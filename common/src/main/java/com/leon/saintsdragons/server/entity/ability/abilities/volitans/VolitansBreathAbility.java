@@ -98,7 +98,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
 
         updateAiBreathTracking(dragon);
-        Vec3 origin = dragon.getMouthPosition();
+        Vec3 origin = dragon.getBreathOrigin();
         Vec3 direction = getBreathDirection(dragon, origin);
         if (direction.lengthSqr() < 1.0E-6) {
             return;
@@ -187,7 +187,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             return;
         }
 
-        Vec3 origin = dragon.getMouthPosition();
+        Vec3 origin = dragon.getBreathOrigin();
         Vec3 aimPoint = target.getEyePosition().add(target.getDeltaMovement().scale(0.35D));
         Vec3 toTarget = aimPoint.subtract(origin);
         if (toTarget.lengthSqr() <= 1.0E-6) {

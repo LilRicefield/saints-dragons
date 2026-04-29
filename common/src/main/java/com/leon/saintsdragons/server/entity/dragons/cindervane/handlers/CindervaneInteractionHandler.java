@@ -11,23 +11,19 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-/**
- * Handles all interactions with Amphithere entities
- * Adapted from Lightning Dragon interaction handler
- */
 public class CindervaneInteractionHandler extends AbstractDragonInteractionHandler<Cindervane> {
-    public CindervaneInteractionHandler(Cindervane dragon) {
-        super(dragon);
+    public CindervaneInteractionHandler(Cindervane amphithere) {
+        super(amphithere);
     }
 
-    /**
-     * Handle interactions with untamed amphitheres (taming)
-     */
     @Override
     protected InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
@@ -41,7 +37,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             return InteractionResult.PASS;
         }
 
-        // Check feeding cooldown to prevent spam-feeding
         if (!dragon.canFeed()) {
             if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
@@ -56,27 +51,21 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             if (!player.getAbilities().instabuild) {
                 heldItem.shrink(1);
             }
-
-            // Trigger eat animation
             dragon.triggerAnim("actions", "eat");
             dragon.playEatMovingSound();
-
-            // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
             dragon.setFeedingCooldown(44);
-
-            boolean hearty = heldItem.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean hearty = heldItem.is(ModItems.HEARTY_DRAGON_MEAL.get());
             dragon.applyFeedingHunger(hearty);
-
             double tameChance = resolveTamingChance(heldItem, config);
             if (hearty) {
-                dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
 
             if (DragonTamingChance.rollPercent(dragon.getRandom(), tameChance)) {
                 dragon.tame(player);
                 dragon.getNavigation().stop();
                 dragon.setOrderedToSit(true);
-                dragon.setCommand(1); // Set command to Sit (1) to match the sitting state
+                dragon.setCommand(1);
                 dragon.setTarget(null);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
 
@@ -90,31 +79,21 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
         return InteractionResult.SUCCESS;
     }
 
-    /**
-     * Handle interactions with tamed amphitheres (feeding, commands, mounting)
-     */
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         boolean isOwner = dragon.isOwnedBy(player);
-
-        // Owner-only interactions
         if (isOwner) {
             if (player.isCrouching() && dragon.isFood(heldItem)) {
                 return handleBreeding(player, heldItem);
             }
-
-            // Handle feeding for healing or growth
             if (dragon.isFood(heldItem)) {
                 return handleFeeding(player, heldItem);
             }
-
-            // Handle owner commands - Shift+Right-click cycles through commands
             if (dragon.canOwnerCommand(player) && !dragon.isFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
             }
         }
 
-        // Handle mounting - both owner and non-owners can mount
         if (hand == InteractionHand.MAIN_HAND && !dragon.isFood(heldItem) && !player.isCrouching()) {
             return handleMounting(player, isOwner);
         }
@@ -122,14 +101,10 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
         return InteractionResult.PASS;
     }
 
-    /**
-     * Handle mounting logic for both owner and passengers
-     */
     private InteractionResult handleMounting(Player player, boolean isOwner) {
         var passengers = dragon.getPassengers();
 
         if (isOwner) {
-            // Owner can mount if seat 0 is empty (or no passengers at all)
             if (passengers.isEmpty() && dragon.canOwnerMount(player)) {
                 if (!dragon.level().isClientSide) {
                     dragon.prepareForMounting();
@@ -139,7 +114,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 }
                 return InteractionResult.sidedSuccess(dragon.level().isClientSide);
             } else if (!passengers.isEmpty() && passengers.get(0) != player) {
-                // Seat 0 occupied: owner can reclaim control if it's a non-owner occupant.
                 Entity firstPassenger = passengers.get(0);
                 boolean seat0IsOwner = firstPassenger instanceof Player firstPlayer && dragon.isOwnedBy(firstPlayer);
                 if (!seat0IsOwner && dragon.canOwnerMount(player)) {
@@ -162,13 +136,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 return InteractionResult.FAIL;
             }
         } else {
-            // Non-owner can mount as passenger if:
-            // 1. Seat 0 is occupied by the owner
-            // 2. Seat 1 is empty (less than 2 passengers)
-            // 3. Dragon is not sitting or doing something that would prevent riding
-
             if (passengers.isEmpty()) {
-                // No one is riding - non-owners can't mount without owner
                 if (!dragon.level().isClientSide) {
                     player.displayClientMessage(
                         Component.translatable("entity.saintsdragons.cindervane.passenger_needs_owner"),
@@ -179,7 +147,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             }
 
             if (passengers.size() >= 2) {
-                // Both seats are full
                 if (!dragon.level().isClientSide) {
                     player.displayClientMessage(
                         Component.translatable("entity.saintsdragons.cindervane.seats_full"),
@@ -189,9 +156,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 return InteractionResult.FAIL;
             }
 
-            // Check if owner is in seat 0
             if (passengers.get(0) instanceof Player firstPlayer && dragon.isOwnedBy(firstPlayer)) {
-                // Owner is driving, non-owner can mount as passenger
                 if (!dragon.level().isClientSide) {
                     if (!player.startRiding(dragon)) {
                         return InteractionResult.FAIL;
@@ -199,7 +164,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 }
                 return InteractionResult.sidedSuccess(dragon.level().isClientSide);
             } else {
-                // Seat 0 is occupied by non-owner (shouldn't happen, but handle it)
                 if (!dragon.level().isClientSide) {
                     player.displayClientMessage(
                         Component.translatable("entity.saintsdragons.cindervane.passenger_needs_owner"),
@@ -251,12 +215,8 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
         return InteractionResult.sidedSuccess(client);
     }
 
-    /**
-     * Handle feeding the dragon for healing
-     */
     private InteractionResult handleFeeding(Player player, ItemStack food) {
         var baby = dragon.getBabyComponent();
-        // Check feeding cooldown to prevent spam-feeding
         if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.cindervane", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
@@ -265,15 +225,11 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             if (!player.getAbilities().instabuild) {
                 food.shrink(1);
             }
-
-            // Trigger eat animation
             dragon.triggerAnim("actions", "eat");
             dragon.playEatMovingSound();
-
-            // Set feeding cooldown (2.2083 seconds * 20 ticks/second = 44 ticks)
             dragon.setFeedingCooldown(44);
 
-            boolean hearty = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean hearty = food.is(ModItems.HEARTY_DRAGON_MEAL.get());
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
                 if (baby != null) {
@@ -287,11 +243,9 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 dragon.heal(healAmount);
                 dragon.applyFeedingHunger(hearty);
                 if (hearty) {
-                    dragon.addEffect(new net.minecraft.world.effect.MobEffectInstance(net.minecraft.world.effect.MobEffects.REGENERATION, 200, 1));
+                    dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
                 }
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
-
-                // Send appropriate message
                 String messageKey;
                 if (fullyHealed) {
                     messageKey = wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.cindervane.fed";
@@ -309,9 +263,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
         return InteractionResult.sidedSuccess(true);
     }
 
-    /**
-     * Handle command cycling (Follow/Sit/Wander).
-     */
     private InteractionResult handleCommandCycling(Player player) {
         if (dragon.isInSitTransition()) {
             if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
@@ -331,15 +282,10 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        // Get current command and cycle to next
         int currentCommand = dragon.getCommand();
-        int nextCommand = (currentCommand + 1) % 3; // 0=Follow, 1=Sit, 2=Wander
-
-        // Apply the new command
+        int nextCommand = (currentCommand + 1) % 3;
         dragon.setCommand(nextCommand);
         applyCommandState(nextCommand);
-
-        // Send feedback message to player (action bar), server-side only to avoid duplicates
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
                 Component.translatable(
@@ -355,8 +301,8 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
-        boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        boolean validFood = dragon.isFood(itemstack) || itemstack.is(net.minecraft.world.item.Items.SALMON) || hearty;
+        boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        boolean validFood = dragon.isFood(itemstack) || itemstack.is(Items.SALMON) || hearty;
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
@@ -395,7 +341,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             return heartyChance;
         }
 
-        // Raw chicken is intentionally between hearty and base fish chances.
         if (food.is(Items.CHICKEN)) {
             Double chickenChance = config.extraDoubles().get("taming_chance_chicken");
             if (chickenChance != null) {
@@ -406,25 +351,15 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             }
         }
 
-        // Cod + salmon remain base chance.
         return baseChance;
     }
-
-    /**
-     * Apply the command state to the dragon.
-     */
     private void applyCommandState(int command) {
         switch (command) {
-            case 0: // Follow
+            case 0, 2:
                 dragon.setOrderedToSit(false);
-                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
-            case 1: // Sit
+            case 1:
                 dragon.setOrderedToSit(true);
-                break;
-            case 2: // Wander
-                dragon.setOrderedToSit(false);
-                // Let updateSittingProgress() handle the "up" animation transition naturally
                 break;
         }
     }
@@ -440,7 +375,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     @Override
-    protected net.minecraft.world.item.Item getBinderItem() {
+    protected Item getBinderItem() {
         return ModItems.CINDERVANE_BINDER.get();
     }
 }

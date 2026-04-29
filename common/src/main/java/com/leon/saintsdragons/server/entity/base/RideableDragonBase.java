@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -17,7 +18,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -29,21 +29,17 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class RideableDragonBase extends DragonEntity implements RideableDragon, FlyingAnimal {
+public abstract class RideableDragonBase extends DragonEntity implements RideableDragon {
     private static final Logger LOGGER = LoggerFactory.getLogger(RideableDragonBase.class);
     private static final int MAX_PERSISTED_FLIGHT_MODE = 5;
     private final Set<String> warnedMissingActions = new HashSet<>();
-
-    /**
-     * Compatibility padding for modpacks that inject an extra tracked field into an upstream mob class.
-     * Keep this unregistered; it reserves one shared rideable tracker id so the real fields below do not
-     * collide with that injected parent slot in heavily-modded Fabric packs. PROMINENCE II?? Bomboclaat, i'm too lazy to track, so here we are.
-     */
+    protected final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
     private static final EntityDataAccessor<Byte> DATA_TRACKER_COMPAT_PADDING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
-
     private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
@@ -54,21 +50,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_HOVERING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
-
-    /**
-     * Prominence II injects a parent tracker that lands exactly where our landing flag would normally sit.
-     * Keep this unregistered so that slot is skipped before we register DATA_LANDING.
-     */
     private static final EntityDataAccessor<Byte> DATA_LANDING_TRACKER_COMPAT_PADDING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
-
     public static final EntityDataAccessor<Boolean> DATA_LANDING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
-
-    /**
-     * Second compatibility gap for packs that occupy tracker id 41 in a parent class without reserving it
-     * through normal defineId sequencing. This keeps the shared movement-state block above that slot. TWO. JUST CAUSE.
-     */
     private static final EntityDataAccessor<Byte> DATA_MOVEMENT_TRACKER_COMPAT_PADDING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
     public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
@@ -97,7 +82,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
-        this.entityData.define(DATA_MELEE_MODE, 0); // Default to primary melee (mode 0)
+        this.entityData.define(DATA_MELEE_MODE, 0);
         this.entityData.define(DATA_RIDER_LOCKED, false);
         this.entityData.define(DATA_FLYING, false);
         this.entityData.define(DATA_TAKEOFF, false);
@@ -115,6 +100,17 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     protected abstract void defineRideableDragonData();
 
+    public void setClientLocatorPosition(String name, Vec3 pos) {
+        if (name == null || pos == null) {
+            return;
+        }
+        this.clientLocatorCache.put(name, pos);
+    }
+
+    @Override
+    public Vec3 getClientLocatorPosition(String name) {
+        return name == null ? null : this.clientLocatorCache.get(name);
+    }
 
     public boolean canBeControlledBy(Player player) {
         if (player == null) {
@@ -166,6 +162,35 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         float clampedStrafe = locked ? 0f : applyInputDeadzone(strafe);
         setLastRiderForward(clampedForward);
         setLastRiderStrafe(clampedStrafe);
+        updateRiderGroundMoveState(clampedForward, clampedStrafe);
+    }
+
+    protected void updateRiderGroundMoveState(float forward, float strafe) {
+        if (!shouldUpdateRiderGroundMoveState()) {
+            return;
+        }
+        int moveState = getRiderGroundMoveState(forward, strafe);
+        setGroundMoveStateFromRider(moveState);
+        setRunning(moveState == 2);
+    }
+
+    protected boolean shouldUpdateRiderGroundMoveState() {
+        return !isFlying() && !isTakeoff() && !isLanding() && !isHovering();
+    }
+
+    protected int getRiderGroundMoveState(float forward, float strafe) {
+        if (Math.abs(forward) + Math.abs(strafe) <= 0.05F) {
+            return 0;
+        }
+        return isAccelerating() && canRiderGroundRun() ? 2 : 1;
+    }
+
+    protected boolean canRiderGroundRun() {
+        return true;
+    }
+
+    public void setGroundMoveStateFromRider(int state) {
+        setGroundMoveStateFromAI(state);
     }
 
     protected void handleRiderAction(ServerPlayer player, DragonRiderAction action, String abilityName, boolean locked) {
@@ -195,19 +220,9 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    /**
-     * Override this to handle dragon-specific rider actions.
-     * Base actions (takeoff, accelerate, melee toggle, dodge) are handled automatically.
-     *
-     * @param player The riding player
-     * @param action The action to handle
-     * @param abilityName The ability name (for ABILITY_USE/STOP actions)
-     * @param locked Whether rider controls are currently locked
-     * @return true if the action was handled, false to let base handler try
-     */
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
-        return false; // Default: no custom actions
+        return false;
     }
 
     protected boolean supportsRiderAction(DragonRiderAction action) {
@@ -226,57 +241,34 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    /**
-     * Called when rider requests a dodge. Override in subclasses to implement dodge mechanics.
-     * @param player The player riding
-     * @param isLeft True if dodging left, false if dodging right
-     */
     protected void onRiderDodge(Player player, boolean isLeft) {
         if (!supportsRiderAction(DragonRiderAction.DOUBLE_TAP_A)
                 && !supportsRiderAction(DragonRiderAction.DOUBLE_TAP_D)) {
             warnMissingAction("double_tap_a/d");
-            return;
         }
     }
 
-    /**
-     * Called when rider requests a bulldoze toggle. Override in subclasses to implement bulldoze mechanics.
-     * @param player The player riding
-     */
     protected void onRiderBulldoze(Player player) {
         warnMissingAction("bulldoze");
-        return;
     }
 
-    /**
-     * Called when rider requests a dash forward. Override in subclasses to implement dash mechanics.
-     * @param player The player riding
-     */
     protected void onRiderDash(Player player) {
         if (!supportsRiderAction(DragonRiderAction.DOUBLE_TAP_W)) {
             warnMissingAction("double_tap_w");
-            return;
         }
     }
-
-    /**
-     * Called when rider requests a backward dodge. Override in subclasses to implement backward dodge mechanics.
-     * @param player The player riding
-     */
     protected void onRiderBackwardDodge(Player player) {
         if (!supportsRiderAction(DragonRiderAction.DOUBLE_TAP_S)) {
             warnMissingAction("double_tap_s");
-            return;
         }
     }
-
     protected void onRiderToggleMelee(Player player) {
-        // Check if this dragon has a secondary melee attack
+
         if (!hasSecondaryMelee()) {
             if (player instanceof ServerPlayer serverPlayer) {
                 serverPlayer.displayClientMessage(
                     net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
-                    true // Action bar
+                    true
                 );
             }
             return;
@@ -285,10 +277,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         toggleMeleeMode();
     }
 
-    /**
-     * Override this to specify if the dragon has a secondary melee attack.
-     * Defaults to true - dragons without secondary melee should override and return false.
-     */
     public boolean hasSecondaryMelee() {
         return true;
     }
@@ -300,7 +288,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     protected void onRiderTakeoffRequest(Player player) {
         if (!supportsRiderAction(DragonRiderAction.TAKEOFF_REQUEST)) {
             warnMissingAction("takeoff_request");
-            return;
         }
     }
 
@@ -396,23 +383,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return null;
     }
 
-    /**
-     * Get the current melee mode (0=primary, 1=secondary)
-     */
     public int getMeleeMode() {
         return this.entityData.get(DATA_MELEE_MODE);
     }
 
-    /**
-     * Set the melee mode (0=primary, 1=secondary)
-     */
     public void setMeleeMode(int mode) {
         this.entityData.set(DATA_MELEE_MODE, Mth.clamp(mode, 0, 1));
     }
 
-    /**
-     * Toggle between primary and secondary melee mode
-     */
     public void toggleMeleeMode() {
         setMeleeMode(getMeleeMode() == 0 ? 1 : 0);
     }
@@ -431,18 +409,12 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    public byte buildClientControlState(boolean ascendDown, boolean descendDown, boolean attackDown, boolean primaryDown, boolean secondaryDown, boolean sneakDown) {
-        return (byte) -1;
-    }
-
     public record RiderAbilityBinding(String abilityId, Activation activation) {
         public enum Activation {
             PRESS,
             HOLD
         }
     }
-
-    // ===== RIDER INPUT IMPLEMENTATION =====
 
     protected EntityDataAccessor<Float> getRiderForwardAccessor() {
         return DATA_RIDER_FORWARD;
@@ -490,17 +462,11 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return this.entityData.get(getRiderStrafeAccessor());
     }
 
-    // ===== MOVEMENT STATE IMPLEMENTATION =====
-
     @Override
     public int getGroundMoveState() {
         return this.entityData.get(getGroundMoveStateAccessor());
     }
 
-    /**
-     * Set ground move state from AI goals (0=idle, 1=walking, 2=running).
-     * This bypasses velocity-based detection and directly sets the animation state.
-     */
     public void setGroundMoveStateFromAI(int state) {
         int clampedState = Mth.clamp(state, 0, 2);
         if (this.entityData.get(getGroundMoveStateAccessor()) != clampedState) {
@@ -516,41 +482,24 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     @Override
     public int getEffectiveGroundState() {
-        Integer state = this.getAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.GROUND_STATE);
+        Integer state = this.getAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.GROUND_MODE);
         if (state != null) {
             return state;
         }
         return this.entityData.get(getGroundMoveStateAccessor());
     }
 
-    // ===== SIT TRANSITION INTERFACE =====
-
-    /**
-     * Check if dragon is currently in a sit transition animation (sitting down or standing up).
-     * Override this in dragons that have sit animations with specific transition timing.
-     * Goals should avoid starting while transitions are active.
-     */
     public boolean isInSitTransition() {
-        return false; // Default: no transitions
+        return false;
     }
 
-    /**
-     * Check if dragon is currently playing the sit-down animation.
-     * Override this in dragons that have sit-down animations.
-     */
     public boolean isSittingDownAnimation() {
-        return false; // Default: no sit-down animation
+        return false;
     }
 
-    /**
-     * Check if dragon is currently playing the stand-up animation.
-     * Override this in dragons that have stand-up animations.
-     */
     public boolean isStandingUpAnimation() {
-        return false; // Default: no stand-up animation
+        return false;
     }
-
-    // ===== RIDER CONTROL IMPLEMENTATION =====
 
     @Override
     public boolean isGoingUp() {
@@ -598,35 +547,27 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.setYHeadRot(blendedYaw);
     }
 
-    // ===== ANIMATION SYNC IMPLEMENTATION =====
-
     @Override
     public void syncAnimState(int groundState, int flightMode) {
         if (level().isClientSide) {
             return;
         }
-        this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.GROUND_STATE, groundState);
-        this.setAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.FLIGHT_MODE, flightMode);
+        this.setAnimData(DragonAnimTickets.GROUND_MODE, groundState);
+        this.setAnimData(DragonAnimTickets.FLIGHT_MODE, flightMode);
     }
 
     @Override
     public void initializeAnimationState() {
         if (!level().isClientSide) {
-            // Set initial state based on current entity state
-            int initialGroundState = 0; // Default to idle
-            int initialFlightMode = -1; // Default to ground state
-
+            int initialGroundState = 0;
+            int initialFlightMode = -1;
             if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
-                // Check if entity is actually moving
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                // 0=idle, 1=walk, 2=run (GeckoLib threshold at 0.000001 handles actual animation)
                 if (velSqr > 0.02) initialGroundState = 2;
                 else if (velSqr > 0.0008) initialGroundState = 1;
             } else if (isFlying()) {
                 initialFlightMode = getFlightMode();
             }
-
-            // Set the initial state without triggering sync (to avoid thrashing)
             this.entityData.set(getGroundMoveStateAccessor(), initialGroundState);
             this.entityData.set(getFlightModeAccessor(), initialFlightMode);
         }
@@ -635,38 +576,26 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     @Override
     public void resetAnimationState() {
         if (!level().isClientSide) {
-            // Recalculate current state based on actual entity state
-            int currentGroundState = 0; // Default to idle
-
+            int currentGroundState = 0;
             if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
-                // Recalculate ground movement state based on current velocity
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
                 if (velSqr > 0.02) currentGroundState = 2;
                 else if (velSqr > 0.0008) currentGroundState = 1;
             }
 
             int currentFlightMode = getFlightMode();
-
-            // Update entity data to match calculated state
             this.entityData.set(getGroundMoveStateAccessor(), currentGroundState);
             this.entityData.set(getFlightModeAccessor(), currentFlightMode);
-
-            // Force sync current state
             this.syncAnimState(currentGroundState, currentFlightMode);
         }
     }
 
-    // ===== REQUIRED OVERRIDES IMPLEMENTATION =====
-
     @Override
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
         Vec3 input = super.getRiddenInput(player, deltaIn);
-
-        // Capture rider inputs for animation state (like Lightning Dragon)
         if (!level().isClientSide && !isFlying()) {
             float fwd = (float) Mth.clamp(input.z, -1.0, 1.0);
             float str = (float) Mth.clamp(input.x, -1.0, 1.0);
-            // Apply simple threshold to filter noise
             this.setLastRiderForward(Math.abs(fwd) > 0.02f ? fwd : 0f);
             this.setLastRiderStrafe(Math.abs(str) > 0.02f ? str : 0f);
         }
@@ -676,57 +605,42 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     @Override
     public void removePassenger(@NotNull Entity passenger) {
-        // CRITICAL: Always clear control lock when passenger is removed to prevent stuck state
         if (passenger == getControllingPassenger()) {
             clearRiderControlLock();
         }
         super.removePassenger(passenger);
-        // Reset rider-driven movement states immediately on dismount
         if (!this.level().isClientSide) {
             this.setAccelerating(false);
             this.setRunning(false);
             this.setLastRiderForward(0f);
             this.setLastRiderStrafe(0f);
             this.entityData.set(getGroundMoveStateAccessor(), 0);
-            // Nudge observers so animation stops if we dismounted mid-run/walk
             this.syncAnimState(0, getSyncedFlightMode());
         }
     }
 
-    // ===== ANIMATION STATE TICKING IMPLEMENTATION =====
 
     @Override
     public void tickAnimationStates() {
-        // Update ground movement state with more sophisticated detection
-        int moveState = 0; // idle
-
+        int moveState = 0;
         if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
-            // If being ridden, prefer rider inputs for robust state selection
             if (getControllingPassenger() != null) {
                 float fwd = this.entityData.get(getRiderForwardAccessor());
                 float str = this.entityData.get(getRiderStrafeAccessor());
-
-                // Check if rider has significant input (threshold 0.05)
                 if (Math.abs(fwd) + Math.abs(str) > 0.05f) {
                     moveState = this.isAccelerating() ? 2 : 1;
                 } else {
-                    // Fallback while ridden: use actual velocity so observers still see walk/run
                     double speedSqr = getDeltaMovement().horizontalDistanceSqr();
                     if (speedSqr > 0.08) moveState = 2;
                     else if (speedSqr > 0.005) moveState = 1;
                 }
             } else {
-                // Use horizontal velocity for AI classification
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
                 if (velSqr > 0.02) moveState = 2;
                 else if (velSqr > 0.0008) moveState = 1;
             }
         }
-
-        // Update flight mode
         int flightMode = getFlightMode();
-
-        // Update entity data and sync to clients
         boolean groundStateChanged = this.entityData.get(getGroundMoveStateAccessor()) != moveState;
         boolean flightModeChanged = this.entityData.get(getFlightModeAccessor()) != flightMode;
 
@@ -737,13 +651,9 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (flightModeChanged) {
             this.entityData.set(getFlightModeAccessor(), flightMode);
         }
-
-        // Send animation state sync to clients when states change
         if (groundStateChanged || flightModeChanged) {
             this.syncAnimState(moveState, flightMode);
         }
-
-        // Stop running if not moving
         if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
             this.setRunning(false);
         }
@@ -769,7 +679,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             riderAirborneTicksForLanding = 0;
         }
     }
-
 
     protected boolean consumeRiderTouchdownFromAir(double maxUpwardVelocity) {
         boolean touchdown = onGround()
@@ -840,17 +749,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return Math.max(0.0D, bestAltitude);
     }
 
-    /**
-     * Returns true when collision terrain is close enough for a landing animation handoff.
-     */
     public boolean isNearLandingTerrain(double maxAltitude) {
         double altitude = getAltitudeAboveCollisionTerrain(24, true);
         return altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= maxAltitude;
     }
-
-    /**
-     * Check if the dragon is flying. Final bridge delegates to subclass hook to avoid obfuscation mismatches.
-     */
     @Override
     public final boolean isFlying() {
         return isDragonFlying();
@@ -872,14 +774,16 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return false;
     }
 
-    /**
-     * Check if the dragon is running. Must be implemented by subclasses.
-     */
-    public abstract boolean isRunning();
+    @Override
+    public boolean isWalking() {
+        return !isFlying() && getEffectiveGroundState() == 1;
+    }
 
-    /**
-     * Set if the dragon is running. Must be implemented by subclasses.
-     */
+    @Override
+    public boolean isRunning() {
+        return !isFlying() && getEffectiveGroundState() == 2;
+    }
+
     public abstract void setRunning(boolean running);
 
     @Override
@@ -889,17 +793,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.setGroundMoveStateFromAI(0);
     }
 
-    /**
-     * Force the sit progress to a specific value and sync it. Intended for platform handlers that
-     * need to restore animation state (e.g., after reconnect).
-     */
     public void forceSitProgress(float value) {
         super.forceSitProgress(value);
     }
 
-    /**
-     * Persist the common rideable dragon state to NBT so every dragon saves the same baseline data.
-     */
     protected void saveRideableData(CompoundTag tag) {
         tag.putBoolean("Flying", isFlying());
         tag.putBoolean("Takeoff", isTakeoff());
@@ -917,18 +814,11 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         saveSitProgress(tag);
     }
 
-    /**
-     * Load the common rideable state from NBT. Subclasses can override {@link #applyLoadedFlightState}
-     * if they need to push the booleans into custom accessors.
-     */
     protected void loadRideableData(CompoundTag tag) {
         boolean savedFlying = tag.getBoolean("Flying");
         boolean savedTakeoff = tag.getBoolean("Takeoff");
         boolean savedHovering = tag.getBoolean("Hovering");
         boolean savedLanding = tag.getBoolean("Landing");
-
-        // Trigger-only transient states do not replay cleanly across save/load.
-        // Persist the broader flying/hovering posture, but drop mid-transition flags.
         if (savedTakeoff || savedLanding) {
             savedTakeoff = false;
             savedLanding = false;
@@ -971,39 +861,19 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    /**
-     * Hook for subclasses to push saved flight booleans into their own accessors.
-     * Ground-only dragons can ignore it.
-     */
+
     protected void applyLoadedFlightState(boolean flying, boolean takeoff, boolean hovering, boolean landing) {
-        // Default no-op; dragons with dedicated flight data should override.
     }
 
-    // ===== RIDER CONTROL LOCK SYSTEM =====
-
-    /**
-     * Locks rider controls for the specified number of ticks.
-     * Used during animations like landed, ultimate abilities, etc.
-     * @param ticks Number of ticks to lock controls (20 ticks = 1 second)
-     */
     public void lockRiderControls(int ticks) {
         riderControlLockTicks = Math.max(riderControlLockTicks, Math.max(0, ticks));
         this.entityData.set(DATA_RIDER_LOCKED, true);
     }
 
-    /**
-     * Checks if rider controls are currently locked.
-     * Client-side checks synced entity data, server-side checks tick counter.
-     * @return true if controls are locked
-     */
     public boolean areRiderControlsLocked() {
         return level().isClientSide ? this.entityData.get(DATA_RIDER_LOCKED) : riderControlLockTicks > 0;
     }
 
-    /**
-     * Clears the rider control lock immediately.
-     * Called when passenger dismounts to prevent stuck state.
-     */
     public void clearRiderControlLock() {
         if (riderControlLockTicks > 0 || this.entityData.get(DATA_RIDER_LOCKED)) {
             riderControlLockTicks = 0;
@@ -1011,10 +881,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    /**
-     * Ticks down the rider control lock timer.
-     * Must be called in the dragon's tick/aiStep method.
-     */
     protected void tickRiderControlLock() {
         if (!level().isClientSide && riderControlLockTicks > 0) {
             riderControlLockTicks--;
@@ -1023,5 +889,4 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             }
         }
     }
-
 }

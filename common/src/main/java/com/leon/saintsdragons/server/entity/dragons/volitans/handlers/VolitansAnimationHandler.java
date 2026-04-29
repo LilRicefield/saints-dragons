@@ -35,7 +35,6 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation WAKE_UP_UNDERWATER = RawAnimation.begin().thenPlay("animation.volitans.wake_up_underwater");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.volitans.hurt");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.volitans.die");
-
     private static final RawAnimation BITE = RawAnimation.begin().thenPlay("animation.volitans.bite");
     private static final RawAnimation HORN_GORE = RawAnimation.begin().thenPlay("animation.volitans.horn_gore");
     private static final RawAnimation SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.volitans.swipe_left");

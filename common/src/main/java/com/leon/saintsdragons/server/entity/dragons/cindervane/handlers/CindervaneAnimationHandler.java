@@ -1,6 +1,4 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
-
-import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
@@ -9,10 +7,8 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 
-/**
- * Lightweight animation helper for the Amphithere.
- */
 public class CindervaneAnimationHandler {
+    private final Cindervane amphithere;
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.cindervane.idle");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.cindervane.glide");
     private static final RawAnimation GLIDE_DOWN = RawAnimation.begin().thenLoop("animation.cindervane.glide_down");
@@ -26,8 +22,6 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.cindervane.sit");
-
-    // Sleep sequence animations
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.cindervane.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.cindervane.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.cindervane.fall_asleep");
@@ -35,43 +29,30 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
 
-
-    private final Cindervane dragon;
-
     public CindervaneAnimationHandler(Cindervane dragon) {
-        this.dragon = dragon;
+        this.amphithere = dragon;
     }
 
     public PlayState handleMovementAnimation(AnimationState<Cindervane> state) {
         state.getController().transitionLength(12); // Longer transitions for smoother animation
-        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
 
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        // Wait for entity data to sync from server before processing animations
-        if (dragon.level().isClientSide && !dragon.isClientAnimationReady()) {
-            state.setAndContinue(IDLE);
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isDying()) {
+        if (amphithere.isDying()) {
             return PlayState.STOP;
         }
 
-        if (dragon.isTakeoff()) {
+        if (amphithere.isTakeoff()) {
             return PlayState.STOP;
         }
-
-        // Handle sleep: continuous animation for sleep loop, stop for transitions
-        if (dragon.isSleeping() && !dragon.isSleepTransitioning()) {
+        if (amphithere.isSleeping() && !amphithere.isSleepTransitioning()) {
             state.getController().transitionLength(6);
             state.setAndContinue(SLEEP);
             return PlayState.CONTINUE;
-        } else if (dragon.isSleepTransitioning()) {
-            // Transition animations are triggered, don't interfere
+        } else if (amphithere.isSleepTransitioning()) {
             return PlayState.STOP;
         }
 
-        boolean inWater = dragon.isInWater() || dragon.isInWaterOrBubble();
+        boolean inWater = amphithere.isInWater() || amphithere.isInWaterOrBubble();
 
         if (inWater) {
             state.getController().transitionLength(6);
@@ -80,17 +61,17 @@ public class CindervaneAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        if (dragon.isFallingForAnimation()) {
+        if (amphithere.isFallingForAnimation()) {
             state.getController().transitionLength(4);
             state.setAndContinue(FALLING);
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
 
-        if (dragon.isVehicle()) {
+        if (amphithere.isVehicle()) {
             state.getController().transitionLength(4);
             if (aerialState) {
-                DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
+                DragonFlightStateEvaluator.VisualState visualState = amphithere.getVisualFlightState(state.getPartialTick());
 
                 if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
                     return PlayState.STOP;
@@ -129,7 +110,7 @@ public class CindervaneAnimationHandler {
                 state.getController().transitionLength(12);
                 state.setAndContinue(GLIDE);
             } else {
-                int groundState = dragon.getEffectiveGroundState();
+                int groundState = amphithere.getEffectiveGroundState();
                 if (groundState == 2) {
                     state.setAndContinue(RUN);
                 } else if (groundState == 1) {
@@ -141,25 +122,20 @@ public class CindervaneAnimationHandler {
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
-
-        // Drive SIT from our custom progress system only to avoid desync
-        // Only play SIT loop when FULLY sat down (sit_down transition finished)
-        float sitProgress = dragon.getSitProgress();
-        float maxSit = dragon.maxSitTicks();
+        float sitProgress = amphithere.getSitProgress();
+        float maxSit = amphithere.maxSitTicks();
 
         if (sitProgress >= maxSit) {
-            // Fully sitting - play SIT loop
             state.setAndContinue(SIT);
             return PlayState.CONTINUE;
         } else if (sitProgress > 0f) {
-            // In transition (either sitting down or standing up) - let action controller handle it
             return PlayState.STOP;
         }
 
         state.getController().setAnimationSpeed(1.0f);
 
         if (aerialState) {
-            DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
+            DragonFlightStateEvaluator.VisualState visualState = amphithere.getVisualFlightState(state.getPartialTick());
 
             if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
                 return PlayState.STOP;
@@ -201,62 +177,33 @@ public class CindervaneAnimationHandler {
                 return PlayState.CONTINUE;
             }
 
-            // Fallback: default to flap
             state.getController().transitionLength(6);
             state.setAndContinue(FLAP);
             return PlayState.CONTINUE;
         }
 
-        if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
-            // Use the improved movement state detection - prioritize AI-set states for tamed dragons
-            int groundState = dragon.getEffectiveGroundState(); // Use effective state for client-side consistency
-            
-            // Add hysteresis to prevent rapid animation changes
+        if (!amphithere.isTakeoff() && !amphithere.isLanding() && !amphithere.isHovering()) {
+            int groundState = amphithere.getEffectiveGroundState();
+
             if (groundState == 2) {
-                // Running state
                 state.setAndContinue(RUN);
             } else if (groundState == 1) {
-                // Walking state
                 state.setAndContinue(WALK);
-            } else if (dragon.isRunning()) {
-                // Fallback to running check
+            } else if (amphithere.isRunning()) {
                 state.setAndContinue(RUN);
-            } else if (dragon.isWalking()) {
-                // Fallback to walking check
+            } else if (amphithere.isWalking()) {
                 state.setAndContinue(WALK);
             } else {
                 state.setAndContinue(IDLE);
             }
         } else {
-            // During takeoff, landing, or hovering, play idle animation
             state.setAndContinue(IDLE);
         }
 
         return PlayState.CONTINUE;
     }
 
-    /**
-     * DEPRECATED: Banking is now fully procedural via model bone rotations
-     * This controller is kept for compatibility but always returns STOP
-     */
-    public PlayState bankingPredicate(AnimationState<Cindervane> state) {
-        // Banking is handled procedurally in CindervaneModel.applyBankingRoll()
-        // No keyframed animations needed
-        return PlayState.STOP;
-    }
-
-    /**
-     * DEPRECATED: Pitching is now fully procedural via model bone rotations
-     * This controller is kept for compatibility but always returns STOP
-     */
-    public PlayState pitchingPredicate(AnimationState<Cindervane> state) {
-        // Pitching is handled procedurally in CindervaneModel.applyFlightPitch()
-        // No keyframed animations needed
-        return PlayState.STOP;
-    }
-
     public void setupActionController(AnimationController<Cindervane> controller) {
-        // Explicit animation triggers
         controller.triggerableAnim("bite",
                 RawAnimation.begin().thenPlay("animation.cindervane.bite"));
         controller.triggerableAnim("bite_air",
@@ -269,19 +216,13 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
         controller.triggerableAnim("eat",
                 RawAnimation.begin().thenPlay("animation.cindervane.eat"));
-
-        // Landed animation (plays after landing with rider)
         controller.triggerableAnim("landed", LANDED);
-
-        // Sleep sequence animations
         controller.triggerableAnim("down", SIT_DOWN);
         controller.triggerableAnim("up", SIT_UP);
         controller.triggerableAnim("fall_asleep", FALL_ASLEEP);
         controller.triggerableAnim("sleep", SLEEP);
         controller.triggerableAnim("wake_up", WAKE_UP);
-
-        // Vocal entries (only those bound to the actions controller)
-        dragon.getVocalEntries().forEach((key, entry) -> {
+        amphithere.getVocalEntries().forEach((key, entry) -> {
             if (!"actions".equals(entry.controllerId())) {
                 return;
             }
@@ -304,25 +245,24 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.die"));
     }
 
-    // Sleep animation trigger methods
     public void triggerSitDownAnimation() {
-        dragon.triggerAnim("actions", "down");
+        amphithere.triggerAnim("actions", "down");
     }
 
     public void triggerSitUpAnimation() {
-        dragon.triggerAnim("actions", "up");
+        amphithere.triggerAnim("actions", "up");
     }
 
     public void triggerFallAsleepAnimation() {
-        dragon.triggerAnim("actions", "fall_asleep");
+        amphithere.triggerAnim("actions", "fall_asleep");
     }
 
     public void triggerSleepAnimation() {
-        dragon.triggerAnim("actions", "sleep");
+        amphithere.triggerAnim("actions", "sleep");
     }
 
     public void triggerWakeUpAnimation() {
-        dragon.triggerAnim("actions", "wake_up");
+        amphithere.triggerAnim("actions", "wake_up");
     }
 
     public PlayState actionPredicate(AnimationState<Cindervane> state) {

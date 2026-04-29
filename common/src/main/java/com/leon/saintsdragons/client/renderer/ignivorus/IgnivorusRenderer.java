@@ -28,7 +28,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
     private static final String FIRE_BONE = "fireBone";
     private static final String PASSENGER_BONE = "passengerBone";
-    private static final String MOUTH_LOCATOR_BONE = "mouth_origin";
 
     // Bones for hitbox parts
     private static final String HEAD_BONE = "headController";
@@ -97,7 +96,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         }
         model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(FIRE_BONE).ifPresent(b -> b.setTrackingMatrices(true));
-        model.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> b.setTrackingMatrices(true));
 
         // Enable tracking for hitbox bones
         model.getBone(HEAD_BONE).ifPresent(b -> b.setTrackingMatrices(true));
@@ -156,13 +154,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
             if (world != null) {
                 entity.setClientLocatorPosition("fireBoneOrigin", world);
-            }
-        });
-
-        this.lastBakedModel.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
-            if (world != null) {
-                entity.setClientLocatorPosition("mouth_origin", world);
             }
         });
 

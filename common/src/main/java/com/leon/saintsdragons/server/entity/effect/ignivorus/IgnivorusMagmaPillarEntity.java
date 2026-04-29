@@ -36,10 +36,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * GeckoLib-driven magma pillar spawned by the Ignivorus roar.
- * Handles timing, damage, and knockback locally so the ability can simply instantiate it.
- */
+
 public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private static final RawAnimation EMERGE_ANIMATION =
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.emerge");
@@ -47,22 +44,18 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.subside");
     private static final int SUBSIDE_DURATION_TICKS = 9; // Matches 0.416s subside animation
     private static final EntityDimensions BASE_DIMENSIONS = EntityDimensions.scalable(5.5F, 5.5F);
-    // Damage volume tuning: widen pillar hit detection so near-edge targets are still affected.
     private static final double DAMAGE_RADIUS_BASE = 2.25D;
     private static final double DAMAGE_RADIUS_SCALE_MULTIPLIER = 0.65D;
     private static final double DAMAGE_VERTICAL_BELOW = 0.75D;
     private static final double DAMAGE_VERTICAL_HEIGHT_BASE = 5.5D;
     private static final double DAMAGE_VERTICAL_HEIGHT_SCALE_MULTIPLIER = 2.4D;
-
     private static final EntityDataAccessor<Integer> DATA_STAGE =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_SCALE =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_SUBSIDING =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.BOOLEAN);
-
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
-
     private Ignivorus owner;
     private UUID ownerUUID;
     private float impactDamage = 16.0f;
@@ -72,8 +65,8 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private int livedTicks;
     private int subsideTicks;
     private final java.util.Set<UUID> hitEntities = new java.util.HashSet<>();
-    private boolean rotationLocked = false; // Lock rotation after initial setup
-    private float lockedHeadYaw = 0.0f; // Store head rotation since setter doesn't work
+    private boolean rotationLocked = false;
+    private float lockedHeadYaw = 0.0f;
 
     public IgnivorusMagmaPillarEntity(EntityType<? extends IgnivorusMagmaPillarEntity> type, Level level) {
         super(type, level);
@@ -94,12 +87,9 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         this.lifetimeTicks = lifetimeTicks;
         setStage(stageIndex);
         setVisualScale(1.0f + stageIndex * 0.2f);
-
-        // Use explicit yaw computed by the ability from its spawn-forward vector.
         initializeRotation(yaw);
-        this.rotationLocked = true; // Lock rotation from now on
+        this.rotationLocked = true;
     }
-
     @Override
     protected void defineSynchedData() {
         this.entityData.define(DATA_STAGE, 0);
@@ -123,22 +113,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
 
     public float getVisualScale() {
         return this.entityData.get(DATA_SCALE);
-    }
-
-    public void setImpactDamage(float impactDamage) {
-        this.impactDamage = impactDamage;
-    }
-
-    public void setKnockbackStrength(double knockbackStrength) {
-        this.knockbackStrength = knockbackStrength;
-    }
-
-    public void setWarmupTicks(int warmupTicks) {
-        this.warmupTicks = warmupTicks;
-    }
-
-    public void setLifetimeTicks(int lifetimeTicks) {
-        this.lifetimeTicks = lifetimeTicks;
     }
 
     public boolean isSubsiding() {
@@ -173,61 +147,12 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
 
         if (!level().isClientSide) {
             resolveOwner();
-            // Apply damage every tick after warmup until pillar begins subsiding
             if (livedTicks >= warmupTicks) {
                 applyImpact();
             }
             if (livedTicks >= lifetimeTicks) {
                 beginSubside();
             }
-        }
-    }
-
-    @Override
-    public void setYRot(float yaw) {
-        // Only allow rotation changes before lock
-        if (!rotationLocked) {
-            super.setYRot(yaw);
-        }
-    }
-
-    @Override
-    public void setXRot(float pitch) {
-        // Always lock pitch to 0 (vertical pillars)
-        if (!rotationLocked) {
-            super.setXRot(0.0f);
-        }
-    }
-
-    @Override
-    public void setYBodyRot(float yaw) {
-        // Only allow before lock
-        if (!rotationLocked) {
-            super.setYBodyRot(yaw);
-        }
-    }
-
-    @Override
-    public void setYHeadRot(float yaw) {
-        // Only allow before lock
-        if (!rotationLocked) {
-            super.setYHeadRot(yaw);
-        }
-    }
-
-    @Override
-    public float getYHeadRot() {
-        // Return our locked head rotation instead of the entity's default
-        return rotationLocked ? lockedHeadYaw : super.getYHeadRot();
-    }
-
-    @Override
-    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps, boolean teleport) {
-        // Prevent client interpolation from overriding rotation
-        if (rotationLocked) {
-            super.lerpTo(x, y, z, lockedHeadYaw, 0.0f, steps, teleport);
-        } else {
-            super.lerpTo(x, y, z, yRot, xRot, steps, teleport);
         }
     }
 
@@ -272,7 +197,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         boolean firstHit = hitEntities.isEmpty() && !hits.isEmpty();
 
         for (LivingEntity target : hits) {
-            // Mark as hit to prevent multiple damage ticks
             hitEntities.add(target.getUUID());
 
             target.hurt(source, impactDamage);
@@ -293,7 +217,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             }
         }
 
-        // Only play effects/sounds on the first hit to avoid spam
         if (firstHit) {
             server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 2.0D, getZ(), 20,
                     0.6D, 1.2D, 0.6D, 0.05D);
@@ -346,7 +269,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             ownerUUID = tag.getUUID("Owner");
         }
 
-        // Load hit entities
         hitEntities.clear();
         if (tag.contains("HitEntities")) {
             long[] uuidArray = tag.getLongArray("HitEntities");
@@ -381,8 +303,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         tag.putFloat("LockedYaw", lockedHeadYaw);
         tag.putBoolean("Subsiding", isSubsiding());
         tag.putInt("SubsideTicks", subsideTicks);
-
-        // Save hit entities
         long[] uuidArray = new long[hitEntities.size() * 2];
         int i = 0;
         for (UUID uuid : hitEntities) {
@@ -398,7 +318,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
         float yaw = packet.getYRot();
         initializeRotation(yaw);

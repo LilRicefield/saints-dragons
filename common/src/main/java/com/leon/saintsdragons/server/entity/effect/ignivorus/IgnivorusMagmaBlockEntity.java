@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
@@ -15,19 +16,15 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -94,19 +91,14 @@ public class IgnivorusMagmaBlockEntity extends Entity {
 
     @Override
     public void tick() {
-        // Don't call super.tick() - handle movement manually
 
         if (this.getBlockState().isAir()) {
             discard();
             return;
         }
-
         livedTicks++;
 
-        // Gradual arc: gravity increases over time for a natural arc trajectory
-        // Starts with no gravity, then gradually increases
         if (!this.isNoGravity()) {
-            // Gravity ramps up over the first 20 ticks, then stays constant
             float gravityProgress = Math.min(1.0f, livedTicks / 20.0f);
             double gravity = -0.05D * gravityProgress; // Max gravity of -0.05
             this.setDeltaMovement(this.getDeltaMovement().add(0.0D, gravity, 0.0D));
@@ -116,12 +108,11 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         Vec3 motion = this.getDeltaMovement();
         Vec3 nextPos = currentPos.add(motion);
 
-        // Raycast to check for block collision along the path
-        net.minecraft.world.phys.BlockHitResult hitResult = level().clip(new net.minecraft.world.level.ClipContext(
+        BlockHitResult hitResult = level().clip(new ClipContext(
                 currentPos,
                 nextPos,
-                net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
                 this
         ));
 
@@ -140,44 +131,31 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         } else if (hitEntity) {
             this.setPos(entityHit.getLocation());
         } else if (hitBlock) {
-            // Move to impact point
             this.setPos(hitResult.getLocation());
         } else {
-            // Move freely without physics collision
             this.setPos(nextPos);
         }
 
-        // Server-side logic only
         if (!level().isClientSide) {
-            // Apply air resistance
             if (!this.isNoGravity()) {
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.99D));
             }
-
-            // Check lifetime
             if (livedTicks > lifetimeTicks) {
                 explode();
                 return;
             }
-
-            // Explode on entity hit
             if (hitEntity) {
                 explode();
                 return;
             }
 
-            // Explode on block hit
             if (hitBlock) {
                 explode();
-                return;
             }
         } else {
-            // Client-side: apply same air resistance for prediction
             if (!this.isNoGravity()) {
                 this.setDeltaMovement(this.getDeltaMovement().scale(0.99D));
             }
-
-            // Spawn trail particles
             spawnTrailParticles();
         }
     }
@@ -189,7 +167,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         }
         AABB bounds = getBoundingBox().expandTowards(end.subtract(start)).inflate(1.0D);
         return ProjectileUtil.getEntityHitResult(level(), this, start, end, bounds, target -> {
-            if (!(target instanceof net.minecraft.world.entity.LivingEntity living)) {
+            if (!(target instanceof LivingEntity living)) {
                 return false;
             }
             if (!living.isAlive()) {
@@ -229,46 +207,37 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
                 0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
 
-        // Enhanced effects for larger fireballs (charge level 2+)
         if (scale >= 6.0F) {
-            // Dense smoke plume
             server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
                     0.9D * scale, 0.7D * scale, 0.9D * scale, 0.06D);
-            // Falling debris particles
             server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, capParticles(10, scale, 50),
                     1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
-
-            // Destroy blocks for charge level 2+ (radius 6 = ~13 block diameter crater)
             if (allowGriefing) {
                 destroyBlocks(server, impactPos, 6, false);
             }
         }
-
-        // Max charge explosion (charge level 3) - DEVASTATING
         if (scale >= 8.0F) {
-            // Center explosion emitter
+
             server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.5D, impact.z, 1,
                     0.0D, 0.0D, 0.0D, 0.0D);
             server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(16, scale, 60),
                     2.0D * scale, 1.0D * scale, 2.0D * scale, 0.2D);
 
-            // Massive block destruction radius for max charge (radius 12 = ~25 block diameter crater)
             if (allowGriefing) {
                 destroyBlocks(server, impactPos, 12, true);
             }
         }
 
-        // Sound - louder and lower pitch for bigger explosions
         float volume = 1.0F + (scale * 0.2F);
         float pitch = Math.max(0.4F, 0.9F / scale);
         server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), volume, pitch);
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
-        List<net.minecraft.world.entity.LivingEntity> hits = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, area,
+        List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area,
                 target -> target.isAlive() && target != owner && (owner == null || !owner.isAlly(target)));
 
-        for (net.minecraft.world.entity.LivingEntity target : hits) {
+        for (LivingEntity target : hits) {
             target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);
             target.setSecondsOnFire((int)(4 * scale));
 
@@ -363,7 +332,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                     if (server.random.nextDouble() < chance) {
                         server.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
                     }
-                    break; // Only place one fire per column
+                    break;
                 }
             }
         }
@@ -377,7 +346,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         this.impactRadius = tag.getDouble("ImpactRadius");
         this.impactDamage = tag.getFloat("ImpactDamage");
         if (tag.contains("BlockState", CompoundTag.TAG_COMPOUND) && level() instanceof ServerLevel server) {
-            BlockState state = NbtUtils.readBlockState(server.holderLookup(net.minecraft.core.registries.Registries.BLOCK), tag.getCompound("BlockState"));
+            BlockState state = NbtUtils.readBlockState(server.holderLookup(Registries.BLOCK), tag.getCompound("BlockState"));
             setBlockState(state.isAir() ? Blocks.MAGMA_BLOCK.defaultBlockState() : state);
         }
         if (tag.contains("Scale")) {
@@ -396,14 +365,13 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
-        // Restore velocity from packet
         this.setDeltaMovement(packet.getXa(), packet.getYa(), packet.getZa());
     }
 
@@ -414,12 +382,11 @@ public class IgnivorusMagmaBlockEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        // Render up to 128 blocks away for larger fireballs
         return distance < 16384.0D;
     }
 
     @Override
-    protected boolean canAddPassenger(Entity passenger) {
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
         return false;
     }
 
@@ -429,8 +396,8 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return super.hurt(source, amount);
         }
         return false;
@@ -442,8 +409,8 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
-        return !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY);
+    public boolean isInvulnerableTo(DamageSource source) {
+        return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     @Override
@@ -452,7 +419,7 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public EntityDimensions getDimensions(@NotNull Pose pose) {
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
         float scale = getVisualScale();
         return EntityDimensions.fixed(0.98F * scale, 0.98F * scale);
     }

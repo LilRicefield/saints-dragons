@@ -24,10 +24,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Expanding spherical supernova effect for Ignivorus ultimate ability.
- * Creates a growing sphere of damage that pulses outward from the center.
- */
 public class IgnivorusNovaEntity extends Entity {
 
     private static final int DURATION = 20;
@@ -123,11 +119,7 @@ public class IgnivorusNovaEntity extends Entity {
             if (target.getUUID().equals(ownerUUID)) continue;
             if (owner != null && owner.getPassengers().contains(target)) continue;
             if (damagedEntities.contains(target.getUUID())) continue;
-
-            // Don't damage baby Ignivorus dragons (protect the young!)
             if (target instanceof Ignivorus baby && baby.isBaby()) continue;
-
-            // Don't damage allies or tamed pets
             if (owner instanceof Ignivorus ignivorus && ignivorus.isAlly(target)) continue;
 
             double distanceSqr = target.position().distanceToSqr(position());

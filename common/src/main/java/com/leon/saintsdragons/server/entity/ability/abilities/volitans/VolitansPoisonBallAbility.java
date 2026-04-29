@@ -159,7 +159,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
         }
 
         Vec3 direction = getAimDirection(dragon);
-        Vec3 spawnPos = dragon.getMouthPosition();
+        Vec3 spawnPos = dragon.getBreathOrigin();
 
         int poisonDurationTicks = (int) Math.round(dragon.getConfiguredExtra("poison_ball_poison_duration_ticks", POISON_DURATION_TICKS));
         int poisonAmplifier = dragon.getConfiguredPoisonAmplifier("poison_ball_poison_level", POISON_AMPLIFIER + 1);
@@ -188,7 +188,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
             Vec3 targetPos = target.getEyePosition();
             Vec3 lead = target.getDeltaMovement().scale(TARGET_LEAD_FACTOR);
             Vec3 aimPoint = targetPos.add(lead);
-            Vec3 dir = aimPoint.subtract(dragon.getMouthPosition());
+            Vec3 dir = aimPoint.subtract(dragon.getBreathOrigin());
             if (dir.lengthSqr() > 1.0E-6) {
                 return dir.normalize();
             }

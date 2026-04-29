@@ -18,15 +18,11 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Visual-only falling block entity for cosmetic effects.
- * Does not place blocks or drop items - purely visual.
- */
 public class VisualFallingBlockEntity extends Entity {
     private static final EntityDataAccessor<BlockState> BLOCK_STATE =
             SynchedEntityData.defineId(VisualFallingBlockEntity.class, EntityDataSerializers.BLOCK_STATE);
 
-    private int lifetime = 40; // 2 seconds default
+    private int lifetime = 40;
 
     public VisualFallingBlockEntity(EntityType<?> entityType, Level level) {
         super(entityType, level);
@@ -59,24 +55,15 @@ public class VisualFallingBlockEntity extends Entity {
 
     @Override
     public void tick() {
-        // Apply gravity
         if (!this.isNoGravity()) {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0, -0.04, 0.0));
         }
 
-        // Move with physics
         this.move(MoverType.SELF, this.getDeltaMovement());
-
-        // Apply drag
         this.setDeltaMovement(this.getDeltaMovement().scale(0.98));
-
-        // Only despawn if we've been around for a bit AND hit the ground
-        // This lets the blocks complete their arc
         if (this.onGround() && this.tickCount > 20) {
             this.discard();
         }
-
-        // Safety despawn if exceeded max lifetime
         if (this.tickCount > lifetime) {
             this.discard();
         }
@@ -110,7 +97,7 @@ public class VisualFallingBlockEntity extends Entity {
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
     }
 }

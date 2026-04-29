@@ -28,10 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Individual flame projectile for Ignivorus flamethrower effect.
- * Spawned continuously during fire breath to create a stream of flames.
- */
 public class IgnivorusFlameEntity extends Entity {
 
     private static final EntityDataAccessor<Float> DATA_SCALE =
@@ -46,14 +42,14 @@ public class IgnivorusFlameEntity extends Entity {
     private int age;
     private int maxAge;
     private Vec3 spawnPos;
-    private boolean hasHitEntity = false; // Track if this flame already hit something
-    private boolean hasHitBlock = false; // Track if this flame has impacted the ground
+    private boolean hasHitEntity = false;
+    private boolean hasHitBlock = false;
     private double igniteBlockChance = 1.0D;
 
     public IgnivorusFlameEntity(EntityType<? extends IgnivorusFlameEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
-        this.maxAge = 20; // Default 1 second lifetime
+        this.maxAge = 20;
     }
 
     public IgnivorusFlameEntity(Level level, Vec3 position, Vec3 velocity, Entity owner, float damage, float scale, int lifetime) {
@@ -105,8 +101,6 @@ public class IgnivorusFlameEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
-
-        // Increment age on BOTH client and server for animation
         this.age++;
 
         if (!this.level().isClientSide) {
@@ -114,21 +108,17 @@ public class IgnivorusFlameEntity extends Entity {
                 spawnPos = position();
             }
 
-            // Remove when lifetime expires
             if (this.age >= this.maxAge) {
                 this.discard();
                 return;
             }
-
-            // Entity scans are the hottest path; running every 2 ticks reduces load significantly.
             if (!hasHitEntity
                     && (this.age % ENTITY_COLLISION_CHECK_INTERVAL == 0)
                     && checkEntityCollision()) {
-                this.discard(); // Disappear after hitting an entity (like a bullet)
+                this.discard();
                 return;
             }
 
-            // Then check for block hits
             if (!hasHitBlock) {
                 Vec3 start = position();
                 Vec3 end = start.add(getDeltaMovement());
@@ -149,74 +139,47 @@ public class IgnivorusFlameEntity extends Entity {
                 }
             }
         }
-
-        // Move forward
         Vec3 motion = getDeltaMovement();
         setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
-
-        // Minimal slowdown to maintain speed
         setDeltaMovement(motion.scale(0.995));
     }
 
-    /**
-     * Bullet-style collision detection - checks for entity hits along movement path.
-     * Returns true if an entity was hit (flame should be destroyed).
-     */
     private boolean checkEntityCollision() {
-        // Raycast along the movement path to detect hits at close range
         Vec3 start = position();
         Vec3 motion = getDeltaMovement();
         Vec3 end = start.add(motion);
 
-        float radius = 1.5F * getScale(); // Wider detection for reliable hits
+        float radius = 1.5F * getScale();
         AABB searchBox = new AABB(start, end).inflate(radius);
         List<LivingEntity> potentialTargets = level().getEntitiesOfClass(LivingEntity.class, searchBox);
-
         LivingEntity owner = getOwner();
         LivingEntity closestTarget = null;
         double closestDistance = Double.MAX_VALUE;
-
-        // Find the closest valid target along the ray
         for (LivingEntity target : potentialTargets) {
-            // Skip owner and owner's passengers
             if (ownerUUID != null && target.getUUID().equals(ownerUUID)) continue;
             if (owner != null && owner.getPassengers().contains(target)) continue;
-
-            // Don't damage baby Ignivorus dragons (protect the young!)
             if (target instanceof Ignivorus baby && baby.isBaby()) continue;
-
-            // Don't damage allies or tamed pets
             if (owner instanceof Ignivorus ignivorus && ignivorus.isAlly(target)) continue;
-
-            // Check if target is within hit radius
             double distance = target.distanceToSqr(this);
             if (distance <= radius * radius && distance < closestDistance) {
                 closestTarget = target;
                 closestDistance = distance;
             }
         }
-
-        // If we found a target, deal damage and return true
         if (closestTarget != null) {
             hasHitEntity = true;
 
-            // Always use mobAttack damage source - this bypasses Fire Resistance
             DamageSource damageSource = owner != null
                     ? level().damageSources().mobAttack(owner)
                     : level().damageSources().generic();
-
-            // Deal impact damage (works through Fire Resistance)
             closestTarget.hurt(damageSource, damage);
-
-            // Only set on fire if target doesn't have Fire Resistance
             if (!closestTarget.fireImmune()) {
                 closestTarget.setSecondsOnFire(3);
             }
 
-            return true; // Signal that we hit something
+            return true;
         }
-
-        return false; // No hit
+        return false;
     }
 
     private LivingEntity getOwner() {

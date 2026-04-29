@@ -9,6 +9,7 @@ import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -140,7 +141,7 @@ public class VolitansWaterBreathEntity extends Entity {
     }
 
     private LivingEntity getOwner() {
-        if (owner == null && ownerUUID != null && level() instanceof net.minecraft.server.level.ServerLevel server) {
+        if (owner == null && ownerUUID != null && level() instanceof ServerLevel server) {
             Entity entity = server.getEntity(ownerUUID);
             if (entity instanceof LivingEntity living) {
                 owner = living;

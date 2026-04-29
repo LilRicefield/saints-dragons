@@ -87,8 +87,4 @@ public final class DragonBarrelRollHelper {
         currentSmoothedRoll += (currentRoll - currentSmoothedRoll) * config.smoothingFactor();
         return new Output(currentRoll, currentPrevSmoothedRoll, currentSmoothedRoll);
     }
-
-    public static float getNearestUprightRoll(float rollRadians) {
-        return Math.round(rollRadians / Mth.TWO_PI) * Mth.TWO_PI;
-    }
 }

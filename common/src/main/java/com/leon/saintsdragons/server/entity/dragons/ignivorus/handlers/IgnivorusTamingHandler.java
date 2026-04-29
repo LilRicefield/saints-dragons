@@ -3,9 +3,6 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 import com.leon.saintsdragons.server.entity.component.DragonTamingStunComponent;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 
-/**
- * Ignivorus-specific wiring for shared taming-stun component.
- */
 public class IgnivorusTamingHandler extends DragonTamingStunComponent<Ignivorus> {
 
     public IgnivorusTamingHandler(Ignivorus dragon) {

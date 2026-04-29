@@ -7,6 +7,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
@@ -164,8 +166,10 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     /**
      * Teleport dragon to owner when too far away
      */
-    private void handleTeleportToOwner(LivingEntity owner) {
-        dragon.teleportTo(owner.getX(), owner.getY() + 3, owner.getZ());
+    protected void handleTeleportToOwner(LivingEntity owner) {
+        if (!attemptOwnerTeleport(dragon, owner)) {
+            dragon.teleportTo(owner.getX(), owner.getY() + 3, owner.getZ());
+        }
         if (dragon.canTakeoff()) {
             dragon.beginAiFlight();
         } else {
@@ -175,6 +179,32 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             dragon.setHovering(false);
         }
         resetPathTracking();
+    }
+
+    public static boolean attemptOwnerTeleport(RideableDragonBase dragon, LivingEntity owner) {
+        if (dragon == null || owner == null || dragon.level() != owner.level()) {
+            return false;
+        }
+        BlockPos ownerPos = owner.blockPosition();
+        for (int i = 0; i < 8; i++) {
+            int dx = dragon.getRandom().nextInt(7) - 3;
+            int dz = dragon.getRandom().nextInt(7) - 3;
+            BlockPos candidate = ownerPos.offset(dx, 0, dz);
+            if (isTeleportFriendlyBlock(dragon.level(), candidate)) {
+                dragon.teleportTo(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
+                dragon.getNavigation().stop();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isTeleportFriendlyBlock(Level level, BlockPos pos) {
+        BlockPos below = pos.below();
+        BlockState floor = level.getBlockState(below);
+        BlockState body = level.getBlockState(pos);
+        BlockState above = level.getBlockState(pos.above());
+        return floor.isSolidRender(level, below) && body.isAir() && above.isAir();
     }
 
     /**

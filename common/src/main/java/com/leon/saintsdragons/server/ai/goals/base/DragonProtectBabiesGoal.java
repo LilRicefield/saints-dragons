@@ -10,14 +10,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Makes adult dragons protect nearby babies of the same species.
- * - Prevents flight when babies are nearby (adults stay grounded)
- * - Attacks entities that hurt babies
- * - Does NOT follow babies around (babies follow adults instead)
- *
- * @param <T> The dragon type (e.g., Raevyx, Ignivorus, etc.)
- */
+
 public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal {
     private final T dragon;
     private final Class<T> dragonClass;

@@ -12,23 +12,15 @@ import net.minecraft.nbt.Tag;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Single responsibility: Track active ability and global cooldowns
- */
 public class DragonCombatHandler {
     private final DragonEntity dragon;
     
     private DragonAbility<?> activeAbility;
     private DragonAbility<?> overlayAbility;
-    private int globalCooldown = 0; // Global cooldown between any abilities
-    private boolean processingAbility = false; // Prevent re-entry during ability start
-    
-    // Per-ability cooldown tracking
+    private int globalCooldown = 0;
+    private boolean processingAbility = false;
     private final Map<DragonAbilityType<?, ?>, Integer> abilityCooldowns = new HashMap<>();
     private final Map<DragonAbilityType<?, ?>, Boolean> overlayAbilityCache = new HashMap<>();
-
-    // ===== PERSISTENCE =====
-    // Persist global + per-ability cooldowns across save/load
     public void saveToNBT(CompoundTag tag) {
         tag.putInt("GlobalAbilityCooldown", Math.max(0, globalCooldown));
         CompoundTag cd = new CompoundTag();
@@ -65,7 +57,6 @@ public class DragonCombatHandler {
     public DragonAbility<?> getActiveAbility() {
         return activeAbility;
     }
-    
     public void setActiveAbility(DragonAbility<?> ability) {
         this.activeAbility = ability;
         dragon.setActiveAbility(ability);
@@ -75,13 +66,6 @@ public class DragonCombatHandler {
         return activeAbility != null ? activeAbility.getAbilityType() : null;
     }
 
-    public boolean canUseAbility() {
-        return globalCooldown == 0
-                && (activeAbility == null || !activeAbility.isUsing())
-                && !processingAbility
-                && !dragon.areRiderControlsLocked();
-    }
-
     public void lockGlobalCooldown(int ticks) {
         if (ticks <= 0) {
             return;
@@ -89,13 +73,6 @@ public class DragonCombatHandler {
         globalCooldown = Math.max(globalCooldown, ticks);
     }
 
-    public boolean isGlobalCooldownActive() {
-        return globalCooldown > 0;
-    }
-    
-    /**
-     * Check if a specific ability type can be started (includes per-ability cooldown)
-     */
     public boolean canStart(DragonAbilityType<?, ?> abilityType) {
         if (processingAbility) {
             return false;
@@ -116,31 +93,15 @@ public class DragonCombatHandler {
         return globalCooldown == 0
             && (activeAbility == null || !activeAbility.isUsing());
     }
-    
-    /**
-     * Check if a specific ability's cooldown is ready
-     */
+
     public boolean isAbilityCooldownReady(DragonAbilityType<?, ?> abilityType) {
         return abilityCooldowns.getOrDefault(abilityType, 0) <= 0;
     }
-    
-    /**
-     * Set cooldown for a specific ability type
-     */
+
     public void setAbilityCooldown(DragonAbilityType<?, ?> abilityType, int cooldownTicks) {
         abilityCooldowns.put(abilityType, cooldownTicks);
     }
-    
-    /**
-     * Get remaining cooldown ticks for a specific ability type
-     */
-    public int getCooldownTicks(DragonAbilityType<?, ?> abilityType) {
-        return abilityCooldowns.getOrDefault(abilityType, 0);
-    }
 
-    /**
-     * Clear cooldown tracking for a specific ability type.
-     */
     public void clearAbilityCooldown(DragonAbilityType<?, ?> abilityType) {
         if (abilityType == null) {
             return;
@@ -166,7 +127,7 @@ public class DragonCombatHandler {
 
         boolean overlay = isOverlayAbilityType(abilityType);
 
-        processingAbility = true; // Guard against re-entry
+        processingAbility = true;
         try {
             @SuppressWarnings("unchecked")
             var ability = ((DragonAbilityType<DragonEntity, ?>) abilityType).makeInstance(dragon);
@@ -276,21 +237,11 @@ public class DragonCombatHandler {
         return overlayAbility != null && overlayAbility.getAbilityType() == abilityType && overlayAbility.isUsing();
     }
 
-    /**
-     * Check if there's an active overlay ability
-     */
     public boolean hasActiveOverlay() {
         return overlayAbility != null && overlayAbility.isUsing();
     }
-    
-    /**
-     * Clears all combat states - used when mounting or transitioning states
-     */
     public void clearAllStates() {
-        // End any active ability
         forceEndActiveAbility();
-        
-        // Clear all cooldowns
         globalCooldown = 0;
         abilityCooldowns.clear();
         processingAbility = false;
@@ -317,8 +268,6 @@ public class DragonCombatHandler {
         }
     }
 
-    // Removed unused target validation stub
-
     public void tick() {
         if (dragon.level().isClientSide) {
             return;
@@ -326,12 +275,11 @@ public class DragonCombatHandler {
         if (globalCooldown > 0) {
             globalCooldown--;
         }
-        
-        // Tick down per-ability cooldowns
+
         abilityCooldowns.entrySet().removeIf(entry -> {
             int newValue = entry.getValue() - 1;
             if (newValue <= 0) {
-                return true; // Remove from map when cooldown reaches 0
+                return true;
             } else {
                 entry.setValue(newValue);
                 return false;

@@ -150,7 +150,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
         }
 
         Vec3 direction = getAimDirection(dragon);
-        Vec3 spawnPos = dragon.getMouthPosition().add(direction.scale(1.2D));
+        Vec3 spawnPos = dragon.getGroundEatingProjectileOrigin().add(direction.scale(1.2D));
         BlockState blockState = resolveGroundBlockState(dragon);
 
         StegonautGroundChunkEntity projectile = new StegonautGroundChunkEntity(
@@ -174,7 +174,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
             Vec3 targetPos = dragon.getTarget().getEyePosition();
             Vec3 lead = dragon.getTarget().getDeltaMovement().scale(TARGET_LEAD_FACTOR);
             Vec3 aimPoint = targetPos.add(lead);
-            Vec3 dir = aimPoint.subtract(dragon.getMouthPosition());
+            Vec3 dir = aimPoint.subtract(dragon.getGroundEatingProjectileOrigin());
             if (dir.lengthSqr() > 1.0E-6) {
                 return dir.normalize();
             }

@@ -13,6 +13,7 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.sounds.SoundEvents;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -105,7 +106,7 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public boolean stillValid(Player player) {
+    public boolean stillValid(@NotNull Player player) {
         if (this.stegonaut == null) {
             return true;
         }
@@ -113,7 +114,7 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public ItemStack quickMoveStack(Player player, int index) {
+    public @NotNull ItemStack quickMoveStack(@NotNull Player player, int index) {
         ItemStack original = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
         if (slot != null && slot.hasItem()) {
@@ -159,7 +160,7 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
     }
 
     @Override
-    public void removed(Player player) {
+    public void removed(@NotNull Player player) {
         super.removed(player);
         this.cargoInventory.stopOpen(player);
     }
@@ -183,7 +184,7 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
         }
 
         @Override
-        public boolean mayPlace(ItemStack stack) {
+        public boolean mayPlace(@NotNull ItemStack stack) {
             return hasChestInstalled();
         }
     }
@@ -194,12 +195,12 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
         }
 
         @Override
-        public boolean mayPlace(ItemStack stack) {
+        public boolean mayPlace(@NotNull ItemStack stack) {
             return !hasChestInstalled() && stack.is(Items.CHEST);
         }
 
         @Override
-        public boolean mayPickup(Player player) {
+        public boolean mayPickup(@NotNull Player player) {
             return hasChestInstalled();
         }
 
@@ -219,7 +220,7 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
         }
 
         @Override
-        public void onTake(Player player, ItemStack stack) {
+        public void onTake(@NotNull Player player, @NotNull ItemStack stack) {
             super.onTake(player, stack);
             if (stegonaut != null && stegonaut.hasStegonautChest()) {
                 stegonaut.removeStegonautChestAndDropContents();

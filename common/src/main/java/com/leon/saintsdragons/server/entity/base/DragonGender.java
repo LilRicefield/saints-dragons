@@ -1,9 +1,5 @@
 package com.leon.saintsdragons.server.entity.base;
 
-/**
- * Simple gender enum for dragons.
- * Uses a byte id so we can extend beyond two options later if needed.
- */
 public enum DragonGender {
     MALE((byte) 0),
     FEMALE((byte) 1);

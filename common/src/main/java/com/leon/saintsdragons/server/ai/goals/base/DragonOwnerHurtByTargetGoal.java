@@ -4,10 +4,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtByTargetGoal;
 
-/**
- * Custom OwnerHurtByTargetGoal that respects the wyvern's ally system.
- * Prevents targeting allies even when they hurt the owner.
- */
 public class DragonOwnerHurtByTargetGoal extends OwnerHurtByTargetGoal {
     private final DragonEntity dragon;
     

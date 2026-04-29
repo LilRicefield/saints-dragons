@@ -5,10 +5,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Shared rider-flight helpers for rideable dragons.
- * Keeps breach takeoff and in-water flight-state preservation logic in one place.
- */
 public final class DragonRiderFlight {
 
     public interface Host {
@@ -46,11 +42,9 @@ public final class DragonRiderFlight {
             return false;
         }
         default void onManualTakeoffStart() {
-            // Optional dragon-specific reset hook.
         }
 
         default void setRiderTakeoffTicks(int ticks) {
-            // Optional for hosts that do not track a rider takeoff timer.
         }
     }
 

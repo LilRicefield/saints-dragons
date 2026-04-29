@@ -76,13 +76,6 @@ public class StegonautAnimationHandler {
         // Set default transition length for smooth blending
         state.getController().transitionLength(8); // Smooth but not too slow
 
-        // CLIENT-SIDE GRACE PERIOD: Prevent T-pose on world rejoin with shaders
-        // Wait for entity data to sync from server before processing animations
-        if (drake.level().isClientSide && !drake.isClientAnimationReady()) {
-            state.setAndContinue(IDLE_ANIM);
-            return PlayState.CONTINUE;
-        }
-
         // Swimming has higher priority than ground loops
         if (drake.isInWaterOrBubble()) {
             state.getController().transitionLength(6);

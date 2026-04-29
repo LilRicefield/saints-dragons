@@ -32,7 +32,6 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
     private static final float PASSENGER_Z = 0.0f;
     private static final String PASSENGER_BONE = "passengerBone";
     private static final String BREATH_BONE = "breathBone";
-    private static final String MOUTH_LOCATOR_BONE = "mouth_origin";
     private static final int SYNC_INTERVAL_TICKS = 2;
     private final java.util.Map<Integer, Integer> lastBreathSnapshotHashes = new java.util.HashMap<>();
 
@@ -68,7 +67,6 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         if (model != null) {
             model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));
             model.getBone(BREATH_BONE).ifPresent(b -> b.setTrackingMatrices(true));
-            model.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         }
 
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
@@ -105,13 +103,6 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
             if (world != null) {
                 entity.setClientLocatorPosition("breathBoneOrigin", world);
-            }
-        });
-
-        this.lastBakedModel.getBone(MOUTH_LOCATOR_BONE).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
-            if (world != null) {
-                entity.setClientLocatorPosition("mouth_origin", world);
             }
         });
 
@@ -184,14 +175,10 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
             return;
         }
 
-        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(2);
+        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(1);
         net.minecraft.world.phys.Vec3 breath = entity.getClientLocatorPosition("breathBoneOrigin");
         if (breath != null) {
             positions.put("breathBoneOrigin", breath);
-        }
-        net.minecraft.world.phys.Vec3 mouth = entity.getClientLocatorPosition("mouth_origin");
-        if (mouth != null) {
-            positions.put("mouth_origin", mouth);
         }
 
         if (positions.isEmpty()) {
@@ -209,7 +196,7 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
 
     private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
         int hash = 1;
-        for (String boneName : new String[] {"breathBoneOrigin", "mouth_origin"}) {
+        for (String boneName : new String[] {"breathBoneOrigin"}) {
             net.minecraft.world.phys.Vec3 pos = positions.get(boneName);
             if (pos == null) {
                 continue;

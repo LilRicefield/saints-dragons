@@ -27,7 +27,6 @@ public record MessageDragonBonePositions(
             "hip",
             "fireBoneOrigin",
             "breathBoneOrigin",
-            "mouth_origin",
             "automountBoneRight",
             "leftwing",
             "rightwing",

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.stegonaut;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -13,18 +14,13 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityDimensions;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -101,10 +97,10 @@ public class StegonautGroundChunkEntity extends Entity {
         Vec3 motion = this.getDeltaMovement();
         Vec3 nextPos = currentPos.add(motion);
 
-        net.minecraft.world.phys.BlockHitResult blockHit = level().clip(new net.minecraft.world.level.ClipContext(
+        BlockHitResult blockHit = level().clip(new ClipContext(
                 currentPos, nextPos,
-                net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
                 this
         ));
         boolean hitBlock = blockHit.getType() == HitResult.Type.BLOCK;
@@ -141,7 +137,7 @@ public class StegonautGroundChunkEntity extends Entity {
         }
         AABB bounds = getBoundingBox().expandTowards(end.subtract(start)).inflate(0.8D);
         return ProjectileUtil.getEntityHitResult(level(), this, start, end, bounds, target -> {
-            if (!(target instanceof net.minecraft.world.entity.LivingEntity living) || !living.isAlive()) {
+            if (!(target instanceof LivingEntity living) || !living.isAlive()) {
                 return false;
             }
             if (owner != null && (target == owner || owner.isAlly(target))) {
@@ -159,7 +155,7 @@ public class StegonautGroundChunkEntity extends Entity {
 
         Vec3 impact = position();
         float scale = getVisualScale();
-        server.sendParticles(net.minecraft.core.particles.ParticleTypes.POOF,
+        server.sendParticles(ParticleTypes.POOF,
                 impact.x, impact.y + 0.3D, impact.z,
                 Math.min(80, Math.max(10, (int) (24 * scale))),
                 0.45D * scale, 0.35D * scale, 0.45D * scale, 0.05D);
@@ -168,9 +164,9 @@ public class StegonautGroundChunkEntity extends Entity {
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
-        List<net.minecraft.world.entity.LivingEntity> hits = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, area,
+        List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area,
                 target -> target.isAlive() && target != owner && (owner == null || !owner.isAlly(target)));
-        for (net.minecraft.world.entity.LivingEntity target : hits) {
+        for (LivingEntity target : hits) {
             if (owner != null) {
                 target.hurt(server.damageSources().mobAttack(owner), impactDamage);
             } else {
@@ -208,12 +204,12 @@ public class StegonautGroundChunkEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
         this.setDeltaMovement(packet.getXa(), packet.getYa(), packet.getZa());
     }
@@ -234,7 +230,7 @@ public class StegonautGroundChunkEntity extends Entity {
     }
 
     @Override
-    public EntityDimensions getDimensions(@NotNull Pose pose) {
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
         float scale = getVisualScale();
         return EntityDimensions.fixed(0.98F * scale, 0.98F * scale);
     }

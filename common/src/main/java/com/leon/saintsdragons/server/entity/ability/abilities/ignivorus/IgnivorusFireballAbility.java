@@ -183,7 +183,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         }
 
         Vec3 direction = getAimDirection(dragon);
-        Vec3 spawnPos = getMouthPosition(dragon);
+        Vec3 spawnPos = getFireballOrigin(dragon);
 
         float multiplier = getChargeMultiplier(chargeAtRelease);
         float damage = resolveImpactDamage() * multiplier;
@@ -209,9 +209,9 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         getUser().setFireballChargeLevel(0);
     }
 
-    private Vec3 getMouthPosition(Ignivorus dragon) {
-        Vec3 mouth = dragon.getFireBreathStartAnchor(1.0f);
-        return mouth != null ? mouth : dragon.getEyePosition();
+    private Vec3 getFireballOrigin(Ignivorus dragon) {
+        Vec3 origin = dragon.getFireBreathStartAnchor(1.0f);
+        return origin != null ? origin : dragon.getEyePosition();
     }
 
     private Vec3 getAimDirection(Ignivorus dragon) {
@@ -228,7 +228,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             Vec3 targetPos = target.getEyePosition();
             Vec3 lead = target.getDeltaMovement().scale(0.6);
             Vec3 aimPoint = targetPos.add(lead);
-            Vec3 dir = aimPoint.subtract(getMouthPosition(dragon));
+            Vec3 dir = aimPoint.subtract(getFireballOrigin(dragon));
             if (dir.lengthSqr() > 1.0E-6) {
                 return dir.normalize();
             }

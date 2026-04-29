@@ -44,7 +44,7 @@ public class VolitansBreathLoopSound extends AbstractTickableSoundInstance {
     }
 
     private void updatePosition() {
-        Vec3 start = dragon.getMouthPosition();
+        Vec3 start = dragon.getBreathOrigin();
         if (start == null) {
             start = dragon.position().add(0.0D, dragon.getBbHeight() * 0.72D, 0.9D);
         }

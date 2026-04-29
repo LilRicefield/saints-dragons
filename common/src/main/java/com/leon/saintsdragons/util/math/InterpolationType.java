@@ -1,8 +1,5 @@
 package com.leon.saintsdragons.util.math;
 
-/**
- * Interpolation types for smooth value transitions.
- */
 public enum InterpolationType {
     LINEAR((a, b, t) -> (1.0 - t) * a + t * b),
     CATMULLROM((a, b, t) -> 0.5 * (2.0 * a + (b - a) * t + (2.0 * a - 5.0 * a + 4.0 * b - b) * t * t + (3.0 * a - a - 3.0 * b + b) * t * t * t));
@@ -17,9 +14,7 @@ public enum InterpolationType {
         return this.function.interpolate(a, b, t);
     }
 
-    /**
-     * Interpolate rotation angles, handling wrapping around 360 degrees.
-     */
+
     public double interpolateRot(double a, double b, double t) {
         double f2 = b % 360.0;
         double f1 = a % 360.0;

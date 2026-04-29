@@ -64,10 +64,6 @@ import javax.annotation.Nullable;
 public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity {
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
-
-    private static final int TRADE_START_TICKS = 29;
-    private static final int TRADE_STOP_TICKS = 29;
-
     private static final VillagerTrades.ItemListing[] TRADES = new VillagerTrades.ItemListing[]{
             (trader, random) -> createIgnivorusEggTrade(random),
             (trader, random) -> createRaevyxEggTrade(random),
@@ -75,11 +71,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             (trader, random) -> createCindervaneEggTrade(random),
             (trader, random) -> createStegonautEggTrade(random)
     };
+    private static final int TRADE_START_TICKS = 29;
+    private static final int TRADE_STOP_TICKS = 29;
     private static final int HEARTY_MEAL_EGG_COUNT = 4;
     private static final int HEARTY_MEAL_SALMON_COUNT = 4;
     private static final int HEARTY_MEAL_OUTPUT_COUNT = 6;
     private static final int HEARTY_MEAL_MAX_USES = 9999;
-
     private static final int IDLE_VARIANT_DURATION = 66;
     private static final int IDLE_VARIANT_MIN_COOLDOWN = 200;
     private static final int IDLE_VARIANT_MAX_COOLDOWN = 600;
@@ -95,7 +92,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final String GREETED_PLAYERS_TAG = "GreetedPlayers";
     private static final String UNLOCKED_TRADERS_TAG = "UnlockedTraders";
     private static final String UNLOCKED_TRADER_UUID_TAG = "UUID";
-
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private TradeAnimState tradeAnimState = TradeAnimState.NONE;
     private int tradeAnimTicks = 0;
@@ -103,7 +99,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private boolean wasMovementStopped = false;
     private BodyControl bodyControl;
     public final SmoothValue bodyRotDeviation = SmoothValue.rotation(0.0);
-
     private boolean playingIdleVariant = false;
     private int idleVariantTicks = 0;
     private int idleVariantCooldown = 0;
@@ -116,9 +111,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private boolean openTradeAfterReaction;
     private final Set<UUID> greetedPlayerUuids = new HashSet<>();
     private final Set<UUID> unlockedTraderUuids = new HashSet<>();
-
     private final HumanSoundHandler soundHandler;
-
     private final int restockInterval;
     private int restockTimer;
 

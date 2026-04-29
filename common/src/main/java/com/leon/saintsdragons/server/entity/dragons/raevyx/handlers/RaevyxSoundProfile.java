@@ -92,5 +92,4 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         float volume = Math.max(0.6f, 0.9f + (float) (flightSpeed * 0.2f));
         handler.playClientSound(dragon, dragon.position(), ModSounds.RAEVYX_FLAP.get(), volume, pitch);
     }
-
 }

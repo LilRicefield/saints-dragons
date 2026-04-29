@@ -27,11 +27,6 @@ import net.minecraft.world.phys.Vec3;
 public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
     private BakedGeoModel lastBakedModel;
     
-    // Mouth locator offset from head bone (adjust these values based on your model)
-    private static final float MOUTH_X = 0.0f;
-    private static final float MOUTH_Y = -0.2f; // Slightly below head center
-    private static final float MOUTH_Z = 0.8f;  // Forward from head center
-
     private static final String PASSENGER_BONE = "passengerBone";
     private static final float PASSENGER_X = 0.0f;
     private static final float PASSENGER_Y = -3.0f;
@@ -89,7 +84,6 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
             RenderPassContext.endExtraction();
         }
         
-        // After bones have been processed, sample accurate world positions for mouth locator
         sampleAndStashLocatorsAccurate(entity);
     }
 
@@ -134,7 +128,6 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
             return;
         }
         model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));
-        model.getBone("head").ifPresent(b -> b.setTrackingMatrices(true));
     }
     
     private void sampleAndStashLocatorsAccurate(Stegonaut entity) {
@@ -143,12 +136,6 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
         this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
             net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
-        });
-        
-        // Sample mouth origin from head bone
-        this.lastBakedModel.getBone("head").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_X, MOUTH_Y, MOUTH_Z);
-            if (world != null) entity.setClientLocatorPosition("mouth_origin", world);
         });
     }
     

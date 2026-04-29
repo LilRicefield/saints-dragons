@@ -13,10 +13,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Shares retaliation target information across nearby pack members.
- * Alpha and followers can mirror valid threats from one another.
- */
 public class DragonPackDefendPackGoal<T extends DragonEntity & PackMember<T>> extends Goal {
     private final T member;
     private final Class<T> memberClass;

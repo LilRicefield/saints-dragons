@@ -61,7 +61,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
             // Get mouth position from bone, but we need to interpolate the entity position
             net.minecraft.world.phys.Vec3 bonePos = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
-            net.minecraft.world.phys.Vec3 computedPos = animatable.computeHeadMouthOrigin(partialTick);
+            net.minecraft.world.phys.Vec3 computedPos = animatable.computeBeamStartFallback(partialTick);
 
             // Always prefer bone position when available - it's the visual source of truth
             mouthWorld = bonePos != null ? bonePos : computedPos;

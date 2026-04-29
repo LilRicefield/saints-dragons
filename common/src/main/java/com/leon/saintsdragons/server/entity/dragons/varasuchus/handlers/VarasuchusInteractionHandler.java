@@ -14,11 +14,11 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
-/**
- * Handles all player interactions with Rift Drakes.
- */
+
 public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandler<Varasuchus> {
 
     public VarasuchusInteractionHandler(Varasuchus dragon) {
@@ -27,7 +27,6 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     @Override
     protected InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
-        // Check if legacy taming is enabled
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
         boolean legacyTaming = config.extraBoolean("legacy_taming", false);
@@ -43,15 +42,12 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
         if (isVarasuchusFood(heldItem)) {
             if (legacyTaming) {
-                // Legacy taming: simple food-based taming with RNG
                 return handleLegacyTaming(player, heldItem);
             } else if (dragon.getHealth() < dragon.getMaxHealth()) {
-                // Normal mode: only allow feeding for healing, not taming
                 return handleFeeding(player, heldItem, true);
             }
         }
 
-        // Rodeo taming (only in non-legacy mode)
         if (!legacyTaming && hand == InteractionHand.MAIN_HAND && heldItem.isEmpty() && !player.isCrouching()) {
             boolean started = dragon.beginUntamedRide(player);
             return started ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
@@ -80,8 +76,8 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             playEatSound();
             dragon.setFeedingCooldown(40);
 
-            boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            boolean tropicalFish = food.is(net.minecraft.world.item.Items.TROPICAL_FISH);
+            boolean heartyMeal = food.is(ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean tropicalFish = food.is(Items.TROPICAL_FISH);
             float healAmount = heartyMeal ? 35.0F : 5.0F;
             float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
             dragon.setHealth(newHealth);
@@ -192,7 +188,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             playEatSound();
             dragon.setFeedingCooldown(50);
 
-            boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean heartyMeal = food.is(ModItems.HEARTY_DRAGON_MEAL.get());
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
                 if (baby != null) {
@@ -240,8 +236,8 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBabyTaming(Player player, ItemStack food, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
-        boolean heartyMeal = food.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        boolean tropicalFish = food.is(net.minecraft.world.item.Items.TROPICAL_FISH);
+        boolean heartyMeal = food.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        boolean tropicalFish = food.is(Items.TROPICAL_FISH);
         boolean validFood = isVarasuchusFood(food);
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
@@ -336,9 +332,8 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private void applyCommandState(int command) {
         switch (command) {
-            case 0 -> dragon.setOrderedToSit(false); // Follow
-            case 1 -> dragon.setOrderedToSit(true);  // Sit
-            case 2 -> dragon.setOrderedToSit(false); // Wander
+            case 0, 2 -> dragon.setOrderedToSit(false);
+            case 1 -> dragon.setOrderedToSit(true);
             default -> {
             }
         }
@@ -346,15 +341,15 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private boolean isVarasuchusFood(ItemStack itemstack) {
         return dragon.isFood(itemstack)
-                || itemstack.is(net.minecraft.world.item.Items.SALMON)
-                || itemstack.is(net.minecraft.world.item.Items.COD)
-                || itemstack.is(net.minecraft.world.item.Items.TROPICAL_FISH)
+                || itemstack.is(Items.SALMON)
+                || itemstack.is(Items.COD)
+                || itemstack.is(Items.TROPICAL_FISH)
                 || itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
 
     @Override
-    protected net.minecraft.world.item.Item getBinderItem() {
+    protected Item getBinderItem() {
         return ModItems.VARASUCHUS_BINDER.get();
     }
 }

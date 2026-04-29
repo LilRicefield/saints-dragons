@@ -224,9 +224,8 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
 
     private void applyCommandState(int command) {
         switch (command) {
-            case 0 -> dragon.setOrderedToSit(false);
+            case 0, 2 -> dragon.setOrderedToSit(false);
             case 1 -> dragon.setOrderedToSit(true);
-            case 2 -> dragon.setOrderedToSit(false);
             default -> {
             }
         }

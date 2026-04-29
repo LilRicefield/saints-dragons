@@ -58,8 +58,6 @@ public final class VolitansUnderwaterSpawner {
             return;
         }
 
-        // This custom spawner bypasses vanilla biome spawn weighting, so keep the
-        // config value conservative: weight 1 means a 1% roll per interval.
         int effectiveChance = Mth.clamp(weight, 0, 100);
         if (level.random.nextInt(100) >= effectiveChance) {
             return;

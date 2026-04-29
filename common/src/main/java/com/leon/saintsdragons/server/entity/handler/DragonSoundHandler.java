@@ -73,11 +73,10 @@ public class DragonSoundHandler {
             return;
         }
 
-        // Trigger the animation if this vocal has one
         if (entry.animationId() != null && !entry.animationId().isEmpty()) {
             String controllerId = entry.controllerId() != null && !entry.controllerId().isEmpty() 
                 ? entry.controllerId() 
-                : "action"; // Default to "action" controller if not specified
+                : "action";
             dragon.triggerAnim(controllerId, vocalKey);
         }
 
@@ -101,9 +100,6 @@ public class DragonSoundHandler {
         );
     }
 
-    public void playSoundSpec(DragonSoundSpec spec) {
-        DragonSoundOrchestrator.play(dragon, spec);
-    }
 
     public void playClientSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
         double x = position != null ? position.x : dragon.getX();

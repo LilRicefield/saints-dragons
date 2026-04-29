@@ -27,6 +27,7 @@ import net.minecraft.world.level.levelgen.structure.TemplateStructurePiece;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
@@ -62,18 +63,18 @@ public class IvyHousePiece extends TemplateStructurePiece {
     }
 
     @Override
-    protected void addAdditionalSaveData(net.minecraft.world.level.levelgen.structure.pieces.StructurePieceSerializationContext structurePieceSerializationContext, CompoundTag compoundTag) {
+    protected void addAdditionalSaveData(net.minecraft.world.level.levelgen.structure.pieces.@NotNull StructurePieceSerializationContext structurePieceSerializationContext, @NotNull CompoundTag compoundTag) {
         super.addAdditionalSaveData(structurePieceSerializationContext, compoundTag);
         compoundTag.putString(ROTATION_TAG, this.placeSettings.getRotation().name());
         compoundTag.putBoolean(IVY_TAG, this.spawnedIvy);
     }
 
     @Override
-    protected void handleDataMarker(String metadata, BlockPos blockPos, ServerLevelAccessor serverLevelAccessor, RandomSource randomSource, BoundingBox boundingBox) {
+    protected void handleDataMarker(@NotNull String metadata, @NotNull BlockPos blockPos, @NotNull ServerLevelAccessor serverLevelAccessor, @NotNull RandomSource randomSource, @NotNull BoundingBox boundingBox) {
     }
 
     @Override
-    public void postProcess(WorldGenLevel worldGenLevel, StructureManager structureManager, ChunkGenerator chunkGenerator, RandomSource randomSource, BoundingBox boundingBox, ChunkPos chunkPos, BlockPos blockPos) {
+    public void postProcess(@NotNull WorldGenLevel worldGenLevel, @NotNull StructureManager structureManager, @NotNull ChunkGenerator chunkGenerator, @NotNull RandomSource randomSource, @NotNull BoundingBox boundingBox, @NotNull ChunkPos chunkPos, @NotNull BlockPos blockPos) {
         if (!SaintsDragonsConfig.isIvyHouseEnabled()) {
             return;
         }

@@ -32,11 +32,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     private static final float AUTO_MOUNT_OFFSET_X = 0.0f;
     private static final float AUTO_MOUNT_OFFSET_Y = 0.0f;
     private static final float AUTO_MOUNT_OFFSET_Z = 0.0f;
-    private static final String MOUTH_LOCATOR_NAME = "mouth_origin";
-    private static final String MOUTH_BONE = "jawController";
-    private static final float MOUTH_OFFSET_X = 0.0f;
-    private static final float MOUTH_OFFSET_Y = 1.5f;
-    private static final float MOUTH_OFFSET_Z = -9.0f;
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0;
 
@@ -94,7 +89,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         model.getBone("passengerBone1").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("passengerBone2").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(AUTO_MOUNT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
-        model.getBone(MOUTH_BONE).ifPresent(b -> b.setTrackingMatrices(true));
     }
     @Override
     public void render(@NotNull Cindervane entity, float entityYaw, float partialTick,
@@ -137,13 +131,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
                 }
             });
 
-            // Sample accurate mouth locator from jaw controller so bite abilities originate at the model mouth
-            this.lastBakedModel.getBone(MOUTH_BONE).ifPresent(b -> {
-                net.minecraft.world.phys.Vec3 world = transformLocator(b, MOUTH_OFFSET_X, MOUTH_OFFSET_Y, MOUTH_OFFSET_Z);
-                if (world != null) {
-                    entity.setClientLocatorPosition(MOUTH_LOCATOR_NAME, world);
-                }
-            });
         }
 
         sendBonePositionsToServer(entity);
@@ -208,14 +195,10 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
             return;
         }
 
-        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(2);
+        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(1);
         net.minecraft.world.phys.Vec3 autoMount = entity.getClientLocatorPosition(AUTO_MOUNT_LOCATOR);
         if (autoMount != null) {
             positions.put(AUTO_MOUNT_LOCATOR, autoMount);
-        }
-        net.minecraft.world.phys.Vec3 mouth = entity.getClientLocatorPosition(MOUTH_LOCATOR_NAME);
-        if (mouth != null) {
-            positions.put(MOUTH_LOCATOR_NAME, mouth);
         }
 
         if (positions.isEmpty()) {
@@ -239,13 +222,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
             hash = 31 * hash + quantize(autoMount.x);
             hash = 31 * hash + quantize(autoMount.y);
             hash = 31 * hash + quantize(autoMount.z);
-        }
-        net.minecraft.world.phys.Vec3 mouth = positions.get(MOUTH_LOCATOR_NAME);
-        if (mouth != null) {
-            hash = 31 * hash + MOUTH_LOCATOR_NAME.hashCode();
-            hash = 31 * hash + quantize(mouth.x);
-            hash = 31 * hash + quantize(mouth.y);
-            hash = 31 * hash + quantize(mouth.z);
         }
         return hash;
     }

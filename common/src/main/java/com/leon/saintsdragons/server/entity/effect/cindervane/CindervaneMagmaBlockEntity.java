@@ -63,12 +63,6 @@ public class CindervaneMagmaBlockEntity extends Entity {
         this.entityData.define(DATA_BLOCK_STATE, Blocks.MAGMA_BLOCK.defaultBlockState());
     }
 
-    public void setFiringProperties(Cindervane owner, double impactRadius, float impactDamage, int lifetimeTicks) {
-        this.owner = owner;
-        this.impactRadius = impactRadius;
-        this.impactDamage = impactDamage;
-        this.lifetimeTicks = lifetimeTicks;
-    }
 
     public void setBlockState(BlockState state) {
         this.entityData.set(DATA_BLOCK_STATE, state);
@@ -80,7 +74,6 @@ public class CindervaneMagmaBlockEntity extends Entity {
 
     @Override
     public void tick() {
-        // Don't call super.tick() - handle movement manually like FallingBlockEntity does
 
         if (this.getBlockState().isAir()) {
             discard();
@@ -88,27 +81,17 @@ public class CindervaneMagmaBlockEntity extends Entity {
         }
 
         livedTicks++;
-
-        // Apply gravity (on both sides for smooth client prediction)
         if (!this.isNoGravity()) {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.04D, 0.0D));
         }
-
-        // Move (on both sides)
         this.move(MoverType.SELF, this.getDeltaMovement());
-
-        // Server-side logic only
         if (!level().isClientSide) {
-            // Apply air resistance
             this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
 
-            // Check lifetime
             if (livedTicks > lifetimeTicks) {
                 explode();
                 return;
             }
-
-            // Check for ground impact
             if (this.onGround()) {
                 Vec3 motion = this.getDeltaMovement();
                 this.setDeltaMovement(motion.x * 0.7D, -motion.y * 0.5D, motion.z * 0.7D);
@@ -116,10 +99,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
                 return;
             }
         } else {
-            // Client-side: apply same air resistance for prediction
             this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
-
-            // Spawn trail particles
             spawnTrailParticles();
         }
     }
@@ -195,12 +175,12 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public Packet<ClientGamePacketListener> getAddEntityPacket() {
+    public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
     }
 
     @Override
-    public void recreateFromPacket(ClientboundAddEntityPacket packet) {
+    public void recreateFromPacket(@NotNull ClientboundAddEntityPacket packet) {
         super.recreateFromPacket(packet);
         // Restore velocity from packet
         this.setDeltaMovement(packet.getXa(), packet.getYa(), packet.getZa());
@@ -213,12 +193,11 @@ public class CindervaneMagmaBlockEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        // Render up to 64 blocks away
         return distance < 4096.0D;
     }
 
     @Override
-    protected boolean canAddPassenger(Entity passenger) {
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
         return false;
     }
 
@@ -251,7 +230,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     @Override
-    public EntityDimensions getDimensions(@NotNull Pose pose) {
+    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
         return EntityDimensions.fixed(0.98F, 0.98F);
     }
 

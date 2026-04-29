@@ -3,9 +3,6 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 import com.leon.saintsdragons.server.entity.component.DragonTamingStunComponent;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
-/**
- * Raevyx-specific wiring for shared taming-stun component.
- */
 public class RaevyxTamingHandler extends DragonTamingStunComponent<Raevyx> {
 
     public RaevyxTamingHandler(Raevyx wyvern) {
@@ -51,4 +48,3 @@ public class RaevyxTamingHandler extends DragonTamingStunComponent<Raevyx> {
         dragon.setBeaming(false);
     }
 }
-

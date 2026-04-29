@@ -7,14 +7,12 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * All-in-one combat goal for Raevyx - handles movement, attack selection, and execution.
- * No state machine, no windup phases - just instant attacks when in range.
- */
+
 public class RaevyxGroundCombatGoal extends Goal {
     private final Raevyx wyvern;
     private final double biteRange = 3.0;
@@ -27,18 +25,29 @@ public class RaevyxGroundCombatGoal extends Goal {
     private double lastTargetX;
     private double lastTargetY;
     private double lastTargetZ;
-
-    // Roar opener mechanic
     private boolean hasUsedRoarOpener = false;
     private int roarOpenerDelay = 0;
-
-    // Beam cooldown mechanic (AI only - 3 minute cooldown)
     private int beamCooldown = 0;
-    private static final int BEAM_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
+    private static final int BEAM_COOLDOWN_TICKS = 3600;
     private int groundRendCooldown = 0;
     private static final int GROUND_REND_COOLDOWN_TICKS = 400;
-    private final RaevyxCombatDirector combatDirector = new RaevyxCombatDirector();
     private int postRoarGroundRendTicks = 0;
+    private static final int MODE_REEVALUATE_TICKS = 6;
+    private static final int DAMAGE_MEMORY_TICKS = 30;
+    private static final double DASH_MIN_RANGE = 8.0D;
+    private static final double DASH_MAX_RANGE = 26.0D;
+    private static final float BUDGET_REGEN_PER_TICK = 0.025f;
+    private static final float DASH_COST = 0.62f;
+    private static final float BEAM_COST = 0.25f;
+    private static final int MOBILITY_LOCK_TICKS = 24;
+    private static final int BEAM_LOCK_TICKS = 30;
+    private Mode combatMode = Mode.PRESSURE;
+    private int modeReevaluateCooldown = 0;
+    private int recentDamageTicks = 0;
+    private long lastDamageGameTime = Long.MIN_VALUE;
+    private int mobilityLockTicks = 0;
+    private int beamLockTicks = 0;
+    private float mobilityBudget = 1.0f;
 
     public RaevyxGroundCombatGoal(Raevyx wyvern) {
         this.wyvern = wyvern;
@@ -88,7 +97,6 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
 
-        // Stop attacking if player switches to creative/spectator
         if (target instanceof net.minecraft.world.entity.player.Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
@@ -123,23 +131,17 @@ public class RaevyxGroundCombatGoal extends Goal {
     @Override
     public void stop() {
         wyvern.getNavigation().stop();
-        // Don't modify running state - let other systems handle it
         wyvern.setAggressive(false);
         pathRecalcCooldown = 0;
-        combatDirector.reset();
-
-        // Reset roar opener for next combat encounter
+        resetCombatPacing();
         hasUsedRoarOpener = false;
         roarOpenerDelay = 0;
     }
 
     @Override
     public void start() {
-        // Don't set running to avoid speed boost - just use chaseSpeed multiplier
         wyvern.setAggressive(true);
-        combatDirector.reset();
-
-        // Initialize roar opener - wait for sleep transitions to finish
+        resetCombatPacing();
         hasUsedRoarOpener = false;
         roarOpenerDelay = wyvern.isSleepTransitioning() ? 30 : 8;
 
@@ -156,8 +158,6 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (attackCooldown > 0) {
             attackCooldown--;
         }
-
-        // Tick down beam cooldown
         if (beamCooldown > 0) {
             beamCooldown--;
         }
@@ -177,14 +177,10 @@ public class RaevyxGroundCombatGoal extends Goal {
             }
 
             wyvern.getLookControl().setLookAt(target, 30.0F, 30.0F);
-
-            // In water, use direct swim steering instead of land path navigation to avoid sinking/stalling.
             if (wyvern.isInWaterOrBubble()) {
                 handleWaterCombat(target);
                 return;
             }
-
-            // Handle roar opener - use roar once at the start of combat
             if (!hasUsedRoarOpener) {
                 if (wyvern.isSleepTransitioning()) {
                     roarOpenerDelay = Math.max(roarOpenerDelay, 8);
@@ -193,35 +189,30 @@ public class RaevyxGroundCombatGoal extends Goal {
                 }
                 if (roarOpenerDelay > 0) {
                     roarOpenerDelay--;
-                    // Keep chasing during delay
                     updateChasePath(target);
                 } else {
-                    // Delay expired - use roar ability
                     if (!canUseAiAbility(RaevyxAbilities.RAEVYX_ROAR, true)) {
                         updateChasePath(target);
                         return;
                     }
                     if (startAiAbility(RaevyxAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
                         hasUsedRoarOpener = true;
-                        attackCooldown = 40; // Brief cooldown after roar
+                        attackCooldown = 40;
                         postRoarGroundRendTicks = 40;
                     }
                 }
-                return; // Don't do normal attacks during roar opener phase
+                return;
             }
-
-            // Normal combat after roar opener
             double gap = getGapToTarget(target);
             boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
             boolean beamReady = beamCooldown <= 0;
-            combatDirector.tick(wyvern, target, gap, hasLineOfSight, beamReady);
-
+            tickCombatPacing(target, gap, hasLineOfSight, beamReady);
             if (tryGroundRendPressure(target, gap, hasLineOfSight)) {
                 return;
             }
 
-            if (combatDirector.shouldTryDash(wyvern, gap, isCurrentlyAttacking())) {
-                if (wyvern.tryAIGroundDash(target)) {
+            if (shouldTryDash(gap, isCurrentlyAttacking())) {
+                if (tryAIGroundDash(target)) {
                     attackCooldown = Math.max(attackCooldown, 12);
                     return;
                 }
@@ -232,14 +223,11 @@ public class RaevyxGroundCombatGoal extends Goal {
             }
 
             if (tryDirectedBeam(target, hasLineOfSight, beamReady)) {
-                return;
             } else if (gap > goreRange) {
-                // Medium-long range (4.5-32 blocks) OR beam on cooldown - chase to get closer
                 if (!isCurrentlyAttacking()) {
                     updateChasePath(target);
                 }
             } else {
-                // In melee range (0-4.5 blocks) - stop moving and attack
                 wyvern.getNavigation().stop();
                 pathRecalcCooldown = 0;
                 tryAttack(target);
@@ -247,9 +235,6 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
     }
 
-    /**
-     * Check if wyvern is currently executing an attack ability
-     */
     private boolean isCurrentlyAttacking() {
         return wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_BITE)
             || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_HORN_GORE)
@@ -258,9 +243,6 @@ public class RaevyxGroundCombatGoal extends Goal {
             || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_ROAR);
     }
 
-    /**
-     * Try to attack target based on distance. Instant execution, no windup.
-     */
     private void tryAttack(LivingEntity target) {
         if (attackCooldown > 0 || isCurrentlyAttacking()) {
             return;
@@ -280,9 +262,7 @@ public class RaevyxGroundCombatGoal extends Goal {
             return;
         }
 
-        // Choose attack based on distance - fire immediately
         if (gap <= biteRange) {
-            // Close range - bite attack
             if (!canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
                 return;
             }
@@ -290,7 +270,6 @@ public class RaevyxGroundCombatGoal extends Goal {
                 attackCooldown = 20;
             }
         } else if (gap <= goreRange) {
-            // Medium range - horn gore
             if (!canUseAiAbility(RaevyxAbilities.RAEVYX_HORN_GORE, false)) {
                 return;
             }
@@ -298,11 +277,10 @@ public class RaevyxGroundCombatGoal extends Goal {
                 attackCooldown = 20;
             }
         }
-        // Note: 4.5-32 block range has no attack - wyvern will chase to get closer
     }
 
     private boolean tryDirectedBeam(LivingEntity target, boolean hasLineOfSight, boolean beamReady) {
-        if (!combatDirector.shouldTryBeam(wyvern, getGapToTarget(target), hasLineOfSight, beamReady, isCurrentlyAttacking(), attackCooldown)) {
+        if (!shouldTryBeam(getGapToTarget(target), hasLineOfSight, beamReady, isCurrentlyAttacking(), attackCooldown)) {
             return false;
         }
         if (!canUseAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
@@ -315,6 +293,32 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
         attackCooldown = 60;
         beamCooldown = BEAM_COOLDOWN_TICKS;
+        return true;
+    }
+
+    private boolean tryAIGroundDash(LivingEntity target) {
+        if (wyvern.isFlying() || wyvern.isTakeoff() || wyvern.isLanding() || wyvern.isHovering() || wyvern.isInWaterOrBubble()) {
+            return false;
+        }
+        if (wyvern.isDashing() || wyvern.isDodging()) {
+            return false;
+        }
+
+        double dx = target.getX() - wyvern.getX();
+        double dz = target.getZ() - wyvern.getZ();
+        if (dx * dx + dz * dz > 0.0001D) {
+            float targetYaw = (float) (Math.atan2(dz, dx) * (180.0D / Math.PI)) - 90.0F;
+            wyvern.setYRot(targetYaw);
+            wyvern.yBodyRot = targetYaw;
+        }
+
+        final int dashDuration = 27;
+        final int dashCooldown = 50;
+        final double dashDistance = 30.0D;
+        if (!wyvern.beginForwardDashMotion(dashDuration, dashCooldown, dashDistance)) {
+            return false;
+        }
+        wyvern.triggerDashFeedback();
         return true;
     }
 
@@ -361,9 +365,125 @@ public class RaevyxGroundCombatGoal extends Goal {
                 && wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_GROUND_REND);
     }
 
-    /**
-     * Get the gap between entity edges (not centers)
-     */
+    private void resetCombatPacing() {
+        combatMode = Mode.PRESSURE;
+        modeReevaluateCooldown = 0;
+        recentDamageTicks = 0;
+        lastDamageGameTime = Long.MIN_VALUE;
+        mobilityLockTicks = 0;
+        beamLockTicks = 0;
+        mobilityBudget = 1.0f;
+    }
+
+    private void tickCombatPacing(LivingEntity target, double gap, boolean hasLineOfSight, boolean beamReady) {
+        if (mobilityLockTicks > 0) {
+            mobilityLockTicks--;
+        }
+        if (beamLockTicks > 0) {
+            beamLockTicks--;
+        }
+        if (recentDamageTicks > 0) {
+            recentDamageTicks--;
+        }
+        mobilityBudget = Math.min(1.0f, mobilityBudget + BUDGET_REGEN_PER_TICK);
+
+        long gameTime = wyvern.level().getGameTime();
+        if (wyvern.hurtTime > 0 && gameTime != lastDamageGameTime) {
+            lastDamageGameTime = gameTime;
+            recentDamageTicks = DAMAGE_MEMORY_TICKS;
+        }
+
+        if (modeReevaluateCooldown > 0) {
+            modeReevaluateCooldown--;
+            return;
+        }
+        modeReevaluateCooldown = MODE_REEVALUATE_TICKS;
+        combatMode = decideMode(target, gap, hasLineOfSight, beamReady);
+    }
+
+    private boolean shouldTryDash(double gap, boolean currentlyAttacking) {
+        if (currentlyAttacking || wyvern.isBeaming() || wyvern.isDodging() || wyvern.isDashing()) {
+            return false;
+        }
+        if (mobilityLockTicks > 0 || gap < DASH_MIN_RANGE || gap > DASH_MAX_RANGE || mobilityBudget < DASH_COST) {
+            return false;
+        }
+
+        float chance = switch (combatMode) {
+            case SPACE -> 0.20f;
+            case PRESSURE -> 0.14f;
+            default -> 0.06f;
+        };
+        if (recentDamageTicks > 0) {
+            chance *= 0.75f;
+        }
+
+        if (wyvern.getRandom().nextFloat() >= chance) {
+            return false;
+        }
+        mobilityBudget = Math.max(0.0f, mobilityBudget - DASH_COST);
+        mobilityLockTicks = MOBILITY_LOCK_TICKS;
+        beamLockTicks = Math.max(beamLockTicks, 12);
+        return true;
+    }
+
+    private boolean shouldTryBeam(double gap, boolean hasLineOfSight, boolean beamReady, boolean currentlyAttacking, int cooldownTicks) {
+        if (currentlyAttacking || cooldownTicks > 0) {
+            return false;
+        }
+        if (!beamReady || !hasLineOfSight || beamLockTicks > 0 || mobilityBudget < BEAM_COST) {
+            return false;
+        }
+
+        float chance = switch (combatMode) {
+            case PRESSURE -> 0.20f;
+            case SPACE -> 0.10f;
+            default -> 0.04f;
+        };
+        if (gap < 8.0D || gap > 32.0D) {
+            chance *= 0.45f;
+        }
+        if (recentDamageTicks > 0) {
+            chance *= 0.8f;
+        }
+
+        if (wyvern.getRandom().nextFloat() >= chance) {
+            return false;
+        }
+        mobilityBudget = Math.max(0.0f, mobilityBudget - BEAM_COST);
+        beamLockTicks = BEAM_LOCK_TICKS;
+        return true;
+    }
+
+    private Mode decideMode(LivingEntity target, double gap, boolean hasLineOfSight, boolean beamReady) {
+        if (recentDamageTicks > 0 && gap <= 14.0D) {
+            return Mode.EVADE;
+        }
+        if (gap <= 5.0D) {
+            return Mode.REPOSITION;
+        }
+        if (gap > 12.0D) {
+            return Mode.SPACE;
+        }
+        if (hasLineOfSight && beamReady && gap >= 8.0D && gap <= 28.0D) {
+            return Mode.PRESSURE;
+        }
+        if (isLikelyMeleeThreat(target, gap)) {
+            return Mode.EVADE;
+        }
+        return Mode.PRESSURE;
+    }
+
+    private boolean isLikelyMeleeThreat(LivingEntity target, double gap) {
+        if (gap > 6.0D) {
+            return false;
+        }
+        if (target instanceof Player player) {
+            return player.getAttackStrengthScale(0.0f) > 0.85f;
+        }
+        return target.swingTime > 0;
+    }
+
     private double getGapToTarget(LivingEntity target) {
         double centerDistance = this.wyvern.distanceTo(target);
         double combinedRadii = (this.wyvern.getBbWidth() + target.getBbWidth()) * 0.5;
@@ -380,7 +500,6 @@ public class RaevyxGroundCombatGoal extends Goal {
 
     private void updateChasePath(LivingEntity target) {
         if (wyvern.isInWaterOrBubble()) {
-            // Ground navigation is unreliable in water for this dragon.
             return;
         }
         if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
@@ -414,8 +533,6 @@ public class RaevyxGroundCombatGoal extends Goal {
         boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
         double gap = getGapToTarget(target);
         boolean inAttackRange = gap <= goreRange;
-
-        // Direct steering toward target with gentle buoyancy so it doesn't sink while aggroing.
         Vec3 current = wyvern.getDeltaMovement();
         Vec3 toTarget = target.position().subtract(wyvern.position());
         Vec3 horizontal = new Vec3(toTarget.x, 0.0, toTarget.z);
@@ -458,9 +575,6 @@ public class RaevyxGroundCombatGoal extends Goal {
         return dx * dx + dy * dy + dz * dz > 4.0D;
     }
 
-    /**
-     * Check if target is airborne (flying, riding flying mount, or off ground)
-     */
     private boolean isTargetAirborne(LivingEntity target) {
         return DragonTargetingHelper.isTargetAirborne(target, 8.0D);
     }
@@ -483,5 +597,12 @@ public class RaevyxGroundCombatGoal extends Goal {
                 majorCooldownTicks,
                 repeatLockoutTicks
         );
+    }
+
+    private enum Mode {
+        PRESSURE,
+        SPACE,
+        EVADE,
+        REPOSITION
     }
 }

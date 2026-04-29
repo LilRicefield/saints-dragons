@@ -8,8 +8,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 
@@ -86,7 +84,7 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
             return;
         }
 
-        Vec3 mouth = dragon.computeMouthOrigin(1.0f).add(0.0D, SPAWN_VERTICAL_OFFSET, 0.0D);
+        Vec3 origin = getVolleyOrigin(dragon);
         float baseYaw = dragon.yHeadRot;
         float basePitch = dragon.getXRot();
 
@@ -97,7 +95,7 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
             float pitch = basePitch + pitchOffset;
 
             Vec3 direction = Vec3.directionFromRotation(pitch, yaw).normalize();
-            Vec3 spawnPos = mouth.add(direction.scale(SPAWN_FORWARD_OFFSET));
+            Vec3 spawnPos = origin.add(direction.scale(SPAWN_FORWARD_OFFSET));
 
             CindervaneMagmaBlockEntity block = new CindervaneMagmaBlockEntity(server, spawnPos,
                     dragon, MAGMA_IMPACT_RADIUS, resolveImpactDamage(), MAGMA_BLOCK_LIFETIME);
@@ -110,6 +108,16 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
         return (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
                 .abilityDamage("magma_volley", DEFAULT_IMPACT_DAMAGE);
+    }
+
+    private Vec3 getVolleyOrigin(Cindervane dragon) {
+        Vec3 forward = dragon.getLookAngle();
+        if (forward.lengthSqr() <= 1.0E-6D) {
+            forward = new Vec3(0.0D, 0.0D, 1.0D);
+        }
+        return dragon.getBoundingBox().getCenter()
+                .add(forward.normalize().scale(dragon.getBbWidth() * 0.75D))
+                .add(0.0D, SPAWN_VERTICAL_OFFSET, 0.0D);
     }
 
 }

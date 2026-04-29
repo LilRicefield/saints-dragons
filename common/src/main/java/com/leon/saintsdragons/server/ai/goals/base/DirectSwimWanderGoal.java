@@ -14,10 +14,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * Direct wandering for swimming creatures.
- * Picks random underwater positions and swims directly toward them.
- */
 public class DirectSwimWanderGoal extends Goal {
     private static final int RANDOM_TARGET_ATTEMPTS = 6;
 

@@ -1,19 +1,28 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.animal.FlyingAnimal;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.function.BooleanSupplier;
 
-public abstract class RideableFlyingDragon extends RideableDragonBase {
+public abstract class RideableFlyingDragon extends RideableDragonBase implements FlyingAnimal, DragonFlightCapable {
     protected static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     protected static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
     protected static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
@@ -40,6 +49,42 @@ public abstract class RideableFlyingDragon extends RideableDragonBase {
 
     protected RideableFlyingDragon(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
+    }
+
+    @Override
+    public void markLandedNow() {
+        setFlying(false);
+        setTakeoff(false);
+        setLanding(false);
+        setHovering(false);
+        afterStandardLandingStateReset();
+        clearTakeoffState();
+        resetRiderTakeoffTicksAfterLanding();
+        resetTimeFlyingAfterLanding();
+
+        if (!level().isClientSide) {
+            onStandardServerLanding();
+            switchToGroundNavigationAfterLanding();
+            setNoGravity(false);
+        }
+    }
+
+    protected void afterStandardLandingStateReset() {
+    }
+
+    protected void clearTakeoffState() {
+    }
+
+    protected void resetRiderTakeoffTicksAfterLanding() {
+    }
+
+    protected void resetTimeFlyingAfterLanding() {
+    }
+
+    protected void onStandardServerLanding() {
+    }
+
+    protected void switchToGroundNavigationAfterLanding() {
     }
 
     @Override
@@ -85,6 +130,138 @@ public abstract class RideableFlyingDragon extends RideableDragonBase {
                 LANDING_BLEND_ALTITUDE,
                 isRiderLandingBlendActive()
         );
+    }
+
+    protected void tickStandardPitchingLogic() {
+        tickPitchingLandingBlendTimer();
+
+        DragonFlightVisuals.State state = getFlightVisualState();
+        EntityDataAccessor<Float> pitchAccessor = getFlightPitchAccessor();
+        if (state == null || pitchAccessor == null) {
+            return;
+        }
+
+        DragonFlightVisuals.beginPitchTick(state);
+        if (level().isClientSide) {
+            state.flightPitchRad = this.entityData.get(pitchAccessor);
+            return;
+        }
+
+        if (shouldResetStandardPitch()) {
+            DragonFlightVisuals.resetPitch(state);
+            this.entityData.set(pitchAccessor, state.flightPitchRad);
+            return;
+        }
+
+        Vec3 velocity = getDeltaMovement();
+        float targetPitchRad;
+
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            boolean useKeyPitch = isRiderPitchKeyMode();
+
+            if (useKeyPitch) {
+                float rawKeyPitchRad = 0f;
+                if (isGoingUp()) {
+                    rawKeyPitchRad = (float) Math.toRadians(getRiderKeyPitchDegrees());
+                } else if (isGoingDown()) {
+                    rawKeyPitchRad = (float) -Math.toRadians(getRiderKeyPitchDegrees());
+                }
+                targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(state, rawKeyPitchRad);
+            } else {
+                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+                float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+                boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+
+                if (hasMovementInput) {
+                    float rawPlayerPitchRad = -(float) Math.toRadians(player.getXRot());
+                    targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(state, rawPlayerPitchRad);
+                } else {
+                    DragonFlightVisuals.clearRiderPitchInput(state);
+                    targetPitchRad = 0f;
+                }
+            }
+
+            if (wantsRiderLandingPitch(player, useKeyPitch) && isNearStandardPitchLandingBlendTerrain()) {
+                float landingPitchRad = (float) -Math.toRadians(35.0f);
+                targetPitchRad = Math.min(targetPitchRad, landingPitchRad);
+            }
+        } else {
+            targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(velocity);
+            if (isLanding() && shouldApplyStandardAiLandingPitch()) {
+                float landingPitchRad = (float) -Math.toRadians(18.0f);
+                targetPitchRad = Math.min(targetPitchRad, landingPitchRad);
+            }
+        }
+
+        state.flightPitchRad = DragonFlightVisuals.approachPitch(state.flightPitchRad, targetPitchRad);
+        this.entityData.set(pitchAccessor, state.flightPitchRad);
+
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            if (wantsRiderLandingPitch(player, isRiderPitchKeyMode()) && isNearStandardPitchLandingBlendTerrain()) {
+                triggerPitchingLandingBlend();
+            }
+        }
+    }
+
+    protected DragonFlightVisuals.State getFlightVisualState() {
+        return null;
+    }
+
+    protected EntityDataAccessor<Float> getFlightPitchAccessor() {
+        return null;
+    }
+
+    protected void tickPitchingLandingBlendTimer() {
+    }
+
+    protected void triggerPitchingLandingBlend() {
+    }
+
+    public boolean isRiderPitchKeyMode() {
+        return false;
+    }
+
+    protected float getRiderKeyPitchDegrees() {
+        return 25.0F;
+    }
+
+    protected boolean shouldResetStandardPitch() {
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        return inWater
+                || areRiderControlsLocked()
+                || (!isFlying() && !(allowsStandardPitchWhileLanding() && isLanding()))
+                || (isHovering() && shouldResetStandardPitchInHover())
+                || shouldResetStandardPitchForSit()
+                || isStandardPitchActionBlocked();
+    }
+
+    protected boolean allowsStandardPitchWhileLanding() {
+        return true;
+    }
+
+    protected boolean shouldResetStandardPitchInHover() {
+        return false;
+    }
+
+    protected boolean shouldResetStandardPitchForSit() {
+        return isOrderedToSit();
+    }
+
+    protected boolean isStandardPitchActionBlocked() {
+        return false;
+    }
+
+    protected boolean shouldApplyStandardAiLandingPitch() {
+        return true;
+    }
+
+    private boolean wantsRiderLandingPitch(Player player, boolean useKeyPitch) {
+        return isGoingDown() || (!useKeyPitch && player.getXRot() > 30.0f);
+    }
+
+    private boolean isNearStandardPitchLandingBlendTerrain() {
+        double altitude = getAltitudeAboveTerrain();
+        return altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= LANDING_BLEND_ALTITUDE;
     }
 
     protected void tickBarrelRollLogic() {
@@ -237,6 +414,17 @@ public abstract class RideableFlyingDragon extends RideableDragonBase {
 
     protected double getAltitudeAboveTerrain() {
         return getAltitudeAboveCollisionTerrain(24, true);
+    }
+
+    @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, DamageSource source) {
+        this.fallDistance = 0.0F;
+        for (Entity passenger : this.getPassengers()) {
+            if (passenger instanceof LivingEntity living) {
+                living.fallDistance = 0.0F;
+            }
+        }
+        return false;
     }
 
     protected boolean isRiderLandingBlendActive() {

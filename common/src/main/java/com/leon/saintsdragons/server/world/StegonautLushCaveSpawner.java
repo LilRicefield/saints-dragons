@@ -23,11 +23,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Conservative fallback for Stegonaut cave spawning when vanilla passive spawn selection
- * fails to place them inside lush caves. This respects the same biome tag and config lists,
- * and bails out quickly when density/cluster checks say no. Bomboclaat lush caves
- */
+
 public final class StegonautLushCaveSpawner {
     private static final TagKey<Biome> DEFAULT_STEGONAUT_BIOME_TAG = TagKey.create(
             Registries.BIOME,

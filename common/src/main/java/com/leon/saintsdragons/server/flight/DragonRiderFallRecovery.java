@@ -2,9 +2,6 @@ package com.leon.saintsdragons.server.flight;
 
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Shared rider-only fall recovery checks for flight-capable dragons.
- */
 public final class DragonRiderFallRecovery {
     public static final float DEFAULT_FALL_ANIMATION_MIN_BLOCKS = 1.0F;
     public static final float DEFAULT_FALL_RECOVERY_MIN_BLOCKS = 1.0F;

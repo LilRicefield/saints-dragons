@@ -17,11 +17,8 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawSoundProfile;
-import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
-import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
-import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import net.minecraft.core.BlockPos;
@@ -49,8 +46,6 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -74,6 +69,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.shapes.BooleanOp;
 import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.NotNull;
@@ -85,9 +81,13 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
-public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable, SoundHandledDragon, PackMember<Nulljaw> {
+public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw> {
+    @Override
+    protected ResourceLocation getDragonAttributesId() {
+        return DragonAttributeConfigLoader.NULLJAW_ID;
+    }
+
     private static final double NATURAL_SPAWN_NULLJAW_RADIUS = 96.0D;
     private static final int MAX_NEARBY_WILD_NULLJAWS = 4;
     private static final double CARRIED_HITBOX_DOWNWARD_EXTENSION = 1.65D;
@@ -126,9 +126,7 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
-    private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
-    private final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
     private final AsyncFlightController asyncAirController;
     private final AsyncFlightMoveControl asyncAirMoveControl;
     private final FlyingPathNavigation airNavigation;
@@ -176,9 +174,7 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
         setAttributeBase(Attributes.ARMOR, config.armor());
 
-        if (this.getHealth() > this.getMaxHealth()) {
-            this.setHealth(this.getMaxHealth());
-        }
+        clampHealthToMax();
     }
 
     @Override
@@ -191,13 +187,6 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
         applyConfiguredAttributes();
         this.setHealth(this.getMaxHealth());
         return spawnData;
-    }
-
-    private void setAttributeBase(Attribute attribute, double value) {
-        AttributeInstance instance = this.getAttribute(attribute);
-        if (instance != null) {
-            instance.setBaseValue(value);
-        }
     }
 
     public static boolean canSpawnHere(EntityType<? extends Nulljaw> type,
@@ -342,11 +331,6 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
     }
 
     @Override
-    public DragonSoundHandler getSoundHandler() {
-        return soundHandler;
-    }
-
-    @Override
     public DragonSoundProfile getSoundProfile() {
         return NulljawSoundProfile.INSTANCE;
     }
@@ -379,7 +363,6 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
     @Override
     public void aiStep() {
         super.aiStep();
-        this.soundHandler.tick();
         tickBankingLogic();
         tickPitchingLogic();
         nudgeUpIfCarriedRiderInWall();
@@ -479,11 +462,11 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
         nextAmbientSoundDelay = MIN_AMBIENT_DELAY + this.getRandom().nextInt(Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1));
         int choice = this.getRandom().nextInt(3);
         if (choice == 0) {
-            soundHandler.playVocal("grumble1");
+            getSoundHandler().playVocal("grumble1");
         } else if (choice == 1) {
-            soundHandler.playVocal("grumble2");
+            getSoundHandler().playVocal("grumble2");
         } else {
-            soundHandler.playVocal("grumble3");
+            getSoundHandler().playVocal("grumble3");
         }
     }
 
@@ -718,11 +701,6 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @NotNull DamageSource source) {
-        return false;
-    }
-
-    @Override
     public void die(@NotNull DamageSource cause) {
         if (!this.dead && !this.level().isClientSide && !deathSoundQueued) {
             deathSoundQueued = true;
@@ -763,12 +741,8 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
     }
 
     @Override
-    public @NotNull EntityDimensions getDimensions(@NotNull Pose pose) {
-        EntityDimensions base = super.getDimensions(pose);
-        if (isBaby()) {
-            base = base.scale(BABY_HITBOX_SCALE);
-        }
-        return base;
+    protected float getBabyHitboxScale() {
+        return BABY_HITBOX_SCALE;
     }
 
     @Override
@@ -893,30 +867,6 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
     }
 
     @Override
-    public boolean canParticipateInPack() {
-        if (this.isTame()) {
-            return false;
-        }
-        if (this.isBaby() || this.isDying()) {
-            return false;
-        }
-        if (!this.isAlive() || this.isRemoved()) {
-            return false;
-        }
-        return !this.isOrderedToSit() && this.getCommand() != 1;
-    }
-
-    @Override
-    public boolean canLeadPack() {
-        return canParticipateInPack() && !this.isFemale();
-    }
-
-    @Override
-    public int getPackLeadershipPriority() {
-        return (int) Math.round((this.getHealth() / Math.max(1.0F, this.getMaxHealth())) * 100.0F);
-    }
-
-    @Override
     public int getMaxPackSize() {
         return MAX_PACK_SIZE;
     }
@@ -924,11 +874,6 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
     @Override
     public double getPackSearchRadius() {
         return PACK_SEARCH_RADIUS;
-    }
-
-    @Override
-    public int getPackLeaderRefreshIntervalTicks() {
-        return 60;
     }
 
     @Override
@@ -1057,30 +1002,4 @@ public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable
         return null;
     }
 
-    @Override
-    public Vec3 getHeadPosition() {
-        Vec3 forward = this.getLookAngle().normalize().scale(this.getBbWidth() * 0.55D);
-        return this.position().add(0.0D, this.getBbHeight() * 0.0D, 0.0D).add(forward);
-    }
-
-    @Override
-    public Vec3 getMouthPosition() {
-        Vec3 forward = this.getLookAngle().normalize().scale(this.getBbWidth() * 0.8D);
-        return this.position().add(0.0D, this.getBbHeight() * 0.0D, 0.0D).add(forward);
-    }
-
-    public void setClientLocatorPosition(String name, Vec3 pos) {
-        if (name == null || pos == null) {
-            return;
-        }
-        this.clientLocatorCache.put(name, pos);
-    }
-
-    @Override
-    public Vec3 getClientLocatorPosition(String name) {
-        if (name == null) {
-            return null;
-        }
-        return this.clientLocatorCache.get(name);
-    }
 }
