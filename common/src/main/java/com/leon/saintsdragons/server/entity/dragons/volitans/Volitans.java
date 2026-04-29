@@ -2,7 +2,6 @@ package com.leon.saintsdragons.server.entity.dragons.volitans;
 
 import com.leon.saintsdragons.common.block.VolitansEggBlock;
 import com.leon.saintsdragons.common.block.VolitansEggBlockEntity;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -36,10 +35,9 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
-import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -108,7 +106,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
 
-public class Volitans extends RideableDragonBase implements DragonFlightCapable, SemiAquaticDragon, SoundHandledDragon, ShakesScreen {
+public class Volitans extends RideableFlyingDragon implements DragonFlightCapable, SemiAquaticDragon, SoundHandledDragon, ShakesScreen {
     private static final double BABY_MAX_HEALTH = 60.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
@@ -209,28 +207,9 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private static final float BREATH_REARM_THRESHOLD = 0.20F;
     private static final int SPINE_DROP_COOLDOWN_TICKS = 30;
     private static final float FISH_DROP_CHANCE = 0.40F;
-    public static final double LANDING_BLEND_ALTITUDE = 8.0D;
-    public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
-    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
-    public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
+    public static final double LANDING_BLEND_ALTITUDE = RideableFlyingDragon.LANDING_BLEND_ALTITUDE;
     public static final double BREED_PARTNER_RANGE = 20.0D;
     public static final double BREED_DISTANCE_SQR = 16.0D;
-    public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
-    public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
-    public static final int RIDER_WATER_SCAN_RADIUS = 2;
-    public static final int RIDER_WATER_SCAN_DEPTH = 8;
-    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
-    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
-    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
-    private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
-    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
-            new DragonBarrelRollHelper.Config(
-                    AIR_AUTO_ALIGN_DECAY,
-                    LANDING_AUTO_ALIGN_STEP,
-                    0.04f,
-                    0.005f,
-                    Mth.HALF_PI
-            );
     private static final float BURROW_MOVE_SHAKE_INTENSITY = 0.12F;
     private static final int BURROW_EXIT_TAKEOFF_BLOCK_BUFFER_TICKS = 8;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
@@ -259,11 +238,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private int spineDropCooldownTicks;
     private int riderTakeoffTicks;
     private int groundedAerialRecoveryTicks;
-    private boolean riderHighAltitudeGlide;
-    private double lastCheckedX;
-    private double lastCheckedY;
-    private double lastCheckedZ;
-    private int ticksSinceLastMovement;
     private int ticksInWater;
     private int ticksOutOfWater;
     private float bankSmoothedYaw = 0f;
@@ -272,8 +246,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     private float flightPitchRad = 0f;
     private float prevFlightPitchRad = 0f;
     private float smoothedPlayerPitchRad = 0f;
-    private float prevSmoothedRoll = 0.0f;
-    private float smoothedRoll = 0.0f;
     private final ScreenShakeComponent screenShakeComponent;
     private int sitTransitionTicks = 0;
     private boolean isSittingDown = false;
@@ -307,7 +279,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
-        this.setRideable();
         this.setMaxUpStep(1.0F);
         this.riderController = new VolitansRiderController(this);
         this.takeoffComponent = createTakeoffComponent();
@@ -812,94 +783,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected int getFlightMode() {
-        if (!isFlying()) {
-            riderHighAltitudeGlide = false;
-            return -1;
-        }
-        if (isTakeoff()) {
-            return 3;
-        }
-
-        if (isLanding()) {
-            return 2;
-        }
-
-        if (isRiddenByOwner()) {
-            double deltaX = getX() - lastCheckedX;
-            double deltaY = getY() - lastCheckedY;
-            double deltaZ = getZ() - lastCheckedZ;
-            double positionChangeSqr = deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ;
-
-            boolean movingIntent = isGoingUp() || isGoingDown() || isAccelerating();
-
-            if (positionChangeSqr > 0.0001D || movingIntent) {
-                ticksSinceLastMovement = 0;
-                lastCheckedX = getX();
-                lastCheckedY = getY();
-                lastCheckedZ = getZ();
-            } else {
-                ticksSinceLastMovement++;
-            }
-
-            if (ticksSinceLastMovement > 3) {
-                return 5; // fly_idle
-            }
-            if (isAccelerating()) {
-                return 4; // sprint_flap
-            }
-
-            double altitude = getY() - level().getHeight(
-                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    (int) getX(),
-                    (int) getZ()
-            );
-            Vec3 velocity = getDeltaMovement();
-            boolean ascending = velocity.y > 0.02D;
-            boolean riderAscending = isVehicle() && isGoingUp();
-
-            if (shouldForceSurfaceGlide(altitude)) {
-                riderHighAltitudeGlide = false;
-                return 0;
-            }
-            if (ascending || riderAscending) {
-                return 1; // flap
-            }
-            if (riderHighAltitudeGlide) {
-                if (altitude > RIDER_GLIDE_ALTITUDE_EXIT) {
-                    return 0;
-                }
-                riderHighAltitudeGlide = false;
-            } else if (altitude > RIDER_GLIDE_ALTITUDE_THRESHOLD) {
-                riderHighAltitudeGlide = true;
-                return 0;
-            }
-            return 1; // flap
-        }
-        if (isHovering()) {
-            return 2;
-        }
-
-        riderHighAltitudeGlide = false;
-
-        Vec3 velocity = getDeltaMovement();
-        double horizontalSpeedSqr = velocity.horizontalDistanceSqr();
-        double yDelta = getY() - yo;
-        if (horizontalSpeedSqr < 0.01D && Math.abs(yDelta) < 0.1D) {
-            return 5; // fly_idle
-        }
-
-        boolean ascending = velocity.y > 0.02D;
-        boolean riderAscending = isVehicle() && isGoingUp();
-        if (ascending || riderAscending) {
-            return 1;
-        }
-
-        double altitude = getY() - level().getHeight(
-                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                (int) getX(),
-                (int) getZ()
-        );
-        return altitude > 35.0D ? 0 : 1;
+        return evaluateStandardFlightMode(false);
     }
 
     @Override
@@ -1436,14 +1320,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
 
         riderController.tickRidden(player);
-    }
-
-    public void syncRiderLookLock(@NotNull Player player) {
-        copyRiderLook(player);
-    }
-
-    public void syncRiderYawLock(@NotNull Player player) {
-        copyRiderYaw(player);
     }
 
     public boolean isRiderPitchKeyMode() {
@@ -3018,49 +2894,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
     }
 
-    private void tickBarrelRollLogic() {
-        float currentRoll = getAccumulatedRoll();
-        boolean serverSide = !level().isClientSide;
-        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
-        boolean inWater = isInWaterOrBubble();
-        boolean canBarrelRoll = barrelRollEnabled
-                && isFlying()
-                && !inWater
-                && !areRiderControlsLocked()
-                && !isGroundMobilityActive()
-                && !riderForwardDashing
-                && !riderBackDashing
-                && riderBackDashRecoveryTicks <= 0
-                && !riderSideDodging
-                && riderSideDodgeRecoveryTicks <= 0;
-        if (serverSide && canBarrelRoll && isVehicle() && getControllingPassenger() != null) {
-            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
-                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
-            }
-        }
-        DragonBarrelRollHelper.Output output = DragonBarrelRollHelper.tick(
-                currentRoll,
-                this.smoothedRoll,
-                new DragonBarrelRollHelper.Input(
-                        isVehicle(),
-                        onGround() || inWater,
-                        isLanding(),
-                        serverSide && canBarrelRoll && isActivelyBarrelRolling(),
-                        shouldEaseAirAutoAlign(),
-                        isLanding(),
-                        LANDING_BLEND_ALTITUDE,
-                        getAltitudeAboveCollisionTerrain(16, true)
-                ),
-                BARREL_ROLL_CONFIG
-        );
-
-        setAccumulatedRoll(output.accumulatedRoll());
-        this.prevSmoothedRoll = output.prevSmoothedRoll();
-        this.smoothedRoll = output.smoothedRoll();
-    }
-
     public float getBankAngleDegrees(float partialTick) {
         return Mth.lerp(partialTick, prevBankAngle, bankAngle);
     }
@@ -3081,7 +2914,21 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         setAccumulatedRoll(getAccumulatedRoll() + radians);
     }
 
-    private boolean shouldEaseAirAutoAlign() {
+    @Override
+    protected boolean canUseBarrelRoll() {
+        return isFlying()
+                && !isInWaterOrBubble()
+                && !areRiderControlsLocked()
+                && !isGroundMobilityActive()
+                && !riderForwardDashing
+                && !riderBackDashing
+                && riderBackDashRecoveryTicks <= 0
+                && !riderSideDodging
+                && riderSideDodgeRecoveryTicks <= 0;
+    }
+
+    @Override
+    protected boolean shouldEaseAirAutoAlign() {
         if (!isFlying() || isInWaterOrBubble() || areRiderControlsLocked()) {
             return false;
         }
@@ -3093,7 +2940,8 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
     }
 
-    private boolean isActivelyBarrelRolling() {
+    @Override
+    protected boolean isActivelyBarrelRolling() {
         return isFlying()
                 && !isInWaterOrBubble()
                 && !areRiderControlsLocked()
@@ -3107,8 +2955,14 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
     }
 
-    public float getSmoothedRoll(float partialTick) {
-        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
+    @Override
+    protected boolean isBarrelRollLandingBlendActive() {
+        return isLanding();
+    }
+
+    @Override
+    protected double getBarrelRollAltitudeAboveTerrain() {
+        return getAltitudeAboveCollisionTerrain(16, true);
     }
 
     private void tickScreenShake() {
@@ -3140,20 +2994,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 || areRiderControlsLocked()
                 || isInSitTransition()
                 || activeAbilityBlocksTakeoff;
-    }
-
-    public boolean isRiddenByOwner() {
-        if (!isTame() || !isVehicle()) {
-            return false;
-        }
-        if (!(getControllingPassenger() instanceof Player player)) {
-            return false;
-        }
-        return isOwnedBy(player);
-    }
-
-    private boolean shouldForceSurfaceGlide(double altitudeAboveTerrain) {
-        return altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface();
     }
 
     private boolean shouldAggroOnSight() {
@@ -3189,28 +3029,44 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
     }
 
     private void tickRiderLandingBlendTimer() {
-        // Ultimate slam owns touchdown presentation ("slammed"), so skip generic landed handling.
-        if (isUltimateSlamActive()) {
-            consumeRiderTouchdownFromAir(1.0D);
-            return;
-        }
+        tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
+            @Override
+            public boolean skipGenericLandingHandling() {
+                return isUltimateSlamActive();
+            }
 
-        trackRiderAirborneForLanding();
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+            @Override
+            public double touchdownVelocity() {
+                return 0.25D;
+            }
 
-        if (inWater) {
-            consumeRiderTouchdownFromAir(1.0D);
-            if (!level().isClientSide && (isFlying() || isTakeoff() || isLanding() || isHovering())
-                    && riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks)) {
+            @Override
+            public boolean shouldClearFlightStateInWater() {
+                return riderFlightComponent.shouldClearFlightStateInWater(riderTakeoffTicks);
+            }
+
+            @Override
+            public void onWaterFlightCleared() {
                 markLandedNow();
             }
-            return;
-        }
 
-        if (!isVehicle() || !isFlying() || onGround()) {
-            boolean touchdownFromFlight = consumeRiderTouchdownFromAir(0.25D);
-            boolean completedLanding = isLanding() && onGround();
-            if ((completedLanding || touchdownFromFlight) && onGround() && !level().isClientSide) {
+            @Override
+            public boolean isCompletedLanding() {
+                return isLanding() && onGround();
+            }
+
+            @Override
+            public boolean shouldStartLandingBlend() {
+                return !isLanding() && shouldTriggerLandingBlend();
+            }
+
+            @Override
+            public void startLandingBlend() {
+                setLanding(true);
+            }
+
+            @Override
+            public void onRiderLanded() {
                 triggerAnim("actions", "landed");
                 if (!isBaby()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
@@ -3218,12 +3074,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
                 lockRiderControls(LANDED_CONTROL_LOCK_TICKS);
                 markLandedNow();
             }
-            return;
-        }
-
-        if (!isLanding() && shouldTriggerLandingBlend()) {
-            setLanding(true);
-        }
+        });
     }
 
     private boolean shouldTriggerLandingBlend() {
@@ -3241,42 +3092,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         }
 
         return getAltitudeAboveCollisionTerrain(16, true) <= LANDING_BLEND_ALTITUDE;
-    }
-
-    private boolean isNearWaterSurface() {
-        if (level() == null) {
-            return false;
-        }
-
-        double dragonY = getY();
-        if (dragonY > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
-            return false;
-        }
-
-        net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos();
-        int baseX = Mth.floor(getX());
-        int baseY = Mth.floor(dragonY);
-        int baseZ = Mth.floor(getZ());
-
-        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
-            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
-                for (int dy = 0; dy <= RIDER_WATER_SCAN_DEPTH; dy++) {
-                    cursor.set(baseX + dx, baseY - dy, baseZ + dz);
-                    if (!level().hasChunkAt(cursor)) {
-                        continue;
-                    }
-                    BlockState state = level().getBlockState(cursor);
-                    if (!state.getFluidState().isEmpty()) {
-                        double surfaceY = cursor.getY() + 1.0D;
-                        if (Math.abs(dragonY - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
     }
 
     public void applyConfiguredAttributes() {
@@ -3540,10 +3355,7 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
 
     @Override
     protected void onSleepFreezeTick() {
-        getNavigation().stop();
-        setTarget(null);
-        setRunning(false);
-        setGroundMoveStateFromAI(0);
+        super.onSleepFreezeTick();
         setYRot(sleepLockedYaw);
         yRotO = sleepLockedYaw;
         yBodyRot = sleepLockedYaw;
@@ -3552,12 +3364,6 @@ public class Volitans extends RideableDragonBase implements DragonFlightCapable,
         yHeadRotO = sleepLockedYaw;
         setXRot(sleepLockedPitch);
         xRotO = sleepLockedPitch;
-
-        if (isInWaterOrBubble()) {
-            setDeltaMovement(Vec3.ZERO);
-        } else {
-            setDeltaMovement(Vec3.ZERO);
-        }
     }
 
     @Override

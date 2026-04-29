@@ -11,7 +11,7 @@ import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
@@ -25,6 +25,7 @@ import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -42,7 +43,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.AgeableMob;
 import java.util.Map;
 import java.util.UUID;
@@ -73,7 +73,7 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class Stegonaut extends RideableDragonBase implements SoundHandledDragon, PackMember<Stegonaut> {
+public class Stegonaut extends RideableGroundDragon implements SoundHandledDragon, PackMember<Stegonaut> {
 
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
@@ -102,6 +102,9 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     private static final double BABY_MAX_HEALTH = 50.0D;
     private static final double BABY_ARMOR = 5.0D;
     private static final float BABY_HITBOX_SCALE = 0.65F;
+    private static final double RIDER_JUMP_MIN_VERTICAL = 0.0D;
+    private static final double RIDER_JUMP_MAX_VERTICAL = 3.0D;
+    private static final double RIDER_JUMP_FORWARD_BOOST = 0.0D;
 
     // ===== VOCAL ENTRIES =====
     // IMPORTANT: Keys MUST match animation trigger names registered in StegonautAnimationHandler
@@ -236,11 +239,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
                 .add(Attributes.FOLLOW_RANGE, 64.0D);
     }
 
-    @Override
-    protected boolean isDragonFlying() {
-        return false;
-    }
-
     /**
      * Check if the wyvern is in a muted state (sitting/staying)
      * Used by sound system to prevent ambient sounds
@@ -287,8 +285,28 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     }
 
     @Override
-    public boolean canTakeoff() {
-        return false;
+    protected boolean canGroundDragonJump() {
+        return !isOrderedToSit() && getActiveAbility() == null;
+    }
+
+    @Override
+    protected void onGroundDragonJumped(int jumpPower) {
+        setGroundMoveStateFromAI(1);
+    }
+
+    @Override
+    protected double getRiderJumpMinVertical() {
+        return RIDER_JUMP_MIN_VERTICAL;
+    }
+
+    @Override
+    protected double getRiderJumpMaxVertical() {
+        return RIDER_JUMP_MAX_VERTICAL;
+    }
+
+    @Override
+    protected double getRiderJumpForwardBoost() {
+        return RIDER_JUMP_FORWARD_BOOST;
     }
 
     @Override
@@ -758,11 +776,8 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
     @Override
     protected void onSleepFreezeTick() {
-        this.getNavigation().stop();
-        this.setDeltaMovement(0, this.getDeltaMovement().y, 0);
+        super.onSleepFreezeTick();
         this.setOrderedToSit(true);
-        setGroundMoveStateFromAI(0);
-        setSitProgress(getSitProgress());
     }
 
     @Override
@@ -1334,8 +1349,7 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
 
             setGoingUp(false);
             setGoingDown(false);
-            this.setSpeed(riderController.getRiddenSpeed(player));
-            super.travel(motion);
+            travelRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
             return;
         }
 
@@ -1356,26 +1370,6 @@ public class Stegonaut extends RideableDragonBase implements SoundHandledDragon,
     @Override
     public @Nullable net.minecraft.world.entity.LivingEntity getControllingPassenger() {
         return riderController.getControllingPassenger();
-    }
-
-    @Override
-    protected int getFlightMode() {
-        return -1;
-    }
-
-    @Override
-    public boolean isTakeoff() {
-        return false;
-    }
-
-    @Override
-    public boolean isLanding() {
-        return false;
-    }
-
-    @Override
-    public boolean isHovering() {
-        return false;
     }
 
     public boolean canBeBound() {

@@ -211,15 +211,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return 0.6f; // Default for most dragons
     }
 
-    protected void setRideable() {
-        this.isRideable = true;
-    }
-
-    public boolean isRideableDragon() {
-        return this.isRideable;
-    }
-
-    private boolean isRideable = false;
 
     @Override
     protected void defineSynchedData() {
@@ -238,11 +229,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     public float smoothTailDragVelocity(float targetDegrees) {
         clientTailDragVelocity = Mth.lerp(0.15f, clientTailDragVelocity, targetDegrees);
         return clientTailDragVelocity;
-    }
-
-
-    public void resetTailDragVelocity() {
-        clientTailDragVelocity = 0.0f;
     }
 
     public com.leon.saintsdragons.util.math.SmoothValue getBodyRotDeviation() {
@@ -285,13 +271,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return HUNGER_MAX;
         }
         return hungerComponent.getHunger();
-    }
-
-    public int getMaxHunger() {
-        if (hungerComponent == null) {
-            return HUNGER_MAX;
-        }
-        return hungerComponent.getMaxHunger();
     }
 
     public boolean isHungry() {
@@ -560,39 +539,19 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     // ===== DRAGON ABILITY SYSTEM =====
-    /**
-     * Get the currently active Dragon ability, if any
-     */
     @SuppressWarnings("unchecked")
     public <T extends DragonEntity> DragonAbility<T> getActiveAbility() {
         return (DragonAbility<T>) activeAbility;
     }
 
-    /**
-     * Set the active Dragon ability
-     */
     public void setActiveAbility(DragonAbility<?> ability) {
         this.activeAbility = ability;
-    }
-
-    /**
-     * Check if wyvern can use abilities (not on cooldown, not already using one)
-     */
-    public boolean canUseAbility() {
-        return combatManager.canUseAbility();
-    }
-
-    public boolean areAbilitiesLocked() {
-        return combatManager.isGlobalCooldownActive();
     }
 
     public void lockAbilities(int ticks) {
         combatManager.lockGlobalCooldown(ticks);
     }
 
-    /**
-     * Try to activate a Dragon ability
-     */
     public <T extends DragonEntity> void tryActivateAbility(DragonAbilityType<T, ?> abilityType) {
         if (abilityType == null || level().isClientSide) {
             return;
@@ -659,9 +618,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return Collections.emptyMap();
     }
 
-    /**
-     * Provides dragon-specific sound configuration. Subclasses should override as needed.
-     */
     public DragonSoundProfile getSoundProfile() {
         return DragonSoundProfile.EMPTY;
     }
@@ -671,17 +627,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
                              boolean allowDuringSleep, boolean preventOverlap) {
     }
 
-
-    /**
-     * Builder for creating VocalEntry maps with less boilerplate.
-     * Use this to define wyvern vocals instead of manual Map.ofEntries bookkeeping.
-     */
     public static final class VocalEntryBuilder {
         private final Map<String, VocalEntry> entries = new java.util.HashMap<>();
 
-        /**
-         * Add a vocal entry with full control over all parameters.
-         */
         public VocalEntryBuilder add(String key, String controller, String animation,
                                      Supplier<SoundEvent> sound, float volume,
                                      float basePitch, float variance,
@@ -693,18 +641,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
             return this;
         }
 
-        /**
-         * Convenience overload for common case: no variance, trigger ok everywhere.
-         */
         public VocalEntryBuilder add(String key, String controller, String animation,
                                      Supplier<SoundEvent> sound) {
             return add(key, controller, animation, sound,
                     1.0f, 1.0f, 0.0f, false, false, false);
         }
 
-        /**
-         * Build the immutable map of vocal entries.
-         */
         public Map<String, VocalEntry> build() {
             return Map.copyOf(entries);
         }
@@ -714,10 +656,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         return null;
     }
 
-    /**
-     * Get the death ability type for this dragon.
-     * Override this to specify which death ability to use (e.g., baby vs adult death animations).
-     */
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
         return null;
     }
@@ -732,10 +670,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
         }
     }
 
-
     @Override
     protected void playStepSound(net.minecraft.core.@NotNull BlockPos pos, @NotNull BlockState state) {
-
     }
 
     @Override
@@ -1143,6 +1079,19 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity {
     }
 
     protected void onSleepFreezeTick() {
+        this.getNavigation().stop();
+        if (shouldClearTargetOnSleepFreeze()) {
+            this.setTarget(null);
+        }
+        this.setDeltaMovement(getSleepFreezeDeltaMovement());
+    }
+
+    protected boolean shouldClearTargetOnSleepFreeze() {
+        return true;
+    }
+
+    protected Vec3 getSleepFreezeDeltaMovement() {
+        return Vec3.ZERO;
     }
 
     protected void onSleepSitDownAnimation() {

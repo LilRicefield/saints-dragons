@@ -66,9 +66,8 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         if (flying && !isTakeoffWindowActive()) {
             double distanceToGround = getDistanceToGround();
             boolean nearGround = distanceToGround >= 0 && distanceToGround <= LANDING_HEIGHT_TRIGGER;
-            boolean atWaterSurface = isNearWaterSurface();
 
-            if (nearGround && dragon.isGoingDown() && !atWaterSurface && !dragon.isLanding()) {
+            if (nearGround && dragon.isGoingDown() && !dragon.isLanding()) {
                 dragon.setLanding(true);
             }
 
@@ -135,11 +134,6 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             return -1;
         }
         return Math.max(0.0D, bestDistance);
-    }
-
-    private boolean isNearWaterSurface() {
-        double dragonY = dragon.getY();
-        return Math.abs(dragonY - Ignivorus.RIDER_WATER_SURFACE_LEVEL) <= Ignivorus.RIDER_WATER_SURFACE_TOLERANCE;
     }
 
     public float getRiddenSpeed(Player rider) {

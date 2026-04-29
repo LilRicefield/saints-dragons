@@ -9,6 +9,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
+import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -16,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 
 import java.util.function.Consumer;
@@ -121,6 +123,8 @@ public final class DragonRideInputHandler {
     private static int raevyxSecondaryHoldTicks = 0;
     private static boolean raevyxGroundRendTriggered = false;
     private static final int RAEVYX_SECONDARY_HOLD_TICKS = 6;
+    private static int groundJumpHoldTicks = 0;
+    private static boolean groundJumpMeterActive = false;
 
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
@@ -224,6 +228,8 @@ public final class DragonRideInputHandler {
             lastDescendDown = descendDown;
         }
 
+        handleGroundDragonJumpInput(dragon, mc.options.keyJump.isDown(), forward, strafe, yaw);
+
         if (accelerateDown != wasAccelerateDown) {
             DragonRiderAction action = accelerateDown
                     ? DragonRiderAction.ACCELERATE
@@ -320,6 +326,9 @@ public final class DragonRideInputHandler {
             // Detect double-tap W
             if (forwardDown && !wasForwardKeyDown) {
                 if (currentTime - lastForwardTapTime < DOUBLE_TAP_WINDOW_MS) {
+                    if (dragon instanceof Varasuchus varasuchus) {
+                        varasuchus.startClientRiderDashPrediction();
+                    }
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_W, null, forward, strafe, yaw);
                 }
                 lastForwardTapTime = currentTime;
@@ -373,6 +382,43 @@ public final class DragonRideInputHandler {
         wasTogglePitchModeDown = togglePitchModeDown;
         wasTauntDown = tauntDown;
     }
+
+    private static void handleGroundDragonJumpInput(RideableDragonBase dragon,
+                                                    boolean jumpDown,
+                                                    float forward,
+                                                    float strafe,
+                                                    float yaw) {
+        if (!(dragon instanceof RideableGroundDragon) || dragon.isInWaterOrBubble()) {
+            groundJumpHoldTicks = 0;
+            groundJumpMeterActive = false;
+            return;
+        }
+
+        if (jumpDown) {
+            groundJumpHoldTicks = wasAscendPressed ? groundJumpHoldTicks + 1 : 1;
+            groundJumpMeterActive = true;
+            return;
+        }
+
+        if (wasAscendPressed && groundJumpHoldTicks > 0) {
+            int jumpPower = calculateVanillaRideJumpPower(groundJumpHoldTicks);
+            sendInput(false, false, DragonRiderAction.GROUND_JUMP,
+                    Integer.toString(jumpPower), forward, strafe, yaw);
+        }
+        groundJumpHoldTicks = 0;
+        groundJumpMeterActive = false;
+    }
+
+    private static int calculateVanillaRideJumpPower(int holdTicks) {
+        if (holdTicks <= 0) {
+            return 0;
+        }
+        float scale = holdTicks >= 10
+                ? 0.8F + 2.0F / (float) (holdTicks - 9) * 0.1F
+                : 0.1F * holdTicks;
+        return Mth.floor(Mth.clamp(scale, 0.0F, 1.0F) * 100.0F);
+    }
+
 
     private static void handleAbilityBinding(RiderAbilityBinding binding,
                                              boolean currentDown,
@@ -610,11 +656,17 @@ public final class DragonRideInputHandler {
         volitansBreathActive = false;
         raevyxSecondaryHoldTicks = 0;
         raevyxGroundRendTriggered = false;
+        groundJumpHoldTicks = 0;
+        groundJumpMeterActive = false;
     }
 
     private static boolean isCtrlDown(Minecraft mc) {
         long window = mc.getWindow().getWindow();
         return InputConstants.isKeyDown(window, InputConstants.KEY_LCONTROL)
                 || InputConstants.isKeyDown(window, InputConstants.KEY_RCONTROL);
+    }
+
+    public static boolean isGroundJumpMeterActive() {
+        return groundJumpMeterActive;
     }
 }

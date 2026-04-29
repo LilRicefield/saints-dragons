@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client.event;
 
+import com.leon.saintsdragons.client.input.DragonRideInputHandler;
 import com.leon.saintsdragons.client.ui.DragonRideHealthBar;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
@@ -8,10 +9,12 @@ import com.leon.saintsdragons.client.ui.MeleeModeNotification;
 import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
 import com.leon.saintsdragons.client.ui.VolitansBreathMeterIndicator;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
@@ -45,8 +48,16 @@ public class DragonUIEventHandler {
             return;
         }
 
-        // Only hide vanilla HUD if dragon UI is visible (F4 toggle)
-        // When dragon UI is hidden, show vanilla HUD instead
+        // Ground dragon XP/jump slot is custom-controlled regardless of the F4 HUD mode.
+        if (minecraft.player.getVehicle() instanceof RideableGroundDragon
+                && (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()
+                || event.getOverlay() == VanillaGuiOverlay.JUMP_BAR.type())) {
+            event.setCanceled(true);
+            return;
+        }
+
+        // Only hide vanilla HUD if dragon UI is visible (F4 toggle).
+        // When dragon UI is hidden, show vanilla HUD instead.
         if (!DragonUIRegistry.isUIVisible()) {
             return;
         }
@@ -56,7 +67,8 @@ public class DragonUIEventHandler {
             event.setCanceled(true);
         } else if (event.getOverlay() == VanillaGuiOverlay.ARMOR_LEVEL.type()) {
             event.setCanceled(true);
-        } else if (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()) {
+        } else if (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()
+                && !(minecraft.player.getVehicle() instanceof PlayerRideableJumping)) {
             event.setCanceled(true);
         } else if (event.getOverlay() == VanillaGuiOverlay.MOUNT_HEALTH.type()) {
             event.setCanceled(true);
@@ -76,6 +88,18 @@ public class DragonUIEventHandler {
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+
+        if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()
+                && minecraft.player.getVehicle() instanceof RideableGroundDragon groundDragon) {
+            int x = screenWidth / 2 - 91;
+            if (DragonRideInputHandler.isGroundJumpMeterActive()) {
+                minecraft.gui.renderJumpMeter(groundDragon, event.getGuiGraphics(), x);
+            } else if (!DragonUIRegistry.isUIVisible()
+                    && minecraft.gameMode != null
+                    && minecraft.gameMode.hasExperience()) {
+                minecraft.gui.renderExperienceBar(event.getGuiGraphics(), x);
+            }
+        }
 
         // Get current dragon if riding
         DragonEntity currentDragon = null;

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -12,7 +13,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -28,8 +28,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
     private static final float DEFAULT_PHASE1_DAMAGE = 16.0f;
     private static final float DEFAULT_PHASE2_DAMAGE = 20.8f;
     private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
-    private static final double GORE_RANGE = 7.0;
-    private static final double GORE_RANGE_RIDDEN = 8.5;
+    private static final double GORE_RANGE = 5.0;
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -80,58 +79,26 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
 
     private java.util.List<LivingEntity> findTargets() {
         Varasuchus dragon = getUser();
-        Vec3 head = dragon.getHeadPosition();
-        Vec3 look = dragon.getLookAngle().normalize();
-
         boolean ridden = dragon.getControllingPassenger() != null;
-        double range = ridden ? GORE_RANGE_RIDDEN : GORE_RANGE;
+        double range = GORE_RANGE;
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (isDirectTargetValid(dragon, target, range)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 2.0D)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();
         }
 
-        // Use drake body bounding box inflated by range as broadphase
-        AABB broad = dragon.getBoundingBox().inflate(range, range, range);
-        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, broad,
-                e -> e != dragon && e.isAlive() && e.attackable() && !isAllied(dragon, e));
-
-        double cosLimit = Math.cos(Math.toRadians(GORE_ANGLE_DEG));
-        java.util.List<LivingEntity> hits = new java.util.ArrayList<>();
-
-        for (LivingEntity e : candidates) {
-            // Distance from head to target AABB
-            double dist = distancePointToAABB(head, e.getBoundingBox());
-            if (dist > range + 0.4) continue;
-
-            // Angle test from head toward target center
-            Vec3 toward = e.getBoundingBox().getCenter().subtract(head);
-            double len = toward.length();
-            if (len < 1.0e-4) continue;
-            double dot = toward.normalize().dot(look);
-
-            boolean close = dist < (range * 0.6);
-            boolean angleOk = dot >= cosLimit;
-            if (ridden) {
-                // More lenient while ridden or accept within body range
-                double bodyDist = distancePointToAABB(e.position(), dragon.getBoundingBox());
-                angleOk = angleOk || dot >= (cosLimit * 0.7) || bodyDist <= range;
-            }
-            if (!(close || angleOk)) continue;
-            hits.add(e);
-        }
-        return hits;
-    }
-
-    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
-        if (target == null || !target.isAlive() || !target.attackable() || isAllied(dragon, target) || !dragon.isTargetValid(target)) {
-            return false;
-        }
-        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 2.0D;
-        return dragon.distanceTo(target) <= Math.max(range, widthReach);
+        return DragonMeleeGeometry.findForwardTargets(
+                dragon,
+                range,
+                range,
+                range,
+                GORE_ANGLE_DEG,
+                range * 0.6D,
+                entity -> !isAllied(dragon, entity)
+        );
     }
 
     private void applyGore(LivingEntity target) {
@@ -197,13 +164,6 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
             if (val < desiredPostArmor) lo = mid; else hi = mid;
         }
         return (lo + hi) * 0.5f;
-    }
-
-    private static double distancePointToAABB(Vec3 p, AABB box) {
-        double dx = Math.max(Math.max(box.minX - p.x, 0.0), p.x - box.maxX);
-        double dy = Math.max(Math.max(box.minY - p.y, 0.0), p.y - box.maxY);
-        double dz = Math.max(Math.max(box.minZ - p.z, 0.0), p.z - box.maxZ);
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     private boolean isAllied(Varasuchus dragon, Entity other) {

@@ -4,14 +4,12 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
-import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
@@ -26,10 +24,8 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
     private static final int SOUND_TICKS = 140;
     private static final int[] HIT_TICKS = new int[] {2, 8, 14, 20, 24, 30, 36, 41, 46, 51, 61, 71, 78, 82};
     private static final float HIT_DAMAGE = 15.0F;
-    private static final double CLAW_RANGE = 5.0;
-    private static final double CLAW_RANGE_RIDDEN_BONUS = 1.5;
-    private static final double CLAW_HORIZONTAL = 4.0;
-    private static final double CLAW_HORIZONTAL_RIDDEN = 3.0;
+    private static final double CLAW_RANGE = 6.5;
+    private static final double CLAW_HORIZONTAL = 3.0;
     private static final double CLAW_VERTICAL = 4.0;
     private static final double CLAW_ANGLE_DEG = 100.0;
 
@@ -118,82 +114,27 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
     }
 
     private List<LivingEntity> findClawTargets(Varasuchus dragon) {
-        Vec3 origin = dragon.getMouthPosition();
-        Vec3 forward = dragon.getLookAngle().normalize();
         boolean ridden = dragon.getControllingPassenger() != null;
 
-        double range = CLAW_RANGE + (ridden ? CLAW_RANGE_RIDDEN_BONUS : 0.0);
+        double range = CLAW_RANGE;
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (isDirectTargetValid(dragon, target, range)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        double horizontal = ridden ? CLAW_HORIZONTAL_RIDDEN : CLAW_HORIZONTAL;
-
-        AABB sweep = new AABB(origin, origin.add(forward.scale(range)))
-                .inflate(horizontal, CLAW_VERTICAL, horizontal);
-
-        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, sweep,
-                entity -> entity != dragon && entity.isAlive() && entity.attackable() && !dragon.isAlly(entity));
-
-        double cosLimit = Math.cos(Math.toRadians(CLAW_ANGLE_DEG));
-        List<LivingEntity> valid = new ArrayList<>();
-
-        for (LivingEntity candidate : candidates) {
-            double distance = distancePointToAABB(origin, candidate.getBoundingBox());
-            if (distance > range + 0.5) {
-                continue;
-            }
-
-            Vec3 toward = closestPointOnAABB(origin, candidate.getBoundingBox()).subtract(origin);
-            double len = toward.length();
-            if (len <= 1.0e-4) {
-                continue;
-            }
-
-            Vec3 dir = toward.scale(1.0 / len);
-            double dot = dir.dot(forward);
-            if (dot <= 0.0) {
-                continue;
-            }
-
-            boolean veryClose = distance < (range * 0.4);
-            boolean goodAngle = dot >= cosLimit;
-            if (ridden) {
-                goodAngle = goodAngle || dot >= (cosLimit * 0.7);
-            }
-
-            if (veryClose || goodAngle) {
-                valid.add(candidate);
-            }
-        }
-
-        return valid;
+        return DragonMeleeGeometry.findForwardTargets(
+                dragon,
+                range,
+                CLAW_HORIZONTAL,
+                CLAW_VERTICAL,
+                CLAW_ANGLE_DEG,
+                range * 0.4D,
+                entity -> !dragon.isAlly(entity)
+        );
     }
 
-    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
-        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
-            return false;
-        }
-        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
-        return dragon.distanceTo(target) <= Math.max(range, widthReach);
-    }
-
-    private static double distancePointToAABB(Vec3 point, AABB box) {
-        double dx = Math.max(Math.max(box.minX - point.x, 0.0), point.x - box.maxX);
-        double dy = Math.max(Math.max(box.minY - point.y, 0.0), point.y - box.maxY);
-        double dz = Math.max(Math.max(box.minZ - point.z, 0.0), point.z - box.maxZ);
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-
-    private static Vec3 closestPointOnAABB(Vec3 point, AABB box) {
-        double cx = Mth.clamp(point.x, box.minX, box.maxX);
-        double cy = Mth.clamp(point.y, box.minY, box.maxY);
-        double cz = Mth.clamp(point.z, box.minZ, box.maxZ);
-        return new Vec3(cx, cy, cz);
-    }
 }

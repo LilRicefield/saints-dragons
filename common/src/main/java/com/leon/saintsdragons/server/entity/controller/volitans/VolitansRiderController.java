@@ -62,11 +62,30 @@ public final class VolitansRiderController {
         dragon.setTarget(null);
 
         if ((dragon.isFlying() || dragon.isInWaterOrBubble()) && !dragon.isRiderPitchKeyMode()) {
-            dragon.syncRiderLookLock(rider);
+            syncRiderLook(rider);
         } else {
-            dragon.syncRiderYawLock(rider);
+            syncRiderYaw(rider);
             dragon.setXRot(0.0F);
         }
+    }
+
+    private void syncRiderLook(Player rider) {
+        syncRiderYaw(rider);
+        float targetPitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
+        float blendedPitch = Mth.lerp(0.18F, dragon.getXRot(), targetPitch);
+        dragon.xRotO = dragon.getXRot();
+        dragon.setXRot(blendedPitch);
+    }
+
+    private void syncRiderYaw(Player rider) {
+        float currentYaw = dragon.getYRot();
+        float yawDelta = Mth.wrapDegrees(rider.getYRot() - currentYaw);
+        float blendedYaw = currentYaw + yawDelta * 0.18F;
+        dragon.setYRot(blendedYaw);
+        dragon.yBodyRotO = dragon.yBodyRot;
+        dragon.yBodyRot = blendedYaw;
+        dragon.yHeadRotO = dragon.yHeadRot;
+        dragon.setYHeadRot(blendedYaw);
     }
 
     public double getPassengersRidingOffset() {

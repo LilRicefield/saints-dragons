@@ -5,13 +5,13 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
@@ -23,8 +23,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     private static final float DEFAULT_GORE_DAMAGE = 15.0f;
-    private static final double GORE_RANGE = 6.5; // Increased from 3.8
-    private static final double GORE_RANGE_RIDDEN = 8.0; // Increased from 5.2
+    private static final double GORE_RANGE = 4.0;
     private static final double GORE_ANGLE_DEG = 90.0; // half-angle, increased from 75
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -81,58 +80,26 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
 
     private java.util.List<LivingEntity> findTargets() {
         Raevyx wyvern = getUser();
-        Vec3 head = wyvern.getHeadPosition();
-        Vec3 look = wyvern.getLookAngle().normalize();
-
         boolean ridden = wyvern.getControllingPassenger() != null;
-        double range = ridden ? GORE_RANGE_RIDDEN : GORE_RANGE;
-        double cosLimit = Math.cos(Math.toRadians(GORE_ANGLE_DEG));
+        double range = GORE_RANGE;
 
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
-            if (isDirectAiTargetValid(wyvern, target, range)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 2.0D)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();
         }
 
-        // Use wyvern body bounding box inflated by range as broadphase
-        AABB broad = wyvern.getBoundingBox().inflate(range, range, range);
-        List<LivingEntity> candidates = wyvern.level().getEntitiesOfClass(LivingEntity.class, broad,
-                e -> e != wyvern && e.isAlive() && e.attackable() && !isAllied(wyvern, e));
-
-        java.util.List<LivingEntity> hits = new java.util.ArrayList<>();
-
-        for (LivingEntity e : candidates) {
-            // Distance from head to target AABB
-            double dist = distancePointToAABB(head, e.getBoundingBox());
-            if (dist > range + 0.4) continue;
-
-            // Angle test from head toward target center
-            Vec3 toward = e.getBoundingBox().getCenter().subtract(head);
-            double len = toward.length();
-            if (len < 1.0e-4) continue;
-            double dot = toward.normalize().dot(look);
-
-            boolean close = dist < (range * 0.6);
-            boolean angleOk = dot >= cosLimit;
-            if (ridden) {
-                // More lenient while ridden or accept within body range
-                double bodyDist = distancePointToAABB(e.position(), wyvern.getBoundingBox());
-                angleOk = angleOk || dot >= (cosLimit * 0.7) || bodyDist <= range;
-            }
-            if (!(close || angleOk)) continue;
-            hits.add(e);
-        }
-        return hits;
-    }
-
-    private boolean isDirectAiTargetValid(Raevyx wyvern, LivingEntity target, double range) {
-        if (target == null || !target.isAlive() || !target.attackable() || isAllied(wyvern, target) || !wyvern.isTargetValid(target)) {
-            return false;
-        }
-        double widthReach = wyvern.getBbWidth() + target.getBbWidth() + 2.0D;
-        return wyvern.distanceTo(target) <= Math.max(range, widthReach);
+        return DragonMeleeGeometry.findForwardTargets(
+                wyvern,
+                range,
+                range,
+                range,
+                GORE_ANGLE_DEG,
+                range * 0.6D,
+                entity -> !isAllied(wyvern, entity)
+        );
     }
 
     private void applyGore(LivingEntity target) {
@@ -191,13 +158,6 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
             if (val < desiredPostArmor) lo = mid; else hi = mid;
         }
         return (lo + hi) * 0.5f;
-    }
-
-    private static double distancePointToAABB(Vec3 p, AABB box) {
-        double dx = Math.max(Math.max(box.minX - p.x, 0.0), p.x - box.maxX);
-        double dy = Math.max(Math.max(box.minY - p.y, 0.0), p.y - box.maxY);
-        double dz = Math.max(Math.max(box.minZ - p.z, 0.0), p.z - box.maxZ);
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
     }
 
     private boolean isAllied(Raevyx wyvern, Entity other) {

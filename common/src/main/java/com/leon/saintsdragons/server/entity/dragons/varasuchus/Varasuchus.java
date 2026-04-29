@@ -17,7 +17,7 @@ import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
 import com.leon.saintsdragons.common.block.VarasuchusEggBlockEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -72,7 +72,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon, ShakesScreen, SoundHandledDragon {
+public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen, SoundHandledDragon {
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "action", "animation.varasuchus.grumble1", ModSounds.VARASUCHUS_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
             .add("grumble2", "action", "animation.varasuchus.grumble2", ModSounds.VARASUCHUS_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
@@ -98,6 +98,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WILD_RIDE_ACTIVE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_LEAPING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
 
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
@@ -112,6 +113,9 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     public static final double RIDER_WALK_SPEED = 0.15D;
     public static final double RIDER_RUN_SPEED = 0.30D;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
+    private static final double RIDER_JUMP_MIN_VERTICAL = 0.0D;
+    private static final double RIDER_JUMP_MAX_VERTICAL = 5.0D;
+    private static final double RIDER_JUMP_FORWARD_BOOST = 0;
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
@@ -214,7 +218,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
         this.riderController = new VarasuchusRiderController(this);
-        this.setRideable();
 
         // Initialize ambient sound system with random offset
         RandomSource rng = this.getRandom();
@@ -224,17 +227,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             applyConfiguredAttributes();
             this.setHealth(this.getMaxHealth());
         }
-    }
-
-
-    @Override
-    protected float getRiderLockYawBlend() {
-        return this.isPhaseTwoActive() ? 0.25F : 0.18F;
-    }
-
-    @Override
-    protected float getRiderLockPitchBlend() {
-        return this.isPhaseTwoActive() ? 0.25F : 0.18F;
     }
 
     @Override
@@ -274,11 +266,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     @Override
-    public boolean canTakeoff() {
-        return false;
-    }
-
-    @Override
     public @NotNull net.minecraft.world.entity.EntityDimensions getDimensions(@NotNull net.minecraft.world.entity.Pose pose) {
         net.minecraft.world.entity.EntityDimensions baseDimensions = super.getDimensions(pose);
         if (isBaby()) {
@@ -301,12 +288,8 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             setGoingUp(goingUp);
             setGoingDown(goingDown);
         } else {
-            // On land: trigger jump when space is pressed
             setGoingUp(false);
             setGoingDown(false);
-            if (goingUp && this.onGround()) {
-                handleJumpRequest();
-            }
         }
     }
 
@@ -328,11 +311,6 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
 
     @Override
-    protected void onRiderTakeoffRequest(Player player) {
-        handleJumpRequest();
-    }
-
-    @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
         if (locked) {
@@ -348,7 +326,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
                 onRiderDash(player);
                 yield true;
             }
-            default -> false;
+            default -> super.handleCustomRiderAction(player, action, abilityName, locked);
         };
     }
 
@@ -362,6 +340,16 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
      */
     protected void onRiderLeap(Player player) {
         startGroundDash();
+    }
+
+    public void startClientRiderDashPrediction() {
+        if (level().isClientSide) {
+            startGroundDash();
+        }
+    }
+
+    private boolean isGroundDashing() {
+        return level().isClientSide ? this.entityData.get(DATA_LEAPING) : leaping;
     }
 
     /**
@@ -429,6 +417,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
         // Begin leap
         leaping = true;
+        this.entityData.set(DATA_LEAPING, true);
         leapTicksLeft = LEAP_DURATION;
         leapCooldownTicks = LEAP_COOLDOWN;
         leapVec = leapVector;
@@ -457,7 +446,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
      * Called every tick while leaping.
      */
     private void handleLeapMovement() {
-        // Apply the leap velocity via delta movement so vanilla travel handles motion.
+        // Apply the leap velocity via delta movement; travel() lets vanilla handle collision/motion.
         double yVel = this.getDeltaMovement().y;
         double horizontalX = leapVec.x;
         double horizontalZ = leapVec.z;
@@ -476,6 +465,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
         if (--leapTicksLeft <= 0) {
             leaping = false;
+            this.entityData.set(DATA_LEAPING, false);
             leapVec = Vec3.ZERO;
         }
     }
@@ -565,6 +555,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_WILD_RIDE_ACTIVE, false);
+        this.entityData.define(DATA_LEAPING, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
@@ -782,12 +773,15 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
         updateSittingProgress();
         tickFeedingCooldown();
 
+        if (leaping) {
+            handleLeapMovement();
+        }
+        if (level().isClientSide && leapCooldownTicks > 0) {
+            leapCooldownTicks--;
+        }
+
         // Handle ambient sounds (server-side only)
         if (!level().isClientSide) {
-            // Handle leap movement (must be called every tick for smooth movement)
-            if (leaping) {
-                handleLeapMovement();
-            }
             // Tick leap cooldowns and damage timing
             tickLeapState();
             handleAmbientSounds();
@@ -839,8 +833,8 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
     @Override
     public void travel(@NotNull Vec3 motion) {
-        // During a leap, preserve the stored leap velocity and let vanilla travel apply it without rider overrides
-        if (leaping) {
+        // Dash movement owns velocity here; vanilla travel applies it without rider input flattening.
+        if (isGroundDashing()) {
             super.travel(Vec3.ZERO);
             return;
         }
@@ -860,10 +854,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
             } else {
                 setGoingUp(false);
                 setGoingDown(false);
-                this.setSpeed(riderController.getRiddenSpeed(player));
-                // Use vanilla movement system for proper camera-relative movement
-                // This will call getRiddenInput() and getRiddenSpeed() properly
-                super.travel(motion);
+                travelRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
             }
         } else {
             // Normal AI movement
@@ -1016,38 +1007,28 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
     }
     
     @Override
-    public boolean isDragonFlying() {
-        return false; // Rift Drake doesn't fly
-    }
-    
-    @Override
-    public boolean isHovering() {
-        return false; // Rift Drake doesn't hover
-    }
-    
-    @Override
-    public boolean isTakeoff() {
-        return false; // Rift Drake doesn't take off
-    }
-    
-    @Override
-    public boolean isLanding() {
-        return false; // Rift Drake doesn't land
-    }
-    
-    @Override
-    public int getFlightMode() {
-        return -1; // Ground mode
+    protected boolean canGroundDragonJump() {
+        return !isSwimming() && !isInWaterOrBubble() && !isGroundDashing();
     }
 
+    @Override
+    protected void onGroundDragonJumped(int jumpPower) {
+        setGroundMoveStateFromRider(1);
+    }
 
-    public void handleJumpRequest() {
-        if (this.onGround()) {
-            // Ground jump - standard jump height
-            Vec3 movement = this.getDeltaMovement();
-            this.setDeltaMovement(movement.x, 1.0, movement.z);
-            this.hasImpulse = true;
-        }
+    @Override
+    protected double getRiderJumpMinVertical() {
+        return RIDER_JUMP_MIN_VERTICAL;
+    }
+
+    @Override
+    protected double getRiderJumpMaxVertical() {
+        return RIDER_JUMP_MAX_VERTICAL;
+    }
+
+    @Override
+    protected double getRiderJumpForwardBoost() {
+        return RIDER_JUMP_FORWARD_BOOST;
     }
 
     @Override
@@ -2375,10 +2356,7 @@ public class Varasuchus extends RideableDragonBase implements SemiAquaticDragon,
 
     @Override
     protected void onSleepFreezeTick() {
-        this.getNavigation().stop();
-        this.setDeltaMovement(Vec3.ZERO);
-        this.setRunning(false);
-        setGroundMoveStateFromAI(0);
+        super.onSleepFreezeTick();
     }
 
     @Override

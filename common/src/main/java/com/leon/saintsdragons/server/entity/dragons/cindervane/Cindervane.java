@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -21,9 +20,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
-import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightOrientationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
@@ -114,7 +112,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class Cindervane extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
+public class Cindervane extends RideableFlyingDragon implements DragonFlightCapable, SoundHandledDragon, ShakesScreen, PackMember<Cindervane> {
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_ALBINO = 1;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
@@ -122,17 +120,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             DragonVariant.of(VARIANT_ALBINO, "albino", 15)
     );
     private static final int LANDING_SETTLE_TICKS = 4;
-    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
-    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
-    private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
-    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
-            new DragonBarrelRollHelper.Config(
-                    AIR_AUTO_ALIGN_DECAY,
-                    LANDING_AUTO_ALIGN_STEP,
-                    0.04f,
-                    0.005f,
-                    Mth.HALF_PI
-            );
     public static final int TAKEOFF_ANIMATION_TICKS = 24;
     private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
@@ -202,11 +189,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     @Nullable
     private UUID packLeaderUuid;
 
-    private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
-    private float prevSmoothedRoll = 0.0f;
-    private float smoothedRoll = 0.0f;
-
     // Client-side animation initialization grace period (fixes T-pose on world rejoin with shaders)
     private int clientAnimInitTicks = 0;
 
@@ -215,18 +198,8 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     private static final double MODEL_SCALE = 1.0D;
 
-    public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
-    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
-    public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
-    public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
-    public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
-    public static final int RIDER_WATER_SCAN_RADIUS = 2;
-    public static final int RIDER_WATER_SCAN_DEPTH = 8;
-
     // ===== RIDER LANDING BLEND SYSTEM =====
-    public static final double LANDING_BLEND_ALTITUDE = 8.0D; // Trigger landing animation at this altitude
     private static final int RIDER_LANDING_BLEND_DURATION = 3; // ticks to keep landing blend active
-    private int riderLandingBlendTicks = 0;
 
     // ===== SIT TRANSITION SYSTEM =====
     private int sitTransitionTicks = 0; // Counts down during down/up animations
@@ -1266,56 +1239,41 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     }
 
     private void tickRiderLandingBlendTimer() {
-        trackRiderAirborneForLanding();
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-
-        if (inWater) {
-            riderLandingBlendTicks = 0;
-            if (!level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
-                if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-                    setFlying(false);
-                    setTakeoff(false);
-                    setLanding(false);
-                    setHovering(false);
-                    timeFlying = 0;
-                    switchToGroundNavigation();
-                }
+        tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
+            @Override
+            public void onWaterFlightCleared() {
+                setFlying(false);
+                setTakeoff(false);
+                setLanding(false);
+                setHovering(false);
+                timeFlying = 0;
+                switchToGroundNavigation();
             }
-            return;
-        }
 
-        if (!isVehicle() || !isFlying() || onGround()) {
-            // If we were actively landing and now touched ground, trigger landed animation
-            boolean wasLanding = isFlying() && riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
-            boolean touchdownFromFlight = consumeRiderTouchdownFromAir(0.15D);
-            riderLandingBlendTicks = 0;
-            if (!level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            @Override
+            public boolean isLandingBlendSynced() {
+                return isRiderLandingBlendActive();
+            }
 
-                // Trigger landed animation when rider landing completes or when a gentle touchdown happens.
-                if ((wasLanding || touchdownFromFlight) && onGround() && isVehicle()) {
-                    // Properly clear flight state to prevent T-pose gliding bug
-                    setFlying(false);
-                    setTakeoff(false);
-                    timeFlying = 0;
-                    triggerAnim("actions", "landed");
-                    getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
-                    lockRiderControls(34);  // Lock controls for 1.67 seconds while animation plays
-                }
+            @Override
+            public void clearLandingBlendSync() {
+                entityData.set(DATA_RIDER_LANDING_BLEND, false);
             }
-            return;
-        }
-        if (riderLandingBlendTicks > 0) {
-            riderLandingBlendTicks--;
-            if (riderLandingBlendTicks == 0 && !level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+
+            @Override
+            public void onRiderLanded() {
+                setFlying(false);
+                setTakeoff(false);
+                timeFlying = 0;
+                triggerAnim("actions", "landed");
+                getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
+                lockRiderControls(34);
             }
-        }
+        });
     }
 
     private void triggerRiderLandingBlend() {
-        riderLandingBlendTicks = RIDER_LANDING_BLEND_DURATION;
+        triggerRiderLandingBlendTicks(RIDER_LANDING_BLEND_DURATION);
         if (!level().isClientSide) {
             this.entityData.set(DATA_RIDER_LANDING_BLEND, true);
         }
@@ -1328,10 +1286,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
     // Animation initialization system (fixes T-pose on world rejoin with shaders)
     public boolean isClientAnimationReady() {
         return ClientAnimationInitHelper.isReady(clientAnimInitTicks);
-    }
-
-    private double getAltitudeAboveTerrain() {
-        return getAltitudeAboveCollisionTerrain(24, true);
     }
 
     private void tickPitchingLogic() {
@@ -1414,40 +1368,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
         // Pitching is now fully procedural - no need for animation controller directions
     }
 
-    private void tickBarrelRollLogic() {
-        float currentRoll = getAccumulatedRoll();
-        boolean serverSide = !level().isClientSide;
-        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
-        boolean inWater = isInWaterOrBubble();
-        boolean barrelRollAllowed = barrelRollEnabled && !inWater;
-        if (serverSide && barrelRollAllowed && isVehicle() && getControllingPassenger() != null) {
-            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
-                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
-            }
-        }
-        DragonBarrelRollHelper.Output output = DragonBarrelRollHelper.tick(
-                currentRoll,
-                this.smoothedRoll,
-                new DragonBarrelRollHelper.Input(
-                        isVehicle(),
-                        onGround() || inWater,
-                        isLanding(),
-                        serverSide && barrelRollAllowed && isActivelyBarrelRolling(),
-                        shouldEaseAirAutoAlign(),
-                        isRiderLandingBlendActive(),
-                        LANDING_BLEND_ALTITUDE,
-                        getAltitudeAboveTerrain()
-                ),
-                BARREL_ROLL_CONFIG
-        );
-
-        setAccumulatedRoll(output.accumulatedRoll());
-        this.prevSmoothedRoll = output.prevSmoothedRoll();
-        this.smoothedRoll = output.smoothedRoll();
-    }
-
     private void tickScreenShake() {
         screenShakeComponent.tick();
     }
@@ -1472,27 +1392,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     public void addAccumulatedRoll(float radians) {
         setAccumulatedRoll(getAccumulatedRoll() + radians);
-    }
-
-    private boolean shouldEaseAirAutoAlign() {
-        if (!isFlying() || areRiderControlsLocked()) {
-            return false;
-        }
-
-        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
-            return false;
-        }
-
-        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
-    }
-
-    private boolean isActivelyBarrelRolling() {
-        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
-                && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
-    }
-
-    public float getSmoothedRoll(float partialTick) {
-        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
     }
 
     public boolean isRiderPitchKeyMode() {
@@ -1568,98 +1467,11 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
 
     @Override
     public int getFlightMode() {
-        double altitude = getY() - level().getHeight(
-                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                (int) getX(),
-                (int) getZ());
-        boolean riddenByOwner = isRiddenByOwner();
-        DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
-                isFlying(),
-                shouldPlayTakeoff(),
-                isHovering(),
-                isLanding(),
-                riddenByOwner,
-                isGoingUp(),
-                isGoingDown(),
-                isAccelerating(),
-                riddenByOwner && shouldForceSurfaceGlide(altitude),
-                getX(),
-                getY(),
-                getZ(),
-                this.yo,
-                altitude,
-                RIDER_GLIDE_ALTITUDE_THRESHOLD,
-                RIDER_GLIDE_ALTITUDE_EXIT,
-                getDeltaMovement()
-        );
-        return DragonFlightStateEvaluator.evaluateSyncedMode(flightModeState, input);
-    }
-
-    private boolean shouldPlayTakeoff() {
-        return isTakeoff();
-    }
-
-    private boolean isRiddenByOwner() {
-        if (!isTame() || !isVehicle()) {
-            return false;
-        }
-        if (!(getControllingPassenger() instanceof Player player)) {
-            return false;
-        }
-        return isOwnedBy(player);
+        return evaluateStandardFlightMode(false);
     }
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
-        return DragonFlightStateEvaluator.evaluateAnimationVisualState(
-                getSyncedFlightMode(),
-                isVehicle(),
-                getFlightPitchRadians(partialTick),
-                getDeltaMovement(),
-                isLanding(),
-                getAltitudeAboveTerrain(),
-                LANDING_BLEND_ALTITUDE,
-                isRiderLandingBlendActive()
-        );
-    }
-
-    private boolean shouldForceSurfaceGlide(double altitudeAboveTerrain) {
-        return altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface();
-    }
-
-    private boolean isNearWaterSurface() {
-        if (level() == null) {
-            return false;
-        }
-
-        double dragonY = getY();
-        if (dragonY > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
-            return false;
-        }
-
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        int baseX = Mth.floor(getX());
-        int baseY = Mth.floor(dragonY);
-        int baseZ = Mth.floor(getZ());
-
-        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
-            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
-                for (int dy = 0; dy <= RIDER_WATER_SCAN_DEPTH; dy++) {
-                    cursor.set(baseX + dx, baseY - dy, baseZ + dz);
-                    if (!level().hasChunkAt(cursor)) {
-                        continue;
-                    }
-                    BlockState state = level().getBlockState(cursor);
-                    if (!state.getFluidState().isEmpty()) {
-                        double surfaceY = cursor.getY() + 1.0;
-                        if (Math.abs(dragonY - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
+        return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
     }
 
     @Override
@@ -1908,8 +1720,7 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             // Normal riding: use rider controller for rotation
             riderController.tickRidden(player, travelVector);
         } else {
-            // Controls locked (e.g., during landed animation): use yaw-only rider rotation
-            // Only when not using any ability to preserve ability-specific pitch animation
+            // Controls locked (e.g., during landed animation): keep rider safe and yaw-aligned.
             if (combatManager.getActiveAbility() == null && !combatManager.hasActiveOverlay()) {
                 player.fallDistance = 0.0F;
                 this.fallDistance = 0.0F;
@@ -3044,17 +2855,6 @@ public class Cindervane extends RideableDragonBase implements DragonFlightCapabl
             setCommand(desired);
             setOrderedToSit(desired == 1);
         }
-    }
-
-    @Override
-    protected void onSleepFreezeTick() {
-        this.getNavigation().stop();
-        this.setDeltaMovement(0, 0, 0);
-        this.setRunning(false);
-        // Sleep entry only happens once the dragon is already grounded.
-        // Do not force-clear flight states here; that bypasses landing logic
-        // and can create vertical drop behavior with async air movement.
-        setGroundMoveStateFromAI(0);
     }
 
     @Override

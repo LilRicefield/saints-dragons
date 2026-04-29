@@ -14,7 +14,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFloatGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawSoundProfile;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -87,7 +87,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, PackMember<Nulljaw> {
+public class Nulljaw extends RideableFlyingDragon implements DragonFlightCapable, SoundHandledDragon, PackMember<Nulljaw> {
     private static final double NATURAL_SPAWN_NULLJAW_RADIUS = 96.0D;
     private static final int MAX_NEARBY_WILD_NULLJAWS = 4;
     private static final double CARRIED_HITBOX_DOWNWARD_EXTENSION = 1.65D;
@@ -150,7 +150,6 @@ public class Nulljaw extends RideableDragonBase implements DragonFlightCapable, 
         this.airNavigation.setCanFloat(false);
         this.navigation = this.airNavigation;
         this.moveControl = this.asyncAirMoveControl;
-        this.setRideable();
         this.setFlying(true);
         this.setHovering(false);
         this.setTakeoff(false);

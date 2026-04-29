@@ -4,11 +4,11 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -29,11 +29,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
  */
 public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
     private static final float BASE_DAMAGE = 12.0f;
-    private static final double BASE_RANGE = 5.0;
-    private static final double RIDDEN_RANGE_BONUS = 1.5;
+    private static final double RANGE = 6.5;
     private static final double CLAW_ANGLE_DEG = 100.0;     // Wider cone than bite
-    private static final double CLAW_SWIPE_HORIZONTAL = 4.0;
-    private static final double CLAW_SWIPE_HORIZONTAL_RIDDEN = 3.0;
+    private static final double CLAW_SWIPE_HORIZONTAL = 3.0;
     private static final double CLAW_SWIPE_VERTICAL = 4.0;
 
     // Block breaking configuration
@@ -162,12 +160,11 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         if (!DragonGriefingRules.canDestroyBlocks(server)) {
             return;
         }
-        Vec3 mouth = dragon.getMouthPosition();
-        Vec3 look = dragon.getLookAngle().normalize();
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.forwardAttack(dragon);
 
         // Calculate the swipe area in front of the dragon
-        Vec3 start = mouth;
-        Vec3 end = mouth.add(look.scale(BLOCK_BREAK_RANGE));
+        Vec3 start = attack.origin();
+        Vec3 end = start.add(attack.forward().scale(BLOCK_BREAK_RANGE));
 
         // Create a bounding box for the swipe area
         // Inflate horizontally and forward, but DON'T inflate downward (only upward)
@@ -205,16 +202,16 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
                     }
 
                     Vec3 blockCenter = new Vec3(x + 0.5, y + 0.5, z + 0.5);
-                    Vec3 offset = blockCenter.subtract(mouth);
+                    Vec3 offset = blockCenter.subtract(start);
 
                     // Must be in front of the dragon
-                    double forward = offset.dot(look);
+                    double forward = offset.dot(attack.forward());
                     if (forward < 0.0 || forward > maxForward) {
                         continue;
                     }
 
                     // Check lateral (side-to-side) distance from the forward ray
-                    Vec3 along = look.scale(forward);
+                    Vec3 along = attack.forward().scale(forward);
                     double lateralDistance = offset.subtract(along).length();
                     if (lateralDistance > maxLateral) {
                         continue;
@@ -263,97 +260,30 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         return hardness <= 30.0f;
     }
 
-    // ===== Range calculation =====
-
-    private double getEffectiveRange() {
-        Varasuchus dragon = getUser();
-        double range = BASE_RANGE;
-
-        if (dragon.getControllingPassenger() != null) {
-            range += RIDDEN_RANGE_BONUS;
-        }
-
-        return range;
-    }
-
     // ===== Multi-target finding =====
 
     private List<LivingEntity> findAllTargets() {
         Varasuchus dragon = getUser();
-        Vec3 mouth = dragon.getMouthPosition();
-        Vec3 look = dragon.getLookAngle().normalize();
-
         boolean ridden = dragon.getControllingPassenger() != null;
-        double effectiveRange = getEffectiveRange();
+        double effectiveRange = RANGE;
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (isDirectTargetValid(dragon, target, effectiveRange)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();
         }
 
-        // Wide forward sweep for claw attacks
-        double horizontalInflate = ridden ? CLAW_SWIPE_HORIZONTAL_RIDDEN : CLAW_SWIPE_HORIZONTAL;
-        AABB forwardSweep = new AABB(mouth, mouth.add(look.scale(effectiveRange)))
-                .inflate(horizontalInflate, CLAW_SWIPE_VERTICAL, horizontalInflate);
-
-        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, forwardSweep,
-                e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e));
-
-        double cosLimit = Math.cos(Math.toRadians(CLAW_ANGLE_DEG));
-        List<LivingEntity> validTargets = new java.util.ArrayList<>();
-
-        for (LivingEntity e : candidates) {
-            // Compute closest point on target's AABB to the mouth
-            double distToAabb = distancePointToAABB(mouth, e.getBoundingBox());
-            if (distToAabb > effectiveRange + 0.5) continue;
-
-            // Direction toward the closest point for angle test
-            Vec3 toward = closestPointOnAABB(mouth, e.getBoundingBox()).subtract(mouth);
-            double len = toward.length();
-            if (len <= 0.0001) continue;
-            Vec3 dir = toward.scale(1.0 / len);
-            double dot = dir.dot(look);
-
-            // Require forward projection
-            if (dot <= 0.0) continue;
-
-            // Wide cone for sweeping claws
-            boolean veryClose = distToAabb < (effectiveRange * 0.4);
-            boolean goodAngle = dot >= cosLimit;
-            if (ridden) {
-                goodAngle = goodAngle || dot >= (cosLimit * 0.7);
-            }
-            if (!(veryClose || goodAngle)) continue;
-
-            validTargets.add(e);
-        }
-        return validTargets;
+        return DragonMeleeGeometry.findForwardTargets(
+                dragon,
+                effectiveRange,
+                CLAW_SWIPE_HORIZONTAL,
+                CLAW_SWIPE_VERTICAL,
+                CLAW_ANGLE_DEG,
+                effectiveRange * 0.4D,
+                entity -> !dragon.isAlly(entity)
+        );
     }
 
-    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
-        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
-            return false;
-        }
-        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
-        return dragon.distanceTo(target) <= Math.max(range, widthReach);
-    }
-
-    // ===== Geometry helpers =====
-
-    private static double distancePointToAABB(Vec3 p, AABB box) {
-        double dx = Math.max(Math.max(box.minX - p.x, 0.0), p.x - box.maxX);
-        double dy = Math.max(Math.max(box.minY - p.y, 0.0), p.y - box.maxY);
-        double dz = Math.max(Math.max(box.minZ - p.z, 0.0), p.z - box.maxZ);
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-
-    private static Vec3 closestPointOnAABB(Vec3 p, AABB box) {
-        double cx = Mth.clamp(p.x, box.minX, box.maxX);
-        double cy = Mth.clamp(p.y, box.minY, box.maxY);
-        double cz = Mth.clamp(p.z, box.minZ, box.maxZ);
-        return new Vec3(cx, cy, cz);
-    }
 }

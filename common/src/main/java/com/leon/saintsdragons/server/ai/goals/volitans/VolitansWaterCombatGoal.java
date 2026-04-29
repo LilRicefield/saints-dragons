@@ -141,9 +141,7 @@ public class VolitansWaterCombatGoal extends Goal {
         if (!canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
             return false;
         }
-        dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
-        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 24, ROAR_COOLDOWN_TICKS, true, 120, 48);
-        return true;
+        return startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 24, ROAR_COOLDOWN_TICKS, 120, 48);
     }
 
     private boolean tryBreath(double gap) {
@@ -154,9 +152,10 @@ public class VolitansWaterCombatGoal extends Goal {
         if (!canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true)) {
             return false;
         }
-        dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BREATH);
+        if (!startAiAbility(VolitansAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
+            return false;
+        }
         breathHoldTicks = 50 + dragon.getRandom().nextInt(20);
-        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BREATH, 16, 140, true, 110, 42);
         return true;
     }
 
@@ -165,17 +164,14 @@ public class VolitansWaterCombatGoal extends Goal {
             float roll = dragon.getRandom().nextFloat();
             if (roll < 0.42F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                    dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-                    dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+                    startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
                 }
             } else if (roll < 0.72F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-                    dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BITE);
-                    dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BITE, 12, 16, false, 0, 18);
+                    startAiAbility(VolitansAbilities.VOLITANS_BITE, false, 12, 16, 0, 18);
                 }
             } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
             }
             return;
         }
@@ -183,24 +179,37 @@ public class VolitansWaterCombatGoal extends Goal {
         if (gap <= CLAW_RANGE) {
             if (dragon.getRandom().nextFloat() < 0.58F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                    dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-                    dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+                    startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
                 }
             } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
             }
             return;
         }
 
         if (gap <= GORE_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
         }
     }
 
     private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+    }
+
+    private boolean startAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
+                                   boolean majorAbility,
+                                   int cadenceTicks,
+                                   int abilityCooldownTicks,
+                                   int majorCooldownTicks,
+                                   int repeatLockoutTicks) {
+        return dragon.combatManager.tryUseAiAbility(
+                abilityType,
+                majorAbility,
+                cadenceTicks,
+                abilityCooldownTicks,
+                majorCooldownTicks,
+                repeatLockoutTicks
+        );
     }
 
     private double getGapToTarget(LivingEntity target) {

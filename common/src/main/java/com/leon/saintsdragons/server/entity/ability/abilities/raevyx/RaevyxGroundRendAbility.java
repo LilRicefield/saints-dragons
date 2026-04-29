@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
@@ -294,9 +295,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return;
         }
 
-        Vec3 mouthPos = wyvern.getMouthPosition();
+        Vec3 attackOrigin = DragonMeleeGeometry.forwardAttack(wyvern).origin();
         AABB dragonBox = wyvern.getBoundingBox().inflate(0.9D);
-        AABB mouthBox = new AABB(mouthPos, mouthPos).inflate(1.35D);
+        AABB mouthBox = new AABB(attackOrigin, attackOrigin).inflate(1.35D);
         AABB combinedBox = dragonBox.minmax(mouthBox);
 
         java.util.List<LivingEntity> targets;

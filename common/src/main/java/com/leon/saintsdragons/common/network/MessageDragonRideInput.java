@@ -24,7 +24,7 @@ public record MessageDragonRideInput(
         buf.writeBoolean(msg.goingUp());
         buf.writeBoolean(msg.goingDown());
         buf.writeEnum(msg.action() != null ? msg.action() : DragonRiderAction.NONE);
-        if (msg.action() == DragonRiderAction.ABILITY_USE || msg.action() == DragonRiderAction.ABILITY_STOP) {
+        if (actionCarriesString(msg.action())) {
             buf.writeUtf(msg.abilityName() != null ? msg.abilityName() : "", MAX_ABILITY_NAME_LENGTH);
         }
         buf.writeFloat(msg.forward());
@@ -37,7 +37,7 @@ public record MessageDragonRideInput(
         boolean goingDown = buf.readBoolean();
         DragonRiderAction action = buf.readEnum(DragonRiderAction.class);
         String abilityName = null;
-        if (action == DragonRiderAction.ABILITY_USE || action == DragonRiderAction.ABILITY_STOP) {
+        if (actionCarriesString(action)) {
             abilityName = buf.readUtf(MAX_ABILITY_NAME_LENGTH);
             if (abilityName.isEmpty()) {
                 abilityName = null;
@@ -58,5 +58,11 @@ public record MessageDragonRideInput(
         if (vehicle instanceof RideableDragonBase dragon && dragon.canBeControlledBy(player)) {
             dragon.handleRiderNetworkInput(player, msg);
         }
+    }
+
+    private static boolean actionCarriesString(DragonRiderAction action) {
+        return action == DragonRiderAction.ABILITY_USE
+                || action == DragonRiderAction.ABILITY_STOP
+                || action == DragonRiderAction.GROUND_JUMP;
     }
 }

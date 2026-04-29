@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,35 +20,23 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Powerful AoE bite attack for Ignivorus. Deals fire damage with armor penetration.
- * Triggers on left-click (attack key) when ridden.
- *
- * Hits ALL entities in a sphere around the mouth (mouth_origin locator from .geo file).
- * Range is calculated based on the mouth_origin bone position in the animated model.
- */
 public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
-    // 50 health base damage with 5 armor points ignored
     private static final float BASE_DAMAGE = 50.0f;
-    private static final float ARMOR_PENETRATION = 5.0f; // Armor points bypassed
+    private static final float ARMOR_PENETRATION = 5.0f;
+    private static final double RANGE = 18.0;
+    private static final double AIR_RANGE_BONUS = 2.0;
 
-    // AoE radius around the mouth position
-    private static final double BASE_AOE_RADIUS = 5.0; // Base sphere radius
-    private static final double RIDDEN_RADIUS_BONUS = 2.0; // Extra radius when ridden
-    private static final double AIR_RADIUS_BONUS = 1.0; // Bonus radius when flying
-
-    // Animation timing: startup → active hitframe → recovery
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(STARTUP, 6),    // Windup
-            new AbilitySectionDuration(ACTIVE, 3),     // Hit window
-            new AbilitySectionDuration(RECOVERY, 8)    // Recovery
+            new AbilitySectionDuration(STARTUP, 6),
+            new AbilitySectionDuration(ACTIVE, 3),
+            new AbilitySectionDuration(RECOVERY, 8)
     };
 
     private boolean appliedHit;
 
     public IgnivorusBiteAbility(DragonAbilityType<Ignivorus, IgnivorusBiteAbility> type,
                                 Ignivorus user) {
-        super(type, user, TRACK, 20); // 1 second cooldown (20 ticks)
+        super(type, user, TRACK, 20);
     }
 
     @Override
@@ -58,7 +47,6 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
 
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
-            // Trigger bite animation via GeckoLib action controller
             dragon.triggerAnim("action", "bite");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BITE.get(), 1.0f, 1.0f, 60);
@@ -74,13 +62,11 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
             return;
         }
 
-        // Apply damage during ACTIVE window (hit frame)
         if (section.sectionType == ACTIVE && !appliedHit) {
             Ignivorus dragon = getUser();
 
             List<LivingEntity> targets = selectTargets();
 
-            // Fallback to current target if no targets in cone
             if (targets.isEmpty()) {
                 LivingEntity currentTarget = dragon.getTarget();
                 if (currentTarget != null && currentTarget.isAlive() && !dragon.isAlly(currentTarget)) {
@@ -88,7 +74,6 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
                 }
             }
 
-            // Apply bite to all valid targets
             for (LivingEntity target : targets) {
                 applyHit(dragon, target);
             }
@@ -98,23 +83,14 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     }
 
     private void applyHit(Ignivorus dragon, LivingEntity target) {
-        // Use configured bite damage directly so low config values are respected.
         float damage = resolveBiteDamage();
         float hungerMult = dragon.getHungerMeleeDamageMultiplier();
-
-        // Apply damage as a direct melee hit so even fire-immune bosses (e.g. Wardens) take it,
-        // then layer the burning effect separately.
         DamageSource physicalSource = dragon.level().damageSources().mobAttack(dragon);
-
-        // Approximate armor penetration by boosting the raw hit damage.
         float armorPenDamage = (damage + ARMOR_PENETRATION) * hungerMult;
 
         target.hurt(physicalSource, armorPenDamage);
-
-        // Set target on fire for extra burn damage (3 seconds)
         target.setSecondsOnFire(3);
 
-        // Apply knockback based on look direction
         Vec3 push = dragon.getLookAngle().scale(dragon.isFlying() ? 0.4 : 0.25);
         target.push(push.x, dragon.isFlying() ? 0.2 : 0.08, push.z);
     }
@@ -128,59 +104,40 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     private List<LivingEntity> selectTargets() {
         Ignivorus dragon = getUser();
 
-        // Calculate AoE radius dynamically based on state
-        double radius = BASE_AOE_RADIUS;
-        if (dragon.getControllingPassenger() != null) {
-            radius += RIDDEN_RADIUS_BONUS;
-        }
+        double range = RANGE;
         if (dragon.isFlying()) {
-            radius += AIR_RADIUS_BONUS;
+            range += AIR_RANGE_BONUS;
         }
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
-            if (isDirectTargetValid(dragon, target, radius)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        // Get mouth position from mouth_origin locator in .geo file (with fallback)
-        Vec3 mouthPos = dragon.getMouthPosition();
+        Vec3 origin = DragonMeleeGeometry.forwardAttack(dragon).origin();
 
-        // Create spherical detection area around the mouth
-        // Inflate equally in all directions to create a sphere
-        AABB detectionBox = new AABB(mouthPos, mouthPos).inflate(radius);
+        AABB detectionBox = new AABB(origin, origin).inflate(range);
 
-        // Find ALL valid targets in the sphere - no angle restriction!
-        double finalRadius = radius;
-        double finalRadius1 = radius;
+        double finalRange = range;
         List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, detectionBox,
                 entity -> {
                     if (entity == dragon || !entity.isAlive() || !entity.attackable() || dragon.isAlly(entity)) {
                         return false;
                     }
 
-                    // Additional sphere check - make sure they're within the actual radius
-                    // This catches entities whose AABB intersects the box but center is outside
                     Vec3 entityCenter = entity.getBoundingBox().getCenter();
-                    double distSqr = entityCenter.distanceToSqr(mouthPos);
-                    return distSqr <= (finalRadius * finalRadius1);
+                    double distSqr = entityCenter.distanceToSqr(origin);
+                    return distSqr <= finalRange * finalRange;
                 });
 
-        // Sort by distance (closest first) for consistent behavior
         candidates.sort(Comparator.comparingDouble(e ->
-            e.getBoundingBox().getCenter().distanceToSqr(mouthPos)
+            e.getBoundingBox().getCenter().distanceToSqr(origin)
         ));
 
         return candidates;
     }
 
-    private boolean isDirectTargetValid(Ignivorus dragon, LivingEntity target, double range) {
-        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
-            return false;
-        }
-        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
-        return dragon.distanceTo(target) <= Math.max(range, widthReach);
-    }
 }

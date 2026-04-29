@@ -148,20 +148,20 @@ public class DragonCombatHandler {
         abilityCooldowns.remove(abilityType);
     }
 
-    public void tryUseAbility(DragonAbilityType<?, ?> abilityType) {
+    public boolean tryUseAbility(DragonAbilityType<?, ?> abilityType) {
         if (abilityType == null || dragon.level().isClientSide) {
-            return;
+            return false;
         }
         if (dragon instanceof Volitans volitans
                 && (volitans.isAiSpecialCombatActive() || volitans.isAiSpecialCombatReserved())
                 && abilityType != VolitansAbilities.VOLITANS_ULTIMATE) {
-            return;
+            return false;
         }
         if (dragon.areRiderControlsLocked()) {
-            return;
+            return false;
         }
         if (!canStart(abilityType)) {
-            return;
+            return false;
         }
 
         boolean overlay = isOverlayAbilityType(abilityType);
@@ -172,7 +172,7 @@ public class DragonCombatHandler {
             var ability = ((DragonAbilityType<DragonEntity, ?>) abilityType).makeInstance(dragon);
 
             if (!ability.tryAbility()) {
-                return;
+                return false;
             }
 
             if (overlay) {
@@ -181,9 +181,33 @@ public class DragonCombatHandler {
                 setActiveAbility(ability);
             }
             ability.start();
+            return true;
         } finally {
             processingAbility = false;
         }
+    }
+
+    public boolean tryUseAiAbility(DragonAbilityType<?, ?> abilityType,
+                                   boolean majorAbility,
+                                   int cadenceTicks,
+                                   int abilityCooldownTicks,
+                                   int majorCooldownTicks,
+                                   int repeatLockoutTicks) {
+        if (!canStart(abilityType) || !dragon.getAiCombatPacing().canUse(abilityType, majorAbility)) {
+            return false;
+        }
+        if (!tryUseAbility(abilityType)) {
+            return false;
+        }
+        dragon.getAiCombatPacing().recordUse(
+                abilityType,
+                cadenceTicks,
+                abilityCooldownTicks,
+                majorAbility,
+                majorCooldownTicks,
+                repeatLockoutTicks
+        );
+        return true;
     }
 
     public void forceUseAbility(DragonAbilityType<?, ?> abilityType) {

@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -28,9 +27,8 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
-import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -110,7 +108,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class Ignivorus extends RideableDragonBase implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
+public class Ignivorus extends RideableFlyingDragon implements DragonFlightCapable, SoundHandledDragon, ShakesScreen {
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_CRIMSON = 1;
     private static final DragonVariantSet SPAWN_VARIANTS = DragonVariantSet.of(
@@ -196,26 +194,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private static final float FIRE_BREATH_DEPLETED_THRESHOLD = 0.01f;
     private static final float FIRE_BREATH_REARM_THRESHOLD = 0.20f;
 
-    public static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
-    public static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
-    public static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
-    public static final double RIDER_WATER_SURFACE_LEVEL = 62.0D;
-    public static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
-    public static final int RIDER_WATER_SCAN_RADIUS = 2;
-    public static final int RIDER_WATER_SCAN_DEPTH = 8;
-    public static final double LANDING_BLEND_ALTITUDE = 8.0D;
-    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
-    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
-    private static final float INVERTED_PITCH_TRIGGER_RAD = Mth.HALF_PI;
     private static final float BARREL_ROLL_INPUT_SPEED = 0.235f;
-    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
-            new DragonBarrelRollHelper.Config(
-                    AIR_AUTO_ALIGN_DECAY,
-                    LANDING_AUTO_ALIGN_STEP,
-                    0.04f,
-                    0.005f,
-                    Mth.HALF_PI
-            );
     private static final int RIDER_LANDING_BLEND_DURATION = 5;
     public static final double BREED_PARTNER_RANGE = 20.0D;
     public static final double BREED_DISTANCE_SQR = 2500.0D;
@@ -263,9 +242,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int airTicks;
     public int groundTicks;
     private int groundedAerialRecoveryTicks;
-    private int riderLandingBlendTicks = 0;
-    private float prevSmoothedRoll = 0.0f;
-    private float smoothedRoll = 0.0f;
 
     // ===== HARDCODED GROUND SPEEDS =====
     public static final double RIDER_WALK_SPEED = 0.225D;
@@ -285,7 +261,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     private int fireTime = 0; // Tracks how long fire breath has been active for accuracy ramping
     private Vec3 fireServerTarget = null; // Server-side smooth target position with wobble
 
-    private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
 
     // Bulldoze toggle state
@@ -1778,16 +1753,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    protected float getRiderLockPitchMin() {
-        return -70.0F;
-    }
-
-    @Override
-    protected float getRiderLockPitchMax() {
-        return 45.0F;
-    }
-
-    @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
         super.tickRidden(player, travelVector);
         riderController.tickRidden(player, travelVector);
@@ -1796,13 +1761,7 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
                 if (start == null) {
                     start = getEyePosition();
                 }
-                // Calculate fire aim direction for server-side fire path, but DON'T apply it to dragon rotation
-                // The rider controller already handles rotation - applyFireLook would fight it
-                Vec3 aim = refreshFireAimDirection(start, true);
-                if (aim == null) {
-                    copyRiderLook(player);
-                }
-                // Skip applyFireLook when riding - rider controller handles rotation
+                refreshFireAimDirection(start, true);
         } else {
             resetFireAimDirection();
         }
@@ -2128,15 +2087,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
     }
 
     @Override
-    protected void onSleepFreezeTick() {
-        this.getNavigation().stop();
-        this.setDeltaMovement(0, 0, 0);
-        this.setRunning(false);
-        this.setGroundMoveStateFromAI(0);
-        this.setOrderedToSit(true);
-    }
-
-    @Override
     protected void onSleepSitDownAnimation() {
         animationHandler.triggerSitDownAnimation();
         setOrderedToSit(true);
@@ -2199,12 +2149,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         }
     }
 
-    public void requestFireballReleaseForAI() {
-        var active = combatManager.getActiveAbility();
-        if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
-            ((IgnivorusFireballAbility) active).requestRelease();
-        }
-    }
 
     public boolean isAiSpecialCombatActive() {
         return !level().isClientSide && aiSpecialCombatActive;
@@ -2875,93 +2819,11 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     @Override
     public int getFlightMode() {
-        double altitude = getY() - level().getHeight(
-                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                (int) getX(),
-                (int) getZ());
-        boolean riddenByOwner = isRiddenByOwner();
-        DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
-                isFlying(),
-                shouldPlayTakeoff(),
-                isHovering(),
-                isLanding(),
-                riddenByOwner,
-                isGoingUp(),
-                isGoingDown(),
-                isAccelerating(),
-                riddenByOwner && shouldForceSurfaceGlide(altitude),
-                getX(),
-                getY(),
-                getZ(),
-                this.yo,
-                altitude,
-                RIDER_GLIDE_ALTITUDE_THRESHOLD,
-                RIDER_GLIDE_ALTITUDE_EXIT,
-                getDeltaMovement()
-        );
-        return DragonFlightStateEvaluator.evaluateSyncedMode(flightModeState, input);
-    }
-
-    private boolean shouldPlayTakeoff() {
-        return isTakeoff();
-    }
-
-    private boolean isRiddenByOwner() {
-        if (!isTame() || !isVehicle()) {
-            return false;
-        }
-        if (!(getControllingPassenger() instanceof Player player)) {
-            return false;
-        }
-        return isOwnedBy(player);
-    }
-
-    private boolean shouldForceSurfaceGlide(double altitudeAboveTerrain) {
-        return altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD || isNearWaterSurface();
+        return evaluateStandardFlightMode(false);
     }
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
-        return DragonFlightStateEvaluator.evaluateAnimationVisualState(
-                getSyncedFlightMode(),
-                isVehicle(),
-                getFlightPitchRadians(partialTick),
-                getDeltaMovement(),
-                isLanding(),
-                getAltitudeAboveTerrain(),
-                LANDING_BLEND_ALTITUDE,
-                isRiderLandingBlendActive()
-        );
-    }
-
-    private boolean isNearWaterSurface() {
-        if (level() == null) return false;
-
-        double dragonY = getY();
-        if (dragonY > RIDER_WATER_SURFACE_LEVEL + RIDER_WATER_SURFACE_TOLERANCE) {
-            return false;
-        }
-
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        int baseX = Mth.floor(getX());
-        int baseY = Mth.floor(dragonY);
-        int baseZ = Mth.floor(getZ());
-
-        for (int dx = -RIDER_WATER_SCAN_RADIUS; dx <= RIDER_WATER_SCAN_RADIUS; dx++) {
-            for (int dz = -RIDER_WATER_SCAN_RADIUS; dz <= RIDER_WATER_SCAN_RADIUS; dz++) {
-                for (int dy = 0; dy <= RIDER_WATER_SCAN_DEPTH; dy++) {
-                    cursor.set(baseX + dx, baseY - dy, baseZ + dz);
-                    if (!level().hasChunkAt(cursor)) continue;
-
-                    if (!level().getBlockState(cursor).getFluidState().isEmpty()) {
-                        double surfaceY = cursor.getY() + 1.0;
-                        if (Math.abs(dragonY - surfaceY) <= RIDER_WATER_SURFACE_TOLERANCE) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
+        return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
     }
 
     public boolean isBreathingFire() {
@@ -3017,10 +2879,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         return getFireBreathEnergy() > FIRE_BREATH_DEPLETED_THRESHOLD;
     }
 
-    public boolean isFireBreathEnergyFull() {
-        return getFireBreathEnergy() >= 0.999f;
-    }
-
     public boolean isFireBreathDepleted() {
         return this.entityData.get(DATA_FIRE_BREATH_DEPLETED);
     }
@@ -3064,18 +2922,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
             this.entityData.get(DATA_FIRE_START_X),
             this.entityData.get(DATA_FIRE_START_Y),
             this.entityData.get(DATA_FIRE_START_Z)
-        );
-    }
-
-    @Nullable
-    public Vec3 getFireBreathTarget() {
-        if (!this.entityData.get(DATA_FIRE_END_SET)) {
-            return null;
-        }
-        return new Vec3(
-            this.entityData.get(DATA_FIRE_END_X),
-            this.entityData.get(DATA_FIRE_END_Y),
-            this.entityData.get(DATA_FIRE_END_Z)
         );
     }
 
@@ -3212,31 +3058,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
         Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
         return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
-    }
-
-    private void applyFireLook(Vec3 aimDir) {
-        if (aimDir == null) {
-            return;
-        }
-        float desiredYaw = (float) (Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
-        float desiredPitch = (float) (-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
-
-        float headYawSpeed = 12.0F;
-        float headPitchSpeed = 9.0F;
-
-        this.yHeadRot = Mth.approachDegrees(this.yHeadRot, desiredYaw, headYawSpeed);
-
-        float currentPitch = this.getXRot();
-        float pitchDelta = desiredPitch - currentPitch;
-        float pitchChange = Mth.clamp(pitchDelta, -headPitchSpeed, headPitchSpeed);
-        this.setXRot(currentPitch + pitchChange);
-
-        float yawDiff = Mth.degreesDifferenceAbs(desiredYaw, Mth.wrapDegrees(this.yBodyRot));
-        if (yawDiff > MAX_FIRE_YAW_DEG * 0.65F) {
-            float bodySpeed = 6.0F;
-            this.setYRot(Mth.approachDegrees(this.getYRot(), desiredYaw, bodySpeed));
-            this.yBodyRot = Mth.approachDegrees(this.yBodyRot, desiredYaw, bodySpeed);
-        }
     }
 
     private void resetFireAimDirection() {
@@ -3531,98 +3352,47 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         // Pitching is now fully procedural - no need for animation controller directions
     }
 
-    private void tickBarrelRollLogic() {
-        float currentRoll = getAccumulatedRoll();
-        boolean serverSide = !level().isClientSide;
-        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
-        boolean inWater = isInWaterOrBubble();
-        boolean barrelRollAllowed = barrelRollEnabled && !inWater;
-        if (serverSide && barrelRollAllowed && isVehicle() && getControllingPassenger() != null) {
-            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
-                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
-            }
-        }
-        DragonBarrelRollHelper.Output output = DragonBarrelRollHelper.tick(
-                currentRoll,
-                this.smoothedRoll,
-                new DragonBarrelRollHelper.Input(
-                        isVehicle(),
-                        onGround() || inWater,
-                        isLanding(),
-                        serverSide && barrelRollAllowed && isActivelyBarrelRolling(),
-                        shouldEaseAirAutoAlign(),
-                        isRiderLandingBlendActive(),
-                        LANDING_BLEND_ALTITUDE,
-                        getAltitudeAboveTerrain()
-                ),
-                BARREL_ROLL_CONFIG
-        );
-
-        setAccumulatedRoll(output.accumulatedRoll());
-        this.prevSmoothedRoll = output.prevSmoothedRoll();
-        this.smoothedRoll = output.smoothedRoll();
-    }
-
-
     private void tickRiderLandingBlendTimer() {
-        trackRiderAirborneForLanding();
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
+            @Override
+            public void onWaterFlightCleared() {
+                setFlying(false);
+                setTakeoff(false);
+                setLanding(false);
+                setHovering(false);
+                timeFlying = 0;
+                switchToGroundNavigation();
+            }
 
-        if (inWater) {
-            riderLandingBlendTicks = 0;
-            if (!level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
-                if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-                    setFlying(false);
-                    setTakeoff(false);
-                    setLanding(false);
-                    setHovering(false);
-                    timeFlying = 0;
-                    switchToGroundNavigation();
+            @Override
+            public boolean isLandingBlendSynced() {
+                return isRiderLandingBlendActive();
+            }
+
+            @Override
+            public void clearLandingBlendSync() {
+                entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            }
+
+            @Override
+            public void onRiderLanded() {
+                setFlying(false);
+                setTakeoff(false);
+                timeFlying = 0;
+                String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
+                triggerAnim("action", landedAnim);
+                if (isPhase2Active()) {
+                    getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
+                } else {
+                    getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LANDED.get(), 1.0f, 1.0f, 42);
                 }
+                lockRiderControls(13);
             }
-            return;
-        }
-
-        if (!isVehicle() || !isFlying() || onGround()) {
-            // If we were actively landing and now touched ground, trigger landed animation
-            boolean wasLanding = isFlying() && riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
-            boolean touchdownFromFlight = consumeRiderTouchdownFromAir(0.15D);
-            riderLandingBlendTicks = 0;
-            if (!level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
-
-                // Trigger landed animation when rider landing completes or when a gentle touchdown happens.
-                if ((wasLanding || touchdownFromFlight) && onGround() && isVehicle()) {
-                    // Properly clear flight state to prevent T-pose gliding bug
-                    setFlying(false);
-                    setTakeoff(false);
-                    timeFlying = 0;
-                    // Use Phase 2 landed animation if in Phase 2 mode
-                    String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                    triggerAnim("action", landedAnim);  // Trigger as one-shot animation
-                    if (isPhase2Active()) {
-                        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
-                    } else {
-                        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LANDED.get(), 1.0f, 1.0f, 42);
-                    }
-                    lockRiderControls(13);  // Lock controls for 0.63 seconds while animation plays
-                }
-            }
-            return;
-        }
-        if (riderLandingBlendTicks > 0) {
-            riderLandingBlendTicks--;
-            if (riderLandingBlendTicks == 0 && !level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
-            }
-        }
+        });
     }
 
     private void triggerRiderLandingBlend() {
-        riderLandingBlendTicks = RIDER_LANDING_BLEND_DURATION;
+        triggerRiderLandingBlendTicks(RIDER_LANDING_BLEND_DURATION);
         if (!level().isClientSide) {
             this.entityData.set(DATA_RIDER_LANDING_BLEND, true);
         }
@@ -3630,10 +3400,6 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
 
     public boolean isRiderLandingBlendActive() {
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
-    }
-
-    private double getAltitudeAboveTerrain() {
-        return getAltitudeAboveCollisionTerrain(24, true);
     }
 
     private void tickTerrainClearing() {
@@ -3824,25 +3590,9 @@ public class Ignivorus extends RideableDragonBase implements DragonFlightCapable
         setAccumulatedRoll(getAccumulatedRoll() + radians);
     }
 
-    private boolean shouldEaseAirAutoAlign() {
-        if (!isFlying() || areRiderControlsLocked()) {
-            return false;
-        }
-
-        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
-            return false;
-        }
-
-        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
-    }
-
-    private boolean isActivelyBarrelRolling() {
-        return this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
-                && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
-    }
-
-    public float getSmoothedRoll(float partialTick) {
-        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
+    @Override
+    protected float getBarrelRollInputSpeed() {
+        return BARREL_ROLL_INPUT_SPEED;
     }
 
     public boolean isRiderPitchKeyMode() {

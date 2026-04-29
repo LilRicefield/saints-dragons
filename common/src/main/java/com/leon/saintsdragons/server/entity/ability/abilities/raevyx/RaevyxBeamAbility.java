@@ -240,11 +240,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
                 .abilityDamage("lightning_beam", DEFAULT_BEAM_DAMAGE);
 
-        // Apply water conductivity bonuses
-        var conductivity = wyvern.getConductivityState();
         final double radiusBase = riderControlled ? RIDER_BEAM_RADIUS : AI_BEAM_RADIUS;
-        final double RADIUS = radiusBase * conductivity.rangeMultiplier();
-        final float DAMAGE = configuredBaseDamage * conductivity.damageMultiplier() * wyvern.getDamageMultiplier();
+        final double RADIUS = radiusBase;
+        final float DAMAGE = configuredBaseDamage * wyvern.getDamageMultiplier();
 
         if (!riderControlled) {
             damageAiBeamTargetOnly(wyvern, start, end, DAMAGE, RADIUS);

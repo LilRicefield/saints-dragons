@@ -75,7 +75,7 @@
 					"pivot": [-17.43288, 2.5, -26.93724]
 				},
 				{
-					"name": "anotherrighttoe2",
+					"name": "rightfrontthumb",
 					"parent": "anotherrighttoe2controller",
 					"pivot": [-17.43288, 2.5, -26.93724],
 					"cubes": [
@@ -89,7 +89,7 @@
 					"pivot": [-19.33204, 2.5, -30.2]
 				},
 				{
-					"name": "leftfronttoe6",
+					"name": "rightfrontindex",
 					"parent": "leftfronttoe6controller",
 					"pivot": [-19.33204, 2.5, -30.2],
 					"rotation": [0, -27.5, 0],
@@ -99,7 +99,7 @@
 				},
 				{
 					"name": "bone16controller",
-					"parent": "leftfronttoe6",
+					"parent": "rightfrontindex",
 					"pivot": [-20.33204, 2.5, -39.6]
 				},
 				{
@@ -124,7 +124,7 @@
 					"pivot": [-25.33204, 2.5, -31.2]
 				},
 				{
-					"name": "rightfronttoe6",
+					"name": "rightfrontpinky",
 					"parent": "rightfronttoe6controller",
 					"pivot": [-25.33204, 2.5, -31.2],
 					"rotation": [0, 30, 0],
@@ -134,7 +134,7 @@
 				},
 				{
 					"name": "bone14controller",
-					"parent": "rightfronttoe6",
+					"parent": "rightfrontpinky",
 					"pivot": [-26.33204, 2.5, -40.6]
 				},
 				{
@@ -159,7 +159,7 @@
 					"pivot": [-22.33204, 2.5, -31.2]
 				},
 				{
-					"name": "rightfronttoe2",
+					"name": "rightfrontmiddle",
 					"parent": "rightfronttoe2controller",
 					"pivot": [-22.33204, 2.5, -31.2],
 					"cubes": [
@@ -168,7 +168,7 @@
 				},
 				{
 					"name": "bone15controller",
-					"parent": "rightfronttoe2",
+					"parent": "rightfrontmiddle",
 					"pivot": [-23.33204, 2.5, -40.6]
 				},
 				{
@@ -232,7 +232,7 @@
 					"pivot": [25.332, 2.5, -31.2]
 				},
 				{
-					"name": "leftfronttoe5",
+					"name": "leftfrontpinky",
 					"parent": "leftfronttoe5controller",
 					"pivot": [25.33204, 2.5, -31.2],
 					"rotation": [0, -30, 0],
@@ -242,7 +242,7 @@
 				},
 				{
 					"name": "bone11controller",
-					"parent": "leftfronttoe5",
+					"parent": "leftfrontpinky",
 					"pivot": [26.332, 2.5, -40.6]
 				},
 				{
@@ -267,7 +267,7 @@
 					"pivot": [15.43288, 2.5, -28.93724]
 				},
 				{
-					"name": "anotherlefttoe",
+					"name": "leftfrontthumb",
 					"parent": "anotherlefttoecontroller",
 					"pivot": [15.43288, 2.5, -28.93724],
 					"cubes": [
@@ -281,7 +281,7 @@
 					"pivot": [22.33204, 2.5, -31.2]
 				},
 				{
-					"name": "leftfronttoe2",
+					"name": "leftfrontmiddle",
 					"parent": "leftfronttoe2controller",
 					"pivot": [22.33204, 2.5, -31.2],
 					"cubes": [
@@ -290,7 +290,7 @@
 				},
 				{
 					"name": "bone12controller",
-					"parent": "leftfronttoe2",
+					"parent": "leftfrontmiddle",
 					"pivot": [23.33204, 2.5, -40.6]
 				},
 				{
@@ -310,13 +310,13 @@
 					]
 				},
 				{
-					"name": "leftfronttoe4controller",
+					"name": "leftfrontindex",
 					"parent": "leftfrontfeet",
 					"pivot": [19.33204, 2.5, -30.2]
 				},
 				{
 					"name": "leftfronttoe4",
-					"parent": "leftfronttoe4controller",
+					"parent": "leftfrontindex",
 					"pivot": [19.33204, 2.5, -30.2],
 					"rotation": [0, 27.5, 0],
 					"cubes": [

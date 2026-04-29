@@ -5,7 +5,6 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
 //Custom stuff
 import com.leon.saintsdragons.common.particle.raevyx.*;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
@@ -25,7 +24,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -33,13 +32,9 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxIntera
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTamingHandler;
-import com.leon.saintsdragons.server.entity.interfaces.ElectricalConductivityCapable;
-import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityProfile;
-import com.leon.saintsdragons.server.entity.conductivity.ElectricalConductivityState;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
-import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -93,7 +88,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
@@ -114,8 +108,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 //Just everything
-public class Raevyx extends RideableDragonBase implements FlyingAnimal,
-        DragonFlightCapable, ShakesScreen, SoundHandledDragon, ElectricalConductivityCapable {
+public class Raevyx extends RideableFlyingDragon implements FlyingAnimal,
+        DragonFlightCapable, ShakesScreen, SoundHandledDragon {
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
     private static final float DEFAULT_DASH_DAMAGE = 10.0F;
     private static final int WALK_SOUND_DURATION_TICKS = 32;
@@ -254,23 +248,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
-    private static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
-    private static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D; // Hysteresis: exit at lower altitude
-    private static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
-    public static final double LANDING_BLEND_ALTITUDE = 8.0D;
-    private static final float AIR_AUTO_ALIGN_DECAY = 0.88f;
-    private static final float LANDING_AUTO_ALIGN_STEP = 0.30f;
-    private static final float BARREL_ROLL_INPUT_SPEED = 0.275f;
-    private static final DragonBarrelRollHelper.Config BARREL_ROLL_CONFIG =
-            new DragonBarrelRollHelper.Config(
-                    AIR_AUTO_ALIGN_DECAY,
-                    LANDING_AUTO_ALIGN_STEP,
-                    0.04f,
-                    0.005f,
-                    Mth.HALF_PI
-            );
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
-    private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private static final double BABY_MAX_HEALTH = 60.0D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
@@ -286,7 +264,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     private boolean manualSitCommand = false;
     private boolean commandChangeManual = false;
-    private int riderLandingBlendTicks = 0;
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -1092,10 +1069,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return computeHeadMouthOrigin(1.0f);
     }
 
-    /**
-     * Compute a mouth origin in world space from head yaw/pitch and a fixed local offset.
-     * FALLBACK ONLY - bone-based positioning is preferred and more accurate!
-     */
     public Vec3 computeHeadMouthOrigin(float partialTicks) {
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
         double y = Mth.lerp(partialTicks, this.yo, this.getY());
@@ -1425,59 +1398,11 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     
     @Override
     protected int getFlightMode() {
-        int groundY = this.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Mth.floor(this.getX()), Mth.floor(this.getZ()));
-        double altitudeAboveTerrain = this.getY() - groundY;
-        boolean riddenByOwner = isRiddenByOwner();
-        boolean forceSurfaceGlide = riddenByOwner
-                && ( altitudeAboveTerrain <= RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD);
-        DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(
-                isFlying(),
-                shouldPlayTakeoff(),
-                isHovering(),
-                isLanding(),
-                riddenByOwner,
-                isGoingUp(),
-                isGoingDown(),
-                isAccelerating(),
-                forceSurfaceGlide,
-                getX(),
-                getY(),
-                getZ(),
-                this.yo,
-                altitudeAboveTerrain,
-                RIDER_GLIDE_ALTITUDE_THRESHOLD,
-                RIDER_GLIDE_ALTITUDE_EXIT,
-                getDeltaMovement()
-        );
-        return DragonFlightStateEvaluator.evaluateSyncedMode(flightModeState, input);
-    }
-
-    private boolean shouldPlayTakeoff() {
-        return isTakeoff();
-    }
-
-    private boolean isRiddenByOwner() {
-        if (!isTame() || !isVehicle()) {
-            return false;
-        }
-        if (!(getControllingPassenger() instanceof Player player)) {
-            return false;
-        }
-        return isOwnedBy(player);
+        return evaluateStandardFlightMode(false);
     }
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
-        return DragonFlightStateEvaluator.evaluateAnimationVisualState(
-                getSyncedFlightMode(),
-                isVehicle(),
-                getFlightPitchRadians(partialTick),
-                getDeltaMovement(),
-                isLanding(),
-                getAltitudeAboveTerrain(),
-                LANDING_BLEND_ALTITUDE,
-                isRiderLandingBlendActive()
-        );
+        return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
     }
 
     public boolean isFallingForAnimation() {
@@ -2943,56 +2868,41 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
     }
     
     private void tickRiderLandingBlendTimer() {
-        trackRiderAirborneForLanding();
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-
-        if (inWater) {
-            riderLandingBlendTicks = 0;
-            if (!level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
-                if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
-                    setFlying(false);
-                    setTakeoff(false);
-                    setLanding(false);
-                    setHovering(false);
-                    timeFlying = 0;
-                    switchToGroundNavigation();
-                }
+        tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
+            @Override
+            public void onWaterFlightCleared() {
+                setFlying(false);
+                setTakeoff(false);
+                setLanding(false);
+                setHovering(false);
+                timeFlying = 0;
+                switchToGroundNavigation();
             }
-            return;
-        }
 
-        if (!isVehicle() || !isFlying() || onGround()) {
-            // If we were actively landing and now touched ground, trigger landed animation
-            boolean wasLanding = isFlying() && riderLandingBlendTicks > 0 && isRiderLandingBlendActive();
-            boolean touchdownFromAir = consumeRiderTouchdownFromAir(0.15D);
-            riderLandingBlendTicks = 0;
-            if (!level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+            @Override
+            public boolean isLandingBlendSynced() {
+                return isRiderLandingBlendActive();
+            }
 
-                // Trigger landed animation when rider landing completes or when a gentle touchdown happens.
-                if ((wasLanding || touchdownFromAir) && onGround() && isVehicle()) {
-                    // Properly clear flight state to prevent T-pose gliding bug
-                    setFlying(false);
-                    setTakeoff(false);
-                    timeFlying = 0;
-                    triggerAnim("action", "landed");  // Trigger as one-shot animation
-                    getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
-                    lockRiderControls(30);  // Lock controls for 1.50 seconds while animation plays
-                }
+            @Override
+            public void clearLandingBlendSync() {
+                entityData.set(DATA_RIDER_LANDING_BLEND, false);
             }
-            return;
-        }
-        if (riderLandingBlendTicks > 0) {
-            riderLandingBlendTicks--;
-            if (riderLandingBlendTicks == 0 && !level().isClientSide) {
-                this.entityData.set(DATA_RIDER_LANDING_BLEND, false);
+
+            @Override
+            public void onRiderLanded() {
+                setFlying(false);
+                setTakeoff(false);
+                timeFlying = 0;
+                triggerAnim("action", "landed");
+                getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
+                lockRiderControls(30);
             }
-        }
+        });
     }
 
     private void triggerRiderLandingBlend() {
-        riderLandingBlendTicks = RIDER_LANDING_BLEND_DURATION;
+        triggerRiderLandingBlendTicks(RIDER_LANDING_BLEND_DURATION);
         if (!level().isClientSide) {
             this.entityData.set(DATA_RIDER_LANDING_BLEND, true);
         }
@@ -3003,10 +2913,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
     }
 
-    private double getAltitudeAboveTerrain() {
-        return getAltitudeAboveCollisionTerrain(24, true);
-    }
-    
     private void tickPitchingLogic() {
         tickRiderLandingBlendTimer();
         DragonFlightVisuals.beginPitchTick(this.flightVisualState);
@@ -3079,56 +2985,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             }
         }
         // Pitching is now fully procedural - no need for animation controller directions
-    }
-
-    /**
-     * Manages barrel roll realignment logic and smoothing.
-     * - Forces upright when not ridden or when landing
-     * - Applies smart snap-to-zero when within threshold while ridden
-     * - Smooths roll for visual rendering
-     */
-    private void tickBarrelRollLogic() {
-        float currentRoll = getAccumulatedRoll();
-        boolean serverSide = !level().isClientSide;
-        boolean isRidden = isVehicle() && getControllingPassenger() != null;
-        boolean barrelRollEnabled = level().isClientSide || SaintsDragonsConfig.BARREL_ROLL_ENABLED.get();
-        boolean canBarrelRoll = barrelRollEnabled
-                && isRidden
-                && isFlying()
-                && !areRiderControlsLocked()
-                && !isDodging()
-                && !isDashing()
-                && !isGroundRending();
-        if (serverSide && canBarrelRoll) {
-            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-            if (riderForward > 0.1f && Math.abs(riderStrafe) > 0.1f) {
-                currentRoll += riderStrafe * BARREL_ROLL_INPUT_SPEED;
-            }
-        }
-        boolean isActivelyRolling = serverSide && canBarrelRoll && isActivelyBarrelRolling();
-        boolean riderLandingBlendActive = isRiderLandingBlendActive();
-        double altitudeAboveTerrain = riderLandingBlendActive ? getAltitudeAboveTerrain() : Double.POSITIVE_INFINITY;
-        DragonBarrelRollHelper.Output rollState = DragonBarrelRollHelper.tick(
-                currentRoll,
-                smoothedRoll,
-                new DragonBarrelRollHelper.Input(
-                        canBarrelRoll,
-                        onGround(),
-                        isLanding(),
-                        isActivelyRolling,
-                        shouldEaseAirAutoAlign(),
-                        riderLandingBlendActive,
-                        LANDING_BLEND_ALTITUDE,
-                        altitudeAboveTerrain
-                ),
-                BARREL_ROLL_CONFIG
-        );
-        currentRoll = rollState.accumulatedRoll();
-        prevSmoothedRoll = rollState.prevSmoothedRoll();
-        smoothedRoll = rollState.smoothedRoll();
-        setAccumulatedRoll(currentRoll);
-
     }
 
     @Override
@@ -3829,7 +3685,27 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         setAccumulatedRoll(getAccumulatedRoll() + radians);
     }
 
-    private boolean shouldEaseAirAutoAlign() {
+    @Override
+    protected boolean canUseBarrelRoll() {
+        return isFlying()
+                && !areRiderControlsLocked()
+                && !isDodging()
+                && !isDashing()
+                && !isGroundRending();
+    }
+
+    @Override
+    protected boolean shouldForceBarrelRollUpright() {
+        return onGround();
+    }
+
+    @Override
+    protected boolean isBarrelRollRiddenForHelper(boolean ridden, boolean canBarrelRoll) {
+        return canBarrelRoll;
+    }
+
+    @Override
+    protected boolean shouldEaseAirAutoAlign() {
         if (!isFlying() || areRiderControlsLocked()) {
             return false;
         }
@@ -3841,7 +3717,8 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         return Math.abs(getRiderForwardInput()) > 0.05f;
     }
 
-    private boolean isActivelyBarrelRolling() {
+    @Override
+    protected boolean isActivelyBarrelRolling() {
         return isFlying()
                 && !areRiderControlsLocked()
                 && !isDodging()
@@ -3849,17 +3726,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
                 && !isGroundRending()
                 && this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
                 && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
-    }
-
-    // Smoothed roll for visual interpolation (client-side only, not synced)
-    private float prevSmoothedRoll = 0.0f;
-    private float smoothedRoll = 0.0f;
-
-    /**
-     * Get smoothed barrel roll for rendering (RADIANS)
-     */
-    public float getSmoothedRoll(float partialTick) {
-        return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
     }
 
     // ===== SUPERCHARGE (Summon Storm) =====
@@ -4199,15 +4065,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         this.getNavigation().stop();
         this.setRunning(false);
         this.setGroundMoveStateFromAI(0);
-    }
-
-    @Override
-    protected void onSleepFreezeTick() {
-        this.getNavigation().stop();
-        this.setTarget(null);
-        this.setRunning(false);
-        this.setGroundMoveStateFromAI(0);
-        this.setDeltaMovement(Vec3.ZERO);
     }
 
     @Override
@@ -4791,7 +4648,7 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
         if (!areRiderControlsLocked()) {
             riderController.tickRidden(player, travelVector);
         } else {
-            // While locked, keep rider safe and aligned but do not apply rider-driven pitch changes
+            // While locked, keep rider safe and yaw-aligned without rider-driven pitch changes.
             player.fallDistance = 0.0F;
             this.fallDistance = 0.0F;
             this.setTarget(null);
@@ -4809,14 +4666,10 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
             Vec3 start = getBeamStartAnchor(1.0f);
             if (start == null) {
                 resetBeamAim();
-                copyRiderLook(player);
             } else {
                 // Calculate beam aim direction for server-side beam path, but DON'T apply it to dragon rotation
                 // The rider controller (line 4412) already handles rotation - applyBeamLook would fight it
                 Vec3 aim = refreshBeamAimDirection(start, true);
-                if (aim == null) {
-                    copyRiderLook(player);
-                }
                 // Skip applyBeamLook when riding - rider controller handles rotation
             }
         }
@@ -4894,25 +4747,6 @@ public class Raevyx extends RideableDragonBase implements FlyingAnimal,
 
     private boolean shouldStaySeatedCommand() {
         return this.isTame() && this.getCommand() == 1;
-    }
-
-    // ===== ELECTRICAL CONDUCTIVITY =====
-    private static final ElectricalConductivityProfile CONDUCTIVITY_PROFILE =
-            new ElectricalConductivityProfile(1.0f, 0.5f, 0.0f, 1.0, 0.3, 0.0);
-
-    @Override
-    public ElectricalConductivityProfile getConductivityProfile() {
-        return CONDUCTIVITY_PROFILE;
-    }
-
-    @Override
-    public ElectricalConductivityState getConductivityState() {
-        return ElectricalConductivityCapable.super.getConductivityState();
-    }
-
-    @Override
-    public Raevyx asConductiveEntity() {
-        return this;
     }
 
     public boolean canBeBound() {

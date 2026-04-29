@@ -204,25 +204,28 @@ public class VolitansAirCombatGoal extends Goal {
         }
 
         if (distance >= POISON_MIN_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_POISON_BALL);
+            if (!startAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true, 14, 120, 90, 36)) {
+                return;
+            }
             poisonHoldTicks = 20 + dragon.getRandom().nextInt(8);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_POISON_BALL, 14, 120, true, 90, 36);
             flyTowardTarget(target, POSITION_SPEED * 0.8D, CHASE_HEIGHT_OFFSET);
             return;
         }
 
         if (distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true)) {
             dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BREATH);
+            if (!startAiAbility(VolitansAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
+                return;
+            }
             breathHoldTicks = 50 + dragon.getRandom().nextInt(30);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BREATH, 16, 140, true, 110, 42);
             flyTowardTarget(target, POSITION_SPEED * 0.7D, CHASE_HEIGHT_OFFSET);
             return;
         }
 
         if (distance >= ROAR_MIN_RANGE && distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 12, 140, true, 120, 48);
+            if (!startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 12, 140, 120, 48)) {
+                return;
+            }
             flyTowardTarget(target, POSITION_SPEED * 0.9D, CHASE_HEIGHT_OFFSET);
             return;
         }
@@ -233,19 +236,32 @@ public class VolitansAirCombatGoal extends Goal {
     private void tryMelee() {
         float roll = dragon.getRandom().nextFloat();
         if (roll < 0.40F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BITE);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BITE, 12, 16, false, 0, 18);
+            startAiAbility(VolitansAbilities.VOLITANS_BITE, false, 12, 16, 0, 18);
         } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+            startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
         } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
         }
     }
 
     private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+    }
+
+    private boolean startAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
+                                   boolean majorAbility,
+                                   int cadenceTicks,
+                                   int abilityCooldownTicks,
+                                   int majorCooldownTicks,
+                                   int repeatLockoutTicks) {
+        return dragon.combatManager.tryUseAiAbility(
+                abilityType,
+                majorAbility,
+                cadenceTicks,
+                abilityCooldownTicks,
+                majorCooldownTicks,
+                repeatLockoutTicks
+        );
     }
 
     private void maintainMeleePosition(LivingEntity target) {

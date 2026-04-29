@@ -5,36 +5,28 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
-import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.List;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Phase 2 rage mode bite - AOE bite shorter range than horn gore, more damage than phase 1.
- */
 public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
-    private static final int BITE_SOUND_TICKS = 24; // 1.2s
-    private static final float DEFAULT_DAMAGE = 50.0f;
+    private static final int SOUND_TICKS = 24;
+    private static final float BASE_DAMAGE = 25.0f;
     private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
-    private static final double BASE_RANGE = 5.5;          // Shorter than horn gore (7.0)
-    private static final double RIDDEN_RANGE_BONUS = 0.5;
-    private static final double SWIM_RANGE_BONUS = 2.0;     // Reduced from 8.0
-    private static final double BITE_ANGLE_DEG = 95.0;      // Slightly wider than phase 1
-    private static final double BITE_SWIPE_HORIZONTAL = 4.5;
-    private static final double BITE_SWIPE_HORIZONTAL_RIDDEN = 2.0;
-    private static final double BITE_SWIPE_VERTICAL = 4.5;
+    private static final double RANGE = 6.0;
+    private static final double ANGLE_DEGREES = 95.0;
 
-    // Faster than phase 1 bite
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
             new AbilitySectionDuration(ACTIVE, 6),
@@ -50,7 +42,6 @@ public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
 
     @Override
     public boolean tryAbility() {
-        // Only allow in phase 2
         return getUser().isPhaseTwoActive();
     }
 
@@ -64,7 +55,7 @@ public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
             Varasuchus dragon = getUser();
             dragon.triggerAnim("action", "bite2");
             if (!dragon.level().isClientSide) {
-                dragon.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_BITE2.get(), 1.0f, 1.0f, BITE_SOUND_TICKS);
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_BITE2.get(), 1.0f, 1.0f, SOUND_TICKS);
             }
             appliedHit = false;
         }
@@ -79,11 +70,8 @@ public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
 
         if (section.sectionType == ACTIVE && !appliedHit) {
             Varasuchus dragon = getUser();
+            List<LivingEntity> targets = findAllTargetsInCone();
 
-            // AOE bite - hit ALL valid targets in range
-            java.util.List<LivingEntity> targets = findAllTargetsInCone();
-
-            // Apply hit to all targets found
             for (LivingEntity target : targets) {
                 applyHit(dragon, target);
             }
@@ -110,108 +98,29 @@ public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
         target.push(push.x, dragon.isSwimming() ? 0.2 : 0.08, push.z);
     }
 
-    // ===== Range calculation =====
-
-    private double getEffectiveRange() {
+    private List<LivingEntity> findAllTargetsInCone() {
         Varasuchus dragon = getUser();
-        double range = BASE_RANGE;
-
-        if (dragon.getControllingPassenger() != null) {
-            range += RIDDEN_RANGE_BONUS;
-        }
-        if (dragon.isSwimming()) {
-            range += SWIM_RANGE_BONUS;
-        }
-
-        return range;
-    }
-
-    // ===== AOE target finding - hits ALL valid targets in cone =====
-
-    private java.util.List<LivingEntity> findAllTargetsInCone() {
-        Varasuchus dragon = getUser();
-        Vec3 mouth = dragon.getMouthPosition();
-        Vec3 look = dragon.getLookAngle().normalize();
-
         boolean ridden = dragon.getControllingPassenger() != null;
-        double effectiveRange = getEffectiveRange();
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (isDirectTargetValid(dragon, target, effectiveRange)) {
-                return java.util.List.of(target);
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+                return List.of(target);
             }
-            return java.util.List.of();
+            return List.of();
         }
 
-        // Forward sweep out from the mouth so hits originate ahead of the head
-        double horizontalInflate = ridden ? BITE_SWIPE_HORIZONTAL_RIDDEN : BITE_SWIPE_HORIZONTAL;
-        AABB forwardSweep = new AABB(mouth, mouth.add(look.scale(effectiveRange)))
-                .inflate(horizontalInflate, BITE_SWIPE_VERTICAL, horizontalInflate);
-
-        java.util.List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, forwardSweep,
-                e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e));
-
-        double cosLimit = Math.cos(Math.toRadians(BITE_ANGLE_DEG));
-        java.util.List<LivingEntity> validTargets = new java.util.ArrayList<>();
-
-        for (LivingEntity e : candidates) {
-            // Compute closest point on target's AABB to the mouth
-            double distToAabb = distancePointToAABB(mouth, e.getBoundingBox());
-            if (distToAabb > effectiveRange + 0.4) continue;
-
-            // Direction toward the closest point for angle test
-            Vec3 toward = closestPointOnAABB(mouth, e.getBoundingBox()).subtract(mouth);
-            double len = toward.length();
-            if (len <= 0.0001) continue;
-            Vec3 dir = toward.scale(1.0 / len);
-            double dot = dir.dot(look);
-
-            // Require the bite to project forward from the head
-            if (dot <= 0.0) continue;
-
-            // Be forgiving with angle when very close; otherwise enforce cone
-            boolean veryClose = distToAabb < (effectiveRange * 0.35);
-            boolean goodAngle = dot >= cosLimit;
-            if (ridden) {
-                // Slightly relax the cone while ridden but keep hits forward
-                goodAngle = goodAngle || dot >= (cosLimit * 0.75);
-            }
-            if (!(veryClose || goodAngle)) continue;
-
-            // Add ALL valid targets instead of picking just the closest
-            validTargets.add(e);
-        }
-        return validTargets;
-    }
-
-    private boolean isDirectTargetValid(Varasuchus dragon, LivingEntity target, double range) {
-        if (target == null || !target.isAlive() || !target.attackable() || dragon.isAlly(target) || !dragon.isTargetValid(target)) {
-            return false;
-        }
-        double widthReach = dragon.getBbWidth() + target.getBbWidth() + 1.5D;
-        return dragon.distanceTo(target) <= Math.max(range, widthReach);
-    }
-
-    // ===== Geometry helpers =====
-
-    private static double distancePointToAABB(Vec3 p, AABB box) {
-        double dx = Math.max(Math.max(box.minX - p.x, 0.0), p.x - box.maxX);
-        double dy = Math.max(Math.max(box.minY - p.y, 0.0), p.y - box.maxY);
-        double dz = Math.max(Math.max(box.minZ - p.z, 0.0), p.z - box.maxZ);
-        return Math.sqrt(dx * dx + dy * dy + dz * dz);
-    }
-
-    private static Vec3 closestPointOnAABB(Vec3 p, AABB box) {
-        double cx = Mth.clamp(p.x, box.minX, box.maxX);
-        double cy = Mth.clamp(p.y, box.minY, box.maxY);
-        double cz = Mth.clamp(p.z, box.minZ, box.maxZ);
-        return new Vec3(cx, cy, cz);
+        return DragonMeleeGeometry.findForwardTargets(
+                dragon,
+                RANGE,
+                ANGLE_DEGREES,
+                entity -> !dragon.isAlly(entity)
+        );
     }
 
     private float resolveBaseDamage() {
         return (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID)
-                .abilityDamage("bite_phase2", DEFAULT_DAMAGE);
+                .abilityDamage("bite_phase2", BASE_DAMAGE);
     }
 }

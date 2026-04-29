@@ -266,18 +266,18 @@ public class RaevyxAirCombatGoal extends Goal {
             if (!canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
                 return;
             }
-            dragon.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_BITE);
-            dragon.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_BITE, 20, 20, false, 0, 18);
-            attackCooldown = 20;
+            if (startAiAbility(RaevyxAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
+                attackCooldown = 20;
+            }
         } else if (distance >= beamMinRange && distance <= beamMaxRange && beamCooldown <= 0) {
             // Medium-long range - lightning beam (smart tracking)
             if (!canUseAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
                 return;
             }
-            dragon.combatManager.tryUseAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM);
-            dragon.getAiCombatPacing().recordUse(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, 60, BEAM_COOLDOWN_TICKS, true, 160, 80);
-            attackCooldown = 60; // Longer cooldown after beam
-            beamCooldown = BEAM_COOLDOWN_TICKS; // 2 minute cooldown for AI beam in air
+            if (startAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
+                attackCooldown = 60; // Longer cooldown after beam
+                beamCooldown = BEAM_COOLDOWN_TICKS; // 2 minute cooldown for AI beam in air
+            }
         }
     }
 
@@ -434,5 +434,21 @@ public class RaevyxAirCombatGoal extends Goal {
 
     private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+    }
+
+    private boolean startAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
+                                   boolean majorAbility,
+                                   int cadenceTicks,
+                                   int abilityCooldownTicks,
+                                   int majorCooldownTicks,
+                                   int repeatLockoutTicks) {
+        return dragon.combatManager.tryUseAiAbility(
+                abilityType,
+                majorAbility,
+                cadenceTicks,
+                abilityCooldownTicks,
+                majorCooldownTicks,
+                repeatLockoutTicks
+        );
     }
 }

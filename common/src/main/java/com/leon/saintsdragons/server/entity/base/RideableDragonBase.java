@@ -126,6 +126,16 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return player.isCreative() || player.isSpectator();
     }
 
+    public boolean isRiddenByOwner() {
+        if (!isTame() || !isVehicle()) {
+            return false;
+        }
+        if (!(getControllingPassenger() instanceof Player player)) {
+            return false;
+        }
+        return isOwnedBy(player);
+    }
+
     public void handleRiderNetworkInput(ServerPlayer player, MessageDragonRideInput msg) {
         boolean locked = isRiderInputLocked(player);
         applyRiderVerticalInput(player, msg.goingUp(), msg.goingDown(), locked);
@@ -283,12 +293,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return true;
     }
 
-    /**
-     * Override this to specify if the dragon can take off (i.e., is flight-capable).
-     * Defaults to true - ground-only/aquatic dragons should override and return false.
-     */
     public boolean canTakeoff() {
-        return !this.isBaby();
+        return false;
     }
 
     protected void onRiderTakeoffRequest(Player player) {
@@ -369,23 +375,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             warnMissingAction("open_inventory");
         }
     }
-
-    protected float getRiderLockYawBlend() {
-        return 0.18F;
-    }
-
-    protected float getRiderLockPitchBlend() {
-        return 0.18F;
-    }
-
-    protected float getRiderLockPitchMin() {
-        return -45.0F;
-    }
-
-    protected float getRiderLockPitchMax() {
-        return 45.0F;
-    }
-
 
     @Nullable
     public RiderAbilityBinding getPrimaryRiderAbility() {
@@ -493,6 +482,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.entityData.set(getRiderStrafeAccessor(), strafe);
     }
 
+    public float getLastRiderForward() {
+        return this.entityData.get(getRiderForwardAccessor());
+    }
+
+    public float getLastRiderStrafe() {
+        return this.entityData.get(getRiderStrafeAccessor());
+    }
+
     // ===== MOVEMENT STATE IMPLEMENTATION =====
 
     @Override
@@ -585,39 +582,14 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.entityData.set(getAcceleratingAccessor(), accelerating);
     }
 
-    protected void copyRiderLook(Player player) {
-        if (player == null) {
-            return;
-        }
-
-        float currentYaw = this.getYRot();
-        float targetYaw = player.getYRot();
-        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
-        float yawBlend = getRiderLockYawBlend();
-        float blendedYaw = currentYaw + yawDelta * yawBlend;
-
-        this.setYRot(blendedYaw);
-        this.yBodyRotO = this.yBodyRot;
-        this.yBodyRot = blendedYaw;
-        this.yHeadRotO = this.yHeadRot;
-        this.setYHeadRot(blendedYaw);
-
-        float targetPitch = Mth.clamp(player.getXRot(), getRiderLockPitchMin(), getRiderLockPitchMax());
-        float blendedPitch = Mth.lerp(getRiderLockPitchBlend(), this.getXRot(), targetPitch);
-        this.xRotO = this.getXRot();
-        this.setXRot(blendedPitch);
-    }
-
     protected void copyRiderYaw(Player player) {
         if (player == null) {
             return;
         }
 
         float currentYaw = this.getYRot();
-        float targetYaw = player.getYRot();
-        float yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
-        float yawBlend = getRiderLockYawBlend();
-        float blendedYaw = currentYaw + yawDelta * yawBlend;
+        float yawDelta = Mth.wrapDegrees(player.getYRot() - currentYaw);
+        float blendedYaw = currentYaw + yawDelta * 0.18F;
 
         this.setYRot(blendedYaw);
         this.yBodyRotO = this.yBodyRot;
@@ -777,19 +749,11 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    // ===== ABSTRACT METHODS TO IMPLEMENT =====
 
-    /**
-     * Get the current flight mode. Must be implemented by subclasses.
-     *
-     * @return flight mode (-1=ground, 0=glide, 1=forward, 2=hover, 3=takeoff)
-     */
-    protected abstract int getFlightMode();
+    protected int getFlightMode() {
+        return -1;
+    }
 
-    /**
-     * Track whether a ridden dragon has been airborne since the last grounded/reset state.
-     * Dragons can call this once per tick before touchdown checks.
-     */
     protected void trackRiderAirborneForLanding() {
         boolean airborneWhileInFlightState = isVehicle()
                 && !onGround()
@@ -806,10 +770,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    /**
-     * Consume a ridden air-to-ground touchdown event.
-     * Returns true exactly when the dragon transitions from airborne to grounded while ridden.
-     */
+
     protected boolean consumeRiderTouchdownFromAir(double maxUpwardVelocity) {
         boolean touchdown = onGround()
                 && isVehicle()
@@ -825,14 +786,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return touchdown;
     }
 
-    /**
-     * Shared collision-based altitude probe for ridden landing blend logic.
-     * This is opt-in; only dragons that call it will use it.
-     *
-     * @param maxDropBlocks how far below the dragon's feet to scan
-     * @param blockOnFluids when true, returns POSITIVE_INFINITY if fluid is found in sampled columns
-     * @return altitude from dragon feet to nearest collision top, or POSITIVE_INFINITY if no usable terrain
-     */
     protected double getAltitudeAboveCollisionTerrain(int maxDropBlocks, boolean blockOnFluids) {
         BlockPos origin = this.blockPosition();
         if (!level().hasChunkAt(origin)) {
@@ -903,25 +856,21 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return isDragonFlying();
     }
 
-    /**
-     * Subclass hook to report actual flying state.
-     */
-    protected abstract boolean isDragonFlying();
+    protected boolean isDragonFlying() {
+        return false;
+    }
 
-    /**
-     * Check if the dragon is taking off. Must be implemented by subclasses.
-     */
-    public abstract boolean isTakeoff();
+    public boolean isTakeoff() {
+        return false;
+    }
 
-    /**
-     * Check if the dragon is landing. Must be implemented by subclasses.
-     */
-    public abstract boolean isLanding();
+    public boolean isLanding() {
+        return false;
+    }
 
-    /**
-     * Check if the dragon is hovering. Must be implemented by subclasses.
-     */
-    public abstract boolean isHovering();
+    public boolean isHovering() {
+        return false;
+    }
 
     /**
      * Check if the dragon is running. Must be implemented by subclasses.
@@ -932,6 +881,13 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
      * Set if the dragon is running. Must be implemented by subclasses.
      */
     public abstract void setRunning(boolean running);
+
+    @Override
+    protected void onSleepFreezeTick() {
+        super.onSleepFreezeTick();
+        this.setRunning(false);
+        this.setGroundMoveStateFromAI(0);
+    }
 
     /**
      * Force the sit progress to a specific value and sync it. Intended for platform handlers that

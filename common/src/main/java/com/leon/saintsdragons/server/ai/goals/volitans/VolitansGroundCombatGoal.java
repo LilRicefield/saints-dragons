@@ -149,9 +149,9 @@ public class VolitansGroundCombatGoal extends Goal {
                 updateChasePath(target);
             } else {
                 dragon.getNavigation().stop();
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 24, 200, true, 120, 48);
-                usedRoarOpener = true;
+                if (startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48)) {
+                    usedRoarOpener = true;
+                }
             }
             return;
         }
@@ -264,9 +264,7 @@ public class VolitansGroundCombatGoal extends Goal {
             return false;
         }
         dragon.getNavigation().stop();
-        dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_ROAR);
-        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_ROAR, 24, 200, true, 120, 48);
-        return true;
+        return startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48);
     }
 
     private boolean tryPoisonBall(double gap) {
@@ -277,9 +275,10 @@ public class VolitansGroundCombatGoal extends Goal {
             return false;
         }
         dragon.getNavigation().stop();
-        dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_POISON_BALL);
+        if (!startAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true, 16, 110, 90, 36)) {
+            return false;
+        }
         poisonBallHoldTicks = 18 + dragon.getRandom().nextInt(8);
-        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_POISON_BALL, 16, 110, true, 90, 36);
         return true;
     }
 
@@ -294,9 +293,10 @@ public class VolitansGroundCombatGoal extends Goal {
             return false;
         }
         dragon.getNavigation().stop();
-        dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BURROW);
+        if (!startAiAbility(VolitansAbilities.VOLITANS_BURROW, true, 14, 0, 80, 28)) {
+            return false;
+        }
         burrowCooldown = 220;
-        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BURROW, 14, 0, true, 80, 28);
         return true;
     }
 
@@ -312,9 +312,10 @@ public class VolitansGroundCombatGoal extends Goal {
         }
         dragon.getNavigation().stop();
         dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
-        dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BREATH);
+        if (!startAiAbility(VolitansAbilities.VOLITANS_BREATH, true, 18, 150, 110, 42)) {
+            return false;
+        }
         breathHoldTicks = 60 + dragon.getRandom().nextInt(35);
-        dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BREATH, 18, 150, true, 110, 42);
         return true;
     }
 
@@ -326,37 +327,47 @@ public class VolitansGroundCombatGoal extends Goal {
         if (gap <= BITE_RANGE) {
             float roll = dragon.getRandom().nextFloat();
             if (roll < 0.42F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+                startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
             } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_BITE);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_BITE, 12, 16, false, 0, 18);
+                startAiAbility(VolitansAbilities.VOLITANS_BITE, false, 12, 16, 0, 18);
             } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
             }
             return;
         }
 
         if (gap <= CLAW_RANGE) {
             if (dragon.getRandom().nextFloat() < 0.58F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_CLAW);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_CLAW, 14, 18, false, 0, 20);
+                startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
             } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-                dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
             }
             return;
         }
 
         if (gap <= GORE_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            dragon.combatManager.tryUseAbility(VolitansAbilities.VOLITANS_HORN_GORE);
-            dragon.getAiCombatPacing().recordUse(VolitansAbilities.VOLITANS_HORN_GORE, 16, 22, false, 0, 24);
+            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
         }
     }
 
     private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+    }
+
+    private boolean startAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
+                                   boolean majorAbility,
+                                   int cadenceTicks,
+                                   int abilityCooldownTicks,
+                                   int majorCooldownTicks,
+                                   int repeatLockoutTicks) {
+        return dragon.combatManager.tryUseAiAbility(
+                abilityType,
+                majorAbility,
+                cadenceTicks,
+                abilityCooldownTicks,
+                majorCooldownTicks,
+                repeatLockoutTicks
+        );
     }
 
     private double getGapToTarget(LivingEntity target) {
