@@ -3,9 +3,6 @@ package com.leon.saintsdragons.common.network;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 
-/**
- * Clientbound packet that tells the rider to show the melee mode notification.
- */
 public record MessageDragonMeleeMode(int mode) {
 
     public static void encode(MessageDragonMeleeMode message, FriendlyByteBuf buffer) {

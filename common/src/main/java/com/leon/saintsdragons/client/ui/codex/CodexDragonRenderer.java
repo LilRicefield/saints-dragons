@@ -17,7 +17,6 @@ public class CodexDragonRenderer {
     private static final int VARASUCHUS_SCALE = 15;
     private static final int CINDERVANE_SCALE = 12;
     private static final int STEGONAUT_SCALE = 23;
-
     private static final int IGNIVORUS_OFFSET_X = 0;
     private static final int IGNIVORUS_OFFSET_Y = 0;
     private static final int RAEVYX_OFFSET_X = 0;

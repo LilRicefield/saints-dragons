@@ -18,8 +18,6 @@ import org.joml.Vector3f;
 
 public class RaevyxLightningParticle extends TextureSheetParticle {
     private final SpriteSet spriteSet;
-
-    // Reusable objects to reduce garbage collection pressure
     private static final Vector3f[] CORNER_CACHE = new Vector3f[4];
     static {
         for (int i = 0; i < 4; i++) {
@@ -55,7 +53,6 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
     }
 
     private void updateSprite() {
-        // Calculate sprite index based on age (0-7 frames)
         float agePercent = (float) this.age / (float) this.lifetime;
         int spriteIndex = Math.min((int) (agePercent * 8), 7);
         this.setSprite(this.spriteSet.get(spriteIndex, 7));
@@ -67,13 +64,9 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         float cx = (float)(Mth.lerp(partialTicks, this.xo, this.x) - cam.x());
         float cy = (float)(Mth.lerp(partialTicks, this.yo, this.y) - cam.y());
         float cz = (float)(Mth.lerp(partialTicks, this.zo, this.z) - cam.z());
-
         Quaternionf camQ = new Quaternionf();
         camQ.rotateY((float) Math.toRadians(-camera.getYRot()));
-
         float size = this.getQuadSize(partialTicks);
-
-        // Reuse cached corners to avoid allocations
         CORNER_CACHE[0].set(-1.0F, -1.0F, 0.0F);
         CORNER_CACHE[1].set(-1.0F,  1.0F, 0.0F);
         CORNER_CACHE[2].set( 1.0F,  1.0F, 0.0F);

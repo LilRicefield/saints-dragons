@@ -4,9 +4,6 @@ import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 
-/**
- * Request the global ally list for the Draconic Codex.
- */
 public class MessageGlobalAllyRequest {
     public static final MessageGlobalAllyRequest INSTANCE = new MessageGlobalAllyRequest();
 

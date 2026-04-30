@@ -24,7 +24,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     private static final float BASE_DAMAGE = 15.0f;
-    private static final double RANGE = 8.0;
+    private static final double RANGE = 6.0;
+    private static final double HITBOX_HALF_WIDTH = 3.75;
+    private static final double HITBOX_HALF_HEIGHT = 3.4;
+    private static final double CLOSE_HIT_RANGE = 5.25;
     private static final double ANGLE_DEGREES = 85.0;
     private static final float CHAIN_DAMAGE_BASE = 10.0f;
     private static final double CHAIN_RADIUS = 7.0;
@@ -101,12 +104,15 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         List<LivingEntity> candidates = DragonMeleeGeometry.findForwardTargets(
                 wyvern,
                 RANGE,
+                HITBOX_HALF_WIDTH,
+                HITBOX_HALF_HEIGHT,
                 ANGLE_DEGREES,
+                CLOSE_HIT_RANGE,
                 entity -> !isAllied(wyvern, entity)
         );
         if (!wyvern.level().isClientSide) {
             DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.forwardAttack(wyvern);
-            DragonAbilityDebug.sendBox(wyvern, attack.sweep(RANGE, RANGE, RANGE), 0x33D1FF, 20);
+            DragonAbilityDebug.sendBox(wyvern, attack.sweep(RANGE, HITBOX_HALF_WIDTH, HITBOX_HALF_HEIGHT), 0x33D1FF, 20);
         }
 
         return candidates.isEmpty() ? null : candidates.get(0);

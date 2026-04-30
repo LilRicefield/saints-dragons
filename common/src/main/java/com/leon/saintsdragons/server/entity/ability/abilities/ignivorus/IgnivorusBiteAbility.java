@@ -9,10 +9,8 @@ import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.Comparator;
 import java.util.List;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
@@ -23,8 +21,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
     private static final float BASE_DAMAGE = 50.0f;
     private static final float ARMOR_PENETRATION = 5.0f;
-    private static final double RANGE = 18.0;
+    private static final double RANGE = 10.0;
     private static final double AIR_RANGE_BONUS = 2.0;
+    private static final double HITBOX_HALF_WIDTH = 7.5;
+    private static final double HITBOX_HALF_HEIGHT = 2.6;
+    private static final double CLOSE_HIT_RANGE = 4.25;
+    private static final double ANGLE_DEGREES = 80.0;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 6),
@@ -117,27 +119,15 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
             return List.of();
         }
 
-        Vec3 origin = DragonMeleeGeometry.forwardAttack(dragon).origin();
-
-        AABB detectionBox = new AABB(origin, origin).inflate(range);
-
-        double finalRange = range;
-        List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, detectionBox,
-                entity -> {
-                    if (entity == dragon || !entity.isAlive() || !entity.attackable() || dragon.isAlly(entity)) {
-                        return false;
-                    }
-
-                    Vec3 entityCenter = entity.getBoundingBox().getCenter();
-                    double distSqr = entityCenter.distanceToSqr(origin);
-                    return distSqr <= finalRange * finalRange;
-                });
-
-        candidates.sort(Comparator.comparingDouble(e ->
-            e.getBoundingBox().getCenter().distanceToSqr(origin)
-        ));
-
-        return candidates;
+        return DragonMeleeGeometry.findForwardTargets(
+                dragon,
+                range,
+                HITBOX_HALF_WIDTH,
+                HITBOX_HALF_HEIGHT,
+                ANGLE_DEGREES,
+                CLOSE_HIT_RANGE,
+                entity -> !dragon.isAlly(entity)
+        );
     }
 
 }

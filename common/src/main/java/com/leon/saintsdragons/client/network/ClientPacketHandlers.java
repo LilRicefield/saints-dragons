@@ -2,14 +2,11 @@ package com.leon.saintsdragons.client.network;
 
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
-import com.leon.saintsdragons.client.ui.DragonAllyScreen;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexList;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
-import com.leon.saintsdragons.common.network.MessageDragonAllyDelta;
-import com.leon.saintsdragons.common.network.MessageDragonAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
@@ -21,24 +18,6 @@ import net.minecraft.client.Minecraft;
 @Environment(EnvType.CLIENT)
 public final class ClientPacketHandlers {
     private ClientPacketHandlers() {
-    }
-
-    public static void handleAllyList(MessageDragonAllyList message) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen instanceof DragonAllyScreen allyScreen) {
-            allyScreen.updateAllyList(message.allyList());
-        }
-    }
-
-    public static void handleAllyDelta(MessageDragonAllyDelta message) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen instanceof DragonAllyScreen allyScreen) {
-            if (message.isAdd()) {
-                allyScreen.addAlly(message.username());
-            } else {
-                allyScreen.removeAlly(message.username());
-            }
-        }
     }
 
     public static void handleDraconicCodexList(MessageDraconicCodexList message) {

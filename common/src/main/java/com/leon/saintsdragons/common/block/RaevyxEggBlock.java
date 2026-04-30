@@ -33,17 +33,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-/**
- * Raevyx egg block that hatches into a baby Raevyx over time.
- * Hatches faster during thunderstorms, instantly when struck by lightning.
- */
 public class RaevyxEggBlock extends BaseEntityBlock {
     public static final int MAX_HATCH_LEVEL = 2;
     public static final IntegerProperty HATCH = BlockStateProperties.HATCH;
-    private static final int DEFAULT_NORMAL_TOTAL_HATCH_TICKS = 18000; // 15 minutes
-    private static final int DEFAULT_THUNDER_TOTAL_HATCH_TICKS = 9600; // 8 minutes
-
-    // Egg shape (similar to turtle egg but slightly larger)
+    private static final int DEFAULT_NORMAL_TOTAL_HATCH_TICKS = 18000;
+    private static final int DEFAULT_THUNDER_TOTAL_HATCH_TICKS = 9600;
     private static final VoxelShape SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 10.0D, 13.0D);
 
     public RaevyxEggBlock(Properties properties) {
@@ -65,37 +59,25 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         int currentHatch = state.getValue(HATCH);
 
         if (currentHatch < MAX_HATCH_LEVEL) {
-            // Play cracking sound
             level.playSound(null, pos, SoundEvents.TURTLE_EGG_CRACK, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
             level.setBlock(pos, state.setValue(HATCH, currentHatch + 1), 2);
         } else {
-            // Hatch the egg
             this.hatchEgg(level, pos, state);
         }
     }
 
-    /**
-     * Instantly hatch the egg (called by lightning strike)
-     */
     public void instantHatch(ServerLevel level, BlockPos pos, BlockState state) {
         this.hatchEgg(level, pos, state);
     }
 
-    /**
-     * Spawn baby Raevyx and remove egg block
-     */
+
     private void hatchEgg(ServerLevel level, BlockPos pos, BlockState state) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
-        // Play hatching sound and effects
         level.playSound(null, pos, SoundEvents.TURTLE_EGG_HATCH, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
         level.removeBlock(pos, false);
-
-        // Spawn baby Raevyx
         Raevyx baby = ModEntities.RAEVYX.get().create(level);
         if (baby != null) {
-            // Get block entity data if it exists
             if (blockEntity instanceof RaevyxEggBlockEntity eggEntity) {
-                // Inherit parent data
                 if (eggEntity.getOwnerUUID() != null) {
                     baby.setOwnerUUID(eggEntity.getOwnerUUID());
                     baby.setTame(true);
@@ -106,20 +88,15 @@ public class RaevyxEggBlock extends BaseEntityBlock {
                     baby.setGender(level.random.nextBoolean() ? DragonGender.MALE : DragonGender.FEMALE);
                 }
             } else {
-                // Fallback: random gender
                 baby.setGender(level.random.nextBoolean() ? DragonGender.MALE : DragonGender.FEMALE);
             }
 
-            // Configure as baby
-            baby.setAge(-24000); // 20 minutes until adult
+            baby.setAge(-24000);
             baby.setBaby(true);
             baby.skipRespawnTicks = 5;
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
-
-            // Position at egg location
             baby.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
-
             level.addFreshEntity(baby);
             if (baby.isTame() && baby.getOwnerUUID() != null) {
                 DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
@@ -129,8 +106,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
-        // Eggs can be trampled and destroyed (like turtle eggs)
+    public void stepOn(Level level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull Entity entity) {
         if (!level.isClientSide && entity instanceof Player player && !player.isShiftKeyDown()) {
             if (level.random.nextInt(10) == 0) {
                 this.destroyEgg(level, state, pos);
@@ -140,8 +116,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void tick(BlockState state, ServerLevel level, BlockPos pos, RandomSource random) {
-        // Check for nearby lightning bolts every tick
+    public void tick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, @NotNull RandomSource random) {
         level.getEntitiesOfClass(LightningBolt.class,
             new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
             .stream()
@@ -208,16 +183,12 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public void neighborChanged(@NotNull BlockState state, Level level, @NotNull BlockPos pos, net.minecraft.world.level.block.Block block, BlockPos fromPos, boolean isMoving) {
-        // Schedule a tick to check for lightning when neighbors change (like when lightning strikes nearby)
+    public void neighborChanged(@NotNull BlockState state, Level level, @NotNull BlockPos pos, @NotNull Block block, @NotNull BlockPos fromPos, boolean isMoving) {
         if (!level.isClientSide) {
             level.scheduleTick(pos, this, 1);
         }
     }
 
-    /**
-     * Destroy the egg without spawning a baby
-     */
     private void destroyEgg(Level level, BlockState state, BlockPos pos) {
         level.playSound(null, pos, SoundEvents.TURTLE_EGG_BREAK, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
         level.destroyBlock(pos, false);
@@ -230,7 +201,6 @@ public class RaevyxEggBlock extends BaseEntityBlock {
 
     @Override
     public int getAnalogOutputSignal(BlockState state, @NotNull Level level, @NotNull BlockPos pos) {
-        // Comparator output based on hatch level (0-2)
         return state.getValue(HATCH);
     }
 
@@ -241,7 +211,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     }
 
     @Override
-    public RenderShape getRenderShape(@NotNull BlockState state) {
+    public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
     }
 

@@ -11,7 +11,6 @@ import net.minecraft.util.Mth;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-
 @Environment(EnvType.CLIENT)
 public class CustomEditBox extends EditBox {
     private int textColor = 0xFFFFFF;

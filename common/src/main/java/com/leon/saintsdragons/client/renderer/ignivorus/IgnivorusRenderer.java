@@ -7,15 +7,20 @@ import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmokeLayer;
+import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3d;
@@ -28,8 +33,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
     private static final String FIRE_BONE = "fireBone";
     private static final String PASSENGER_BONE = "passengerBone";
-
-    // Bones for hitbox parts
     private static final String HEAD_BONE = "headController";
     private static final String NECK_BONE = "neck3Controller";
     private static final String HIP_BONE = "hip";
@@ -47,7 +50,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
     private static final String RIGHT_BACK_LEG_BONE = "rightbackleg";
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0D;
-
     private BakedGeoModel lastBakedModel;
     private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
@@ -96,8 +98,6 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         }
         model.getBone(PASSENGER_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(FIRE_BONE).ifPresent(b -> b.setTrackingMatrices(true));
-
-        // Enable tracking for hitbox bones
         model.getBone(HEAD_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(NECK_BONE).ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(HIP_BONE).ifPresent(b -> b.setTrackingMatrices(true));
@@ -135,7 +135,7 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
 
         if (entity.isBaby()) {
             this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
-                net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+                Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
                 if (world != null) {
                     entity.setClientLocatorPosition("passengerLocator", world);
                 }
@@ -144,20 +144,18 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         }
 
         this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+           Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) {
                 entity.setClientLocatorPosition("passengerLocator", world);
             }
         });
 
         this.lastBakedModel.getBone(FIRE_BONE).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
+            Vec3 world = transformLocator(b, 0f, 0f, 0f);
             if (world != null) {
                 entity.setClientLocatorPosition("fireBoneOrigin", world);
             }
         });
-
-        // Track hitbox bone positions and sync to server
         trackBone(HEAD_BONE, "headController", entity);
         trackBone(NECK_BONE, "neck3Controller", entity);
         trackBone(HIP_BONE, "hip", entity);
@@ -173,9 +171,13 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         trackBone(RIGHT_FRONT_LEG_BONE, "rightfrontleg", entity);
         trackBone(LEFT_BACK_LEG_BONE, "leftbackleg", entity);
         trackBone(RIGHT_BACK_LEG_BONE, "rightbackleg", entity);
-
-        // Send bone positions to server for hitbox sync (every few frames to reduce network load)
         sendBonePositionsToServer(entity);
+    }
+
+    @Override
+    public RenderType getRenderType(Ignivorus animatable, ResourceLocation texture,
+                                    @Nullable MultiBufferSource bufferSource, float partialTick) {
+        return RenderType.entityCutoutNoCull(texture);
     }
 
     @Override
@@ -219,22 +221,18 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         if (minecraft.player == null || !entity.isAlive()) {
             return;
         }
-
-        // Keep server-side multipart hitboxes aligned even when nobody is riding.
-        // Limit to nearby entities to avoid unnecessary traffic.
         if (minecraft.player.distanceToSqr(entity) > 96.0D * 96.0D) {
             return;
         }
 
-        // Per-entity cadence so one dragon's render calls do not throttle another's.
         if ((entity.tickCount + entity.getId()) % SYNC_INTERVAL_TICKS != 0) {
             return;
         }
 
-        java.util.Map<String, net.minecraft.world.phys.Vec3> positions =
-                new java.util.HashMap<>(com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES.length);
-        for (String boneName : com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES) {
-            net.minecraft.world.phys.Vec3 pos = entity.getClientLocatorPosition(boneName);
+        java.util.Map<String, Vec3> positions =
+                new java.util.HashMap<>(MessageDragonBonePositions.SYNCED_BONES.length);
+        for (String boneName : MessageDragonBonePositions.SYNCED_BONES) {
+           Vec3 pos = entity.getClientLocatorPosition(boneName);
             if (pos != null) {
                 positions.put(boneName, pos);
             }
@@ -251,16 +249,16 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
         }
 
         if (!positions.isEmpty()) {
-            com.leon.saintsdragons.common.network.NetworkHandler.sendToServer(
-                new com.leon.saintsdragons.common.network.MessageDragonBonePositions(entity.getId(), positions)
+            NetworkHandler.sendToServer(
+                new MessageDragonBonePositions(entity.getId(), positions)
             );
         }
     }
 
-    private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
+    private static int computeSnapshotHash(java.util.Map<String, Vec3> positions) {
         int hash = 1;
-        for (String boneName : com.leon.saintsdragons.common.network.MessageDragonBonePositions.SYNCED_BONES) {
-            net.minecraft.world.phys.Vec3 pos = positions.get(boneName);
+        for (String boneName : MessageDragonBonePositions.SYNCED_BONES) {
+            Vec3 pos = positions.get(boneName);
             if (pos == null) {
                 continue;
             }
@@ -278,22 +276,22 @@ public class IgnivorusRenderer extends GeoEntityRenderer<Ignivorus> {
 
     private void trackBone(String boneName, String locatorName, Ignivorus entity) {
         this.lastBakedModel.getBone(boneName).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f);
+            Vec3 world = transformLocator(b, 0f, 0f, 0f);
             if (world != null) {
                 entity.setClientLocatorPosition(locatorName, world);
             }
         });
     }
 
-    private net.minecraft.world.phys.Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
+    private Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
         if (bone == null || bone.getWorldSpaceMatrix() == null) return null;
 
         float lx = px / 16f;
         float ly = py / 16f;
         float lz = pz / 16f;
-        org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
-        org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
-        org.joml.Vector4f out = worldMat.transform(in);
+        Matrix4f worldMat = new Matrix4f(bone.getWorldSpaceMatrix());
+        Vector4f in = new Vector4f(lx, ly, lz, 1f);
+        Vector4f out = worldMat.transform(in);
         return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
     }
 }

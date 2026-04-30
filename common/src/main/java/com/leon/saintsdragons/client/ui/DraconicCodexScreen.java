@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexRequest;
+import com.leon.saintsdragons.common.network.MessageGlobalAllyManagement;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.client.ui.codex.CodexAllyPanel;
@@ -32,7 +33,6 @@ import java.util.Objects;
 @Environment(EnvType.CLIENT)
 public class DraconicCodexScreen extends Screen {
     public static final ThreadLocal<Boolean> RENDERING_IN_GUI = ThreadLocal.withInitial(() -> false);
-
     private static final ResourceLocation BOOK_TEXTURE =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/draconic_codex.png");
     private static final ResourceLocation TAB_PHYSIOLOGY =
@@ -67,7 +67,6 @@ public class DraconicCodexScreen extends Screen {
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/remove_icon.png");
     private static final ResourceLocation REFRESH_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/refresh_icon.png");
-
     private static final int REFRESH_ICON_OFFSET_X = 72;
     private static final int REFRESH_ICON_OFFSET_Y = 46;
     private static final int REFRESH_ICON_WIDTH = 8;
@@ -75,7 +74,6 @@ public class DraconicCodexScreen extends Screen {
     private static final int REFRESH_ICON_TEXTURE_WIDTH = 8;
     private static final int REFRESH_ICON_TEXTURE_HEIGHT = 9;
     private static final int LIVE_REFRESH_INTERVAL_TICKS = 10;
-
     private final CodexTabPanel tabPanel = new CodexTabPanel();
     private final CodexDragonListPanel dragonListPanel = new CodexDragonListPanel();
     private final CodexDragonRenderer dragonRenderer = new CodexDragonRenderer();
@@ -112,8 +110,6 @@ public class DraconicCodexScreen extends Screen {
 
         this.leftPos = Math.max(0, (this.width - actualWidth) / 2);
         this.topPos = Math.max(0, (this.height - actualHeight) / 2);
-
-        // Request current tamed dragon list from server (safe path: no prune)
         requestCodexRefresh(false);
         NetworkHandler.sendToServer(com.leon.saintsdragons.common.network.MessageGlobalAllyRequest.INSTANCE);
 
@@ -181,8 +177,6 @@ public class DraconicCodexScreen extends Screen {
                 leftPos, topPos, mouseX, mouseY, ecologyPage, ecologyPanel, allyPanel,
                 allyList, allyScrollOffset);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
-
-        // Render dragon last with scissor clipping
         dragonRenderer.drawDragonPortrait(guiGraphics, this.minecraft, getSelectedEntry(), leftPos, topPos, mouseX, mouseY);
     }
 
@@ -338,15 +332,15 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private void addAllyFromInput(String username) {
-        NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyManagement(
-                com.leon.saintsdragons.common.network.MessageGlobalAllyManagement.Action.ADD,
+        NetworkHandler.sendToServer(new MessageGlobalAllyManagement(
+              MessageGlobalAllyManagement.Action.ADD,
                 username
         ));
     }
 
     private void removeAllyFromInput(String username) {
-        NetworkHandler.sendToServer(new com.leon.saintsdragons.common.network.MessageGlobalAllyManagement(
-                com.leon.saintsdragons.common.network.MessageGlobalAllyManagement.Action.REMOVE,
+        NetworkHandler.sendToServer(new MessageGlobalAllyManagement(
+                MessageGlobalAllyManagement.Action.REMOVE,
                 username
         ));
     }

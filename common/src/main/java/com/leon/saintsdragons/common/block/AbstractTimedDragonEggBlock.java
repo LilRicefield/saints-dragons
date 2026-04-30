@@ -70,7 +70,7 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
     }
 
     @Override
-    public RenderShape getRenderShape(@NotNull BlockState state) {
+    public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
     }
 

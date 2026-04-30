@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.model.varasuchus;
 
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.resources.ResourceLocation;
@@ -49,12 +50,9 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
     @Override
     public void setCustomAnimations(Varasuchus entity, long instanceId, AnimationState<Varasuchus> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
-
-        // Skip custom animations when rendering in GUI (like the Draconic Codex)
-        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+        if (DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
-
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
         float partialTick = animationState.getPartialTick();
@@ -78,7 +76,6 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
         if (rootOpt.isEmpty()) {
             return;
         }
-
         GeoBone root = rootOpt.get();
         var snap = root.getInitialSnapshot();
         double deviation = entity.getBodyRotDeviation().get(partialTick);
@@ -109,12 +106,9 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
     private void applyNeckFollow(Varasuchus entity, EntityModelData modelData, float partialTick) {
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
-
         double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-
-        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.40f);
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.45f);
@@ -152,34 +146,20 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
-    /**
-     * Apply swim pitch to body bone for visual feedback when swimming
-     * (like how flying dragons tilt when diving)
-     */
     private void applySwimPitch(Varasuchus entity, float partialTick) {
-        // Only apply swim pitch when actually in water and swimming
         if (!entity.isInWater() && !entity.isInWaterOrBubble()) {
             return;
         }
-
         var bodyOpt = getBone("heightController");
         if (bodyOpt.isEmpty()) {
             return;
         }
-
         GeoBone body = bodyOpt.get();
         float swimPitchRad = entity.getSwimPitchRadians(partialTick);
-
-        // Apply pitch rotation to body bone (additive, preserves animations)
         body.setRotX(body.getRotX() + swimPitchRad);
     }
 
-    /**
-     * Apply swim roll (banking) when turning underwater
-     * (like how flying dragons bank when turning)
-     */
     private void applySwimRoll(Varasuchus entity, float partialTick) {
-        // Only apply swim roll when actually in water and swimming
         if (!entity.isInWater() && !entity.isInWaterOrBubble()) {
             return;
         }
@@ -188,12 +168,10 @@ public class VarasuchusModel extends DefaultedEntityGeoModel<Varasuchus> {
         if (bodyOpt.isEmpty()) {
             return;
         }
-
         GeoBone body = bodyOpt.get();
         float swimRollDegrees = entity.getSwimRollAngleDegrees(partialTick);
         float swimRollRad = swimRollDegrees * Mth.DEG_TO_RAD;
 
-        // Apply roll rotation to body bone (additive, preserves animations)
         body.setRotZ(body.getRotZ() + swimRollRad);
     }
 }

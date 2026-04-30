@@ -13,18 +13,10 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Network message for requesting the player's tamed dragons list for the Draconic Codex.
- */
 public class MessageDraconicCodexRequest {
     private static final long REQUEST_COOLDOWN_TICKS = 10L;
     private static final ConcurrentHashMap<UUID, Long> NEXT_ALLOWED_REQUEST_TICK = new ConcurrentHashMap<>();
     private final boolean pruneMissingBoundEntries;
-
-    public MessageDraconicCodexRequest() {
-        this(false);
-    }
-
     public MessageDraconicCodexRequest(boolean pruneMissingBoundEntries) {
         this.pruneMissingBoundEntries = pruneMissingBoundEntries;
     }
@@ -77,9 +69,6 @@ public class MessageDraconicCodexRequest {
                     if (binderExists) {
                         data.updateDragonBoundState(player.getUUID(), dragonId, true);
                     } else if (message.pruneMissingBoundEntries) {
-                        // Manual refresh acts as an intentional hard-prune pass.
-                        // Live codex updates stay non-destructive so modded storage
-                        // does not silently wipe entries while the screen is open.
                         data.removeDragon(player.getUUID(), dragonId);
                     }
                 }

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.model.volitans;
 
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.resources.ResourceLocation;
@@ -52,7 +53,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     public void setCustomAnimations(Volitans entity, long instanceId, AnimationState<Volitans> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+        if (DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
 

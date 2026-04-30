@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-/**
- * Varasuchus egg block that hatches into a baby Varasuchus over time.
- */
 public class VarasuchusEggBlock extends AbstractTimedDragonEggBlock<VarasuchusEggBlockEntity> {
     private static final int DEFAULT_HATCH_TICKS = 24000; // 20 minutes
     private static final VoxelShape SHAPE = box(4.0D, 0.0D, 4.0D, 12.0D, 10.0D, 12.0D);

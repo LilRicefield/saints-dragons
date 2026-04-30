@@ -28,4 +28,3 @@ public record MessageDragonMovingSound(int entityId, String soundId, float volum
                 com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDragonMovingSound(message));
     }
 }
-

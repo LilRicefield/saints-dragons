@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.model.ignivorus;
 
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.resources.ResourceLocation;
@@ -9,7 +10,6 @@ import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
-
 
 public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
 
@@ -26,7 +26,6 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus_female.png");
     private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus.png");
     private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus_female.png");
-
 
     @Override
     public ResourceLocation getModelResource(Ignivorus entity) {
@@ -61,7 +60,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     public void setCustomAnimations(Ignivorus entity, long instanceId, AnimationState<Ignivorus> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+        if (DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);

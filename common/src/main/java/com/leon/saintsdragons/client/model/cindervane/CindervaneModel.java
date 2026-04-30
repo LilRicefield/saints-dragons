@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.model.cindervane;
 
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.resources.ResourceLocation;
@@ -8,7 +9,6 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
-import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
@@ -27,14 +27,11 @@ public CindervaneModel() {
     private static final ResourceLocation ALBINO_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino_female.png");
     private static final ResourceLocation BABY_MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/baby_cindervane.png");
     private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/baby_cindervane_female.png");
-
-
-
     @Override
     public void setCustomAnimations(Cindervane entity, long instanceId, AnimationState<Cindervane> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+        if (DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
@@ -176,8 +173,6 @@ public CindervaneModel() {
         double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-
-        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.15f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.30f);
         applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.45f);

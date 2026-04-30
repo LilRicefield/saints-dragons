@@ -6,9 +6,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Sync global ally list to client.
- */
 public class MessageGlobalAllyList {
     private final List<String> allyList;
 

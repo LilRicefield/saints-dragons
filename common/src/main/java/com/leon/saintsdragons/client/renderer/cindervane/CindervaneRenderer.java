@@ -14,6 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -24,7 +25,6 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
-    // Offset from bone pivot for rider positioning (adjust as needed)
     private static final float PASSENGER_SEAT0_X = 0.0f, PASSENGER_SEAT0_Y = -3.0f, PASSENGER_SEAT0_Z = 0.0f;
     private static final float PASSENGER_SEAT1_X = 0.0f, PASSENGER_SEAT1_Y = -3.0f, PASSENGER_SEAT1_Z = 0.0f;
     private static final String AUTO_MOUNT_BONE = "automountBoneRight";
@@ -34,22 +34,18 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
     private static final float AUTO_MOUNT_OFFSET_Z = 0.0f;
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0;
-
     private BakedGeoModel lastBakedModel;
     private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
     public CindervaneRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CindervaneModel());
     }
-
     @Override
     public float getMotionAnimThreshold(Cindervane animatable) {
         return 0.000001f;
     }
-
     @Override
     protected float getDeathMaxRotation(Cindervane entity) {
-        // Keep Amphithere upright so custom death animation plays without vanilla flop
         return 0.0F;
     }
 
@@ -67,25 +63,18 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-
         if (entity.isBaby()) {
             this.shadowRadius = 0.8f;
         } else {
             this.shadowRadius = 2.0f * scale;
         }
-
-        // Store the model for later use in render()
         this.lastBakedModel = model;
-
-        // Enable matrix tracking for passenger bones
         enableTrackingForBones(model);
 
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
-
     private void enableTrackingForBones(BakedGeoModel model) {
-        // Enable tracking for both passenger seat bones
         model.getBone("passengerBone1").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone("passengerBone2").ifPresent(b -> b.setTrackingMatrices(true));
         model.getBone(AUTO_MOUNT_BONE).ifPresent(b -> b.setTrackingMatrices(true));
@@ -103,29 +92,22 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         } finally {
             RenderPassContext.endExtraction();
         }
-
-        // Sample passenger bone positions and store in entity's locator cache for RiderController to use
         if (this.lastBakedModel != null) {
-            // Sample seat 0 (driver) position from passengerBone1
             this.lastBakedModel.getBone("passengerBone1").ifPresent(b -> {
-                net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_SEAT0_X, PASSENGER_SEAT0_Y, PASSENGER_SEAT0_Z);
+                Vec3 world = transformLocator(b, PASSENGER_SEAT0_X, PASSENGER_SEAT0_Y, PASSENGER_SEAT0_Z);
                 if (world != null) {
                     entity.setClientLocatorPosition("passengerSeat0", world);
-                    // Alias key so single-seat lookup paths still work in compatibility mode.
                     entity.setClientLocatorPosition("passengerLocator", world);
                 }
             });
-
-            // Sample seat 1 (passenger) position from passengerBone2
             this.lastBakedModel.getBone("passengerBone2").ifPresent(b -> {
-                net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_SEAT1_X, PASSENGER_SEAT1_Y, PASSENGER_SEAT1_Z);
+               Vec3 world = transformLocator(b, PASSENGER_SEAT1_X, PASSENGER_SEAT1_Y, PASSENGER_SEAT1_Z);
                 if (world != null) {
                     entity.setClientLocatorPosition("passengerSeat1", world);
                 }
             });
-
             this.lastBakedModel.getBone(AUTO_MOUNT_BONE).ifPresent(b -> {
-                net.minecraft.world.phys.Vec3 world = transformLocator(b, AUTO_MOUNT_OFFSET_X, AUTO_MOUNT_OFFSET_Y, AUTO_MOUNT_OFFSET_Z);
+               Vec3 world = transformLocator(b, AUTO_MOUNT_OFFSET_X, AUTO_MOUNT_OFFSET_Y, AUTO_MOUNT_OFFSET_Z);
                 if (world != null) {
                     entity.setClientLocatorPosition(AUTO_MOUNT_LOCATOR, world);
                 }
@@ -135,7 +117,6 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
 
         sendBonePositionsToServer(entity);
     }
-
     @Override
     public void renderRecursively(PoseStack poseStack, Cindervane animatable, GeoBone bone, RenderType renderType,
                                   MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
@@ -177,7 +158,7 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
 
         RiderBullcrap.store(animatable.getId(), seatIndex, viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
-        net.minecraft.world.phys.Vec3 boneWorldPos = new net.minecraft.world.phys.Vec3(
+        Vec3 boneWorldPos = new Vec3(
                 boneWorldPosJoml.x,
                 boneWorldPosJoml.y,
                 boneWorldPosJoml.z
@@ -195,8 +176,8 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
             return;
         }
 
-        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(1);
-        net.minecraft.world.phys.Vec3 autoMount = entity.getClientLocatorPosition(AUTO_MOUNT_LOCATOR);
+        java.util.Map<String, Vec3> positions = new java.util.HashMap<>(1);
+        Vec3 autoMount = entity.getClientLocatorPosition(AUTO_MOUNT_LOCATOR);
         if (autoMount != null) {
             positions.put(AUTO_MOUNT_LOCATOR, autoMount);
         }
@@ -214,9 +195,9 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
     }
 
-    private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
+    private static int computeSnapshotHash(java.util.Map<String, Vec3> positions) {
         int hash = 1;
-        net.minecraft.world.phys.Vec3 autoMount = positions.get(AUTO_MOUNT_LOCATOR);
+        Vec3 autoMount = positions.get(AUTO_MOUNT_LOCATOR);
         if (autoMount != null) {
             hash = 31 * hash + AUTO_MOUNT_LOCATOR.hashCode();
             hash = 31 * hash + quantize(autoMount.x);
@@ -230,19 +211,14 @@ public class CindervaneRenderer extends GeoEntityRenderer<Cindervane> {
         return (int) Math.round(value * SNAPSHOT_PRECISION);
     }
 
-    /**
-     * Transform a local offset relative to a bone into world space.
-     * This is used to sample bone positions for rider placement.
-     */
-    private net.minecraft.world.phys.Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
+    private Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
         if (bone == null || bone.getWorldSpaceMatrix() == null) return null;
-
         float lx = px / 16f;
         float ly = py / 16f;
         float lz = pz / 16f;
         org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
         org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
         org.joml.Vector4f out = worldMat.transform(in);
-        return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
+        return new Vec3(out.x(), out.y(), out.z());
     }
 }

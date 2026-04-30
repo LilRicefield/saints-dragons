@@ -8,9 +8,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 
-/**
- * Centralises packet registration and dispatch using the platform abstraction layer.
- */
 public final class NetworkHandler {
     private static final NetworkHelper NETWORK = Services.PLATFORM.getNetworkHelper();
     private static boolean registered = false;
@@ -45,22 +42,6 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerServerbound(
-                MessageDragonAllyManagement.class,
-                id("dragon_ally_management"),
-                MessageDragonAllyManagement::encode,
-                MessageDragonAllyManagement::decode,
-                MessageDragonAllyManagement::handle
-        );
-
-        NETWORK.registerServerbound(
-                MessageDragonAllyRequest.class,
-                id("dragon_ally_request"),
-                MessageDragonAllyRequest::encode,
-                MessageDragonAllyRequest::decode,
-                MessageDragonAllyRequest::handle
-        );
-
-        NETWORK.registerServerbound(
                 MessageDraconicCodexRequest.class,
                 id("draconic_codex_request"),
                 MessageDraconicCodexRequest::encode,
@@ -82,22 +63,6 @@ public final class NetworkHandler {
                 MessageGlobalAllyManagement::encode,
                 MessageGlobalAllyManagement::decode,
                 MessageGlobalAllyManagement::handle
-        );
-
-        NETWORK.registerClientbound(
-                MessageDragonAllyList.class,
-                id("dragon_ally_list"),
-                MessageDragonAllyList::encode,
-                MessageDragonAllyList::decode,
-                MessageDragonAllyList::handle
-        );
-
-        NETWORK.registerClientbound(
-                MessageDragonAllyDelta.class,
-                id("dragon_ally_delta"),
-                MessageDragonAllyDelta::encode,
-                MessageDragonAllyDelta::decode,
-                MessageDragonAllyDelta::handle
         );
 
         NETWORK.registerClientbound(

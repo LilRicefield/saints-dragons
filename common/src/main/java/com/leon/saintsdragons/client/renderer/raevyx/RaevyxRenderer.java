@@ -41,7 +41,6 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
 
     public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RaevyxModel());
-        // Attach beam render layers (glow + beam)
         this.addRenderLayer(new RaevyxGlowLayer(this));
         this.addRenderLayer(new RaevyxLightningBeamLayer());
     }
@@ -62,7 +61,6 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         return entity.isFemale() ? TEXTURE_FEMALE : TEXTURE_MALE;
     }
 
-    // Suppress vanilla death flip; use custom death animation instead (method name varies by MC version)
     protected float getDeathMaxRotation(Raevyx entity) {
         return 0.0F;
     }
@@ -81,15 +79,9 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
 
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
-
-        // Baby dragons have smaller shadows
         this.shadowRadius = entity.isBaby() ? 1.25F : 3.0f;
-
-        // Enable matrix tracking for the feet bones we care about
         this.lastBakedModel = model;
         enableTrackingForBones(model);
-
-        // Call super.preRender
         super.preRender(poseStack, entity, model, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
     }
@@ -154,11 +146,7 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
         return RenderType.entityCutoutNoCull(texture);
     }
 
-    // --- Helpers ---
-    // Passenger bone offsets (in pixels, divided by 16 to convert to blocks)
-    // X = left/right, Y = up/down (negative pushes down), Z = forward/back (negative = forward)
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
-
     private void enableTrackingForBones(BakedGeoModel model) {
         if (model == null) return;
         model.getBone("passengerBone").ifPresent(b -> b.setTrackingMatrices(true));
@@ -166,32 +154,29 @@ public class RaevyxRenderer extends GeoEntityRenderer<Raevyx> {
     }
 
     private void sampleAndStashLocatorsAccurate(Raevyx entity) {
-        if (this.lastBakedModel == null || entity == null) return;
-        // Sample passenger bone position for rider placement
+        if (this.lastBakedModel == null || entity == null)
+            return;
         this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) {
                 entity.setClientLocatorPosition("passengerLocator", world);
                 entity.setClientLocatorPosition("passengerSeat0", world);
             }
         });
-        // Sample beam bone position for accurate beam origin (follows head/neck animations perfectly)
         this.lastBakedModel.getBone("beamBone").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, 0f, 0f, 0f); // Use bone pivot directly
+            Vec3 world = transformLocator(b, 0f, 0f, 0f);
             if (world != null) entity.setClientLocatorPosition("beamBoneOrigin", world);
         });
     }
 
-    private static net.minecraft.world.phys.Vec3 transformLocator(software.bernie.geckolib.cache.object.GeoBone bone,
-                                                                  float px, float py, float pz) {
+    private static Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
         if (bone == null) return null;
-        // Convert pixels to model units (blocks)
         float lx = px / 16f;
         float ly = py / 16f;
         float lz = pz / 16f;
-        org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
-        org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
-        org.joml.Vector4f out = worldMat.transform(in);
-        return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
+        Matrix4f worldMat = new Matrix4f(bone.getWorldSpaceMatrix());
+        Vector4f in = new Vector4f(lx, ly, lz, 1f);
+        Vector4f out = worldMat.transform(in);
+        return new Vec3(out.x(), out.y(), out.z());
     }
 }

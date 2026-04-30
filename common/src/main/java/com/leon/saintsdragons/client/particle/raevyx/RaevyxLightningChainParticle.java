@@ -19,10 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 
-/**
- * Animated lightning chain particle that traces a path between two points.
- * Creates the visual effect of lightning jumping from target to target.
- */
 public class RaevyxLightningChainParticle extends TextureSheetParticle {
     private final SpriteSet spriteSet;
     private final Vec3 startPos;
@@ -158,7 +154,7 @@ public class RaevyxLightningChainParticle extends TextureSheetParticle {
 
     @Override
     public int getLightColor(float partialTicks) {
-        return 240; // Fullbright
+        return 240;
     }
 
     @Override

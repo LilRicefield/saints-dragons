@@ -3,9 +3,6 @@ package com.leon.saintsdragons.common.network;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 
-/**
- * Delta update for global ally list.
- */
 public class MessageGlobalAllyDelta {
     private final String username;
     private final boolean isAdd;

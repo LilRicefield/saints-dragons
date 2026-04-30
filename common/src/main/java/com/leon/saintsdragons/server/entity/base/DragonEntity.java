@@ -770,7 +770,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public boolean isInvulnerableTo(@NotNull DamageSource source) {
-        DragonType dragonType = getDragonType();
+         DragonType dragonType = getDragonType();
         if (dragonType != null && dragonType.getElementalProfile().isImmuneTo(source)) {
             return true;
         }

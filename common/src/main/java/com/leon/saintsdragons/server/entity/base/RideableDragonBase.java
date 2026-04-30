@@ -482,7 +482,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     @Override
     public int getEffectiveGroundState() {
-        Integer state = this.getAnimData(com.leon.saintsdragons.common.network.DragonAnimTickets.GROUND_MODE);
+        Integer state = this.getAnimData(DragonAnimTickets.GROUND_MODE);
         if (state != null) {
             return state;
         }

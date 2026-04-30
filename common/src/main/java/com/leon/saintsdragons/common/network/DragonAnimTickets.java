@@ -4,9 +4,8 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import software.bernie.geckolib.network.SerializableDataTicket;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-
 public final class DragonAnimTickets {
-    public static final SerializableDataTicket<Integer> GROUND_MODE = registerInt("dragon_ground_state");
+    public static final SerializableDataTicket<Integer> GROUND_MODE = registerInt("dragon_ground_mode");
     public static final SerializableDataTicket<Integer> FLIGHT_MODE = registerInt("dragon_flight_mode");
 
     private DragonAnimTickets() {

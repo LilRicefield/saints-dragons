@@ -16,7 +16,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3d;
@@ -110,6 +113,12 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
     }
 
     @Override
+    public RenderType getRenderType(Volitans animatable, ResourceLocation texture,
+                                    @Nullable MultiBufferSource bufferSource, float partialTick) {
+        return RenderType.entityCutoutNoCull(texture);
+    }
+
+    @Override
     public void renderRecursively(PoseStack poseStack, Volitans animatable, GeoBone bone, RenderType renderType,
                                   MultiBufferSource bufferSource, VertexConsumer buffer, boolean isReRender,
                                   float partialTick, int packedLight, int packedOverlay,
@@ -141,7 +150,7 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
 
         RiderBullcrap.store(animatable.getId(), viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
-        net.minecraft.world.phys.Vec3 boneWorldPos = new net.minecraft.world.phys.Vec3(
+       Vec3 boneWorldPos = new Vec3(
                 boneWorldPosJoml.x,
                 boneWorldPosJoml.y,
                 boneWorldPosJoml.z
@@ -149,7 +158,7 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         RiderBullcrap.storeCameraOffset(animatable.getId(), boneWorldPos.subtract(animatable.position()));
     }
 
-    private static net.minecraft.world.phys.Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
+    private static Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
         if (bone == null || bone.getWorldSpaceMatrix() == null) {
             return null;
         }
@@ -157,10 +166,10 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         float lx = px / 16f;
         float ly = py / 16f;
         float lz = pz / 16f;
-        org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
-        org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
-        org.joml.Vector4f out = worldMat.transform(in);
-        return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
+        Matrix4f worldMat = new Matrix4f(bone.getWorldSpaceMatrix());
+        Vector4f in = new Vector4f(lx, ly, lz, 1f);
+        Vector4f out = worldMat.transform(in);
+        return new Vec3(out.x(), out.y(), out.z());
     }
 
     private void sendBreathLocatorToServer(Volitans entity) {
@@ -175,8 +184,8 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
             return;
         }
 
-        java.util.Map<String, net.minecraft.world.phys.Vec3> positions = new java.util.HashMap<>(1);
-        net.minecraft.world.phys.Vec3 breath = entity.getClientLocatorPosition("breathBoneOrigin");
+        java.util.Map<String, Vec3> positions = new java.util.HashMap<>(1);
+        Vec3 breath = entity.getClientLocatorPosition("breathBoneOrigin");
         if (breath != null) {
             positions.put("breathBoneOrigin", breath);
         }
@@ -194,10 +203,10 @@ public class VolitansRenderer extends GeoEntityRenderer<Volitans> {
         NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
     }
 
-    private static int computeSnapshotHash(java.util.Map<String, net.minecraft.world.phys.Vec3> positions) {
+    private static int computeSnapshotHash(java.util.Map<String, Vec3> positions) {
         int hash = 1;
         for (String boneName : new String[] {"breathBoneOrigin"}) {
-            net.minecraft.world.phys.Vec3 pos = positions.get(boneName);
+            Vec3 pos = positions.get(boneName);
             if (pos == null) {
                 continue;
             }

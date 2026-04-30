@@ -10,28 +10,25 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
-
 import java.util.function.Consumer;
 
-/**
- * Shared dragon riding input handling used by both Forge and Fabric integrations.
- * Platform layers hook up registration/ticking and delegate here so gameplay stays identical.
- */
 public final class DragonRideInputHandler {
     private static final String KEY_CATEGORY = "key.categories.saintsdragons";
-
-    // NOTE: Ascend/Accelerate default to UNKNOWN to avoid conflicts with vanilla Jump/Sprint on Fabric.
-    // The handler checks vanilla keybinds (Jump/Shift/Sprint) as fallbacks, so dragon
-    // controls work out-of-box. Players can bind these to different keys if desired.
     public static final KeyMapping DRAGON_ASCEND = new KeyMapping(
             "key.saintsdragons.ascend",
             InputConstants.Type.KEYSYM,
@@ -125,27 +122,19 @@ public final class DragonRideInputHandler {
     private static final int RAEVYX_SECONDARY_HOLD_TICKS = 6;
     private static int groundJumpHoldTicks = 0;
     private static boolean groundJumpMeterActive = false;
-
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
     private static float lastYaw = 0f;
     private static boolean lastAscendDown = false;
     private static boolean lastDescendDown = false;
-
-    // Double-tap dodge detection (Raevyx)
     private static long lastLeftTapTime = 0;
     private static long lastRightTapTime = 0;
     private static boolean wasLeftKeyDown = false;
     private static boolean wasRightKeyDown = false;
-
-    // Double-tap bulldoze detection (Ignivorus)
     private static long lastForwardTapTime = 0;
     private static boolean wasForwardKeyDown = false;
-
-    // Double-tap Phase 2 detection (Ignivorus)
     private static long lastBackwardTapTime = 0;
     private static boolean wasBackwardKeyDown = false;
-
     private static final long DOUBLE_TAP_WINDOW_MS = 300;
 
     private DragonRideInputHandler() {
@@ -156,7 +145,6 @@ public final class DragonRideInputHandler {
             registrar.accept(mapping);
         }
         if (rebuildMappings) {
-            // Ensure Minecraft rebuilds its key->binding lookup so our keys respond immediately on Fabric.
             KeyMapping.resetMapping();
         }
     }
@@ -179,13 +167,10 @@ public final class DragonRideInputHandler {
     }
 
     private static void handleControls(Minecraft mc, LocalPlayer player, RideableDragonBase dragon) {
-        // CLIENT-SIDE LOCK CHECK: Block all input if controls are locked
-        // This prevents client-side prediction from moving the dragon before server can block it
         if (dragon.areRiderControlsLocked()) {
             handleLockedInputs(mc, dragon);
             return;
         }
-
         boolean ascendDown = DRAGON_ASCEND.isDown() || mc.options.keyJump.isDown();
         boolean descendDown = DRAGON_DESCEND.isDown() || mc.options.keyShift.isDown();
         boolean accelerateDown = DRAGON_ACCELERATE.isDown() || mc.options.keySprint.isDown();
@@ -196,12 +181,10 @@ public final class DragonRideInputHandler {
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
         boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
         boolean attackDown = mc.options.keyAttack.isDown();
-
         float forward = player.zza;
         float strafe = player.xxa;
         float yaw = player.getYRot();
-
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut) {
+        if (dragon instanceof Stegonaut) {
             if (mc.screen instanceof InventoryScreen || mc.screen instanceof CreativeModeInventoryScreen) {
                 mc.setScreen(null);
                 sendInput(false, false, DragonRiderAction.OPEN_INVENTORY, null, forward, strafe, yaw);
@@ -237,33 +220,30 @@ public final class DragonRideInputHandler {
             sendInput(ascendDown, descendDown, action, null, forward, strafe, yaw);
         }
 
-        // Only send takeoff request for dragons that can fly
         if (ascendDown && !wasAscendPressed) {
             boolean canTakeoffNow = dragon.canTakeoff();
             boolean alreadyFlying = dragon.isFlying();
             boolean breachWaterBypass =
-                    (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
-                    || dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane
-                    || dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus)
+                    (dragon instanceof Raevyx
+                    || dragon instanceof Cindervane
+                    || dragon instanceof Ignivorus)
                     && dragon.isInWaterOrBubble()
                     && !dragon.isUnderWater()
                     && !alreadyFlying;
             boolean raevyxFallRecoveryBypass =
-                    dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
+                    dragon instanceof Raevyx
                     && !alreadyFlying
                     && !dragon.onGround()
                     && !dragon.isInWaterOrBubble()
                     && !dragon.isInLava()
                     && (dragon.fallDistance >= 1.0F || dragon.getDeltaMovement().y <= -0.02D);
             if ((!alreadyFlying && canTakeoffNow) || breachWaterBypass || raevyxFallRecoveryBypass) {
-                // Preserve the current ascend/descend state so the server keeps Space latched on takeoff
                 sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
             }
         }
 
         if (toggleMeleeDown && !wasToggleMeleeDown) {
-            // Volitans breath mode switch uses X while actively breathing; skip melee UI/messages.
-            if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans && volitansBreathActive) {
+            if (dragon instanceof Volitans && volitansBreathActive) {
                 sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe, yaw);
             } else
             if (dragon.hasSecondaryMelee()) {
@@ -272,16 +252,16 @@ public final class DragonRideInputHandler {
                         .showNotification((dragon.getMeleeMode() + 1) % 2);
             } else {
                 player.displayClientMessage(
-                        net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
+                        Component.translatable("saintsdragons.message.no_secondary_melee"),
                         true
                 );
             }
         }
         if (togglePitchModeDown && !wasTogglePitchModeDown
-                && (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
-                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane
-                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus
-                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans
+                && (dragon instanceof Raevyx
+                || dragon instanceof Cindervane
+                || dragon instanceof Ignivorus
+                || dragon instanceof Volitans
                 || dragon instanceof Varasuchus)) {
             sendInput(false, false, DragonRiderAction.TOGGLE_PITCH_MODE, null, forward, strafe, yaw);
         }
@@ -289,22 +269,17 @@ public final class DragonRideInputHandler {
             sendInput(false, false, DragonRiderAction.TAUNT, null, forward, strafe, yaw);
         }
 
-        // Double-tap dodge detection (Raevyx + Volitans)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx
-                || dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+        if (dragon instanceof Raevyx
+                || dragon instanceof Volitans) {
             boolean leftDown = mc.options.keyLeft.isDown();
             boolean rightDown = mc.options.keyRight.isDown();
             long currentTime = System.currentTimeMillis();
-
-            // Detect left dodge (double-tap A)
             if (leftDown && !wasLeftKeyDown) {
                 if (currentTime - lastLeftTapTime < DOUBLE_TAP_WINDOW_MS) {
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_A, null, forward, strafe, yaw);
                 }
                 lastLeftTapTime = currentTime;
             }
-
-            // Detect right dodge (double-tap D)
             if (rightDown && !wasRightKeyDown) {
                 if (currentTime - lastRightTapTime < DOUBLE_TAP_WINDOW_MS) {
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_D, null, forward, strafe, yaw);
@@ -316,14 +291,12 @@ public final class DragonRideInputHandler {
             wasRightKeyDown = rightDown;
         }
 
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx ||
+        if (dragon instanceof Ignivorus ||
+            dragon instanceof Raevyx ||
             dragon instanceof Varasuchus ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+            dragon instanceof Volitans) {
             boolean forwardDown = mc.options.keyUp.isDown();
             long currentTime = System.currentTimeMillis();
-
-            // Detect double-tap W
             if (forwardDown && !wasForwardKeyDown) {
                 if (currentTime - lastForwardTapTime < DOUBLE_TAP_WINDOW_MS) {
                     if (dragon instanceof Varasuchus varasuchus) {
@@ -336,15 +309,11 @@ public final class DragonRideInputHandler {
 
             wasForwardKeyDown = forwardDown;
         }
-
-        // Double-tap S detection (Ignivorus = Phase 2 toggle, Raevyx/Volitans = backward dash)
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx ||
-            dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+        if (dragon instanceof Ignivorus ||
+            dragon instanceof Raevyx ||
+            dragon instanceof Volitans) {
             boolean backwardDown = mc.options.keyDown.isDown();
             long currentTime = System.currentTimeMillis();
-
-            // Detect double-tap S
             if (backwardDown && !wasBackwardKeyDown) {
                 if (currentTime - lastBackwardTapTime < DOUBLE_TAP_WINDOW_MS) {
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_S, null, forward, strafe, yaw);
@@ -355,23 +324,22 @@ public final class DragonRideInputHandler {
             wasBackwardKeyDown = backwardDown;
         }
 
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+        if (dragon instanceof Volitans) {
             handleVolitansDualTertiary(tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         } else {
             handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe, yaw);
         }
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+        if (dragon instanceof Volitans) {
             handleVolitansDualPrimary(primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
         } else {
             handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe, yaw);
         }
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+        if (dragon instanceof Raevyx) {
             handleRaevyxDualSecondary(secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
         } else {
             handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe, yaw);
         }
         handleAbilityBinding(dragon.getAttackRiderAbility(), attackDown, wasAttackDown, forward, strafe, yaw);
-
         wasAscendPressed = ascendDown;
         wasAccelerateDown = accelerateDown;
         wasTertiaryAbilityDown = tertiaryDown;
@@ -508,7 +476,6 @@ public final class DragonRideInputHandler {
             } else {
                 long heldMs = volitansPrimaryPressStartedAtMs > 0L ? now - volitansPrimaryPressStartedAtMs : 0L;
                 if (heldMs >= VOLITANS_PRIMARY_HOLD_MS) {
-                    // Fallback: if a late frame missed arming while held, still treat as hold-release shoot.
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
                             VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
                     sendInput(false, false, DragonRiderAction.ABILITY_STOP,
@@ -561,7 +528,7 @@ public final class DragonRideInputHandler {
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
         boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
 
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans) {
+        if (dragon instanceof Volitans) {
             if (volitansBreathActive) {
                 sendInput(false, false, DragonRiderAction.ABILITY_STOP, VolitansAbilities.VOLITANS_BREATH_ID, 0f, 0f, 0f);
             }
@@ -575,15 +542,13 @@ public final class DragonRideInputHandler {
         } else {
             handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
         }
-        if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx) {
+        if (dragon instanceof Raevyx) {
             raevyxSecondaryHoldTicks = 0;
             raevyxGroundRendTriggered = false;
         }
         handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
         handleLockedAbilityRelease(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown);
         handleLockedAbilityRelease(dragon.getAttackRiderAbility(), attackDown, wasAttackDown);
-
-        // Reset movement/double-tap tracking, but keep ability key states to avoid re-trigger on unlock.
         resetStateTracking();
         wasTertiaryAbilityDown = tertiaryDown;
         wasPrimaryAbilityDown = primaryDown;

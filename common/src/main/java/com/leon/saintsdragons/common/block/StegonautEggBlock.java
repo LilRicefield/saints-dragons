@@ -19,9 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-/**
- * Stegonaut egg block that hatches into a baby Stegonaut over time.
- */
+
 public class StegonautEggBlock extends AbstractTimedDragonEggBlock<StegonautEggBlockEntity> {
     private static final int DEFAULT_HATCH_TICKS = 30000; // 25 minutes
     private static final VoxelShape EGG_SHAPE = box(3.0D, 0.0D, 3.0D, 13.0D, 10.0D, 13.0D);
@@ -33,7 +31,7 @@ public class StegonautEggBlock extends AbstractTimedDragonEggBlock<StegonautEggB
 
     @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
+    public BlockState getStateForPlacement(@NotNull BlockPlaceContext context) {
         return this.defaultBlockState();
     }
 

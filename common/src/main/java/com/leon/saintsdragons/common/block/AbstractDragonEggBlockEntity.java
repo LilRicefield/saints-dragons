@@ -10,9 +10,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import javax.annotation.Nullable;
 import java.util.UUID;
 
-/**
- * Shared egg block entity state for dragon eggs.
- */
+
 public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
     private static final double LEGACY_NORMAL_HATCH_TICKS = 18000.0D;
 

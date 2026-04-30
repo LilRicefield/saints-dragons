@@ -8,6 +8,7 @@ import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
@@ -53,11 +54,8 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
                           int packedOverlay,
                           float red, float green, float blue, float alpha) {
 
-        // Store model and enable matrix tracking for bones with locators
         this.lastBakedModel = model;
         enableTrackingForBones(model);
-
-        // Scale the drake - females are slightly smaller (85% scale)
         float scale = 1.0f;
         poseStack.scale(scale, scale, scale);
         this.shadowRadius = entity.isBaby() ? 1.5F : 2.5f;
@@ -119,7 +117,7 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
     }
 
     @Override
-    public RenderType getRenderType(Varasuchus animatable, net.minecraft.resources.ResourceLocation texture,
+    public RenderType getRenderType(Varasuchus animatable, ResourceLocation texture,
                                     @Nullable MultiBufferSource bufferSource, float partialTick) {
         return RenderType.entityCutoutNoCull(texture);
     }
@@ -135,21 +133,20 @@ public class VarasuchusRenderer extends GeoEntityRenderer<Varasuchus> {
         if (this.lastBakedModel == null || entity == null) return;
 
         this.lastBakedModel.getBone("passengerBone").ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
         });
     }
 
-    private static net.minecraft.world.phys.Vec3 transformLocator(software.bernie.geckolib.cache.object.GeoBone bone,
+    private static Vec3 transformLocator(GeoBone bone,
                                                                   float px, float py, float pz) {
         if (bone == null) return null;
-        // Convert pixels to model units (blocks)
         float lx = px / 16f;
         float ly = py / 16f;
         float lz = pz / 16f;
-        org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
-        org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
-        org.joml.Vector4f out = worldMat.transform(in);
-        return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
+        Matrix4f worldMat = new Matrix4f(bone.getWorldSpaceMatrix());
+        Vector4f in = new Vector4f(lx, ly, lz, 1f);
+        Vector4f out = worldMat.transform(in);
+        return new Vec3(out.x(), out.y(), out.z());
     }
 }

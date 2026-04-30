@@ -15,9 +15,6 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 
 import java.util.function.Supplier;
 
-/**
- * Platform-agnostic block entity registration.
- */
 public final class ModBlockEntities {
     private static final RegistryHelper.RegistryWrapper<BlockEntityType<?>> REGISTER =
             Services.PLATFORM.getRegistryHelper()

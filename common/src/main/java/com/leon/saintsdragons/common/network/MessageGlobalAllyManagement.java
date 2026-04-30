@@ -5,9 +5,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 
-/**
- * Manage global allies for all owned dragons.
- */
 public class MessageGlobalAllyManagement {
     private final Action action;
     private final String username;

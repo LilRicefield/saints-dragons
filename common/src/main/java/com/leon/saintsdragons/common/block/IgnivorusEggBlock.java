@@ -17,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
 
-/**
- * Ignivorus egg block that hatches into a baby Ignivorus over time.
- */
 public class IgnivorusEggBlock extends AbstractTimedDragonEggBlock<IgnivorusEggBlockEntity> {
     private static final int DEFAULT_HATCH_TICKS = 36000; // 30 minutes
     private static final VoxelShape SHAPE = box(3.0D, 0.0D, 3.0D, 13.0D, 13.0D, 13.0D);

@@ -14,12 +14,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
-/**
- * Horizontal dragon health bar displayed above hotbar when riding.
- * 128x32 pixels, centered on screen.
- */
 public class DragonRideHealthBar {
-    // Raevyx textures (128x32 horizontal)
     private static final ResourceLocation RAEVYX_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_base.png");
     private static final ResourceLocation RAEVYX_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/raevyx/raevyx_overlay.png");
     private static final ResourceLocation IGNIVORUS_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/ignivorus/ignivorus_base.png");

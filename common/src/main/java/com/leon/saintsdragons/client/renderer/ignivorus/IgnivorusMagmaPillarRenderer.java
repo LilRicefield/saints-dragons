@@ -23,7 +23,6 @@ public class IgnivorusMagmaPillarRenderer extends GeoEntityRenderer<IgnivorusMag
     @Override
     public void render(@NotNull IgnivorusMagmaPillarEntity entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-        // Use the pillar's locked yaw directly so Gecko rendering always matches spawn direction.
         super.render(entity, entity.getYHeadRot(), partialTick, poseStack, bufferSource, packedLight);
     }
 }

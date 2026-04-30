@@ -31,9 +31,6 @@ import net.minecraft.world.entity.MobCategory;
 
 import java.util.function.Supplier;
 
-/**
- * Platform-agnostic entity registration.
- */
 public final class ModEntities {
     private static final RegistryHelper.RegistryWrapper<EntityType<?>> REGISTER =
             Services.PLATFORM.getRegistryHelper()

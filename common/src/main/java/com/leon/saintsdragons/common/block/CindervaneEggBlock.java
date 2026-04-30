@@ -74,14 +74,14 @@ public class CindervaneEggBlock extends AbstractTimedDragonEggBlock<CindervaneEg
     }
 
     @Override
-    public boolean canBeReplaced(BlockState state, BlockPlaceContext useContext) {
+    public boolean canBeReplaced(@NotNull BlockState state, BlockPlaceContext useContext) {
         return !useContext.isSecondaryUseActive()
                 && useContext.getItemInHand().is(this.asItem())
                 && state.getValue(EGGS) < MAX_EGGS;
     }
 
     @Override
-    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+    public void stepOn(Level level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull Entity entity) {
         if (!level.isClientSide && entity instanceof Player player && !player.isShiftKeyDown()) {
             if (level.random.nextInt(10) == 0) {
                 this.destroyEgg(level, state, pos);

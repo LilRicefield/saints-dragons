@@ -8,7 +8,9 @@ import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
@@ -43,7 +45,6 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
 
     @Override
     protected float getDeathMaxRotation(Stegonaut entity) {
-        // Prevent vanilla renderer from rotating the body sideways during the death sequence
         return 0.0F;
     }
 
@@ -83,8 +84,13 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
         } finally {
             RenderPassContext.endExtraction();
         }
-        
         sampleAndStashLocatorsAccurate(entity);
+    }
+
+    @Override
+    public RenderType getRenderType(Stegonaut animatable, ResourceLocation texture,
+                                    @Nullable MultiBufferSource bufferSource, float partialTick) {
+        return RenderType.entityCutoutNoCull(texture);
     }
 
     @Override
@@ -116,7 +122,6 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
         if (!RiderBullcrap.tryLockForFrame(animatable.getId(), 0)) {
             return;
         }
-
         RiderBullcrap.store(animatable.getId(), 0, viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
         Vec3 boneWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
@@ -134,25 +139,20 @@ public class StegonautRenderer extends GeoEntityRenderer<Stegonaut> {
         if (this.lastBakedModel == null || entity == null) return;
 
         this.lastBakedModel.getBone(PASSENGER_BONE).ifPresent(b -> {
-            net.minecraft.world.phys.Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
+            Vec3 world = transformLocator(b, PASSENGER_X, PASSENGER_Y, PASSENGER_Z);
             if (world != null) entity.setClientLocatorPosition("passengerLocator", world);
         });
     }
     
-    private static net.minecraft.world.phys.Vec3 transformLocator(software.bernie.geckolib.cache.object.GeoBone bone,
-                                                                  float px, float py, float pz) {
+    private static Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {
         if (bone == null) return null;
-        
-        // Convert pixels to model units (blocks)
         float lx = px / 16f;
         float ly = py / 16f;
         float lz = pz / 16f;
+        Matrix4f worldMat = new Matrix4f(bone.getWorldSpaceMatrix());
+        Vector4f in = new Vector4f(lx, ly, lz, 1f);
+        Vector4f out = worldMat.transform(in);
         
-        // Transform using bone's world matrix
-        org.joml.Matrix4f worldMat = new org.joml.Matrix4f(bone.getWorldSpaceMatrix());
-        org.joml.Vector4f in = new org.joml.Vector4f(lx, ly, lz, 1f);
-        org.joml.Vector4f out = worldMat.transform(in);
-        
-        return new net.minecraft.world.phys.Vec3(out.x(), out.y(), out.z());
+        return new Vec3(out.x(), out.y(), out.z());
     }
 }
