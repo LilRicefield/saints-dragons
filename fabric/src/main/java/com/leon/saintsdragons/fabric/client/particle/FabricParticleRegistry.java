@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
 public class FabricParticleRegistry {
     public static void registerParticleFactories() {
         ParticleFactoryRegistry.getInstance().register(ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
+        ParticleFactoryRegistry.getInstance().register(ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         ParticleFactoryRegistry.getInstance().register(ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
 
     }

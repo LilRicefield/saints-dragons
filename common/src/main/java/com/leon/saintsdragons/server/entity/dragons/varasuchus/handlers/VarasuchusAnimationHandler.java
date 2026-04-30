@@ -20,6 +20,8 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation RUN2 = RawAnimation.begin().thenLoop("animation.varasuchus.run2");
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.varasuchus.swim_idle");
     private static final RawAnimation SWIM_MOVE = RawAnimation.begin().thenLoop("animation.varasuchus.swim_move");
+    private static final RawAnimation JUMP = RawAnimation.begin().thenLoop("animation.varasuchus.jump");
+    private static final RawAnimation JUMP2 = RawAnimation.begin().thenLoop("animation.varasuchus.jump2");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.varasuchus.sit");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.varasuchus.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.varasuchus.up");
@@ -75,6 +77,11 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         if (drake.isWildRideAnimationActive()) {
             controller.transitionLength(2);
             state.setAndContinue(drake.isInWaterOrBubble() ? THRASHING_UNDERWATER : BUCKING);
+            return PlayState.CONTINUE;
+        }
+        if (drake.isRiddenGroundJumpAirborne()) {
+            controller.transitionLength(1);
+            state.setAndContinue(drake.isPhaseTwoActive() ? JUMP2 : JUMP);
             return PlayState.CONTINUE;
         }
         if (drake.areRiderControlsLocked()) {
@@ -169,7 +176,6 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     public void triggerWakeUpAnimation() {
         drake.triggerAnim("action", "wake_up");
     }
-
     public void setupInstantActionController(AnimationController<Varasuchus> controller) {
         controller.triggerableAnim("tail_swipe_left",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_swipe_left"));

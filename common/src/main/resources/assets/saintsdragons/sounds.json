@@ -68,8 +68,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_grumble1",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 30
       }
     ]
   },
@@ -78,8 +79,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_grumble2",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 30
       }
     ]
   },
@@ -88,8 +90,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_grumble3",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 30
       }
     ]
   },
@@ -99,7 +102,8 @@
       {
         "name": "saintsdragons:entity/raevyx/raevyx_takeoff",
         "volume": 2.0,
-        "pitch": 1.0
+        "pitch": 1.0,
+        "attenuation_distance": 30
       }
     ]
   },
@@ -108,8 +112,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_eat",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 30
       }
     ]
   },
@@ -120,7 +125,7 @@
         "name": "saintsdragons:entity/raevyx/raevyx_lightning_beam_start",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 48
       }
     ]
   },
@@ -146,41 +151,11 @@
       }
     ]
   },
-  "raevyx_purr": {
-    "subtitle": "Raevyx purrs contentedly",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_purr",
-        "volume": 1.0,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "raevyx_chuff": {
-    "subtitle": "Raevyx chuffs",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_chuff",
-        "volume": 1.0,
-        "pitch": 1.0
-      }
-    ]
-  },
   "raevyx_content": {
     "subtitle": "Raevyx sounds content",
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_content",
-        "volume": 1.0,
-        "pitch": 1.0
-      }
-    ]
-  },
-  "raevyx_excited": {
-    "subtitle": "Raevyx sounds excited",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_excited",
         "volume": 1.0,
         "pitch": 1.0
       }
@@ -193,7 +168,7 @@
         "name": "saintsdragons:entity/raevyx/raevyx_roar",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 48
       }
     ]
   },
@@ -259,7 +234,7 @@
         "name": "saintsdragons:entity/cindervane/cindervane_grumble1",
         "volume": 1.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 24
       }
     ]
   },
@@ -270,7 +245,7 @@
         "name": "saintsdragons:entity/cindervane/cindervane_grumble2",
         "volume": 1.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 24
       }
     ]
   },
@@ -292,7 +267,7 @@
         "name": "saintsdragons:entity/cindervane/cindervane_grumble3",
         "volume": 1.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 24
       }
     ]
   },

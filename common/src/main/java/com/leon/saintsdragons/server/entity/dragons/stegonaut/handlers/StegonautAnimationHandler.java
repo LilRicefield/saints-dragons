@@ -21,6 +21,7 @@ public class StegonautAnimationHandler {
     private static final RawAnimation SWIM_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.swim");
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sleep");
     private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sit");
+    private static final RawAnimation JUMP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.jump");
 
     // Rest transition animations (one-shot)
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.stegonaut.down");
@@ -80,6 +81,10 @@ public class StegonautAnimationHandler {
         if (drake.isInWaterOrBubble()) {
             state.getController().transitionLength(6);
             state.setAndContinue(SWIM_ANIM);
+            return PlayState.CONTINUE;
+        } else if (drake.isRiddenGroundJumpAirborne()) {
+            state.getController().transitionLength(1);
+            state.setAndContinue(JUMP_ANIM);
             return PlayState.CONTINUE;
         } else if (drake.isSleeping() && !drake.isSleepingEntering() && !drake.isSleepingExiting()) {
             // Continuously apply sleep loop animation (survives chunk reload)

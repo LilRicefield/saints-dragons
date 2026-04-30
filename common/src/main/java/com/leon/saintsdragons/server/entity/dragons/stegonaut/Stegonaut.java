@@ -85,9 +85,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private static final double BABY_MAX_HEALTH = 50.0D;
     private static final double BABY_ARMOR = 5.0D;
     private static final float BABY_HITBOX_SCALE = 0.65F;
-    private static final double RIDER_JUMP_MIN_VERTICAL = 0.0D;
-    private static final double RIDER_JUMP_MAX_VERTICAL = 3.0D;
-    private static final double RIDER_JUMP_FORWARD_BOOST = 0.0D;
+    private static final double RIDER_JUMP_STRENGTH = 0.75D;
+    private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
     private static final int STEGONAUT_CHEST_SLOTS = 15;
     public static final double RIDER_WALK_SPEED = 0.1D;
     public static final double RIDER_RUN_SPEED = 0.25D;
@@ -223,22 +222,22 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected void onGroundDragonJumped(int jumpPower) {
-        setGroundMoveStateFromAI(1);
+        super.onGroundDragonJumped(jumpPower);
     }
 
     @Override
-    protected double getRiderJumpMinVertical() {
-        return RIDER_JUMP_MIN_VERTICAL;
-    }
-
-    @Override
-    protected double getRiderJumpMaxVertical() {
-        return RIDER_JUMP_MAX_VERTICAL;
+    protected double getRiderJumpStrength() {
+        return RIDER_JUMP_STRENGTH;
     }
 
     @Override
     protected double getRiderJumpForwardBoost() {
         return RIDER_JUMP_FORWARD_BOOST;
+    }
+
+    @Override
+    protected int getRiderGroundJumpAnimationFallHoldTicks() {
+        return 3;
     }
 
     @Override

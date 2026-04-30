@@ -36,10 +36,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> STEGONAUT_GROUND_EATING = registerSound("stegonaut_ground_eating");
 
     // Raevyx
-    public static final Supplier<SoundEvent> RAEVYX_PURR = registerSound("raevyx_purr");
-    public static final Supplier<SoundEvent> RAEVYX_CHUFF = registerSound("raevyx_chuff");
     public static final Supplier<SoundEvent> RAEVYX_CONTENT = registerSound("raevyx_content");
-    public static final Supplier<SoundEvent> RAEVYX_EXCITED = registerSound("raevyx_excited");
     public static final Supplier<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR = registerSound("raevyx_summon_storm_air");

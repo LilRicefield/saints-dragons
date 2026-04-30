@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.fabric;
 
-import com.leon.saintsdragons.client.ClientProxy;
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
 import com.leon.saintsdragons.fabric.client.FabricDragonRideKeybinds;
 import com.leon.saintsdragons.fabric.client.FabricDragonUI;
@@ -22,6 +21,5 @@ public final class SaintsDragonsFabricClient implements ClientModInitializer {
         FabricDragonRideKeybinds.init();
         FabricDragonUI.init();
         FabricClientEventHandler.init();
-        new ClientProxy().clientInit();
     }
 }

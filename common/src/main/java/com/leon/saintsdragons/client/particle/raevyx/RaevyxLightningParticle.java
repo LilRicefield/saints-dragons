@@ -34,7 +34,7 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
         this.yd = ySpeed;
         this.zd = zSpeed;
         this.quadSize = size;
-        this.lifetime = 8; // 8 frames of animation
+        this.lifetime = 8;
         this.setSize(size * 1.5F, size * 1.5F);
         updateSprite();
     }
@@ -93,7 +93,7 @@ public class RaevyxLightningParticle extends TextureSheetParticle {
 
     @Override
     public int getLightColor(float partialTicks) {
-        return 240; // Fullbright
+        return 240;
     }
 
     @Override

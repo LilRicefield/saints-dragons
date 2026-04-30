@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.forge.client.event;
 
-import com.leon.saintsdragons.client.input.DragonRideInputHandler;
 import com.leon.saintsdragons.client.ui.DragonRideHealthBar;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
@@ -18,12 +17,10 @@ import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
 import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-/**
- * Event handler for Dragon UI rendering
- */
 @Mod.EventBusSubscriber(modid = "saintsdragons", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class DragonUIEventHandler {
     private static final MeleeModeNotification meleeModeNotification = new MeleeModeNotification();
@@ -34,13 +31,9 @@ public class DragonUIEventHandler {
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
 
     static {
-        // Initialize the UI registry so other classes can access the melee mode notification
         DragonUIRegistry.init(meleeModeNotification);
     }
 
-    /**
-     * Hide vanilla HUD elements when riding a dragon (only if dragon UI is visible)
-     */
     @SubscribeEvent
     public static void onRenderGuiOverlayPre(RenderGuiOverlayEvent.Pre event) {
         Minecraft minecraft = Minecraft.getInstance();
@@ -48,7 +41,6 @@ public class DragonUIEventHandler {
             return;
         }
 
-        // Ground dragon XP/jump slot is custom-controlled regardless of the F4 HUD mode.
         if (minecraft.player.getVehicle() instanceof RideableGroundDragon
                 && (event.getOverlay() == VanillaGuiOverlay.EXPERIENCE_BAR.type()
                 || event.getOverlay() == VanillaGuiOverlay.JUMP_BAR.type())) {
@@ -56,13 +48,10 @@ public class DragonUIEventHandler {
             return;
         }
 
-        // Only hide vanilla HUD if dragon UI is visible (F4 toggle).
-        // When dragon UI is hidden, show vanilla HUD instead.
         if (!DragonUIRegistry.isUIVisible()) {
             return;
         }
 
-        // Hide vanilla HUD when riding a dragon and dragon UI is active
         if (event.getOverlay() == VanillaGuiOverlay.PLAYER_HEALTH.type()) {
             event.setCanceled(true);
         } else if (event.getOverlay() == VanillaGuiOverlay.ARMOR_LEVEL.type()) {
@@ -92,7 +81,7 @@ public class DragonUIEventHandler {
         if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()
                 && minecraft.player.getVehicle() instanceof RideableGroundDragon groundDragon) {
             int x = screenWidth / 2 - 91;
-            if (DragonRideInputHandler.isGroundJumpMeterActive()) {
+            if (minecraft.player.getJumpRidingScale() > 0.0F) {
                 minecraft.gui.renderJumpMeter(groundDragon, event.getGuiGraphics(), x);
             } else if (!DragonUIRegistry.isUIVisible()
                     && minecraft.gameMode != null
@@ -101,33 +90,24 @@ public class DragonUIEventHandler {
             }
         }
 
-        // Get current dragon if riding
         DragonEntity currentDragon = null;
         if (minecraft.player.getVehicle() instanceof DragonEntity dragon) {
             currentDragon = dragon;
             rideHealthBar.setDragon(dragon);
         }
-
-        // Always render melee mode notification (independent of UI visibility toggle)
         meleeModeNotification.render(event.getGuiGraphics(), screenWidth, screenHeight);
 
-        // Only render dragon UI elements if UI is visible
         if (!DragonUIRegistry.isUIVisible()) {
             return;
         }
 
-        // Render dragon-specific UI when riding
         if (currentDragon instanceof Ignivorus ignivorus) {
-            // Fireball charge indicator
             fireballChargeIndicator.setChargeLevel(ignivorus.getFireballChargeLevel());
             fireballChargeIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
-
-            // Fire breath meter
             ignivorusFireBreathMeterIndicator.setBreathEnergy(ignivorus.getFireBreathEnergy());
             ignivorusFireBreathMeterIndicator.setBreathing(ignivorus.isBreathingFire());
             ignivorusFireBreathMeterIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
         } else if (currentDragon instanceof Raevyx raevyx) {
-            // Beam meter for Raevyx
             raevyxBeamMeterIndicator.setBeamEnergy(raevyx.getBeamEnergy());
             raevyxBeamMeterIndicator.setBeaming(raevyx.isBeaming());
             raevyxBeamMeterIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
@@ -139,19 +119,15 @@ public class DragonUIEventHandler {
             volitansBreathMeterIndicator.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
         }
 
-        // Render dragon ride health bar when riding any dragon
         if (currentDragon != null) {
             rideHealthBar.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
         }
     }
 
     @SubscribeEvent
-    public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
-        if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) {
-            // Handle keybinds
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
             DragonUIKeybinds.handleKeybinds();
-
-            // Tick all UI elements for smooth animations
             meleeModeNotification.tick();
             fireballChargeIndicator.tick();
             raevyxBeamMeterIndicator.tick();

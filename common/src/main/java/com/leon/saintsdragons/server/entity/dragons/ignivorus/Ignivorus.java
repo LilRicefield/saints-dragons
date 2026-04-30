@@ -187,6 +187,17 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     public static final double RIDER_PHASE2_WALK_SPEED = 0.15D;
     public static final double RIDER_PHASE2_RUN_SPEED = 0.32D;
+    private static final float DEFAULT_MAX_UP_STEP = 1.5F;
+    private static final float BULLDOZE_MAX_UP_STEP = 0;
+    private static final double BULLDOZE_TUNNEL_REACH = 2.5D;
+    private static final double BULLDOZE_HEAD_FORWARD_FALLBACK = 0.5D;
+    private static final double BULLDOZE_TUNNEL_HALF_WIDTH = 7.0D;
+    private static final int BULLDOZE_TUNNEL_HEIGHT = 7;
+    private static final int BULLDOZE_TUNNEL_MAX_BREAKS_PER_TICK = 60;
+    private static final double BULLDOZE_BODY_COLLISION_REACH = 8.0D;
+    private static final double BULLDOZE_DAMAGE_FORWARD_REACH = 4.5D;
+    private static final double BULLDOZE_DAMAGE_HALF_WIDTH = 7.0D;
+    private static final double BULLDOZE_DAMAGE_HALF_HEIGHT = 2.5D;
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 55.0F;
     private static final double LEAP_HORIZONTAL_SPEED = 2.75D;
@@ -287,7 +298,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     public Ignivorus(EntityType<? extends Ignivorus> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
-        this.setMaxUpStep(1.1F);
+        this.setMaxUpStep(DEFAULT_MAX_UP_STEP);
 
         this.asyncAirController = new AsyncFlightController(this);
         this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
@@ -1023,6 +1034,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void tickBulldozeState() {
+        updateBulldozeStepHeight();
         if (!level().isClientSide) {
             boolean currentlyVehicle = this.isVehicle();
             if (bulldozeCooldownTicks > 0) {
@@ -1048,11 +1060,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             }
 
             if (bulldozing && currentlyVehicle) {
+                Vec3 forward = getBulldozeTunnelDirection(getDeltaMovement());
+                if (forward.lengthSqr() < 1.0E-6D) {
+                    forward = getLookAngle().normalize();
+                }
                 Vec3 damageCenter = this.getBoundingBox().getCenter()
-                        .add(getLookAngle().normalize().scale(this.getBbWidth() * 0.75D));
+                        .add(forward.scale(BULLDOZE_DAMAGE_FORWARD_REACH));
 
-                AABB dragonBox = this.getBoundingBox().inflate(1.5D);
-                AABB forwardBox = new AABB(damageCenter, damageCenter).inflate(2.5D);
+                AABB dragonBox = this.getBoundingBox().inflate(
+                        BULLDOZE_DAMAGE_HALF_WIDTH,
+                        BULLDOZE_DAMAGE_HALF_HEIGHT,
+                        BULLDOZE_DAMAGE_HALF_WIDTH
+                );
+                AABB forwardBox = new AABB(damageCenter, damageCenter).inflate(
+                        BULLDOZE_DAMAGE_HALF_WIDTH,
+                        BULLDOZE_DAMAGE_HALF_HEIGHT,
+                        BULLDOZE_DAMAGE_HALF_WIDTH
+                );
                 AABB combinedBox = dragonBox.minmax(forwardBox);
 
                 java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
@@ -1071,21 +1095,27 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                     target.hurt(this.damageSources().mobAttack(this), resolveBulldozeDamage());
 
                     double knockbackStrength = 2.0D;
-                    double dx = target.getX();
-                    double dz = target.getZ();
+                    double dx = this.getX() - target.getX();
+                    double dz = this.getZ() - target.getZ();
                     double dist = Math.sqrt(dx * dx + dz * dz);
-                    if (dist > 0) {
+                    if (dist > 1.0E-6D) {
                         target.knockback(
                             knockbackStrength,
-                            -dx / dist,
-                            -dz / dist
+                            dx / dist,
+                            dz / dist
                         );
+                    } else {
+                        target.knockback(knockbackStrength, -forward.x, -forward.z);
                     }
                     bulldozeHitCooldowns.put(entityId, 5);
                 }
             }
             bulldozeWasVehicle = currentlyVehicle;
         }
+    }
+
+    private void updateBulldozeStepHeight() {
+        setMaxUpStep(bulldozing && isVehicle() ? BULLDOZE_MAX_UP_STEP : DEFAULT_MAX_UP_STEP);
     }
 
     private void tickPhase2State() {
@@ -1977,6 +2007,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             setAccelerating(false);
             bulldozeCooldownTicks = 40;
             lockRiderControls(20);
+            animationHandler.triggerBulldozeExitAnimation();
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BULLDOZER_EXIT.get(), 1.0f, 1.0f, 45);
         } else {
 
@@ -2895,6 +2926,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
         boolean isBeingRidden = this.isVehicle();
         Vec3 velocity = this.getDeltaMovement();
+        if (isBeingRidden && bulldozing) {
+            clearBulldozeTunnel(getBulldozeTunnelDirection(velocity));
+            return;
+        }
+
         double speed = velocity.horizontalDistanceSqr();
         boolean collisionStuck = this.horizontalCollision || this.isInWall();
         boolean chasingTarget = this.getTarget() != null && this.getTarget().isAlive();
@@ -2955,6 +2991,163 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 }
             }
         }
+    }
+
+    private Vec3 getBulldozeTunnelDirection(Vec3 velocity) {
+        Entity rider = getControllingPassenger();
+        Vec3 look = rider instanceof LivingEntity living ? living.getLookAngle() : getLookAngle();
+        Vec3 horizontal = new Vec3(look.x, 0.0D, look.z);
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            horizontal = new Vec3(velocity.x, 0.0D, velocity.z);
+        }
+        if (horizontal.lengthSqr() < 1.0E-6D) {
+            horizontal = Vec3.directionFromRotation(0.0F, getYRot());
+        }
+        return horizontal.lengthSqr() > 1.0E-6D ? horizontal.normalize() : Vec3.ZERO;
+    }
+
+    private void clearBulldozeTunnel(Vec3 forward) {
+        if (forward.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+        if (right.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+        right = right.normalize();
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        int[] brokenThisTick = new int[] {0};
+
+        cutBulldozeVolume(
+                getBulldozeHeadOrigin(forward).add(forward.scale(0.35D)),
+                forward,
+                right,
+                BULLDOZE_TUNNEL_REACH,
+                BULLDOZE_TUNNEL_HALF_WIDTH,
+                BULLDOZE_TUNNEL_HEIGHT,
+                visited,
+                cursor,
+                brokenThisTick
+        );
+        clearBulldozeBodyCollisionVolume(forward, visited, cursor, brokenThisTick);
+    }
+
+    private void clearBulldozeBodyCollisionVolume(Vec3 forward,
+                                                  java.util.Set<BlockPos> visited,
+                                                  BlockPos.MutableBlockPos cursor,
+                                                  int[] brokenThisTick) {
+        if (brokenThisTick[0] >= BULLDOZE_TUNNEL_MAX_BREAKS_PER_TICK) {
+            return;
+        }
+
+        AABB bodyClearance = getBoundingBox()
+                .inflate(0.15D, 0.05D, 0.15D)
+                .expandTowards(forward.scale(BULLDOZE_BODY_COLLISION_REACH));
+        int floorSafeY = Mth.floor(getBoundingBox().minY) + 1;
+        int minX = Mth.floor(bodyClearance.minX);
+        int maxX = Mth.floor(bodyClearance.maxX);
+        int minY = Math.max(floorSafeY, Mth.floor(bodyClearance.minY));
+        int maxY = Mth.floor(bodyClearance.maxY);
+        int minZ = Mth.floor(bodyClearance.minZ);
+        int maxZ = Mth.floor(bodyClearance.maxZ);
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    if (brokenThisTick[0] >= BULLDOZE_TUNNEL_MAX_BREAKS_PER_TICK) {
+                        return;
+                    }
+
+                    cursor.set(x, y, z);
+                    BlockPos immutablePos = cursor.immutable();
+                    if (isProtectedBulldozeFloorBlock(immutablePos, forward)) {
+                        continue;
+                    }
+                    if (!visited.add(immutablePos) || !level().hasChunkAt(immutablePos)) {
+                        continue;
+                    }
+
+                    BlockState state = level().getBlockState(immutablePos);
+                    if (!canBulldozeDestroyBlock(state, immutablePos)) {
+                        continue;
+                    }
+
+                    level().destroyBlock(immutablePos, true, this);
+                    brokenThisTick[0]++;
+                }
+            }
+        }
+    }
+
+    private void cutBulldozeVolume(Vec3 origin,
+                                   Vec3 forward,
+                                   Vec3 right,
+                                   double reach,
+                                   double halfWidth,
+                                   int height,
+                                   java.util.Set<BlockPos> visited,
+                                   BlockPos.MutableBlockPos cursor,
+                                   int[] brokenThisTick) {
+        int floorSafeY = Mth.floor(getBoundingBox().minY) + 1;
+        int minBreakY = Math.max(floorSafeY, Mth.floor(origin.y - height * 0.45D));
+        int maxBreakY = minBreakY + height - 1;
+
+        for (double forwardOffset = 0.5D; forwardOffset <= reach; forwardOffset += 0.75D) {
+            Vec3 forwardPoint = origin.add(forward.scale(forwardOffset));
+            for (double sideOffset = -halfWidth; sideOffset <= halfWidth; sideOffset += 0.75D) {
+                Vec3 sample = forwardPoint.add(right.scale(sideOffset));
+                for (int y = minBreakY; y <= maxBreakY; y++) {
+                    if (brokenThisTick[0] >= BULLDOZE_TUNNEL_MAX_BREAKS_PER_TICK) {
+                        return;
+                    }
+
+                    cursor.set(Mth.floor(sample.x), y, Mth.floor(sample.z));
+                    BlockPos immutablePos = cursor.immutable();
+                    if (!visited.add(immutablePos) || !level().hasChunkAt(immutablePos)) {
+                        continue;
+                    }
+
+                    BlockState state = level().getBlockState(immutablePos);
+                    if (!canBulldozeDestroyBlock(state, immutablePos)) {
+                        continue;
+                    }
+
+                    level().destroyBlock(immutablePos, true, this);
+                    brokenThisTick[0]++;
+                }
+            }
+        }
+    }
+
+    private boolean canBulldozeDestroyBlock(BlockState state, BlockPos pos) {
+        if (state.isAir() || !state.getFluidState().isEmpty()) {
+            return false;
+        }
+        float hardness = state.getDestroySpeed(level(), pos);
+        return hardness >= 0.0F && hardness <= 5.0F && !state.hasBlockEntity();
+    }
+
+    private boolean isProtectedBulldozeFloorBlock(BlockPos pos, Vec3 forward) {
+        int floorY = Mth.floor(getBoundingBox().minY);
+        if (pos.getY() > floorY) {
+            return false;
+        }
+
+        Vec3 center = getBoundingBox().getCenter();
+        double currentFront = center.dot(forward) + Math.max(getBbWidth() * 0.5D, 0.75D);
+        double blockProjection = (pos.getX() + 0.5D) * forward.x + (pos.getZ() + 0.5D) * forward.z;
+        return blockProjection <= currentFront;
+    }
+
+    private Vec3 getBulldozeHeadOrigin(Vec3 forward) {
+        Vec3 head = getBonePositionForHitbox("headController");
+        if (head != null) {
+            return head;
+        }
+        return getBoundingBox().getCenter().add(forward.scale(getBbWidth() * BULLDOZE_HEAD_FORWARD_FALLBACK));
     }
 
     private void updateSittingProgress() {

@@ -168,7 +168,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble2", "action", "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble3", "action", "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("excited", "action", "", ModSounds.RAEVYX_EXCITED, 1.0f, 1.0f, 0.3f, false, false, false)  // Sound-only, no animation
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
@@ -2767,7 +2766,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         Vec3 dir = step.lengthSqr() > 1.0e-6 ? step.normalize() : randomUnit(this.random);
         for (int i = 0; i <= steps; i++) {
             if (this.random.nextFloat() < 0.7f) {
-                server.sendParticles(new RaevyxLightningStormData(size),
+                server.sendParticles(new RaevyxLightningStormData(size, this.getTextureVariant() == VARIANT_NIGHT_GOLD),
                         pos.x, pos.y, pos.z, 1, dir.x, dir.y, dir.z, 0.0);
             }
             pos = pos.add(step);

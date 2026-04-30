@@ -6,6 +6,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 import java.util.UUID;
@@ -54,7 +55,7 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
     }
 
     @Override
-    protected void saveAdditional(CompoundTag tag) {
+    protected void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putDouble("HatchProgress", this.hatchProgress);
         if (this.ownerUUID != null) {
@@ -66,7 +67,7 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void load(CompoundTag tag) {
+    public void load(@NotNull CompoundTag tag) {
         super.load(tag);
         if (tag.contains("HatchProgress")) {
             this.hatchProgress = Math.max(0.0D, Math.min(1.0D, tag.getDouble("HatchProgress")));

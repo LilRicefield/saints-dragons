@@ -36233,12 +36233,6 @@
 						}
 					}
 				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "raevyx_chuff",
-					"locator": "mouth_origin"
-				}
 			}
 		},
 		"animation.raevyx.purr": {
@@ -36479,12 +36473,6 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
-				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "raevyx_purr",
-					"locator": "mouth_origin"
 				}
 			}
 		},

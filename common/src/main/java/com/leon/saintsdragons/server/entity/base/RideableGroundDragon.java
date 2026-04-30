@@ -1,7 +1,9 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.network.DragonRiderAction;
-import com.leon.saintsdragons.server.entity.util.GroundDragonJumpHelper;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EntityType;
@@ -13,11 +15,30 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class RideableGroundDragon extends RideableDragonBase implements PlayerRideableJumping {
+    private static final EntityDataAccessor<Boolean> DATA_RIDER_GROUND_JUMPING =
+            SynchedEntityData.defineId(RideableGroundDragon.class, EntityDataSerializers.BOOLEAN);
     private float playerJumpPendingScale = 0.0F;
     private boolean riderJumping = false;
+    private boolean riderJumpLeftGround = false;
+    private int riderJumpAnimationTicks = 0;
+    private int riderJumpAnimationHoldTicks = 0;
 
     protected RideableGroundDragon(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
+    }
+
+    @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_RIDER_GROUND_JUMPING, false);
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        if (!level().isClientSide) {
+            tickRiderGroundJumpAnimationState();
+        }
     }
 
     @Override
@@ -44,7 +65,7 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
         if (!locked && action == DragonRiderAction.GROUND_JUMP) {
-            handleStartJump(parseGroundJumpPower(abilityName));
+            onPlayerJump(parseGroundJumpPower(abilityName));
             return true;
         }
         return super.handleCustomRiderAction(player, action, abilityName, locked);
@@ -63,6 +84,10 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
 
     @Override
     public void onPlayerJump(int jumpPower) {
+        if (!canJump()) {
+            return;
+        }
+        queueRiderJump(jumpPower);
     }
 
     private void queueRiderJump(int jumpPower) {
@@ -71,7 +96,7 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
         }
         playerJumpPendingScale = jumpPower >= 90
                 ? 1.0F
-                : 0.25F + 0.55F * jumpPower / 90.0F;
+                : 0.4F + 0.4F * jumpPower / 90.0F;
     }
 
     @Override
@@ -91,17 +116,24 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
             playerJumpPendingScale = 0.0F;
             return;
         }
-        GroundDragonJumpHelper.jump(this, jumpScale, travelVector,
-                getRiderJumpMinVertical(), getRiderJumpMaxVertical(), getRiderJumpForwardBoost());
+
+        float charge = Mth.clamp(jumpScale, 0.0F, 1.0F);
+        double vertical = getRiderJumpStrength() * charge * getBlockJumpFactor() + getJumpBoostPower();
+        Vec3 current = getDeltaMovement();
+        setDeltaMovement(current.x, vertical, current.z);
+        if (travelVector.z > 0.0D) {
+            float yawRad = getYRot() * Mth.DEG_TO_RAD;
+            setDeltaMovement(getDeltaMovement().add(
+                    -getRiderJumpForwardBoost() * Mth.sin(yawRad) * charge,
+                    0.0D,
+                    getRiderJumpForwardBoost() * Mth.cos(yawRad) * charge
+            ));
+        }
+        hasImpulse = true;
+        hurtMarked = true;
+        fallDistance = 0.0F;
         riderJumping = true;
         onGroundDragonJumped(Mth.floor(jumpScale * 100.0F));
-    }
-
-    private Vec3 getCurrentRiderJumpInput() {
-        if (getControllingPassenger() instanceof Player player) {
-            return new Vec3(player.xxa, 0.0D, player.zza);
-        }
-        return new Vec3(getLastRiderStrafe(), 0.0D, getLastRiderForward());
     }
 
     @Override
@@ -125,12 +157,66 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
     }
 
     protected void onGroundDragonJumped(int jumpPower) {
-        setGroundMoveStateFromAI(1);
+        setGroundMoveStateFromRider(1);
+        riderJumpLeftGround = false;
+        riderJumpAnimationTicks = 0;
+        riderJumpAnimationHoldTicks = 0;
+        this.entityData.set(DATA_RIDER_GROUND_JUMPING, true);
     }
 
-    protected abstract double getRiderJumpMinVertical();
+    public boolean isRiddenGroundJumpAirborne() {
+        return this.entityData.get(DATA_RIDER_GROUND_JUMPING)
+                && isVehicle()
+                && getControllingPassenger() instanceof Player
+                && !isInWaterOrBubble()
+                && !onGround()
+                && !verticalCollisionBelow
+                && (getDeltaMovement().y > 0.0D || riderJumpAnimationHoldTicks > 0);
+    }
 
-    protected abstract double getRiderJumpMaxVertical();
+    private void tickRiderGroundJumpAnimationState() {
+        if (!this.entityData.get(DATA_RIDER_GROUND_JUMPING)) {
+            riderJumpLeftGround = false;
+            riderJumpAnimationTicks = 0;
+            return;
+        }
+
+        riderJumpAnimationTicks++;
+        if (this.isInWaterOrBubble() || !this.isVehicle()) {
+            stopRiderGroundJumpAnimation();
+            return;
+        }
+
+        if (!this.onGround() && !this.verticalCollisionBelow) {
+            riderJumpLeftGround = true;
+            if (this.getDeltaMovement().y <= 0.0D) {
+                if (riderJumpAnimationHoldTicks <= 0) {
+                    riderJumpAnimationHoldTicks = getRiderGroundJumpAnimationFallHoldTicks();
+                }
+                if (riderJumpAnimationHoldTicks-- <= 0) {
+                    stopRiderGroundJumpAnimation();
+                }
+            }
+            return;
+        }
+
+        if (riderJumpLeftGround || riderJumpAnimationTicks > 8) {
+            stopRiderGroundJumpAnimation();
+        }
+    }
+
+    private void stopRiderGroundJumpAnimation() {
+        this.entityData.set(DATA_RIDER_GROUND_JUMPING, false);
+        riderJumpLeftGround = false;
+        riderJumpAnimationTicks = 0;
+        riderJumpAnimationHoldTicks = 0;
+    }
+
+    protected int getRiderGroundJumpAnimationFallHoldTicks() {
+        return 0;
+    }
+
+    protected abstract double getRiderJumpStrength();
 
     protected abstract double getRiderJumpForwardBoost();
 
@@ -186,11 +272,6 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
 
     @Override
     public void handleStartJump(int jumpPower) {
-        queueRiderJump(jumpPower);
-        if (playerJumpPendingScale > 0.0F) {
-            executeRiderJump(playerJumpPendingScale, getCurrentRiderJumpInput());
-            playerJumpPendingScale = 0.0F;
-        }
     }
 
     @Override

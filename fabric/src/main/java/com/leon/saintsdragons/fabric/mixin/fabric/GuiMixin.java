@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
-import com.leon.saintsdragons.client.input.DragonRideInputHandler;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
@@ -48,7 +47,7 @@ public class GuiMixin {
             int x = mc.getWindow().getGuiScaledWidth() / 2 - 91;
             renderingGroundDragonBottomSlot = true;
             try {
-                if (DragonRideInputHandler.isGroundJumpMeterActive()
+                if (mc.player.getJumpRidingScale() > 0.0F
                         && mc.player.getVehicle() instanceof PlayerRideableJumping mount) {
                     ((Gui) (Object) this).renderJumpMeter(mount, guiGraphics, x);
                 } else if (!DragonUIRegistry.isUIVisible()

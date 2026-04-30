@@ -47,7 +47,10 @@ public class VolitansBreedGoal extends DragonBreedGoal<Volitans> {
 
         ++this.loveTime;
 
-        if (this.dragon.isInWaterOrBubble() && this.partner.isInWaterOrBubble()) {
+        boolean closeEnough = isCloseEnoughToBreed();
+        if (closeEnough) {
+            stopBreedingMovement(this.dragon);
+        } else if (this.dragon.isInWaterOrBubble() && this.partner.isInWaterOrBubble()) {
             swimTowardPartner();
         } else if (!this.dragon.isFlying()) {
             double speed = this.speedModifier;
@@ -56,8 +59,7 @@ public class VolitansBreedGoal extends DragonBreedGoal<Volitans> {
             this.dragon.getNavigation().moveTo(this.partner, speed);
         }
 
-        if (this.loveTime >= 60
-                && this.dragon.distanceToSqr(this.partner) < this.breedDistanceSqr) {
+        if (this.loveTime >= 60 && closeEnough) {
             Volitans female = this.dragon.isFemale() ? this.dragon : this.partner;
             BlockPos eggPos = findEggLayingPosition(female);
             if (eggPos == null) {

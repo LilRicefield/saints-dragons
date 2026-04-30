@@ -96,9 +96,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public static final double RIDER_WALK_SPEED = 0.15D;
     public static final double RIDER_RUN_SPEED = 0.30D;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
-    private static final double RIDER_JUMP_MIN_VERTICAL = 0.0D;
-    private static final double RIDER_JUMP_MAX_VERTICAL = 5.0D;
-    private static final double RIDER_JUMP_FORWARD_BOOST = 0;
+    private static final double RIDER_JUMP_STRENGTH = 1.0D;
+    private static final double RIDER_JUMP_FORWARD_BOOST = 0.4D;
     private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
     private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
     private static final double BABY_MAX_HEALTH = 80.0D;
@@ -542,7 +541,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         AnimationController<Varasuchus> actions =
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
         AnimationController<Varasuchus> instantActions =
-                new AnimationController<>(this, "instant", 10, animationHandler::instantActionPredicate);
+                new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
         movementController.setSoundKeyframeHandler(event -> {});
         actions.setSoundKeyframeHandler(event -> {});
         instantActions.setSoundKeyframeHandler(event -> {});
@@ -834,23 +833,18 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    protected void onGroundDragonJumped(int jumpPower) {
-        setGroundMoveStateFromRider(1);
-    }
-
-    @Override
-    protected double getRiderJumpMinVertical() {
-        return RIDER_JUMP_MIN_VERTICAL;
-    }
-
-    @Override
-    protected double getRiderJumpMaxVertical() {
-        return RIDER_JUMP_MAX_VERTICAL;
+    protected double getRiderJumpStrength() {
+        return RIDER_JUMP_STRENGTH;
     }
 
     @Override
     protected double getRiderJumpForwardBoost() {
         return RIDER_JUMP_FORWARD_BOOST;
+    }
+
+    @Override
+    protected int getRiderGroundJumpAnimationFallHoldTicks() {
+        return 3;
     }
 
     @Override

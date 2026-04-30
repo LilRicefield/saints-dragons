@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.forge;
 
-import com.leon.saintsdragons.client.ClientProxy;
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,7 +20,6 @@ public final class SaintsDragonsForgeClient {
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             CommonClientModEvents.registerMenuScreens();
-            new ClientProxy().clientInit();
         });
     }
 }

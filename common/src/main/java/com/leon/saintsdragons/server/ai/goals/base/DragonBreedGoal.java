@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.advancements.CriteriaTriggers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -11,6 +12,7 @@ import net.minecraft.stats.Stats;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.targeting.TargetingConditions;
+import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -21,15 +23,12 @@ import java.util.EnumSet;
 import java.util.List;
 import javax.annotation.Nullable;
 
-/**
- * Generic breed goal for dragons that lay eggs, with configurable partner range and breed distance.
- */
 public class DragonBreedGoal<T extends DragonEntity> extends Goal {
     private static final double RIDEABLE_BREED_MOVE_SPEED = 0.55D;
-    private static final double CONTACT_BREED_DISTANCE_SQR = 16.0D;
+    private static final double CONTACT_BREED_DISTANCE = 2.0D;
+    private static final double MAX_CENTER_BREED_DISTANCE_SQR = 16.0D;
     private static final int EGG_SEARCH_RADIUS = 4;
     private static final int EGG_SEARCH_DEPTH = 8;
-
     protected final T dragon;
     protected final Level level;
     protected final double speedModifier;
@@ -59,21 +58,34 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         if (!isBreedingAllowed()) {
             return false;
         }
+        prepareBreedingPosture(this.dragon);
         this.partner = findMate();
+        if (this.partner != null) {
+            prepareBreedingPosture(this.partner);
+        }
         return this.partner != null;
     }
 
     @Override
     public boolean canContinueToUse() {
-        return this.partner != null
+        if (this.partner != null) {
+            prepareBreedingPosture(this.dragon);
+            prepareBreedingPosture(this.partner);
+        }
+        boolean result = this.partner != null
                 && this.partner.isAlive()
                 && this.partner.isInLove()
                 && this.loveTime < 60
                 && isBreedingAllowed();
+        return result;
     }
 
     @Override
     public void stop() {
+        stopBreedingMovement(this.dragon);
+        if (this.partner != null) {
+            stopBreedingMovement(this.partner);
+        }
         this.partner = null;
         this.loveTime = 0;
     }
@@ -85,9 +97,12 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         }
 
         this.dragon.getLookControl().setLookAt(this.partner, 10.0F, (float) this.dragon.getMaxHeadXRot());
-        if (!this.dragon.isFlying()) {
+        boolean closeEnough = isCloseEnoughToBreed();
+        if (closeEnough) {
+            stopBreedingMovement(this.dragon);
+        } else if (!this.dragon.isFlying()) {
             double speed = this.speedModifier;
-            if (this.dragon instanceof com.leon.saintsdragons.server.entity.base.RideableDragonBase rideable) {
+            if (this.dragon instanceof RideableDragonBase rideable) {
                 speed = Math.min(speed, RIDEABLE_BREED_MOVE_SPEED);
                 rideable.setGroundMoveStateFromAI(1);
                 rideable.setRunning(false);
@@ -97,15 +112,38 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
 
         ++this.loveTime;
 
-        if (this.loveTime >= 60 && this.dragon.distanceToSqr(this.partner) < CONTACT_BREED_DISTANCE_SQR) {
+        if (this.loveTime >= 60 && closeEnough) {
             handleBreed();
         }
     }
 
+    protected boolean isCloseEnoughToBreed() {
+        if (this.partner == null) {
+            return false;
+        }
+
+        double configuredDistanceSqr = Math.min(this.breedDistanceSqr, MAX_CENTER_BREED_DISTANCE_SQR);
+        if (this.dragon.distanceToSqr(this.partner) <= configuredDistanceSqr) {
+            return true;
+        }
+
+        return this.dragon.getBoundingBox()
+                .inflate(CONTACT_BREED_DISTANCE, 0.5D, CONTACT_BREED_DISTANCE)
+                .intersects(this.partner.getBoundingBox());
+    }
+
     protected boolean isBreedingAllowed() {
         return this.dragon.isInLove()
-                && !this.dragon.isFlying()
-                && !this.dragon.isOrderedToSit();
+                && !this.dragon.isFlying();
+    }
+
+    private void prepareBreedingPosture(DragonEntity dragon) {
+        if (dragon.isOrderedToSit()) {
+            dragon.setOrderedToSit(false);
+            if (dragon.getCommand() == 1) {
+                dragon.setCommand(0);
+            }
+        }
     }
 
     @Nullable
@@ -121,7 +159,8 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         T closestMate = null;
 
         for (T candidate : list) {
-            if (this.dragon.canMate(candidate)) {
+            boolean canMate = this.dragon.canMate(candidate);
+            if (canMate) {
                 double dist = this.dragon.distanceToSqr(candidate);
                 if (dist < closestDist) {
                     closestMate = candidate;
@@ -179,7 +218,7 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         serverlevel.playSound(null, eggPos, SoundEvents.TURTLE_LAY_EGG, SoundSource.BLOCKS, 0.8F, 1.0F);
 
         this.level.broadcastEntityEvent(female, (byte) 18);
-        if (this.level.getGameRules().getBoolean(net.minecraft.world.level.GameRules.RULE_DOMOBLOOT)) {
+        if (this.level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {
             this.level.addFreshEntity(new ExperienceOrb(
                     this.level,
                     female.getX(),
@@ -197,6 +236,17 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
         if (serverplayer != null) {
             serverplayer.awardStat(Stats.ANIMALS_BRED);
             CriteriaTriggers.BRED_ANIMALS.trigger(serverplayer, this.dragon, this.partner, null);
+        }
+
+        stopBreedingMovement(female);
+        stopBreedingMovement(male);
+    }
+
+    protected void stopBreedingMovement(DragonEntity dragon) {
+        dragon.getNavigation().stop();
+        if (dragon instanceof RideableDragonBase rideable) {
+            rideable.setGroundMoveStateFromAI(0);
+            rideable.setRunning(false);
         }
     }
 

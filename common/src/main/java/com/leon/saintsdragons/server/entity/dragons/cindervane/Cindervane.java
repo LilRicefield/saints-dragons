@@ -270,6 +270,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return VARIANTS.roll(this.getRandom());
     }
 
+    public boolean isAlbinoVariant() {
+        return getTextureVariant() == VARIANT_ALBINO;
+    }
+
     private final Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     public Cindervane(EntityType<? extends Cindervane> type, Level level) {
@@ -587,10 +591,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             }
 
         });
-        this.goalSelector.addGoal(7, new DragonPackFollowLeaderGoal<>(this, Cindervane.class, 1.0D, 20.0D, 10.0D));
-        this.goalSelector.addGoal(8, new DragonGroundWanderGoal<>(this, 0.6D, 160));
-        this.goalSelector.addGoal(9, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
-        if (!this.isBaby()) {this.goalSelector.addGoal(10, new DragonBreedGoal<>(this, 1.0D, Cindervane.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));}
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Cindervane.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+        }
+        this.goalSelector.addGoal(8, new DragonPackFollowLeaderGoal<>(this, Cindervane.class, 1.0D, 20.0D, 10.0D));
+        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 160));
+        this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Cindervane.class));

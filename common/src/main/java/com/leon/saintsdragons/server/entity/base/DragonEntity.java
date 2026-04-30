@@ -394,8 +394,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (!(otherAnimal instanceof DragonEntity otherDragon)) {
             return false;
         }
-        return this.canBreed()
-                && otherDragon.canBreed()
+        return !this.isBaby()
+                && !otherDragon.isBaby()
+                && this.getAge() == 0
+                && otherDragon.getAge() == 0
+                && this.isInLove()
+                && otherDragon.isInLove()
                 && this.isFemale() != otherDragon.isFemale();
     }
 

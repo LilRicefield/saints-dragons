@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -144,23 +145,19 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
             double radius = 0.5D + rng.nextDouble() * (AURA_RADIUS - 0.5D);
             double height = rng.nextDouble() * AURA_VERTICAL;
             Vec3 sample = center.add(Math.cos(angle) * radius, -AURA_VERTICAL * 0.5D + height, Math.sin(angle) * radius);
-            spawnParticles(level, sample);
+            spawnParticles(level, sample, dragon);
             maybeIgnite(level, sample, dragon);
         }
     }
 
-    private void spawnParticles(ServerLevel level, Vec3 sample) {
+    private void spawnParticles(ServerLevel level, Vec3 sample, Cindervane dragon) {
         double spread = 0.6D;
         int flameCount = 6;
-        int emberCount = 4;
         int smokeCount = 3;
+        ParticleOptions flame = dragon.isAlbinoVariant() ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.FLAME;
 
-        level.sendParticles(ParticleTypes.FLAME, sample.x, sample.y, sample.z, flameCount,
+        level.sendParticles(flame, sample.x, sample.y, sample.z, flameCount,
                 spread, spread * 0.6D, spread, 0.05D);
-        level.sendParticles(ParticleTypes.SMALL_FLAME, sample.x, sample.y, sample.z, emberCount,
-                spread * 0.4D, spread * 0.25D, spread * 0.4D, 0.02D);
-        level.sendParticles(ParticleTypes.LAVA, sample.x, sample.y, sample.z, 2,
-                spread * 0.2D, spread * 0.2D, spread * 0.2D, 0.07D);
         level.sendParticles(ParticleTypes.LARGE_SMOKE, sample.x, sample.y, sample.z, smokeCount,
                 spread * 0.8D, spread * 0.4D, spread * 0.8D, 0.0D);
     }
@@ -178,8 +175,9 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
         if (belowState.isAir()) {
             return;
         }
-        if (Blocks.FIRE.defaultBlockState().canSurvive(level, pos) && belowState.isFaceSturdy(level, below, Direction.UP)) {
-            level.setBlock(pos, Blocks.FIRE.defaultBlockState(), 11);
+        BlockState fire = Blocks.FIRE.defaultBlockState();
+        if (fire.canSurvive(level, pos) && belowState.isFaceSturdy(level, below, Direction.UP)) {
+            level.setBlock(pos, fire, 11);
         }
     }
 
