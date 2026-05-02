@@ -5,43 +5,37 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
-/**
- * Hold-to-fire lightning beam ability.
- * No charge: starts immediately, remains active until interrupted.
- * Initial version: only toggles beaming state; damage/VFX added later.
- */
 public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private static final double AI_TARGET_HIT_RADIUS = 0.55D;
     private static final double RIDER_BEAM_RADIUS = 1.2D;
     private static final double AI_BEAM_RADIUS = 0.75D;
-
-    // Beam timeline: 1s startup (20 ticks) then variable active duration.
-    // Rider-controlled: 400 ticks (~20 seconds)
-    // AI-controlled: 80 ticks (4 seconds)
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 400)
     };
     private static final DragonAbilitySection[] AI_TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
-            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 80) // 4 seconds for AI
+            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 80)
     };
-    private static final double MAX_BEAM_RANGE = 64;
-    private static final float DEFAULT_BEAM_DAMAGE = 20.0f; // Reduced from 35.0f for balance
-
-    // Beam energy system constants
-    private static final float ENERGY_COST_PER_TICK = 0.014f; // Depletes in ~71 ticks (3.55 seconds) when ridden
-    private static final float MIN_ENERGY_TO_START = 0.01f; // Can start beam with any remaining energy
-
-    private boolean hasBeamFired = false; // Track if beam has been fired this activation
+    private static final float DEFAULT_BEAM_DAMAGE = 20.0f;
+    private static final float ENERGY_COST_PER_TICK = 0.014f;
+    private boolean hasBeamFired = false;
     private boolean beamStartPlayed = false;
     private boolean beamLoopActive = false;
-
     public RaevyxBeamAbility(DragonAbilityType<Raevyx, RaevyxBeamAbility> type, Raevyx user) {
-        // Choose track based on whether user has a controlling passenger
         super(type, user, user.getControllingPassenger() != null ? RIDER_TRACK : AI_TRACK, 0);
     }
 
@@ -51,14 +45,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.STARTUP) {
             Raevyx wyvern = getUser();
-
-            // Check if beam can be used (has energy AND not locked from depletion)
             if (!wyvern.canUseBeam()) {
                 interrupt();
                 return;
             }
 
-            // Reset state and kick off the beam start animation
             hasBeamFired = false;
             beamLoopActive = false;
             beamStartPlayed = true;
@@ -70,12 +61,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
                 wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_START.get(), 1.8f, pitch, 28);
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
-            // Enter beaming window; visuals/damage enabled during ACTIVE only
             Raevyx wyvern = getUser();
             wyvern.setBeaming(true);
             wyvern.triggerAnim("action", "lightning_beaming");
             beamLoopActive = true;
-            // Initial tick damage alignment (optional single pulse at start)
             if (!hasBeamFired) {
                 fireBeamOnce();
                 hasBeamFired = true;
@@ -101,13 +90,12 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
     @Override
     public void interrupt() {
-        // Ensure beaming visuals stop even if interrupted mid-startup or active
         Raevyx wyvern = getUser();
         wyvern.setBeaming(false);
         wyvern.setBeamGlowActive(false);
         wyvern.clearBeamPath();
         triggerBeamStop(wyvern);
-        hasBeamFired = false; // Reset for next use
+        hasBeamFired = false;
         super.interrupt();
     }
 
@@ -117,9 +105,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (section == null || section.sectionType != AbilitySectionType.ACTIVE) return;
 
         Raevyx wyvern = getUser();
-        if (wyvern.level().isClientSide) return; // server-side authority only
-
-        // Consume beam energy each tick
+        if (wyvern.level().isClientSide) return;
         float energyDrain = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
                 .extraDouble("beam_drain_per_tick", ENERGY_COST_PER_TICK);
@@ -127,51 +113,22 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (energyDrain > 0.0f) {
             wyvern.consumeBeamEnergy(energyDrain);
         }
-
-        // Interrupt if out of energy
         if (!wyvern.hasBeamEnergy()) {
-            // Set depletion lock - must fully recharge before using again
             wyvern.setBeamDepleted(true);
             interrupt();
             return;
         }
 
-        // Check if target is still valid - interrupt beam if not
-
-        var tgt = wyvern.getTarget();
         if (!wyvern.isTame() && wyvern.getControllingPassenger() == null) {
             if (!isValidTarget(wyvern.getTarget())) {
                 interrupt();
                 return;
             }
         }
-
         BeamPath path = computeBeamPath(wyvern);
         if (path == null) {
             return;
         }
-
-        // Actively align body toward target while beaming so the whole wyvern faces the enemy
-        if (tgt != null && tgt.isAlive()) {
-            double dx = tgt.getX() - wyvern.getX();
-            double dz = tgt.getZ() - wyvern.getZ();
-            float targetYaw = (float)(Math.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0F;
-            float currentYaw = wyvern.getYRot();
-            float yawErr = net.minecraft.util.Mth.degreesDifference(currentYaw, targetYaw);
-            // Slightly larger deadzone and adaptive soft approach to reduce jitter
-            if (Math.abs(yawErr) > 3.5f) {
-                // Adaptive turn speed: faster for large errors, softer when close
-                float base = 2.5f;
-                float scale = 0.10f; // per-degree contribution
-                float max = wyvern.isFlying() ? 7.0f : 6.0f; // cap
-                float step = net.minecraft.util.Mth.clamp(base + Math.abs(yawErr) * scale, base, max);
-                float newYaw = net.minecraft.util.Mth.approachDegrees(currentYaw, targetYaw, step);
-                wyvern.setYRot(newYaw);
-                wyvern.yBodyRot = wyvern.getYRot();
-            }
-        }
-        
-        // Deal continuous damage every tick while beam is active
         damageAlongBeam(wyvern, path.origin(), path.impact());
     }
 
@@ -196,50 +153,25 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     }
     
     private BeamPath computeBeamPath(Raevyx wyvern) {
-        net.minecraft.world.phys.Vec3 origin = wyvern.getBeamStartAnchor(1.0f);
-        if (origin == null) {
-            wyvern.clearBeamPath();
+        if (!wyvern.updateBeamPathFromAim()) {
             return null;
         }
 
-        boolean smoothAim = wyvern.getControllingPassenger() == null;
-        net.minecraft.world.phys.Vec3 aimDir = wyvern.refreshBeamAimDirection(origin, smoothAim);
-        if (aimDir == null || aimDir.lengthSqr() < 1.0E-6) {
-            wyvern.clearBeamPath();
+        Vec3 origin = wyvern.getBeamStartPosition();
+        Vec3 impact = wyvern.getBeamEndPosition();
+        if (origin == null || impact == null) {
             return null;
         }
-
-        net.minecraft.world.phys.Vec3 impact = traceBeamImpact(wyvern, origin, aimDir);
-        wyvern.syncBeamPath(origin, impact);
         return new BeamPath(origin, impact);
     }
 
-    private net.minecraft.world.phys.Vec3 traceBeamImpact(Raevyx wyvern,
-                                                         net.minecraft.world.phys.Vec3 origin,
-                                                         net.minecraft.world.phys.Vec3 aimDir) {
-        var reach = origin.add(aimDir.scale(MAX_BEAM_RANGE));
-        var context = new net.minecraft.world.level.ClipContext(
-                origin,
-                reach,
-                net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                net.minecraft.world.level.ClipContext.Fluid.NONE,
-                wyvern
-        );
-        var hit = wyvern.level().clip(context);
-        if (hit == null || hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS) {
-            return reach;
-        }
-        return hit.getLocation();
-    }
-
-    private void damageAlongBeam(Raevyx wyvern, net.minecraft.world.phys.Vec3 start, net.minecraft.world.phys.Vec3 end) {
-        if (!(wyvern.level() instanceof net.minecraft.server.level.ServerLevel server)) return;
+    private void damageAlongBeam(Raevyx wyvern, Vec3 start, Vec3 end) {
+        if (!(wyvern.level() instanceof ServerLevel server)) return;
 
         boolean riderControlled = wyvern.getControllingPassenger() != null;
         final float configuredBaseDamage = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
                 .abilityDamage("lightning_beam", DEFAULT_BEAM_DAMAGE);
-
         final double radiusBase = riderControlled ? RIDER_BEAM_RADIUS : AI_BEAM_RADIUS;
         final double RADIUS = radiusBase;
         final float DAMAGE = configuredBaseDamage * wyvern.getDamageMultiplier();
@@ -249,15 +181,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             return;
         }
 
-        // Create a bounding box that encompasses the entire beam path, inflated by radius
-        var beamAABB = new net.minecraft.world.phys.AABB(start, end).inflate(RADIUS);
-
-        // Get all potential targets in the beam's area
-        var potentialTargets = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, beamAABB,
-                e -> e != wyvern && wyvern.isTargetValid(e) && e.attackable() && !isAllied(wyvern, e));
-
+        var beamAABB = new AABB(start, end).inflate(RADIUS);
+        var potentialTargets = server.getEntitiesOfClass(LivingEntity.class, beamAABB, e -> e != wyvern && wyvern.isTargetValid(e) && e.attackable() && !isAllied(wyvern, e));
         for (var target : potentialTargets) {
-            // Check if the beam actually intersects the entity's bounding box (inflated by radius)
             var targetAABB = target.getBoundingBox().inflate(RADIUS);
             var hit = targetAABB.clip(start, end);
             boolean pointBlankOverlap = targetAABB.contains(start) || targetAABB.contains(end);
@@ -265,16 +191,14 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             if (hit.isPresent() || pointBlankOverlap) {
                 var hitPos = hit.orElse(start);
                 target.hurt(resolveBeamDamageSource(wyvern, target), DAMAGE);
-                // Knockback away from hit position
                 var away = target.position().subtract(hitPos).normalize();
                 target.push(away.x * 0.15, 0.08, away.z * 0.15);
             }
         }
     }
 
-    private void damageAiBeamTargetOnly(Raevyx wyvern, net.minecraft.world.phys.Vec3 start,
-                                        net.minecraft.world.phys.Vec3 end, float damage, double radius) {
-        net.minecraft.world.entity.LivingEntity target = wyvern.getTarget();
+    private void damageAiBeamTargetOnly(Raevyx wyvern, Vec3 start, Vec3 end, float damage, double radius) {
+       LivingEntity target = wyvern.getTarget();
         if (!isValidTarget(target) || !wyvern.isTargetValid(target) || isAllied(wyvern, target)) {
             return;
         }
@@ -292,22 +216,15 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         target.push(away.x * 0.15, 0.08, away.z * 0.15);
     }
 
-    private boolean isAllied(Raevyx wyvern, net.minecraft.world.entity.Entity other) {
-        // Use the comprehensive ally system from DragonEntity
+    private boolean isAllied(Raevyx wyvern, Entity other) {
         return wyvern.isAlly(other);
     }
 
-    /**
-     * Checks if the target is valid for continued beaming.
-     * Beam stops if target is null, dead, removed, or in creative mode.
-     */
-    private boolean isValidTarget(net.minecraft.world.entity.LivingEntity target) {
+    private boolean isValidTarget(LivingEntity target) {
         if (target == null) return false;
         if (!getUser().isTargetValid(target)) return false;
         if (target.isRemoved()) return false;
-
-        // Stop beaming if target switches to creative mode
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }
@@ -316,9 +233,8 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         return true;
     }
 
-    private net.minecraft.world.damagesource.DamageSource resolveBeamDamageSource(Raevyx wyvern, net.minecraft.world.entity.LivingEntity target) {
-        if (target instanceof com.leon.saintsdragons.server.entity.base.DragonEntity) {
-            // Dragon-vs-dragon beam should bypass lightning-tag immunities and use direct attacker damage.
+    private DamageSource resolveBeamDamageSource(Raevyx wyvern, LivingEntity target) {
+        if (target instanceof DragonEntity) {
             return wyvern.level().damageSources().mobAttack(wyvern);
         }
         if (isIafLightningDragon(target)) {
@@ -327,16 +243,13 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         return wyvern.level().damageSources().lightningBolt();
     }
 
-    private boolean isIafLightningDragon(net.minecraft.world.entity.LivingEntity entity) {
+    private boolean isIafLightningDragon(LivingEntity entity) {
         String className = entity.getClass().getName();
         if ("com.github.alexthe666.iceandfire.entity.EntityLightningDragon".equals(className)
                 || "com.iafenvoy.iceandfire.entity.LightningDragonEntity".equals(className)) {
             return true;
         }
-
-        // Fallback for forks/remapped classes: detect by entity type id.
-        net.minecraft.resources.ResourceLocation id =
-                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         if (id == null) {
             return false;
         }
@@ -350,5 +263,5 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         return iafNamespace && looksLikeLightningDragon;
     }
 
-    private record BeamPath(net.minecraft.world.phys.Vec3 origin, net.minecraft.world.phys.Vec3 impact) {}
+    private record BeamPath(Vec3 origin, Vec3 impact) {}
 }

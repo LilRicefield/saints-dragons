@@ -33,7 +33,6 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
     private static final double PROJECTILE_RADIUS = 3.2D;
     private static final float PROJECTILE_DAMAGE = 10.0F;
     private static final double TARGET_LEAD_FACTOR = 0.55D;
-
     private int chargeTicks = 0;
     private boolean holdLoopActive = false;
     private boolean releaseRequested = false;

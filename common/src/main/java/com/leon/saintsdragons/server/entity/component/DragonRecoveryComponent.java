@@ -3,10 +3,7 @@ package com.leon.saintsdragons.server.entity.component;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.util.Mth;
 
-/**
- * Wild-only recovery for dragons that are out of combat.
- * Prevents chip-damage cheesing by allowing non-tamed dragons to recover over time.
- */
+
 public final class DragonRecoveryComponent {
     private static final int RECOVERY_DELAY_AFTER_COMBAT_TICKS = 20 * 12;
     private static final int RECOVERY_INTERVAL_TICKS = 20;
@@ -37,7 +34,6 @@ public final class DragonRecoveryComponent {
         if (!dragon.isAlive() || dragon.isRemoved() || dragon.isDying()) {
             return false;
         }
-        // Never regenerate while taking environmental fire damage.
         if (dragon.isOnFire() || dragon.getRemainingFireTicks() > 0 || dragon.isInLava()) {
             return false;
         }

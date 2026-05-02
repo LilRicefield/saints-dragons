@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.fabric.server;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBinderAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.world.RaevyxStormSpawner;
@@ -38,7 +38,7 @@ public final class FabricServerEvents {
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             if (server.getTickCount() % 20 == 0) {
                 for (var level : server.getAllLevels()) {
-                    StegonautBinderAbility.updateAllPortableBuffs(level);
+                    StegonautBuffAbility.updateAllPortableBuffs(level);
                 }
             }
             for (var level : server.getAllLevels()) {

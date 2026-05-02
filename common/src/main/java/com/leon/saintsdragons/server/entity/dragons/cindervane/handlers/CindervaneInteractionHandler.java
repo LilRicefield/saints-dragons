@@ -282,10 +282,8 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        int currentCommand = dragon.getCommand();
-        int nextCommand = (currentCommand + 1) % 3;
+        int nextCommand = dragon.getNextCommand();
         dragon.setCommand(nextCommand);
-        applyCommandState(nextCommand);
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
                 Component.translatable(
@@ -353,17 +351,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
         return baseChance;
     }
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0, 2:
-                dragon.setOrderedToSit(false);
-                break;
-            case 1:
-                dragon.setOrderedToSit(true);
-                break;
-        }
-    }
-
     private void triggerTamingAdvancement(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             var advancement = serverPlayer.server.getAdvancements()

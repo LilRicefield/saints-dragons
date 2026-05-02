@@ -270,10 +270,8 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        int currentCommand = dragon.getCommand();
-        int nextCommand = (currentCommand + 1) % 3;
+        int nextCommand = dragon.getNextCommand();
         dragon.setCommand(nextCommand);
-        applyCommandState(nextCommand);
 
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
@@ -290,14 +288,10 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        if (dragon.isOrderedToSit()) {
-            dragon.setOrderedToSit(false);
-        }
         if (!dragon.level().isClientSide) {
+            dragon.prepareForMounting();
             dragon.combatManager.clearAllStates();
             dragon.setAggressive(false);
-            dragon.setTarget(null);
-            dragon.getNavigation().stop();
             player.startRiding(dragon);
         }
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
@@ -345,22 +339,4 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
         }
     }
 
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0 -> dragon.setOrderedToSit(false);
-            case 1 -> dragon.setOrderedToSit(true);
-            case 2 -> {
-                dragon.setOrderedToSit(false);
-                dragon.setTarget(null);
-                dragon.getNavigation().stop();
-                if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
-                    dragon.setTakeoff(false);
-                    dragon.setHovering(false);
-                    dragon.setLanding(true);
-                }
-            }
-            default -> {
-            }
-        }
-    }
 }

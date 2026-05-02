@@ -208,9 +208,8 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
     }
 
     private InteractionResult handleCommandCycling(Player player) {
-        int nextCommand = (dragon.getCommand() + 1) % 3;
+        int nextCommand = dragon.getNextCommand();
         dragon.setCommand(nextCommand);
-        applyCommandState(nextCommand);
 
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
@@ -220,15 +219,6 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
         }
 
         return InteractionResult.SUCCESS;
-    }
-
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0, 2 -> dragon.setOrderedToSit(false);
-            case 1 -> dragon.setOrderedToSit(true);
-            default -> {
-            }
-        }
     }
 
     private void awardTamingAdvancement(Player player) {

@@ -106,6 +106,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     public final DragonCombatHandler combatManager;
     public final DragonAllyManager allyManager;
     private final DragonSoundHandler soundHandler = new DragonSoundHandler(this);
+    private int ambientSoundTimer;
+    private int nextAmbientSoundDelay;
     @Nullable
     private final DragonCommandComponent commandComponent;
     @Nullable
@@ -167,6 +169,78 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    protected void handleAnimationSound(String soundKey) {
+        if (soundKey == null || soundKey.isEmpty()) {
+            return;
+        }
+        DragonSoundProfile profile = getSoundProfile();
+        if (profile == null || !profile.handleAnimationSound(getSoundHandler(), this, soundKey, null)) {
+            getSoundHandler().playVocal(soundKey);
+        }
+    }
+
+    protected void resetAmbientSoundTimer(int minDelayTicks, int maxDelayTicks) {
+        ambientSoundTimer = 0;
+        int min = Math.max(1, minDelayTicks);
+        int max = Math.max(min, maxDelayTicks);
+        nextAmbientSoundDelay = min + getRandom().nextInt(max - min + 1);
+    }
+
+    protected void seedAmbientSoundTimer(int minDelayTicks, int maxDelayTicks, int initialTimerBound) {
+        ambientSoundTimer = initialTimerBound > 0 ? getRandom().nextInt(initialTimerBound) : 0;
+        int min = Math.max(1, minDelayTicks);
+        int max = Math.max(min, maxDelayTicks);
+        nextAmbientSoundDelay = min + getRandom().nextInt(max - min + 1);
+    }
+
+    protected void tickAmbientVocalSounds(int minDelayTicks, int maxDelayTicks, Supplier<String> vocalSelector) {
+        if (nextAmbientSoundDelay <= 0) {
+            resetAmbientSoundTimer(minDelayTicks, maxDelayTicks);
+        }
+        if (++ambientSoundTimer < nextAmbientSoundDelay) {
+            return;
+        }
+
+        String vocalKey = vocalSelector != null ? vocalSelector.get() : null;
+        if (vocalKey != null && !vocalKey.isEmpty()) {
+            getSoundHandler().playVocal(vocalKey);
+        }
+        resetAmbientSoundTimer(minDelayTicks, maxDelayTicks);
+    }
+
+    protected String selectWeightedAmbientVocal(String first, float firstChance, String second, float secondChance, String fallback) {
+        float roll = getRandom().nextFloat();
+        if (roll < firstChance) {
+            return first;
+        }
+        if (roll < secondChance) {
+            return second;
+        }
+        return fallback;
+    }
+
+    protected void playGroundStepLoopSound(SoundEvent walkSound, SoundEvent runSound,
+                                           int walkDurationTicks, int runDurationTicks,
+                                           long walkReplayIntervalTicks, long runReplayIntervalTicks,
+                                           boolean running, float volume, float pitch) {
+        if (level().isClientSide || isBaby()) {
+            return;
+        }
+
+        long now = level().getGameTime();
+        long minIntervalTicks = running ? runReplayIntervalTicks : walkReplayIntervalTicks;
+        if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
+            return;
+        }
+        getSoundHandler().setLastStepTick(now);
+        getSoundHandler().playMovingEntitySound(
+                running ? runSound : walkSound,
+                volume,
+                pitch,
+                running ? runDurationTicks : walkDurationTicks
+        );
     }
 
     @Nullable
@@ -1026,7 +1100,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public boolean isStayOrSitMuted() {
-        return false;
+        return this.isOrderedToSit() || this.isInSittingPose();
     }
 
     public boolean supportsSleep() {
@@ -1410,7 +1484,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return null;
     }
     public float maxSitTicks() {
-        return 15.0F; // Default: 15 ticks to fully sit (about 0.75 seconds)
+        return 15.0F;
     }
 
     public float getSitProgress() {
@@ -1574,14 +1648,32 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (commandComponent == null) {
             this.entityData.set(DATA_COMMAND, command);
             if (this.isTame()) {
-                this.setOrderedToSit(command == 1);
+                this.applyCommandState(command);
             }
             return;
         }
         commandComponent.setCommand(command);
     }
+
+    public int getNextCommand() {
+        return (getCommand() + 1) % 3;
+    }
+
+    public void applyCommandState(int command) {
+        switch (command) {
+            case 0, 2 -> this.setOrderedToSit(false);
+            case 1 -> this.setOrderedToSit(true);
+            default -> {
+            }
+        }
+    }
+
+    public void refreshCommandState() {
+        applyCommandState(getCommand());
+    }
+
     public boolean canOwnerCommand(Player player) {
-        return player != null && player.isCrouching();
+        return player != null && player.isCrouching() && this.isOwnedBy(player);
     }
 
     public boolean canOwnerMount(Player player) {
@@ -1738,7 +1830,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         if (this.isTame() && this.isOwnedBy(player)) {
             if (canOwnerCommand(player) && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
-                int next = (getCommand() + 1) % 3; // 0,1,2 wrap
+                int next = getNextCommand();
                 setCommand(next);
                 return InteractionResult.SUCCESS;
             }

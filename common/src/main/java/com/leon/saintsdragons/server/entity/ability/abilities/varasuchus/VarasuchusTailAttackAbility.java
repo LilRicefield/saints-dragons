@@ -20,21 +20,14 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Phase 1 tail attack for the Varasuchus. Standing attack that alternates left/right.
- */
-public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
-    // 8 HP = 8 damage points (4 hearts)
-    private static final float DEFAULT_DAMAGE = 8.0f;
 
-    // Rider sweep range, based on bite range and widened slightly.
+public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
+    private static final float DEFAULT_DAMAGE = 8.0f;
     private static final double RANGE = 9.8;
     private static final double TAIL_ANGLE_DEG = 170.0;
     private static final double TAIL_SWIPE_HORIZONTAL = 4.0;
     private static final double TAIL_SWIPE_VERTICAL = 7.0;
     private static final double KNOCKBACK_STRENGTH = 1.4;
-
-    // Animation timing: 1.4583 seconds = 29 ticks total
     private static final int CONTROL_LOCK_TICKS = (int) Math.round(1.4583 * 20);
     private static final int TAIL_ATTACK_SOUND_TICKS = 50;
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -56,7 +49,6 @@ public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
     @Override
     public boolean tryAbility() {
         Varasuchus dragon = getUser();
-        // Phase 1 only, and disallow underwater usage (no G underwater in phase 1).
         return !dragon.isPhaseTwoActive() && !dragon.isSwimming() && !dragon.isInWaterOrBubble();
     }
 

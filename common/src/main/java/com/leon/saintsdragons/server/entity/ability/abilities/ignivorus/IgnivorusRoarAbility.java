@@ -18,9 +18,6 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Roar ability for Ignivorus that seeds magma pillars in three lanes.
- */
 public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     private static final int STARTUP_TICKS = 8;
     private static final int ACTIVE_TICKS = 36;
@@ -36,21 +33,18 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     private static final int WAVES = 3;
     private static final int FIRST_WAVE_TICK = STARTUP_TICKS + 2;
     private static final int WAVE_INTERVAL_TICKS = 6;
-
     private static final double LANE_SPACING = 5.0D;
     private static final double BASE_FORWARD_OFFSET = 20.0D;
     private static final double FORWARD_STEP = 10.0D;
-
     private static final float BASE_DAMAGE = 18.0f;
     private static final float DAMAGE_PER_WAVE = 4.0f;
     private static final double BASE_KNOCKBACK = 0.9D;
     private static final double KNOCKBACK_PER_WAVE = 0.2D;
     private static final int PILLAR_WARMUP_TICKS = 5;
     private static final int PILLAR_LIFETIME_TICKS = 34;
-
     private boolean soundQueued;
     private int wavesSpawned;
-    private boolean cosmeticMode; // True when roaring mid-flight (no pillars/damage)
+    private boolean cosmeticMode;
 
     public IgnivorusRoarAbility(DragonAbilityType<Ignivorus, IgnivorusRoarAbility> type, Ignivorus user) {
         super(type, user, TRACK, 50);
@@ -65,8 +59,6 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
             Ignivorus dragon = getUser();
             dragon.triggerAnim("action", "roar");
             dragon.lockAbilities(STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS);
-
-            // Trigger screen shake for the roar (intensity 1.8F for ~72 ticks at 0.025/tick decay)
             dragon.triggerScreenShake(1.8F);
 
             soundQueued = true;
@@ -103,7 +95,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
         }
 
         if (cosmeticMode) {
-            return; // Flying roar: animation & sound only, no pillars
+            return;
         }
 
         int totalTicks = getTicksInUse();

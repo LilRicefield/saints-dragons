@@ -103,7 +103,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             if (success) {
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
-                dragon.setCommandManual(1);
+                dragon.setCommand(1);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 if (!legacyTaming) {
                     dragon.resetTamingFailures();
@@ -153,7 +153,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
                 () -> {
                     dragon.tame(player);
                     dragon.setOrderedToSit(true);
-                    dragon.setCommandManual(1);
+                    dragon.setCommand(1);
                     triggerTamingAdvancement(player);
                 }
         );
@@ -293,10 +293,8 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        int currentCommand = dragon.getCommand();
-        int nextCommand = (currentCommand + 1) % 3;
-        dragon.setCommandManual(nextCommand);
-        applyCommandState(nextCommand);
+        int nextCommand = dragon.getNextCommand();
+        dragon.setCommand(nextCommand);
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
                 Component.translatable(
@@ -308,17 +306,6 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
         }
 
         return InteractionResult.SUCCESS;
-    }
-
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0, 2:
-                dragon.setOrderedToSit(false);
-                break;
-            case 1:
-                dragon.setOrderedToSit(true);
-                break;
-        }
     }
 
     private Float nextFailureHealTarget() {

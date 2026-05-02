@@ -2,13 +2,13 @@ package com.leon.saintsdragons.server.flight;
 
 import net.minecraft.world.phys.Vec3;
 
-public final class DragonRiderFallRecovery {
+public final class DragonFallRecovery {
     public static final float DEFAULT_FALL_ANIMATION_MIN_BLOCKS = 1.0F;
     public static final float DEFAULT_FALL_RECOVERY_MIN_BLOCKS = 1.0F;
     public static final double DEFAULT_FALL_ANIMATION_MIN_DESCENT = -0.12D;
     public static final double DEFAULT_FALL_RECOVERY_MIN_DESCENT = -0.08D;
 
-    private DragonRiderFallRecovery() {
+    private DragonFallRecovery() {
     }
 
     public static boolean isFallingForAnimation(

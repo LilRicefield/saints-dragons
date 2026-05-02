@@ -80,22 +80,13 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
         }
 
         GeoBone bone = boneOpt.get();
-        // Add to current rotation (which includes animation) instead of setting from snapshot
         bone.setRotY(bone.getRotY() + rotationY);
     }
 
     private void applyGroundNeckTurn(Stegonaut entity, float partialTick) {
-        // Use yaw velocity to determine turn direction and magnitude
         double velocity = entity.getYawVelocity().get(partialTick);
-
-        // Clamp to prevent excessive rotation
         velocity = Mth.clamp(velocity, -25.0, 25.0);
-
-        // Convert to radians - head turns IN the direction of the turn (opposite of tail drag)
-        // So we NEGATE the velocity
         float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
-
-        // Apply with same values as banking lean (4 neck segments)
         applyNeckBoneRotation("neck1Controller", turnRad * 0.3f);
         applyNeckBoneRotation("neck2Controller", turnRad * 0.5f);
         applyNeckBoneRotation("headController", turnRad * 0.35f);
@@ -118,11 +109,9 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     private void applyTailDrag(Stegonaut entity, float partialTick) {
         double velocity = entity.getYawVelocity().get(partialTick);
         velocity = Mth.clamp(velocity, -30.0, 30.0);
-
         float targetVelocity = (float) velocity;
         float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
         float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
-
         applyTailBoneRotation("tail1", velocityRad * 0.5f);
         applyTailBoneRotation("tail2", velocityRad * 1.0f);
         applyTailBoneRotation("tail3", velocityRad * 1.5f);
@@ -139,16 +128,11 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     }
 
     private void applyNeckFollow(Stegonaut entity, EntityModelData modelData, float partialTick) {
-
-        // Combine look rotation + structural bend (NO CLAMPING - let body control handle it)
         float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
-
         double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
         float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
         float totalYawRad = lookYawRad + structuralYawRad;
-
-        // Distribute rotation across neck segments (DragonBodyControl prevents over-rotation)
         applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.35f);
         applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.40f);
         applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.45f);
@@ -156,11 +140,9 @@ public class StegonautModel extends DefaultedEntityGeoModel<Stegonaut> {
     private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
         var boneOpt = getBone(boneName);
         if (boneOpt.isEmpty()) return;
-
         GeoBone bone = boneOpt.get();
         float addX = headDeltaX * weight;
         float addY = headDeltaY * weight;
-
         bone.setRotX(bone.getRotX() + addX);
         bone.setRotY(bone.getRotY() + addY);
     }

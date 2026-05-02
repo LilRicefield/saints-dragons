@@ -10,20 +10,18 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 
 import java.util.EnumSet;
 
-/**
- * Ground combat coordinator for Varasuchus.
- * Features phase-based combat and optimized pathfinding.
- */
+
 public class VarasuchusCombatGoal extends Goal {
     private static final double CHASE_SPEED = 1.5D;
     private static final double WATER_CHASE_START_MULTIPLIER = 0.72D;
     private static final double WATER_CHASE_RECALC_MULTIPLIER = 0.66D;
     private static final double WATER_CHASE_FAR_BOOST = 1.12D;
-    private static final double BITE_RANGE = 5.0D;   // Matched to bite ability (5.5) - slightly conservative for AI
-    private static final double HORN_RANGE = 5.0D;   // Matched to horn gore ability (7.0) - slightly conservative for AI
-    private static final double CLAW_RANGE = 3.5D;   // Claw requires closer range - it's a swipe attack, not a lunge
-    private static final double DASH_MIN_GAP = 9.0D; // Dash only when clearly out of melee range
-    private static final int AI_DASH_COOLDOWN_TICKS = 8 * 20; // 8 seconds
+    private static final double BITE_RANGE = 5.0D;
+    private static final double HORN_RANGE = 5.0D;
+    private static final double CLAW_RANGE = 3.5D;
+    private static final double DASH_MIN_GAP = 9.0D;
+    private static final int MELEE_CADENCE_TICKS = 30;
+    private static final int AI_DASH_COOLDOWN_TICKS = 8 * 20;
     private static final float PHASE_TWO_HEALTH_THRESHOLD = 0.5F;
 
     private final Varasuchus drake;
@@ -132,9 +130,7 @@ public class VarasuchusCombatGoal extends Goal {
             }
         }
 
-        // In melee range - try to attack, but keep chasing if too far for selected ability
         if (gap <= HORN_RANGE) {
-            // Stop and attack only if we're close enough OR already attacking
             if (gap <= BITE_RANGE || isPerformingAttack()) {
                 if (drake.isInWaterOrBubble()) {
                     drake.setDeltaMovement(drake.getDeltaMovement().scale(0.85D));
@@ -148,7 +144,6 @@ public class VarasuchusCombatGoal extends Goal {
             }
             tryPerformAttacks(target);
         } else {
-            // Out of all melee ranges - chase to get closer
             if (!isPerformingAttack()) {
                 updateChasePath(target);
             }
@@ -167,15 +162,13 @@ public class VarasuchusCombatGoal extends Goal {
         DragonAbilityType<Varasuchus, ?> ability = choosePrimaryAttack(target);
         if (ability != null && drake.combatManager.canStart(ability) && drake.getAiCombatPacing().canUse(ability, false)) {
             drake.combatManager.tryUseAbility(ability);
-            drake.getAiCombatPacing().recordUse(ability, 20, 20, false, 0, 18);
+            drake.getAiCombatPacing().recordUse(ability, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, false, 0, 24);
         }
     }
 
     private DragonAbilityType<Varasuchus, ?> choosePrimaryAttack(LivingEntity target) {
         double gap = getGapToTarget(target);
         boolean phaseTwo = drake.isPhaseTwoActive();
-
-        // Close-quarters rule: always horn gore when target is very close (both phases).
         if (gap <= CLAW_RANGE) {
             return VarasuchusAbilities.VARASUCHUS_HORN_GORE;
         }
@@ -184,24 +177,20 @@ public class VarasuchusCombatGoal extends Goal {
             return VarasuchusAbilities.VARASUCHUS_SLASH_BARRAGE;
         }
 
-        // Phase 2: randomize claw and bite2 at any melee distance (no claw-specific range gate).
         if (phaseTwo && gap <= HORN_RANGE) {
             return drake.getRandom().nextBoolean()
                     ? VarasuchusAbilities.VARASUCHUS_BITE2
                     : VarasuchusAbilities.VARASUCHUS_CLAW;
         }
 
-        // Tail attack is phase 1 only and works best at near-mid range.
         if (!phaseTwo && gap > CLAW_RANGE && gap <= HORN_RANGE && drake.getRandom().nextFloat() < 0.35f) {
             return VarasuchusAbilities.VARASUCHUS_TAIL_ATTACK;
         }
 
-        // Bite range (5.0 gap) - medium close range
         if (gap <= BITE_RANGE) {
             return phaseTwo ? VarasuchusAbilities.VARASUCHUS_BITE2 : VarasuchusAbilities.VARASUCHUS_BITE;
         }
 
-        // Horn range (5.0 gap) - can be used at bite range too
         if (gap <= HORN_RANGE) {
             return VarasuchusAbilities.VARASUCHUS_HORN_GORE;
         }
@@ -209,9 +198,6 @@ public class VarasuchusCombatGoal extends Goal {
         return null;
     }
 
-    /**
-     * Check if drake is currently executing an attack ability
-     */
     private boolean isPerformingAttack() {
         return drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_BITE)
             || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_BITE2)
@@ -247,24 +233,12 @@ public class VarasuchusCombatGoal extends Goal {
         return drake.distanceToSqr(target) <= maxDistanceSq;
     }
 
-    private double getAttackReachSqr(LivingEntity target) {
-        double combinedRadii = (drake.getBbWidth() + target.getBbWidth()) * 0.5;
-        double reach = HORN_RANGE + combinedRadii;
-        return reach * reach;
-    }
-
-    /**
-     * Get the gap between entity edges (not centers)
-     */
     private double getGapToTarget(LivingEntity target) {
         double distance = drake.distanceTo(target);
         double combinedRadii = (drake.getBbWidth() + target.getBbWidth()) * 0.5;
         return Math.max(0.0D, distance - combinedRadii);
     }
 
-    /**
-     * Update chase path with optimized recalculation
-     */
     private void updateChasePath(LivingEntity target) {
         if (drake.isInWaterOrBubble()) {
             updateWaterChase(target, WATER_CHASE_RECALC_MULTIPLIER);

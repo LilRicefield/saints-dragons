@@ -24,20 +24,15 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Phase 2 claw attack for the Rift Drake. Alternates between left and right claw swipes.
- */
 public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
     private static final float BASE_DAMAGE = 12.0f;
     private static final double RANGE = 6.5;
-    private static final double CLAW_ANGLE_DEG = 100.0;     // Wider cone than bite
+    private static final double CLAW_ANGLE_DEG = 100.0;
     private static final double CLAW_SWIPE_HORIZONTAL = 3.0;
     private static final double CLAW_SWIPE_VERTICAL = 4.0;
-
-    // Block breaking configuration
-    private static final double BLOCK_BREAK_RANGE = 6.0;     // How far forward to break blocks
-    private static final double BLOCK_BREAK_WIDTH = 3.0;     // Width of the breaking area
-    private static final double BLOCK_BREAK_HEIGHT = 6.0;    // Height of the breaking area
+    private static final double BLOCK_BREAK_RANGE = 6.0;
+    private static final double BLOCK_BREAK_WIDTH = 3.0;
+    private static final double BLOCK_BREAK_HEIGHT = 6.0;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -51,21 +46,17 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
     public VarasuchusClawAbility(DragonAbilityType<Varasuchus, VarasuchusClawAbility> type,
                                  Varasuchus user) {
         super(type, user, TRACK, 3);
-        // Determine which claw to use based on entity's toggle state
         this.useLeftClaw = user.shouldUseLeftClaw();
-        // Toggle for next time
         user.toggleClawSide();
     }
 
     @Override
     public boolean tryAbility() {
-        // Only allow in phase 2
         return getUser().isPhaseTwoActive();
     }
 
     @Override
     public boolean isOverlayAbility() {
-        // Claw can run concurrently with bite2 for aggressive combos
         return true;
     }
 
@@ -95,15 +86,11 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
 
         if (section.sectionType == ACTIVE && !appliedHit) {
             Varasuchus dragon = getUser();
-
-            // Hit ALL targets in range (multi-target attack)
             List<LivingEntity> targets = findAllTargets();
 
             for (LivingEntity target : targets) {
                 applyHit(dragon, target);
             }
-
-            // Break blocks to clear path (rider-only feature)
             if (dragon.isVehicle()) {
                 breakBlocksInPath(dragon);
             }
@@ -137,7 +124,7 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         if (attackAttr != null) {
             double value = attackAttr.getValue();
             if (value > 0) {
-                damage = (float) (value * 1.2); // 20% more damage than bite
+                damage = (float) (value * 1.2);
             }
         }
 
@@ -146,13 +133,7 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         target.hurt(source, damage);
     }
 
-    // ===== Block Breaking =====
 
-    /**
-     * Breaks blocks in the path of the claw swipe to allow the large dragon to clear obstacles
-     * like trees, foliage, and other natural terrain. Only breaks blocks in front and above,
-     * never breaks the ground below.
-     */
     private void breakBlocksInPath(Varasuchus dragon) {
         if (!(dragon.level() instanceof ServerLevel server)) {
             return;
@@ -161,18 +142,11 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
             return;
         }
         DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.forwardAttack(dragon);
-
-        // Calculate the swipe area in front of the dragon
         Vec3 start = attack.origin();
         Vec3 end = start.add(attack.forward().scale(BLOCK_BREAK_RANGE));
-
-        // Create a bounding box for the swipe area
-        // Inflate horizontally and forward, but DON'T inflate downward (only upward)
         AABB breakArea = new AABB(start, end)
-                .inflate(BLOCK_BREAK_WIDTH, 0, BLOCK_BREAK_WIDTH)  // Horizontal inflate only
-                .expandTowards(0, BLOCK_BREAK_HEIGHT, 0);           // Extend upward only
-
-        // Iterate through all blocks in the area
+                .inflate(BLOCK_BREAK_WIDTH, 0, BLOCK_BREAK_WIDTH)
+                .expandTowards(0, BLOCK_BREAK_HEIGHT, 0);
         BlockPos minPos = new BlockPos(
                 (int) Math.floor(breakArea.minX),
                 (int) Math.floor(breakArea.minY),
@@ -186,11 +160,10 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
 
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
 
-        // Pre-calc thresholds for the ray-like swipe
         double maxForward = BLOCK_BREAK_RANGE + 0.5;
         double maxLateral = BLOCK_BREAK_WIDTH + 0.5;
-        double minVertical = -1.0;  // Allow slightly below mouth (for blocks at mouth level)
-        double maxVertical = BLOCK_BREAK_HEIGHT + 0.5;  // Only extend upward
+        double minVertical = -1.0;
+        double maxVertical = BLOCK_BREAK_HEIGHT + 0.5;
 
         for (int x = minPos.getX(); x <= maxPos.getX(); x++) {
             for (int y = minPos.getY(); y <= maxPos.getY(); y++) {
@@ -203,64 +176,44 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
 
                     Vec3 blockCenter = new Vec3(x + 0.5, y + 0.5, z + 0.5);
                     Vec3 offset = blockCenter.subtract(start);
-
-                    // Must be in front of the dragon
                     double forward = offset.dot(attack.forward());
                     if (forward < 0.0 || forward > maxForward) {
                         continue;
                     }
-
-                    // Check lateral (side-to-side) distance from the forward ray
                     Vec3 along = attack.forward().scale(forward);
                     double lateralDistance = offset.subtract(along).length();
                     if (lateralDistance > maxLateral) {
                         continue;
                     }
 
-                    // ONLY break blocks at mouth level or above (never below)
-                    // This prevents smashing the ground
                     if (offset.y < minVertical || offset.y > maxVertical) {
                         continue;
                     }
 
                     BlockState state = server.getBlockState(cursor);
-
-                    // Skip air and blocks that shouldn't be broken
                     if (state.isAir() || !canBreakBlock(state)) {
                         continue;
                     }
 
-                    // Break the block and drop items
                     server.destroyBlock(cursor, true, dragon);
                 }
             }
         }
     }
 
-    /**
-     * Determines if a block can be broken by the claw attack.
-     * Prevents breaking of very hard blocks like obsidian, bedrock, etc.
-     */
+
     private boolean canBreakBlock(BlockState state) {
-        // Don't break liquid blocks
         if (state.liquid()) {
             return false;
         }
 
-        // Get block hardness
         float hardness = state.getDestroySpeed(getUser().level(), BlockPos.ZERO);
-
-        // Don't break unbreakable blocks (bedrock, barriers, etc.)
         if (hardness < 0) {
             return false;
         }
 
-        // Only break relatively soft blocks (wood, leaves, dirt, stone, etc.)
-        // Prevent breaking very hard blocks like obsidian (hardness 50)
         return hardness <= 30.0f;
     }
-
-    // ===== Multi-target finding =====
 
     private List<LivingEntity> findAllTargets() {
         Varasuchus dragon = getUser();

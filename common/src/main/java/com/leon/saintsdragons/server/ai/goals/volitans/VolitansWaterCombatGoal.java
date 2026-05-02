@@ -18,6 +18,7 @@ public class VolitansWaterCombatGoal extends Goal {
     private static final double BREATH_MAX_RANGE = 16.0D;
     private static final double ROAR_MIN_RANGE = 4.5D;
     private static final double ROAR_MAX_RANGE = 12.0D;
+    private static final int MELEE_CADENCE_TICKS = 30;
 
     private final Volitans dragon;
     private int breathHoldTicks = 0;
@@ -164,14 +165,14 @@ public class VolitansWaterCombatGoal extends Goal {
             float roll = dragon.getRandom().nextFloat();
             if (roll < 0.42F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                    startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
+                    startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
                 }
             } else if (roll < 0.72F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-                    startAiAbility(VolitansAbilities.VOLITANS_BITE, false, 12, 16, 0, 18);
+                    startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
                 }
             } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
+                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
             }
             return;
         }
@@ -179,16 +180,16 @@ public class VolitansWaterCombatGoal extends Goal {
         if (gap <= CLAW_RANGE) {
             if (dragon.getRandom().nextFloat() < 0.58F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                    startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
+                    startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
                 }
             } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
+                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
             }
             return;
         }
 
         if (gap <= GORE_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
+            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
         }
     }
 

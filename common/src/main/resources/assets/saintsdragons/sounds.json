@@ -354,7 +354,7 @@
         "name": "saintsdragons:entity/raevyx/raevyx_horngore",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 30
       }
     ]
   },
@@ -363,8 +363,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_hurt",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 30
       }
     ]
   },
@@ -373,8 +374,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_die",
-        "volume": 1.0,
-        "pitch": 1.0
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -825,7 +827,7 @@
         "name": "saintsdragons:entity/varasuchus/varasuchus_eat",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 32
       }
     ]
   },
@@ -836,7 +838,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_bite",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 48
       }
     ]
   },
@@ -858,7 +860,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_bulldozing",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 8
+        "attenuation_distance": 48
       }
     ]
   },
@@ -869,7 +871,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_bulldozer_enter",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 10
+        "attenuation_distance": 48
       }
     ]
   },
@@ -880,7 +882,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_bulldozer_exit",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 8
+        "attenuation_distance": 48
       }
     ]
   },
@@ -902,7 +904,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_impact",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 20
+        "attenuation_distance": 48
       }
     ]
   },
@@ -935,7 +937,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_magma_pillar",
         "volume": 1.0,
         "pitch": 1.0,
-        "attenuation_distance": 8
+        "attenuation_distance": 20
       }
     ]
   },
@@ -955,9 +957,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_enter",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 40
+        "attenuation_distance": 64
       }
     ]
   },
@@ -1000,7 +1002,8 @@
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_hurt",
         "volume": 1.5,
-        "pitch": 1.0
+        "pitch": 1.0,
+        "attenuation_distance": 32
       }
     ]
   },
@@ -1021,7 +1024,8 @@
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breath_start",
         "volume": 2.0,
-        "pitch": 1.0
+        "pitch": 1.0,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -1042,7 +1046,8 @@
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_fire_breath_end",
         "volume": 2.0,
-        "pitch": 1.0
+        "pitch": 1.0,
+        "attenuation_distance": 48
       }
     ]
   },
@@ -1119,7 +1124,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_grumble1",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 27
+        "attenuation_distance": 30
       }
     ]
   },
@@ -1130,7 +1135,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_grumble2",
         "volume": 2.5,
         "pitch": 1.0,
-        "attenuation_distance": 27
+        "attenuation_distance": 30
       }
     ]
   },
@@ -1141,7 +1146,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_grumble3",
         "volume": 1.5,
         "pitch": 1.0,
-        "attenuation_distance": 27
+        "attenuation_distance": 30
       }
     ]
   },
@@ -1162,7 +1167,8 @@
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_flap",
         "volume": 3.0,
-        "pitch": 1.0
+        "pitch": 1.0,
+        "attenuation_distance": 20
       }
     ]
   },
@@ -1272,7 +1278,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_landed",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 32
       }
     ]
   },
@@ -1346,9 +1352,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_exit",
-        "volume": 1.0,
+        "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 64
       }
     ]
   },

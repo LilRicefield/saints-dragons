@@ -8,31 +8,19 @@ public final class DragonTakeoff {
 
     public interface Host {
         Level level();
-
         boolean isFlying();
-
         void setFlying(boolean value);
-
         void setTakeoff(boolean value);
-
         void setHovering(boolean value);
-
         void setLanding(boolean value);
-
         void switchToAirNavigation();
-
         Vec3 getDeltaMovement();
-
         void setDeltaMovement(Vec3 movement);
-
         void markImpulse();
-
         default void onTakeoffStarted() {
         }
-
         default void onTakeoffEnded() {
         }
-
         default int getTakeoffLiftDelayTicks() {
             return 0;
         }

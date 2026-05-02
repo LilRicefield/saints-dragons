@@ -81,14 +81,9 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Determine if this is a ground or air cast
             isGroundCast = !getUser().isFlying();
             activeStartupDuration = isGroundCast ? GROUND_ONE_SHOT_TICKS : AIR_ONE_SHOT_TICKS;
-
-            // Grant invulnerability for the full animation duration
             getUser().startTemporaryInvuln(activeStartupDuration);
-
-            // Lock controls to mirror cinematic handling regardless of flight state
             getUser().lockRiderControls(activeStartupDuration);
             getUser().lockTakeoff(activeStartupDuration);
 
@@ -111,30 +106,24 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             if (!getLevel().isClientSide) {
                 int superchargeTicks = getConfiguredSuperchargeTicks();
                 int stormDurationTicks = getConfiguredStormDurationTicks();
-                // Apply supercharge
                 getUser().startSupercharge(superchargeTicks);
 
-                // Force thunderstorm in this dimension for at least 1 minute
                 if (getLevel() instanceof ServerLevel server) {
                     var ld = server.getLevelData();
                     if (ld instanceof ServerLevelData data) {
-                        // Always ensure rain and thunder are active, extending duration if needed
                         if (!data.isRaining()) {
                             data.setRaining(true);
                         }
                         data.setRainTime(Math.max(data.getRainTime(), stormDurationTicks));
 
-                        // Force thundering state - always set to true to ensure it triggers
                         if (!data.isThundering()) {
                             data.setThundering(true);
                         }
                         data.setThunderTime(Math.max(data.getThunderTime(), stormDurationTicks));
 
-                        // Sync weather to all clients
                         server.setWeatherParameters(0, stormDurationTicks, true, true);
                     }
 
-                    // Dramatic thunder sound cue
                     server.playSound(null, getUser().blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER,
                             net.minecraft.sounds.SoundSource.WEATHER, 6.0f, 0.9f);
                 }
@@ -152,7 +141,6 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     @Override
     public void end() {
         releaseLocks();
-        // Clear temporary invulnerability to prevent it from persisting if ability is interrupted
         getUser().clearTemporaryInvuln();
         super.end();
     }

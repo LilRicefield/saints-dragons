@@ -29,7 +29,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -66,7 +65,6 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-
 import java.util.Map;
 import java.util.UUID;
 
@@ -78,7 +76,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SWIM_TURN = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_SWIM_PITCH = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DATA_SWIM_PITCH_RAD = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT); // Actual pitch angle for visuals
+    private static final EntityDataAccessor<Float> DATA_SWIM_PITCH_RAD = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WILD_RIDE_ACTIVE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
@@ -98,8 +96,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final double RIDER_JUMP_STRENGTH = 1.0D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.4D;
-    private static final int MIN_AMBIENT_DELAY = 200;  // 10 seconds
-    private static final int MAX_AMBIENT_DELAY = 600;  // 30 seconds
+    private static final int MIN_AMBIENT_DELAY = 200;
+    private static final int MAX_AMBIENT_DELAY = 600;
     private static final double BABY_MAX_HEALTH = 80.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.5F;
@@ -109,7 +107,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;
     private static final int MIN_WILD_TAME_TICKS = 60;
     private static final int MAX_TAMING_PROGRESS = 400;
-    private static final int WILD_RIDE_BUCK_DURATION_TICKS = 90; // 4.5 seconds
+    private static final int WILD_RIDE_BUCK_DURATION_TICKS = 90;
     private static final double WILD_RIDE_WALK_SPEED = 0.9D;
     private static final double BREED_PARTNER_RANGE = 30.0D;
     private static final double BREED_DISTANCE_SQR = 16.0D;
@@ -123,8 +121,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final VarasuchusAnimationHandler animationHandler = new VarasuchusAnimationHandler(this);
     private final VarasuchusInteractionHandler interactionHandler = new VarasuchusInteractionHandler(this);
     private final VarasuchusRiderController riderController;
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
@@ -196,9 +192,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
         this.riderController = new VarasuchusRiderController(this);
-        RandomSource rng = this.getRandom();
-        this.ambientSoundTimer = rng.nextInt(80);
-        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
         if (!level.isClientSide) {
             applyConfiguredAttributes();
             this.setHealth(this.getMaxHealth());
@@ -431,7 +425,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.28D) // Hardcoded AI pathfinding speed
+                .add(Attributes.MOVEMENT_SPEED, 0.28D)
                 .add(Attributes.FOLLOW_RANGE, 40.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, 8.0D)
@@ -542,9 +536,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
         AnimationController<Varasuchus> instantActions =
                 new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
-        movementController.setSoundKeyframeHandler(event -> {});
-        actions.setSoundKeyframeHandler(event -> {});
-        instantActions.setSoundKeyframeHandler(event -> {});
+        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        actions.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        instantActions.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationHandler.setupActionController(actions);
         animationHandler.setupInstantActionController(instantActions);
         controllers.add(movementController);
@@ -582,43 +576,19 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return VOCAL_ENTRIES;
     }
 
-    private void playCustomAmbientSound() {
-        RandomSource random = getRandom();
+    private String selectAmbientGrumble() {
         if (isDying() || getTarget() != null || getActiveAbility() != null || areRiderControlsLocked()) {
-            return;
+            return null;
         }
 
-        String vocalKey = null;
-
-        float moodRoll = random.nextFloat();
-        if (moodRoll < 0.4f) {
-            vocalKey = "grumble1";
-        } else if (moodRoll < 0.7f) {
-            vocalKey = "grumble2";
-        } else {
-            vocalKey = "grumble3";
-        }
-
-        if (vocalKey != null) {
-            this.getSoundHandler().playVocal(vocalKey);
-        }
+        return selectWeightedAmbientVocal("grumble1", 0.4f, "grumble2", 0.7f, "grumble3");
     }
 
     private void handleAmbientSounds() {
         if (isBaby() || isDying() || isOrderedToSit() || isSleeping() || isSleepTransitioning() || isInSitTransition() || getSleepAmbientCooldownTicks() > 0 || areRiderControlsLocked()) {
             return;
         }
-        ambientSoundTimer++;
-        if (ambientSoundTimer >= nextAmbientSoundDelay) {
-            playCustomAmbientSound();
-            resetAmbientSoundTimer();
-        }
-    }
-
-    private void resetAmbientSoundTimer() {
-        RandomSource random = getRandom();
-        ambientSoundTimer = 0;
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
     @Override
@@ -681,7 +651,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 tickPhaseTwoLinger();
             }
         }
-
         tickClientSideUpdates();
     }
 
@@ -691,7 +660,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             super.travel(Vec3.ZERO);
             return;
         }
-
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isWildRideActive()) {
             if (areRiderControlsLocked()) {
                 this.setDeltaMovement(Vec3.ZERO);
@@ -700,7 +668,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
-
             if (this.isInWaterOrBubble()) {
                 handleRiddenSwimming(motion);
             } else {
@@ -709,7 +676,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 travelRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
             }
         } else {
-            // Normal AI movement
             super.travel(motion);
         }
     }
@@ -1128,23 +1094,19 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     private void updateSwimOrientationState() {
-        // Server-only: Update synced swim turn and pitch states
         if (!level().isClientSide) {
             int desiredTurn = this.entityData.get(DATA_SWIM_TURN);
             int desiredPitchState = this.entityData.get(DATA_SWIM_PITCH);
-
             boolean riderControlled = this.isTame()
                     && this.isVehicle()
                     && this.getControllingPassenger() instanceof Player player
                     && this.isOwnedBy(player)
                     && this.isInWaterOrBubble();
-
             if (riderControlled) {
                 float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
                 swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
                 float enter = 0.35F;
                 float exit = 0.12F;
-
                 int targetState = swimTurnState;
                 if (swimTurnSmoothedYaw > enter) {
                     targetState = -1;
@@ -1153,10 +1115,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 } else if (Math.abs(swimTurnSmoothedYaw) < exit) {
                     targetState = 0;
                 }
-
                 swimTurnState = targetState;
                 desiredTurn = swimTurnState;
-
                 if (this.isGoingUp()) {
                     desiredPitchState = -1;
                     swimPitchStateTicks = 6;
@@ -1176,7 +1136,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     swimTurnState = 0;
                 }
                 desiredTurn = swimTurnState;
-
                 if (desiredPitchState != 0) {
                     if (++swimPitchStateTicks > 4) {
                         desiredPitchState = 0;
@@ -1186,18 +1145,14 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     swimPitchStateTicks = 0;
                 }
             }
-
             if (this.entityData.get(DATA_SWIM_TURN) != desiredTurn) {
                 this.entityData.set(DATA_SWIM_TURN, desiredTurn);
             }
-
             if (this.entityData.get(DATA_SWIM_PITCH) != desiredPitchState) {
                 this.entityData.set(DATA_SWIM_PITCH, desiredPitchState);
             }
         }
-
         prevSwimRollAngle = swimRollAngle;
-
         if (!isSwimming() || areRiderControlsLocked()) {
             swimRollAngle = 0f;
             prevSwimRollAngle = 0f;
@@ -1212,7 +1167,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             }
             return;
         }
-
         float yawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
         swimTurnSmoothedYaw = swimTurnSmoothedYaw * 0.6F + yawDelta * 0.4F;
         float targetAngle = Mth.clamp(swimTurnSmoothedYaw * 40.0f, -60f, 60f);
@@ -1226,7 +1180,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
-
             prevSwimPitchRad = swimPitchRad;
             float targetPitchRad = 0f;
             if (useKeyPitch) {
@@ -1816,7 +1769,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     isSittingDown = false;
                     sitTransitionTicks = getSitUpAnimationTicks();
                 }
-
                 float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
                 sitProgress -= decrementRate;
                 if (sitProgress < 0f) {
@@ -1829,7 +1781,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     private void tickClientSideUpdates() {
         if (level().isClientSide) {
-            // Smooth client-side swim pitch to prevent jitter from network updates
             prevClientSwimPitchRad = clientSwimPitchRad;
             float targetPitch = this.entityData.get(DATA_SWIM_PITCH_RAD);
             clientSwimPitchRad = Mth.lerp(0.5f, clientSwimPitchRad, targetPitch);
@@ -2064,12 +2015,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     protected double getCullingInflateX() {
         return 8.0D;
     }
-
     @Override
     protected double getCullingInflateY() {
         return 4.0D;
     }
-
     @Override
     protected double getCullingInflateZ() {
         return 8.0D;
@@ -2142,7 +2091,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (this.isOrderedToSit() || this.isVehicle()) {
             return false;
         }
-
         if (this.isOnFire()) {
             return true;
         }
@@ -2157,14 +2105,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (this.isOrderedToSit()) {
             return false;
         }
-
         if (this.isTame() && this.getOwner() != null) {
             LivingEntity owner = this.getOwner();
             if (!owner.isInWater() && this.distanceToSqr(owner) > 100.0D) {
                 return true;
             }
         }
-
         return ticksInWater > 1200 && this.getRandom().nextFloat() < 0.08F;
     }
 }

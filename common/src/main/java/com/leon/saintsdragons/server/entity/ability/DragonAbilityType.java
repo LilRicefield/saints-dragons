@@ -16,9 +16,6 @@ public record DragonAbilityType<M extends LivingEntity, T extends DragonAbility<
         }
     }
 
-    /**
-     * Type-safe construction that avoids unchecked cast warnings.
-     */
     public T makeInstance(M user) {
         return factory.create(this, user);
     }

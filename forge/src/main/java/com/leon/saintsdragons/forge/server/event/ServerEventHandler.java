@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.forge.server.event;
 
-import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBinderAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.world.RaevyxStormSpawner;
 import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
 import com.leon.saintsdragons.server.world.VolitansUnderwaterSpawner;
@@ -13,13 +13,12 @@ import net.minecraftforge.fml.common.Mod;
 @Mod.EventBusSubscriber(modid = "saintsdragons")
 public class ServerEventHandler {
 
-
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             if (event.getServer().getTickCount() % 20 == 0) {
                 for (ServerLevel level : event.getServer().getAllLevels()) {
-                    StegonautBinderAbility.updateAllPortableBuffs(level);
+                    StegonautBuffAbility.updateAllPortableBuffs(level);
                 }
             }
 

@@ -15,11 +15,6 @@ import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
-import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -28,12 +23,9 @@ import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
-import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
-import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
-import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
@@ -59,11 +51,8 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -122,7 +111,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 50)
     );
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
-    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
@@ -244,20 +232,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final IgnivorusRiderController riderController;
-    private final DragonRiderFlight riderFlightComponent;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
-    private final DragonPathNavigateGround groundNav;
-    private final AsyncFlightController asyncAirController;
-    private final AsyncFlightMoveControl asyncAirMoveControl;
-    private final MoveControl groundMoveControl;
-    private final FlyingPathNavigation airNav;
-    private final DragonNavigationModeController navigationModeController;
     public int timeFlying = 0;
     private int airTicks;
-    private final DragonTakeoff takeoffComponent;
     public int groundTicks;
-    private int groundedAerialRecoveryTicks;
     private Vec3 fireAimDir;
     private int fireTime = 0;
     private Vec3 fireServerTarget = null;
@@ -286,8 +265,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private final ScreenShakeComponent screenShakeComponent;
     private float cinematicZoomProgress = 0.0F;
     private float prevCinematicZoomProgress = 0.0F;
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 520;
     private int groundStepSoundCooldownTicks = 0;
@@ -300,236 +277,31 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
         this.setMaxUpStep(DEFAULT_MAX_UP_STEP);
 
-        this.asyncAirController = new AsyncFlightController(this);
-        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
-        this.groundNav = new DragonPathNavigateGround(this, level);
-        this.groundMoveControl = new MoveControl(this);
-        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
-            @Override
-            public boolean isStableDestination(@NotNull BlockPos pos) {
-                return !this.level.getBlockState(pos.below()).isAir();
-            }
-        };
-        this.airNav.setCanOpenDoors(false);
-        this.airNav.setCanFloat(false);
-        this.airNav.setCanPassDoors(false);
-        this.navigationModeController = new DragonNavigationModeController(
-                new DragonNavigationModeController.Host() {
-                    @Override
-                    public void setActiveNavigation(PathNavigation navigation) {
-                        Ignivorus.this.navigation = navigation;
-                    }
-
-                    @Override
-                    public void setActiveMoveControl(MoveControl moveControl) {
-                        Ignivorus.this.moveControl = moveControl;
-                    }
-
-                    @Override
-                    public void afterSwitchToGround() {
-                        if (Ignivorus.this.onGround()) {
-                            Ignivorus.this.setDeltaMovement(Vec3.ZERO);
-                            Ignivorus.this.hasImpulse = false;
-                        } else {
-                            Vec3 motion = Ignivorus.this.getDeltaMovement();
-                            Ignivorus.this.setDeltaMovement(motion.x * 0.25D, motion.y, motion.z * 0.25D);
-                        }
-                    }
-                },
-                this.groundNav,
-                this.airNav,
-                this.groundMoveControl,
-                this.asyncAirMoveControl
-        );
-        this.navigation = this.groundNav;
-        this.moveControl = this.groundMoveControl;
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
 
         this.riderController = new IgnivorusRiderController(this);
-        this.takeoffComponent = createTakeoffComponent();
-        this.riderFlightComponent = createRiderFlightComponent();
-        resetAmbientSoundTimer();
+        resetAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY);
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
     }
 
-    private DragonRiderFlight createRiderFlightComponent() {
-        return new DragonRiderFlight(new DragonRiderFlight.Host() {
-            @Override
-            public Entity asEntity() {
-                return Ignivorus.this;
-            }
-
-            @Override
-            public Level level() {
-                return Ignivorus.this.level();
-            }
-
-            @Override
-            public AABB getBoundingBox() {
-                return Ignivorus.this.getBoundingBox();
-            }
-
-            @Override
-            public boolean isVehicle() {
-                return Ignivorus.this.isVehicle();
-            }
-
-            @Override
-            public boolean isFlying() {
-                return Ignivorus.this.isFlying();
-            }
-
-            @Override
-            public boolean isTakeoff() {
-                return Ignivorus.this.isTakeoff();
-            }
-
-            @Override
-            public boolean isGoingUp() {
-                return Ignivorus.this.isGoingUp();
-            }
-
-            @Override
-            public boolean isUnderWater() {
-                return Ignivorus.this.isUnderWater();
-            }
-
-            @Override
-            public boolean isInWaterOrBubble() {
-                return Ignivorus.this.isInWaterOrBubble();
-            }
-
-            @Override
-            public boolean isTame() {
-                return Ignivorus.this.isTame();
-            }
-
-            @Override
-            public boolean hasControllingRider() {
-                return riderController.getRidingPlayer() != null;
-            }
-
-            @Override
-            public boolean canTakeoff() {
-                return Ignivorus.this.canTakeoff();
-            }
-
-            @Override
-            public void setFlying(boolean value) {
-                Ignivorus.this.setFlying(value);
-            }
-
-            @Override
-            public void setHovering(boolean value) {
-                Ignivorus.this.setHovering(value);
-            }
-
-            @Override
-            public void setLanding(boolean value) {
-                Ignivorus.this.setLanding(value);
-            }
-
-            @Override
-            public void switchToAirNavigation() {
-                Ignivorus.this.switchToAirNavigation();
-            }
-
-            @Override
-            public void setGoingUp(boolean value) {
-                Ignivorus.this.setGoingUp(value);
-            }
-
-            @Override
-            public void setGoingDown(boolean value) {
-                Ignivorus.this.setGoingDown(value);
-            }
-
-            @Override
-            public void stopNavigation() {
-                Ignivorus.this.getNavigation().stop();
-            }
-
-            @Override
-            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-                Ignivorus.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
-            }
-
-            @Override
-            public Vec3 getDeltaMovement() {
-                return Ignivorus.this.getDeltaMovement();
-            }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) {
-                Ignivorus.this.setDeltaMovement(movement);
-            }
-
-            @Override
-            public void markImpulse() {
-                Ignivorus.this.hasImpulse = true;
-            }
-
-            @Override
-            public long getGameTime() {
-                return Ignivorus.this.level().getGameTime();
-            }
-
-            @Override
-            public void onManualTakeoffStart() {
-                Ignivorus.this.timeFlying = 0;
-            }
-        }, new DragonRiderFlight.Config(
+    @Override
+    protected DragonRiderFlight.Config getRiderFlightConfig() {
+        return new DragonRiderFlight.Config(
                 true,
                 0,
                 0.25D,
                 0,
                 0.45D,
                 0
-        ));
+        );
     }
 
-    private DragonTakeoff createTakeoffComponent() {
-        return new DragonTakeoff(new DragonTakeoff.Host() {
-            @Override
-            public Level level() { return Ignivorus.this.level(); }
-
-            @Override
-            public boolean isFlying() { return Ignivorus.this.isFlying(); }
-
-            @Override
-            public void setFlying(boolean value) { Ignivorus.this.setFlying(value); }
-
-            @Override
-            public void setTakeoff(boolean value) { Ignivorus.this.setTakeoff(value); }
-
-            @Override
-            public void setHovering(boolean value) { Ignivorus.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Ignivorus.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Ignivorus.this.switchToAirNavigation(); }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Ignivorus.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Ignivorus.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Ignivorus.this.hasImpulse = true; }
-
-            @Override
-            public void onTakeoffStarted() { Ignivorus.this.timeFlying = 0; }
-        });
-    }
-
-    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+    @Override
+    protected void onTakeoffStarted() {
+        this.timeFlying = 0;
     }
 
     @Override
@@ -657,23 +429,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         tickLeapState();
         tickScreenShake();
         tickCinematicZoom();
-        takeoffComponent.tick();
-        groundedAerialRecoveryTicks = DragonGroundedAerialRecovery.tick(
-                level(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                isTakeoff(),
-                isFlying(),
-                isHovering(),
-                isLanding(),
-                false,
-                getDeltaMovement(),
-                groundedAerialRecoveryTicks,
-                GROUNDED_AERIAL_RECOVERY_TICKS,
-                0.05D,
-                this::markLandedNow
-        );
+        tickStandardTakeoffAndGroundedAerialRecovery();
         if (isFlying()) {
             airTicks++;
             groundTicks = 0;
@@ -699,12 +455,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
-        if (!level().isClientSide && this.navigationModeController.isUsingAirNavigation()
-                && (this.isFlying() || this.isTakeoff() || this.isLanding())
-                && !this.isVehicle()
-                && !isDirectAirCombatActive()) {
-            this.asyncAirController.serverTick();
-        }
+        tickAsyncFlightNavigation(isDirectAirCombatActive());
 
         tickBankingLogic();
         tickBarrelRollLogic();
@@ -857,11 +608,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return groundNav;
-    }
-
-    @Override
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
         if (!level().isClientSide && isFlying()) {
@@ -888,29 +634,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
 
-        if (ambientSoundTimer < nextAmbientSoundDelay) {
-            ambientSoundTimer++;
-            return;
-        }
-
-        playAmbientGrumble();
-        resetAmbientSoundTimer();
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
-    private void playAmbientGrumble() {
+    private String selectAmbientGrumble() {
         float roll = this.getRandom().nextFloat();
-        String vocalKey = roll < 0.34f ? "ignivorus_grumble1"
+        return roll < 0.34f ? "ignivorus_grumble1"
                 : (roll < 0.67f ? "ignivorus_grumble2" : "ignivorus_grumble3");
-        this.getSoundHandler().playVocal(vocalKey);
     }
-
-    private void resetAmbientSoundTimer() {
-        RandomSource random = getRandom();
-        ambientSoundTimer = 0;
-        int range = Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
-    }
-
 
     public boolean canFeed() {
         return this.entityData.get(DATA_FEEDING_COOLDOWN) <= 0;
@@ -1655,7 +1386,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         blended = new Vec3(blended.x, dy, blended.z);
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
-        riderFlightComponent.tryAutoBreachTakeoff();
+        tryAutoBreachRiderTakeoff();
     }
 
     private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed) {
@@ -1962,10 +1693,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                stack.is(ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
-    public void setCommandManual(int command) {
-        this.setCommand(command);
-    }
-
     @Override
     protected void onRiderToggleMelee(Player player) {
         if ((isFlying() || isTakeoff() || isLanding() || isHovering()) && player instanceof ServerPlayer serverPlayer && !level().isClientSide) {
@@ -2214,88 +1941,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        boolean canRecover = canRecoverTakeoffFromFall();
-
-        if (inWater) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-            return;
-        }
-
-        if (locked) {
-            setGoingUp(false);
-            setGoingDown(false);
-            return;
-        }
-
-        if (goingUp && canRecover) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-
-        if (isFlying() || canRecover) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-        } else {
-            setGoingUp(false);
-            setGoingDown(false);
-        }
+    protected boolean isRiderFallRecoveryBlocked() {
+        return leaping || getLeapAnimState() != 0;
     }
 
     @Override
-    protected void onRiderTakeoffRequest(Player player) {
-        if (canRecoverTakeoffFromFall()) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        if (!isFlying()) {
-            enforcePrimaryMeleeForFlight(player);
-            requestRiderTakeoff();
-        }
-    }
-
-    public boolean isFallingForAnimation() {
-        return DragonRiderFallRecovery.isFallingForAnimation(
-                isVehicle(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                this.fallDistance,
-                getDeltaMovement()
-        );
-    }
-
-    private boolean canRecoverTakeoffFromFall() {
-        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
-                isTame(),
-                isVehicle(),
-                isAlive(),
-                isBaby(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                leaping || getLeapAnimState() != 0,
-                this.fallDistance,
-                getDeltaMovement()
-        );
-    }
-
-    public void requestRiderTakeoff() {
-        riderFlightComponent.requestRiderTakeoff();
+    protected void beforeStandardRiderTakeoff(Player player) {
+        enforcePrimaryMeleeForFlight(player);
     }
 
     @Override
@@ -2311,19 +1963,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public @Nullable LivingEntity getControllingPassenger() {
         return riderController.getControllingPassenger();
-    }
-
-    public void switchToAirNavigation() {
-        this.navigationModeController.switchToAir();
-    }
-
-    public void switchToGroundNavigation() {
-        this.navigationModeController.switchToGround();
-    }
-
-    @Override
-    protected void clearTakeoffState() {
-        takeoffComponent.clear();
     }
 
     @Override
@@ -2476,15 +2115,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public boolean isLanding() {
         return this.entityData.get(DATA_LANDING);
-    }
-
-    public boolean isFlightControllerStuck() {
-        if (!this.navigationModeController.isUsingAirNavigation()) {
-            return false;
-        }
-        AsyncFlightController.PathState state = this.asyncAirController.getState();
-        return state == AsyncFlightController.PathState.STUCK
-                || state == AsyncFlightController.PathState.FAILED;
     }
 
     @Override
@@ -2864,6 +2494,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected boolean isStandardPitchActionBlocked() {
         return isBreathingFire();
+    }
+
+    @Override
+    protected float getStandardAiLandingPitchDegrees() {
+        return 32.0F;
     }
 
     private void tickRiderLandingBlendTimer() {
@@ -3293,16 +2928,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public DragonSoundProfile getSoundProfile() {
         return IgnivorusSoundProfile.INSTANCE;
-    }
-
-    private void handleAnimationSound(String soundKey) {
-        DragonSoundProfile profile = getSoundProfile();
-        if (profile != null) {
-            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
-            if (!handled) {
-                getSoundHandler().playVocal(soundKey);
-            }
-        }
     }
 
     @Override

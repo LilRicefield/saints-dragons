@@ -101,7 +101,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             if (success) {
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
-                dragon.setCommandManual(1); // Set command to Sit (1) to match the sitting state
+                dragon.setCommand(1);
                 dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 if (!legacyTaming) {
@@ -222,7 +222,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 () -> {
                     dragon.tame(player);
                     dragon.setOrderedToSit(true);
-                    dragon.setCommandManual(1);
+                    dragon.setCommand(1);
                     dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
                     triggerTamingAdvancement(player);
                 }
@@ -305,32 +305,12 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             return InteractionResult.SUCCESS;
         }
 
-        int nextCommand = (dragon.getCommand() + 1) % 3;
-        dragon.setCommandManual(nextCommand);
-        applyCommandState(nextCommand);
+        int nextCommand = dragon.getNextCommand();
+        dragon.setCommand(nextCommand);
         String messageKey = "entity.saintsdragons.all.command_" + nextCommand;
         player.displayClientMessage(Component.translatable(messageKey, dragon.getName()), true);
 
         return InteractionResult.CONSUME;
-    }
-
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0:
-                dragon.setOrderedToSit(false);
-                break;
-            case 1:
-                dragon.setOrderedToSit(true);
-                break;
-            case 2:
-                dragon.setOrderedToSit(false);
-                if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
-                    dragon.setTakeoff(false);
-                    dragon.setHovering(false);
-                    dragon.setLanding(true);
-                }
-                break;
-        }
     }
 
     private void playEatSound() {
@@ -345,13 +325,8 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        if (dragon.isOrderedToSit()) {
-            dragon.setOrderedToSit(false);
-        }
-        if (dragon.getCommand() == 1) {
-            dragon.setCommandManual(0);
-        }
         if (!dragon.level().isClientSide) {
+            dragon.prepareForMounting();
             if (!player.startRiding(dragon)) {
                 return InteractionResult.FAIL;
             }

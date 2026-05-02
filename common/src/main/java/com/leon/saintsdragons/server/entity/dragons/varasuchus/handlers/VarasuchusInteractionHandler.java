@@ -283,14 +283,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
         }
 
         if (!dragon.level().isClientSide) {
-            if (dragon.isOrderedToSit()) {
-                dragon.setOrderedToSit(false);
-            }
-            if (dragon.getCommand() == 1) {
-                dragon.setCommand(0);
-            }
-            dragon.setTarget(null);
-            dragon.getNavigation().stop();
+            dragon.prepareForMounting();
             player.startRiding(dragon);
         }
 
@@ -316,10 +309,8 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
-        int currentCommand = dragon.getCommand();
-        int nextCommand = (currentCommand + 1) % 3;
+        int nextCommand = dragon.getNextCommand();
         dragon.setCommand(nextCommand);
-        applyCommandState(nextCommand);
 
         if (!dragon.level().isClientSide) {
             player.displayClientMessage(
@@ -328,15 +319,6 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             );
         }
         return InteractionResult.SUCCESS;
-    }
-
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0, 2 -> dragon.setOrderedToSit(false);
-            case 1 -> dragon.setOrderedToSit(true);
-            default -> {
-            }
-        }
     }
 
     private boolean isVarasuchusFood(ItemStack itemstack) {

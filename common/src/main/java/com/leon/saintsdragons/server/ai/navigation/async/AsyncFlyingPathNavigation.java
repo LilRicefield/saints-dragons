@@ -6,10 +6,7 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Adapter that preserves existing navigation.moveTo(...) call sites
- * while routing path requests into the async flight controller.
- */
+
 public class AsyncFlyingPathNavigation extends FlyingPathNavigation {
     private final AsyncFlightController controller;
 
@@ -49,8 +46,5 @@ public class AsyncFlyingPathNavigation extends FlyingPathNavigation {
 
     @Override
     public void tick() {
-        // The async controller owns movement and path progression.
-        // Vanilla FlyingPathNavigation.tick() assumes this.path is populated
-        // and will crash when followThePath() dereferences it.
     }
 }

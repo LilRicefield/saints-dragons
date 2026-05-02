@@ -11,7 +11,6 @@ public final class DragonRiderFlight {
         Entity asEntity();
         Level level();
         AABB getBoundingBox();
-
         boolean isVehicle();
         boolean isFlying();
         boolean isTakeoff();
@@ -21,7 +20,6 @@ public final class DragonRiderFlight {
         boolean isTame();
         boolean hasControllingRider();
         boolean canTakeoff();
-
         void setFlying(boolean value);
         void setHovering(boolean value);
         void setLanding(boolean value);
@@ -30,7 +28,6 @@ public final class DragonRiderFlight {
         void setGoingDown(boolean value);
         void stopNavigation();
         void startTakeoffSequence(double minUpwardVelocity, int animationTicks);
-
         Vec3 getDeltaMovement();
         void setDeltaMovement(Vec3 movement);
         void markImpulse();

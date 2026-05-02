@@ -7,10 +7,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
-/**
- * Shared taming-stun component for dragons that support weakened/stun taming flow.
- * Handles stun lifecycle, timeout/recovery, and grounded-stun enforcement.
- */
 public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     protected final T dragon;
 

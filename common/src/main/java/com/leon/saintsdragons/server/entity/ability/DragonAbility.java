@@ -10,22 +10,17 @@ import software.bernie.geckolib.core.object.PlayState;
 
 import java.util.Random;
 
-/**
- * Base wyvern ability class with GeckoLib integration
- */
+
 public abstract class DragonAbility<T extends LivingEntity> {
     private final DragonAbilitySection[] sectionTrack;
     protected int cooldownMax;
     private final DragonAbilityType<T, ? extends DragonAbility<T>> abilityType;
     private final T user;
-
-    // Timing and state
     private int ticksInUse;
     private int ticksInSection;
     private int currentSectionIndex;
     private boolean isUsing;
     private int cooldownTimer;
-
     protected Random rand;
     protected RawAnimation activeAnimation;
 
@@ -43,7 +38,7 @@ public abstract class DragonAbility<T extends LivingEntity> {
         this(abilityType, user, sectionTrack, 0);
     }
 
-    // ===== CORE ABILITY LIFECYCLE =====
+
 
     public void start() {
         if (user instanceof DragonAbilityEntity) {
@@ -71,7 +66,7 @@ public abstract class DragonAbility<T extends LivingEntity> {
             if (section instanceof AbilitySectionInstant) {
                 nextSection();
             } else if (section instanceof AbilitySectionDuration sectionDuration) {
-                if (ticksInSection > sectionDuration.duration) nextSection();
+                if (ticksInSection >= sectionDuration.duration) nextSection();
             }
         } else {
             tickNotUsing();
@@ -98,9 +93,7 @@ public abstract class DragonAbility<T extends LivingEntity> {
         end();
     }
 
-    // ===== ANIMATION INTEGRATION =====
-
-    @SuppressWarnings("unused") // API hook: used by entities implementing DragonAbilityEntity
+    @SuppressWarnings("unused")
     public void playAnimation(RawAnimation animation) {
         activeAnimation = animation;
         // Delegate to entity so it can trigger a synced GeckoLib animation (server → clients)
@@ -109,16 +102,13 @@ public abstract class DragonAbility<T extends LivingEntity> {
         }
     }
 
-    @SuppressWarnings("unused") // API hook for GeckoLib controller wiring
+    @SuppressWarnings("unused")
     public <E extends GeoEntity> PlayState animationPredicate(AnimationState<E> e) {
         if (activeAnimation == null || activeAnimation.getAnimationStages().isEmpty())
             return PlayState.STOP;
         e.getController().setAnimation(activeAnimation);
         return PlayState.CONTINUE;
     }
-
-    // ===== SECTION MANAGEMENT =====
-
     public void nextSection() {
         jumpToSection(currentSectionIndex + 1);
     }
@@ -134,68 +124,36 @@ public abstract class DragonAbility<T extends LivingEntity> {
         }
     }
 
-    // ===== OVERRIDE POINTS =====
 
-    /**
-     * Whether this ability should be treated as an overlay that can run alongside other abilities.
-     * Overlay abilities stay active without blocking primary attacks.
-     */
     public boolean isOverlayAbility() {
         return false;
     }
-
-    public void tickUsing() {
-        // Override for ability-specific behavior during use
-    }
-
-    public void tickNotUsing() {
-        // Override for ability-specific behavior when not in use
-    }
-
-    protected void beginSection(DragonAbilitySection section) {
-        // Override to handle section start logic
-    }
-
-    protected void endSection(DragonAbilitySection section) {
-        // Override to handle section end logic
-    }
-
-    // ===== ABILITY CONDITIONS =====
-
+    public void tickUsing() {}
+    public void tickNotUsing() {}
+    protected void beginSection(DragonAbilitySection section) {}
+    protected void endSection(DragonAbilitySection section) {}
     public boolean canUse() {
         return !isUsing() && cooldownTimer == 0;
     }
-
     public boolean tryAbility() {
         return true;
     }
-
     protected boolean canContinueUsing() {
         return true;
     }
 
-    /**
-     * Shared post-action recovery applied after this ability finishes.
-     * This is the runtime "endlag" window before another primary ability can begin.
-     */
     public int getRecoveryTicks() {
         return 10;
     }
 
-    /**
-     * Recovery applied when the ability is interrupted or force-ended.
-     * Defaults to normal recovery, but abilities can soften or harden this if needed.
-     */
     public int getInterruptRecoveryTicks() {
         return getRecoveryTicks();
     }
 
-    @SuppressWarnings("unused") // Override in abilities that should be interruptible by damage
+    @SuppressWarnings("unused")
     public boolean damageInterrupts() {
         return false;
     }
-
-    // ===== GETTERS =====
 
     public boolean isUsing() {
         return isUsing;
@@ -209,7 +167,7 @@ public abstract class DragonAbility<T extends LivingEntity> {
         return user.level();
     }
 
-    @SuppressWarnings("unused") // Useful for UI/debugging; not always referenced
+    @SuppressWarnings("unused")
     public int getTicksInUse() {
         return ticksInUse;
     }
@@ -227,7 +185,7 @@ public abstract class DragonAbility<T extends LivingEntity> {
         return getSectionTrack()[currentSectionIndex];
     }
 
-    @SuppressWarnings("unused") // Useful for UI/debugging; not always referenced
+    @SuppressWarnings("unused")
     public int getCurrentSectionIndex() {
         return currentSectionIndex;
     }
@@ -244,15 +202,12 @@ public abstract class DragonAbility<T extends LivingEntity> {
         return abilityType;
     }
 
-    @SuppressWarnings("unused") // Convenience alias for isUsing(); kept for clarity/API
+    @SuppressWarnings("unused")
     public boolean isAnimating() {
         return isUsing();
     }
 
-    /**
-     * Interface for entities that can use wyvern abilities
-     */
-    @SuppressWarnings("unused") // Optional integration interface for entities opting into this API
+    @SuppressWarnings("unused")
     public interface DragonAbilityEntity {
         void setActiveAbility(DragonAbility<?> ability);
         DragonAbility<?> getActiveAbility();

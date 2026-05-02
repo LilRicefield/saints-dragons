@@ -18,5 +18,4 @@ public class DragonUIRegistry {
     public static boolean isUIVisible() {
         return uiVisible;
     }
-
 }

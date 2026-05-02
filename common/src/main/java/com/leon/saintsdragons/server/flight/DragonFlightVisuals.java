@@ -11,7 +11,6 @@ public final class DragonFlightVisuals {
     private static final float BANK_SCALE = 5.5f;
     private static final float BANK_MAX_ANGLE = 55.0f;
     private static final float BANK_LERP = 0.32f;
-
     private static final float RIDER_PITCH_MEMORY = 0.65f;
     private static final float RIDER_PITCH_BLEND = 0.35f;
     private static final float PITCH_LERP = 0.24f;

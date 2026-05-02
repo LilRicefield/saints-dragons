@@ -20,9 +20,7 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 import java.util.function.Supplier;
 
-/**
- * Mirrors the Forge biome modifier using Fabric's BiomeModifications API.
- */
+
 public final class FabricDragonSpawns {
     private static final TagKey<Biome> HAS_CINDERVANE =
             TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));

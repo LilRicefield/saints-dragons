@@ -10,11 +10,6 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.cindervane.*;
-import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -22,12 +17,9 @@ import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
-import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
-import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
-import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
@@ -81,12 +73,9 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -137,7 +126,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
     private static final int LANDING_SETTLE_TICKS = 4;
     public static final int TAKEOFF_ANIMATION_TICKS = 24;
-    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
     private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
     private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
@@ -164,27 +152,16 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                     .add("cindervane_die", "instant", "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
                     .build();
 
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
     private int groundStepSoundCooldownTicks = 0;
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
-    private final DragonRiderFlight riderFlightComponent;
-    private final DragonPathNavigateGround groundNav;
-    private final AsyncFlightController asyncAirController;
-    private final AsyncFlightMoveControl asyncAirMoveControl;
-    private final MoveControl groundMoveControl;
-    private final FlyingPathNavigation airNav;
-    private final DragonNavigationModeController navigationModeController;
     private int targetCooldown;
     private int airTicks;
     public int groundTicks;
     public int timeFlying = 0;
     private int landingTicks;
-    private int riderTakeoffTicks;
-    private int groundedAerialRecoveryTicks;
     private boolean wasVehicleLastTick;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
@@ -195,7 +172,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private UUID packLeaderUuid;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private final ScreenShakeComponent screenShakeComponent;
-    private final DragonTakeoff takeoffComponent;
     private int sitTransitionTicks = 0;
     private boolean isSittingDown = false;
     private boolean isStandingUp = false;
@@ -280,196 +256,32 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.12F);
         this.setMaxUpStep(1.1F);
-
-        this.asyncAirController = new AsyncFlightController(this);
-        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
-        this.groundNav = new DragonPathNavigateGround(this, level);
-        this.groundMoveControl = new MoveControl(this);
-        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
-            @Override
-            public boolean isStableDestination(@Nonnull BlockPos pos) {
-                BlockState below = this.level.getBlockState(pos.below());
-                return !below.isAir();
-            }
-        };
-        this.airNav.setCanOpenDoors(false);
-        this.airNav.setCanFloat(false);
-        this.airNav.setCanPassDoors(false);
-
-        this.navigationModeController = new DragonNavigationModeController(
-                new DragonNavigationModeController.Host() {
-                    @Override
-                    public void setActiveNavigation(PathNavigation navigation) {
-                        Cindervane.this.navigation = navigation;
-                    }
-
-                    @Override
-                    public void setActiveMoveControl(MoveControl moveControl) {
-                        Cindervane.this.moveControl = moveControl;
-                    }
-
-                    @Override
-                    public void afterSwitchToGround() {
-                        if (Cindervane.this.onGround()) {
-                            Cindervane.this.setDeltaMovement(Vec3.ZERO);
-                            Cindervane.this.hasImpulse = false;
-                        } else {
-                            Vec3 motion = Cindervane.this.getDeltaMovement();
-                            Cindervane.this.setDeltaMovement(motion.x * 0.25D, motion.y, motion.z * 0.25D);
-                        }
-                    }
-                },
-                this.groundNav,
-                this.airNav,
-                this.groundMoveControl,
-                this.asyncAirMoveControl
-        );
-        this.navigation = this.groundNav;
-        this.moveControl = this.groundMoveControl;
         this.riderController = new CindervaneRiderController(this);
-        this.takeoffComponent = createTakeoffComponent();
-        this.riderFlightComponent = createRiderFlightComponent();
-
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
-
-        RandomSource rng = this.getRandom();
-        this.ambientSoundTimer = rng.nextInt(80);
-        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1));
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
 
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
     }
 
-    private DragonRiderFlight createRiderFlightComponent() {
-        return new DragonRiderFlight(new DragonRiderFlight.Host() {
-            @Override
-            public Entity asEntity() { return Cindervane.this; }
-
-            @Override
-            public Level level() { return Cindervane.this.level(); }
-
-            @Override
-            public AABB getBoundingBox() { return Cindervane.this.getBoundingBox(); }
-
-            @Override
-            public boolean isVehicle() { return Cindervane.this.isVehicle(); }
-
-            @Override
-            public boolean isFlying() { return Cindervane.this.isFlying(); }
-
-            @Override
-            public boolean isTakeoff() { return Cindervane.this.isTakeoff(); }
-
-            @Override
-            public boolean isGoingUp() { return Cindervane.this.isGoingUp(); }
-
-            @Override
-            public boolean isUnderWater() { return Cindervane.this.isUnderWater(); }
-
-            @Override
-            public boolean isInWaterOrBubble() { return Cindervane.this.isInWaterOrBubble(); }
-
-            @Override
-            public boolean isTame() { return Cindervane.this.isTame(); }
-
-            @Override
-            public boolean hasControllingRider() { return riderController.getRidingPlayer() != null; }
-
-            @Override
-            public boolean canTakeoff() { return Cindervane.this.canTakeoff(); }
-
-            @Override
-            public void setFlying(boolean value) { Cindervane.this.setFlying(value); }
-
-            @Override
-            public void setHovering(boolean value) { Cindervane.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Cindervane.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Cindervane.this.switchToAirNavigation(); }
-
-            @Override
-            public void setGoingUp(boolean value) { Cindervane.this.setGoingUp(value); }
-
-            @Override
-            public void setGoingDown(boolean value) { Cindervane.this.setGoingDown(value); }
-
-            @Override
-            public void stopNavigation() { Cindervane.this.getNavigation().stop(); }
-
-            @Override
-            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-                Cindervane.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
-            }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Cindervane.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Cindervane.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Cindervane.this.hasImpulse = true; }
-
-            @Override
-            public long getGameTime() { return Cindervane.this.level().getGameTime(); }
-
-            @Override
-            public void setRiderTakeoffTicks(int ticks) { Cindervane.this.setRiderTakeoffTicks(ticks); }
-        }, new DragonRiderFlight.Config(
+    @Override
+    protected DragonRiderFlight.Config getRiderFlightConfig() {
+        return new DragonRiderFlight.Config(
                 true,
                 0,
                 0.55D,
                 TAKEOFF_ANIMATION_TICKS,
                 0.45D,
                 TAKEOFF_ANIMATION_TICKS
-        ));
+        );
     }
 
-    private DragonTakeoff createTakeoffComponent() {
-        return new DragonTakeoff(new DragonTakeoff.Host() {
-            @Override
-            public Level level() { return Cindervane.this.level(); }
-
-            @Override
-            public boolean isFlying() { return Cindervane.this.isFlying(); }
-
-            @Override
-            public void setFlying(boolean value) { Cindervane.this.setFlying(value); }
-
-            @Override
-            public void setTakeoff(boolean value) { Cindervane.this.setTakeoff(value); }
-
-            @Override
-            public void setHovering(boolean value) { Cindervane.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Cindervane.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Cindervane.this.switchToAirNavigation(); }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Cindervane.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Cindervane.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Cindervane.this.hasImpulse = true; }
-
-            @Override
-            public void onTakeoffStarted() { Cindervane.this.timeFlying = 0; }
-        });
-    }
-
-    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+    @Override
+    protected void onTakeoffStarted() {
+        this.timeFlying = 0;
     }
 
     @Override
@@ -486,13 +298,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 }
             }
         }
-
         if (!this.isTame()) {
             this.setOwnerUUID(null);
             this.setCommand(2);
             this.setOrderedToSit(false);
         }
-
         applyConfiguredAttributes();
         this.setHealth(this.getMaxHealth());
         return data;
@@ -500,7 +310,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
-
         if (this.isBaby()) {
             setAttributeBase(Attributes.MAX_HEALTH, 40.0);
             setAttributeBase(Attributes.ARMOR, 0.0);
@@ -510,7 +319,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
             setAttributeBase(Attributes.ARMOR, config.armor());
         }
-
         clampHealthToMax();
     }
 
@@ -654,9 +462,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
             tickAnimationStates();
         }
-
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
-        if (!isFlying() && !isTakeoff() && !isLanding() && navigationModeController.isUsingAirNavigation()) {
+        if (!isFlying() && !isTakeoff() && !isLanding() && isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
     }
@@ -672,23 +479,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (level().isClientSide) {
             return;
         }
-        takeoffComponent.tick();
-        groundedAerialRecoveryTicks = DragonGroundedAerialRecovery.tick(
-                level(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                isTakeoff(),
-                isFlying(),
-                isHovering(),
-                isLanding(),
-                false,
-                getDeltaMovement(),
-                groundedAerialRecoveryTicks,
-                GROUNDED_AERIAL_RECOVERY_TICKS,
-                0.05D,
-                this::markLandedNow
-        );
+        tickStandardTakeoffAndGroundedAerialRecovery();
         tickSittingState();
         tickRiderTakeoff();
         tickMountedState();
@@ -705,12 +496,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (targetCooldown > 0) {
             targetCooldown--;
         }
-        if (this.navigationModeController.isUsingAirNavigation()
-                && (this.isFlying() || this.isTakeoff() || this.isLanding())
-                && !this.isVehicle()
-                && !isDirectAirCombatActive()) {
-            this.asyncAirController.serverTick();
+        if (!level().isClientSide && (isFlying() || isTakeoff() || isLanding() || isHovering())) {
+            this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
+        tickAsyncFlightNavigation(isDirectAirCombatActive());
         if (isFlying()) {
             timeFlying++;
         } else {
@@ -840,10 +629,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     private void handleAmbientSounds() {
-        if (nextAmbientSoundDelay <= 0) {
-            resetAmbientSoundTimer();
-        }
-
         if (isBaby() || isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || getSleepAmbientCooldownTicks() > 0 || areRiderControlsLocked()) {
             return;
         }
@@ -856,16 +641,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return;
         }
 
-        ambientSoundTimer++;
-        if (ambientSoundTimer < nextAmbientSoundDelay) {
-            return;
-        }
-
-        String vocal = selectAmbientGrumble();
-        if (vocal != null) {
-            this.getSoundHandler().playVocal(vocal);
-        }
-        resetAmbientSoundTimer();
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
     private String selectAmbientGrumble() {
@@ -879,13 +655,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return "grumble2";
         }
         return "grumble3";
-    }
-
-    private void resetAmbientSoundTimer() {
-        ambientSoundTimer = 0;
-        RandomSource random = getRandom();
-        int range = Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1);
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
     }
 
     private void tickGroundStepAudio() {
@@ -934,7 +703,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         setLanding(false);
         setTakeoff(false);
         setAccelerating(false);
-        this.riderTakeoffTicks = 0;
+        setRiderTakeoffTicks(0);
 
         if (!isFlying()) {
             airTicks = 0;
@@ -944,7 +713,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             this.getNavigation().stop();
         }
 
-        if (!isFlying() && navigationModeController.isUsingAirNavigation()) {
+        if (!isFlying() && isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
 
@@ -957,12 +726,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.setTarget(null);
         this.setOrderedToSit(false);
         this.setNoGravity(isFlying() || isHovering());
-    }
-
-    private void tickRiderTakeoff() {
-        if (!level().isClientSide && riderTakeoffTicks > 0) {
-            riderTakeoffTicks--;
-        }
     }
 
     private void tickBankingLogic() {
@@ -1131,84 +894,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        boolean canRecover = canRecoverTakeoffFromFall();
-
-        if (inWater) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-            return;
-        }
-
-        if (locked) {
-            setGoingUp(false);
-            setGoingDown(false);
-            return;
-        }
-
-        if (goingUp && canRecover) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-
-        if (this.isFlying() || canRecover) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-        } else {
-            setGoingUp(false);
-            setGoingDown(false);
-        }
-    }
-
-    @Override
-    protected void onRiderTakeoffRequest(Player player) {
-        if (canRecoverTakeoffFromFall()) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        requestRiderTakeoff();
-    }
-
-    public boolean isFallingForAnimation() {
-        return DragonRiderFallRecovery.isFallingForAnimation(
-                isVehicle(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                this.fallDistance,
-                getDeltaMovement()
-        );
-    }
-
-    private boolean canRecoverTakeoffFromFall() {
-        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
-                isTame(),
-                isVehicle(),
-                isAlive(),
-                isBaby(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                false,
-                this.fallDistance,
-                getDeltaMovement()
-        );
-    }
-
-    @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
         if (locked) {
@@ -1282,10 +967,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return true;
         }
         return slashGrabPassengerUuid != null && slashGrabPassengerUuid.equals(passenger.getUUID());
-    }
-
-    public void requestRiderTakeoff() {
-        riderFlightComponent.requestRiderTakeoff();
     }
 
     public double getPassengersRidingOffset() {
@@ -1403,7 +1084,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
         if (inWater && !level().isClientSide) {
-            if (riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks)) {
+            if (shouldClearRiderFlightStateInWater()) {
                 this.setFlying(false);
                 this.setTakeoff(false);
                 this.setHovering(false);
@@ -1458,7 +1139,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.setDeltaMovement(blended);
         this.move(MoverType.SELF, this.getDeltaMovement());
 
-        riderFlightComponent.tryAutoBreachTakeoff();
+        tryAutoBreachRiderTakeoff();
     }
 
     private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
@@ -1475,10 +1156,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         double dz = worldZ * 0.6D * swimSpeed;
 
         return new Vec3(dx, 0.0D, dz);
-    }
-
-    public void switchToAirNavigation() {
-        this.navigationModeController.switchToAir();
     }
 
     private void handleFireBodyCrash() {
@@ -1701,21 +1378,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
     }
 
-    public void switchToGroundNavigation() {
-        this.navigationModeController.switchToGround();
-    }
-
     public boolean isBreathingFire() {
         return this.entityData.get(DATA_FIRE_BREATHING);
     }
 
     public void setBreathingFire(boolean breathing) {
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
-    }
-
-    @Override
-    protected @NotNull PathNavigation createNavigation(@Nonnull Level level) {
-        return new DragonPathNavigateGround(this, level);
     }
 
     @Override
@@ -1759,16 +1427,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     public DragonSoundProfile getSoundProfile() {
         return CindervaneSoundProfile.INSTANCE;
-    }
-
-    private void handleAnimationSound(String soundKey) {
-        DragonSoundProfile profile = getSoundProfile();
-        if (profile != null) {
-            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
-            if (!handled) {
-                getSoundHandler().playVocal(soundKey);
-            }
-        }
     }
 
     @Override
@@ -1970,25 +1628,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         applyConfiguredAttributes();
     }
 
-    public void prepareForMounting() {
-        if (level().isClientSide) {
-            return;
-        }
-
-        this.setOrderedToSit(false);
-        if (this.getCommand() == 1) {
-            this.setCommand(0);
-        }
-            clearSitProgress();
-            this.setTarget(null);
-
-        if (this.getNavigation().getPath() != null) {
-            this.getNavigation().stop();
-        }
-
-        clearStatesWhenMounted();
-    }
-
     @Override
     public @Nullable UUID getPackLeaderUuid() {
         return this.packLeaderUuid;
@@ -2088,15 +1727,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
     }
 
-    public boolean isFlightControllerStuck() {
-        if (!this.navigationModeController.isUsingAirNavigation()) {
-            return false;
-        }
-        AsyncFlightController.PathState state = this.asyncAirController.getState();
-        return state == AsyncFlightController.PathState.STUCK
-                || state == AsyncFlightController.PathState.FAILED;
-    }
-
     @Override
     public float getFlightSpeed() {
         return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
@@ -2128,16 +1758,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    protected void clearTakeoffState() {
-        takeoffComponent.clear();
-    }
-
-    @Override
-    protected void resetRiderTakeoffTicksAfterLanding() {
-        this.riderTakeoffTicks = 0;
-    }
-
-    @Override
     protected void resetTimeFlyingAfterLanding() {
         this.timeFlying = 0;
     }
@@ -2159,14 +1779,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             suppressSleep(60);
         }
         markLandedNow();
-    }
-
-    public int getRiderTakeoffTicks() {
-        return riderTakeoffTicks;
-    }
-
-    public void setRiderTakeoffTicks(int ticks) {
-        this.riderTakeoffTicks = Math.max(0, ticks);
     }
 
     @Override

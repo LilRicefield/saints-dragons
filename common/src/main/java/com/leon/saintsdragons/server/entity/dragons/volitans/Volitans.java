@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModBlocks;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
@@ -26,11 +27,6 @@ import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansSlamSequenceGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansWaterCombatGoal;
-import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
@@ -39,10 +35,7 @@ import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
-import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
-import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
-import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
@@ -54,14 +47,20 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
@@ -72,21 +71,21 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.animal.Pufferfish;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.animal.Dolphin;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -155,7 +154,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final double RIDER_BURROW_SPEED = 0.40D;
     private static final double RIDER_SWIM_SPEED = 1.42D;
     public static final int TAKEOFF_ANIMATION_TICKS = 35;
-    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     public static final int TAKEOFF_LAUNCH_DELAY_TICKS = 15;
     private static final int SIT_DOWN_ANIMATION_TICKS = 50;
     private static final int SIT_UP_ANIMATION_TICKS = 25;
@@ -224,19 +222,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
     private final VolitansRiderController riderController;
-    private final DragonRiderFlight riderFlightComponent;
     private final java.util.Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
-    private final AsyncFlightController asyncAirController;
-    private final AsyncFlightMoveControl asyncAirMoveControl;
-    private final DragonPathNavigateGround groundNav;
-    private final MoveControl groundMoveControl;
-    private final FlyingPathNavigation airNav;
-    private final DragonNavigationModeController navigationModeController;
-    private final DragonTakeoff takeoffComponent;
     private int timeFlying;
     private int spineDropCooldownTicks;
-    private int riderTakeoffTicks;
-    private int groundedAerialRecoveryTicks;
     private int ticksInWater;
     private int ticksOutOfWater;
     private float bankSmoothedYaw = 0f;
@@ -273,193 +261,36 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private int tempInvulnTicks = 0;
     private float sleepLockedYaw = 0.0F;
     private float sleepLockedPitch = 0.0F;
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
 
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.setMaxUpStep(1.0F);
         this.riderController = new VolitansRiderController(this);
-        this.takeoffComponent = createTakeoffComponent();
-        this.riderFlightComponent = createRiderFlightComponent();
-
-        this.asyncAirController = new AsyncFlightController(this);
-        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
-        this.groundNav = new DragonPathNavigateGround(this, level);
-        this.groundMoveControl = new MoveControl(this);
-        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
-            @Override
-            public boolean isStableDestination(@NotNull net.minecraft.core.BlockPos pos) {
-                return !this.level.getBlockState(pos.below()).isAir();
-            }
-        };
-        this.airNav.setCanOpenDoors(false);
-        this.airNav.setCanPassDoors(false);
-        this.airNav.setCanFloat(false);
-        this.navigationModeController = new DragonNavigationModeController(
-                new DragonNavigationModeController.Host() {
-                    @Override
-                    public void setActiveNavigation(PathNavigation navigation) {
-                        Volitans.this.navigation = navigation;
-                    }
-
-                    @Override
-                    public void setActiveMoveControl(MoveControl moveControl) {
-                        Volitans.this.moveControl = moveControl;
-                    }
-
-                    @Override
-                    public void afterSwitchToGround() {
-                        if (Volitans.this.onGround()) {
-                            Volitans.this.setDeltaMovement(Vec3.ZERO);
-                            Volitans.this.hasImpulse = false;
-                        }
-                    }
-                },
-                this.groundNav,
-                this.airNav,
-                this.groundMoveControl,
-                this.asyncAirMoveControl
-        );
-        this.navigation = this.groundNav;
-        this.moveControl = this.groundMoveControl;
 
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
-        resetAmbientSoundTimer();
+        resetAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY);
     }
 
-    private DragonTakeoff createTakeoffComponent() {
-        return new DragonTakeoff(new DragonTakeoff.Host() {
-            @Override
-            public Level level() { return Volitans.this.level(); }
-
-            @Override
-            public boolean isFlying() { return Volitans.this.isFlying(); }
-
-            @Override
-            public void setFlying(boolean value) { Volitans.this.setFlying(value); }
-
-            @Override
-            public void setTakeoff(boolean value) { Volitans.this.setTakeoff(value); }
-
-            @Override
-            public void setHovering(boolean value) { Volitans.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Volitans.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Volitans.this.switchToAirNavigation(); }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Volitans.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Volitans.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Volitans.this.hasImpulse = true; }
-
-            @Override
-            public void onTakeoffStarted() { Volitans.this.timeFlying = 0; }
-
-            @Override
-            public int getTakeoffLiftDelayTicks() { return TAKEOFF_LAUNCH_DELAY_TICKS; }
-        });
-    }
-
-    private DragonRiderFlight createRiderFlightComponent() {
-        return new DragonRiderFlight(new DragonRiderFlight.Host() {
-            @Override
-            public Entity asEntity() { return Volitans.this; }
-
-            @Override
-            public Level level() { return Volitans.this.level(); }
-
-            @Override
-            public AABB getBoundingBox() { return Volitans.this.getBoundingBox(); }
-
-            @Override
-            public boolean isVehicle() { return Volitans.this.isVehicle(); }
-
-            @Override
-            public boolean isFlying() { return Volitans.this.isFlying(); }
-
-            @Override
-            public boolean isTakeoff() { return Volitans.this.isTakeoff(); }
-
-            @Override
-            public boolean isGoingUp() { return Volitans.this.isGoingUp(); }
-
-            @Override
-            public boolean isUnderWater() { return Volitans.this.isUnderWater(); }
-
-            @Override
-            public boolean isInWaterOrBubble() { return Volitans.this.isInWaterOrBubble(); }
-
-            @Override
-            public boolean isTame() { return Volitans.this.isTame(); }
-
-            @Override
-            public boolean hasControllingRider() { return riderController.getRidingPlayer() != null; }
-
-            @Override
-            public boolean canTakeoff() { return Volitans.this.canTakeoff(); }
-
-            @Override
-            public void setFlying(boolean value) { Volitans.this.setFlying(value); }
-
-            @Override
-            public void setHovering(boolean value) { Volitans.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Volitans.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Volitans.this.switchToAirNavigation(); }
-
-            @Override
-            public void setGoingUp(boolean value) { Volitans.this.setGoingUp(value); }
-
-            @Override
-            public void setGoingDown(boolean value) { Volitans.this.setGoingDown(value); }
-
-            @Override
-            public void stopNavigation() { Volitans.this.getNavigation().stop(); }
-
-            @Override
-            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-                Volitans.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
-            }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Volitans.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Volitans.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Volitans.this.hasImpulse = true; }
-
-            @Override
-            public long getGameTime() { return Volitans.this.level().getGameTime(); }
-
-            @Override
-            public void setRiderTakeoffTicks(int ticks) { Volitans.this.riderTakeoffTicks = Math.max(0, ticks); }
-        }, new DragonRiderFlight.Config(
+    @Override
+    protected DragonRiderFlight.Config getRiderFlightConfig() {
+        return new DragonRiderFlight.Config(
                 true,
                 0,
                 0.12D,
                 TAKEOFF_ANIMATION_TICKS,
                 0.12D,
                 TAKEOFF_ANIMATION_TICKS
-        ));
+        );
     }
 
+    @Override
     public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        if (!canStartTakeoffSequence()) {
+            return;
+        }
         this.setRunning(false);
         this.setAccelerating(false);
         this.setDeltaMovement(Vec3.ZERO);
@@ -469,12 +300,22 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 lockRiderControls(TAKEOFF_LAUNCH_DELAY_TICKS);
             }
         }
-        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+        super.startTakeoffSequence(minUpwardVelocity, animationTicks);
+    }
+
+    @Override
+    protected void onTakeoffStarted() {
+        this.timeFlying = 0;
+    }
+
+    @Override
+    protected int getTakeoffLiftDelayTicks() {
+        return TAKEOFF_LAUNCH_DELAY_TICKS;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        var config = com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
-                .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.VOLITANS_ID);
+        var config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
@@ -498,7 +339,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     public static boolean canSpawnHere(EntityType<? extends Volitans> type,
                                        LevelAccessor level,
                                        MobSpawnType spawnType,
-                                       net.minecraft.core.BlockPos pos,
+                                       BlockPos pos,
                                        RandomSource random) {
         if (!TamableAnimal.checkMobSpawnRules(type, level, spawnType, pos, random)) {
             return false;
@@ -511,13 +352,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
 
         BlockState below = level.getBlockState(pos.below());
-        return below.isFaceSturdy(level, pos.below(), net.minecraft.core.Direction.UP);
+        return below.isFaceSturdy(level, pos.below(), Direction.UP);
     }
 
     @Override
     public @NotNull SpawnGroupData finalizeSpawn(
-            @NotNull net.minecraft.world.level.ServerLevelAccessor level,
-            @NotNull net.minecraft.world.DifficultyInstance difficulty,
+            @NotNull ServerLevelAccessor level,
+            @NotNull DifficultyInstance difficulty,
             @NotNull MobSpawnType spawnReason,
             @Nullable SpawnGroupData spawnData,
             @Nullable CompoundTag dataTag
@@ -529,7 +370,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected void playStepSound(net.minecraft.core.@NotNull BlockPos pos, @NotNull BlockState state) {
+    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
         if (isBaby()) {
             return;
         }
@@ -540,19 +381,18 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
 
-        long now = this.level().getGameTime();
         boolean running = getGroundMoveState() == 2;
-        long minIntervalTicks = running ? RUN_SOUND_REPLAY_INTERVAL_TICKS : WALK_SOUND_REPLAY_INTERVAL_TICKS;
-        if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
-            return;
-        }
-        getSoundHandler().setLastStepTick(now);
-
-        if (running) {
-            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_RUN.get(), 1.0f, 1.0f, RUN_SOUND_DURATION_TICKS);
-        } else {
-            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_WALK.get(), 1.0f, 1.0f, WALK_SOUND_DURATION_TICKS);
-        }
+        playGroundStepLoopSound(
+                ModSounds.VOLITANS_WALK.get(),
+                ModSounds.VOLITANS_RUN.get(),
+                WALK_SOUND_DURATION_TICKS,
+                RUN_SOUND_DURATION_TICKS,
+                WALK_SOUND_REPLAY_INTERVAL_TICKS,
+                RUN_SOUND_REPLAY_INTERVAL_TICKS,
+                running,
+                1.0f,
+                1.0f
+        );
     }
 
     @Override
@@ -691,11 +531,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new DragonPathNavigateGround(this, level);
-    }
-
-    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_S -> true;
@@ -715,35 +550,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (locked && isUltimateSlamActive()) {
             return;
         }
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        boolean canRecover = canRecoverTakeoffFromFall();
-
-        if (inWater) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-            return;
-        }
-
-        if (locked) {
-            setGoingUp(false);
-            setGoingDown(false);
-            return;
-        }
-
-        if (goingUp && canRecover) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-
-        if (isFlying() || canRecover) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-        } else {
-            setGoingUp(false);
-            setGoingDown(false);
-        }
+        super.applyRiderVerticalInput(player, goingUp, goingDown, locked);
     }
 
     @Override
@@ -894,16 +701,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected void clearTakeoffState() {
-        takeoffComponent.clear();
-    }
-
-    @Override
-    protected void resetRiderTakeoffTicksAfterLanding() {
-        this.riderTakeoffTicks = 0;
-    }
-
-    @Override
     protected void resetTimeFlyingAfterLanding() {
         this.timeFlying = 0;
     }
@@ -914,54 +711,41 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
+    protected void afterSwitchToGroundNavigation() {
+        if (onGround()) {
+            setDeltaMovement(Vec3.ZERO);
+            hasImpulse = false;
+        }
+    }
+
+    @Override
     protected void onRiderTakeoffRequest(Player player) {
         if (shouldSuppressTakeoffInput()) {
             return;
         }
-        if (canRecoverTakeoffFromFall()) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
+        super.onRiderTakeoffRequest(player);
+    }
+
+    @Override
+    protected boolean isRiderFallRecoveryBlocked() {
+        return shouldSuppressTakeoffInput() || isUltimateSlamActive() || isBurrowing();
+    }
+
+    @Override
+    protected boolean shouldSkipGroundedAerialRecovery() {
+        return isUltimateSlamActive();
+    }
+
+    @Override
+    protected boolean shouldIgnoreGroundedTakeoffRecovery() {
+        return true;
+    }
+
+    @Override
+    protected void beforeStandardRiderTakeoff(Player player) {
         if (!this.isInWaterOrBubble()) {
             clearGroundMobilityState();
         }
-        riderFlightComponent.requestRiderTakeoff();
-    }
-
-    public boolean isFallingForAnimation() {
-        return DragonRiderFallRecovery.isFallingForAnimation(
-                isVehicle(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                this.fallDistance,
-                getDeltaMovement()
-        );
-    }
-
-    private boolean canRecoverTakeoffFromFall() {
-        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
-                isTame(),
-                isVehicle(),
-                isAlive(),
-                isBaby(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                shouldSuppressTakeoffInput() || isUltimateSlamActive() || isBurrowing(),
-                this.fallDistance,
-                getDeltaMovement()
-        );
     }
 
     @Override
@@ -1058,7 +842,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             if (combatManager.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
                 toggleBreathMode();
                 player.displayClientMessage(
-                        net.minecraft.network.chat.Component.translatable(
+                        Component.translatable(
                                 isPoisonBreathMode()
                                         ? "saintsdragons.message.volitans_breath_poison"
                                         : "saintsdragons.message.volitans_breath_water"
@@ -1219,28 +1003,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             handleAmbientSounds();
             tickWaterPreferenceTimers();
             tickBreathGaugeEnergy();
-            takeoffComponent.tick();
-            groundedAerialRecoveryTicks = isUltimateSlamActive()
-                    ? 0
-                    : DragonGroundedAerialRecovery.tick(
-                            level(),
-                            onGround(),
-                            isInWaterOrBubble(),
-                            isInLava(),
-                            isTakeoff(),
-                            isFlying(),
-                            isHovering(),
-                            isLanding(),
-                            true,
-                            getDeltaMovement(),
-                            groundedAerialRecoveryTicks,
-                            GROUNDED_AERIAL_RECOVERY_TICKS,
-                            0.05D,
-                            this::markLandedNow
-                    );
-            if (riderTakeoffTicks > 0) {
-                riderTakeoffTicks--;
-            }
+            tickStandardTakeoffAndGroundedAerialRecovery();
+            tickRiderTakeoff();
 
             if (isFlying()) {
                 timeFlying++;
@@ -1251,7 +1015,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             tickRiderLandingBlendTimer();
             updateSittingProgress();
 
-            if (!isUltimateSlamActive() && this.isInWaterOrBubble() && riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks)) {
+            if (isLanding() && onGround()) {
+                handleAiLandingComplete();
+            }
+
+            if (!isUltimateSlamActive() && this.isInWaterOrBubble() && shouldClearRiderFlightStateInWater()) {
                 markLandedNow();
             }
 
@@ -1282,15 +1050,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             switchToGroundNavigation();
         }
 
-        if (!this.level().isClientSide
-                && this.navigationModeController.isUsingAirNavigation()
-                && shouldUseAirNavigation
-                && !this.isVehicle()
-                && (this.isLanding() || this.getTarget() == null)
-                && !this.isAiSpecialCombatActive()
-                && !this.isAiSpecialCombatReserved()) {
-            this.asyncAirController.serverTick();
+        if (!level().isClientSide && shouldUseAirNavigation) {
+            this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
+        tickAsyncFlightNavigation(isDirectAirCombatActive());
 
         if (!this.level().isClientSide) {
             tickAnimationStates();
@@ -1367,8 +1130,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (isUltimateSlamActive()) {
-            // Ultimate slam uses velocity-based movement - bypass normal travel and directly apply velocity
-            this.move(net.minecraft.world.entity.MoverType.SELF, this.getDeltaMovement());
+            this.move(MoverType.SELF, this.getDeltaMovement());
             return;
         }
 
@@ -1412,7 +1174,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                     setGroundMoveStateFromRider(0);
                 }
                 if (!level().isClientSide) {
-                    riderFlightComponent.tryAutoBreachTakeoff();
+                    tryAutoBreachRiderTakeoff();
                 }
                 return;
             }
@@ -1450,14 +1212,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         return super.mobInteract(player, hand);
     }
 
-    private void switchToAirNavigation() {
-        this.navigationModeController.switchToAir();
-    }
-
-    private void switchToGroundNavigation() {
-        this.navigationModeController.switchToGround();
-    }
-
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Volitans> movement =
@@ -1491,16 +1245,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         });
         animationHandler.setupInstantActionController(instant);
         controllers.add(instant);
-    }
-
-    private void handleAnimationSound(String soundKey) {
-        DragonSoundProfile profile = getSoundProfile();
-        if (profile != null) {
-            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
-            if (!handled) {
-                getSoundHandler().playVocal(soundKey);
-            }
-        }
     }
 
     @Override
@@ -1610,8 +1354,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    public AgeableMob getBreedOffspring(net.minecraft.server.level.ServerLevel level, AgeableMob otherParent) {
-        Volitans baby = com.leon.saintsdragons.common.registry.ModEntities.VOLITANS.get().create(level);
+    public AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
+        Volitans baby = ModEntities.VOLITANS.get().create(level);
         if (baby != null) {
             assignMotherToBaby(baby, otherParent);
             baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
@@ -1624,7 +1368,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             baby.setBaby(true);
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
-            net.minecraft.core.BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
             double spawnY = safePos != null ? safePos.getY() : this.getY();
             baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
             registerToOwnerCodex(baby, level);
@@ -1643,7 +1387,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable com.leon.saintsdragons.server.entity.base.DragonEntity partner) {
+    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
         if (!(blockEntity instanceof VolitansEggBlockEntity eggEntity)) {
             return;
         }
@@ -1662,10 +1406,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected int chooseSpawnTextureVariant(@NotNull net.minecraft.world.level.ServerLevelAccessor levelAccessor,
-                                            @NotNull net.minecraft.world.DifficultyInstance difficulty,
+    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
+                                            @NotNull DifficultyInstance difficulty,
                                             @NotNull MobSpawnType reason,
-                                            @Nullable net.minecraft.world.entity.SpawnGroupData spawnData,
+                                            @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
         return rollAdultVariant();
     }
@@ -1690,7 +1434,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 || stack.is(Items.SALMON)
                 || stack.is(Items.PUFFERFISH)
                 || stack.is(Items.TROPICAL_FISH)
-                || stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+                || stack.is(ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
     public boolean isTamingStunned() {
@@ -1887,21 +1631,12 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         dropFishType(Items.PUFFERFISH);
     }
 
-    private void dropFishType(net.minecraft.world.item.Item fishItem) {
+    private void dropFishType(Item fishItem) {
         if (this.random.nextFloat() >= getConfiguredExtra("fish_drop_chance", FISH_DROP_CHANCE)) {
             return;
         }
         int amount = Mth.nextInt(this.random, 1, 3);
         this.spawnAtLocation(new ItemStack(fishItem, amount));
-    }
-
-    public boolean isFlightControllerStuck() {
-        if (!this.navigationModeController.isUsingAirNavigation()) {
-            return false;
-        }
-        AsyncFlightController.PathState state = this.asyncAirController.getState();
-        return state == AsyncFlightController.PathState.STUCK
-                || state == AsyncFlightController.PathState.FAILED;
     }
 
     @Override
@@ -2281,6 +2016,12 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean isAiSpecialCombatReserved() {
         return aiSpecialCombatReserved;
+    }
+
+    private boolean isDirectAirCombatActive() {
+        return isAiSpecialCombatActive()
+                || isAiSpecialCombatReserved()
+                || (!isLanding() && getTarget() != null);
     }
 
     public void setAiSpecialCombatReserved(boolean reserved) {
@@ -2693,7 +2434,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             );
             spine.setNoGravity(true);
             spine.shoot(shootDir.x, shootDir.y, shootDir.z, RIDER_BACK_DASH_SPIKE_SPEED, RIDER_BACK_DASH_SPIKE_INACCURACY);
-            spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+            spine.pickup = AbstractArrow.Pickup.DISALLOWED;
             level().addFreshEntity(spine);
         }
     }
@@ -2910,7 +2651,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
             @Override
             public boolean shouldClearFlightStateInWater() {
-                return riderFlightComponent.shouldClearFlightStateInWater(riderTakeoffTicks);
+                return shouldClearRiderFlightStateInWater();
             }
 
             @Override
@@ -2963,8 +2704,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void applyConfiguredAttributes() {
-        var config = com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.getInstance()
-                .getConfig(com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader.VOLITANS_ID);
+        var config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
         setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
         setAttributeBase(Attributes.MOVEMENT_SPEED, 0.30D);
         setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
@@ -2973,9 +2714,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void handleAmbientSounds() {
-        if (nextAmbientSoundDelay <= 0) {
-            resetAmbientSoundTimer();
-        }
         if (isBaby()
                 || isDying()
                 || isSleeping()
@@ -2992,26 +2730,12 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
 
-        ambientSoundTimer++;
-        if (ambientSoundTimer < nextAmbientSoundDelay) {
-            return;
-        }
-
-        playAmbientGrumble();
-        resetAmbientSoundTimer();
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
-    private void playAmbientGrumble() {
+    private String selectAmbientGrumble() {
         float roll = this.getRandom().nextFloat();
-        String vocalKey = roll < 0.34f ? "grumble1" : (roll < 0.67f ? "grumble2" : "grumble3");
-        this.getSoundHandler().playVocal(vocalKey);
-    }
-
-    private void resetAmbientSoundTimer() {
-        RandomSource random = getRandom();
-        ambientSoundTimer = 0;
-        int range = Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1);
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(range);
+        return roll < 0.34f ? "grumble1" : (roll < 0.67f ? "grumble2" : "grumble3");
     }
 
     public void playEatMovingSound() {
@@ -3108,11 +2832,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         int z = Mth.floor(positionZ);
         int startY = Mth.floor(fromY);
         int maxY = Math.min(level().getMaxBuildHeight() - 1, startY + WATER_SURFACE_SLEEP_SCAN_BLOCKS);
-        net.minecraft.core.BlockPos.MutableBlockPos cursor = new net.minecraft.core.BlockPos.MutableBlockPos(x, startY, z);
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(x, startY, z);
 
         for (int y = startY; y <= maxY; y++) {
             cursor.setY(y);
-            if (!level().getFluidState(cursor).is(net.minecraft.tags.FluidTags.WATER)) {
+            if (!level().getFluidState(cursor).is(FluidTags.WATER)) {
                 return y;
             }
         }

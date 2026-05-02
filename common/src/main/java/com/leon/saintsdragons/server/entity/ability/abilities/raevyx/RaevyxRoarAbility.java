@@ -6,18 +6,21 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.*;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
-/**
- * Simple one-shot roar ability: plays a roar vocal and triggers the matching
- * action animation. No damage/effects here; purely audiovisual.
- */
 public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
 
-    // Brief startup to sync with animation pose, a short active window
-    // so the ability keeps itself alive while the clip plays, then recover.
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 6),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 28),
@@ -59,120 +62,104 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         var section = getCurrentSection();
         if (section == null) return;
 
-        // Continuously trigger screen shake during the entire ability
         if (!getUser().level().isClientSide) {
-            getUser().triggerScreenShake(1.0F); // Reduced intensity for Roar
+            getUser().triggerScreenShake(1.0F);
         }
 
-        // During ACTIVE section, spawn lightning strikes at the selected target
         if (section.sectionType == AbilitySectionType.ACTIVE && strikesLeft > 0 && !getUser().level().isClientSide) {
             if (strikeCooldown > 0) {
                 strikeCooldown--;
             } else {
                 spawnLightningStrike();
                 strikesLeft--;
-                strikeCooldown = 6 + getUser().getRandom().nextInt(6); // 0.3s to 0.6s between strikes
+                strikeCooldown = 6 + getUser().getRandom().nextInt(6);
             }
         }
     }
 
     private void selectLightningTargets() {
         Raevyx dragon = getUser();
-        net.minecraft.world.entity.LivingEntity rider = dragon.getControllingPassenger();
+        LivingEntity rider = dragon.getControllingPassenger();
 
-        java.util.Set<Integer> ids = new java.util.LinkedHashSet<>();
-        if (dragon.level() instanceof net.minecraft.server.level.ServerLevel server) {
+        Set<Integer> ids = new LinkedHashSet<>();
+        if (dragon.level() instanceof ServerLevel server) {
             var box = dragon.getBoundingBox().inflate(24.0);
-            var chasers = server.getEntitiesOfClass(net.minecraft.world.entity.Mob.class, box, m -> {
+            var chasers = server.getEntitiesOfClass(Mob.class, box, m -> {
                 var t = m.getTarget();
                 return m.isAlive() && (t == dragon || (rider != null && t == rider));
             });
-            // Sort by distance ascending
-            chasers.sort(java.util.Comparator.comparingDouble(m -> m.distanceToSqr(dragon)));
+            chasers.sort(Comparator.comparingDouble(m -> m.distanceToSqr(dragon)));
             for (var m : chasers) ids.add(m.getId());
         }
 
-        // Add recent aggro and current target as fallbacks
-        if (dragon.level() instanceof net.minecraft.server.level.ServerLevel) {
-            java.util.List<net.minecraft.world.entity.LivingEntity> recent = dragon.getRecentAggro();
-            recent.sort(java.util.Comparator.comparingDouble(e -> e.distanceToSqr(dragon)));
+        if (dragon.level() instanceof ServerLevel) {
+            List<LivingEntity> recent = dragon.getRecentAggro();
+            recent.sort(Comparator.comparingDouble(e -> e.distanceToSqr(dragon)));
             for (var le : recent) if (le != null && le.isAlive()) ids.add(le.getId());
             var ct = dragon.getTarget();
             if (ct != null && ct.isAlive()) ids.add(ct.getId());
         }
 
-        // Cap list size for performance
-        this.targetIds = new java.util.ArrayList<>();
+        this.targetIds = new ArrayList<>();
         int added = 0;
         for (Integer id : ids) {
             this.targetIds.add(id);
-            if (++added >= 6) break; // up to 6 targets
+            if (++added >= 6) break;
         }
         this.targetCursor = 0;
     }
 
     private void spawnLightningStrike() {
         Raevyx dragon = getUser();
-        if (!(dragon.level() instanceof net.minecraft.server.level.ServerLevel server)) return;
-        net.minecraft.world.entity.LivingEntity target = nextValidTarget(server);
+        if (!(dragon.level() instanceof ServerLevel server)) return;
+        LivingEntity target = nextValidTarget(server);
         if (target == null) return;
 
-        double ox = (dragon.getRandom().nextDouble() - 0.5) * 2.0; // slight scatter
+        double ox = (dragon.getRandom().nextDouble() - 0.5) * 2.0;
         double oz = (dragon.getRandom().nextDouble() - 0.5) * 2.0;
         double x = target.getX() + ox;
         double z = target.getZ() + oz;
         double y = target.getY();
-
-        // Spawn the vanilla lightning bolt entity for visuals + damage
-        var bolt = net.minecraft.world.entity.EntityType.LIGHTNING_BOLT.create(server);
+        var bolt = EntityType.LIGHTNING_BOLT.create(server);
         if (bolt != null) {
             bolt.moveTo(x, y, z);
             if (!dragon.isTame()) {
-                // Untamed roar already applies its own stun package below; keep the lightning
-                // visual but prevent vanilla fire/side effects from burning the Raevyx during dash follow-up.
                 bolt.setVisualOnly(true);
             }
             var owner = dragon.getOwner();
-            if (owner instanceof net.minecraft.server.level.ServerPlayer sp) {
+            if (owner instanceof ServerPlayer sp) {
                 bolt.setCause(sp);
             }
             server.addFreshEntity(bolt);
         }
-
-        // Electrocute visuals: spawn several short arcs around the target itself
         spawnElectrocuteArcs(server, target);
-        // Apply a brief stun-like debuff to the struck target
-        applyStun(target); // ~1.5s
+        applyStun(target);
     }
 
 
-    private void spawnElectrocuteArcs(ServerLevel server, net.minecraft.world.entity.LivingEntity target) {
+    private void spawnElectrocuteArcs(ServerLevel server, LivingEntity target) {
         Raevyx dragon = getUser();
-        java.util.Random rnd = new java.util.Random(dragon.getRandom().nextLong());
+        Random rnd = new Random(dragon.getRandom().nextLong());
         boolean female = dragon.isFemale();
         Vec3 center = target.position().add(0, target.getBbHeight() * 0.5, 0);
         double radius = Math.max(target.getBoundingBox().getXsize(), target.getBoundingBox().getZsize()) * 0.6;
-        int count = 6 + dragon.getRandom().nextInt(5); // 6-10 short arcs
+        int count = 6 + dragon.getRandom().nextInt(5);
         for (int i = 0; i < count; i++) {
-            // Pick two random directions on a sphere and radii within the body radius
             Vec3 a = randomUnit(rnd).scale(radius * (0.4 + rnd.nextDouble() * 0.6));
             Vec3 b = randomUnit(rnd).scale(radius * (0.4 + rnd.nextDouble() * 0.6));
             Vec3 from = center.add(a);
             Vec3 to = center.add(b);
-            spawnRoarArc(server, from, to, female);
+            spawnRoarArc(server, from, to);
         }
     }
 
-    private void spawnRoarArc(ServerLevel server, Vec3 from, Vec3 to, boolean female) {
-        // Spawn simpler lightning arc impact effects (less layered)
+    private void spawnRoarArc(ServerLevel server, Vec3 from, Vec3 to) {
         Vec3 delta = to.subtract(from);
-        int steps = Math.max(2, (int) (delta.length() * 4)); // Fewer steps
+        int steps = Math.max(2, (int) (delta.length() * 4));
         Vec3 step = delta.scale(1.0 / steps);
         Vec3 pos = from;
         Vec3 dir = step.normalize();
-        float size = 0.8f; // Smaller base size
-
-        // Spawn single particle at each position (no layering)
+        float size = 0.8f;
         for (int i = 0; i <= steps; i++) {
             server.sendParticles(new RaevyxLightningStormData(size),
                     pos.x, pos.y, pos.z,
@@ -182,34 +169,28 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
     }
 
     private static Vec3 randomUnit(java.util.Random rnd) {
-        // Uniform random unit vector
         double u = rnd.nextDouble();
         double v = rnd.nextDouble();
         double theta = 2 * Math.PI * u;
-        double z = 2 * v - 1; // [-1,1]
+        double z = 2 * v - 1;
         double r = Math.sqrt(1 - z * z);
         return new Vec3(r * Math.cos(theta), z, r * Math.sin(theta));
     }
 
-private static void applyStun(net.minecraft.world.entity.LivingEntity target) {
-    final int durationTicks = 30; // ~1.5s
-        // Movement slowdown (amplifier 5 ≈ -73% speed), brief weakness to sell stun
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.MOVEMENT_SLOWDOWN, durationTicks, 5, false, true));
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.WEAKNESS, durationTicks, 0, false, true));
-        // Optional: mild blindness to disorient
-        target.addEffect(new net.minecraft.world.effect.MobEffectInstance(
-                net.minecraft.world.effect.MobEffects.BLINDNESS, Math.min(durationTicks, 20), 0, false, true));
+private static void applyStun(LivingEntity target) {
+    final int durationTicks = 30;
+
+        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, durationTicks, 5, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, durationTicks, 0, false, true));
+        target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, Math.min(durationTicks, 20), 0, false, true));
     }
 
-    private net.minecraft.world.entity.LivingEntity nextValidTarget(net.minecraft.server.level.ServerLevel server) {
-        // Cycle through list to find a live target
+    private LivingEntity nextValidTarget(ServerLevel server) {
         int n = targetIds != null ? targetIds.size() : 0;
         for (int i = 0; i < n; i++) {
             int idx = (targetCursor + i) % n;
-            net.minecraft.world.entity.Entity e = server.getEntity(targetIds.get(idx));
-            if (e instanceof net.minecraft.world.entity.LivingEntity le && le.isAlive()) {
+            Entity e = server.getEntity(targetIds.get(idx));
+            if (e instanceof LivingEntity le && le.isAlive()) {
                 targetCursor = (idx + 1) % n;
                 return le;
             }

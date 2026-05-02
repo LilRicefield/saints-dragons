@@ -6,23 +6,22 @@ import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
 public class IgnivorusGroundCombatGoal extends Goal {
     private final Ignivorus dragon;
-
-    // Combat ranges
-    private final double meleeEngageRange = 6.0;      // Chase until this close, then stop and melee
-    private final double fireBreathMinRange = 32.0;   // Only use fire breath when target is this far
-
+    private final double meleeEngageRange = 6.0;
+    private final double fireBreathMinRange = 32.0;
     private final double chaseSpeed = 1.75D;
     private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
@@ -30,23 +29,15 @@ public class IgnivorusGroundCombatGoal extends Goal {
     private double lastTargetX;
     private double lastTargetY;
     private double lastTargetZ;
-
-    // One-time low-health ultimate trigger per combat encounter
     private boolean hasUsedUltimateTrigger = false;
-
-    // Fire breath cooldown mechanic (AI only - 3 minute cooldown)
     private int breathCooldown = 0;
-    private static final int BREATH_COOLDOWN_TICKS = 3600; // 3 minutes (60 seconds * 20 ticks * 3)
-    private static final float BREATH_RANDOM_CHANCE = 0.12f; // 12% chance per attack window
-
-    // Phase 2 stance switching (AI only)
+    private static final int BREATH_COOLDOWN_TICKS = 3600;
+    private static final float BREATH_RANDOM_CHANCE = 0.12f;
     private int phase2DecisionCooldown = 0;
     private static final int PHASE2_DECISION_MIN = 60;
     private static final int PHASE2_DECISION_MAX = 120;
     private static final float PHASE2_TOGGLE_ON_CHANCE = 0.85f;
     private static final float PHASE2_TOGGLE_OFF_CHANCE = 0.05f;
-
-    // Fireball AI (Phase 2 stance)
     private int fireballDecisionCooldown = 0;
     private int fireballPostCooldown = 0;
     private FireballMode fireballMode = FireballMode.NONE;
@@ -78,7 +69,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return false;
         }
 
-        // Don't attack creative/spectator players
         if (target instanceof net.minecraft.world.entity.player.Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
@@ -95,7 +85,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return false;
         }
 
-        // Don't use ground combat if target is airborne (let air combat goal handle it)
         if (isTargetAirborne(target)) {
             return false;
         }
@@ -122,8 +111,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return false;
         }
 
-        // Stop attacking if player switches to creative/spectator
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }
@@ -139,17 +127,15 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return false;
         }
 
-        // IMPORTANT: If currently breathing fire or using ultimate, don't stop the goal even if target goes out of range
-        // This prevents abilities from being cancelled mid-animation when the player runs away
+
         if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_ULTIMATE)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_WING_SWIPE)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_STOMP)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIREBALL)) {
-            return true; // Keep goal active to finish the ability
+            return true;
         }
 
-        // Stop ground combat if target becomes airborne (switch to air combat goal)
         if (isTargetAirborne(target)) {
             return false;
         }
@@ -169,25 +155,19 @@ public class IgnivorusGroundCombatGoal extends Goal {
     @Override
     public void stop() {
         dragon.getNavigation().stop();
-        // Don't modify running state - let other systems handle it
         dragon.setAggressive(false);
         dragon.setGroundMoveStateFromAI(0);
         cancelFireBreathIfActive();
         pathRecalcCooldown = 8;
         pathFailureBackoff = 0;
-
-        // Reset one-time ultimate trigger for next combat encounter
         hasUsedUltimateTrigger = false;
     }
 
     @Override
     public void start() {
-        // Don't set running to avoid speed boost - just use chaseSpeed multiplier
         dragon.setAggressive(true);
         dragon.setGroundMoveStateFromAI(2);
-
         hasUsedUltimateTrigger = false;
-
         LivingEntity target = dragon.getTarget();
         if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding()) {
             DragonLandingHelper.beginAggroLanding(dragon, target, 1.5D);
@@ -201,7 +181,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            // Avoid forcing an immediate expensive repath on every goal (re)start.
             pathRecalcCooldown = Math.max(pathRecalcCooldown, 8);
             rememberTargetPosition(target);
         }
@@ -223,7 +202,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return;
         }
 
-        // Keep dragon grounded during combat - prevent flight AI from interfering
         if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff()) {
             dragon.markLandedNow();
             dragon.setHovering(false);
@@ -242,7 +220,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
             attackCooldown--;
         }
 
-        // Tick down breath cooldown
         if (breathCooldown > 0) {
             breathCooldown--;
         }
@@ -258,7 +235,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         LivingEntity target = dragon.getTarget();
         if (!dragon.isTargetValid(target)) {
-            // Target died or disappeared - immediately cancel fire breath
             cancelFireBreathIfActive();
             updateGroundMoveState();
             return;
@@ -280,7 +256,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
-        // Water combat: swim-chase target directly (ground navigation is unreliable in water).
         if (dragon.isInWaterOrBubble()) {
             handleWaterCombatChase(target, gap, hasLineOfSight);
             updateGroundMoveState();
@@ -308,12 +283,10 @@ public class IgnivorusGroundCombatGoal extends Goal {
             updateGroundMoveState();
             return;
         } else if (gap > meleeEngageRange) {
-            // Medium-long range (6-32 blocks) OR breath on cooldown - chase to get closer
             if (!isCurrentlyAttacking()) {
                 updateChasePath(target);
             }
         } else {
-            // In melee range (0-6 blocks) - stop moving and attack
             dragon.getNavigation().stop();
             pathRecalcCooldown = 8;
             tryAttack(target);
@@ -322,9 +295,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
         updateGroundMoveState();
     }
 
-    /**
-     * Check if dragon is currently executing an attack ability
-     */
     private boolean isCurrentlyAttacking() {
         return dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BODY_SLAM)
@@ -337,9 +307,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
             || dragon.isLeapImpactRecovering();
     }
 
-    /**
-     * Immediately cancels fire breath if active (e.g., when target dies or switches to creative)
-     */
     private void cancelFireBreathIfActive() {
         // Don't interfere if being ridden (let rider control abilities)
         if (dragon.isVehicle()) {
@@ -351,11 +318,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
     }
 
-    /**
-     * Attack selection: MELEE-FOCUSED with unpredictable randomization.
-     * Fire breath ONLY at long range (AI can't aim well).
-     * Bite and body slam randomized for unpredictability - NOT range-based.
-     */
     private void tryAttack(LivingEntity target) {
         if (attackCooldown > 0 || isCurrentlyAttacking()) {
             return;
@@ -368,8 +330,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
         double gap = getGapToTarget(target);
 
         if (gap <= meleeEngageRange) {
-            // Melee attacks ONLY in melee range (<6 blocks)
-            // Phase 2 swaps to wing swipe / stomp instead of bite / body slam
             if (dragon.isPhase2Active()) {
                 if (dragon.getRandom().nextBoolean()) {
                     if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_STOMP, false)) {
@@ -387,25 +347,23 @@ public class IgnivorusGroundCombatGoal extends Goal {
                     attackCooldown = 30;
                 }
             } else {
-                // Randomly choose between bite and body slam for unpredictability
                 if (dragon.getRandom().nextBoolean()) {
                     if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BODY_SLAM, false)) {
                         return;
                     }
                     dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BODY_SLAM);
                     dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BODY_SLAM, 35, 35, false, 0, 28);
-                    attackCooldown = 35; // Moderate cooldown for body slam
+                    attackCooldown = 35;
                 } else {
                     if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BITE, false)) {
                         return;
                     }
                     dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BITE);
                     dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
-                    attackCooldown = 30; // Slightly faster cooldown for bite
+                    attackCooldown = 30;
                 }
             }
         }
-        // No attack in 6-32 block range - just chase
     }
 
     private boolean tryRandomBreath(LivingEntity target, boolean hasLineOfSight) {
@@ -631,9 +589,6 @@ public class IgnivorusGroundCombatGoal extends Goal {
         return dragon.getHealth() <= dragon.getMaxHealth() * healthFraction;
     }
 
-    /**
-     * Get the gap between entity edges (not centers)
-     */
     private double getGapToTarget(LivingEntity target) {
         double centerDistance = this.dragon.distanceTo(target);
         double combinedRadii = (this.dragon.getBbWidth() + target.getBbWidth()) * 0.5;
@@ -721,10 +676,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
         double yDiff = targetY - dragon.getY();
         double ny = current.y;
         if (dragon.horizontalCollision) {
-            // Shore lip / bank collision: force a stronger upward pop for this large body.
             ny = Math.max(current.y + 0.16D, 0.42D);
         } else if (yDiff > 0.25D) {
-            // Start climbing earlier when the target is even slightly above waterline.
             ny = Math.max(current.y + 0.09D, 0.14D);
         } else if (yDiff < -1.1D) {
             ny = Math.min(current.y - 0.05D, -0.11D);
@@ -748,15 +701,11 @@ public class IgnivorusGroundCombatGoal extends Goal {
         MOVING
     }
 
-    /**
-     * Check if target is airborne (flying, riding flying mount, or off ground)
-     */
     private boolean isTargetAirborne(LivingEntity target) {
         return DragonTargetingHelper.isTargetAirborne(target, 8.0D);
     }
 
-    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+    private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
-
 }

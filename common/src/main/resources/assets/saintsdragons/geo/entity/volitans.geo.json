@@ -70,7 +70,7 @@
 					]
 				},
 				{
-					"name": "toe1",
+					"name": "left4",
 					"parent": "leftfrontfeet",
 					"pivot": [25, 2.81952, -39.22907],
 					"cubes": [
@@ -79,7 +79,7 @@
 					]
 				},
 				{
-					"name": "toe3",
+					"name": "left3",
 					"parent": "leftfrontfeet",
 					"pivot": [17, 2.81952, -39.22907],
 					"cubes": [
@@ -88,7 +88,7 @@
 					]
 				},
 				{
-					"name": "toe4",
+					"name": "left2",
 					"parent": "leftfrontfeet",
 					"pivot": [13.82628, 2.81952, -36.84901],
 					"rotation": [0, 37.5, 0],
@@ -98,17 +98,17 @@
 					]
 				},
 				{
-					"name": "toe5",
+					"name": "left1",
 					"parent": "leftfrontfeet",
 					"pivot": [13.93626, 2.81952, -26.84961],
 					"rotation": [0, 37.5, 0],
 					"cubes": [
-						{"origin": [13.13626, -0.43048, -33.34961], "size": [3.6, 4, 9], "uv": [530, 575]},
+						{"origin": [14.13626, -0.43048, -33.34961], "size": [3.6, 4, 9], "uv": [530, 575]},
 						{"origin": [14.93626, -0.43048, -38.34961], "size": [0, 7, 14], "uv": [0, 669]}
 					]
 				},
 				{
-					"name": "toe2",
+					"name": "left5",
 					"parent": "leftfrontfeet",
 					"pivot": [27, 2.81952, -31.22907],
 					"rotation": [0, -12.5, 0],
@@ -175,7 +175,7 @@
 					]
 				},
 				{
-					"name": "toe14",
+					"name": "right4",
 					"parent": "rightfrontfeet",
 					"pivot": [-25, 2.81952, -39.22907],
 					"cubes": [
@@ -184,7 +184,7 @@
 					]
 				},
 				{
-					"name": "toe15",
+					"name": "right3",
 					"parent": "rightfrontfeet",
 					"pivot": [-17, 2.81952, -39.22907],
 					"cubes": [
@@ -193,7 +193,7 @@
 					]
 				},
 				{
-					"name": "toe16",
+					"name": "right2",
 					"parent": "rightfrontfeet",
 					"pivot": [-13.82628, 2.81952, -36.84901],
 					"rotation": [0, -37.5, 0],
@@ -203,7 +203,7 @@
 					]
 				},
 				{
-					"name": "toe17",
+					"name": "right1",
 					"parent": "rightfrontfeet",
 					"pivot": [-13.93626, 2.81952, -26.84961],
 					"rotation": [0, -37.5, 0],
@@ -213,7 +213,7 @@
 					]
 				},
 				{
-					"name": "toe18",
+					"name": "right5",
 					"parent": "rightfrontfeet",
 					"pivot": [-27, 2.81952, -31.22907],
 					"rotation": [0, 12.5, 0],

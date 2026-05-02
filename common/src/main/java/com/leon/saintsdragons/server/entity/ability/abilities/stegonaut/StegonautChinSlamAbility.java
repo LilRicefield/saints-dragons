@@ -66,7 +66,6 @@ public class StegonautChinSlamAbility extends DragonAbility<Stegonaut> {
 
     private void applyHit(LivingEntity target) {
         Stegonaut dragon = getUser();
-        // Armor penetration approximation: add flat damage equivalent to 4 armor points bypassed.
         float damage = (resolveDamage() + ARMOR_PENETRATION) * dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         target.hurt(source, damage);

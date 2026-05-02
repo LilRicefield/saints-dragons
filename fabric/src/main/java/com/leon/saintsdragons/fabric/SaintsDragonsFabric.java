@@ -17,6 +17,7 @@ import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRe
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.packs.PackType;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.entity.EntityType;
@@ -41,7 +42,6 @@ public final class SaintsDragonsFabric implements ModInitializer {
             CreativeModeTabs.TOOLS_AND_UTILITIES,
             CreativeModeTabs.SEARCH
     );
-
     @Override
     public void onInitialize() {
         SaintsDragonsCommon.init();
@@ -50,43 +50,31 @@ public final class SaintsDragonsFabric implements ModInitializer {
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonAttributeReloadListener());
         FabricServerEvents.init();
         FabricLootTableModifier.register();
-
         CommonModEvents.registerEntityAttributes(SaintsDragonsFabric::registerDefaultAttributes);
-
         CommonModEvents.registerSpawnPlacements(SpawnPlacements::register);
         FabricDragonSpawns.register();
-
-        CommonModEvents.registerCreativeTabEntries((tab, itemSupplier) ->
-                ItemGroupEvents.modifyEntriesEvent(tab)
-                        .register(entries -> entries.accept(itemSupplier.get())));
-
-        // Hide Saint's Dragons custom potion items and any vanilla potion-family variants from Minecraft tabs.
-        for (ResourceKey<net.minecraft.world.item.CreativeModeTab> tab : POTION_HIDE_TABS) {
+        CommonModEvents.registerCreativeTabEntries((tab, itemSupplier) -> ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> entries.accept(itemSupplier.get())));
+        for (ResourceKey<CreativeModeTab> tab : POTION_HIDE_TABS) {
             ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> {
                 entries.getDisplayStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant);
                 entries.getSearchTabStacks().removeIf(SaintsDragonsFabric::isHiddenVanillaPotionVariant);
             });
         }
-
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) ->
                 CommonModEvents.registerCommands(dispatcher));
     }
-
     private static void raiseVanillaAttributeCaps() {
         raiseAttributeCap(Attributes.MAX_HEALTH, "MAX_HEALTH");
         raiseAttributeCap(Attributes.ARMOR, "ARMOR");
     }
-
-    private static void raiseAttributeCap(net.minecraft.world.entity.ai.attributes.Attribute attribute, String name) {
+    private static void raiseAttributeCap(Attribute attribute, String name) {
         if (!(attribute instanceof RangedAttribute ranged)) {
             return;
         }
-
         RangedAttributeAccessor accessor = (RangedAttributeAccessor) ranged;
         if (accessor.saintsdragons$getMaxValue() >= ATTRIBUTE_CAP) {
             return;
         }
-
         accessor.saintsdragons$setMaxValue(ATTRIBUTE_CAP);
         SaintsDragonsCommon.LOGGER.info("Raised {} attribute cap to {}", name, ATTRIBUTE_CAP);
     }
@@ -95,10 +83,8 @@ public final class SaintsDragonsFabric implements ModInitializer {
             EntityType<? extends T> type,
             AttributeSupplier.Builder builder
     ) {
-        // Avoid IDE contract false-positives on wildcard capture in inline lambdas.
         FabricDefaultAttributeRegistry.register(type, builder.build());
     }
-
     private static boolean isHiddenVanillaPotionVariant(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return false;

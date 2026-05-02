@@ -21,7 +21,7 @@ public final class DragonCommandComponent {
         dragon.getEntityData().set(dataAccessor, command);
         // Only sit via command if tamed; untamed dragons ignore owner commands
         if (dragon.isTame()) {
-            dragon.setOrderedToSit(command == 1);
+            dragon.applyCommandState(command);
         }
     }
 

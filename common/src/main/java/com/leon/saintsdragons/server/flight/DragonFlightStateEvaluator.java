@@ -34,11 +34,6 @@ public final class DragonFlightStateEvaluator {
     }
 
     public static int evaluateSyncedMode(State state, FlightInput input) {
-        if (!input.flying) {
-            reset(state);
-            return MODE_GROUND;
-        }
-
         if (input.takeoff) {
             state.riderHighAltitudeGlide = false;
             resetAiState(state);
@@ -49,6 +44,11 @@ public final class DragonFlightStateEvaluator {
             state.riderHighAltitudeGlide = false;
             resetAiState(state);
             return MODE_LANDING;
+        }
+
+        if (!input.flying) {
+            reset(state);
+            return MODE_GROUND;
         }
 
         if (input.hovering) {

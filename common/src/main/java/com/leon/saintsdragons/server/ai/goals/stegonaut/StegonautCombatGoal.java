@@ -10,10 +10,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
-/**
- * Ground combat goal for Stegonaut.
- * Uses currently selected melee mode (bite/chin slam).
- */
+
 public class StegonautCombatGoal extends Goal {
     private final Stegonaut dragon;
     private final double attackRangeGround = 3.4D;
@@ -66,7 +63,6 @@ public class StegonautCombatGoal extends Goal {
     public void stop() {
         dragon.getNavigation().stop();
         pathRecalcCooldown = 0;
-        // Always clear combat target when this goal stops so idle swim goals can take over.
         dragon.setTarget(null);
     }
 
@@ -95,7 +91,6 @@ public class StegonautCombatGoal extends Goal {
             return;
         }
 
-        // Keep closing distance while waiting for cooldown so we don't stall out at edge range.
         if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
             updateChasePath(target);
             return;
@@ -150,7 +145,6 @@ public class StegonautCombatGoal extends Goal {
     }
 
     private void handleWaterCombatChase(LivingEntity target, boolean inAttackRange, boolean hasLineOfSight) {
-        // In water, use direct steering instead of ground pathing.
         dragon.getNavigation().stop();
 
         Vec3 current = dragon.getDeltaMovement();

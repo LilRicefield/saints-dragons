@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.common.registry.ModPotions;
+import com.leon.saintsdragons.forge.client.ForgeConfigRootScreen;
 import com.leon.saintsdragons.forge.init.ForgeBrewingRecipes;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
@@ -12,7 +13,14 @@ import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.forge.world.AddConditionalFeaturesBiomeModifier;
 import com.leon.saintsdragons.forge.world.AddDragonsBiomeModifier;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.mojang.serialization.Codec;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -50,43 +58,30 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Forge entry point that bridges common setup into the mod lifecycle.
- */
+
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
     private static final double ATTRIBUTE_CAP = 100000.0D;
     private static final String FORGE_ATTRIBUTES_CONFIG_FILE = SaintsDragonsConfig.CONFIG_FOLDER + "/attributes.toml";
     private static final String FORGE_CLIENT_CONFIG_FILE = SaintsDragonsConfig.CONFIG_FOLDER + "/client.toml";
-
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
 
-    private static final RegistryObject<Codec<AddDragonsBiomeModifier>> ADD_DRAGONS_CODEC =
-            BIOME_MODIFIERS.register("add_dragons", () -> AddDragonsBiomeModifier.CODEC);
-    private static final RegistryObject<Codec<AddConditionalFeaturesBiomeModifier>> ADD_CONDITIONAL_FEATURES_CODEC =
-            BIOME_MODIFIERS.register("add_conditional_features", () -> AddConditionalFeaturesBiomeModifier.CODEC);
-
     public SaintsDragonsForge() {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
-
         raiseVanillaMaxHealthCap();
-
         BIOME_MODIFIERS.register(modEventBus);
         ModLootModifiers.register(modEventBus);
-
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON,
                 ForgeDragonAttributesConfig.ATTRIBUTES_SPEC,
                 FORGE_ATTRIBUTES_CONFIG_FILE);
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> ClientOnly::registerConfigScreen);
-
         modEventBus.addListener(this::onEntityAttributeCreation);
         modEventBus.addListener(this::onBuildCreativeTabs);
         modEventBus.addListener(this::onRegisterSpawnPlacements);
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onModConfigEvent);
-
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(this::onAddReloadListeners);
 
@@ -122,7 +117,6 @@ public final class SaintsDragonsForge {
     private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         CommonModEvents.registerEntityAttributes((type, builder) -> event.put(type, builder.build()));
     }
-
     private void onBuildCreativeTabs(BuildCreativeModeTabContentsEvent event) {
         CommonModEvents.registerCreativeTabEntries((tabKey, itemSupplier) -> {
             if (event.getTabKey().equals(tabKey)) {
@@ -215,20 +209,20 @@ public final class SaintsDragonsForge {
                     level.getWorldBorder().getMaxZ()
             );
 
-            for (var dragon : level.getEntitiesOfClass(com.leon.saintsdragons.server.entity.base.DragonEntity.class, bounds)) {
-                if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane cindervane) {
+            for (var dragon : level.getEntitiesOfClass(DragonEntity.class, bounds)) {
+                if (dragon instanceof Cindervane cindervane) {
                     cindervane.applyConfiguredAttributes();
-                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx raevyx) {
+                } else if (dragon instanceof Raevyx raevyx) {
                     raevyx.applyConfiguredAttributes();
                 } else if (dragon instanceof Varasuchus varasuchus) {
                     varasuchus.applyConfiguredAttributes();
-                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
+                } else if (dragon instanceof Ignivorus ignivorus) {
                     ignivorus.applyConfiguredAttributes();
-                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
+                } else if (dragon instanceof Volitans volitans) {
                     volitans.applyConfiguredAttributes();
-                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut stegonaut) {
+                } else if (dragon instanceof Stegonaut stegonaut) {
                     stegonaut.applyConfiguredAttributes();
-                } else if (dragon instanceof com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw nulljaw) {
+                } else if (dragon instanceof Nulljaw nulljaw) {
                     nulljaw.applyConfiguredAttributes();
                 }
             }
@@ -243,7 +237,7 @@ public final class SaintsDragonsForge {
             ModLoadingContext.get().registerExtensionPoint(
                     ConfigScreenHandler.ConfigScreenFactory.class,
                     () -> new ConfigScreenHandler.ConfigScreenFactory(
-                            (minecraft, parent) -> new com.leon.saintsdragons.forge.client.ForgeConfigRootScreen(parent)
+                            (minecraft, parent) -> new ForgeConfigRootScreen(parent)
                     )
             );
         }

@@ -48,12 +48,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final Component SPAWN_CATEGORY = Component.translatable("config.saintsdragons.category.spawning");
     private static final Component ATTRIBUTES_CATEGORY = Component.translatable("config.saintsdragons.category.attributes");
     private static final Component OTHERS_CATEGORY = Component.translatable("config.saintsdragons.category.others");
-
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
         return this::createScreen;
     }
-
     private Screen createScreen(Screen parent) {
         ConfigHolder<SaintsDragonsFabricSpawnConfig> holder = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
         ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricServerConfig.class);

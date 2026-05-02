@@ -20,6 +20,5 @@ public class AsyncFlightMoveControl extends MoveControl {
 
     @Override
     public void tick() {
-        // Intentionally empty. AsyncFlightController owns movement updates.
     }
 }

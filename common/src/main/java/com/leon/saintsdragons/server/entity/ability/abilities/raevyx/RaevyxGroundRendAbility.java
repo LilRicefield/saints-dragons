@@ -6,17 +6,19 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType;
 
 public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int STARTUP_TICKS = 20;
@@ -67,7 +69,6 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return;
         }
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            // Play GroundRend animation immediately and delay movement until ACTIVE section.
             getUser().triggerAnim("action", "ground_rend");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(
@@ -78,7 +79,6 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 );
             }
             getUser().setAccelerating(false);
-            // Enable ground rend state to bypass normal travel logic
             getUser().setGroundRending(true);
             getUser().setGroundRendTravelSpeed(0.0F);
             aiGroundRendDir = getForwardDir(getUser());
@@ -329,8 +329,8 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 continue;
             }
 
-            float armor = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR);
-            float toughness = (float) target.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR_TOUGHNESS);
+            float armor = (float) target.getAttributeValue(Attributes.ARMOR);
+            float toughness = (float) target.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
             float desiredDamage = wyvern.isSupercharged() ? SUPERCHARGED_HIT_DAMAGE : HIT_DAMAGE;
             float rawDamage = rawDamageForDesiredPostArmor(desiredDamage, Math.max(0f, armor), toughness);
             target.hurt(wyvern.damageSources().mobAttack(wyvern), rawDamage);
@@ -348,7 +348,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return;
         }
 
-        var bolt = net.minecraft.world.entity.EntityType.LIGHTNING_BOLT.create(server);
+        var bolt = EntityType.LIGHTNING_BOLT.create(server);
         if (bolt == null) {
             return;
         }
@@ -356,7 +356,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         bolt.moveTo(target.getX(), target.getY(), target.getZ());
         bolt.setVisualOnly(true);
         var owner = wyvern.getOwner();
-        if (owner instanceof net.minecraft.server.level.ServerPlayer sp) {
+        if (owner instanceof ServerPlayer sp) {
             bolt.setCause(sp);
         }
         server.addFreshEntity(bolt);

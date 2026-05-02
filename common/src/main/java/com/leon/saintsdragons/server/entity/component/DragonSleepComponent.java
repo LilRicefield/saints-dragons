@@ -102,7 +102,6 @@ public final class DragonSleepComponent {
             sleepActionCooldown--;
         }
 
-        // Wild dragons: clear any persisted sit order/command after reload so sleep can re-evaluate.
         if (!dragon.isTame() && dragon.isOrderedToSit() && !dragon.isSleeping() && !dragon.isSleepTransitioning()) {
             dragon.setOrderedToSit(false);
             if (dragon.getCommand() == 1) {
@@ -150,7 +149,6 @@ public final class DragonSleepComponent {
 
     private void handleTamedDragonSleep() {
         if (shouldFollowOwnerSleepNow()) {
-            // Owner-bed sleep should not be blocked by stale wake/suppression cooldowns.
             sleepActionCooldown = 0;
             sleepReentryCooldownTicks = 0;
             return;
@@ -180,7 +178,7 @@ public final class DragonSleepComponent {
     }
 
     private boolean shouldFollowOwnerSleepNow() {
-        // Owner-follow sleep trigger: tamed dragon, owner sleeping, and nighttime.
+
         return dragon.isTame() && !dragon.level().isDay() && isOwnerSleeping();
     }
 
@@ -236,13 +234,11 @@ public final class DragonSleepComponent {
         int recentCombatTick = Math.max(dragon.getLastDamagerTimestamp(), dragon.getLastHurtByMobTimestamp());
         if (recentCombatTick > 0 && dragon.tickCount - recentCombatTick < RECENT_COMBAT_SLEEP_BLOCK_TICKS) return false;
         if ((dragon.isInWaterOrBubble() && !dragon.canSleepInWater()) || dragon.isInLava()) return false;
-
         boolean alreadySleepingOrTransitioning = dragon.isSleeping() || dragon.isSleepTransitioning();
         boolean ownerBedSleep = shouldFollowOwnerSleepNow();
         boolean ownerSitCommand = dragon.isTame() && (dragon.isOrderedToSit() || dragon.getCommand() == 1);
         boolean waterSleeperAtRest = dragon.canSleepInWater() && dragon.isInWaterOrBubble();
         if (!alreadySleepingOrTransitioning) {
-            // Some sit poses can transiently report off-ground. Allow owner-bed sleep when explicitly owner-sat.
             if (!dragon.onGround() && !waterSleeperAtRest && !(ownerBedSleep && ownerSitCommand)) return false;
             if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
                 if (flyer.isFlying() || flyer.isHovering() || flyer.isTakeoff() || flyer.isLanding()) {
@@ -322,7 +318,6 @@ public final class DragonSleepComponent {
         boolean alreadySeated = dragon.sleepIsAlreadySeatedForSleep();
         boolean forceSitDown = dragon.sleepShouldForceSitDownOnEnter();
         if (dragon.isTame() && (dragon.isOrderedToSit() || dragon.getCommand() == 1) && alreadySeated) {
-            // For owner-commanded sit, skip sit-down and play fall-asleep directly.
             forceSitDown = false;
         }
         dragon.sleepOnLockCommand(sleepCommandSnapshot);

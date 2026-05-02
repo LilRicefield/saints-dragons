@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
-import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautPassiveBuffAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -28,6 +28,8 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -110,17 +112,12 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private final StegonautInteractionHandler interactionHandler = new StegonautInteractionHandler(this);
     private final StegonautRiderController riderController = new StegonautRiderController(this);
     private final SimpleContainer stegonautChestInventory = new SimpleContainer(STEGONAUT_CHEST_SLOTS);
-    private final StegonautPassiveBuffAbility passiveBuffAbility =
-            new StegonautPassiveBuffAbility(this);
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
+    private final StegonautBuffAbility buffAbility = new StegonautBuffAbility(this);
 
     public Stegonaut(EntityType<? extends Stegonaut> entityType, Level level) {
         super(entityType, level);
         animationController.initializeAnimation();
-        RandomSource rng = this.getRandom();
-        this.ambientSoundTimer = rng.nextInt(80);
-        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
         if (!level.isClientSide) {
             applyConfiguredAttributes();
             this.setHealth(this.getMaxHealth());
@@ -154,8 +151,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Stegonaut.class, 0.75D, 16.0D, 8.0D));
         this.goalSelector.addGoal(7, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
         this.goalSelector.addGoal(7, new StegonautGroundWanderGoal(this, 0.35D, 120));
-        this.goalSelector.addGoal(8, new StegonautLookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(9, new StegonautRandomLookAroundGoal(this));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
         this.targetSelector.addGoal(1, new DragonProtectBabiesGoal<>(this, Stegonaut.class));
         this.targetSelector.addGoal(2, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(3, new DragonOwnerHurtTargetGoal(this));
@@ -177,15 +174,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D);
-    }
-
-    public boolean isStayOrSitMuted() {
-        return this.isOrderedToSit() || this.isInSittingPose();
-    }
-
-    @Override
-    public boolean canOwnerCommand(Player player) {
-        return player != null && player.equals(this.getOwner());
     }
 
     @Override
@@ -362,15 +350,15 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Stegonaut> movementController = new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
-        movementController.setSoundKeyframeHandler(event -> {});
+        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         controllers.add(movementController);
         AnimationController<Stegonaut> actionController = new AnimationController<>(this, "action", 5, animationController::actionPredicate);
         animationController.setupActionController(actionController);
-        actionController.setSoundKeyframeHandler(event -> {});
+        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         controllers.add(actionController);
         AnimationController<Stegonaut> instantController = new AnimationController<>(this, "instant", 1, animationController::instantActionPredicate);
         animationController.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(event -> {});
+        instantController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         controllers.add(instantController);
     }
 
@@ -483,75 +471,27 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
     }
 
-    public void prepareForMounting() {
-        if (this.level().isClientSide) {
-            return;
-        }
-
+    @Override
+    protected void clearSittingForMounting() {
         suppressSitAnimation = true;
-        this.setOrderedToSit(false);
+        setOrderedToSit(false);
         suppressSitAnimation = false;
-        if (this.getCommand() == 1) {
-            this.setCommand(0);
-        }
-        forceSitProgress(0f);
-        this.setTarget(null);
-        if (this.getNavigation().getPath() != null) {
-            this.getNavigation().stop();
-        }
-    }
-
-    private void applyCommandState(int command) {
-        switch (command) {
-            case 0, 2:
-                this.setOrderedToSit(false);
-                break;
-            case 1:
-                this.setOrderedToSit(true);
-                break;
-        }
-    }
-
-    public void refreshCommandState() {
-        applyCommandState(this.getCommand());
     }
 
     private int grumbleCooldown = 0;
-    private void playCustomAmbientSound() {
-        RandomSource random = getRandom();
-
+    private String selectAmbientGrumble() {
         if (isDying() || getTarget() != null || isBaby()) {
-            return;
-        }
-        String vocalKey = null;
-
-        float moodRoll = random.nextFloat();
-
-        if (moodRoll < 0.4f) {
-            vocalKey = "grumble1";
-        } else if (moodRoll < 0.7f) {
-            vocalKey = "grumble2";
-        } else {
-            vocalKey = "grumble3";
+            return null;
         }
 
-        this.getSoundHandler().playVocal(vocalKey);
+        return selectWeightedAmbientVocal("grumble1", 0.4f, "grumble2", 0.7f, "grumble3");
     }
     private void handleAmbientSounds() {
         if (isDying() || isSleeping() || isSleepTransitioning()) {
             return;
         }
 
-        ambientSoundTimer++;
-        if (ambientSoundTimer >= nextAmbientSoundDelay) {
-            playCustomAmbientSound();
-            resetAmbientSoundTimer();
-        }
-    }
-    private void resetAmbientSoundTimer() {
-        RandomSource random = getRandom();
-        ambientSoundTimer = 0;
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
     @Override
@@ -739,9 +679,9 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         }
 
         if (this.isAlive()) {
-            passiveBuffAbility.tick();
+            buffAbility.tick();
         } else {
-            passiveBuffAbility.cleanup();
+            buffAbility.cleanup();
         }
         if (grumbleCooldown > 0) {
             grumbleCooldown--;

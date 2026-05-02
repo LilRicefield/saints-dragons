@@ -28,6 +28,7 @@ public class VolitansAirCombatGoal extends Goal {
     private static final double CHASE_SPEED = 2.0D;
     private static final double POSITION_SPEED = 0.85D;
     private static final double BITE_APPROACH_DISTANCE = 3.75D;
+    private static final int MELEE_CADENCE_TICKS = 30;
 
     private final Volitans dragon;
     private int breathHoldTicks = 0;
@@ -236,11 +237,11 @@ public class VolitansAirCombatGoal extends Goal {
     private void tryMelee() {
         float roll = dragon.getRandom().nextFloat();
         if (roll < 0.40F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_BITE, false, 12, 16, 0, 18);
+            startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
         } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, 14, 18, 0, 20);
+            startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
         } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, 16, 22, 0, 24);
+            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
         }
     }
 

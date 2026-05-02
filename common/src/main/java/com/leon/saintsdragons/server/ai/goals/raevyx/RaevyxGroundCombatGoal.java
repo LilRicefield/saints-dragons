@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -61,9 +62,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (!wyvern.isTargetValid(target)) {
             return false;
         }
-
-        // Don't attack creative/spectator players
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }
@@ -77,7 +76,6 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
 
-        // Don't use ground combat if target is airborne (let air combat goal handle it)
         if (isTargetAirborne(target)) {
             return false;
         }
@@ -97,7 +95,7 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
 
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }
@@ -111,7 +109,6 @@ public class RaevyxGroundCombatGoal extends Goal {
             return false;
         }
 
-        // Stop ground combat if target becomes airborne (switch to air combat goal)
         if (isTargetAirborne(target)) {
             return false;
         }
@@ -579,11 +576,11 @@ public class RaevyxGroundCombatGoal extends Goal {
         return DragonTargetingHelper.isTargetAirborne(target, 8.0D);
     }
 
-    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+    private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return wyvern.combatManager.canStart(abilityType) && wyvern.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 
-    private boolean startAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
+    private boolean startAiAbility(DragonAbilityType<?, ?> abilityType,
                                    boolean majorAbility,
                                    int cadenceTicks,
                                    int abilityCooldownTicks,

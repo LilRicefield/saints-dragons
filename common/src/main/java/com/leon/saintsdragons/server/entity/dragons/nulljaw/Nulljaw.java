@@ -133,8 +133,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Nullable
     private UUID packLeaderUuid;
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
     private int hoverVisualTicks;
     private boolean running;
     private boolean deathSoundQueued;
@@ -153,9 +151,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         this.setTakeoff(false);
         this.setLanding(false);
         this.setNoGravity(true);
-        RandomSource rng = this.getRandom();
-        this.ambientSoundTimer = rng.nextInt(80);
-        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1));
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -455,19 +451,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         if (this.isDeadOrDying() || this.isVehicle()) {
             return;
         }
-        if (++ambientSoundTimer < nextAmbientSoundDelay) {
-            return;
-        }
-        ambientSoundTimer = 0;
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + this.getRandom().nextInt(Math.max(1, MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY + 1));
-        int choice = this.getRandom().nextInt(3);
-        if (choice == 0) {
-            getSoundHandler().playVocal("grumble1");
-        } else if (choice == 1) {
-            getSoundHandler().playVocal("grumble2");
-        } else {
-            getSoundHandler().playVocal("grumble3");
-        }
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY,
+                () -> selectWeightedAmbientVocal("grumble1", 0.34f, "grumble2", 0.67f, "grumble3"));
     }
 
     @Override
@@ -661,7 +646,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         if (this.isTame() && this.isOwnedBy(player)) {
             if (player.isCrouching() && hand == InteractionHand.MAIN_HAND && heldItem.isEmpty()) {
                 if (!this.level().isClientSide) {
-                    int next = (this.getCommand() + 1) % 3;
+                    int next = this.getNextCommand();
                     this.setCommand(next);
                     if (player instanceof ServerPlayer serverPlayer) {
                         serverPlayer.displayClientMessage(

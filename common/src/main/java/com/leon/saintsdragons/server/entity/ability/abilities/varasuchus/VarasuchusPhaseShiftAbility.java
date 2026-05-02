@@ -18,7 +18,6 @@ public class VarasuchusPhaseShiftAbility extends DragonAbility<Varasuchus> {
     private static final int PHASE_TWO_SOUND_TICKS = 60;        // 3.0s
     private static final int PHASE_TWO_UNDERWATER_SOUND_TICKS = 60;
     private static final int PHASE_ONE_UNDERWATER_SOUND_TICKS = 20;
-
     private static final DragonAbilitySection[] TRACK_GROUND = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, GROUND_TRANSITION_TICKS),
             new AbilitySectionInstant(ACTIVE)
@@ -28,7 +27,6 @@ public class VarasuchusPhaseShiftAbility extends DragonAbility<Varasuchus> {
             new AbilitySectionDuration(STARTUP, UNDERWATER_TRANSITION_TICKS),
             new AbilitySectionInstant(ACTIVE)
     };
-
     private final boolean enteringPhaseTwo;
     private final boolean underwaterTransition;
     private boolean phaseToggleApplied;

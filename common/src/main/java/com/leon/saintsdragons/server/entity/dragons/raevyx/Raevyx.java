@@ -9,11 +9,6 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
-import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
@@ -29,10 +24,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTaming
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
-import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
-import com.leon.saintsdragons.server.flight.DragonRiderFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
-import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -56,6 +48,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -66,10 +59,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
@@ -81,6 +70,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.core.particles.ParticleTypes;
@@ -92,6 +82,7 @@ import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
@@ -120,7 +111,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final int MAX_AMBIENT_DELAY = 600;
     public static final float MODEL_SCALE = 1.0f;
     public static final int TAKEOFF_ANIMATION_TICKS = 35;
-    private static final int GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     public static final int AGGRO_TTL_TICKS = 200;
     public static final double BREED_PARTNER_RANGE = 8.0D;
     public static final double BREED_DISTANCE_SQR = 16.0D;
@@ -175,14 +165,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             .add("raevyx_die", "instant", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
-    private int ambientSoundTimer;
-    private int nextAmbientSoundDelay;
     private final ScreenShakeComponent screenShakeComponent;
-    private boolean manualSitCommand = false;
-    private boolean commandChangeManual = false;
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     public int timeFlying = 0;
-    private int groundedAerialRecoveryTicks = 0;
     public boolean landingFlag = false;
     public boolean landedFlag = false;
     public int landingTimer = 0;
@@ -216,19 +201,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private int postStandUnlockTicks = 0;
     private final RaevyxTamingHandler tamingController = new RaevyxTamingHandler(this);
     private int tamingAbortCalmTicks = 0;
-    public final GroundPathNavigation groundNav;
-    public final FlyingPathNavigation airNav;
-    private final AsyncFlightController asyncAirController;
-    private final AsyncFlightMoveControl asyncAirMoveControl;
-    private final MoveControl groundMoveControl;
-    private final DragonNavigationModeController navigationModeController;
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
     private final RaevyxRiderController riderController;
-    private final DragonRiderFlight riderFlightComponent;
-    private final DragonTakeoff takeoffComponent;
     private int tempInvulnTicks = 0;
-    private int riderTakeoffTicks = 0;
     private long lastLandingGameTime = Long.MIN_VALUE;
     private Vec3 prevClientBeamEnd = null;
     private Vec3 clientBeamEnd = null;
@@ -237,34 +213,65 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private float beamYawOffsetRad = 0.0f;
     private float beamPitchOffsetRad = 0.0f;
     private int beamTime = 0;
+    private int beamAimRefreshTick = -1;
+    private int beamPathRefreshTick = -1;
     private Vec3 beamServerTarget = null;
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new DragonFloatGoal(this, 0.004D, -0.03D, 0.1F));
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
+            this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
+        }
+        this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
+        this.goalSelector.addGoal(7, new DragonFollowParentGoal<>(this, Raevyx.class, 1.15D));
+        if (!this.isBaby()) {
+            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Raevyx.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+        }
+        this.goalSelector.addGoal(8, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forRaevyx()) {
+            @Override
+            protected void startFollowTakeoff() {
+                if (Raevyx.this.isFlying() || Raevyx.this.isTakeoff()) {
+                    return;
+                }
+                Raevyx.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
+            }
+        });
+        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 1.0, 60));
+        this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
+        this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
+        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
+            @Override
+            public boolean canUse() {
+                return !Raevyx.this.isVehicle() && super.canUse();
+            }
+        });
+        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {
+            @Override
+            public boolean canUse() {
+                return !Raevyx.this.isVehicle() && super.canUse();
+            }
+        });
+        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
+        this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Raevyx.class));  // Protect nearby babies
+        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
+                target -> shouldAggroOnSight()));
+        this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+                this,
+                80,
+                this::shouldAggroOnSight,
+                target -> target instanceof Sheep || target instanceof Pig
+        ));
+    }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return dragonCache;
     }
 
-    @Override
-    public void setCommand(int command) {
-        int previous = super.getCommand();
-        super.setCommand(command);
-        if (command == 1) {
-            this.manualSitCommand = this.commandChangeManual || this.manualSitCommand;
-        } else {
-            this.manualSitCommand = false;
-        }
-        this.commandChangeManual = false;
-    }
-
-    public void setCommandManual(int command) {
-        this.commandChangeManual = true;
-        this.setCommand(command);
-    }
-
-    public void setCommandAuto(int command) {
-        this.commandChangeManual = false;
-        this.setCommand(command);
-    }
     private boolean getBooleanData(EntityDataAccessor<Boolean> accessor) {
         return this.entityData.get(accessor);
     }
@@ -389,19 +396,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
+    protected boolean isRiderTakeoffLocked() {
+        return isGroundRending() || isTakeoffLocked();
+    }
+
+    @Override
     protected void afterStandardLandingStateReset() {
         this.setLanded(true);
         this.landingTimer = 0;
-    }
-
-    @Override
-    protected void clearTakeoffState() {
-        takeoffComponent.clear();
-    }
-
-    @Override
-    protected void resetRiderTakeoffTicksAfterLanding() {
-        this.riderTakeoffTicks = 0;
     }
 
     @Override
@@ -442,50 +444,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.34F);
         this.setMaxUpStep(1.25F);
-        this.asyncAirController = new AsyncFlightController(this);
-        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
-        this.groundNav = new DragonPathNavigateGround(this, level);
-        this.groundMoveControl = new MoveControl(this);
-        this.airNav = new AsyncFlyingPathNavigation(this, level, this.asyncAirController) {
-            @Override
-            public boolean isStableDestination(@Nonnull BlockPos pos) {
-                return !this.level.getBlockState(pos.below()).isAir();
-            }
-        };
-        this.airNav.setCanOpenDoors(false);
-        this.airNav.setCanFloat(false);
-        this.airNav.setCanPassDoors(false);
-        this.navigationModeController = new DragonNavigationModeController(
-                new DragonNavigationModeController.Host() {
-                    @Override
-                    public void setActiveNavigation(PathNavigation navigation) {
-                        Raevyx.this.navigation = navigation;
-                    }
-
-                    @Override
-                    public void setActiveMoveControl(MoveControl moveControl) {
-                        Raevyx.this.moveControl = moveControl;
-                    }
-
-                    @Override
-                    public void afterSwitchToGround() {
-                        if (Raevyx.this.onGround()) {
-                            Raevyx.this.setDeltaMovement(Vec3.ZERO);
-                            Raevyx.this.hasImpulse = false;
-                        } else {
-                            Vec3 motion = Raevyx.this.getDeltaMovement();
-                            Raevyx.this.setDeltaMovement(motion.x * 0.25D, motion.y, motion.z * 0.25D);
-                        }
-                    }
-                },
-                this.groundNav,
-                this.airNav,
-                this.groundMoveControl,
-                this.asyncAirMoveControl
-        );
-
-        this.navigation = this.groundNav;
-        this.moveControl = this.groundMoveControl;
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, -1.0F);
@@ -493,173 +451,35 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.lightningInteractionHandler = new RaevyxInteractionHandler(this);
         this.animationHandler = new RaevyxAnimationHandler(this);
         this.riderController = new RaevyxRiderController(this);
-        this.takeoffComponent = createTakeoffComponent();
-        this.riderFlightComponent = createRiderFlightComponent();
-        RandomSource rng = this.getRandom();
-        this.ambientSoundTimer = rng.nextInt(80);
-        this.nextAmbientSoundDelay = MIN_AMBIENT_DELAY + rng.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
 
         if (!level.isClientSide) {
             applyConfiguredAttributes();
         }
     }
 
-    private DragonRiderFlight createRiderFlightComponent() {
-        return new DragonRiderFlight(new DragonRiderFlight.Host() {
-            @Override
-            public Entity asEntity() { return Raevyx.this; }
-
-            @Override
-            public Level level() { return Raevyx.this.level(); }
-
-            @Override
-            public AABB getBoundingBox() { return Raevyx.this.getBoundingBox(); }
-
-            @Override
-            public boolean isVehicle() { return Raevyx.this.isVehicle(); }
-
-            @Override
-            public boolean isFlying() { return Raevyx.this.isFlying(); }
-
-            @Override
-            public boolean isTakeoff() { return Raevyx.this.isTakeoff(); }
-
-            @Override
-            public boolean isGoingUp() { return Raevyx.this.isGoingUp(); }
-
-            @Override
-            public boolean isUnderWater() { return Raevyx.this.isUnderWater(); }
-
-            @Override
-            public boolean isInWaterOrBubble() { return Raevyx.this.isInWaterOrBubble(); }
-
-            @Override
-            public boolean isTame() { return Raevyx.this.isTame(); }
-
-            @Override
-            public boolean hasControllingRider() { return riderController.getRidingPlayer() != null; }
-
-            @Override
-            public boolean canTakeoff() { return Raevyx.this.canTakeoff(); }
-
-            @Override
-            public void setFlying(boolean value) { Raevyx.this.setFlying(value); }
-
-            @Override
-            public void setHovering(boolean value) { Raevyx.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Raevyx.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Raevyx.this.switchToAirNavigation(); }
-
-            @Override
-            public void setGoingUp(boolean value) { Raevyx.this.setGoingUp(value); }
-
-            @Override
-            public void setGoingDown(boolean value) { Raevyx.this.setGoingDown(value); }
-
-            @Override
-            public void stopNavigation() { Raevyx.this.getNavigation().stop(); }
-
-            @Override
-            public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-                Raevyx.this.startTakeoffSequence(minUpwardVelocity, animationTicks);
-            }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Raevyx.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Raevyx.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Raevyx.this.hasImpulse = true; }
-
-            @Override
-            public long getGameTime() { return Raevyx.this.level().getGameTime(); }
-
-            @Override
-            public long getLastLandingGameTime() { return Raevyx.this.getLastLandingGameTime(); }
-
-            @Override
-            public boolean isTakeoffLocked() { return Raevyx.this.isTakeoffLocked(); }
-
-            @Override
-            public void onManualTakeoffStart() {
-                Raevyx.this.timeFlying = 0;
-                Raevyx.this.landingFlag = false;
-                Raevyx.this.landingTimer = 0;
-            }
-
-            @Override
-            public void setRiderTakeoffTicks(int ticks) { Raevyx.this.setRiderTakeoffTicks(ticks); }
-        }, new DragonRiderFlight.Config(
+    @Override
+    protected DragonRiderFlight.Config getRiderFlightConfig() {
+        return new DragonRiderFlight.Config(
                 true,
                 5,
                 0.55D,
                 TAKEOFF_ANIMATION_TICKS,
                 0.45D,
                 TAKEOFF_ANIMATION_TICKS
-        ));
+        );
     }
 
-    private DragonTakeoff createTakeoffComponent() {
-        return new DragonTakeoff(new DragonTakeoff.Host() {
-            @Override
-            public Level level() { return Raevyx.this.level(); }
-
-            @Override
-            public boolean isFlying() { return Raevyx.this.isFlying(); }
-
-            @Override
-            public void setFlying(boolean value) { Raevyx.this.setFlying(value); }
-
-            @Override
-            public void setTakeoff(boolean value) { Raevyx.this.setTakeoff(value); }
-
-            @Override
-            public void setHovering(boolean value) { Raevyx.this.setHovering(value); }
-
-            @Override
-            public void setLanding(boolean value) { Raevyx.this.setLanding(value); }
-
-            @Override
-            public void switchToAirNavigation() { Raevyx.this.switchToAirNavigation(); }
-
-            @Override
-            public Vec3 getDeltaMovement() { return Raevyx.this.getDeltaMovement(); }
-
-            @Override
-            public void setDeltaMovement(Vec3 movement) { Raevyx.this.setDeltaMovement(movement); }
-
-            @Override
-            public void markImpulse() { Raevyx.this.hasImpulse = true; }
-
-            @Override
-            public void onTakeoffStarted() {
-                Raevyx.this.timeFlying = 0;
-                Raevyx.this.landingFlag = false;
-                Raevyx.this.landingTimer = 0;
-            }
-        });
-    }
-
-    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-        if (this.isBaby()) {
-            return;
-        }
-        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+    @Override
+    protected void onTakeoffStarted() {
+        this.timeFlying = 0;
+        this.landingFlag = false;
+        this.landingTimer = 0;
     }
 
     @Override
     protected float getBodyTurnSpeed() {
         return 0.6f;
-    }
-
-    public boolean isStayOrSitMuted() {
-        return this.isOrderedToSit() || this.isInSittingPose();
     }
 
     @Override
@@ -674,20 +494,19 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
 
-        long now = this.level().getGameTime();
         double horizontalSpeedSq = this.getDeltaMovement().horizontalDistanceSqr();
         boolean running = isActuallyRunning() || horizontalSpeedSq > 0.02D;
-        long minIntervalTicks = running ? RUN_SOUND_REPLAY_INTERVAL_TICKS : WALK_SOUND_REPLAY_INTERVAL_TICKS;
-        if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
-            return;
-        }
-        getSoundHandler().setLastStepTick(now);
-
-        if (running) {
-            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_RUN.get(), 1.0f, 1.0f, RUN_SOUND_DURATION_TICKS);
-        } else {
-            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_WALK.get(), 1.0f, 1.0f, WALK_SOUND_DURATION_TICKS);
-        }
+        playGroundStepLoopSound(
+                ModSounds.RAEVYX_WALK.get(),
+                ModSounds.RAEVYX_RUN.get(),
+                WALK_SOUND_DURATION_TICKS,
+                RUN_SOUND_DURATION_TICKS,
+                WALK_SOUND_REPLAY_INTERVAL_TICKS,
+                RUN_SOUND_REPLAY_INTERVAL_TICKS,
+                running,
+                1.0f,
+                1.0f
+        );
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -774,48 +593,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected void applyRiderVerticalInput(Player player, boolean goingUp, boolean goingDown, boolean locked) {
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        boolean canRecover = canRecoverTakeoffFromFall();
-        if (inWater) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-            return;
-        }
-
-        if (locked) {
-            setGoingUp(false);
-            setGoingDown(false);
-            return;
-        }
-        if (goingUp && canRecover) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        if (this.isFlying() || canRecover) {
-            setGoingUp(goingUp);
-            setGoingDown(goingDown);
-        } else {
-            setGoingUp(false);
-            setGoingDown(false);
-        }
-    }
-
-    @Override
-    protected void onRiderTakeoffRequest(Player player) {
-        boolean canRecover = canRecoverTakeoffFromFall();
-        if (canRecover) {
-            setGoingUp(true);
-            setGoingDown(false);
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        requestRiderTakeoff();
-    }
-
-    @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
         if (locked || isGroundRending()) {
@@ -841,12 +618,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             }
             default -> false;
         };
-    }
-    public void requestRiderTakeoff() {
-        if (isGroundRending()) {
-            return;
-        }
-        riderFlightComponent.requestRiderTakeoff();
     }
     public Vec3 computeBeamStartFallback(float partialTicks) {
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
@@ -946,7 +717,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.entityData.set(DATA_PITCH_KEY_MODE, enabled);
     }
 
-    public void setBeamEndPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
+    public void setBeamEndPosition(@Nullable Vec3 pos) {
 
         if (pos == null) {
             this.entityData.set(DATA_BEAM_END_SET, false);
@@ -1006,22 +777,39 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         setBeamEndPosition(null);
     }
 
+    public boolean updateBeamPathFromAim() {
+        if (beamPathRefreshTick == tickCount && getBeamStartPosition() != null && getBeamEndPosition() != null) {
+            return true;
+        }
 
-    // ===== NAVIGATION SWITCHING =====
-    public void switchToAirNavigation() {
-        this.navigationModeController.switchToAir();
+        Vec3 origin = getBeamStartAnchor(1.0f);
+        if (origin == null) {
+            clearBeamPath();
+            return false;
+        }
+
+        boolean smoothAim = getControllingPassenger() == null;
+        Vec3 aimDir = refreshBeamAimDirection(origin, smoothAim);
+        if (aimDir == null || aimDir.lengthSqr() < 1.0E-6) {
+            clearBeamPath();
+            return false;
+        }
+
+        syncBeamPath(origin, traceBeamImpact(origin, aimDir));
+        beamPathRefreshTick = tickCount;
+        return true;
     }
 
-    public void switchToGroundNavigation() {
-        this.navigationModeController.switchToGround();
+    private Vec3 traceBeamImpact(Vec3 origin, Vec3 aimDir) {
+        final double maxBeamRange = 64.0D;
+        Vec3 reach = origin.add(aimDir.scale(maxBeamRange));
+        var context = new ClipContext(origin, reach, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this);
+        var hit = level().clip(context);
+        if (hit == null || hit.getType() == HitResult.Type.MISS) {
+            return reach;
+        }
+        return hit.getLocation();
     }
-
-    @Override
-    protected @NotNull PathNavigation createNavigation(@Nonnull Level level) {
-        return new DragonPathNavigateGround(this, level);
-    }
-
-
     public void setFlying(boolean flying) {
         if (flying && this.isBaby()) flying = false;
         if (!flying && isVehicle() && !isOrderedToSit() && !onGround()) {
@@ -1074,9 +862,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public boolean isActuallyRunning() {
         if (isFlying()) return false;
         int s = level().isClientSide ? getEffectiveGroundState() : this.entityData.get(DATA_GROUND_MOVE_STATE);
-        if (s == 2) return true;
-        if (s == 1) return false;
-        return false;
+        return s == 2;
     }
 
 
@@ -1122,38 +908,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
     }
 
-    public boolean isFallingForAnimation() {
-        return DragonRiderFallRecovery.isFallingForAnimation(
-                isVehicle(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                this.fallDistance,
-                getDeltaMovement()
-        );
-    }
-
-    private boolean canRecoverTakeoffFromFall() {
-        return DragonRiderFallRecovery.canRecoverTakeoffFromFall(
-                isTame(),
-                isVehicle(),
-                isAlive(),
-                isBaby(),
-                isFlying(),
-                isTakeoff(),
-                isLanding(),
-                isHovering(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                isGroundRending(),
-                this.fallDistance,
-                getDeltaMovement()
-        );
+    @Override
+    protected boolean isRiderFallRecoveryBlocked() {
+        return isGroundRending();
     }
 
     @Override
@@ -1191,7 +948,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public void tickAnimationStates() {
     }
 
-    // Allow AI goals to set ground move state explicitly
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
             int s = Math.max(0, Math.min(2, state));
@@ -1207,10 +963,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return player;
         }
         return null;
-    }
-
-    public boolean canOwnerCommand(Player ownerPlayer) {
-        return ownerPlayer.isCrouching(); // Shift key pressed
     }
 
     @Override
@@ -1230,8 +982,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        // Use melee mode to switch between bite and horn gore
-        // Mode 0 = bite (primary), Mode 1 = horn gore (secondary)
         if (getMeleeMode() == 0) {
             return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
         } else {
@@ -1603,23 +1353,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         tickSittingState();
-        takeoffComponent.tick();
-        groundedAerialRecoveryTicks = DragonGroundedAerialRecovery.tick(
-                level(),
-                onGround(),
-                isInWaterOrBubble(),
-                isInLava(),
-                isTakeoff(),
-                isFlying(),
-                isHovering(),
-                isLanding(),
-                false,
-                getDeltaMovement(),
-                groundedAerialRecoveryTicks,
-                GROUNDED_AERIAL_RECOVERY_TICKS,
-                0.05D,
-                this::markLandedNow
-        );
+        tickStandardTakeoffAndGroundedAerialRecovery();
         tickRiderTakeoff();
         tickHurtSoundCooldown();
         spawnPendingFamilyBabies(ModEntities.RAEVYX.get(), Raevyx::applyConfiguredAttributes);
@@ -1639,12 +1373,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
         tickRiderControlLock();
 
-        if (this.navigationModeController.isUsingAirNavigation()
-                && (this.isFlying() || this.isTakeoff() || this.isLanding())
-                && !this.isVehicle()
-                && !isDirectAirCombatActive()) {
-            this.asyncAirController.serverTick();
-        }
+        tickAsyncFlightNavigation(isDirectAirCombatActive());
         if (tickCount % 2 == 0) {
             tickRiderControlLockMovement();
         }
@@ -1756,7 +1485,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
-        if (!isFlying() && !isTakeoff() && !isLanding() && navigationModeController.isUsingAirNavigation()) {
+        if (!isFlying() && !isTakeoff() && !isLanding() && isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
     }
@@ -1817,7 +1546,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             if (this.isOrderedToSit()) {
                 this.setOrderedToSit(false);
                 if (this.getCommand() == 1) {
-                    this.setCommandAuto(0);
+                    this.setCommand(0);
                 }
             }
             if (this.getNavigation().getPath() != null) {
@@ -1857,6 +1586,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (!riderControlled) {
             applyBeamLook(aimDir);
         }
+        if (!level().isClientSide) {
+            updateBeamPathFromAim();
+        }
     }
 
     public Vec3 getBeamAimDirection() {
@@ -1864,6 +1596,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     public Vec3 refreshBeamAimDirection(Vec3 start, boolean smooth) {
+        if (beamAimRefreshTick == tickCount && beamAimDir != null) {
+            updateBeamOffsets(beamAimDir);
+            return beamAimDir;
+        }
+
         Vec3 desiredDir = computeRawBeamAimDirection(start);
         if (desiredDir == null) {
             updateBeamOffsets(null);
@@ -1891,6 +1628,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
 
         updateBeamOffsets(beamAimDir);
+        beamAimRefreshTick = tickCount;
         return beamAimDir;
     }
 
@@ -2017,6 +1755,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         beamAimDir = null;
         beamYawOffsetRad = 0.0f;
         beamPitchOffsetRad = 0.0f;
+        beamAimRefreshTick = -1;
+        beamPathRefreshTick = -1;
     }
 
     private void updateBeamOffsets(@org.jetbrains.annotations.Nullable Vec3 direction) {
@@ -2046,12 +1786,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             this.clientBeamEnd = getBeamEndPosition();
         }
     }
-    private void tickRiderTakeoff() {
-        if (!level().isClientSide && riderTakeoffTicks > 0 && !isDying()) {
-            riderTakeoffTicks--;
-        }
-    }
-    
     private void tickControllers() {
         updateSittingProgress();
     }
@@ -2098,7 +1832,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 if ((sitProgress == maxSitTicks() || isSittingDown) && !isStandingUp) {
                     animationHandler.triggerSitUpAnimation();
                     isStandingUp = true;
-                    isSittingDown = false; // Cancel the sit-down
+                    isSittingDown = false;
                     sitTransitionTicks = getSitUpAnimationTicks();
                 }
                 float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
@@ -2153,7 +1887,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private void tickSuperchargeVfx() {
         if (isSupercharged() && this.level().isThundering() && superchargeVfxCooldown-- <= 0) {
             spawnSuperchargeVfx();
-            superchargeVfxCooldown = 6 + this.random.nextInt(6); // pulse every ~0.3-0.6s
+            superchargeVfxCooldown = 6 + this.random.nextInt(6);
         }
     }
     
@@ -2251,18 +1985,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected boolean allowsStandardPitchWhileLanding() {
-        return false;
-    }
-
-    @Override
     protected boolean isStandardPitchActionBlocked() {
         return isBeaming();
     }
 
     @Override
-    protected boolean shouldApplyStandardAiLandingPitch() {
-        return false;
+    protected float getStandardAiLandingPitchDegrees() {
+        return 24.0F;
     }
 
     @Override
@@ -2291,42 +2020,20 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.hurtSoundCooldown = this.isVehicle() ? 15 : 8;
     }
 
-    private void playCustomAmbientSound() {
-        RandomSource random = getRandom();
-
+    private String selectAmbientGrumble() {
         if (isDying() || isBaby() || isAggressive() || isBeaming() || getActiveAbility() != null) {
-            return;
+            return null;
         }
-        String vocalKey = null;
         if (isOrderedToSit()) {
-            vocalKey = "grumble1";
-        } else {
-            float grumbleChance = random.nextFloat();
-            if (grumbleChance < 0.4f) {
-                vocalKey = "grumble1";
-            } else if (grumbleChance < 0.7f) {
-                vocalKey = "grumble2";
-            } else {
-                vocalKey = "grumble3";
-            }
+            return "grumble1";
         }
-        if (vocalKey != null) this.getSoundHandler().playVocal(vocalKey);
+        return selectWeightedAmbientVocal("grumble1", 0.4f, "grumble2", 0.7f, "grumble3");
     }
 
     private void handleAmbientSounds() {
 
         if (isDying() || isSleeping() || isSleepTransitioning() || isInSitTransition() || getSleepAmbientCooldownTicks() > 0 || areRiderControlsLocked()) return;
-        ambientSoundTimer++;
-        if (ambientSoundTimer >= nextAmbientSoundDelay) {
-            playCustomAmbientSound();
-            resetAmbientSoundTimer();
-        }
-    }
-
-    private void resetAmbientSoundTimer() {
-        RandomSource random = getRandom();
-        ambientSoundTimer = 0;
-        nextAmbientSoundDelay = MIN_AMBIENT_DELAY + random.nextInt(MAX_AMBIENT_DELAY - MIN_AMBIENT_DELAY);
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
     private void handleGroundRendMovement() {
@@ -2373,7 +2080,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
         if (inWater) {
             if (!level().isClientSide) {
-                if (riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks)) {
+                if (shouldClearRiderFlightStateInWater()) {
                     this.setFlying(false);
                     this.setTakeoff(false);
                     this.setHovering(false);
@@ -2425,11 +2132,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.move(MoverType.SELF, this.getDeltaMovement());
         boolean atSurface = !this.isUnderWater(); // Head above water
         boolean tryingToAscend = isGoingUp();
-        boolean hasHeadroom = riderFlightComponent.hasBreachTakeoffClearance();
+        boolean hasHeadroom = hasRiderBreachTakeoffClearance();
 
         if (!this.isFlying() && atSurface && tryingToAscend && hasHeadroom) {
             if (!level().isClientSide) {
-                riderFlightComponent.tryAutoBreachTakeoff();
+                tryAutoBreachRiderTakeoff();
             }
         }
     }
@@ -2446,16 +2153,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         double dz = worldZ * 0.6D * swimSpeed;
         return new Vec3(dx, 0, dz);
     }
-
-    public boolean isFlightControllerStuck() {
-        if (!this.navigationModeController.isUsingAirNavigation()) {
-            return false;
-        }
-        AsyncFlightController.PathState state = this.asyncAirController.getState();
-        return state == AsyncFlightController.PathState.STUCK
-                || state == AsyncFlightController.PathState.FAILED;
-    }
-
 
     @SuppressWarnings("unused")
     public static boolean canSpawnHere(EntityType<Raevyx> type,
@@ -2511,56 +2208,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         public RaevyxFamilyData(boolean shouldSpawnBaby) {
             super(shouldSpawnBaby);
         }
-    }
-
-    @Override
-    protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DragonFloatGoal(this, 0.004D, -0.03D, 0.1F));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
-            this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
-        }
-        this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(7, new DragonFollowParentGoal<>(this, Raevyx.class, 1.15D));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Raevyx.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        }
-        this.goalSelector.addGoal(8, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forRaevyx()) {
-            @Override
-            protected void startFollowTakeoff() {
-                if (Raevyx.this.isFlying() || Raevyx.this.isTakeoff()) {
-                    return;
-                }
-                Raevyx.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            }
-        });
-        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 1.0, 60));
-        this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
-        this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
-            @Override
-            public boolean canUse() {
-                return !Raevyx.this.isVehicle() && super.canUse();
-            }
-        });
-        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {
-            @Override
-            public boolean canUse() {
-                return !Raevyx.this.isVehicle() && super.canUse();
-            }
-        });
-        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Raevyx.class));  // Protect nearby babies
-        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                target -> shouldAggroOnSight()));
-        this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
-                this,
-                80,
-                this::shouldAggroOnSight,
-                target -> target instanceof Sheep || target instanceof Pig
-        ));
     }
 
     @Override
@@ -2636,12 +2283,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public int getMaxAirSupply() {
-        return 20 * 60 * 3; // 3600 ticks ~= 180s
+        return 20 * 60 * 3;
     }
 
     @Override
     public int increaseAirSupply(int currentAir) {
-        int refillPerTick = 50; // ~3600/72 ticks ≈ 3.6s to refill from 0
+        int refillPerTick = 50;
         return Math.min(getMaxAirSupply(), currentAir + refillPerTick);
     }
 
@@ -2935,9 +2582,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    public DragonEntity.DragonSleepPreferences getSleepPreferences() {
-        // Raevyx are daylight sleepers (avoid thunderstorms)
-        return DragonEntity.DragonSleepPreferences.DIURNAL();
+    public DragonSleepPreferences getSleepPreferences() {
+        return DragonSleepPreferences.DIURNAL();
     }
 
     @Override
@@ -3003,9 +2649,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected void onSleepLockCommand(int snapshot) {
         if (snapshot == 1) {
-            this.setCommandManual(1);
+            this.setCommand(1);
         } else {
-            this.setCommandAuto(1);
+            this.setCommand(1);
         }
         this.setOrderedToSit(true);
         this.getNavigation().stop();
@@ -3022,10 +2668,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected void onSleepUnlockCommand(int desired) {
         if (desired == 1) {
-            this.setCommandManual(1);
+            this.setCommand(1);
             this.setOrderedToSit(true);
         } else {
-            this.setCommandAuto(desired);
+            this.setCommand(desired);
             this.setOrderedToSit(false);
         }
         this.getNavigation().stop();
@@ -3109,7 +2755,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 postStandUnlockTicks = Math.max(postStandUnlockTicks, 20);
             }
             if (this.getCommand() == 1) {
-                this.setCommandAuto(0);
+                this.setCommand(0);
             }
         }
     }
@@ -3126,8 +2772,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putInt("TimeFlying", timeFlying);
-        tag.putBoolean("UsingAirNav", navigationModeController.isUsingAirNavigation());
-        tag.putInt("RiderTakeoffTicks", riderTakeoffTicks);
+        tag.putBoolean("UsingAirNav", isUsingAirNavigation());
         tag.putLong("LastLandingGameTime", lastLandingGameTime);
         tag.putBoolean("LandingFlag", landingFlag);
         tag.putInt("LandingTimer", landingTimer);
@@ -3137,7 +2782,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tag.putInt("SuperchargeTicks", Math.max(0, this.superchargeTicks));
         tag.putInt("TempInvulnTicks", Math.max(0, this.tempInvulnTicks));
         tag.putBoolean("AllowGroundBeamStorm", this.allowGroundBeamDuringStorm);
-        tag.putBoolean("ManualSitCommand", this.manualSitCommand);
         tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putFloat("BeamEnergy", getBeamEnergy());
@@ -3152,7 +2796,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         boolean savedFlying = tag.getBoolean("Flying");
         this.timeFlying = tag.getInt("TimeFlying");
         boolean savedUsingAirNav = tag.getBoolean("UsingAirNav");
-        this.riderTakeoffTicks = tag.contains("RiderTakeoffTicks") ? tag.getInt("RiderTakeoffTicks") : 0;
         this.lastLandingGameTime = tag.contains("LastLandingGameTime") ? tag.getLong("LastLandingGameTime") : Long.MIN_VALUE;
         this.landingFlag = tag.contains("LandingFlag") && tag.getBoolean("LandingFlag");
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
@@ -3186,16 +2829,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (tag.contains("BeamEnergy")) {
             setBeamEnergy(tag.getFloat("BeamEnergy"));
         } else {
-            setBeamEnergy(1.0f); // Default to full energy for older saves
+            setBeamEnergy(1.0f);
         }
         if (tag.contains("BeamDepleted")) {
             setBeamDepleted(tag.getBoolean("BeamDepleted"));
         } else {
-            setBeamDepleted(false); // Default to unlocked for older saves
+            setBeamDepleted(false);
         }
         tamingController.load(tag);
-
-        this.manualSitCommand = tag.contains("ManualSitCommand") && tag.getBoolean("ManualSitCommand");
 
         if (savedUsingAirNav) {
             switchToAirNavigation();
@@ -3214,12 +2855,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             this.setAggressive(false);
         }
 
-        if (this.getCommand() == 1 && !this.manualSitCommand) {
-            this.setCommandAuto(0);
-            this.setOrderedToSit(false);
-        }
         if (!this.isTame()) {
-            this.setCommandAuto(0);
+            this.setCommand(0);
             this.setOrderedToSit(false);
             this.setInSittingPose(false);
             clearSitProgress();
@@ -3231,42 +2868,27 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         applyConfiguredAttributes();
     }
 
-    public int getRiderTakeoffTicks() { return riderTakeoffTicks; }
-    public void setRiderTakeoffTicks(int ticks) { this.riderTakeoffTicks = Math.max(0, ticks); }
     public void clearAllStatesForMounting() {
         // Clear combat states
         this.setTarget(null);
         this.setBeaming(false);
-        
-        // Clear movement states
         this.setRunning(false);
         this.getNavigation().stop();
-        
-        // Clear flight states (will be controlled by rider)
         this.setTakeoff(false);
         this.setLanding(false);
         this.setHovering(false);
-        
-        // Clear sitting state and sync command value
         if (this.isOrderedToSit()) {
             this.setOrderedToSit(false);
-            // If wyvern was sitting, set command to Follow (0) when mounted
             if (this.getCommand() == 1) {
-                this.setCommandAuto(0);
+                this.setCommand(0);
             }
         }
-        
-        // Clear any pending timers
-        this.riderTakeoffTicks = 0;
 
-        // Reset combat manager
+        setRiderTakeoffTicks(0);
         this.combatManager.clearAllStates();
-        
-        // Clear any sleep suppression (fresh start)
         clearSleepCooldowns();
     }
 
-    // ===== GECKOLIB =====
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Raevyx> movementController =
@@ -3318,18 +2940,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return RaevyxSoundProfile.INSTANCE;
     }
 
-    private void handleAnimationSound(String soundKey) {
-        DragonSoundProfile profile = getSoundProfile();
-        if (profile != null) {
-            // Let the profile handle it (it knows about flaps, steps, etc.)
-            boolean handled = profile.handleAnimationSound(getSoundHandler(), this, soundKey, null);
-            if (!handled) {
-                // Profile didn't handle it, try as vocal
-                getSoundHandler().playVocal(soundKey);
-            }
-        }
-    }
-
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         return getMeleeMode() == 0 ?
@@ -3349,8 +2959,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public void lockRiderControls(int ticks) {
-        super.lockRiderControls(ticks);  // Base handles tick counting and entity data
-        // Raevyx-specific: reset movement states during lock
+        super.lockRiderControls(ticks);
         this.setAccelerating(false);
         this.setGoingUp(false);
         this.setGoingDown(false);
@@ -3361,30 +2970,27 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
     }
 
-    // While > 0, only takeoff is locked (allows running/movement during roar)
     private int takeoffLockTicks = 0;
     public boolean isTakeoffLocked() { return takeoffLockTicks > 0; }
     public void lockTakeoff(int ticks) { this.takeoffLockTicks = Math.max(this.takeoffLockTicks, Math.max(0, ticks)); }
     public void clearTakeoffLock() { this.takeoffLockTicks = 0; }
     private void tickTakeoffLock() { if (takeoffLockTicks > 0) takeoffLockTicks--; }
-
     public void clearTemporaryInvuln() {
         this.tempInvulnTicks = 0;
         if (!isDying()) this.setInvulnerable(false);
     }
 
-    // ===== RECENT AGGRO TRACKING (for roar lightning targeting) =====
-    private final java.util.Map<Integer, Long> recentAggroIds = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<Integer, Long> recentAggroIds = new ConcurrentHashMap<>();
 
     public void noteAggroFrom(LivingEntity target) {
         if (target == null || target.level().isClientSide) return;
         recentAggroIds.put(target.getId(), this.level().getGameTime() + AGGRO_TTL_TICKS);
     }
 
-    public java.util.List<LivingEntity> getRecentAggro() {
-        java.util.List<LivingEntity> out = new java.util.ArrayList<>();
+    public List<LivingEntity> getRecentAggro() {
+        List<LivingEntity> out = new ArrayList<>();
         long now = this.level().getGameTime();
-        java.util.Iterator<java.util.Map.Entry<Integer, Long>> it = recentAggroIds.entrySet().iterator();
+        Iterator<java.util.Map.Entry<Integer, Long>> it = recentAggroIds.entrySet().iterator();
         while (it.hasNext()) {
             var e = it.next();
             if (e.getValue() < now) { it.remove(); continue; }
@@ -3392,7 +2998,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             if (ent instanceof LivingEntity le && le.isAlive()) {
                 out.add(le);
             } else {
-                // Clean up dead/invalid entities
                 it.remove();
             }
         }
@@ -3408,19 +3013,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    public float getEyeHeight(@Nonnull Pose pose) {
-        // Always use dynamically calculated eye height when available
-        EntityDimensions dimensions = getDimensions(pose);
-        return dimensions.height * 0.6f;
-    }
-
-    @Override
-    protected float getStandingEyeHeight(@Nonnull Pose pose, @Nonnull EntityDimensions dimensions) {
-        // Always use cached value when available (both client and server need this)
-        return dimensions.height * 0.6f;
-    }
-
-    @Override
     protected float getBabyHitboxScale() {
         return 0.4F;
     }
@@ -3428,7 +3020,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public void ageBoundaryReached() {
         super.ageBoundaryReached();
-        // Refresh hitbox dimensions when baby grows into adult
         applyConfiguredAttributes();
         this.refreshDimensions();
     }
@@ -3512,15 +3103,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             if (!this.isFlying()) {
                 this.setGoingUp(false);
                 this.setGoingDown(false);
-            }
-        }
-
-        if (isBeaming()) {
-            Vec3 start = getBeamStartAnchor(1.0f);
-            if (start == null) {
-                resetBeamAim();
-            } else {
-                Vec3 aim = refreshBeamAimDirection(start, true);
             }
         }
     }

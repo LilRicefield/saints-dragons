@@ -301,7 +301,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     }
 
     public void requestRiderTakeoff() {
-        dragon.requestRiderTakeoff();
+        dragon.tryRiderTakeoff(getControllingPassenger() instanceof Player player ? player : null);
     }
 
     private boolean isTakeoffWindowActive() {

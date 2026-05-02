@@ -27,17 +27,12 @@ public class DragonRideHealthBar {
     private static final ResourceLocation STEGONAUT_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_overlay.png");
     private static final ResourceLocation VOLITANS_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/volitans/volitans_base.png");
     private static final ResourceLocation VOLITANS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/volitans/volitans_overlay.png");
-
-    // Bar dimensions
     private static final int BAR_WIDTH = 182;
     private static final int BAR_HEIGHT = 22;
-
     private DragonEntity dragon;
     private float currentHealthPercent = 1.0f;
     private float targetHealthPercent = 1.0f;
     private long lastHealthUpdate = 0;
-
-    // Cached text rendering values
     private String cachedHealthText = "";
     private int cachedTextWidth = 0;
     private float cachedHealth = -1;
@@ -58,9 +53,6 @@ public class DragonRideHealthBar {
         return dragon;
     }
 
-    /**
-     * Render the health bar above the hotbar
-     */
     public void render(GuiGraphics guiGraphics, int screenWidth, int screenHeight, float partialTicks) {
         if (dragon == null || dragon.isDeadOrDying()) {
             return;
@@ -70,18 +62,14 @@ public class DragonRideHealthBar {
         }
 
         updateHealth();
-
-        // Position: centered horizontally, above hotbar (same Y as beam meter)
         int x = (screenWidth - BAR_WIDTH) / 2;
-        int y = screenHeight - 57; // Above hotbar
+        int y = screenHeight - 57;
         if (dragon instanceof Cindervane || dragon instanceof Varasuchus) {
             y += 6;
         }
-
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
 
-        // Render dragon-specific health bar
         if (dragon instanceof Raevyx) {
             renderTexturedHealthBar(guiGraphics, x, y, RAEVYX_BASE, RAEVYX_OVERLAY);
         } else if (dragon instanceof Ignivorus) {
@@ -95,41 +83,27 @@ public class DragonRideHealthBar {
         } else if (dragon instanceof Volitans) {
             renderTexturedHealthBar(guiGraphics, x, y, VOLITANS_BASE, VOLITANS_OVERLAY);
         } else {
-            // Fallback colored bar for other dragons
             renderFallbackHealthBar(guiGraphics, x, y);
         }
 
-        // Render health text
         renderHealthText(guiGraphics, x, y);
-
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableBlend();
     }
 
     private void renderTexturedHealthBar(GuiGraphics guiGraphics, int x, int y, ResourceLocation baseTexture, ResourceLocation overlayTexture) {
-        // Render overlay texture (background/backing) FIRST - always full size
         guiGraphics.blit(overlayTexture, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
-
-        // Calculate how much of the base texture to show (left-to-right)
         int fillWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(BAR_WIDTH * currentHealthPercent)));
-
         if (fillWidth > 0) {
-            // Render base texture (health fill) ON TOP - clips from right, renders left-to-right
             guiGraphics.blit(baseTexture, x, y, 0, 0, fillWidth, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         }
     }
 
     private void renderFallbackHealthBar(GuiGraphics guiGraphics, int x, int y) {
-        // Border
         guiGraphics.fill(x, y, x + BAR_WIDTH, y + BAR_HEIGHT, 0xFF333333);
-
-        // Background
         guiGraphics.fill(x + 1, y + 1, x + BAR_WIDTH - 1, y + BAR_HEIGHT - 1, 0xFF1A1A1A);
-
-        // Health fill
         int fillWidth = Math.max(0, Math.round((BAR_WIDTH - 2) * currentHealthPercent));
         if (fillWidth > 0) {
-            // Color based on health percentage
             int color = getHealthColor(currentHealthPercent);
             guiGraphics.fill(x + 1, y + 1, x + 1 + fillWidth, y + BAR_HEIGHT - 1, color);
         }
@@ -137,56 +111,44 @@ public class DragonRideHealthBar {
 
     private int getHealthColor(float healthPercent) {
         if (healthPercent > 0.75f) {
-            return 0xFF00FF00; // Green
+            return 0xFF00FF00;
         } else if (healthPercent > 0.5f) {
-            return 0xFFFFFF00; // Yellow
+            return 0xFFFFFF00;
         } else if (healthPercent > 0.25f) {
-            return 0xFFFF8800; // Orange
+            return 0xFFFF8800;
         } else {
-            return 0xFFFF0000; // Red
+            return 0xFFFF0000;
         }
     }
 
     private void renderHealthText(GuiGraphics guiGraphics, int x, int y) {
-        // Cache the text to avoid expensive String.format() every frame
         float currentHealth = dragon.getHealth();
         float maxHealth = dragon.getMaxHealth();
-
         if (currentHealth != cachedHealth || maxHealth != cachedMaxHealth) {
             cachedHealthText = String.format("%.0f/%.0f", currentHealth, maxHealth);
             cachedTextWidth = minecraft.font.width(cachedHealthText);
             cachedHealth = currentHealth;
             cachedMaxHealth = maxHealth;
         }
-
-        // Position text centered on the health bar
         int textX = x + (BAR_WIDTH - cachedTextWidth) / 2;
         int textY = y + (BAR_HEIGHT - minecraft.font.lineHeight) / 2;
-
-        // Render text with shadow for readability
         int textColor = getHealthTextColor();
         guiGraphics.drawString(minecraft.font, cachedHealthText, textX, textY, textColor, true);
     }
 
     private int getHealthTextColor() {
-        if (dragon instanceof Raevyx) {
-            return 0xFFFFFF; // White
-        }
-        return 0xFFFFFF; // White fallback
+        return 0xFFFFFF;
     }
 
     private void updateHealth() {
         if (dragon == null) return;
-
         float newHealthPercent = dragon.getHealth() / dragon.getMaxHealth();
         if (newHealthPercent != targetHealthPercent) {
             targetHealthPercent = newHealthPercent;
             lastHealthUpdate = System.currentTimeMillis();
         }
-
-        // Smooth health bar animation
         long timeSinceUpdate = System.currentTimeMillis() - lastHealthUpdate;
-        if (timeSinceUpdate < 500) { // 500ms animation
+        if (timeSinceUpdate < 500) {
             float animationProgress = timeSinceUpdate / 500.0f;
             currentHealthPercent = currentHealthPercent + (targetHealthPercent - currentHealthPercent) * animationProgress;
         } else {

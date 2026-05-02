@@ -3,10 +3,13 @@ package com.leon.saintsdragons.server.ai.goals.ignivorus;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -17,28 +20,18 @@ public class IgnivorusAirCombatGoal extends Goal {
     private static final double FLIGHT_DRAG = 0.94D;
     private static final double DIRECT_CHASE_SPEED = 3.75D;
     private static final double LANDING_SPEED = 1.5D;
-
     private final Ignivorus dragon;
-
-    // Combat ranges
     private static final double BITE_APPROACH_DISTANCE = 10.0D;
-    private final double biteRange = 16.0;              // Close-range melee
-    private final double fireBreathMinRange = 20.0;   // Fire breath at medium-long range
-    private final double fireBreathMaxRange = 64.0;   // Max effective range
-
-    // Flight positioning
-    private static final double ENGAGEMENT_DISTANCE = 25.0; // Preferred combat distance
-
+    private final double biteRange = 16.0;
+    private final double fireBreathMinRange = 20.0;
+    private final double fireBreathMaxRange = 64.0;
+    private static final double ENGAGEMENT_DISTANCE = 25.0;
     private int attackCooldown = 0;
     private int repositionCooldown = 0;
-
-    // Fire breath cooldown (AI only - 2 minute cooldown for air combat)
     private int breathCooldown = 0;
-    private static final int BREATH_COOLDOWN_TICKS = 2400; // 2 minutes
-
-    // Emergency landing mechanic
+    private static final int BREATH_COOLDOWN_TICKS = 2400;
     private int shotFromBelowCounter = 0;
-    private static final int SHOT_FROM_BELOW_THRESHOLD = 3; // Land after 3 hits from below
+    private static final int SHOT_FROM_BELOW_THRESHOLD = 3;
     private long lastDamageTick = 0;
     public IgnivorusAirCombatGoal(Ignivorus dragon) {
         this.dragon = dragon;
@@ -56,8 +49,7 @@ public class IgnivorusAirCombatGoal extends Goal {
             return false;
         }
 
-        // Don't attack creative/spectator players
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }
@@ -73,18 +65,14 @@ public class IgnivorusAirCombatGoal extends Goal {
             return false;
         }
 
-        // Check if target is airborne (flying, riding flying mount, or significantly off ground)
         if (!isTargetAirborne(target)) {
             return false;
         }
 
-        // If target is airborne but dragon is grounded, check if we should take off
         if (!dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
-            // Only take off if we can actually fly
             if (!canTriggerFlight()) {
                 return false;
             }
-            // Target is airborne and we can fly - activate to trigger takeoff
         }
 
         if (dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
@@ -109,8 +97,7 @@ public class IgnivorusAirCombatGoal extends Goal {
             return false;
         }
 
-        // Stop attacking if player switches to creative/spectator
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }
@@ -126,13 +113,11 @@ public class IgnivorusAirCombatGoal extends Goal {
             return false;
         }
 
-        // Keep goal active while using abilities
         if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)) {
             return true;
         }
 
-        // Stop if target lands (switch to ground combat)
         if (!isTargetAirborne(target)) {
             if (dragon.isFlying() || dragon.isHovering()) {
                 DragonLandingHelper.beginAggroLanding(dragon, target, LANDING_SPEED);
@@ -159,8 +144,6 @@ public class IgnivorusAirCombatGoal extends Goal {
         attackCooldown = 0;
         repositionCooldown = 0;
         LivingEntity target = dragon.getTarget();
-
-        // Don't call setLanding() if it triggers setTakeoff() - just clear flight flags
         if (target != null
                 && dragon.isTargetValid(target)
                 && !isTargetAirborne(target)
@@ -174,7 +157,6 @@ public class IgnivorusAirCombatGoal extends Goal {
     public void start() {
         dragon.setAggressive(true);
 
-        // Use the same takeoff path as other Ignivorus flight states so physics/flags stay coherent.
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
             dragon.beginAiTakeoff(Ignivorus.TAKEOFF_ANIMATION_TICKS);
         } else if (dragon.isFlying() || dragon.isHovering()) {
@@ -203,7 +185,6 @@ public class IgnivorusAirCombatGoal extends Goal {
             return;
         }
 
-        // Transition from takeoff to flying once airborne
         if (dragon.isTakeoff() && !dragon.onGround()) {
             dragon.beginAiFlight();
         }
@@ -227,41 +208,30 @@ public class IgnivorusAirCombatGoal extends Goal {
         }
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-
-        // Check for emergency landing (shot from below)
         checkEmergencyLanding(target);
 
         double distance = dragon.distanceTo(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
-        // Attack logic based on distance
         if (distance <= biteRange && hasLineOfSight) {
-            // Close range - bite attack
             if (!isCurrentlyAttacking()) {
                 tryAttack(target, distance);
             }
-            // Maintain position for bite
             maintainBitePosition(target);
         } else if (distance >= fireBreathMinRange && distance <= fireBreathMaxRange && hasLineOfSight && breathCooldown <= 0) {
-            // Medium-long range - fire breath
             if (!isCurrentlyAttacking()) {
                 tryAttack(target, distance);
             }
-            // Hold position while breathing fire
             if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)) {
                 DragonDirectAirCombatMovementHelper.holdPosition(dragon, FLIGHT_DRAG);
             } else {
                 maintainCombatPosition(target);
             }
         } else {
-            // Out of range or no line of sight - chase target
             chaseTarget(target);
         }
     }
 
-    /**
-     * Check if dragon is currently executing an attack ability
-     */
     private boolean isCurrentlyAttacking() {
         return dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)
             || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
@@ -269,9 +239,6 @@ public class IgnivorusAirCombatGoal extends Goal {
             || dragon.isLeapImpactRecovering();
     }
 
-    /**
-     * Try to attack target based on distance
-     */
     private void tryAttack(LivingEntity target, double distance) {
         if (attackCooldown > 0 || isCurrentlyAttacking()) {
             return;
@@ -282,7 +249,6 @@ public class IgnivorusAirCombatGoal extends Goal {
         }
 
         if (distance <= biteRange) {
-            // Close range - bite attack
             if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BITE, false)) {
                 return;
             }
@@ -290,20 +256,16 @@ public class IgnivorusAirCombatGoal extends Goal {
             dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
             attackCooldown = 30;
         } else if (distance >= fireBreathMinRange && distance <= fireBreathMaxRange && breathCooldown <= 0) {
-            // Medium-long range - fire breath
             if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, true)) {
                 return;
             }
             dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
             dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, 60, BREATH_COOLDOWN_TICKS, true, 180, 80);
-            attackCooldown = 60; // Longer cooldown after breath
-            breathCooldown = BREATH_COOLDOWN_TICKS; // 2 minute cooldown for AI breath in air
+            attackCooldown = 60;
+            breathCooldown = BREATH_COOLDOWN_TICKS;
         }
     }
 
-    /**
-     * Chase target in 3D space using flight controls (based on FollowOwnerGoal pattern)
-     */
     private void chaseTarget(LivingEntity target) {
         DragonDirectAirCombatMovementHelper.chasePredictedTarget(
                 dragon,
@@ -318,9 +280,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         );
     }
 
-    /**
-     * Maintain combat position (circle or hold distance)
-     */
+
     private void maintainCombatPosition(LivingEntity target) {
         if (repositionCooldown > 0) {
             return;
@@ -328,19 +288,12 @@ public class IgnivorusAirCombatGoal extends Goal {
 
         double distance = dragon.distanceTo(target);
         double targetY = target.getY() + target.getBbHeight() * 0.5D;
-
-        // Get target's look vector for positioning
         Vec3 targetLook = target.getLookAngle();
-
-        // Position to the side for strafing (alternate sides based on time)
         double angle = (dragon.tickCount * 0.05) % (Math.PI * 2);
         double offsetX = Math.cos(angle) * ENGAGEMENT_DISTANCE;
         double offsetZ = Math.sin(angle) * ENGAGEMENT_DISTANCE;
-
         double posX = target.getX() + offsetX;
         double posZ = target.getZ() + offsetZ;
-
-        // Add vertical variation
         double verticalOffset = Math.sin(dragon.tickCount * 0.1) * 1.0;
 
         DragonDirectAirCombatMovementHelper.flyToward(
@@ -351,7 +304,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 FLIGHT_DRAG
         );
 
-        repositionCooldown = 20; // Reposition every second
+        repositionCooldown = 20;
     }
 
     private void maintainBitePosition(LivingEntity target) {
@@ -375,9 +328,6 @@ public class IgnivorusAirCombatGoal extends Goal {
         DragonDirectAirCombatMovementHelper.flyToward(dragon, desired, speed, FLIGHT_ACCEL, FLIGHT_DRAG);
     }
 
-    /**
-     * Check if target is airborne (flying, riding flying mount, or off ground)
-     */
     private boolean isTargetAirborne(LivingEntity target) {
         if (target.onGround()) {
             return false;
@@ -389,7 +339,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         if (target.isFallFlying()) {
             return true;
         }
-        double groundY = dragon.level().getHeightmapPos(net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
+        double groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
         double heightAboveGround = target.getY() - groundY;
         if (heightAboveGround > Math.max(2.5D, target.getBbHeight() * 0.75D)) {
             return true;
@@ -398,62 +348,52 @@ public class IgnivorusAirCombatGoal extends Goal {
         return false;
     }
 
-    /**
-     * Check if dragon is being shot from below - emergency landing trigger
-     */
+
     private void checkEmergencyLanding(LivingEntity target) {
         long currentTick = dragon.level().getGameTime();
 
-        // Check if we took damage recently
         if (dragon.hurtTime > 0 && currentTick != lastDamageTick) {
             lastDamageTick = currentTick;
 
-            // Check if target is below us
             if (target.getY() < dragon.getY() - 5.0) {
                 shotFromBelowCounter++;
 
-                // Trigger emergency landing if hit threshold
                 if (shotFromBelowCounter >= SHOT_FROM_BELOW_THRESHOLD) {
                     triggerEmergencyLanding();
                 }
             }
         }
 
-        // Reset counter if we haven't been hit in a while (100 ticks = 5 seconds)
         if (currentTick - lastDamageTick > 100) {
             shotFromBelowCounter = 0;
         }
     }
 
-    /**
-     * Force dragon to land (shot from below)
-     */
+
     private void triggerEmergencyLanding() {
         DragonLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), LANDING_SPEED);
-        shotFromBelowCounter = 0; // Reset counter
+        shotFromBelowCounter = 0;
     }
 
     private double getMaxAggroDistanceSqr() {
         double followRange = this.dragon.getAttributeValue(Attributes.FOLLOW_RANGE);
         if (followRange <= 0.0D) {
-            followRange = 64.0D; // Larger range for air combat
+            followRange = 64.0D;
         }
         return followRange * followRange;
     }
 
-    /**
-     * Check if dragon is allowed to take flight (from FollowOwnerGoal pattern)
-     */
+
     private boolean canTriggerFlight() {
         return !dragon.isOrderedToSit() &&
                 !dragon.isBaby() &&
                 (dragon.onGround() || dragon.isInWater()) &&
                 dragon.getPassengers().isEmpty() &&
                 dragon.getControllingPassenger() == null &&
-                dragon.getActiveAbility() == null; // Don't interrupt abilities
+                dragon.getActiveAbility() == null;
     }
 
-    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+    private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 

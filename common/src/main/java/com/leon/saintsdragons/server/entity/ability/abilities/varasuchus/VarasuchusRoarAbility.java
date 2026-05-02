@@ -11,13 +11,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Cosmetic roar for the Rift Drake. Plays roar animation and sound.
- * Locks abilities for the full animation duration (~5s) but allows movement.
- */
+
 public class VarasuchusRoarAbility extends DragonAbility<Varasuchus> {
 
-    // Animation length: ~4.75s = 95 ticks. Round up to 100 ticks for 5 seconds.
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 6),
             new AbilitySectionDuration(ACTIVE, 85),
@@ -60,16 +56,9 @@ public class VarasuchusRoarAbility extends DragonAbility<Varasuchus> {
         }
 
         Varasuchus dragon = getUser();
-
-        // Continuous screen shake during the entire ability
         if (!dragon.level().isClientSide) {
-            // Phase 2 has stronger shake due to the aggressive swipes
             float intensity = dragon.isPhaseTwoActive() ? 1.0F : 0.8F;
             dragon.triggerScreenShake(intensity);
-        }
-
-        if (section.sectionType == ACTIVE) {
-            // Roar is cosmetic only now; phase 2 damage lives in slash barrage.
         }
     }
 }

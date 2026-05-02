@@ -13,18 +13,17 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
-/**
- * Simple horn gore melee: modest damage + strong knockback in front of head.
- */
 public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     private static final float DEFAULT_GORE_DAMAGE = 15.0f;
     private static final double GORE_RANGE = 4.0;
-    private static final double GORE_ANGLE_DEG = 90.0; // half-angle, increased from 75
+    private static final double GORE_ANGLE_DEG = 90.0;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 3),
@@ -32,8 +31,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 3)
     };
 
-    // Track entities already hit during the ACTIVE window so we don't double hit in multi-tick ACTIVE
-    private final java.util.Set<Integer> hitIdsThisUse = new java.util.HashSet<>();
+    private final Set<Integer> hitIdsThisUse = new HashSet<>();
     private boolean playedSoundThisUse = false;
 
     public RaevyxHornGoreAbility(DragonAbilityType<Raevyx, RaevyxHornGoreAbility> type, Raevyx user) {
@@ -52,8 +50,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
             hitIdsThisUse.clear();
             playedSoundThisUse = false;
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
-            // Sound is handled by animation keyframe in horn_gore animation
-            hitIdsThisUse.clear(); // Reset hit tracking for this strike window
+            hitIdsThisUse.clear();
         }
     }
 
@@ -62,10 +59,8 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         DragonAbilitySection section = getCurrentSection();
         if (section == null) return;
         if (section.sectionType != AbilitySectionType.ACTIVE) return;
-
-        // Multi-target horn gore: hit all valid entities in cone that haven't been hit yet
-        java.util.List<LivingEntity> candidates = findTargets();
-        java.util.List<LivingEntity> newHits = new java.util.ArrayList<>();
+        List<LivingEntity> candidates = findTargets();
+        List<LivingEntity> newHits = new ArrayList<>();
         for (LivingEntity le : candidates) {
             if (hitIdsThisUse.add(le.getId())) {
                 newHits.add(le);
@@ -78,7 +73,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         }
     }
 
-    private java.util.List<LivingEntity> findTargets() {
+    private List<LivingEntity> findTargets() {
         Raevyx wyvern = getUser();
         boolean ridden = wyvern.getControllingPassenger() != null;
         double range = GORE_RANGE;
@@ -86,9 +81,9 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
             if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 2.0D)) {
-                return java.util.List.of(target);
+                return List.of(target);
             }
-            return java.util.List.of();
+            return List.of();
         }
 
         return DragonMeleeGeometry.findForwardTargets(
@@ -105,54 +100,37 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     private void applyGore(LivingEntity target) {
         Raevyx wyvern = getUser();
         DamageSource src = wyvern.level().damageSources().mobAttack(wyvern);
-
         float mult = wyvern.getDamageMultiplier() * wyvern.getHungerMeleeDamageMultiplier();
         boolean isSupercharged = wyvern.isSupercharged();
-
-        // Armor penetration: ignore 2 armor points when calculating effective damage
-        // When supercharged, ignore 4 armor points (2x enhancement)
         float armorPenetration = isSupercharged ? 4.0f : 2.0f;
         float armor = (float) target.getAttributeValue(Attributes.ARMOR);
         float toughness = (float) target.getAttributeValue(Attributes.ARMOR_TOUGHNESS);
         float desiredPostArmor = damageAfterArmor(resolveGoreDamage() * mult, Math.max(0f, armor - armorPenetration), toughness);
-
-        // Find a raw damage value which, after the target's ACTUAL armor/toughness, equals desiredPostArmor
         float rawToDeal = solveRawDamageForPostArmor(desiredPostArmor, armor, toughness);
         target.hurt(src, rawToDeal);
         wyvern.noteAggroFrom(target);
-
-        // Strong directional knockback away from wyvern head
         Vec3 look = wyvern.getLookAngle().normalize();
-        double strength = isSupercharged ? 2.8 : 1.4; // 2x knockback when supercharged
-        // knockback(strength, x, z): applies horizontal knockback opposite to (x,z)
+        double strength = isSupercharged ? 2.8 : 1.4;
         target.knockback((float) strength, -look.x, -look.z);
-
-        // Small vertical lift - enhanced when supercharged
         Vec3 dv = target.getDeltaMovement();
-        float verticalLift = isSupercharged ? 0.7f : 0.35f; // 2x vertical lift when supercharged
+        float verticalLift = isSupercharged ? 0.7f : 0.35f;
         target.setDeltaMovement(dv.x, Math.max(dv.y, verticalLift), dv.z);
 
     }
 
-    // ===== helpers =====
     private static float damageAfterArmor(float damage, float armor, float toughness) {
-        // Mirrors vanilla CombatRules.getDamageAfterAbsorb
         float f = 2.0F + toughness / 4.0F;
         float reduction = Mth.clamp(armor - damage / f, armor * 0.2F, 20.0F);
         return damage * (1.0F - reduction / 25.0F);
     }
 
     private static float solveRawDamageForPostArmor(float desiredPostArmor, float armor, float toughness) {
-        // Binary search a raw damage amount such that after-armor equals desiredPostArmor
-        // Monotonic increasing, so safe to search
         float lo = 0.0f;
-        float hi = Math.max(desiredPostArmor + 16.0f, 16.0f); // reasonable starting upper bound
-        // Ensure upper bound is sufficient
+        float hi = Math.max(desiredPostArmor + 16.0f, 16.0f);
         for (int i = 0; i < 8 && damageAfterArmor(hi, armor, toughness) < desiredPostArmor; i++) {
             hi *= 2.0f;
         }
-        // Binary search
-        for (int it = 0; it < 20; it++) { // ~1e-6 relative precision typically
+        for (int it = 0; it < 20; it++) {
             float mid = (lo + hi) * 0.5f;
             float val = damageAfterArmor(mid, armor, toughness);
             if (val < desiredPostArmor) lo = mid; else hi = mid;
@@ -161,7 +139,6 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     }
 
     private boolean isAllied(Raevyx wyvern, Entity other) {
-        // Use the comprehensive ally system from DragonEntity
         return wyvern.isAlly(other);
     }
 

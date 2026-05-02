@@ -302,6 +302,6 @@ public record CindervaneRiderController(Cindervane dragon) {
         return null;
     }
     public void requestRiderTakeoff() {
-        dragon.requestRiderTakeoff();
+        dragon.tryRiderTakeoff(getControllingPassenger() instanceof Player player ? player : null);
     }
 }

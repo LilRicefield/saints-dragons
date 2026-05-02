@@ -793,8 +793,28 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.setGroundMoveStateFromAI(0);
     }
 
-    public void forceSitProgress(float value) {
-        super.forceSitProgress(value);
+    public void prepareForMounting() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        clearSittingForMounting();
+        if (getCommand() == 1) {
+            setCommand(0);
+        }
+        clearSitProgress();
+        setTarget(null);
+        if (getNavigation().getPath() != null) {
+            getNavigation().stop();
+        }
+        afterPrepareForMounting();
+    }
+
+    protected void clearSittingForMounting() {
+        setOrderedToSit(false);
+    }
+
+    protected void afterPrepareForMounting() {
     }
 
     protected void saveRideableData(CompoundTag tag) {

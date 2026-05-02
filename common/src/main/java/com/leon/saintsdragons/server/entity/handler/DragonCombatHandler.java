@@ -142,6 +142,9 @@ public class DragonCombatHandler {
                 setActiveAbility(ability);
             }
             ability.start();
+            if (clearIfStartupAborted(ability, overlay)) {
+                return false;
+            }
             return true;
         } finally {
             processingAbility = false;
@@ -195,9 +198,24 @@ public class DragonCombatHandler {
                 setActiveAbility(ability);
             }
             ability.start();
+            clearIfStartupAborted(ability, overlay);
         } finally {
             processingAbility = false;
         }
+    }
+
+    private boolean clearIfStartupAborted(DragonAbility<?> ability, boolean overlay) {
+        if (ability.isUsing()) {
+            return false;
+        }
+        if (overlay) {
+            if (overlayAbility == ability) {
+                overlayAbility = null;
+            }
+        } else if (activeAbility == ability) {
+            setActiveAbility(null);
+        }
+        return true;
     }
 
     public void forceEndActiveAbility() {

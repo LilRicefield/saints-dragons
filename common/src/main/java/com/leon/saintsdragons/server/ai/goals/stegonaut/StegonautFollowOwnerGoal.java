@@ -7,19 +7,11 @@ import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
 
-/**
- * Simple follow owner goal for Primitive Drake.
- * Ground-based following with teleportation for extreme distances.
- */
 public class StegonautFollowOwnerGoal extends Goal {
     private final Stegonaut drake;
-
-    // Distance constants - tuned for ground-based following
     private static final double START_FOLLOW_DIST = 12.0;
     private static final double STOP_FOLLOW_DIST = 8.0;
     private static final double TELEPORT_DIST = 32;
-
-    // Performance optimization - don't re-path constantly
     private int pathRecalcCooldown = 0;
     private double lastOwnerX = Double.NaN;
     private double lastOwnerY = Double.NaN;
@@ -32,27 +24,16 @@ public class StegonautFollowOwnerGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        // Follow goal only runs in Follow command mode (0).
         if (drake.isTame() && drake.getCommand() != 0) {
             return false;
         }
-
-        // Basic requirements
         if (!drake.isTame() || drake.isOrderedToSit()) {
             return false;
         }
-
-        // Don't follow while ready to breed
         if (drake.isInLove()) {
             return false;
         }
 
-        // Never follow while playing dead
-        if (false) {
-            return false;
-        }
-
-        // Never follow while actively targeting an enemy
         LivingEntity target = drake.getTarget();
         if (target != null && target.isAlive()) {
             return false;
@@ -63,19 +44,15 @@ public class StegonautFollowOwnerGoal extends Goal {
             return false;
         }
 
-        // Must be in same dimension
         if (owner.level() != drake.level()) {
             return false;
         }
-
-        // Only follow if owner is far enough away
         double ownerDist = drake.distanceToSqr(owner);
         return ownerDist > START_FOLLOW_DIST * START_FOLLOW_DIST;
     }
 
     @Override
     public boolean canContinueToUse() {
-        // Follow goal only runs in Follow command mode (0).
         if (drake.isTame() && drake.getCommand() != 0) {
             return false;
         }
@@ -89,12 +66,6 @@ public class StegonautFollowOwnerGoal extends Goal {
             return false;
         }
 
-        // Suspend following while playing dead
-        if (false) {
-            return false;
-        }
-
-        // Suspend following while fighting
         LivingEntity target = drake.getTarget();
         if (target != null && target.isAlive()) {
             return false;
@@ -104,14 +75,12 @@ public class StegonautFollowOwnerGoal extends Goal {
             return false;
         }
 
-        // Keep following until we're close enough
         double dist = drake.distanceToSqr(owner);
         return dist > STOP_FOLLOW_DIST * STOP_FOLLOW_DIST;
     }
 
     @Override
     public void start() {
-        // Reset tracking
         resetPathTracking();
     }
 
@@ -122,25 +91,17 @@ public class StegonautFollowOwnerGoal extends Goal {
 
         double distance = drake.distanceTo(owner);
 
-        // Emergency teleport if owner gets stupidly far away
         if (distance > TELEPORT_DIST) {
             drake.teleportTo(owner.getX(), owner.getY() + 1, owner.getZ());
             resetPathTracking();
             return;
         }
-
-        // Always look at owner while following
         drake.getLookControl().setLookAt(owner, 10.0f, 10.0f);
-
-        // Handle ground following
         handleGroundFollowing(owner, distance);
     }
 
-    /**
-     * Handle following on ground
-     */
+
     private void handleGroundFollowing(LivingEntity owner, double distance) {
-        // Check if we should stop moving
         if (distance <= STOP_FOLLOW_DIST) {
             drake.getNavigation().stop();
             pathRecalcCooldown = 0;
@@ -150,14 +111,11 @@ public class StegonautFollowOwnerGoal extends Goal {
         double baseSpeed = 0.8;
         double speed = baseSpeed * (1.0 + (distance / 100.0));
         speed = Math.min(speed, 1.0); // Cap at walking speed
-
         updateGroundPath(owner, speed, distance);
-        
-        // If stuck, try to jump or find alternative path
         if (drake.getNavigation().isStuck()) {
             drake.getJumpControl().jump();
             drake.getNavigation().stop();
-            pathRecalcCooldown = 0; // Force repath next tick
+            pathRecalcCooldown = 0;
         }
     }
 
