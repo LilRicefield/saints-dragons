@@ -10,6 +10,9 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.Entity;
 
 public final class DragonRideCameraController {
+    private static final double BASELINE_FRAME_SECONDS = 1.0D / 60.0D;
+    private static final double MAX_FRAME_SCALE = 4.0D;
+
     private static int activeVehicleId = Integer.MIN_VALUE;
     private static CameraState state = null;
 
@@ -44,10 +47,11 @@ public final class DragonRideCameraController {
         double targetVerticalShift = airOrWaterMode ? profile.airOrWaterVerticalShift() : profile.groundedVerticalShift();
         float targetPitchOffset = airOrWaterMode ? profile.airOrWaterPitchOffset() : profile.groundedPitchOffset();
 
-        state.zoom = approach(state.zoom, targetZoom, profile.zoomSmoothing());
-        state.lateralShift = approach(state.lateralShift, targetLateralShift, profile.lateralShiftSmoothing());
-        state.verticalShift = approach(state.verticalShift, targetVerticalShift, profile.verticalShiftSmoothing());
-        state.pitchOffset = approach(state.pitchOffset, targetPitchOffset, profile.pitchSmoothing());
+        double frameScale = state.consumeFrameScale();
+        state.zoom = (float) approach(state.zoom, targetZoom, frameAdjustedSmoothing(profile.zoomSmoothing(), frameScale));
+        state.lateralShift = approach(state.lateralShift, targetLateralShift, frameAdjustedSmoothing(profile.lateralShiftSmoothing(), frameScale));
+        state.verticalShift = approach(state.verticalShift, targetVerticalShift, frameAdjustedSmoothing(profile.verticalShiftSmoothing(), frameScale));
+        state.pitchOffset = (float) approach(state.pitchOffset, targetPitchOffset, frameAdjustedSmoothing(profile.pitchSmoothing(), frameScale));
 
         return new CameraOutput(state.zoom, state.lateralShift, state.verticalShift, state.pitchOffset);
     }
@@ -99,17 +103,40 @@ public final class DragonRideCameraController {
         return current + (target - current) * smoothing;
     }
 
+    private static double frameAdjustedSmoothing(double smoothing, double frameScale) {
+        if (smoothing <= 0.0D) {
+            return 0.0D;
+        }
+        if (smoothing >= 1.0D) {
+            return 1.0D;
+        }
+        return 1.0D - Math.pow(1.0D - smoothing, frameScale);
+    }
+
     private static final class CameraState {
         private float zoom;
         private double lateralShift;
         private double verticalShift;
         private float pitchOffset;
+        private long lastUpdateNanos;
 
         private CameraState(float zoom, double lateralShift, double verticalShift, float pitchOffset) {
             this.zoom = zoom;
             this.lateralShift = lateralShift;
             this.verticalShift = verticalShift;
             this.pitchOffset = pitchOffset;
+        }
+
+        private double consumeFrameScale() {
+            long now = System.nanoTime();
+            if (this.lastUpdateNanos == 0L) {
+                this.lastUpdateNanos = now;
+                return 1.0D;
+            }
+
+            double elapsedSeconds = (now - this.lastUpdateNanos) / 1_000_000_000.0D;
+            this.lastUpdateNanos = now;
+            return Math.min(Math.max(elapsedSeconds / BASELINE_FRAME_SECONDS, 0.0D), MAX_FRAME_SCALE);
         }
     }
 

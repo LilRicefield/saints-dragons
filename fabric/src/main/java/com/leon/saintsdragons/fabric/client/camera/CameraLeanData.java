@@ -3,6 +3,10 @@ package com.leon.saintsdragons.fabric.client.camera;
 import net.minecraft.util.Mth;
 
 public final class CameraLeanData {
+    private static final double BASELINE_FRAME_SECONDS = 1.0D / 60.0D;
+    private static final double MAX_FRAME_SCALE = 4.0D;
+    private static final double LEAN_SMOOTHING = 0.03D;
+
     private static double targetLeanX = 0.0;
     private static double targetLeanY = 0.0;
     private static double targetLeanZ = 0.0;
@@ -11,6 +15,7 @@ public final class CameraLeanData {
     private static double currentLeanZ = 0.0;
     private static double targetCameraTilt = 0.0;
     private static double currentCameraTilt = 0.0;
+    private static long lastUpdateNanos = 0L;
 
     private CameraLeanData() {
     }
@@ -28,10 +33,11 @@ public final class CameraLeanData {
     }
 
     public static void update() {
-        currentLeanX = Mth.lerp(0.03f, currentLeanX, targetLeanX);
-        currentLeanY = Mth.lerp(0.03f, currentLeanY, targetLeanY);
-        currentLeanZ = Mth.lerp(0.03f, currentLeanZ, targetLeanZ);
-        currentCameraTilt = Mth.lerp(0.03f, currentCameraTilt, targetCameraTilt);
+        double smoothing = frameAdjustedSmoothing(LEAN_SMOOTHING, consumeFrameScale());
+        currentLeanX = Mth.lerp(smoothing, currentLeanX, targetLeanX);
+        currentLeanY = Mth.lerp(smoothing, currentLeanY, targetLeanY);
+        currentLeanZ = Mth.lerp(smoothing, currentLeanZ, targetLeanZ);
+        currentCameraTilt = Mth.lerp(smoothing, currentCameraTilt, targetCameraTilt);
     }
 
     public static void reset() {
@@ -43,6 +49,7 @@ public final class CameraLeanData {
         currentLeanZ = 0.0;
         targetCameraTilt = 0.0;
         currentCameraTilt = 0.0;
+        lastUpdateNanos = 0L;
     }
 
     public static double getLeanX() {
@@ -59,5 +66,27 @@ public final class CameraLeanData {
 
     public static double getCameraTilt() {
         return currentCameraTilt;
+    }
+
+    private static double consumeFrameScale() {
+        long now = System.nanoTime();
+        if (lastUpdateNanos == 0L) {
+            lastUpdateNanos = now;
+            return 1.0D;
+        }
+
+        double elapsedSeconds = (now - lastUpdateNanos) / 1_000_000_000.0D;
+        lastUpdateNanos = now;
+        return Math.min(Math.max(elapsedSeconds / BASELINE_FRAME_SECONDS, 0.0D), MAX_FRAME_SCALE);
+    }
+
+    private static double frameAdjustedSmoothing(double smoothing, double frameScale) {
+        if (smoothing <= 0.0D) {
+            return 0.0D;
+        }
+        if (smoothing >= 1.0D) {
+            return 1.0D;
+        }
+        return 1.0D - Math.pow(1.0D - smoothing, frameScale);
     }
 }
