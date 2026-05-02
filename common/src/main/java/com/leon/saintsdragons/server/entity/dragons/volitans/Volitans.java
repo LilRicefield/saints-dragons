@@ -1697,6 +1697,38 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 && combatManager.getActiveAbility() == null;
     }
 
+    public void prepareForBinderStorage() {
+        clearVolitansBinderTransientState();
+        setBoundInBinder(true);
+    }
+
+    public void prepareAfterBinderRelease() {
+        clearVolitansBinderTransientState();
+        setBoundInBinder(false);
+    }
+
+    private void clearVolitansBinderTransientState() {
+        setTarget(null);
+        setAggressive(false);
+        setLastHurtByMob(null);
+        this.setLastHurtByPlayer(null);
+        setInvulnerable(false);
+        setBurrowing(false);
+        stopUltimateSlamMovement();
+        setAiSpecialCombatActive(false);
+        setAiSpecialCombatReserved(false);
+        clearGroundMobilityState();
+        combatManager.clearAllStates();
+        setGoingUp(false);
+        setGoingDown(false);
+        setAccelerating(false);
+        setRunning(false);
+        setGroundMoveStateFromAI(0);
+        setGroundMoveStateFromRider(0);
+        setDeltaMovement(Vec3.ZERO);
+        this.hurtMarked = false;
+    }
+
     @Override
     public boolean ignoresLeashPull() {
         return true;

@@ -133,6 +133,7 @@
   
   "saintsdragons.message.creature_captured": "Bound %s in the binder!",
   "saintsdragons.message.creature_released": "Released %s from the binder!",
+  "saintsdragons.message.creature_release_failed": "Could not release %s here. Try again nearby.",
   "saintsdragons.message.creature_cannot_be_captured": "This creature cannot be bound right now",
   "saintsdragons.message.binder_already_occupied": "This binder already contains a creature",
   "saintsdragons.message.binder_not_bound": "This binder is empty - bind a creature first",

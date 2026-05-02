@@ -40,6 +40,10 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         }
 
         T dragon = getDragonClass().cast(target);
+        if (player.level().isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+
         if (!dragon.isTame() || !dragon.isOwnedBy(player)) {
             player.displayClientMessage(Component.translatable(getNotOwnerMessageKey()), true);
             return InteractionResult.FAIL;
@@ -79,6 +83,10 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             return super.useOn(context);
         }
 
+        if (context.getLevel().isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+
         return releaseDragon(stack, player, context.getClickedPos()) ? InteractionResult.SUCCESS : InteractionResult.FAIL;
     }
 
@@ -111,6 +119,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         }
 
         CompoundTag dragonData = new CompoundTag();
+        prepareDragonForCapture(dragon, player);
         dragon.setBoundInBinder(true);
         dragon.addAdditionalSaveData(dragonData);
         tag.put(getDragonDataKey(), dragonData);
@@ -159,6 +168,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
 
         newDragon.setUUID(originalUUID);
         newDragon.setPos(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D);
+        prepareDragonForRelease(newDragon, player);
 
         if (ownerUUID != null) {
             newDragon.setTame(true);
@@ -177,7 +187,11 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             }
         }
 
-        serverLevel.addFreshEntity(newDragon);
+        if (!serverLevel.addFreshEntity(newDragon)) {
+            player.displayClientMessage(Component.translatable(getReleaseFailedMessageKey(), dragonName), true);
+            return false;
+        }
+
         DragonCodexSavedData.get(serverLevel).updateDragonBoundState(ownerUUID != null ? ownerUUID : player.getUUID(), originalUUID, false);
         clearBinderData(tag);
         onDragonReleased(newDragon, player, stack);
@@ -199,6 +213,12 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
     }
 
     protected void onDragonReleased(T dragon, Player player, ItemStack binderStack) {
+    }
+
+    protected void prepareDragonForCapture(T dragon, Player player) {
+    }
+
+    protected void prepareDragonForRelease(T dragon, Player player) {
     }
 
     protected String getNotOwnerMessageKey() {
@@ -273,6 +293,10 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
 
     protected String getReleasedMessageKey() {
         return "saintsdragons.message.creature_released";
+    }
+
+    protected String getReleaseFailedMessageKey() {
+        return "saintsdragons.message.creature_release_failed";
     }
 
     protected abstract String getTooltipDescriptionKey();

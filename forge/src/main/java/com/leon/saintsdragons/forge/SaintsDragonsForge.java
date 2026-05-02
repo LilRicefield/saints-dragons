@@ -67,6 +67,12 @@ public final class SaintsDragonsForge {
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
 
+    public static final RegistryObject<Codec<AddConditionalFeaturesBiomeModifier>> ADD_CONDITIONAL_FEATURES =
+            BIOME_MODIFIERS.register("add_conditional_features", () -> AddConditionalFeaturesBiomeModifier.CODEC);
+
+    public static final RegistryObject<Codec<AddDragonsBiomeModifier>> ADD_DRAGONS =
+            BIOME_MODIFIERS.register("add_dragons", () -> AddDragonsBiomeModifier.CODEC);
+
     public SaintsDragonsForge() {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         raiseVanillaMaxHealthCap();
