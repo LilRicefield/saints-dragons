@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
-import com.leon.saintsdragons.common.block.CindervaneEggBlockEntity;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlocks;
@@ -38,6 +37,7 @@ import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.Chicken;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.ExplosionDamageCalculator;
@@ -50,6 +50,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Supplier;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -83,7 +85,6 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -105,6 +106,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_ALBINO = 1;
+    private static final double BABY_MAX_HEALTH = 40.0D;
+    private static final double BABY_ARMOR = 0.0D;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
             DragonVariant.of(VARIANT_DEFAULT, "default", 85),
             DragonVariant.of(VARIANT_ALBINO, "albino", 15)
@@ -232,18 +235,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    protected int getMaxTextureVariant() {
-        return VARIANTS.maxId();
-    }
-
-    @Override
-    public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return VARIANTS.nameMap();
-    }
-
-    @Override
-    protected int chooseAdultTextureVariant() {
-        return VARIANTS.roll(this.getRandom());
+    protected DragonVariantSet getVariantSet() {
+        return VARIANTS;
     }
 
     public boolean isAlbinoVariant() {
@@ -309,16 +302,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     public void applyConfiguredAttributes() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
-        if (this.isBaby()) {
-            setAttributeBase(Attributes.MAX_HEALTH, 40.0);
-            setAttributeBase(Attributes.ARMOR, 0.0);
-            setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed() * 0.7);
-        } else {
-            setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-            setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
-            setAttributeBase(Attributes.ARMOR, config.armor());
-        }
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
+        applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         clampHealthToMax();
     }
 
@@ -1559,26 +1544,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob partner) {
-        Cindervane baby = ModEntities.CINDERVANE.get().create(level);
-        if (baby != null) {
-            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-            assignMotherToBaby(baby, partner);
-            java.util.UUID ownerId = this.getOwnerUUID();
-            if (ownerId != null) {
-                baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
-            }
-            baby.skipRespawnTicks = 5;
-            baby.setAge(-24000);
-            baby.setBaby(true);
-            baby.applyConfiguredAttributes();
-            baby.setHealth(baby.getMaxHealth());
-            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
-            double spawnY = safePos != null ? safePos.getY() : this.getY();
-            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
-            registerToOwnerCodex(baby, level);
-        }
-        return baby;
+        return createBreedOffspring(level, partner, ModEntities.CINDERVANE.get(), Cindervane::applyConfiguredAttributes);
     }
 
     @Override
@@ -1932,25 +1898,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    public BlockState getEggBlockState() {
-        return ModBlocks.CINDERVANE_EGG.get().defaultBlockState();
+    protected Supplier<? extends Block> getEggBlock() {
+        return ModBlocks.CINDERVANE_EGG;
     }
 
-    @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
-        if (!(blockEntity instanceof CindervaneEggBlockEntity eggEntity)) {
-            return;
-        }
-
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
-        if (ownerUUID != null) {
-            eggEntity.setOwnerUUID(ownerUUID);
-        }
-
-        DragonGender babyGender =
-            this.getRandom().nextBoolean() ?
-            DragonGender.FEMALE :
-            DragonGender.MALE;
-        eggEntity.setBabyGender(babyGender);
-    }
 }

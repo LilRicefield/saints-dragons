@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.varasuchus.*;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
+import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -20,18 +21,20 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
-import com.leon.saintsdragons.common.block.VarasuchusEggBlockEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.world.DragonSpawnRules;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
-import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -46,27 +49,32 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.animal.Cod;
+import net.minecraft.world.entity.animal.Salmon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import javax.annotation.Nonnull;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen {
     @Override
@@ -106,6 +114,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
     private static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;
     private static final int MIN_WILD_TAME_TICKS = 60;
+    private static final int WILD_RIDE_BUCK_COOLDOWN_TICKS = 20 * 5;
     private static final int MAX_TAMING_PROGRESS = 400;
     private static final int WILD_RIDE_BUCK_DURATION_TICKS = 90;
     private static final double WILD_RIDE_WALK_SPEED = 0.9D;
@@ -155,6 +164,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private boolean wildRideActive = false;
     private int wildRideTicks = 0;
     private int nextBuckAttemptTick = 0;
+    private int wildRideBuckCooldownTicks = 0;
     private int cumulativeWildRideProgress = 0;
     private int groundStepSoundCooldownTicks = 0;
     @Nullable
@@ -390,7 +400,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             leapDamageApplied = true;
             Vec3 tailPos = this.getBoundingBox().getCenter();
             AABB damageBox = new AABB(tailPos, tailPos).inflate(8.0D);
-            java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
+            List<LivingEntity> entities = this.level().getEntitiesOfClass(
                 LivingEntity.class,
                 damageBox,
                 entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
@@ -522,8 +532,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     this,
                     80,
                     this::isWildAggressionEnabled,
-                    target -> target instanceof net.minecraft.world.entity.animal.Salmon
-                            || target instanceof net.minecraft.world.entity.animal.Cod
+                    target -> target instanceof Salmon
+                            || target instanceof Cod
             ));
         }
     }
@@ -613,6 +623,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             handleAmbientSounds();
             tickRiderControlLock();
             tickGroundStepAudio();
+            tickWildRideBuckCooldown();
             boolean inWater = this.isInWaterOrBubble();
             if (inWater) {
                 this.setAirSupply(this.getMaxAirSupply());
@@ -711,6 +722,14 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (this.level().isClientSide) {
             return true;
         }
+        if (wildRideBuckCooldownTicks > 0) {
+            int seconds = Math.max(1, (wildRideBuckCooldownTicks + 19) / 20);
+            player.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.varasuchus.buck_cooldown", this.getName(), seconds),
+                    true
+            );
+            return false;
+        }
         player.startRiding(this);
         startWildRideSequence();
         return true;
@@ -727,19 +746,18 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     public void applyConfiguredAttributes() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
-        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
+        applyConfiguredHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
 
         clampHealthToMax();
     }
 
     @Override
-    public boolean isFood(@Nonnull net.minecraft.world.item.ItemStack stack) {
-        return stack.is(net.minecraft.world.item.Items.COD) ||
-               stack.is(net.minecraft.world.item.Items.SALMON) ||
-               stack.is(net.minecraft.world.item.Items.TROPICAL_FISH) ||
-               stack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+    public boolean isFood(@Nonnull ItemStack stack) {
+        return stack.is(Items.COD) ||
+               stack.is(Items.SALMON) ||
+               stack.is(Items.TROPICAL_FISH) ||
+               stack.is(ModItems.HEARTY_DRAGON_MEAL.get());
     }
 
     @Override
@@ -900,7 +918,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public @Nullable net.minecraft.world.entity.LivingEntity getControllingPassenger() {
+    public @Nullable LivingEntity getControllingPassenger() {
         return riderController.getControllingPassenger();
     }
 
@@ -991,26 +1009,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public net.minecraft.world.entity.AgeableMob getBreedOffspring(@Nonnull net.minecraft.server.level.ServerLevel level, @Nonnull net.minecraft.world.entity.AgeableMob other) {
-        Varasuchus baby = ModEntities.VARASUCHUS.get().create(level);
-        if (baby != null) {
-            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-            assignMotherToBaby(baby, other);
-            java.util.UUID ownerId = this.getOwnerUUID();
-            if (ownerId != null) {
-                baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
-            }
-
-            baby.skipRespawnTicks = 5;
-            baby.setAge(-24000);
-            baby.setBaby(true);
-            baby.applyConfiguredAttributes();
-            baby.setHealth(baby.getMaxHealth());
-            baby.moveTo(this.getX(), this.getY(), this.getZ(), this.getYRot(), 0.0F);
-            registerToOwnerCodex(baby, level);
-        }
-        return baby;
+    public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
+        return createBreedOffspring(level, other, ModEntities.VARASUCHUS.get(), Varasuchus::applyConfiguredAttributes);
     }
 
     @Override
@@ -1026,27 +1026,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public BlockState getEggBlockState() {
-        return ModBlocks.VARASUCHUS_EGG.get().defaultBlockState();
+    protected Supplier<? extends Block> getEggBlock() {
+        return ModBlocks.VARASUCHUS_EGG;
     }
 
     @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
-        if (!(blockEntity instanceof VarasuchusEggBlockEntity eggEntity)) {
-            return;
-        }
-
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
-        if (ownerUUID != null) {
-            eggEntity.setOwnerUUID(ownerUUID);
-        }
-
-        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
-        eggEntity.setBabyGender(babyGender);
-    }
-
-    @Override
-    public com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> getPrimaryAttackAbility() {
+    public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         boolean useHornGore = getMeleeMode() == 1;
         if (isPhaseTwoActive()) {
             return useHornGore ? VarasuchusAbilities.VARASUCHUS_HORN_GORE : VarasuchusAbilities.VARASUCHUS_BITE2;
@@ -1061,8 +1046,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                                        RandomSource random) {
         boolean mobRules = Mob.checkMobSpawnRules(type, level, spawnType, pos, random);
         return mobRules
-                && com.leon.saintsdragons.server.world.DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
-                && com.leon.saintsdragons.server.world.DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Varasuchus.class);
+                && DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Varasuchus.class);
     }
 
     private void enterSwimState() {
@@ -1646,6 +1631,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.fallDistance = 0.0F;
     }
 
+    private void tickWildRideBuckCooldown() {
+        if (wildRideBuckCooldownTicks > 0) {
+            wildRideBuckCooldownTicks--;
+        }
+    }
+
     private void applyWildRideWalk() {
         this.setAccelerating(false);
         this.setGroundMoveStateFromAI(1);
@@ -1693,6 +1684,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         rider.hurtMarked = true;
         rider.hasImpulse = true;
         rider.fallDistance = 0.0F;
+        wildRideBuckCooldownTicks = WILD_RIDE_BUCK_COOLDOWN_TICKS;
         this.level().broadcastEntityEvent(this, (byte) 6);
     }
 
@@ -2000,7 +1992,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public boolean hurt(@javax.annotation.Nonnull net.minecraft.world.damagesource.DamageSource damageSource, float amount) {
+    public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
         if (super.isDying()) {
             return false;
         }
@@ -2035,7 +2027,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
@@ -2044,7 +2036,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         loadRideableData(tag);
         if (tag.contains("FeedingCooldownTicks")) {

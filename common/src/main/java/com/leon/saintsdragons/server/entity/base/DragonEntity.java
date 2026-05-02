@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.DragonType;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -62,11 +63,13 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -82,6 +85,9 @@ import java.util.UUID;
 
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon {
     protected static final int DAMAGE_SLEEP_SUPPRESSION_TICKS = 20 * 30;
+    private static final DragonVariantSet DEFAULT_VARIANTS = DragonVariantSet.of(
+            DragonVariant.of(0, "default", 1)
+    );
     protected static final EntityDataAccessor<Integer> DATA_COMMAND =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Float> DATA_SIT_PROGRESS =
@@ -547,6 +553,33 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         });
     }
 
+    protected <T extends DragonEntity> T createBreedOffspring(ServerLevel level, AgeableMob otherParent, EntityType<T> babyType, Consumer<T> configureBaby) {
+        T baby = babyType.create(level);
+        if (baby == null) {
+            return null;
+        }
+
+        baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
+        assignMotherToBaby(baby, otherParent);
+        UUID ownerId = this.getOwnerUUID();
+        if (ownerId != null) {
+            baby.setOwnerUUID(ownerId);
+            baby.setTame(true);
+        }
+
+        baby.skipRespawnTicks = 5;
+        baby.setAge(-24000);
+        baby.setBaby(true);
+        configureBaby.accept(baby);
+        baby.setHealth(baby.getMaxHealth());
+
+        BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
+        double spawnY = safePos != null ? safePos.getY() : this.getY();
+        baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
+        registerToOwnerCodex(baby, level);
+        return baby;
+    }
+
     public int getTextureVariant() {
         return this.entityData.get(DATA_TEXTURE_VARIANT);
     }
@@ -561,7 +594,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     protected int chooseAdultTextureVariant() {
-        return rollRandomTextureVariant();
+        return getVariantSet().roll(this.getRandom());
     }
 
     public int getPendingAdultTextureVariant() {
@@ -605,12 +638,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     protected int getMaxTextureVariant() {
-        return 0;
+        return getVariantSet().maxId();
     }
 
 
     public Map<String, Integer> getTextureVariantNameMap() {
-        return Map.of("default", 0);
+        return getVariantSet().nameMap();
+    }
+
+    protected DragonVariantSet getVariantSet() {
+        return DEFAULT_VARIANTS;
     }
 
     public String getTextureVariantName(int variantId) {
@@ -627,13 +664,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return "saintsdragons.variant." + getTextureVariantName(variantId);
     }
 
-    protected int rollRandomTextureVariant() {
-        int maxVariant = getMaxTextureVariant();
-        if (maxVariant <= 0) {
-            return 0;
-        }
-        return this.getRandom().nextInt(maxVariant + 1);
-    }
     protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
                                             @NotNull DifficultyInstance difficulty,
                                             @NotNull MobSpawnType reason,
@@ -1058,10 +1088,26 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Nullable
     public BlockState getEggBlockState() {
+        Supplier<? extends Block> eggBlock = getEggBlock();
+        return eggBlock == null ? null : eggBlock.get().defaultBlockState();
+    }
+
+    @Nullable
+    protected Supplier<? extends Block> getEggBlock() {
         return null;
     }
 
     public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
+        if (!(blockEntity instanceof AbstractDragonEggBlockEntity eggEntity)) {
+            return;
+        }
+
+        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        if (ownerUUID != null) {
+            eggEntity.setOwnerUUID(ownerUUID);
+        }
+
+        eggEntity.setBabyGender(this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
     }
 
     @Nullable
@@ -1394,27 +1440,30 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public record DragonSleepPreferences(
             boolean canSleepAtNight,
-            boolean canSleepDuringDay,
-            boolean avoidsThunderstorms
+            boolean canSleepDuringDay
     ) {
         public boolean canSleepDuringConditions(net.minecraft.world.level.Level level) {
-            if (avoidsThunderstorms && level.isThundering()) return false;
-            boolean isDay = level.isDay();
+            boolean isDay = isNaturalDay(level);
             if (isDay && !canSleepDuringDay) return false;
             if (!isDay && !canSleepAtNight) return false;
             return true;
         }
 
         public static DragonSleepPreferences DIURNAL() {
-            return new DragonSleepPreferences(false, true, true);
+            return new DragonSleepPreferences(false, true);
         }
 
         public static DragonSleepPreferences NOCTURNAL() {
-            return new DragonSleepPreferences(true, false, true);
+            return new DragonSleepPreferences(true, false);
         }
 
         public static DragonSleepPreferences FLEXIBLE() {
-            return new DragonSleepPreferences(true, true, true);
+            return new DragonSleepPreferences(true, true);
+        }
+
+        public static boolean isNaturalDay(net.minecraft.world.level.Level level) {
+            long dayTime = level.getDayTime() % 24000L;
+            return dayTime < 12000L;
         }
     }
 
@@ -1458,6 +1507,28 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (instance != null) {
             instance.setBaseValue(value);
         }
+    }
+
+    protected double configuredMaxHealth(DragonAttributeConfig config, double babyMaxHealth) {
+        return isBaby() ? babyMaxHealth : config.maxHealth();
+    }
+
+    protected double configuredArmor(DragonAttributeConfig config, double babyArmor) {
+        return isBaby() ? babyArmor : config.armor();
+    }
+
+    protected void applyConfiguredHealthAndArmor(DragonAttributeConfig config, double babyMaxHealth, double babyArmor) {
+        setAttributeBase(Attributes.MAX_HEALTH, configuredMaxHealth(config, babyMaxHealth));
+        setAttributeBase(Attributes.ARMOR, configuredArmor(config, babyArmor));
+    }
+
+    protected void applyConfiguredFlyingHealthAndArmor(DragonAttributeConfig config, double babyMaxHealth, double babyArmor) {
+        applyConfiguredFlyingHealthAndArmor(config, babyMaxHealth, babyArmor, 0.0D);
+    }
+
+    protected void applyConfiguredFlyingHealthAndArmor(DragonAttributeConfig config, double babyMaxHealth, double babyArmor, double babyFlyingSpeed) {
+        applyConfiguredHealthAndArmor(config, babyMaxHealth, babyArmor);
+        setAttributeBase(Attributes.FLYING_SPEED, isBaby() ? babyFlyingSpeed : config.flyingSpeed());
     }
 
     protected void clampHealthToMax() {
@@ -1574,8 +1645,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     public void tick() {
         super.tick();
         this.soundHandler.tick();
-
-        // Decrement skip respawn counter
         if (skipRespawnTicks > 0) {
             skipRespawnTicks--;
         }
@@ -1633,8 +1702,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         fallbackPitchDeviation.setTo(pitchDelta);
         fallbackPitchDeviation.update(0.25f);
     }
-
-    // ===== COMMAND SYSTEM (shared) =====
 
     public int getCommand() {
         if (commandComponent == null) {
@@ -1905,7 +1972,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
         allyManager.saveToNBT(tag);
     }
-
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {

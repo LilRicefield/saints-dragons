@@ -17,11 +17,16 @@ import java.lang.reflect.Method;
 @Mixin(value = GameRenderer.class, priority = 500)
 public class EntityRendererMixin {
     
-    // Smooth FOV transition state
+    @Unique
+    private static final double BASELINE_FRAME_SECONDS = 1.0D / 60.0D;
+    @Unique
+    private static final double MAX_FRAME_SCALE = 4.0D;
     @Unique
     private static double saint_sDragons$currentFOVMultiplier = 1.0;
     @Unique
-    private static final double FOV_TRANSITION_SPEED = 0.05; // How fast FOV changes (0.01 = very slow, 0.1 = fast)
+    private static final double FOV_TRANSITION_SPEED = 0.05;
+    @Unique
+    private static long saintsdragons$lastFovUpdateNanos = 0L;
     @Unique
     private static boolean saintsdragons$zoomifyLookupResolved = false;
     @Unique
@@ -33,21 +38,20 @@ public class EntityRendererMixin {
         if (mc.player != null && mc.player.getVehicle() != null) {
             Entity vehicle = mc.player.getVehicle();
             if (!DragonFovHelper.shouldApply(vehicle)) {
-                saint_sDragons$currentFOVMultiplier = 1.0;
+                saintsdragons$resetFovSmoothing();
                 return;
             }
 
             double targetFOVMultiplier = DragonFovHelper.getTargetMultiplier(vehicle);
-            
-            // Smooth interpolation between current and target FOV multiplier
+
             double diff = targetFOVMultiplier - saint_sDragons$currentFOVMultiplier;
-            if (Math.abs(diff) > 0.001) { // Only interpolate if there's a meaningful difference
-                saint_sDragons$currentFOVMultiplier += diff * FOV_TRANSITION_SPEED;
+            if (Math.abs(diff) > 0.001) {
+                double smoothing = saintsdragons$frameAdjustedSmoothing(FOV_TRANSITION_SPEED, saintsdragons$consumeFovFrameScale());
+                saint_sDragons$currentFOVMultiplier += diff * smoothing;
             } else {
-                saint_sDragons$currentFOVMultiplier = targetFOVMultiplier; // Snap to target if very close
+                saint_sDragons$currentFOVMultiplier = targetFOVMultiplier;
             }
-            
-            // Apply the smoothly interpolated FOV multiplier
+
             double baseFOV = cir.getReturnValue();
             if (!camera.isDetached()) {
                 baseFOV /= saintsdragons$getZoomifyDivisor(partialTicks);
@@ -56,13 +60,43 @@ public class EntityRendererMixin {
             
             cir.setReturnValue(newFOV);
         } else {
-            saint_sDragons$currentFOVMultiplier = 1.0;
+            saintsdragons$resetFovSmoothing();
         }
     }
 
     @Inject(method = "render", at = @At("HEAD"), require = 0)
     private void saintsdragons$beginRiderRenderFrame(org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         RiderBullcrap.beginRenderFrame();
+    }
+
+    @Unique
+    private static void saintsdragons$resetFovSmoothing() {
+        saint_sDragons$currentFOVMultiplier = 1.0D;
+        saintsdragons$lastFovUpdateNanos = 0L;
+    }
+
+    @Unique
+    private static double saintsdragons$consumeFovFrameScale() {
+        long now = System.nanoTime();
+        if (saintsdragons$lastFovUpdateNanos == 0L) {
+            saintsdragons$lastFovUpdateNanos = now;
+            return 1.0D;
+        }
+
+        double elapsedSeconds = (now - saintsdragons$lastFovUpdateNanos) / 1_000_000_000.0D;
+        saintsdragons$lastFovUpdateNanos = now;
+        return Math.min(Math.max(elapsedSeconds / BASELINE_FRAME_SECONDS, 0.0D), MAX_FRAME_SCALE);
+    }
+
+    @Unique
+    private static double saintsdragons$frameAdjustedSmoothing(double smoothing, double frameScale) {
+        if (smoothing <= 0.0D) {
+            return 0.0D;
+        }
+        if (smoothing >= 1.0D) {
+            return 1.0D;
+        }
+        return 1.0D - Math.pow(1.0D - smoothing, frameScale);
     }
 
     @Unique

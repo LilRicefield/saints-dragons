@@ -10,7 +10,6 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
-import com.leon.saintsdragons.common.block.IgnivorusEggBlockEntity;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal;
@@ -70,6 +69,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -82,7 +82,6 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -91,8 +90,9 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
@@ -102,13 +102,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_CRIMSON = 1;
-    private static final DragonVariantSet SPAWN_VARIANTS = DragonVariantSet.of(
+    private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
             DragonVariant.of(VARIANT_DEFAULT, "default", 95),
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
-    );
-    private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
-            DragonVariant.of(VARIANT_DEFAULT, "default", 50),
-            DragonVariant.of(VARIANT_CRIMSON, "crimson", 50)
     );
     public static final int TAKEOFF_ANIMATION_TICKS = 30;
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
@@ -243,7 +239,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private boolean bulldozing = false;
     private int bulldozeCooldownTicks = 0;
-    private final java.util.Map<Integer, Integer> bulldozeHitCooldowns = new java.util.HashMap<>();
+    private final Map<Integer, Integer> bulldozeHitCooldowns = new HashMap<>();
     private boolean bulldozeWasVehicle = false;
     private boolean phase2Active = false;
     private int phase2CooldownTicks = 0;
@@ -652,27 +648,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected int getMaxTextureVariant() {
-        return VARIANTS.maxId();
-    }
-
-    @Override
-    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
-                                            @NotNull DifficultyInstance difficulty,
-                                            @NotNull MobSpawnType reason,
-                                            @Nullable SpawnGroupData spawnData,
-                                            @Nullable CompoundTag spawnTag) {
-        return SPAWN_VARIANTS.roll(this.getRandom());
-    }
-
-    @Override
-    protected int chooseAdultTextureVariant() {
-        return VARIANTS.roll(this.getRandom());
-    }
-
-    @Override
-    public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return VARIANTS.nameMap();
+    protected DragonVariantSet getVariantSet() {
+        return VARIANTS;
     }
 
     public int getFireballChargeLevel() {
@@ -810,21 +787,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 );
                 AABB combinedBox = dragonBox.minmax(forwardBox);
 
-                java.util.List<LivingEntity> entities = this.level().getEntitiesOfClass(
-                    LivingEntity.class,
-                    combinedBox,
+                List<LivingEntity> entities = this.level().getEntitiesOfClass(LivingEntity.class, combinedBox,
                     entity -> entity != this && entity != this.getControllingPassenger() && !this.isAlly(entity)
                 );
-
                 for (LivingEntity target : entities) {
                     int entityId = target.getId();
-
                     if (bulldozeHitCooldowns.containsKey(entityId)) {
                         continue;
                     }
 
                     target.hurt(this.damageSources().mobAttack(this), resolveBulldozeDamage());
-
                     double knockbackStrength = 2.0D;
                     double dx = this.getX() - target.getX();
                     double dz = this.getZ() - target.getZ();
@@ -1052,7 +1024,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private void spawnLeapImpactBlockEffect(ServerLevel level) {
         RandomSource random = getRandom();
         BlockPos dragonPos = blockPosition();
-        java.util.List<BlockPos> blockPositions = new java.util.ArrayList<>();
+        List<BlockPos> blockPositions = new ArrayList<>();
         addRingBlockPositions(blockPositions, dragonPos, 16, 20, random, 25);
         addRingBlockPositions(blockPositions, dragonPos, 10, 15, random, 20);
         addRingBlockPositions(blockPositions, dragonPos, 5, 9, random, 15);
@@ -1070,7 +1042,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         spawnLeapParticleRing(level, dragonPos, dirtParticles, 15, 20, 80, random);
     }
 
-    private void addRingBlockPositions(java.util.List<BlockPos> positions, BlockPos center,
+    private void addRingBlockPositions(List<BlockPos> positions, BlockPos center,
                                        int minRadius, int maxRadius, RandomSource random, int count) {
         for (int i = 0; i < count; i++) {
             double angle = random.nextDouble() * Math.PI * 2;
@@ -1165,8 +1137,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         int centerZ = (int) Math.floor(center.z);
 
         int radiusInt = (int) Math.ceil(radius);
-        java.util.List<BlockPos> blocksToRestore = new java.util.ArrayList<>();
-        java.util.Map<BlockPos, BlockState> originalStates = new java.util.HashMap<>();
+        List<BlockPos> blocksToRestore = new ArrayList<>();
+        Map<BlockPos, BlockState> originalStates = new HashMap<>();
         for (int x = -radiusInt; x <= radiusInt; x++) {
             for (int z = -radiusInt; z <= radiusInt; z++) {
                 double distSqr = x * x + z * z;
@@ -1248,11 +1220,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         level.addFreshEntity(fallingBlock);
     }
 
-    private void scheduleBlockRestoration(ServerLevel level, java.util.Map<BlockPos, BlockState> blocks, int delayTicks) {
+    private void scheduleBlockRestoration(ServerLevel level, Map<BlockPos, BlockState> blocks, int delayTicks) {
         level.getServer().tell(new TickTask(
             level.getServer().getTickCount() + delayTicks,
             () -> {
-                for (java.util.Map.Entry<BlockPos, BlockState> entry : blocks.entrySet()) {
+                for (Map.Entry<BlockPos, BlockState> entry : blocks.entrySet()) {
                     BlockPos pos = entry.getKey();
                     BlockState state = entry.getValue();
                     if (level.getBlockState(pos).isAir()) {
@@ -1527,7 +1499,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             var owner = getOwner();
             ownerSleeping = owner instanceof Player player && player.isSleeping();
         }
-        return !level().isDay() || ownerSleeping;
+        return !DragonEntity.DragonSleepPreferences.isNaturalDay(level()) || ownerSleeping;
     }
 
     @Override
@@ -2025,12 +1997,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (this.level().isClientSide) {
             return;
         }
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
         double attackDamage = config.abilityDamage("bite", 15.0D);
 
-        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
-        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
-        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
+        applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         setAttributeBase(Attributes.ATTACK_DAMAGE, isBaby() ? 0.0D : attackDamage);
         clampHealthToMax();
     }
@@ -2651,9 +2621,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         right = right.normalize();
-
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        java.util.Set<BlockPos> visited = new java.util.HashSet<>();
+        Set<BlockPos> visited = new HashSet<>();
         int[] brokenThisTick = new int[] {0};
 
         cutBulldozeVolume(
@@ -2670,10 +2639,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         clearBulldozeBodyCollisionVolume(forward, visited, cursor, brokenThisTick);
     }
 
-    private void clearBulldozeBodyCollisionVolume(Vec3 forward,
-                                                  java.util.Set<BlockPos> visited,
-                                                  BlockPos.MutableBlockPos cursor,
-                                                  int[] brokenThisTick) {
+    private void clearBulldozeBodyCollisionVolume(Vec3 forward, Set<BlockPos> visited, BlockPos.MutableBlockPos cursor, int[] brokenThisTick) {
         if (brokenThisTick[0] >= BULLDOZE_TUNNEL_MAX_BREAKS_PER_TICK) {
             return;
         }
@@ -2717,15 +2683,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
     }
 
-    private void cutBulldozeVolume(Vec3 origin,
-                                   Vec3 forward,
-                                   Vec3 right,
-                                   double reach,
-                                   double halfWidth,
-                                   int height,
-                                   java.util.Set<BlockPos> visited,
-                                   BlockPos.MutableBlockPos cursor,
-                                   int[] brokenThisTick) {
+    private void cutBulldozeVolume(Vec3 origin, Vec3 forward, Vec3 right, double reach, double halfWidth, int height, Set<BlockPos> visited, BlockPos.MutableBlockPos cursor, int[] brokenThisTick) {
         int floorSafeY = Mth.floor(getBoundingBox().minY) + 1;
         int minBreakY = Math.max(floorSafeY, Mth.floor(origin.y - height * 0.45D));
         int maxBreakY = minBreakY + height - 1;
@@ -2975,7 +2933,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         );
         groundStepSoundCooldownTicks = duration;
     }
-    private final Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
 
     public void setServerBonePosition(String boneName, Vec3 position) {
         if (boneName == null || position == null) return;
@@ -2997,46 +2955,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    public BlockState getEggBlockState() {
-        return ModBlocks.IGNIVORUS_EGG.get().defaultBlockState();
-    }
-
-    @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
-        if (!(blockEntity instanceof IgnivorusEggBlockEntity eggEntity)) {
-            return;
-        }
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
-        if (ownerUUID != null) {
-            eggEntity.setOwnerUUID(ownerUUID);
-        }
-        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
-        eggEntity.setBabyGender(babyGender);
+    protected Supplier<? extends Block> getEggBlock() {
+        return ModBlocks.IGNIVORUS_EGG;
     }
 
     @Override
     public @Nullable AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
-        Ignivorus baby = ModEntities.IGNIVORUS.get().create(level);
-        if (baby != null) {
-            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-            assignMotherToBaby(baby, otherParent);
-            java.util.UUID ownerId = this.getOwnerUUID();
-            if (ownerId != null) {
-                baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
-            }
-            baby.skipRespawnTicks = 5;
-            baby.setAge(-24000);
-            baby.setBaby(true);
-            baby.applyConfiguredAttributes();
-            baby.setHealth(baby.getMaxHealth());
-
-            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
-            double spawnY = safePos != null ? safePos.getY() : this.getY();
-            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
-            registerToOwnerCodex(baby, level);
-        }
-        return baby;
+        return createBreedOffspring(level, otherParent, ModEntities.IGNIVORUS.get(), Ignivorus::applyConfiguredAttributes);
     }
 
     @Override

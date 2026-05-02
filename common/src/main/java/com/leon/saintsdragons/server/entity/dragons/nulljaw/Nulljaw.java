@@ -103,6 +103,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private static final double AI_CRUISE_SPEED = 0.24D;
     private static final double FLOAT_ACCEL = 0.10D;
     private static final double FLOAT_DRAG = 0.96D;
+    private static final double BABY_MAX_HEALTH = 70.0D;
+    private static final double BABY_ARMOR = 4.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final int HOVER_VISUAL_GRACE_TICKS = 8;
     private static final double MOUNTED_HOVER_VISUAL_THRESHOLD_SQ = 0.010D;
@@ -165,10 +167,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     public void applyConfiguredAttributes() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
-        setAttributeBase(Attributes.ARMOR, config.armor());
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
+        applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
 
         clampHealthToMax();
     }

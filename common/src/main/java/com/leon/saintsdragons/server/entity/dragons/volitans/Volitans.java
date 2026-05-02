@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
 import com.leon.saintsdragons.common.block.VolitansEggBlock;
-import com.leon.saintsdragons.common.block.VolitansEggBlockEntity;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -86,7 +85,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
@@ -99,8 +97,8 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
-
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen {
     @Override
@@ -222,7 +220,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
     private final VolitansRiderController riderController;
-    private final java.util.Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
     private int timeFlying;
     private int spineDropCooldownTicks;
     private int ticksInWater;
@@ -1355,25 +1353,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
-        Volitans baby = ModEntities.VOLITANS.get().create(level);
-        if (baby != null) {
-            assignMotherToBaby(baby, otherParent);
-            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-            java.util.UUID ownerId = this.getOwnerUUID();
-            if (ownerId != null) {
-                baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
-            }
-            baby.setAge(-24000);
-            baby.setBaby(true);
-            baby.applyConfiguredAttributes();
-            baby.setHealth(baby.getMaxHealth());
-            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
-            double spawnY = safePos != null ? safePos.getY() : this.getY();
-            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
-            registerToOwnerCodex(baby, level);
-        }
-        return baby;
+        return createBreedOffspring(level, otherParent, ModEntities.VOLITANS.get(), Volitans::applyConfiguredAttributes);
     }
 
     @Override
@@ -1387,45 +1367,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
-        if (!(blockEntity instanceof VolitansEggBlockEntity eggEntity)) {
-            return;
-        }
-
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
-        if (ownerUUID != null) {
-            eggEntity.setOwnerUUID(ownerUUID);
-        }
-
-        eggEntity.setBabyGender(this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-    }
-
-    @Override
-    protected int getMaxTextureVariant() {
-        return VARIANTS.maxId();
-    }
-
-    @Override
-    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
-                                            @NotNull DifficultyInstance difficulty,
-                                            @NotNull MobSpawnType reason,
-                                            @Nullable SpawnGroupData spawnData,
-                                            @Nullable CompoundTag spawnTag) {
-        return rollAdultVariant();
-    }
-
-    @Override
-    protected int chooseAdultTextureVariant() {
-        return rollAdultVariant();
-    }
-
-    @Override
-    public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return VARIANTS.nameMap();
-    }
-
-    private int rollAdultVariant() {
-        return VARIANTS.roll(this.getRandom());
+    protected DragonVariantSet getVariantSet() {
+        return VARIANTS;
     }
 
     @Override
@@ -2736,12 +2679,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void applyConfiguredAttributes() {
-        var config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
+        var config = getConfiguredDragonAttributes();
+        applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         setAttributeBase(Attributes.MOVEMENT_SPEED, 0.30D);
-        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
-        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
         clampHealthToMax();
     }
 

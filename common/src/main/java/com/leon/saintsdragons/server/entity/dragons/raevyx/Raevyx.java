@@ -14,7 +14,6 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
-import com.leon.saintsdragons.common.block.RaevyxEggBlockEntity;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
@@ -51,7 +50,7 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
-import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -83,6 +82,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
@@ -102,7 +102,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = WALK_SOUND_DURATION_TICKS;
     private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = RUN_SOUND_DURATION_TICKS;
     public static final int VARIANT_DEFAULT = 0;
-    public static final int VARIANT_NIGHT_GOLD = 50;
+    public static final int VARIANT_NIGHT_GOLD = 1;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
             DragonVariant.of(VARIANT_DEFAULT, "default", 90),
             DragonVariant.of(VARIANT_NIGHT_GOLD, "night_gold", 10)
@@ -179,7 +179,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     int aiDodgeCooldownTicks = 0;
     int dodgeIFramesTicks = 0;
     private boolean lastDashWasRight = false;
-    private final java.util.Map<Integer, Integer> dashHitCooldowns = new java.util.HashMap<>();
+    private final Map<Integer, Integer> dashHitCooldowns = new HashMap<>();
     private final DragonDashAndDodgeComponent dashMotion =
             new DragonDashAndDodgeComponent(this, active -> {
                 this.entityData.set(DATA_DASHING, active);
@@ -308,27 +308,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected int getMaxTextureVariant() {
-        return VARIANTS.maxId();
-    }
-
-    @Override
-    protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
-                                            @NotNull DifficultyInstance difficulty,
-                                            @NotNull MobSpawnType reason,
-                                            @Nullable SpawnGroupData spawnData,
-                                            @Nullable CompoundTag spawnTag) {
-        return rollAdultVariant();
-    }
-
-    @Override
-    protected int chooseAdultTextureVariant() {
-        return rollAdultVariant();
-    }
-
-    @Override
-    public java.util.Map<String, Integer> getTextureVariantNameMap() {
-        return VARIANTS.nameMap();
+    protected DragonVariantSet getVariantSet() {
+        return VARIANTS;
     }
 
     public boolean isTamingStunned() {
@@ -1234,12 +1215,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (dashMotion.isActive()) {
             Vec3 damageCenter = this.getBoundingBox().getCenter()
                     .add(getLookAngle().normalize().scale(this.getBbWidth() * 0.75D));
-
             AABB dragonBox = this.getBoundingBox().inflate(1.5D);
             AABB forwardBox = new AABB(damageCenter, damageCenter).inflate(2.0D);
             AABB combinedBox = dragonBox.minmax(forwardBox);
-
-            java.util.List<LivingEntity> entities;
+            List<LivingEntity> entities;
             if (this.isVehicle()) {
                 entities = this.level().getEntitiesOfClass(
                     LivingEntity.class,
@@ -1253,9 +1232,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                         || currentTarget == this
                         || this.isAlly(currentTarget)
                         || !combinedBox.intersects(currentTarget.getBoundingBox())) {
-                    entities = java.util.Collections.emptyList();
+                    entities = Collections.emptyList();
                 } else {
-                    entities = java.util.List.of(currentTarget);
+                    entities = List.of(currentTarget);
                 }
             }
 
@@ -1865,7 +1844,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             if (superchargeTicks <= 0) {
                 superchargeTicks = 0;
                 DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-                Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(getBaseMaxHealth(config));
+                Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(configuredMaxHealth(config, BABY_MAX_HEALTH));
                 if (this.getHealth() > this.getMaxHealth()) {
                     this.setHealth(this.getMaxHealth());
                 }
@@ -2192,16 +2171,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     public void applyConfiguredAttributes() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, getBaseMaxHealth(config));
-        setAttributeBase(Attributes.FLYING_SPEED, config.flyingSpeed());
-        setAttributeBase(Attributes.ARMOR, isBaby() ? 0.0D : config.armor());
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
+        applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, 0.0D);
 
         clampHealthToMax();
-    }
-
-    private double getBaseMaxHealth(DragonAttributeConfig config) {
-        return isBaby() ? BABY_MAX_HEALTH : config.maxHealth();
     }
 
     private static class RaevyxFamilyData extends AgeableMob.AgeableMobGroupData {
@@ -2362,7 +2335,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.superchargeTicks = Math.max(this.superchargeTicks, Math.max(0, ticks));
         if (wasNotSupercharged && isSupercharged()) {
             DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-            Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(getBaseMaxHealth(config) * 2.0D);
+            Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(configuredMaxHealth(config, BABY_MAX_HEALTH) * 2.0D);
             this.setHealth(this.getMaxHealth());
             this.allowGroundBeamDuringStorm = true;
             this.superchargeVfxCooldown = 20;
@@ -2990,7 +2963,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public List<LivingEntity> getRecentAggro() {
         List<LivingEntity> out = new ArrayList<>();
         long now = this.level().getGameTime();
-        Iterator<java.util.Map.Entry<Integer, Long>> it = recentAggroIds.entrySet().iterator();
+        Iterator<Map.Entry<Integer, Long>> it = recentAggroIds.entrySet().iterator();
         while (it.hasNext()) {
             var e = it.next();
             if (e.getValue() < now) { it.remove(); continue; }
@@ -3024,58 +2997,20 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.refreshDimensions();
     }
 
-    private int rollAdultVariant() {
-        return VARIANTS.roll(this.getRandom());
-    }
     @Override
     public boolean canBreed() {
         return !this.isBaby() && this.getHealth() >= this.getMaxHealth() && this.isInLove();
     }
 
     @Override
-    public BlockState getEggBlockState() {
-        return ModBlocks.RAEVYX_EGG.get().defaultBlockState();
-    }
-
-    @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity, @Nullable DragonEntity partner) {
-        if (!(blockEntity instanceof RaevyxEggBlockEntity eggEntity)) {
-            return;
-        }
-
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
-        if (ownerUUID != null) {
-            eggEntity.setOwnerUUID(ownerUUID);
-        }
-
-        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
-        eggEntity.setBabyGender(babyGender);
+    protected Supplier<? extends Block> getEggBlock() {
+        return ModBlocks.RAEVYX_EGG;
     }
 
     @Override
     @Nullable
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob otherParent) {
-        Raevyx baby = ModEntities.RAEVYX.get().create(level);
-        if (baby != null) {
-            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-            assignMotherToBaby(baby, otherParent);
-            java.util.UUID ownerId = this.getOwnerUUID();
-            if (ownerId != null) {
-                baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
-            }
-
-            baby.skipRespawnTicks = 5;
-            baby.setAge(-24000);
-            baby.setBaby(true);
-            baby.applyConfiguredAttributes();
-            baby.setHealth(baby.getMaxHealth());
-            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
-            double spawnY = safePos != null ? safePos.getY() : this.getY();
-            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
-            registerToOwnerCodex(baby, level);
-        }
-        return baby;
+        return createBreedOffspring(level, otherParent, ModEntities.RAEVYX.get(), Raevyx::applyConfiguredAttributes);
     }
 
     @Override

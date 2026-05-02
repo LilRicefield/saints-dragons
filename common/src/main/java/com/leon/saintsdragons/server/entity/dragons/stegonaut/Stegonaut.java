@@ -23,7 +23,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -39,13 +38,12 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.server.level.ServerLevel;
-
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
@@ -54,7 +52,6 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.common.block.StegonautEggBlockEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -369,32 +366,12 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
-        Stegonaut baby = ModEntities.STEGONAUT.get().create(level);
-        if (baby != null) {
-            baby.setGender(this.random.nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE);
-            assignMotherToBaby(baby, other);
-            java.util.UUID ownerId = this.getOwnerUUID();
-            if (ownerId != null) {
-                baby.setOwnerUUID(ownerId);
-                baby.setTame(true);
-            }
-            baby.setAge(-24000);
-            baby.setBaby(true);
-            baby.applyConfiguredAttributes();
-            baby.setHealth(baby.getMaxHealth());
-            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
-            double spawnY = safePos != null ? safePos.getY() : this.getY();
-            baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
-            registerToOwnerCodex(baby, level);
-        }
-        return baby;
+        return createBreedOffspring(level, other, ModEntities.STEGONAUT.get(), Stegonaut::applyConfiguredAttributes);
     }
 
     public void applyConfiguredAttributes() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
-        setAttributeBase(Attributes.MAX_HEALTH, isBaby() ? BABY_MAX_HEALTH : config.maxHealth());
-        setAttributeBase(Attributes.ARMOR, isBaby() ? BABY_ARMOR : config.armor());
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
+        applyConfiguredHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         clampHealthToMax();
     }
 
@@ -416,24 +393,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
-    public BlockState getEggBlockState() {
-        return ModBlocks.STEGONAUT_EGG.get().defaultBlockState();
-    }
-
-    @Override
-    public void configureEggBlockEntity(BlockEntity blockEntity,
-                                        @Nullable DragonEntity partner) {
-        if (!(blockEntity instanceof StegonautEggBlockEntity eggEntity)) {
-            return;
-        }
-
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
-        if (ownerUUID != null) {
-            eggEntity.setOwnerUUID(ownerUUID);
-        }
-
-        DragonGender babyGender = this.getRandom().nextBoolean() ? DragonGender.FEMALE : DragonGender.MALE;
-        eggEntity.setBabyGender(babyGender);
+    protected Supplier<? extends Block> getEggBlock() {
+        return ModBlocks.STEGONAUT_EGG;
     }
 
     public static boolean canSpawnHere(EntityType<? extends Stegonaut> type,
@@ -613,7 +574,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     public boolean canSleepNow() {
-        return !level().isDay();
+        return !DragonEntity.DragonSleepPreferences.isNaturalDay(level());
     }
 
     @Override

@@ -295,6 +295,7 @@
   "entity.saintsdragons.varasuchus.breeding_already_ready": "%s is already ready to breed",
   "entity.saintsdragons.varasuchus.breeding_ready": "%s is ready to breed!",
   "entity.saintsdragons.varasuchus.sleeping": "%s is sleeping, wake it up to tame.",
+  "entity.saintsdragons.varasuchus.buck_cooldown": "Nuh-uh. %s said no. Try again in %s seconds.",
   "entity.saintsdragons.varasuchus.sitting_down": "%s is settling down...",
   "entity.saintsdragons.varasuchus.standing_up": "%s is standing up...",
   "entity.saintsdragons.varasuchus.transitioning": "%s is reshaping its stance...",

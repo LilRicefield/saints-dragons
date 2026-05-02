@@ -179,7 +179,9 @@ public final class DragonSleepComponent {
 
     private boolean shouldFollowOwnerSleepNow() {
 
-        return dragon.isTame() && !dragon.level().isDay() && isOwnerSleeping();
+        return dragon.isTame()
+                && !DragonEntity.DragonSleepPreferences.isNaturalDay(dragon.level())
+                && isOwnerSleeping();
     }
 
     private boolean shouldAttemptSleep() {
