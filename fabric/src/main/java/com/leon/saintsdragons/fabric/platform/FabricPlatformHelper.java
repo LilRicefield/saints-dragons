@@ -65,6 +65,11 @@ public final class FabricPlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public String getPlatformId() {
+        return "fabric";
+    }
+
+    @Override
     public boolean isModLoaded(String modId) {
         return FabricLoader.getInstance().isModLoaded(modId);
     }

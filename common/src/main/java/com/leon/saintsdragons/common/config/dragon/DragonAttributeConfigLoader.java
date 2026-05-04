@@ -40,7 +40,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
-    private static final boolean IS_FORGE = Services.PLATFORM.isModLoaded("forge");
+    private static final boolean IS_FORGE = "forge".equals(Services.PLATFORM.getPlatformId());
 
     private final Map<ResourceLocation, DragonAttributeConfig> defaults;
     private final Path configDirectory;
