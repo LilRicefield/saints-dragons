@@ -1,8 +1,8 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
-import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,8 +16,6 @@ import java.util.EnumSet;
 
 
 public class IgnivorusAirCombatGoal extends Goal {
-    private static final double FLIGHT_ACCEL = 0.12D;
-    private static final double FLIGHT_DRAG = 0.94D;
     private static final double DIRECT_CHASE_SPEED = 3.75D;
     private static final double LANDING_SPEED = 1.5D;
     private final Ignivorus dragon;
@@ -223,7 +221,7 @@ public class IgnivorusAirCombatGoal extends Goal {
                 tryAttack(target, distance);
             }
             if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)) {
-                DragonDirectAirCombatMovementHelper.holdPosition(dragon, FLIGHT_DRAG);
+                DragonAsyncAirMovementHelper.holdPosition(dragon);
             } else {
                 maintainCombatPosition(target);
             }
@@ -267,16 +265,14 @@ public class IgnivorusAirCombatGoal extends Goal {
     }
 
     private void chaseTarget(LivingEntity target) {
-        DragonDirectAirCombatMovementHelper.chasePredictedTarget(
+        DragonAsyncAirMovementHelper.chasePredictedTarget(
                 dragon,
                 target,
                 5.0D,
                 0.5D,
                 0.15D,
                 0.5D,
-                DIRECT_CHASE_SPEED,
-                FLIGHT_ACCEL,
-                FLIGHT_DRAG
+                DIRECT_CHASE_SPEED
         );
     }
 
@@ -286,9 +282,7 @@ public class IgnivorusAirCombatGoal extends Goal {
             return;
         }
 
-        double distance = dragon.distanceTo(target);
         double targetY = target.getY() + target.getBbHeight() * 0.5D;
-        Vec3 targetLook = target.getLookAngle();
         double angle = (dragon.tickCount * 0.05) % (Math.PI * 2);
         double offsetX = Math.cos(angle) * ENGAGEMENT_DISTANCE;
         double offsetZ = Math.sin(angle) * ENGAGEMENT_DISTANCE;
@@ -296,12 +290,10 @@ public class IgnivorusAirCombatGoal extends Goal {
         double posZ = target.getZ() + offsetZ;
         double verticalOffset = Math.sin(dragon.tickCount * 0.1) * 1.0;
 
-        DragonDirectAirCombatMovementHelper.flyToward(
+        DragonAsyncAirMovementHelper.moveToward(
                 dragon,
                 new Vec3(posX, targetY + verticalOffset, posZ),
-                1.0D,
-                FLIGHT_ACCEL,
-                FLIGHT_DRAG
+                1.0D
         );
 
         repositionCooldown = 20;
@@ -325,7 +317,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
 
         double speed = dist > BITE_APPROACH_DISTANCE ? 1.2D : 0.6D;
-        DragonDirectAirCombatMovementHelper.flyToward(dragon, desired, speed, FLIGHT_ACCEL, FLIGHT_DRAG);
+        DragonAsyncAirMovementHelper.moveToward(dragon, desired, speed);
     }
 
     private boolean isTargetAirborne(LivingEntity target) {

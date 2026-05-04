@@ -1,11 +1,10 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
@@ -23,8 +22,6 @@ public class VolitansAirCombatGoal extends Goal {
     private static final double ROAR_MIN_RANGE = 6.0D;
     private static final double ROAR_MAX_RANGE = 12.0D;
     private static final double CHASE_HEIGHT_OFFSET = 2.0D;
-    private static final double FLIGHT_ACCEL = 0.12D;
-    private static final double FLIGHT_DRAG = 0.94D;
     private static final double CHASE_SPEED = 2.0D;
     private static final double POSITION_SPEED = 0.85D;
     private static final double BITE_APPROACH_DISTANCE = 3.75D;
@@ -278,49 +275,19 @@ public class VolitansAirCombatGoal extends Goal {
     }
 
     private void flyTowardTarget(LivingEntity target, double speedScale, double heightOffset) {
-        Vec3 targetVelocity = target.getDeltaMovement();
-        double targetX = target.getX() + targetVelocity.x * 5.0D;
-        double targetZ = target.getZ() + targetVelocity.z * 5.0D;
-        double targetY = target.getY() + target.getBbHeight() + heightOffset + Math.sin(dragon.tickCount * 0.12D) * 0.5D;
-        flyToward(new Vec3(targetX, targetY, targetZ), speedScale);
+        DragonAsyncAirMovementHelper.chasePredictedTarget(
+                dragon,
+                target,
+                5.0D,
+                heightOffset,
+                0.12D,
+                0.5D,
+                speedScale
+        );
     }
 
     private void flyToward(Vec3 destination, double speedScale) {
-        if (dragon.isTakeoff() && dragon.onGround()) {
-            return;
-        }
-        dragon.beginAiFlight();
-        Vec3 toDest = destination.subtract(dragon.position());
-        if (toDest.lengthSqr() < 1.0E-4D) {
-            return;
-        }
-
-        Vec3 targetDir = toDest.normalize();
-        Vec3 current = dragon.getDeltaMovement();
-        double flightSpeed = Math.max(0.18D, dragon.getFlightSpeed() * speedScale);
-        Vec3 targetVel = targetDir.scale(flightSpeed);
-        Vec3 blended = new Vec3(
-                current.x + (targetVel.x - current.x) * FLIGHT_ACCEL,
-                current.y + (targetVel.y - current.y) * FLIGHT_ACCEL,
-                current.z + (targetVel.z - current.z) * FLIGHT_ACCEL
-        ).scale(FLIGHT_DRAG);
-
-        dragon.setSpeed((float) flightSpeed);
-        dragon.setDeltaMovement(blended);
-        dragon.move(MoverType.SELF, blended);
-        dragon.hasImpulse = true;
-
-        double horizontal = Math.sqrt(blended.x * blended.x + blended.z * blended.z);
-        if (horizontal > 1.0E-4D) {
-            float targetYaw = (float) (Math.atan2(blended.z, blended.x) * (180.0D / Math.PI)) - 90.0F;
-            dragon.setYRot(targetYaw);
-            dragon.yBodyRot = targetYaw;
-            dragon.yHeadRot = targetYaw;
-        }
-        if (blended.lengthSqr() > 1.0E-4D) {
-            float targetPitch = (float) (-(Math.atan2(blended.y, horizontal) * (180.0D / Math.PI)));
-            dragon.setXRot(Mth.clamp(targetPitch, -45.0F, 45.0F));
-        }
+        DragonAsyncAirMovementHelper.moveToward(dragon, destination, speedScale);
     }
 
     private boolean isValidTarget(LivingEntity target) {

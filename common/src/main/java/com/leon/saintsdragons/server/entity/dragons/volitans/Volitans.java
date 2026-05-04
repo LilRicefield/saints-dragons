@@ -1051,7 +1051,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (!level().isClientSide && shouldUseAirNavigation) {
             this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
-        tickAsyncFlightNavigation(isDirectAirCombatActive());
+        tickAsyncFlightNavigation(isAiSpecialCombatActive() || isAiSpecialCombatReserved());
 
         if (!this.level().isClientSide) {
             tickAnimationStates();
@@ -1308,29 +1308,22 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
         double y = Mth.lerp(partialTicks, this.yo, this.getY());
         double z = Mth.lerp(partialTicks, this.zo, this.getZ());
-
         float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
         float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
-
         double yaw = Math.toRadians(yawDeg);
         double pitch = Math.toRadians(pitchDeg);
-
         double localRight = 0.0D;
         double localUp = this.getBbHeight() * 0.72D;
         double localForward = this.getBbWidth() * 0.75D;
-
         double cp = Math.cos(pitch);
         double sp = Math.sin(pitch);
         double cy = Math.cos(-yaw);
         double sy = Math.sin(-yaw);
-
         double x1 = localRight;
         double y1 = localUp * cp - localForward * sp;
         double z1 = localUp * sp + localForward * cp;
-
         double wx = x1 * cy - z1 * sy;
         double wz = x1 * sy + z1 * cy;
-
         return new Vec3(x + wx, y + y1, z + wz);
     }
 
@@ -1991,12 +1984,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean isAiSpecialCombatReserved() {
         return aiSpecialCombatReserved;
-    }
-
-    private boolean isDirectAirCombatActive() {
-        return isAiSpecialCombatActive()
-                || isAiSpecialCombatReserved()
-                || (!isLanding() && getTarget() != null);
     }
 
     public void setAiSpecialCombatReserved(boolean reserved) {

@@ -228,6 +228,7 @@
   "entity.saintsdragons.all.command_0": "%s is now following you",
   "entity.saintsdragons.all.command_1": "%s is now sitting", 
   "entity.saintsdragons.all.command_2": "%s is now wandering",
+  "entity.saintsdragons.all.land_to_dismount": "Land your dragon to get off.",
   "entity.saintsdragons.dragon.feeding": "Feeding %s...",
   
   "entity.saintsdragons.raevyx.fed": "%s is fully healed!",

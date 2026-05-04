@@ -484,7 +484,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (!level().isClientSide && (isFlying() || isTakeoff() || isLanding() || isHovering())) {
             this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
-        tickAsyncFlightNavigation(isDirectAirCombatActive());
+        tickAsyncFlightNavigation();
         if (isFlying()) {
             timeFlying++;
         } else {
@@ -508,14 +508,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             }
         }
         tickClientSideUpdates();
-    }
-
-    private boolean isDirectAirCombatActive() {
-        LivingEntity target = this.getTarget();
-        return !this.isLanding()
-                && this.isAggressive()
-                && target != null
-                && this.isTargetValid(target);
     }
 
     private void tickSittingState() {

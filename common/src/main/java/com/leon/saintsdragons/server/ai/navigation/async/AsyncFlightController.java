@@ -105,6 +105,26 @@ public class AsyncFlightController {
         this.setWaypoint(target, speed, null);
     }
 
+    public void trackMovingWaypoint(Vec3 target, double speed) {
+        if (this.currentWaypoint == null
+                || this.state == PathState.IDLE
+                || this.state == PathState.ARRIVED
+                || this.state == PathState.FAILED
+                || this.isLandingTarget(target)) {
+            this.setWaypoint(target, speed, null);
+            return;
+        }
+
+        this.waypointQueue.clear();
+        this.currentWaypoint = target;
+        this.currentArrivalCallback = null;
+        this.speedModifier = speed;
+        this.state = PathState.FOLLOWING;
+        this.invalidatePathRequests();
+        this.pathResolver.clearPathNodes();
+        this.stuckDetector.reset();
+    }
+
     public void setWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
         if (this.currentWaypoint != null
                 && target.distanceToSqr(this.currentWaypoint) < 1.0

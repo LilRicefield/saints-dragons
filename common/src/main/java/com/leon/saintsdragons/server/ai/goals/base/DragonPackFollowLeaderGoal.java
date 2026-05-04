@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import net.minecraft.core.BlockPos;
@@ -461,7 +462,11 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
             return;
         }
         if (shouldRefreshAirMoveTarget(target, speed)) {
-            rideableMember.getMoveControl().setWantedPosition(target.x, target.y, target.z, speed);
+            if (rideableMember instanceof RideableFlyingDragon flyingMember) {
+                flyingMember.trackAiFlightTarget(target, speed);
+            } else {
+                rideableMember.getNavigation().moveTo(target.x, target.y, target.z, speed);
+            }
             lastAirMoveTarget = target;
             lastAirMoveSpeed = speed;
             airMoveRefreshCooldown = airMoveRefreshInterval(speed);

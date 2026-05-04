@@ -1,8 +1,8 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
-import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,8 +15,6 @@ import java.util.EnumSet;
 
 public class RaevyxAirCombatGoal extends Goal {
     private final Raevyx dragon;
-    private static final double FLIGHT_ACCEL = 0.12D;
-    private static final double FLIGHT_DRAG = 0.94D;
     private static final double DIRECT_CHASE_SPEED = 6.0D;
     private static final double BITE_TRIGGER_RANGE = 7.0;
     private static final double ENGAGEMENT_DISTANCE = 30.0;
@@ -208,7 +206,7 @@ public class RaevyxAirCombatGoal extends Goal {
                 tryAttack(target, distance);
             }
             if (dragon.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)) {
-                DragonDirectAirCombatMovementHelper.holdPosition(dragon, FLIGHT_DRAG);
+                DragonAsyncAirMovementHelper.holdPosition(dragon);
             } else {
                 maintainCombatPosition(target);
             }
@@ -252,16 +250,14 @@ public class RaevyxAirCombatGoal extends Goal {
 
 
     private void chaseTarget(LivingEntity target) {
-        DragonDirectAirCombatMovementHelper.chasePredictedTarget(
+        DragonAsyncAirMovementHelper.chasePredictedTarget(
                 dragon,
                 target,
                 5.0D,
                 0.5D,
                 0.15D,
                 0.5D,
-                DIRECT_CHASE_SPEED,
-                FLIGHT_ACCEL,
-                FLIGHT_DRAG
+                DIRECT_CHASE_SPEED
         );
     }
 
@@ -270,21 +266,17 @@ public class RaevyxAirCombatGoal extends Goal {
             return;
         }
 
-        double distance = dragon.distanceTo(target);
         double targetY = target.getY() + target.getBbHeight() * 0.5D;
-        Vec3 targetLook = target.getLookAngle();
         double angle = (dragon.tickCount * 0.05) % (Math.PI * 2);
         double offsetX = Math.cos(angle) * ENGAGEMENT_DISTANCE;
         double offsetZ = Math.sin(angle) * ENGAGEMENT_DISTANCE;
         double posX = target.getX() + offsetX;
         double posZ = target.getZ() + offsetZ;
         double verticalOffset = Math.sin(dragon.tickCount * 0.1) * 1.0;
-        DragonDirectAirCombatMovementHelper.flyToward(
+        DragonAsyncAirMovementHelper.moveToward(
                 dragon,
                 new Vec3(posX, targetY + verticalOffset, posZ),
-                1.0D,
-                FLIGHT_ACCEL,
-                FLIGHT_DRAG
+                1.0D
         );
 
         repositionCooldown = 20;
@@ -308,7 +300,7 @@ public class RaevyxAirCombatGoal extends Goal {
         Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
 
         double speed = dist > BITE_APPROACH_DISTANCE ? 1.2 : 0.6;
-        DragonDirectAirCombatMovementHelper.flyToward(dragon, desired, speed, FLIGHT_ACCEL, FLIGHT_DRAG);
+        DragonAsyncAirMovementHelper.moveToward(dragon, desired, speed);
     }
 
     private boolean isTargetAirborne(LivingEntity target) {
@@ -366,7 +358,7 @@ public class RaevyxAirCombatGoal extends Goal {
                 (dragon.onGround() || dragon.isInWater()) &&
                 dragon.getPassengers().isEmpty() &&
                 dragon.getControllingPassenger() == null &&
-                dragon.getActiveAbility() == null; // Don't interrupt abilities
+                dragon.getActiveAbility() == null;
     }
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {

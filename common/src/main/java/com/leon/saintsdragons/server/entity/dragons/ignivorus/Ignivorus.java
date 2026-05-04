@@ -458,7 +458,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
-        tickAsyncFlightNavigation(isDirectAirCombatActive());
+        tickAsyncFlightNavigation();
 
         tickBankingLogic();
         tickBarrelRollLogic();
@@ -536,14 +536,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         setLanding(false);
         setNoGravity(false);
         setDeltaMovement(Vec3.ZERO);
-    }
-
-    private boolean isDirectAirCombatActive() {
-        LivingEntity target = this.getTarget();
-        return !this.isLanding()
-                && this.isAggressive()
-                && target != null
-                && this.isTargetValid(target);
     }
 
     @Override

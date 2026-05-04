@@ -4,6 +4,7 @@
   "package": "com.leon.saintsdragons.fabric.mixin.fabric",
   "compatibilityLevel": "JAVA_17",
   "client": [
+    "AirDismountInputMixin",
     "CameraMixin",
     "CameraRollMixin",
     "EntityEyePositionMixin",

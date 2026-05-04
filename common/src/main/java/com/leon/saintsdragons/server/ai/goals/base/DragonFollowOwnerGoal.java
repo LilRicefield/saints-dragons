@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
@@ -485,7 +486,11 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     private void requestAirMove(Vec3 target, double speed) {
         if (shouldRefreshAirMoveTarget(target, speed)) {
-            dragon.getMoveControl().setWantedPosition(target.x, target.y, target.z, speed);
+            if (dragon instanceof RideableFlyingDragon flyingDragon) {
+                flyingDragon.trackAiFlightTarget(target, speed);
+            } else {
+                dragon.getNavigation().moveTo(target.x, target.y, target.z, speed);
+            }
             lastAirMoveTarget = target;
             lastAirMoveSpeed = speed;
             airMoveRefreshCooldown = airMoveRefreshInterval(speed);

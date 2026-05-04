@@ -42,6 +42,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -1376,7 +1377,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
         tickRiderControlLock();
 
-        tickAsyncFlightNavigation(isDirectAirCombatActive());
+        tickAsyncFlightNavigation();
         if (tickCount % 2 == 0) {
             tickRiderControlLockMovement();
         }
@@ -1497,14 +1498,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (!isFlying() && !isTakeoff() && !isLanding() && isUsingAirNavigation()) {
             switchToGroundNavigation();
         }
-    }
-
-    private boolean isDirectAirCombatActive() {
-        LivingEntity target = this.getTarget();
-        return !this.isLanding()
-                && this.isAggressive()
-                && target != null
-                && this.isTargetValid(target);
     }
 
     private void tickScreenShake() {
@@ -2251,7 +2244,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (isGroundRending()) {
             return false;
         }
-        if (damageSource.is(DamageTypes.LIGHTNING_BOLT)) {
+        if (damageSource.is(DamageTypeTags.IS_LIGHTNING)) {
             return false;
         }
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {

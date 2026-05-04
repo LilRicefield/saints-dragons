@@ -29,6 +29,7 @@ import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -1999,6 +2000,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             wakeUpImmediately();
             suppressSleep(200);
+        }
+        if (damageSource.is(DamageTypeTags.IS_DROWNING)) {
+            amount *= 0.5F;
         }
         return super.hurt(damageSource, amount);
     }

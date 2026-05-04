@@ -23,6 +23,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -305,6 +306,9 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         }
         if (!isWildStegonautDamageAllowed(source)) {
             return false;
+        }
+        if (source.is(DamageTypeTags.IS_FALL)) {
+            amount *= 0.3F;
         }
 
         return super.hurt(source, amount);

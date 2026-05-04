@@ -395,13 +395,18 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 || state == AsyncFlightController.PathState.FAILED;
     }
 
-    protected void tickAsyncFlightNavigation(boolean blockedByDirectAirCombat) {
+    protected void tickAsyncFlightNavigation() {
         if (!level().isClientSide
                 && isUsingAirNavigation()
                 && (isFlying() || isTakeoff() || isLanding())
-                && !isVehicle()
-                && !blockedByDirectAirCombat) {
+                && !isVehicle()) {
             this.asyncAirController.serverTick();
+        }
+    }
+
+    protected void tickAsyncFlightNavigation(boolean blockedByDirectAirCombat) {
+        if (!blockedByDirectAirCombat) {
+            tickAsyncFlightNavigation();
         }
     }
 
@@ -605,6 +610,17 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         if (target != null) {
             getNavigation().moveTo(target.x, target.y, target.z, speed);
         }
+    }
+
+    public void trackAiFlightTarget(@Nullable Vec3 target, double speed) {
+        if (target == null) {
+            return;
+        }
+        if (isUsingAirNavigation()) {
+            this.asyncAirController.trackMovingWaypoint(target, speed);
+            return;
+        }
+        moveAiFlightTo(target, speed);
     }
 
     public @Nullable Vec3 findStandardAiFlightTarget(double maxTurnDegrees, double minRange, double extraRange,

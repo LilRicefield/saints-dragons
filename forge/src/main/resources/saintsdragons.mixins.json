@@ -10,6 +10,7 @@
     "ServerGamePacketListenerMixin"
   ],
   "client": [
+    "client.AirDismountInputMixin",
     "client.CameraMixin",
     "client.EntityEyePositionMixin",
     "client.CameraPositionMixin",
