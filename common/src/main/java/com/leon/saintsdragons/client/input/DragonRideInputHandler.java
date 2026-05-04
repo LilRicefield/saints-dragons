@@ -82,8 +82,8 @@ public final class DragonRideInputHandler {
             InputConstants.KEY_Y,
             KEY_CATEGORY
     );
-    public static final KeyMapping DRAGON_TAUNT = new KeyMapping(
-            "key.saintsdragons.taunt",
+    public static final KeyMapping DRAGON_FLEX = new KeyMapping(
+            "key.saintsdragons.flex",
             InputConstants.Type.KEYSYM,
             InputConstants.KEY_4,
             KEY_CATEGORY
@@ -98,7 +98,7 @@ public final class DragonRideInputHandler {
             DRAGON_SECONDARY_ABILITY,
             DRAGON_TOGGLE_MELEE,
             DRAGON_TOGGLE_PITCH_MODE,
-            DRAGON_TAUNT
+            DRAGON_FLEX
     };
 
     private static boolean wasAscendPressed = false;
@@ -109,7 +109,7 @@ public final class DragonRideInputHandler {
     private static boolean wasAttackDown = false;
     private static boolean wasToggleMeleeDown = false;
     private static boolean wasTogglePitchModeDown = false;
-    private static boolean wasTauntDown = false;
+    private static boolean wasFlexDown = false;
     private static int volitansTertiaryHoldTicks = 0;
     private static boolean volitansBreathActive = false;
     private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
@@ -179,7 +179,7 @@ public final class DragonRideInputHandler {
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
-        boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
+        boolean flexDown = DRAGON_FLEX.isDown() && isCtrlDown(mc);
         boolean attackDown = mc.options.keyAttack.isDown();
         float forward = player.zza;
         float strafe = player.xxa;
@@ -263,8 +263,8 @@ public final class DragonRideInputHandler {
                 || dragon instanceof Varasuchus)) {
             sendInput(false, false, DragonRiderAction.TOGGLE_PITCH_MODE, null, forward, strafe, yaw);
         }
-        if (tauntDown && !wasTauntDown) {
-            sendInput(false, false, DragonRiderAction.TAUNT, null, forward, strafe, yaw);
+        if (flexDown && !wasFlexDown) {
+            sendInput(false, false, DragonRiderAction.FLEX, null, forward, strafe, yaw);
         }
 
         if (dragon instanceof Raevyx
@@ -346,7 +346,7 @@ public final class DragonRideInputHandler {
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
         wasTogglePitchModeDown = togglePitchModeDown;
-        wasTauntDown = tauntDown;
+        wasFlexDown = flexDown;
     }
 
     private static void handleAbilityBinding(RiderAbilityBinding binding,
@@ -487,7 +487,7 @@ public final class DragonRideInputHandler {
         boolean attackDown = mc.options.keyAttack.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
-        boolean tauntDown = DRAGON_TAUNT.isDown() && isCtrlDown(mc);
+        boolean flexDown = DRAGON_FLEX.isDown() && isCtrlDown(mc);
 
         if (dragon instanceof Volitans) {
             if (volitansBreathActive) {
@@ -517,7 +517,7 @@ public final class DragonRideInputHandler {
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
         wasTogglePitchModeDown = togglePitchModeDown;
-        wasTauntDown = tauntDown;
+        wasFlexDown = flexDown;
     }
 
     private static void handleLockedAbilityRelease(RiderAbilityBinding binding,
@@ -562,7 +562,7 @@ public final class DragonRideInputHandler {
         wasAttackDown = false;
         wasToggleMeleeDown = false;
         wasTogglePitchModeDown = false;
-        wasTauntDown = false;
+        wasFlexDown = false;
         volitansPrimaryPressStartedAtMs = 0L;
         volitansPoisonBallActive = false;
         lastForward = 0f;

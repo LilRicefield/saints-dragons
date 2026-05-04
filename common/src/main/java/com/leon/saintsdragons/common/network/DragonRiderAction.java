@@ -13,7 +13,7 @@ public enum DragonRiderAction {
     DOUBLE_TAP_S,
     DOUBLE_TAP_D,
     TOGGLE_PITCH_MODE,
-    TAUNT,
+    FLEX,
     GROUND_JUMP,
     OPEN_INVENTORY,
 }

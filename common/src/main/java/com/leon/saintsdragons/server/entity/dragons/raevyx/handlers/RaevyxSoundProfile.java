@@ -27,6 +27,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             Map.entry("roar", 112),
             Map.entry("roar_ground", 112),
             Map.entry("roar_air", 112),
+            Map.entry("flex", 60),
             Map.entry("raevyx_hurt", 20),
             Map.entry("raevyx_die", 62)
     );
@@ -61,6 +62,7 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         }
         int duration = switch (key) {
             case "roar", "roar_ground", "roar_air" -> 112;
+            case "flex" -> 60;
             case "grumble1" -> 52;
             case "grumble2" -> 72;
             case "grumble3" -> 43;

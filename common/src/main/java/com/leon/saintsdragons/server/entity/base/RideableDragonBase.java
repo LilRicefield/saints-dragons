@@ -230,7 +230,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case TAKEOFF_REQUEST, ACCELERATE, STOP_ACCELERATE, TOGGLE_MELEE -> true;
             case ABILITY_USE, ABILITY_STOP,
                  DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 TAUNT, TOGGLE_PITCH_MODE, OPEN_INVENTORY -> false;
+                 FLEX, TOGGLE_PITCH_MODE, OPEN_INVENTORY -> false;
             default -> true;
         };
     }

@@ -199,6 +199,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private static final int LEAP_STATE_NONE = 0;
     private static final int LEAP_STATE_TAKEOFF = 1;
     private static final int LEAP_IMPACT_RECOVERY_DURATION = 20;
+    private static final int FLEX_CONTROL_LOCK_TICKS = 20 * 9;
+    private static final int FLEX_COOLDOWN_TICKS = 20 * 5;
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
@@ -208,6 +210,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                     .add("ignivorus_roar", "action", "animation.ignivorus.roar",
                             ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f,
                             false, false, false)
+                    .add("ignivorus_flex", "action", "animation.ignivorus.flex",
+                            ModSounds.IGNIVORUS_FLEX, 2.0f, 0.95f, 0.05f,
+                            false, false, true)
                     .add("ignivorus_grumble1", "action", "animation.ignivorus.grumble1",
                             ModSounds.IGNIVORUS_GRUMBLE_1, 1.1f, 0.95f, 0.08f,
                             true, false, true)
@@ -243,6 +248,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private boolean bulldozeWasVehicle = false;
     private boolean phase2Active = false;
     private int phase2CooldownTicks = 0;
+    private int flexCooldownTicks = 0;
     private boolean useRightWingSwipe = true;
     private boolean phase2WasVehicle = false;
     private int aiPhase2LockTicks = 0;
@@ -393,7 +399,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+                 TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP, FLEX -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -420,6 +426,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         tickRiderControlLock();
+        tickFlexCooldown();
         tickBulldozeState();
         tickPhase2State();
         tickLeapState();
@@ -1446,11 +1453,41 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (locked) {
             return false;
         }
+        if (action == DragonRiderAction.FLEX) {
+            if (!canRiderFlex()) {
+                return true;
+            }
+            lockRiderControls(FLEX_CONTROL_LOCK_TICKS);
+            flexCooldownTicks = FLEX_COOLDOWN_TICKS;
+            getNavigation().stop();
+            setDeltaMovement(Vec3.ZERO);
+            getSoundHandler().playVocal("ignivorus_flex");
+            return true;
+        }
         if (action == DragonRiderAction.TOGGLE_PITCH_MODE) {
             setRiderPitchKeyMode(!isRiderPitchKeyMode());
             return true;
         }
         return false;
+    }
+
+    private boolean canRiderFlex() {
+        return !isBaby()
+                && onGround()
+                && !isPhase2Active()
+                && !isFlying()
+                && !isTakeoff()
+                && !isLanding()
+                && !isInWaterOrBubble()
+                && flexCooldownTicks <= 0
+                && !bulldozing
+                && !leaping;
+    }
+
+    private void tickFlexCooldown() {
+        if (!level().isClientSide && flexCooldownTicks > 0) {
+            flexCooldownTicks--;
+        }
     }
 
     public void setGroundMoveStateFromAI(int state) {

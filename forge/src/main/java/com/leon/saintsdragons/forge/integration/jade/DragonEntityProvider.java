@@ -52,7 +52,7 @@ public enum DragonEntityProvider implements IEntityComponentProvider, IServerDat
         }
 
         // Send variant name to client
-        int variantId = dragon.getTextureVariant();
+        int variantId = dragon.getCodexTextureVariant();
         String variantName = dragon.getTextureVariantName(variantId);
         tag.putString("VariantName", variantName);
     }

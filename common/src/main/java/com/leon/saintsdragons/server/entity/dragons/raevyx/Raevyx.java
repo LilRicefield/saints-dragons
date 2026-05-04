@@ -119,6 +119,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private static final int DODGE_DURATION_TICKS = 12;
     private static final int DODGE_IFRAMES_TICKS = 8;
     private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
+    private static final int RIDER_FLEX_CONTROL_LOCK_TICKS = 50;
+    private static final int RIDER_FLEX_COOLDOWN_TICKS = 20 * 5;
     private static final int AI_DODGE_COOLDOWN_TICKS = 60;
     private static final double DODGE_DISTANCE_BLOCKS = 20;
     private static final double AIR_DODGE_DISTANCE_MULTIPLIER = 5.75D;
@@ -161,6 +163,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("flex", "action", "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
             .add("raevyx_hurt", "instant", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
             .add("raevyx_die", "instant", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
@@ -178,6 +181,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     int dodgeCooldownTicks = 0;
     int aiDodgeCooldownTicks = 0;
     int dodgeIFramesTicks = 0;
+    private int riderFlexCooldownTicks = 0;
     private boolean lastDashWasRight = false;
     private final Map<Integer, Integer> dashHitCooldowns = new HashMap<>();
     private final DragonDashAndDodgeComponent dashMotion =
@@ -293,7 +297,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 TAUNT, TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+                 FLEX, TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -581,8 +585,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
 
         return switch (action) {
-            case TAUNT -> {
-                triggerAnim("action", "taunt");
+            case FLEX -> {
+                if (canRiderFlex()) {
+                    lockRiderControls(RIDER_FLEX_CONTROL_LOCK_TICKS);
+                    riderFlexCooldownTicks = RIDER_FLEX_COOLDOWN_TICKS;
+                    getNavigation().stop();
+                    setDeltaMovement(Vec3.ZERO);
+                    getSoundHandler().playVocal("flex");
+                }
                 yield true;
             }
             case DOUBLE_TAP_W -> {
@@ -600,6 +610,19 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             default -> false;
         };
     }
+
+    private boolean canRiderFlex() {
+        return !isBaby()
+                && onGround()
+                && !isFlying()
+                && !isTakeoff()
+                && !isLanding()
+                && !isInWaterOrBubble()
+                && !isGroundRending()
+                && riderFlexCooldownTicks <= 0
+                && !isBeaming();
+    }
+
     public Vec3 computeBeamStartFallback(float partialTicks) {
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
         double y = Mth.lerp(partialTicks, this.yo, this.getY());
@@ -1332,6 +1355,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         tickSittingState();
+        tickRiderFlexCooldown();
         tickStandardTakeoffAndGroundedAerialRecovery();
         tickRiderTakeoff();
         tickHurtSoundCooldown();
@@ -1434,6 +1458,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
 
         tickClientSideUpdates();
+    }
+
+    private void tickRiderFlexCooldown() {
+        if (riderFlexCooldownTicks > 0) {
+            riderFlexCooldownTicks--;
+        }
     }
 
     private void tickFlightLifecycle() {

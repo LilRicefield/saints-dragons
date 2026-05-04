@@ -336,6 +336,17 @@
       }
     ]
   },
+  "raevyx_flex": {
+    "subtitle": "Raevyx flexes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_flex",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "raevyx_bite": {
     "subtitle": "Raevyx bites",
     "sounds": [
@@ -927,6 +938,17 @@
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 32
+      }
+    ]
+  },
+  "ignivorus_flex": {
+    "subtitle": "Ignivorus flexes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_flex",
+        "volume": 3.0,
+        "pitch": 1.0,
+        "attenuation_distance": 48
       }
     ]
   },

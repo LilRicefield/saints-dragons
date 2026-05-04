@@ -38,6 +38,7 @@ public final class ModSounds {
     // Raevyx
     public static final Supplier<SoundEvent> RAEVYX_CONTENT = registerSound("raevyx_content");
     public static final Supplier<SoundEvent> RAEVYX_ROAR = registerSound("raevyx_roar");
+    public static final Supplier<SoundEvent> RAEVYX_FLEX = registerSound("raevyx_flex");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM = registerSound("raevyx_summon_storm");
     public static final Supplier<SoundEvent> RAEVYX_SUMMON_STORM_AIR = registerSound("raevyx_summon_storm_air");
     public static final Supplier<SoundEvent> RAEVYX_WALK = registerSound("raevyx_walk");
@@ -104,6 +105,7 @@ public final class ModSounds {
 
     // Ignivorus
     public static final Supplier<SoundEvent> IGNIVORUS_ROAR = registerSound("ignivorus_roar");
+    public static final Supplier<SoundEvent> IGNIVORUS_FLEX = registerSound("ignivorus_flex");
     public static final Supplier<SoundEvent> IGNIVORUS_BITE = registerSound("ignivorus_bite");
     public static final Supplier<SoundEvent> IGNIVORUS_WALK = registerSound("ignivorus_walk");
     public static final Supplier<SoundEvent> IGNIVORUS_RUN = registerSound("ignivorus_run");

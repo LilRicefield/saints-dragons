@@ -264,6 +264,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_shoots"));
         actionController.triggerableAnim("roar",
             RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
+        actionController.triggerableAnim("ignivorus_flex",
+            RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
         actionController.triggerableAnim("ultimate_start",
             RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
         actionController.triggerableAnim("ultimate",

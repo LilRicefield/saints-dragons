@@ -62,6 +62,7 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             return null;
         }
         int duration = switch (key) {
+            case "ignivorus_flex", "flex" -> 200;
             case "ignivorus_grumble1", "grumble1" -> 56;
             case "ignivorus_grumble2", "grumble2" -> 61;
             case "ignivorus_grumble3", "grumble3" -> 55;
