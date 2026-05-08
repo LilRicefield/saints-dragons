@@ -50,6 +50,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         super(GSON, "dragon_attributes");
         this.configDirectory = Services.PLATFORM.getConfigDirectory()
                 .resolve(SaintsDragonsCommon.MOD_ID)
+                .resolve("server")
                 .resolve("dragon_attributes");
         this.defaults = ImmutableMap.copyOf(buildDefaultConfigs());
         this.configs = IS_FORGE ? ImmutableMap.copyOf(buildDefaultConfigs()) : this.defaults;

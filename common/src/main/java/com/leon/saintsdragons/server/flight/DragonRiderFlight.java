@@ -28,6 +28,9 @@ public final class DragonRiderFlight {
         void setGoingDown(boolean value);
         void stopNavigation();
         void startTakeoffSequence(double minUpwardVelocity, int animationTicks);
+        default void startWaterBreachTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+            startTakeoffSequence(minUpwardVelocity, animationTicks);
+        }
         Vec3 getDeltaMovement();
         void setDeltaMovement(Vec3 movement);
         void markImpulse();
@@ -111,6 +114,9 @@ public final class DragonRiderFlight {
         boolean breachAttempt = config.allowWaterBreachTakeoff()
                 && host.isInWaterOrBubble()
                 && !host.isUnderWater();
+        if (breachAttempt && !hasBreachTakeoffClearance()) {
+            return false;
+        }
         if (!host.canTakeoff() && !breachAttempt) {
             return false;
         }
@@ -119,7 +125,11 @@ public final class DragonRiderFlight {
         host.setGoingDown(false);
         host.setGoingUp(true);
         host.onManualTakeoffStart();
-        applyTakeoffState(config.manualUpwardMin(), config.riderTakeoffTicksOnManual());
+        if (breachAttempt) {
+            applyWaterBreachTakeoffState(config.breachUpwardMin(), config.riderTakeoffTicksOnBreach());
+        } else {
+            applyTakeoffState(config.manualUpwardMin(), config.riderTakeoffTicksOnManual());
+        }
         return true;
     }
 
@@ -139,7 +149,7 @@ public final class DragonRiderFlight {
         if (!hasBreachTakeoffClearance()) {
             return false;
         }
-        applyTakeoffState(config.breachUpwardMin(), config.riderTakeoffTicksOnBreach());
+        applyWaterBreachTakeoffState(config.breachUpwardMin(), config.riderTakeoffTicksOnBreach());
         return true;
     }
 
@@ -150,6 +160,14 @@ public final class DragonRiderFlight {
 
     private void applyTakeoffState(double minUpwardVelocity, int riderTakeoffTicks) {
         host.startTakeoffSequence(minUpwardVelocity, riderTakeoffTicks);
+
+        if (riderTakeoffTicks > 0) {
+            host.setRiderTakeoffTicks(riderTakeoffTicks);
+        }
+    }
+
+    private void applyWaterBreachTakeoffState(double minUpwardVelocity, int riderTakeoffTicks) {
+        host.startWaterBreachTakeoffSequence(minUpwardVelocity, riderTakeoffTicks);
 
         if (riderTakeoffTicks > 0) {
             host.setRiderTakeoffTicks(riderTakeoffTicks);

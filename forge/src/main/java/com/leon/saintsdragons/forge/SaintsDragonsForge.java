@@ -62,8 +62,8 @@ import java.util.Map;
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
     private static final double ATTRIBUTE_CAP = 100000.0D;
-    private static final String FORGE_ATTRIBUTES_CONFIG_FILE = SaintsDragonsConfig.CONFIG_FOLDER + "/attributes.toml";
-    private static final String FORGE_CLIENT_CONFIG_FILE = SaintsDragonsConfig.CONFIG_FOLDER + "/client.toml";
+    private static final String FORGE_ATTRIBUTES_CONFIG_FILE = SaintsDragonsConfig.SERVER_CONFIG_FOLDER + "/attributes.toml";
+    private static final String FORGE_CLIENT_CONFIG_FILE = SaintsDragonsConfig.CLIENT_CONFIG_FOLDER + "/clientcommon.toml";
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
 

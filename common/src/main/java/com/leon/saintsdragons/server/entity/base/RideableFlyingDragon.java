@@ -22,6 +22,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
@@ -77,6 +78,14 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private int riderLandingBlendTicks = 0;
     private float prevSmoothedRoll = 0.0F;
     private float smoothedRoll = 0.0F;
+
+    protected abstract EntityDataAccessor<Boolean> getFlyingDataAccessor();
+
+    protected abstract EntityDataAccessor<Boolean> getTakeoffDataAccessor();
+
+    protected abstract EntityDataAccessor<Boolean> getHoveringDataAccessor();
+
+    protected abstract EntityDataAccessor<Boolean> getLandingDataAccessor();
 
     protected RideableFlyingDragon(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -268,6 +277,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             }
 
             @Override
+            public void startWaterBreachTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+                RideableFlyingDragon.this.startRiderWaterBreachTakeoffSequence(minUpwardVelocity, animationTicks);
+            }
+
+            @Override
             public Vec3 getDeltaMovement() { return RideableFlyingDragon.this.getDeltaMovement(); }
 
             @Override
@@ -319,10 +333,186 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return canTakeoff();
     }
 
+    public void startRiderWaterBreachTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        if (!canStartRiderWaterBreachTakeoffSequence()) {
+            return;
+        }
+        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+    }
+
+    protected boolean canStartRiderWaterBreachTakeoffSequence() {
+        return !isBaby()
+                && isAlive()
+                && isTame()
+                && isVehicle()
+                && !isFlying()
+                && !isRiderTakeoffLocked()
+                && isInWaterOrBubble()
+                && !isUnderWater()
+                && !isInLava()
+                && isGoingUp()
+                && hasRiderBreachTakeoffClearance()
+                && !isRiderWaterBreachTakeoffBlocked();
+    }
+
+    protected boolean isRiderWaterBreachTakeoffBlocked() {
+        return false;
+    }
+
     protected void onTakeoffStarted() {
     }
 
     protected void onTakeoffEnded() {
+    }
+
+    @Override
+    protected boolean isDragonFlying() {
+        return this.entityData.get(getFlyingDataAccessor());
+    }
+
+    @Override
+    public boolean isTakeoff() {
+        return this.entityData.get(getTakeoffDataAccessor());
+    }
+
+    @Override
+    public boolean isHovering() {
+        return this.entityData.get(getHoveringDataAccessor());
+    }
+
+    @Override
+    public boolean isLanding() {
+        return this.entityData.get(getLandingDataAccessor());
+    }
+
+    @Override
+    public void setFlying(boolean flying) {
+        boolean requestedFlying = normalizeFlyingStateRequest(flying);
+        if (!canApplyFlyingState(requestedFlying)) {
+            return;
+        }
+        boolean wasFlying = isFlying();
+        if (requestedFlying == wasFlying && !shouldReapplyUnchangedFlyingState(requestedFlying)) {
+            return;
+        }
+        if (requestedFlying && !wasFlying && shouldRedirectFlyingStartToTakeoff()) {
+            startTakeoffSequence(getRedirectedFlyingTakeoffVelocity(), getRedirectedFlyingTakeoffTicks());
+            return;
+        }
+
+        this.entityData.set(getFlyingDataAccessor(), requestedFlying);
+        afterFlyingDataSet(wasFlying, requestedFlying);
+
+        if (wasFlying == requestedFlying && !shouldReapplyUnchangedFlyingState(requestedFlying)) {
+            return;
+        }
+        if (wasFlying != requestedFlying || shouldReapplyUnchangedFlyingState(requestedFlying)) {
+            onFlyingStateChanged(wasFlying, requestedFlying);
+        }
+    }
+
+    protected boolean normalizeFlyingStateRequest(boolean flying) {
+        return flying;
+    }
+
+    protected boolean canApplyFlyingState(boolean flying) {
+        return true;
+    }
+
+    protected boolean shouldRedirectFlyingStartToTakeoff() {
+        return !isTakeoff() && onGround();
+    }
+
+    protected double getRedirectedFlyingTakeoffVelocity() {
+        return 0.12D;
+    }
+
+    protected int getRedirectedFlyingTakeoffTicks() {
+        return 20;
+    }
+
+    protected boolean shouldReapplyUnchangedFlyingState(boolean flying) {
+        return false;
+    }
+
+    protected void afterFlyingDataSet(boolean wasFlying, boolean flying) {
+    }
+
+    protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
+        if (wasFlying != flying) {
+            setAccelerating(false);
+        }
+        if (flying) {
+            onFlyingStarted();
+        } else {
+            onFlyingStopped();
+        }
+    }
+
+    protected void onFlyingStarted() {
+        switchToAirNavigation();
+        setRunning(false);
+    }
+
+    protected void onFlyingStopped() {
+        takeoffComponent.clear();
+        if (!isLanding()) {
+            switchToGroundNavigation();
+        }
+    }
+
+    @Override
+    public void setTakeoff(boolean takeoff) {
+        boolean requestedTakeoff = normalizeTakeoffStateRequest(takeoff);
+        boolean wasTakeoff = isTakeoff();
+        this.entityData.set(getTakeoffDataAccessor(), requestedTakeoff);
+        if (!requestedTakeoff && takeoffComponent.isActive()) {
+            takeoffComponent.clear();
+            return;
+        }
+        if (shouldRunTakeoffStateStarted(wasTakeoff, requestedTakeoff) && !level().isClientSide) {
+            onTakeoffStateStarted();
+        }
+    }
+
+    protected boolean normalizeTakeoffStateRequest(boolean takeoff) {
+        return takeoff;
+    }
+
+    protected boolean shouldRunTakeoffStateStarted(boolean wasTakeoff, boolean takeoff) {
+        return takeoff && !wasTakeoff;
+    }
+
+    protected void onTakeoffStateStarted() {
+    }
+
+    @Override
+    public void setHovering(boolean hovering) {
+        this.entityData.set(getHoveringDataAccessor(), normalizeHoveringStateRequest(hovering));
+    }
+
+    protected boolean normalizeHoveringStateRequest(boolean hovering) {
+        return hovering;
+    }
+
+    @Override
+    public void setLanding(boolean landing) {
+        if (!canApplyLandingState(landing)) {
+            return;
+        }
+        this.entityData.set(getLandingDataAccessor(), landing);
+        onLandingDataSet(landing);
+    }
+
+    protected boolean canApplyLandingState(boolean landing) {
+        return !(landing && onGround() && !isFlying() && !isTakeoff());
+    }
+
+    protected void onLandingDataSet(boolean landing) {
+        if (landing) {
+            setHovering(false);
+            setTakeoff(false);
+        }
     }
 
     protected int getTakeoffLiftDelayTicks() {
@@ -507,6 +697,115 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     protected boolean shouldClearRiderFlightStateInWater() {
         return riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks);
+    }
+
+    protected boolean clearRiderFlightStateInWaterIfNeeded() {
+        if (level().isClientSide || !isInWaterOrBubble() || !shouldClearRiderFlightStateInWater()) {
+            return false;
+        }
+        setFlying(false);
+        setTakeoff(false);
+        setHovering(false);
+        setLanding(false);
+        switchToGroundNavigation();
+        onRiderFlightStateClearedInWater();
+        return true;
+    }
+
+    protected void onRiderFlightStateClearedInWater() {
+    }
+
+    protected boolean shouldUseRiderFlightMovementInWater() {
+        return isInWaterOrBubble() && isFlying() && isGoingUp();
+    }
+
+    protected void handleRiderWaterSwimming(Vec3 input) {
+        Vec3 velocity = getDeltaMovement();
+        double swimSpeed = getRiderWaterSwimSpeed();
+        if (isAccelerating()) {
+            swimSpeed *= getRiderWaterSwimAccelerationMultiplier();
+        }
+
+        Vec3 desired = getRiderWaterSwimVector(input, swimSpeed);
+        Vec3 blended = velocity.add(desired.subtract(velocity).scale(getRiderWaterSwimBlend()));
+        blended = blended.multiply(getRiderWaterSwimHorizontalDrag(), getRiderWaterSwimVerticalDrag(), getRiderWaterSwimHorizontalDrag());
+
+        boolean breachingTakeoff = shouldPreserveRiderWaterBreachLift();
+        double dy = blended.y;
+        if (isGoingUp()) {
+            dy = breachingTakeoff
+                    ? Math.max(velocity.y, dy + getRiderWaterSwimAscendImpulse())
+                    : Math.min(swimSpeed * getRiderWaterSwimAscendCapFactor(), dy + getRiderWaterSwimAscendImpulse());
+        } else if (isGoingDown()) {
+            dy = Math.max(-swimSpeed * getRiderWaterSwimDescendCapFactor(), dy - getRiderWaterSwimDescendImpulse());
+        } else {
+            dy -= getRiderWaterSwimIdleSink();
+        }
+
+        Vec3 movement = new Vec3(blended.x, dy, blended.z);
+        setDeltaMovement(movement);
+        move(MoverType.SELF, getDeltaMovement());
+        tryAutoBreachRiderTakeoff();
+    }
+
+    protected Vec3 getRiderWaterSwimVector(Vec3 input, double swimSpeed) {
+        double strafe = input.x;
+        double forward = input.z;
+        float yawRad = getYRot() * Mth.DEG_TO_RAD;
+        double sin = Math.sin(yawRad);
+        double cos = Math.cos(yawRad);
+        double worldX = strafe * cos - forward * sin;
+        double worldZ = forward * cos + strafe * sin;
+        double scale = getRiderWaterSwimDirectionScale() * swimSpeed;
+        return new Vec3(worldX * scale, 0.0D, worldZ * scale);
+    }
+
+    protected boolean shouldPreserveRiderWaterBreachLift() {
+        return (isFlying() || isTakeoff()) && isGoingUp();
+    }
+
+    protected double getRiderWaterSwimSpeed() {
+        return 0.4D;
+    }
+
+    protected double getRiderWaterSwimAccelerationMultiplier() {
+        return 1.3D;
+    }
+
+    protected double getRiderWaterSwimDirectionScale() {
+        return 0.6D;
+    }
+
+    protected double getRiderWaterSwimBlend() {
+        return 0.15D;
+    }
+
+    protected double getRiderWaterSwimHorizontalDrag() {
+        return 0.88D;
+    }
+
+    protected double getRiderWaterSwimVerticalDrag() {
+        return 0.92D;
+    }
+
+    protected double getRiderWaterSwimAscendImpulse() {
+        return 0.08D;
+    }
+
+    protected double getRiderWaterSwimAscendCapFactor() {
+        return 0.6D;
+    }
+
+    protected double getRiderWaterSwimDescendImpulse() {
+        return 0.12D;
+    }
+
+    protected double getRiderWaterSwimDescendCapFactor() {
+        return 0.8D;
+    }
+
+    protected double getRiderWaterSwimIdleSink() {
+        return 0.03D;
     }
 
     protected void tickRiderTakeoff() {
@@ -917,6 +1216,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return null;
     }
 
+    protected EntityDataAccessor<Float> getAccumulatedRollAccessor() {
+        return null;
+    }
+
     protected void tickPitchingLandingBlendTimer() {
     }
 
@@ -1007,10 +1310,19 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     public float getAccumulatedRoll() {
+        EntityDataAccessor<Float> rollAccessor = getAccumulatedRollAccessor();
+        if (rollAccessor != null) {
+            return this.entityData.get(rollAccessor);
+        }
         return accumulatedRoll;
     }
 
     public void setAccumulatedRoll(float radians) {
+        EntityDataAccessor<Float> rollAccessor = getAccumulatedRollAccessor();
+        if (rollAccessor != null) {
+            this.entityData.set(rollAccessor, radians);
+            return;
+        }
         accumulatedRoll = radians;
     }
 
@@ -1020,6 +1332,22 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     public float getSmoothedRoll(float partialTick) {
         return Mth.lerp(partialTick, prevSmoothedRoll, smoothedRoll);
+    }
+
+    public float getBankAngleDegrees(float partialTick) {
+        DragonFlightVisuals.State state = getFlightVisualState();
+        if (state == null) {
+            return 0.0F;
+        }
+        return Mth.lerp(partialTick, state.prevBankAngle, state.bankAngle);
+    }
+
+    public float getFlightPitchRadians(float partialTick) {
+        DragonFlightVisuals.State state = getFlightVisualState();
+        if (state == null) {
+            return 0.0F;
+        }
+        return Mth.lerp(partialTick, state.prevFlightPitchRad, state.flightPitchRad);
     }
 
     protected float getBarrelRollInputSpeed() {
@@ -1249,16 +1577,4 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
         void onRiderLanded();
     }
-
-    @Override
-    protected abstract boolean isDragonFlying();
-
-    @Override
-    public abstract boolean isTakeoff();
-
-    @Override
-    public abstract boolean isLanding();
-
-    @Override
-    public abstract boolean isHovering();
 }

@@ -33,7 +33,9 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
+import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
+import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
@@ -225,9 +227,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private int spineDropCooldownTicks;
     private int ticksInWater;
     private int ticksOutOfWater;
-    private float bankSmoothedYaw = 0f;
-    private float bankAngle = 0f;
-    private float prevBankAngle = 0f;
+    private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private float flightPitchRad = 0f;
     private float prevFlightPitchRad = 0f;
     private float smoothedPlayerPitchRad = 0f;
@@ -299,6 +299,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         }
         super.startTakeoffSequence(minUpwardVelocity, animationTicks);
+    }
+
+    @Override
+    public void startRiderWaterBreachTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        startTakeoffSequence(minUpwardVelocity, animationTicks);
     }
 
     @Override
@@ -531,7 +536,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_S -> true;
+            case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_S -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -590,23 +595,23 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected boolean isDragonFlying() {
-        return this.entityData.get(DATA_FLYING);
+    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
+        return DATA_FLYING;
     }
 
     @Override
-    public boolean isTakeoff() {
-        return this.entityData.get(DATA_TAKEOFF);
+    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
+        return DATA_TAKEOFF;
     }
 
     @Override
-    public boolean isLanding() {
-        return this.entityData.get(DATA_LANDING);
+    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
+        return DATA_HOVERING;
     }
 
     @Override
-    public boolean isHovering() {
-        return this.entityData.get(DATA_HOVERING);
+    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
+        return DATA_LANDING;
     }
 
     @Override
@@ -639,8 +644,17 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    public void setFlying(boolean flying) {
-        this.entityData.set(DATA_FLYING, flying);
+    protected boolean shouldReapplyUnchangedFlyingState(boolean flying) {
+        return !flying;
+    }
+
+    @Override
+    protected boolean shouldRedirectFlyingStartToTakeoff() {
+        return false;
+    }
+
+    @Override
+    protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
         if (!flying) {
             takeoffComponent.clear();
             this.entityData.set(DATA_TAKEOFF, false);
@@ -650,30 +664,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    public void setTakeoff(boolean takeoff) {
-        boolean wasTakeoff = this.entityData.get(DATA_TAKEOFF);
-        this.entityData.set(DATA_TAKEOFF, takeoff);
-        if (!takeoff && takeoffComponent.isActive()) {
-            takeoffComponent.clear();
-            return;
-        }
-        if (takeoff && !wasTakeoff && !level().isClientSide && !isBaby()) {
+    protected void onTakeoffStateStarted() {
+        if (!isBaby()) {
             getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_TAKEOFF.get(), 2.0f, 1.0f, 50);
         }
     }
 
     @Override
-    public void setHovering(boolean hovering) {
-        this.entityData.set(DATA_HOVERING, hovering);
-    }
-
-    @Override
-    public void setLanding(boolean landing) {
-        this.entityData.set(DATA_LANDING, landing);
-        if (landing) {
-            setHovering(false);
-            setTakeoff(false);
-        }
+    protected boolean canApplyLandingState(boolean landing) {
+        return true;
     }
 
     @Override
@@ -821,10 +820,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
         if (action == DragonRiderAction.DOUBLE_TAP_W) {
             onRiderDash(player);
-            return true;
-        }
-        if (action == DragonRiderAction.TOGGLE_PITCH_MODE) {
-            setRiderPitchKeyMode(!isRiderPitchKeyMode());
             return true;
         }
         if (action == DragonRiderAction.DOUBLE_TAP_A) {
@@ -1461,9 +1456,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
-        if (tag.contains("RiderPitchKeyMode")) {
-            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
-        }
         tempInvulnTicks = Math.max(0, tag.getInt("VolitansTempInvulnTicks"));
         if (tempInvulnTicks > 0) {
             setInvulnerable(true);
@@ -1491,7 +1483,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         tag.putBoolean("VolitansWaterBreathDepleted", isWaterBreathDepleted());
         tag.putBoolean("VolitansPoisonBreathDepleted", isPoisonBreathDepleted());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
-        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("VolitansTempInvulnTicks", tempInvulnTicks);
         tamingController.save(tag);
     }
@@ -1808,12 +1799,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void setWaterBreathEnergy(float energy) {
-        float clamped = Mth.clamp(energy, 0.0F, 1.0F);
-        this.entityData.set(DATA_WATER_BREATH_ENERGY, clamped);
-        this.entityData.set(DATA_POISON_BREATH_ENERGY, clamped);
-        if (clamped >= BREATH_REARM_THRESHOLD && (isWaterBreathDepleted() || isPoisonBreathDepleted())) {
-            setWaterBreathDepleted(false);
-        }
+        DragonBreathComponent.setEnergy(getCurrentBreathGauge(), energy, BREATH_REARM_THRESHOLD);
     }
 
     public float getPoisonBreathEnergy() {
@@ -1833,7 +1819,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public boolean hasCurrentBreathEnergy() {
-        return getCurrentBreathEnergy() > BREATH_DEPLETED_THRESHOLD;
+        return DragonBreathComponent.canUse(getCurrentBreathGauge(), BREATH_DEPLETED_THRESHOLD);
     }
 
     public boolean isWaterBreathDepleted() {
@@ -1862,7 +1848,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public boolean canUseCurrentBreathMode() {
-        return hasCurrentBreathEnergy() && !isCurrentBreathDepleted();
+        return DragonBreathComponent.canUse(getCurrentBreathGauge(), BREATH_DEPLETED_THRESHOLD);
+    }
+
+    public boolean drainCurrentBreathEnergy(float amount) {
+        return DragonBreathComponent.drain(getCurrentBreathGauge(), amount, BREATH_DEPLETED_THRESHOLD, BREATH_REARM_THRESHOLD);
     }
 
     public boolean isBreathing() {
@@ -1901,8 +1891,34 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
 
         if (getWaterBreathEnergy() < 1.0F) {
-            setWaterBreathEnergy(getWaterBreathEnergy() + (float) getConfiguredExtra("breath_regen_per_tick", 0.0025D));
+            DragonBreathComponent.regen(getCurrentBreathGauge(), (float) getConfiguredExtra("breath_regen_per_tick", 0.0025D), BREATH_REARM_THRESHOLD);
         }
+    }
+
+    public DragonBreathComponent.Gauge getCurrentBreathGauge() {
+        return new DragonBreathComponent.Gauge() {
+            @Override
+            public float getEnergy() {
+                return Volitans.this.getWaterBreathEnergy();
+            }
+
+            @Override
+            public void setEnergyRaw(float energy) {
+                float clamped = Mth.clamp(energy, 0.0F, 1.0F);
+                Volitans.this.entityData.set(DATA_WATER_BREATH_ENERGY, clamped);
+                Volitans.this.entityData.set(DATA_POISON_BREATH_ENERGY, clamped);
+            }
+
+            @Override
+            public boolean isDepleted() {
+                return Volitans.this.isWaterBreathDepleted();
+            }
+
+            @Override
+            public void setDepleted(boolean depleted) {
+                Volitans.this.setWaterBreathDepleted(depleted);
+            }
+        };
     }
 
     public int getConfiguredPoisonLevel(String key, int fallbackLevel) {
@@ -2117,32 +2133,14 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void tickBankingLogic() {
-        prevBankAngle = bankAngle;
-
-        boolean shouldBank = isFlying() && !isLanding();
-        if (!shouldBank) {
-            bankSmoothedYaw = 0f;
-            bankAngle = 0f;
-            prevBankAngle = 0f;
-            return;
-        }
-
-        if (horizontalCollision || verticalCollision) {
-            bankSmoothedYaw *= 0.45f;
-            bankAngle = Mth.lerp(0.55f, bankAngle, 0f);
-            if (Math.abs(bankAngle) < 0.01f) {
-                bankAngle = 0f;
-            }
-            return;
-        }
-
-        float yawChange = Mth.wrapDegrees(getYRot() - yRotO);
-        bankSmoothedYaw = bankSmoothedYaw * 0.75f + yawChange * 0.25f;
-        float targetAngle = Mth.clamp(bankSmoothedYaw * 6.0f, -90f, 90f);
-        bankAngle = Mth.lerp(0.30f, bankAngle, targetAngle);
-        if (Math.abs(bankAngle) < 0.01f) {
-            bankAngle = 0f;
-        }
+        DragonFlightVisuals.tickBanking(
+                this.flightVisualState,
+                isFlying() && !isLanding(),
+                this.horizontalCollision,
+                this.verticalCollision,
+                this.getYRot(),
+                this.yRotO
+        );
     }
 
     private Vec3 getRiderDashForwardVector() {
@@ -2406,6 +2404,22 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         return new Vec3(-Mth.sin(yawRad), 0.0D, Mth.cos(yawRad)).normalize();
     }
 
+    @Override
+    protected DragonFlightVisuals.State getFlightVisualState() {
+        return this.flightVisualState;
+    }
+
+    @Override
+    protected EntityDataAccessor<Float> getFlightPitchAccessor() {
+        return DATA_FLIGHT_PITCH;
+    }
+
+    @Override
+    protected EntityDataAccessor<Float> getAccumulatedRollAccessor() {
+        return DATA_ACCUMULATED_ROLL;
+    }
+
+    // remove this and voli ain't pitching right
     private void tickPitchingLogic() {
         prevFlightPitchRad = flightPitchRad;
         if (level().isClientSide) {
@@ -2465,24 +2479,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.entityData.set(DATA_FLIGHT_PITCH, flightPitchRad);
     }
 
-    public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, prevBankAngle, bankAngle);
-    }
-
+    @Override
     public float getFlightPitchRadians(float partialTick) {
         return Mth.lerp(partialTick, prevFlightPitchRad, flightPitchRad);
-    }
-
-    public float getAccumulatedRoll() {
-        return this.entityData.get(DATA_ACCUMULATED_ROLL);
-    }
-
-    public void setAccumulatedRoll(float radians) {
-        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
-    }
-
-    public void addAccumulatedRoll(float radians) {
-        setAccumulatedRoll(getAccumulatedRoll() + radians);
     }
 
     @Override

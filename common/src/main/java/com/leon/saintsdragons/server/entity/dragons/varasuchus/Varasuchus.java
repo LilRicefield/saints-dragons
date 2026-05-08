@@ -51,6 +51,7 @@ import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.Cod;
+import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.Salmon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
@@ -176,7 +177,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case DOUBLE_TAP_W,
-                 TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+                 ABILITY_USE, ABILITY_STOP -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -271,10 +272,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         return switch (action) {
-            case TOGGLE_PITCH_MODE -> {
-                setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                yield true;
-            }
             case DOUBLE_TAP_W -> {
                 onRiderDash(player);
                 yield true;
@@ -535,6 +532,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     this::isWildAggressionEnabled,
                     target -> target instanceof Salmon
                             || target instanceof Cod
+                            || target instanceof Cow
             ));
         }
     }
@@ -2035,7 +2033,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         super.addAdditionalSaveData(tag);
         saveRideableData(tag);
         tag.putBoolean("PhaseTwo", isPhaseTwoActive());
-        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
     }
 
@@ -2048,9 +2045,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
         if (tag.contains("PhaseTwo")) {
             setPhaseTwoActive(tag.getBoolean("PhaseTwo"), false);
-        }
-        if (tag.contains("RiderPitchKeyMode")) {
-            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
         }
         applyConfiguredAttributes();
     }

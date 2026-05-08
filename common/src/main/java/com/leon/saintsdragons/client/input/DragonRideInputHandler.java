@@ -76,12 +76,6 @@ public final class DragonRideInputHandler {
             InputConstants.KEY_X,
             KEY_CATEGORY
     );
-    public static final KeyMapping DRAGON_TOGGLE_PITCH_MODE = new KeyMapping(
-            "key.saintsdragons.toggle_pitch_mode",
-            InputConstants.Type.KEYSYM,
-            InputConstants.KEY_Y,
-            KEY_CATEGORY
-    );
     public static final KeyMapping DRAGON_FLEX = new KeyMapping(
             "key.saintsdragons.flex",
             InputConstants.Type.KEYSYM,
@@ -97,7 +91,6 @@ public final class DragonRideInputHandler {
             DRAGON_PRIMARY_ABILITY,
             DRAGON_SECONDARY_ABILITY,
             DRAGON_TOGGLE_MELEE,
-            DRAGON_TOGGLE_PITCH_MODE,
             DRAGON_FLEX
     };
 
@@ -108,7 +101,7 @@ public final class DragonRideInputHandler {
     private static boolean wasSecondaryAbilityDown = false;
     private static boolean wasAttackDown = false;
     private static boolean wasToggleMeleeDown = false;
-    private static boolean wasTogglePitchModeDown = false;
+    private static boolean wasPitchLockDown = false;
     private static boolean wasFlexDown = false;
     private static int volitansTertiaryHoldTicks = 0;
     private static boolean volitansBreathActive = false;
@@ -178,7 +171,7 @@ public final class DragonRideInputHandler {
         boolean primaryDown = DRAGON_PRIMARY_ABILITY.isDown();
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
-        boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
+        boolean pitchLockDown = mc.options.keyUse.isDown();
         boolean flexDown = DRAGON_FLEX.isDown() && isCtrlDown(mc);
         boolean attackDown = mc.options.keyAttack.isDown();
         float forward = player.zza;
@@ -255,13 +248,11 @@ public final class DragonRideInputHandler {
                 );
             }
         }
-        if (togglePitchModeDown && !wasTogglePitchModeDown
-                && (dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Volitans
-                || dragon instanceof Varasuchus)) {
-            sendInput(false, false, DragonRiderAction.TOGGLE_PITCH_MODE, null, forward, strafe, yaw);
+        if (supportsPitchLock(dragon) && pitchLockDown != wasPitchLockDown) {
+            DragonRiderAction action = pitchLockDown
+                    ? DragonRiderAction.START_PITCH_MODE
+                    : DragonRiderAction.STOP_PITCH_MODE;
+            sendInput(false, false, action, null, forward, strafe, yaw);
         }
         if (flexDown && !wasFlexDown) {
             sendInput(false, false, DragonRiderAction.FLEX, null, forward, strafe, yaw);
@@ -345,7 +336,7 @@ public final class DragonRideInputHandler {
         wasSecondaryAbilityDown = secondaryDown;
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
-        wasTogglePitchModeDown = togglePitchModeDown;
+        wasPitchLockDown = pitchLockDown;
         wasFlexDown = flexDown;
     }
 
@@ -486,7 +477,7 @@ public final class DragonRideInputHandler {
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean attackDown = mc.options.keyAttack.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
-        boolean togglePitchModeDown = DRAGON_TOGGLE_PITCH_MODE.isDown();
+        boolean pitchLockDown = mc.options.keyUse.isDown();
         boolean flexDown = DRAGON_FLEX.isDown() && isCtrlDown(mc);
 
         if (dragon instanceof Volitans) {
@@ -510,13 +501,16 @@ public final class DragonRideInputHandler {
         handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
         handleLockedAbilityRelease(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown);
         handleLockedAbilityRelease(dragon.getAttackRiderAbility(), attackDown, wasAttackDown);
+        if (wasPitchLockDown && !pitchLockDown) {
+            sendInput(false, false, DragonRiderAction.STOP_PITCH_MODE, null, 0f, 0f, 0f);
+        }
         resetStateTracking();
         wasTertiaryAbilityDown = tertiaryDown;
         wasPrimaryAbilityDown = primaryDown;
         wasSecondaryAbilityDown = secondaryDown;
         wasAttackDown = attackDown;
         wasToggleMeleeDown = toggleMeleeDown;
-        wasTogglePitchModeDown = togglePitchModeDown;
+        wasPitchLockDown = pitchLockDown;
         wasFlexDown = flexDown;
     }
 
@@ -561,7 +555,7 @@ public final class DragonRideInputHandler {
         wasSecondaryAbilityDown = false;
         wasAttackDown = false;
         wasToggleMeleeDown = false;
-        wasTogglePitchModeDown = false;
+        wasPitchLockDown = false;
         wasFlexDown = false;
         volitansPrimaryPressStartedAtMs = 0L;
         volitansPoisonBallActive = false;
@@ -588,6 +582,14 @@ public final class DragonRideInputHandler {
         long window = mc.getWindow().getWindow();
         return InputConstants.isKeyDown(window, InputConstants.KEY_LCONTROL)
                 || InputConstants.isKeyDown(window, InputConstants.KEY_RCONTROL);
+    }
+
+    private static boolean supportsPitchLock(RideableDragonBase dragon) {
+        return dragon instanceof Raevyx
+                || dragon instanceof Cindervane
+                || dragon instanceof Ignivorus
+                || dragon instanceof Volitans
+                || dragon instanceof Varasuchus;
     }
 
 }

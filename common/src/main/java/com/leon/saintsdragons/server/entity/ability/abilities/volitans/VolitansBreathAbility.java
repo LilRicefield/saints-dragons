@@ -105,10 +105,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
 
         float drainPerTick = (float) dragon.getConfiguredExtra("breath_drain_per_tick", 1.0D / (20.0D * 12.0D));
-        float energy = Math.max(0.0F, dragon.getCurrentBreathEnergy() - drainPerTick);
-        dragon.setCurrentBreathEnergy(energy);
-        if (!dragon.hasCurrentBreathEnergy()) {
-            dragon.setCurrentBreathDepleted(true);
+        if (!dragon.drainCurrentBreathEnergy(drainPerTick)) {
             interrupt();
             return;
         }

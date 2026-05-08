@@ -213,6 +213,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case ABILITY_USE -> { if (!locked) onRiderAbilityUse(player, abilityName); }
             case ABILITY_STOP -> { if (!locked) onRiderAbilityStop(player, abilityName); }
             case TOGGLE_MELEE -> { if (!locked) onRiderToggleMelee(player); }
+            case START_PITCH_MODE -> { if (!locked) setRiderPitchKeyMode(true); }
+            case STOP_PITCH_MODE -> setRiderPitchKeyMode(false);
             case DOUBLE_TAP_A -> { if (!locked) onRiderDodge(player, true); }
             case DOUBLE_TAP_D -> { if (!locked) onRiderDodge(player, false); }
             case OPEN_INVENTORY -> { if (!locked) onRiderOpenInventory(player); }
@@ -227,12 +229,15 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case TAKEOFF_REQUEST, ACCELERATE, STOP_ACCELERATE, TOGGLE_MELEE -> true;
+            case TAKEOFF_REQUEST, ACCELERATE, STOP_ACCELERATE, TOGGLE_MELEE, START_PITCH_MODE, STOP_PITCH_MODE -> true;
             case ABILITY_USE, ABILITY_STOP,
                  DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 FLEX, TOGGLE_PITCH_MODE, OPEN_INVENTORY -> false;
+                 FLEX, OPEN_INVENTORY -> false;
             default -> true;
         };
+    }
+
+    public void setRiderPitchKeyMode(boolean enabled) {
     }
 
     private void warnMissingAction(String action) {
@@ -607,6 +612,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     public void removePassenger(@NotNull Entity passenger) {
         if (passenger == getControllingPassenger()) {
             clearRiderControlLock();
+            setRiderPitchKeyMode(false);
         }
         super.removePassenger(passenger);
         if (!this.level().isClientSide) {

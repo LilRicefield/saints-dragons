@@ -120,8 +120,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private static final int DODGE_DURATION_TICKS = 12;
     private static final int DODGE_IFRAMES_TICKS = 8;
     private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
-    private static final int RIDER_FLEX_CONTROL_LOCK_TICKS = 50;
-    private static final int RIDER_FLEX_COOLDOWN_TICKS = 20 * 5;
+    private static final int RIDER_FLEX_CONTROL_LOCK_TICKS = 65;
+    private static final int RIDER_FLEX_COOLDOWN_TICKS = 40;
     private static final int AI_DODGE_COOLDOWN_TICKS = 60;
     private static final double DODGE_DISTANCE_BLOCKS = 20;
     private static final double AIR_DODGE_DISTANCE_MULTIPLIER = 5.75D;
@@ -298,7 +298,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 FLEX, TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+                 FLEX, ABILITY_USE, ABILITY_STOP -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -604,10 +604,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 onRiderBackwardDodge(player);
                 yield true;
             }
-            case TOGGLE_PITCH_MODE -> {
-                setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                yield true;
-            }
             default -> false;
         };
     }
@@ -815,53 +811,61 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
         return hit.getLocation();
     }
-    public void setFlying(boolean flying) {
-        if (flying && this.isBaby()) flying = false;
-        if (!flying && isVehicle() && !isOrderedToSit() && !onGround()) {
-
-            return;
-        }
-        boolean wasFlying = isFlying();
-        if (flying && !wasFlying && !isTakeoff() && this.onGround()) {
-            startTakeoffSequence(0.11D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        this.entityData.set(DATA_FLYING, flying);
-        if (wasFlying != flying) {
-            this.setAccelerating(false);
-        }
-
-        if (wasFlying != flying) {
-            if (flying) {
-                switchToAirNavigation();
-                setRunning(false);
-            } else {
-                takeoffComponent.clear();
-                if (!isLanding()) {
-                    switchToGroundNavigation();
-                }
-            }
-        }
+    @Override
+    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
+        return DATA_FLYING;
     }
 
-    public void setTakeoff(boolean takeoff) {
-        if (takeoff && this.isBaby()) takeoff = false;
-        boolean wasTakeoff = isTakeoff();
-        this.entityData.set(DATA_TAKEOFF, takeoff);
-        if (!takeoff && takeoffComponent.isActive()) {
-            takeoffComponent.clear();
-            return;
-        }
-        if (takeoff && !wasTakeoff && !level().isClientSide) {
-            triggerAnim("instant", getControllingPassenger() != null ? "rider_takeoff" : "takeoff");
-            float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
-            getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
-        }
+    @Override
+    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
+        return DATA_TAKEOFF;
     }
 
-    public void setHovering(boolean hovering) {
-        if (hovering && this.isBaby()) hovering = false;
-        this.entityData.set(DATA_HOVERING, hovering);
+    @Override
+    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
+        return DATA_HOVERING;
+    }
+
+    @Override
+    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
+        return DATA_LANDING;
+    }
+
+    @Override
+    protected boolean normalizeFlyingStateRequest(boolean flying) {
+        return flying && !isBaby();
+    }
+
+    @Override
+    protected boolean canApplyFlyingState(boolean flying) {
+        return flying || !isVehicle() || isOrderedToSit() || onGround();
+    }
+
+    @Override
+    protected double getRedirectedFlyingTakeoffVelocity() {
+        return 0.11D;
+    }
+
+    @Override
+    protected int getRedirectedFlyingTakeoffTicks() {
+        return TAKEOFF_ANIMATION_TICKS;
+    }
+
+    @Override
+    protected boolean normalizeTakeoffStateRequest(boolean takeoff) {
+        return takeoff && !isBaby();
+    }
+
+    @Override
+    protected void onTakeoffStateStarted() {
+        triggerAnim("instant", getControllingPassenger() != null ? "rider_takeoff" : "takeoff");
+        float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
+        getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
+    }
+
+    @Override
+    protected boolean normalizeHoveringStateRequest(boolean hovering) {
+        return hovering && !isBaby();
     }
 
     public boolean isActuallyRunning() {
@@ -871,15 +875,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
 
-    public void setLanding(boolean landing) {
-        if (landing && isVehicle()) {
-            return;
-        }
-        if (landing && this.onGround() && !this.isFlying() && !this.isTakeoff()) {
-            return;
-        }
+    @Override
+    protected boolean canApplyLandingState(boolean landing) {
+        return !(landing && isVehicle()) && super.canApplyLandingState(landing);
+    }
 
-        this.entityData.set(DATA_LANDING, landing);
+    @Override
+    protected void onLandingDataSet(boolean landing) {
         if (landing) {
             landingTimer = 0;
             this.setTakeoff(false);
@@ -918,28 +920,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return isGroundRending();
     }
 
-    @Override
-    protected boolean isDragonFlying() {
-        return getBooleanData(DATA_FLYING);
-    }
-    
-    @Override
-    public boolean isTakeoff() {
-        return getBooleanData(DATA_TAKEOFF);
-    }
-    
-    @Override
-    public boolean isLanding() {
-        return getBooleanData(DATA_LANDING);
-    }
-
     public boolean isLanded() {
         return getBooleanData(DATA_LANDED);
-    }
-
-    @Override
-    public boolean isHovering() {
-        return getBooleanData(DATA_HOVERING);
     }
     
     @Override
@@ -1011,16 +993,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return riderController.getDismountLocationForPassenger(passenger);
     }
 
-
     public boolean isDodging() { return dodgeMotion.isActive(); }
     public boolean isDashing() {
         return this.entityData.get(DATA_DASHING);
     }
-
     public boolean wasLastDashRight() {
         return this.entityData.get(DATA_LAST_DASH_RIGHT);
     }
-
     public boolean isGroundRending() { return this.entityData.get(DATA_GROUND_RENDING); }
     public void setGroundRending(boolean rending) {
         boolean wasGroundRending = this.groundRending;
@@ -1347,7 +1326,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         super.tick();
         tickControllers();
         tickBankingLogic();
-        tickPitchingLogic();
+        tickStandardPitchingLogic();
         tickBarrelRollLogic();
         tickRunningTime();
         tickScreenShake();
@@ -1962,10 +1941,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
     }
 
-    private void tickPitchingLogic() {
-        tickStandardPitchingLogic();
-    }
-
     @Override
     protected DragonFlightVisuals.State getFlightVisualState() {
         return this.flightVisualState;
@@ -1974,6 +1949,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {
         return DATA_FLIGHT_PITCH;
+    }
+
+    @Override
+    protected EntityDataAccessor<Float> getAccumulatedRollAccessor() {
+        return DATA_ACCUMULATED_ROLL;
     }
 
     @Override
@@ -2081,23 +2061,17 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
         if (inWater) {
-            if (!level().isClientSide) {
-                if (shouldClearRiderFlightStateInWater()) {
-                    this.setFlying(false);
-                    this.setTakeoff(false);
-                    this.setHovering(false);
-                    this.setLanding(false);
-                    this.switchToGroundNavigation();
-                }
-            }
+            clearRiderFlightStateInWaterIfNeeded();
         }
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
-            if (inWater) {
-                handleWaterSwimming(motion);
+            if (shouldUseRiderFlightMovementInWater()) {
+                this.riderController.handleRiderMovement(player, motion);
+            } else if (inWater) {
+                handleRiderWaterSwimming(motion);
             } else if (isFlying()) {
                 this.riderController.handleRiderMovement(player, motion);
             } else {
@@ -2107,53 +2081,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         } else {
             super.travel(motion);
         }
-    }
-
-    private void handleWaterSwimming(Vec3 input) {
-        Vec3 velocity = this.getDeltaMovement();
-        double swimSpeed = 0.4D;
-        if (isAccelerating()) {
-            swimSpeed *= 1.3D;
-        }
-        Vec3 desired = getSwimVec3(input, swimSpeed, velocity);
-        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.15D));
-        double dragFactor = 0.88D;
-        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
-        double dy = blended.y;
-        if (isGoingUp()) {
-            dy = Math.min(swimSpeed * 0.6D, dy + 0.08D);
-        } else if (isGoingDown()) {
-            dy = Math.max(-swimSpeed * 0.8D, dy - 0.12D);
-        } else {
-            dy -= 0.03D;
-        }
-
-        blended = new Vec3(blended.x, dy, blended.z);
-
-        this.setDeltaMovement(blended);
-        this.move(MoverType.SELF, this.getDeltaMovement());
-        boolean atSurface = !this.isUnderWater(); // Head above water
-        boolean tryingToAscend = isGoingUp();
-        boolean hasHeadroom = hasRiderBreachTakeoffClearance();
-
-        if (!this.isFlying() && atSurface && tryingToAscend && hasHeadroom) {
-            if (!level().isClientSide) {
-                tryAutoBreachRiderTakeoff();
-            }
-        }
-    }
-
-    private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
-        double strafe = wishDir.x;
-        double forward = wishDir.z;
-        float yawRad = this.getYRot() * ((float) Math.PI / 180F);
-        double sin = Math.sin(yawRad);
-        double cos = Math.cos(yawRad);
-        double worldX = strafe * cos - forward * sin;
-        double worldZ = forward * cos + strafe * sin;
-        double dx = worldX * 0.6D * swimSpeed;
-        double dz = worldZ * 0.6D * swimSpeed;
-        return new Vec3(dx, 0, dz);
     }
 
     @SuppressWarnings("unused")
@@ -2292,23 +2219,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public void thunderHit(@Nonnull ServerLevel level, @Nonnull LightningBolt lightning) {
         if (this.isOnFire()) this.clearFire();
     }
-    public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
-    }
-    public float getFlightPitchRadians(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
-    }
-    public float getAccumulatedRoll() {
-        return this.entityData.get(DATA_ACCUMULATED_ROLL);
-    }
-
-    public void setAccumulatedRoll(float radians) {
-        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
-    }
-    public void addAccumulatedRoll(float radians) {
-        setAccumulatedRoll(getAccumulatedRoll() + radians);
-    }
-
     @Override
     protected boolean canUseBarrelRoll() {
         return isFlying()
@@ -2778,7 +2688,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tag.putInt("SuperchargeTicks", Math.max(0, this.superchargeTicks));
         tag.putInt("TempInvulnTicks", Math.max(0, this.tempInvulnTicks));
         tag.putBoolean("AllowGroundBeamStorm", this.allowGroundBeamDuringStorm);
-        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tag.putFloat("BeamEnergy", getBeamEnergy());
         tag.putBoolean("BeamDepleted", isBeamDepleted());
@@ -2797,9 +2706,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.landingTimer = tag.contains("LandingTimer") ? tag.getInt("LandingTimer") : 0;
         this.landedFlag = tag.contains("LandedFlag") && tag.getBoolean("LandedFlag");
         this.landedTimer = tag.contains("LandedTimer") ? tag.getInt("LandedTimer") : 0;
-        if (tag.contains("RiderPitchKeyMode")) {
-            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
-        }
         if (!savedFlying) {
             landingTimer = 0;
         }

@@ -2,12 +2,8 @@
   "replace": false,
   "values": [
     {"id": "#c:is_plains", "required": false},
-    {"id": "#minecraft:is_river", "required": false},
-    {"id": "#c:is_river", "required": false},
-    {"id": "#forge:is_river", "required": false},
     "minecraft:plains",
     "minecraft:sunflower_plains",
-    "minecraft:river",
     "minecraft:stony_shore",
     {"id": "biomesoplenty:floodplain", "required":  false},
     {"id": "biomesoplenty:marsh", "required":  false},

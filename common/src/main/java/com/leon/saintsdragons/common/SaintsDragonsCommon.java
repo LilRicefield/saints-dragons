@@ -29,13 +29,10 @@ public final class SaintsDragonsCommon {
     }
 
     public static void init() {
-        // Initialize GeckoLib runtime (required for animations)
         GeckoLib.initialize();
         SaintsDragonsConfig.bootstrap();
         DragonAttributeConfigLoader.bootstrap();
-        // GeckoLib data tickets MUST be registered first (before entities use them)
         DragonAnimTickets.bootstrap();
-
         ModEntities.register();
         ModBlocks.register();
         ModBlockEntities.register();
@@ -47,8 +44,6 @@ public final class SaintsDragonsCommon {
         ModSounds.register();
         ModParticles.register();
         SaintsCreativeTab.register();
-
-        // Ensure ability registries are loaded on both logical sides.
         RaevyxAbilities.init();
         VarasuchusAbilities.init();
         IgnivorusAbilities.init();

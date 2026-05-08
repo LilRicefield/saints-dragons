@@ -1729,7 +1729,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (this.isBaby()) {
             return false;
         }
-        if (this.getHappiness() < 30) {
+        if (this.getHappiness() <= 30) {
             if (!this.level().isClientSide && this.level() instanceof ServerLevel serverLevel) {
                 serverLevel.sendParticles(
                         ParticleTypes.ANGRY_VILLAGER,

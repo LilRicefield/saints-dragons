@@ -6,15 +6,11 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
-import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,15 +26,11 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private static final int AI_ACTIVE_TICKS = 80;
     private static final int COOLDOWN_TICKS = 40;
     private static final float DEFAULT_FIRE_BREATH_DRAIN_PER_TICK = 1.0f / RIDER_ACTIVE_TICKS;
-    private static final double MAX_RANGE = 64.0D;
-    private static final double IMPACT_RADIUS = 1.25D;
+    private static final double VISUAL_RANGE = 24.0D;
     private static final float DEFAULT_DAMAGE_PER_SECOND = 80.0F;
-    private static final int FIRE_DURATION_SECONDS = 3;
     private static final double FLAME_SPAWN_OFFSET_FORWARD = 0.0;
     private static final double FLAME_SPAWN_OFFSET_UP = 0.0;
     private static final double FLAME_SPAWN_OFFSET_RIGHT = 0.0;
-    private static final int ABILITY_ACTIVE_BEFORE_MELTING = 80;
-    private static final int BLOCK_MELT_TICKS = 40;
     private static final int FLAME_SPAWN_MIN = 3;
     private static final int FLAME_SPAWN_MAX = 5;
     private static final double DEFAULT_FLAME_SPAWN_MULTIPLIER = 1.0D;
@@ -57,7 +49,6 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private boolean breathStartPlayed = false;
     private boolean breathLoopActive = false;
-    private int totalActiveTicks = 0;
 
     public IgnivorusFireBreathAbility(DragonAbilityType<Ignivorus, IgnivorusFireBreathAbility> type,
                                       Ignivorus user) {
@@ -86,7 +77,6 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             }
             breathStartPlayed = true;
             breathLoopActive = false;
-            totalActiveTicks = 0;
             dragon.setBreathingFire(false);
             dragon.setFireBreathProgress(0);
             dragon.clearFireBreathPath();
@@ -123,7 +113,6 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         dragon.setBreathingFire(false);
         dragon.setFireBreathProgress(0);
         dragon.clearFireBreathPath();
-        totalActiveTicks = 0;
         triggerBreathStop(dragon);
         super.interrupt();
     }
@@ -166,17 +155,11 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 return;
             }
         }
-        totalActiveTicks++;
         if (!dragon.level().isClientSide) {
             float drain = (float) DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                     .extraDouble("fire_breath_drain_per_tick", DEFAULT_FIRE_BREATH_DRAIN_PER_TICK);
-            drain = Math.max(0.0f, drain);
-            if (drain > 0.0f) {
-                dragon.setFireBreathEnergy(Math.max(0.0f, dragon.getFireBreathEnergy() - drain));
-            }
-            if (!dragon.hasFireBreathEnergy()) {
-                dragon.setFireBreathDepleted(true);
+            if (!dragon.drainFireBreathEnergy(drain)) {
                 interrupt();
                 return;
             }
@@ -197,31 +180,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.clearFireBreathPath();
             return;
         }
-        Vec3 impact = traceImpact(dragon, origin, aim);
-        dragon.syncFireBreathPath(origin, impact);
-        int spawnedFlames = 0;
+        dragon.syncFireBreathPath(origin, origin.add(aim.normalize().scale(VISUAL_RANGE)));
         if (dragon.level() instanceof ServerLevel serverLevel) {
-            spawnedFlames = spawnFlameProjectiles(serverLevel, dragon, origin, aim);
-        }
-
-        if (currentProgress > 10 && dragon.level() instanceof ServerLevel serverLevel) {
-            double sizeScale = Math.max(0.8D, dragon.getBbWidth());
-            double baseRadius = IMPACT_RADIUS * sizeScale;
-            double progressRatio = Math.min(1.0, currentProgress / 40.0);
-            Vec3 currentImpact = origin.add(impact.subtract(origin).scale(progressRatio));
-            boolean canMeltBlocks = totalActiveTicks >= ABILITY_ACTIVE_BEFORE_MELTING && DragonGriefingRules.canDestroyBlocks(serverLevel);
-            float fallbackImpactDamage = 0.0f;
-            DragonDestructionManager.applyFireBreathImpact(
-                serverLevel,
-                dragon,
-                currentImpact,
-                baseRadius,
-                fallbackImpactDamage,
-                FIRE_DURATION_SECONDS,
-                BLOCK_MELT_TICKS,
-                canMeltBlocks,
-                false
-            );
+            spawnFlameProjectiles(serverLevel, dragon, origin, aim);
         }
     }
 
@@ -230,16 +191,6 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                 .abilityDamage("fire_breath", DEFAULT_DAMAGE_PER_SECOND);
         return configDamagePerSecond / 20.0F;
-    }
-
-    private Vec3 traceImpact(Ignivorus dragon, Vec3 origin, Vec3 direction) {
-        Vec3 reach = origin.add(direction.scale(MAX_RANGE));
-        ClipContext ctx = new ClipContext(origin, reach, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, dragon);
-        HitResult hit = dragon.level().clip(ctx);
-        if (hit == null || hit.getType() == HitResult.Type.MISS) {
-            return reach;
-        }
-        return hit.getLocation();
     }
 
     private int spawnFlameProjectiles(ServerLevel level, Ignivorus dragon, Vec3 origin, Vec3 direction) {

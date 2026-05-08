@@ -7,8 +7,10 @@ import java.util.Collections;
 
 public final class SaintsDragonsConfig {
     public static final String CONFIG_FOLDER = "saintsdragons";
-    public static final String SPAWNING_CONFIG_FILE = CONFIG_FOLDER + "/spawning.toml";
-    public static final String SERVER_CONFIG_FILE = CONFIG_FOLDER + "/server.toml";
+    public static final String CLIENT_CONFIG_FOLDER = CONFIG_FOLDER + "/client";
+    public static final String SERVER_CONFIG_FOLDER = CONFIG_FOLDER + "/server";
+    public static final String SPAWNING_CONFIG_FILE = SERVER_CONFIG_FOLDER + "/spawning.toml";
+    public static final String SERVER_CONFIG_FILE = SERVER_CONFIG_FOLDER + "/servercommon.toml";
 
     public static final int SPAWN_WEIGHT_MAX = 5000;
     public static final int RAEVYX_SPAWN_WEIGHT_DEFAULT = 1;

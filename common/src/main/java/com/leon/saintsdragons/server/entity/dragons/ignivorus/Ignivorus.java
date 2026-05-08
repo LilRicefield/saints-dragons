@@ -31,6 +31,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
+import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -61,7 +62,6 @@ import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Sheep;
 import javax.annotation.Nonnull;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -297,7 +297,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 0.25D,
                 0,
                 0.45D,
-                0
+                TAKEOFF_ANIMATION_TICKS
         );
     }
 
@@ -399,7 +399,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP, FLEX -> true;
+                 ABILITY_USE, ABILITY_STOP, FLEX -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -462,7 +462,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
         tickBankingLogic();
         tickBarrelRollLogic();
-        tickPitchingLogic();
+        tickStandardPitchingLogic();
 
         if (!level().isClientSide) {
             if (isBaby()) {
@@ -1302,10 +1302,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
+        if (inWater) {
+            clearRiderFlightStateInWaterIfNeeded();
+        }
+
         if (this.isVehicle() && riderController.getRidingPlayer() != null) {
             Player rider = riderController.getRidingPlayer();
-            if (inWater) {
-                handleWaterSwimming(travelVec);
+            if (shouldUseRiderFlightMovementInWater()) {
+                riderController.handleRiderMovement(rider, travelVec);
+            } else if (inWater) {
+                handleRiderWaterSwimming(travelVec);
             } else if (isFlying()) {
                 riderController.handleRiderMovement(rider, travelVec);
             } else {
@@ -1316,7 +1322,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
 
         if (inWater) {
-            handleWaterSwimming(travelVec);
+            handleRiderWaterSwimming(travelVec);
             return;
         }
 
@@ -1328,50 +1334,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         return riderController.getRiddenSpeed(rider);
     }
 
-    private void handleWaterSwimming(Vec3 input) {
-        if ((isFlying() || isTakeoff() || isLanding() || isHovering()) && !isGoingUp()) {
-            setFlying(false);
-            setTakeoff(false);
-            setLanding(false);
-            setHovering(false);
-            timeFlying = 0;
-            switchToGroundNavigation();
-        }
-        Vec3 velocity = this.getDeltaMovement();
-        double swimSpeed = 0.4D;
-        if (isAccelerating()) {
-            swimSpeed *= 1.3D;
-        }
-        Vec3 desired = getSwimVec3(input, swimSpeed);
-        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.15D));
-        double dragFactor = 0.88D;
-        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
-        double dy = blended.y;
-        if (isGoingUp()) {
-            dy = Math.min(swimSpeed * 0.6D, dy + 0.08D);
-        } else if (isGoingDown()) {
-            dy = Math.max(-swimSpeed * 0.8D, dy - 0.12D);
-        } else {
-            dy -= 0.03D;
-        }
-        blended = new Vec3(blended.x, dy, blended.z);
-        this.setDeltaMovement(blended);
-        this.move(MoverType.SELF, this.getDeltaMovement());
-        tryAutoBreachRiderTakeoff();
-    }
-
-    private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed) {
-        double strafe = wishDir.x;
-        double forward = wishDir.z;
-        float yawRad = this.getYRot() * ((float) Math.PI / 180F);
-        double sin = Math.sin(yawRad);
-        double cos = Math.cos(yawRad);
-        double worldX = strafe * cos - forward * sin;
-        double worldZ = forward * cos + strafe * sin;
-        double dx = worldX * 0.6D * swimSpeed;
-        double dz = worldZ * 0.6D * swimSpeed;
-
-        return new Vec3(dx, 0.0D, dz);
+    @Override
+    protected void onRiderFlightStateClearedInWater() {
+        timeFlying = 0;
     }
 
     private boolean isPhaseTwoRidingAbilityBlocked(String abilityName) {
@@ -1454,10 +1419,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             getNavigation().stop();
             setDeltaMovement(Vec3.ZERO);
             getSoundHandler().playVocal("ignivorus_flex");
-            return true;
-        }
-        if (action == DragonRiderAction.TOGGLE_PITCH_MODE) {
-            setRiderPitchKeyMode(!isRiderPitchKeyMode());
             return true;
         }
         return false;
@@ -2043,77 +2004,60 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 && !isInLava();
     }
 
-    public void setFlying(boolean flying) {
-        if (flying && !this.isVehicle() && (this.isInWater() || this.isInWaterOrBubble() || this.isInLava())) {
-            return;
-        }
-        boolean wasFlying = isFlying();
-        if (flying && !wasFlying && !isTakeoff() && this.onGround()) {
-            startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        this.entityData.set(DATA_FLYING, flying);
-
-        if (wasFlying != flying) {
-            this.setAccelerating(false);
-            if (flying) {
-                enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player p ? p : null);
-                switchToAirNavigation();
-                setRunning(false);
-            } else {
-                takeoffComponent.clear();
-                if (!isLanding()) {
-                    switchToGroundNavigation();
-                }
-            }
-        }
+    @Override
+    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
+        return DATA_FLYING;
     }
 
-    public void setTakeoff(boolean takeoff) {
-        this.entityData.set(DATA_TAKEOFF, takeoff);
-        if (!takeoff && takeoffComponent.isActive()) {
-            takeoffComponent.clear();
-            return;
-        }
-        if (takeoff && !level().isClientSide) {
-            triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
-            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
-        }
+    @Override
+    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
+        return DATA_TAKEOFF;
     }
 
-    public void setHovering(boolean hovering) {
-        this.entityData.set(DATA_HOVERING, hovering);
+    @Override
+    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
+        return DATA_HOVERING;
     }
 
-    public void setLanding(boolean landing) {
-        if (landing && this.onGround() && !this.isFlying() && !this.isTakeoff()) {
-            return;
-        }
-        this.entityData.set(DATA_LANDING, landing);
+    @Override
+    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
+        return DATA_LANDING;
+    }
+
+    @Override
+    protected boolean canApplyFlyingState(boolean flying) {
+        return !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
+    }
+
+    @Override
+    protected int getRedirectedFlyingTakeoffTicks() {
+        return TAKEOFF_ANIMATION_TICKS;
+    }
+
+    @Override
+    protected void onFlyingStarted() {
+        enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player p ? p : null);
+        switchToAirNavigation();
+        setRunning(false);
+    }
+
+    @Override
+    protected boolean shouldRunTakeoffStateStarted(boolean wasTakeoff, boolean takeoff) {
+        return takeoff;
+    }
+
+    @Override
+    protected void onTakeoffStateStarted() {
+        triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
+        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
+    }
+
+    @Override
+    protected void onLandingDataSet(boolean landing) {
     }
 
     @Override
     public void setRunning(boolean running) {
-    }
-
-    @Override
-    protected boolean isDragonFlying() {
-        return this.entityData.get(DATA_FLYING);
-    }
-
-    @Override
-    public boolean isTakeoff() {
-        return this.entityData.get(DATA_TAKEOFF);
-    }
-
-    @Override
-    public boolean isHovering() {
-        return this.entityData.get(DATA_HOVERING);
-    }
-
-    @Override
-    public boolean isLanding() {
-        return this.entityData.get(DATA_LANDING);
     }
 
     @Override
@@ -2157,15 +2101,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     public void setFireBreathEnergy(float energy) {
-        float clamped = Mth.clamp(energy, 0.0f, 1.0f);
-        this.entityData.set(DATA_FIRE_BREATH_ENERGY, clamped);
-        if (clamped >= FIRE_BREATH_REARM_THRESHOLD && isFireBreathDepleted()) {
-            setFireBreathDepleted(false);
-        }
+        DragonBreathComponent.setEnergy(getFireBreathGauge(), energy, FIRE_BREATH_REARM_THRESHOLD);
     }
 
     public boolean hasFireBreathEnergy() {
-        return getFireBreathEnergy() > FIRE_BREATH_DEPLETED_THRESHOLD;
+        return DragonBreathComponent.canUse(getFireBreathGauge(), FIRE_BREATH_DEPLETED_THRESHOLD);
     }
 
     public boolean isFireBreathDepleted() {
@@ -2177,7 +2117,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     public boolean canUseFireBreath() {
-        return hasFireBreathEnergy() && !isFireBreathDepleted();
+        return DragonBreathComponent.canUse(getFireBreathGauge(), FIRE_BREATH_DEPLETED_THRESHOLD);
+    }
+
+    public boolean drainFireBreathEnergy(float amount) {
+        return DragonBreathComponent.drain(getFireBreathGauge(), amount, FIRE_BREATH_DEPLETED_THRESHOLD, FIRE_BREATH_REARM_THRESHOLD);
     }
 
     private void tickFireBreathEnergy() {
@@ -2185,11 +2129,32 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             float regen = (float) DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                     .extraDouble("fire_breath_regen_per_tick", FIRE_BREATH_ENERGY_REGEN);
-            regen = Math.max(0.0f, regen);
-            if (regen > 0.0f) {
-                setFireBreathEnergy(getFireBreathEnergy() + regen);
-            }
+            DragonBreathComponent.regen(getFireBreathGauge(), regen, FIRE_BREATH_REARM_THRESHOLD);
         }
+    }
+
+    public DragonBreathComponent.Gauge getFireBreathGauge() {
+        return new DragonBreathComponent.Gauge() {
+            @Override
+            public float getEnergy() {
+                return Ignivorus.this.getFireBreathEnergy();
+            }
+
+            @Override
+            public void setEnergyRaw(float energy) {
+                Ignivorus.this.entityData.set(DATA_FIRE_BREATH_ENERGY, Mth.clamp(energy, 0.0F, 1.0F));
+            }
+
+            @Override
+            public boolean isDepleted() {
+                return Ignivorus.this.isFireBreathDepleted();
+            }
+
+            @Override
+            public void setDepleted(boolean depleted) {
+                Ignivorus.this.setFireBreathDepleted(depleted);
+            }
+        };
     }
 
     public void syncFireBreathPath(@Nullable Vec3 start, @Nullable Vec3 end) {
@@ -2466,10 +2431,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         );
     }
 
-    private void tickPitchingLogic() {
-        tickStandardPitchingLogic();
-    }
-
     @Override
     protected DragonFlightVisuals.State getFlightVisualState() {
         return this.flightVisualState;
@@ -2478,6 +2439,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {
         return DATA_FLIGHT_PITCH;
+    }
+
+    @Override
+    protected EntityDataAccessor<Float> getAccumulatedRollAccessor() {
+        return DATA_ACCUMULATED_ROLL;
     }
 
     @Override
@@ -2510,6 +2476,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 setHovering(false);
                 timeFlying = 0;
                 switchToGroundNavigation();
+            }
+
+            @Override
+            public boolean shouldClearFlightStateInWater() {
+                return shouldClearRiderFlightStateInWater();
             }
 
             @Override
@@ -2838,21 +2809,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     public boolean isStandingUpAnimation() {
         return isStandingUp;
     }
-    public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
-    }
-    public float getFlightPitchRadians(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
-    }
-    public float getAccumulatedRoll() {
-        return this.entityData.get(DATA_ACCUMULATED_ROLL);
-    }
-    public void setAccumulatedRoll(float radians) {
-        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
-    }
-    public void addAccumulatedRoll(float radians) {
-        setAccumulatedRoll(getAccumulatedRoll() + radians);
-    }
     @Override
     protected float getBarrelRollInputSpeed() {
         return BARREL_ROLL_INPUT_SPEED;
@@ -3000,7 +2956,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         tag.putInt("TimeFlying", timeFlying);
         this.combatManager.saveToNBT(tag);
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
-        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putBoolean("Bulldozing", bulldozing);
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
         tag.putBoolean("Phase2Active", phase2Active);
@@ -3021,9 +2976,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         this.combatManager.loadFromNBT(tag);
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
-        }
-        if (tag.contains("RiderPitchKeyMode")) {
-            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
         }
         if (tag.contains("Bulldozing")) {
             bulldozing = tag.getBoolean("Bulldozing");

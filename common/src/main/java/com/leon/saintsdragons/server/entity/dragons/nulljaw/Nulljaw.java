@@ -878,23 +878,23 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
-    protected boolean isDragonFlying() {
-        return this.entityData.get(DATA_FLYING);
+    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
+        return DATA_FLYING;
     }
 
     @Override
-    public boolean isTakeoff() {
-        return this.entityData.get(DATA_TAKEOFF);
+    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
+        return DATA_TAKEOFF;
     }
 
     @Override
-    public boolean isLanding() {
-        return this.entityData.get(DATA_LANDING);
+    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
+        return DATA_HOVERING;
     }
 
     @Override
-    public boolean isHovering() {
-        return this.entityData.get(DATA_HOVERING);
+    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
+        return DATA_LANDING;
     }
 
     @Override
@@ -908,23 +908,21 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
-    public void setFlying(boolean flying) {
-        this.entityData.set(DATA_FLYING, flying);
+    protected boolean shouldRedirectFlyingStartToTakeoff() {
+        return false;
     }
 
     @Override
-    public void setTakeoff(boolean takeoff) {
-        this.entityData.set(DATA_TAKEOFF, takeoff);
+    protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
     }
 
     @Override
-    public void setHovering(boolean hovering) {
-        this.entityData.set(DATA_HOVERING, hovering);
+    protected boolean canApplyLandingState(boolean landing) {
+        return true;
     }
 
     @Override
-    public void setLanding(boolean landing) {
-        this.entityData.set(DATA_LANDING, landing);
+    protected void onLandingDataSet(boolean landing) {
     }
 
     @Override
@@ -968,10 +966,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     public void beginAiLanding() {
         beginAiFlight();
-    }
-
-    public void handleAiLandingComplete() {
-        markLandedNow();
     }
 
     @Override

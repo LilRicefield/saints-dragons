@@ -32,6 +32,7 @@ public class CodexEcologyPanel {
     );
     private static final List<ResourceLocation> RAEVYX_FAVORITE_FOODS = List.of(
             new ResourceLocation("minecraft", "salmon"),
+            new ResourceLocation("minecraft", "cod"),
             new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
     private static final List<ResourceLocation> RAEVYX_DROPS = List.of(

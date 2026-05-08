@@ -69,7 +69,6 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -181,7 +180,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case TOGGLE_PITCH_MODE, ABILITY_USE, ABILITY_STOP -> true;
+            case ABILITY_USE, ABILITY_STOP -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -458,7 +457,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         tickRiderControlLock();
         tickBankingLogic();
         tickBarrelRollLogic();
-        tickPitchingLogic();
+        tickStandardPitchingLogic();
         tickScreenShake();
         tickFlightLifecycle();
         if (level().isClientSide) {
@@ -731,6 +730,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             }
 
             @Override
+            public boolean shouldClearFlightStateInWater() {
+                return shouldClearRiderFlightStateInWater();
+            }
+
+            @Override
             public boolean isLandingBlendSynced() {
                 return isRiderLandingBlendActive();
             }
@@ -763,10 +767,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return this.entityData.get(DATA_RIDER_LANDING_BLEND);
     }
 
-    private void tickPitchingLogic() {
-        tickStandardPitchingLogic();
-    }
-
     @Override
     protected DragonFlightVisuals.State getFlightVisualState() {
         return this.flightVisualState;
@@ -775,6 +775,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected EntityDataAccessor<Float> getFlightPitchAccessor() {
         return DATA_FLIGHT_PITCH;
+    }
+
+    @Override
+    protected EntityDataAccessor<Float> getAccumulatedRollAccessor() {
+        return DATA_ACCUMULATED_ROLL;
     }
 
     @Override
@@ -799,25 +804,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     private void tickScreenShake() {
         screenShakeComponent.tick();
-    }
-
-    public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
-    }
-    public float getFlightPitchRadians(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
-    }
-
-    public float getAccumulatedRoll() {
-        return this.entityData.get(DATA_ACCUMULATED_ROLL);
-    }
-
-    public void setAccumulatedRoll(float radians) {
-        this.entityData.set(DATA_ACCUMULATED_ROLL, radians);
-    }
-
-    public void addAccumulatedRoll(float radians) {
-        setAccumulatedRoll(getAccumulatedRoll() + radians);
     }
 
     public boolean isRiderPitchKeyMode() {
@@ -878,10 +864,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
 
         return switch (action) {
-            case TOGGLE_PITCH_MODE -> {
-                setRiderPitchKeyMode(!isRiderPitchKeyMode());
-                yield true;
-            }
             default -> false;
         };
     }
@@ -1061,13 +1043,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         boolean inWater = this.isInWater() || this.isInWaterOrBubble();
 
         if (inWater && !level().isClientSide) {
-            if (shouldClearRiderFlightStateInWater()) {
-                this.setFlying(false);
-                this.setTakeoff(false);
-                this.setHovering(false);
-                this.setLanding(false);
-                this.switchToGroundNavigation();
-            }
+            clearRiderFlightStateInWaterIfNeeded();
         }
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
@@ -1075,8 +1051,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 this.getNavigation().stop();
             }
 
-            if (inWater) {
-                handleWaterSwimming(motion);
+            if (shouldUseRiderFlightMovementInWater()) {
+                this.riderController.handleRiderMovement(player, motion);
+            } else if (inWater) {
+                handleRiderWaterSwimming(motion);
             } else if (isFlying()) {
                 this.riderController.handleRiderMovement(player, motion);
             } else {
@@ -1086,53 +1064,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return;
         }
         super.travel(motion);
-    }
-
-    private void handleWaterSwimming(Vec3 input) {
-        Vec3 velocity = this.getDeltaMovement();
-
-        double swimSpeed = 0.4D;
-        if (isAccelerating()) {
-            swimSpeed *= 1.3D;
-        }
-
-        Vec3 desired = getSwimVec3(input, swimSpeed, velocity);
-        Vec3 blended = velocity.add(desired.subtract(velocity).scale(0.15D));
-
-        double dragFactor = 0.88D;
-        blended = blended.multiply(dragFactor, 0.92D, dragFactor);
-
-        double dy = blended.y;
-        if (isGoingUp()) {
-            dy = Math.min(swimSpeed * 0.6D, dy + 0.08D);
-        } else if (isGoingDown()) {
-            dy = Math.max(-swimSpeed * 0.8D, dy - 0.12D);
-        } else {
-            dy -= 0.03D;
-        }
-
-        blended = new Vec3(blended.x, dy, blended.z);
-
-        this.setDeltaMovement(blended);
-        this.move(MoverType.SELF, this.getDeltaMovement());
-
-        tryAutoBreachRiderTakeoff();
-    }
-
-    private Vec3 getSwimVec3(Vec3 wishDir, double swimSpeed, Vec3 velocity) {
-        double strafe = wishDir.x;
-        double forward = wishDir.z;
-        float yawRad = this.getYRot() * ((float) Math.PI / 180F);
-        double sin = Math.sin(yawRad);
-        double cos = Math.cos(yawRad);
-
-        double worldX = strafe * cos - forward * sin;
-        double worldZ = forward * cos + strafe * sin;
-
-        double dx = worldX * 0.6D * swimSpeed;
-        double dz = worldZ * 0.6D * swimSpeed;
-
-        return new Vec3(dx, 0.0D, dz);
     }
 
     private void handleFireBodyCrash() {
@@ -1544,7 +1475,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         super.addAdditionalSaveData(tag);
         tag.putInt("TimeFlying", timeFlying);
         saveRideableData(tag);
-        tag.putBoolean("RiderPitchKeyMode", isRiderPitchKeyMode());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
 
         if (this.packLeaderUuid != null) {
@@ -1559,10 +1489,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         loadRideableData(tag);
         boolean savedFlying = tag.getBoolean("Flying");
         this.timeFlying = tag.getInt("TimeFlying");
-        if (tag.contains("RiderPitchKeyMode")) {
-            setRiderPitchKeyMode(tag.getBoolean("RiderPitchKeyMode"));
-        }
-
         this.packLeaderUuid = tag.hasUUID("PackLeaderUuid") ? tag.getUUID("PackLeaderUuid") : null;
         if (this.isTame()) {
             this.packLeaderUuid = null;
@@ -1607,23 +1533,37 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    protected boolean isDragonFlying() {
-        return this.entityData.get(DATA_FLYING);
+    protected EntityDataAccessor<Boolean> getFlyingDataAccessor() {
+        return DATA_FLYING;
     }
 
     @Override
-    public void setFlying(boolean flying) {
-        if (flying && !this.isVehicle() && (this.isInWater() || this.isInWaterOrBubble() || this.isInLava())) {
-            return;
-        }
-        if (flying == isFlying()) {
-            return;
-        }
-        if (flying && !isTakeoff() && this.onGround()) {
-            startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            return;
-        }
-        this.entityData.set(DATA_FLYING, flying);
+    protected EntityDataAccessor<Boolean> getTakeoffDataAccessor() {
+        return DATA_TAKEOFF;
+    }
+
+    @Override
+    protected EntityDataAccessor<Boolean> getHoveringDataAccessor() {
+        return DATA_HOVERING;
+    }
+
+    @Override
+    protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
+        return DATA_LANDING;
+    }
+
+    @Override
+    protected boolean canApplyFlyingState(boolean flying) {
+        return !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
+    }
+
+    @Override
+    protected int getRedirectedFlyingTakeoffTicks() {
+        return TAKEOFF_ANIMATION_TICKS;
+    }
+
+    @Override
+    protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
         if (flying) {
             switchToAirNavigation();
             setLanding(false);
@@ -1638,22 +1578,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    public boolean isTakeoff() {
-        return this.entityData.get(DATA_TAKEOFF);
-    }
-
-    @Override
-    public void setTakeoff(boolean takeoff) {
-        boolean wasTakeoff = isTakeoff();
-        this.entityData.set(DATA_TAKEOFF, takeoff);
-        if (!takeoff && takeoffComponent.isActive()) {
-            takeoffComponent.clear();
-            return;
-        }
-        if (takeoff && !wasTakeoff && !level().isClientSide) {
-            triggerAnim("instant", "takeoff");
-            getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
-        }
+    protected void onTakeoffStateStarted() {
+        triggerAnim("instant", "takeoff");
+        getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
     }
 
     private boolean riderOverridesSittingCommand() {
@@ -1661,23 +1588,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    public boolean isHovering() {
-        return this.entityData.get(DATA_HOVERING);
-    }
-
-    @Override
-    public void setHovering(boolean hovering) {
-        this.entityData.set(DATA_HOVERING, hovering);
-    }
-
-    @Override
-    public boolean isLanding() {
-        return this.entityData.get(DATA_LANDING);
-    }
-
-    @Override
-    public void setLanding(boolean landing) {
-        this.entityData.set(DATA_LANDING, landing);
+    protected void onLandingDataSet(boolean landing) {
         landingTicks = 0;
         if (landing) {
             setHovering(false);

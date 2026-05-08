@@ -5,7 +5,7 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
-@Config(name = "saintsdragons/server")
+@Config(name = "saintsdragons/server/servercommon")
 public final class SaintsDragonsFabricServerConfig implements ConfigData {
     @ConfigEntry.Category("gameplay")
     @ConfigEntry.Gui.Tooltip
