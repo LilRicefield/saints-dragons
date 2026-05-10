@@ -1,12 +1,12 @@
 {
   "replace": false,
   "values": [
-    {"id": "#c:is_plains", "required": false},
-    "minecraft:plains",
-    "minecraft:sunflower_plains",
-    "minecraft:stony_shore",
-    {"id": "biomesoplenty:floodplain", "required":  false},
-    {"id": "biomesoplenty:marsh", "required":  false},
-    {"id": "terralith:brushland", "required":  false}
+    "#minecraft:is_beach",
+    {"id": "#c:beach", "required": false},
+    {"id": "#c:stony_shores", "required": false},
+    {"id": "#c:is_beach", "required": false},
+    {"id": "#c:is_stony_shores", "required": false},
+    {"id": "#forge:is_beach", "required": false},
+    "minecraft:stony_shore"
   ]
 }

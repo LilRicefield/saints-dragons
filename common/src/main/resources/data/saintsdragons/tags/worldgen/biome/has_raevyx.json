@@ -3,9 +3,22 @@
   "values": [
     {"id": "#minecraft:is_mountain", "required": false},
     {"id": "#minecraft:is_hill", "required": false},
+    {"id": "#c:mountain", "required": false},
+    {"id": "#c:mountain_peak", "required": false},
+    {"id": "#c:mountain_slope", "required": false},
     {"id": "#c:is_mountain", "required": false},
     {"id": "#c:is_plains", "required": false},
+    {"id": "#c:plains", "required": false},
+    {"id": "#c:climate_temperate", "required": false},
+    {"id": "#forge:is_plains", "required": false},
+    {"id": "#forge:is_mountain", "required": false},
+    {"id": "#forge:is_peak", "required": false},
+    {"id": "#forge:is_slope", "required": false},
     {"id": "#c:is_temperate/overworld", "required": false},
+    {"id": "#terralith:skylands", "required": false},
+    {"id": "#terralith:shrublands", "required": false},
+    {"id": "#biomeswevegone:plains", "required": false},
+    {"id": "#biomeswevegone:mountain", "required": false},
     "minecraft:plains",
     "minecraft:meadow",
     "minecraft:windswept_hills",
@@ -13,10 +26,6 @@
     "minecraft:cherry_grove",
     "minecraft:windswept_forest",
     "minecraft:stony_peaks",
-    "minecraft:jagged_peaks",
-    {"id": "terralith:skylands", "required":  false},
-    {"id": "biomesoplenty:grassland", "required":  false},
-    {"id": "biomesoplenty:highland", "required":  false},
-    {"id": "terralith:brushland", "required":  false}
+    "minecraft:jagged_peaks"
   ]
 }

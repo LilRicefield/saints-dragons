@@ -5,5 +5,8 @@
     "saintsdragons:cindervane_egg_patch"
   ],
   "step": "vegetal_decoration",
-  "config_key": "cindervaneEggBlockWorldgen"
+  "config_key": "cindervaneEggBlockWorldgen",
+  "default_biome_tag": "saintsdragons:has_cindervane",
+  "additional_config_key": "cindervaneAdditionalBiomes",
+  "excluded_config_key": "cindervaneExcludedBiomes"
 }

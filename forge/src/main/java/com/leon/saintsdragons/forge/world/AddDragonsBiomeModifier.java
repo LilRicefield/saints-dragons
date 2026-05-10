@@ -1,11 +1,10 @@
 package com.leon.saintsdragons.forge.world;
 
-import com.leon.saintsdragons.common.util.BiomeConfigHelper;
+import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.Holder;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -17,10 +16,7 @@ import net.minecraftforge.common.world.ModifiableBiomeInfo;
 
 import java.util.function.Supplier;
 
-/**
- * Forge biome modifier that mirrors Fabric's runtime spawn registration.
- * The JSON file only needs to point at this serializer; all spawn weights come from config.
- */
+
 public final class AddDragonsBiomeModifier implements BiomeModifier {
     public static final Codec<AddDragonsBiomeModifier> CODEC = Codec.unit(AddDragonsBiomeModifier::new);
 
@@ -61,48 +57,11 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
         }
     }
 
-    private static boolean isInConfigBiomes(Holder<Biome> biome, ConfigHelper.ListValue configList) {
-        if (configList == null) {
-            return false;
-        }
-        try {
-            ResourceLocation biomeId = biome.unwrapKey()
-                    .map(net.minecraft.resources.ResourceKey::location)
-                    .orElse(null);
-            if (biomeId == null) {
-                return false;
-            }
-            return configList.get().stream()
-                    .map(BiomeConfigHelper::normalizeBiomeId)
-                    .anyMatch(id -> id != null && biomeId.equals(id));
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static boolean isInConfigBiomeTags(Holder<Biome> biome, ConfigHelper.ListValue configList) {
-        if (configList == null) {
-            return false;
-        }
-        try {
-            return configList.get().stream()
-                    .map(BiomeConfigHelper::normalizeBiomeTag)
-                    .anyMatch(tag -> tag != null && biome.is(tag));
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     private static boolean shouldSpawnInBiome(Holder<Biome> biome,
                                               TagKey<Biome> defaultTag,
                                               ConfigHelper.ListValue additionalBiomes,
                                               ConfigHelper.ListValue excludedBiomes) {
-        boolean explicitlyIncluded = isInConfigBiomes(biome, additionalBiomes)
-                || isInConfigBiomeTags(biome, additionalBiomes);
-        boolean explicitlyExcluded = isInConfigBiomes(biome, excludedBiomes)
-                || isInConfigBiomeTags(biome, excludedBiomes);
-        boolean defaultAllowed = biome.is(defaultTag) && !explicitlyExcluded;
-        return explicitlyIncluded || defaultAllowed;
+        return DragonBiomeMatcher.isAllowed(biome, defaultTag, additionalBiomes, excludedBiomes);
     }
 
     private static void addSpawn(ModifiableBiomeInfo.BiomeInfo.Builder builder,

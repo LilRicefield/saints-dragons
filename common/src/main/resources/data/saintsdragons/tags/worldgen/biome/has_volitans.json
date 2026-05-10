@@ -2,11 +2,8 @@
   "replace": false,
   "values": [
     "#minecraft:is_ocean",
-    "#minecraft:is_beach",
-    "minecraft:lukewarm_ocean",
-    "minecraft:deep_lukewarm_ocean",
-    "minecraft:warm_ocean",
-    "minecraft:deep_ocean",
-    "minecraft:ocean"
+    {"id": "#c:ocean", "required": false},
+    {"id": "#c:is_ocean", "required": false},
+    {"id": "#forge:is_ocean", "required": false}
   ]
 }

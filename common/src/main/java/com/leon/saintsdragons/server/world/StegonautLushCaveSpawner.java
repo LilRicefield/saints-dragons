@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.world;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.util.BiomeConfigHelper;
+import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-
 
 public final class StegonautLushCaveSpawner {
     private static final TagKey<Biome> DEFAULT_STEGONAUT_BIOME_TAG = TagKey.create(
@@ -234,44 +233,12 @@ public final class StegonautLushCaveSpawner {
     }
 
     private static boolean isStegonautBiomeAllowed(Holder<Biome> biome) {
-        boolean explicitlyIncluded = isInConfigBiomes(biome, SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES)
-                || isInConfigBiomeTags(biome, SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES);
-        boolean explicitlyExcluded = isInConfigBiomes(biome, SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES)
-                || isInConfigBiomeTags(biome, SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES);
-        boolean defaultAllowed = biome.is(DEFAULT_STEGONAUT_BIOME_TAG) && !explicitlyExcluded;
-        return explicitlyIncluded || defaultAllowed;
-    }
-
-    private static boolean isInConfigBiomes(Holder<Biome> biome, com.leon.saintsdragons.platform.ConfigHelper.ListValue configList) {
-        if (configList == null) {
-            return false;
-        }
-        try {
-            ResourceLocation biomeId = biome.unwrapKey()
-                    .map(net.minecraft.resources.ResourceKey::location)
-                    .orElse(null);
-            if (biomeId == null) {
-                return false;
-            }
-            return configList.get().stream()
-                    .map(BiomeConfigHelper::normalizeBiomeId)
-                    .anyMatch(id -> id != null && biomeId.equals(id));
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private static boolean isInConfigBiomeTags(Holder<Biome> biome, com.leon.saintsdragons.platform.ConfigHelper.ListValue configList) {
-        if (configList == null) {
-            return false;
-        }
-        try {
-            return configList.get().stream()
-                    .map(BiomeConfigHelper::normalizeBiomeTag)
-                    .anyMatch(tag -> tag != null && biome.is(tag));
-        } catch (Exception e) {
-            return false;
-        }
+        return DragonBiomeMatcher.isAllowed(
+                biome,
+                DEFAULT_STEGONAUT_BIOME_TAG,
+                SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES,
+                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES
+        );
     }
 
 }

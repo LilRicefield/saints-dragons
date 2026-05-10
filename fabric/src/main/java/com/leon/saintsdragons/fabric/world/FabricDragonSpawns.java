@@ -2,15 +2,12 @@ package com.leon.saintsdragons.fabric.world;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
-import com.leon.saintsdragons.common.util.BiomeConfigHelper;
+import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
-import net.fabricmc.fabric.api.biome.v1.BiomeSelectionContext;
-import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
@@ -49,16 +46,8 @@ public final class FabricDragonSpawns {
 
             registerSpawn(
                     entry.biomeTag(),
-                    excludedBiomes,
-                    entry.category(),
-                    entityType,
-                    weight,
-                    minGroupSize,
-                    maxGroupSize
-            );
-            registerAdditionalBiomes(
-                    entry.id(),
                     additionalBiomes,
+                    excludedBiomes,
                     entry.category(),
                     entityType,
                     weight,
@@ -76,12 +65,16 @@ public final class FabricDragonSpawns {
             return;
         }
         BiomeModifications.addFeature(
-                BiomeSelectors.tag(HAS_CINDERVANE),
+                context -> DragonBiomeMatcher.isAllowed(
+                        context.getBiomeKey().location(),
+                        context::hasTag,
+                        HAS_CINDERVANE,
+                        SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES,
+                        SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES
+                ),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
                 CINDERVANE_EGG_PATCH
         );
-
-        registerAdditionalFeatures(SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES, CINDERVANE_EGG_PATCH);
     }
 
     private static void registerVarasuchusEggs() {
@@ -89,13 +82,20 @@ public final class FabricDragonSpawns {
             return;
         }
         BiomeModifications.addFeature(
-                BiomeSelectors.tag(HAS_VARASUCHUS_EGGS),
+                context -> DragonBiomeMatcher.isAllowed(
+                        context.getBiomeKey().location(),
+                        context::hasTag,
+                        HAS_VARASUCHUS_EGGS,
+                        SaintsDragonsConfig.VARASUCHUS_ADDITIONAL_BIOMES,
+                        SaintsDragonsConfig.VARASUCHUS_EXCLUDED_BIOMES
+                ),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
                 VARASUCHUS_EGG_PATCH
         );
     }
 
     private static void registerSpawn(TagKey<Biome> biomeTag,
+                                      ConfigHelper.ListValue additionalBiomes,
                                       ConfigHelper.ListValue excludedBiomes,
                                       MobCategory category,
                                       EntityType<?> entityType,
@@ -110,127 +110,19 @@ public final class FabricDragonSpawns {
         }
 
         BiomeModifications.addSpawn(
-                context -> context.hasTag(biomeTag) && !isBiomeExcluded(context, excludedBiomes),
+                context -> DragonBiomeMatcher.isAllowed(
+                        context.getBiomeKey().location(),
+                        context::hasTag,
+                        biomeTag,
+                        additionalBiomes,
+                        excludedBiomes
+                ),
                 category,
                 entityType,
                 weight,
                 minGroupSize,
                 maxGroupSize
         );
-    }
-
-    private static void registerAdditionalBiomes(ResourceLocation spawnId,
-                                                 ConfigHelper.ListValue configList,
-                                                 MobCategory category,
-                                                 EntityType<?> entityType,
-                                                 int weight,
-                                                 int minGroupSize,
-                                                 int maxGroupSize) {
-        if (configList == null) {
-            return;
-        }
-        if (weight <= 0 || minGroupSize <= 0 || maxGroupSize <= 0) {
-            return;
-        }
-        if (minGroupSize > maxGroupSize) {
-            minGroupSize = maxGroupSize;
-        }
-
-        try {
-            for (String rawEntry : configList.get()) {
-                try {
-                    TagKey<Biome> biomeTag = BiomeConfigHelper.normalizeBiomeTag(rawEntry);
-                    if (biomeTag != null) {
-                        BiomeModifications.addSpawn(
-                                BiomeSelectors.tag(biomeTag),
-                                category,
-                                entityType,
-                                weight,
-                                minGroupSize,
-                                maxGroupSize
-                        );
-                        continue;
-                    }
-
-                    ResourceLocation biomeId = BiomeConfigHelper.normalizeBiomeId(rawEntry);
-                    if (biomeId == null) {
-                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config for {}: {}", spawnId, rawEntry);
-                        continue;
-                    }
-
-                    ResourceKey<Biome> biomeKey = ResourceKey.create(Registries.BIOME, biomeId);
-                    BiomeModifications.addSpawn(
-                            BiomeSelectors.includeByKey(biomeKey),
-                            category,
-                            entityType,
-                            weight,
-                            minGroupSize,
-                            maxGroupSize
-                    );
-                } catch (Exception e) {
-                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config for {}: {}", spawnId, rawEntry);
-                }
-            }
-        } catch (Exception e) {
-            // Config not loaded or error, skip
-        }
-    }
-
-    private static void registerAdditionalFeatures(ConfigHelper.ListValue configList,
-                                                   ResourceKey<PlacedFeature> featureKey) {
-        if (configList == null) {
-            return;
-        }
-        try {
-            for (String rawEntry : configList.get()) {
-                try {
-                    TagKey<Biome> biomeTag = BiomeConfigHelper.normalizeBiomeTag(rawEntry);
-                    if (biomeTag != null) {
-                        BiomeModifications.addFeature(
-                                BiomeSelectors.tag(biomeTag),
-                                GenerationStep.Decoration.VEGETAL_DECORATION,
-                                featureKey
-                        );
-                        continue;
-                    }
-
-                    ResourceLocation biomeId = BiomeConfigHelper.normalizeBiomeId(rawEntry);
-                    if (biomeId == null) {
-                        SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config: {}", rawEntry);
-                        continue;
-                    }
-                    ResourceKey<Biome> biomeKey = ResourceKey.create(Registries.BIOME, biomeId);
-                    BiomeModifications.addFeature(
-                            BiomeSelectors.includeByKey(biomeKey),
-                            GenerationStep.Decoration.VEGETAL_DECORATION,
-                            featureKey
-                    );
-                } catch (Exception e) {
-                    SaintsDragonsCommon.LOGGER.warn("Invalid biome ID or biome tag in config: {}", rawEntry);
-                }
-            }
-        } catch (Exception e) {
-            // Config not loaded or error, skip
-        }
-    }
-
-    private static boolean isBiomeExcluded(BiomeSelectionContext context, ConfigHelper.ListValue excludedBiomes) {
-        if (excludedBiomes == null) {
-            return false;
-        }
-        try {
-            ResourceLocation biomeId = context.getBiomeKey().location();
-            return excludedBiomes.get().stream().anyMatch(entry -> {
-                TagKey<Biome> tag = BiomeConfigHelper.normalizeBiomeTag(entry);
-                if (tag != null) {
-                    return context.hasTag(tag);
-                }
-                ResourceLocation id = BiomeConfigHelper.normalizeBiomeId(entry);
-                return id != null && biomeId.equals(id);
-            });
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     private static ConfigHelper.ListValue resolveConfigList(Supplier<ConfigHelper.ListValue> supplier) {
