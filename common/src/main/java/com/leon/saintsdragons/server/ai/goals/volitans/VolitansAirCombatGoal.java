@@ -52,6 +52,9 @@ public class VolitansAirCombatGoal extends Goal {
         if (!isTargetAirborne(target)) {
             return false;
         }
+        if (!dragon.isAerial() && !DragonAirCombatHelper.canTriggerAiFlightForTarget(dragon, target)) {
+            return false;
+        }
         return dragon.distanceToSqr(target) <= getMaxAggroDistanceSqr();
     }
 

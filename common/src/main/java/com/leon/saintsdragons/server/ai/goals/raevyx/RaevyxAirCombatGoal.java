@@ -21,6 +21,8 @@ public class RaevyxAirCombatGoal extends Goal {
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final double BEAM_MIN_RANGE = 20.0D;
     private static final double BEAM_MAX_RANGE = 70.0D;
+    private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND = 8.0D;
+    private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON = 5.0D;
     private int attackCooldown = 0;
     private int repositionCooldown = 0;
     private int beamCooldown = 0;
@@ -59,7 +61,7 @@ public class RaevyxAirCombatGoal extends Goal {
         }
 
         if (targetAirborne && !dragonAirborne) {
-            if (!canTriggerFlight()) {
+            if (!canTriggerFlight(target)) {
                 return false;
             }
         }
@@ -302,8 +304,13 @@ public class RaevyxAirCombatGoal extends Goal {
         return DragonAirCombatHelper.maxAggroDistanceSqr(dragon, 64.0D);
     }
 
-    private boolean canTriggerFlight() {
-        return DragonAirCombatHelper.canTriggerAiFlight(dragon);
+    private boolean canTriggerFlight(LivingEntity target) {
+        return DragonAirCombatHelper.canTriggerAiFlightForTarget(
+                dragon,
+                target,
+                TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND,
+                TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON
+        );
     }
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {

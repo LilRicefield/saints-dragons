@@ -16,6 +16,8 @@ public class CindervaneAirCombatGoal extends Goal {
     private static final double CHASE_SPEED = 2.0D;
     private static final double LANDING_SPEED = 2.2D;
     private static final double FIRE_BODY_ACTIVATION_RANGE = 8.0D;
+    private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND = 8.0D;
+    private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON = 5.0D;
     private final Cindervane amphithere;
     private int fireBodyCheckCooldown = 0;
     private int lostSightTicks = 0;
@@ -44,8 +46,15 @@ public class CindervaneAirCombatGoal extends Goal {
             return false;
         }
 
-        if (targetAirborne && !dragonAirborne && !amphithere.canTakeoff()) {
-            return false;
+        if (targetAirborne && !dragonAirborne) {
+            if (!amphithere.canTakeoff()
+                    || !DragonAirCombatHelper.canTriggerAiFlightForTarget(
+                    amphithere,
+                    target,
+                    TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND,
+                    TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON)) {
+                return false;
+            }
         }
 
         return true;

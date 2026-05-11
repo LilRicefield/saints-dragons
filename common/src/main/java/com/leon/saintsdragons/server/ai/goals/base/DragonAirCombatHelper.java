@@ -10,6 +10,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 public final class DragonAirCombatHelper {
+    private static final double DEFAULT_TAKEOFF_TARGET_MIN_HEIGHT_ABOVE_GROUND = 8.0D;
+    private static final double DEFAULT_TAKEOFF_TARGET_MIN_HEIGHT_ABOVE_DRAGON = 5.0D;
+
     private DragonAirCombatHelper() {
     }
 
@@ -37,6 +40,38 @@ public final class DragonAirCombatHelper {
                 && dragon.getControllingPassenger() == null
                 && !dragon.isPassenger()
                 && dragon.getActiveAbility() == null;
+    }
+
+    public static boolean canTriggerAiFlightForTarget(RideableDragonBase dragon, LivingEntity target) {
+        return canTriggerAiFlightForTarget(
+                dragon,
+                target,
+                DEFAULT_TAKEOFF_TARGET_MIN_HEIGHT_ABOVE_GROUND,
+                DEFAULT_TAKEOFF_TARGET_MIN_HEIGHT_ABOVE_DRAGON
+        );
+    }
+
+    public static boolean canTriggerAiFlightForTarget(RideableDragonBase dragon,
+                                                      LivingEntity target,
+                                                      double minHeightAboveGround,
+                                                      double minHeightAboveDragon) {
+        return canTriggerAiFlight(dragon)
+                && isTargetHighEnoughForAiTakeoff(dragon, target, minHeightAboveGround, minHeightAboveDragon);
+    }
+
+    public static boolean isTargetHighEnoughForAiTakeoff(RideableDragonBase dragon,
+                                                         LivingEntity target,
+                                                         double minHeightAboveGround,
+                                                         double minHeightAboveDragon) {
+        if (target == null || target.onGround()) {
+            return false;
+        }
+        if (target.getVehicle() instanceof LivingEntity vehicle && vehicle.onGround()) {
+            return false;
+        }
+        double groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
+        return target.getY() - groundY > minHeightAboveGround
+                && target.getY() - dragon.getY() > minHeightAboveDragon;
     }
 
     public static void startOrResumeFlight(RideableDragonBase dragon, int takeoffTicks) {

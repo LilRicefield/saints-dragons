@@ -23,6 +23,8 @@ public class IgnivorusAirCombatGoal extends Goal {
     private static final double FIRE_BREATH_MIN_RANGE = 20.0D;
     private static final double FIRE_BREATH_MAX_RANGE = 64.0D;
     private static final double ENGAGEMENT_DISTANCE = 25.0;
+    private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND = 8.0D;
+    private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON = 5.0D;
     private static final int SHOT_FROM_BELOW_THRESHOLD = 3;
     private static final int BREATH_COOLDOWN_TICKS = 2400;
     private int attackCooldown = 0;
@@ -68,7 +70,7 @@ public class IgnivorusAirCombatGoal extends Goal {
         }
 
         if (!dragon.isAerial()) {
-            if (!canTriggerFlight()) {
+            if (!canTriggerFlight(target)) {
                 return false;
             }
         }
@@ -321,8 +323,13 @@ public class IgnivorusAirCombatGoal extends Goal {
     }
 
 
-    private boolean canTriggerFlight() {
-        return DragonAirCombatHelper.canTriggerAiFlight(dragon);
+    private boolean canTriggerFlight(LivingEntity target) {
+        return DragonAirCombatHelper.canTriggerAiFlightForTarget(
+                dragon,
+                target,
+                TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND,
+                TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON
+        );
     }
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
