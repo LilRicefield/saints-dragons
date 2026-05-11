@@ -130,7 +130,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final EntityDataAccessor<Integer> DATA_SLASH_GRAB_PASSENGER_ID =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
     private static final int LANDING_SETTLE_TICKS = 4;
-    public static final int TAKEOFF_ANIMATION_TICKS = 24;
+    public static final int TAKEOFF_ANIMATION_TICKS = 25;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
     private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
     private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
@@ -167,7 +167,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public int groundTicks;
     public int timeFlying = 0;
     private int landingTicks;
-    private boolean wasVehicleLastTick;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
     private boolean autoGrabPassengerMountAllowed;
@@ -469,7 +468,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         tickStandardTakeoffAndGroundedAerialRecovery();
         tickSittingState();
         tickRiderTakeoff();
-        tickMountedState();
         updateSittingProgress();
         spawnPendingFamilyBabies(ModEntities.CINDERVANE.get(), Cindervane::applyConfiguredAttributes);
         if (isBreathingFire() || fireBodyCrashArmed) {
@@ -518,38 +516,36 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
     }
 
-    private void tickMountedState() {
-        boolean mounted = this.isVehicle();
+    @Override
+    protected void afterMountedStateStartedClear() {
+        clearStatesWhenMounted();
+    }
 
-        if (mounted && !wasVehicleLastTick) {
-            clearSitProgress();
-            clearStatesWhenMounted();
+    @Override
+    protected void onMountedStateStopped() {
+        this.setBreathingFire(false);
+        combatManager.forceEndActiveAbility();
+        this.entityData.set(DATA_FLIGHT_MODE, -1);
+        super.onMountedStateStopped();
+        this.syncAnimState(0, -1);
+    }
 
-            if (this.isOrderedToSit()) {
-                this.setOrderedToSit(false);
-                if (this.getCommand() == 1) {
-                    this.setCommand(0);
-                }
-            }
+    @Override
+    protected boolean shouldPlaySitUpWhenMounted() {
+        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
+    }
 
-            if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
-                wakeUpImmediately();
-                suppressSleep(300);
-            }
-        }
+    @Override
+    protected void clearLocalSitTransitionForMount() {
+        clearSitProgress();
+        isSittingDown = false;
+        isStandingUp = false;
+        sitTransitionTicks = 0;
+    }
 
-        if (!mounted && wasVehicleLastTick) {
-            this.setBreathingFire(false);
-            combatManager.forceEndActiveAbility();
-            clearSitProgress();
-            this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
-            this.entityData.set(DATA_FLIGHT_MODE, -1);
-            this.entityData.set(DATA_RIDER_FORWARD, 0f);
-            this.entityData.set(DATA_RIDER_STRAFE, 0f);
-            this.syncAnimState(0, -1);
-        }
-
-        wasVehicleLastTick = mounted;
+    @Override
+    protected void playSitUpWhenMounted() {
+        animationHandler.triggerSitUpAnimation();
     }
 
     private static class CindervaneFamilyData extends AgeableMob.AgeableMobGroupData {

@@ -1389,7 +1389,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             tickSuperchargeTimer();
             tickTempInvulnTimer();
             tickSuperchargeVfx();
-            tickMountingState();
         }
         if (tickCount % 100 == 0) {
             tickRecentAggroCleanup();
@@ -1398,7 +1397,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             if (this.isVehicle()) {
                 wakeUpImmediately();
-                clearAllStatesWhenMounted();
+                clearLocalSitTransitionForMount();
             } else if (this.getTarget() != null || this.isAggressive()) {
 
                 wakeUpImmediately();
@@ -1512,29 +1511,30 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
     }
     
-    private boolean wasVehicleLastTick = false;
-    
-    private void tickMountingState() {
-        if (!this.level().isClientSide && this.isVehicle() && !wasVehicleLastTick) {
-            clearAllStatesWhenMounted();
-        }
-        wasVehicleLastTick = this.isVehicle();
+    @Override
+    protected void onMountedStateStopped() {
+        super.onMountedStateStopped();
+        riderFlexCooldownTicks = 0;
     }
 
-    private void clearAllStatesWhenMounted() {
-        if (!this.level().isClientSide && this.isVehicle()) {
-            wakeUpImmediately();
-            if (this.isOrderedToSit()) {
-                this.setOrderedToSit(false);
-                if (this.getCommand() == 1) {
-                    this.setCommand(0);
-                }
-            }
-            if (this.getNavigation().getPath() != null) {
-                this.getNavigation().stop();
-            }
-            suppressSleep(300);
-        }
+    @Override
+    protected boolean shouldPlaySitUpWhenMounted() {
+        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
+    }
+
+    @Override
+    protected void clearLocalSitTransitionForMount() {
+        clearSitProgress();
+        isSittingDown = false;
+        isStandingUp = false;
+        sitTransitionTicks = 0;
+        this.setInSittingPose(false);
+        riderFlexCooldownTicks = 0;
+    }
+
+    @Override
+    protected void playSitUpWhenMounted() {
+        animationHandler.triggerSitUpAnimation();
     }
     
     private void tickRunningTime() {
@@ -2049,7 +2049,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             super.travel(Vec3.ZERO);
             return;
         }
-        boolean sittingLocked = (this.isOrderedToSit() || this.isInSittingPose()) && postStandUnlockTicks <= 0;
+        boolean sittingLocked = !this.isVehicle() && (this.isOrderedToSit() || this.isInSittingPose()) && postStandUnlockTicks <= 0;
         if (sittingLocked || this.isDying() || this.isSleeping() || this.isSleepTransitioning()) {
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
@@ -2768,27 +2768,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             clearSleepCooldowns();
         }
         applyConfiguredAttributes();
-    }
-
-    public void clearAllStatesForMounting() {
-        // Clear combat states
-        this.setTarget(null);
-        this.setBeaming(false);
-        this.setRunning(false);
-        this.getNavigation().stop();
-        this.setTakeoff(false);
-        this.setLanding(false);
-        this.setHovering(false);
-        if (this.isOrderedToSit()) {
-            this.setOrderedToSit(false);
-            if (this.getCommand() == 1) {
-                this.setCommand(0);
-            }
-        }
-
-        setRiderTakeoffTicks(0);
-        this.combatManager.clearAllStates();
-        clearSleepCooldowns();
     }
 
     @Override

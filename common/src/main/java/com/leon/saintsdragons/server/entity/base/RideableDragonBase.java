@@ -72,6 +72,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
 
     private int riderControlLockTicks = 0;
+    private boolean wasVehicleLastTick = false;
     private boolean riderWasAirborneForLanding = false;
     private int riderAirborneTicksForLanding = 0;
 
@@ -888,6 +889,74 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (!level().isClientSide && this.tickCount == 1) {
             initializeAnimationState();
             resetAnimationState();
+        }
+        tickMountedState();
+    }
+
+    private void tickMountedState() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        boolean mounted = isVehicle();
+        if (mounted && !wasVehicleLastTick) {
+            onMountedStateStarted();
+        } else if (!mounted && wasVehicleLastTick) {
+            onMountedStateStopped();
+        }
+        wasVehicleLastTick = mounted;
+    }
+
+    protected void onMountedStateStarted() {
+        boolean shouldPlaySitUp = shouldPlaySitUpWhenMounted();
+        clearStateForMountedRider();
+        clearLocalSitTransitionForMount();
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+            wakeUpImmediately();
+            suppressSleep(300);
+        }
+        afterMountedStateStartedClear();
+        if (shouldPlaySitUp) {
+            playSitUpWhenMounted();
+        }
+    }
+
+    protected void onMountedStateStopped() {
+        this.entityData.set(getRiderForwardAccessor(), 0f);
+        this.entityData.set(getRiderStrafeAccessor(), 0f);
+        this.entityData.set(getGroundMoveStateAccessor(), 0);
+        syncAnimState(0, getFlightMode());
+        clearLocalSitTransitionForMount();
+    }
+
+    protected boolean shouldPlaySitUpWhenMounted() {
+        return isOrderedToSit() || getSitProgress() > 0.0F || isInSittingPose();
+    }
+
+    protected void clearLocalSitTransitionForMount() {
+    }
+
+    protected void afterMountedStateStartedClear() {
+    }
+
+    protected void playSitUpWhenMounted() {
+    }
+
+    protected void clearStateForMountedRider() {
+        clearSittingForMounting();
+        if (getCommand() == 1) {
+            setCommand(0);
+        }
+        clearSitProgress();
+        setInSittingPose(false);
+        clearRiderControlLock();
+        setRunning(false);
+        setAccelerating(false);
+        setGoingUp(false);
+        setGoingDown(false);
+        setTarget(null);
+        if (getNavigation().getPath() != null) {
+            getNavigation().stop();
         }
     }
 

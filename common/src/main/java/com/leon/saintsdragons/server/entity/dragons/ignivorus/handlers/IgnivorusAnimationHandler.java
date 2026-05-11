@@ -103,7 +103,20 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
-        if (!aerialState && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.5f)) {
+        if (!aerialState && dragon.isVehicle()) {
+            float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
+            float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);
+            boolean isMoving = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+            if (isMoving) {
+                boolean isRunning = dragon.getEntityData().get(Ignivorus.DATA_ACCELERATING);
+                state.setAndContinue(isRunning ? RUN : WALK);
+            } else {
+                state.setAndContinue(IDLE);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        if (!dragon.isVehicle() && !aerialState && dragon.getCommand() == 1) {
             state.setAndContinue(SIT);
             return PlayState.CONTINUE;
         }

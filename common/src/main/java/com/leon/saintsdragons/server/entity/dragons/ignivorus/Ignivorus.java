@@ -106,7 +106,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             DragonVariant.of(VARIANT_DEFAULT, "default", 95),
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
     );
-    public static final int TAKEOFF_ANIMATION_TICKS = 30;
+    public static final int TAKEOFF_ANIMATION_TICKS = 32;
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
@@ -199,8 +199,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private static final int LEAP_STATE_NONE = 0;
     private static final int LEAP_STATE_TAKEOFF = 1;
     private static final int LEAP_IMPACT_RECOVERY_DURATION = 20;
-    private static final int FLEX_CONTROL_LOCK_TICKS = 20 * 9;
-    private static final int FLEX_COOLDOWN_TICKS = 20 * 5;
+    private static final int FLEX_CONTROL_LOCK_TICKS = 170;
+    private static final int FLEX_COOLDOWN_TICKS = 40;
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
@@ -536,6 +536,26 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         setLanding(false);
         setNoGravity(false);
         setDeltaMovement(Vec3.ZERO);
+    }
+
+    @Override
+    protected boolean shouldPlaySitUpWhenMounted() {
+        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
+    }
+
+    @Override
+    protected void clearLocalSitTransitionForMount() {
+        clearSitProgress();
+        isSittingDown = false;
+        isStandingUp = false;
+        sitTransitionTicks = 0;
+        setInSittingPose(false);
+        flexCooldownTicks = 0;
+    }
+
+    @Override
+    protected void playSitUpWhenMounted() {
+        animationHandler.triggerSitUpAnimation();
     }
 
     @Override

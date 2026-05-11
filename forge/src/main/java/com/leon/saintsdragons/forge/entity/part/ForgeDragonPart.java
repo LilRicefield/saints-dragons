@@ -121,22 +121,16 @@ public class ForgeDragonPart extends PartEntity<Entity> {
     @Override
     public net.minecraft.world.InteractionResult interact(@NotNull Player player,
                                                            @NotNull net.minecraft.world.InteractionHand hand) {
-        Entity parent = this.getParent();
-        if (parent == null) {
-            return net.minecraft.world.InteractionResult.PASS;
-        }
-        return parent.interact(player, hand);
+        // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
+        return net.minecraft.world.InteractionResult.PASS;
     }
 
     @Override
     public net.minecraft.world.InteractionResult interactAt(@NotNull Player player,
                                                              @NotNull Vec3 vec,
                                                              @NotNull net.minecraft.world.InteractionHand hand) {
-        Entity parent = this.getParent();
-        if (parent == null) {
-            return net.minecraft.world.InteractionResult.PASS;
-        }
-        return parent.interactAt(player, vec, hand);
+        // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
+        return net.minecraft.world.InteractionResult.PASS;
     }
 
     @Override

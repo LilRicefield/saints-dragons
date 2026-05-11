@@ -165,7 +165,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private boolean isSittingDown = false;
     private boolean isStandingUp = false;
     private int sitTransitionTicks = 0;
-    private boolean wasVehicleLastTick = false;
     private int phaseTwoLingerTicks = 0;
     private final DragonDashAndDodgeComponent groundDash =
             new DragonDashAndDodgeComponent(this, active -> this.entityData.set(DATA_LEAPING, active));
@@ -618,7 +617,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         super.tick();
 
         tickSittingState();
-        tickMountedState();
         tickScreenShake();
         updateSittingProgress();
         tickFeedingCooldown();
@@ -1515,36 +1513,22 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
     }
 
-    private void tickMountedState() {
-        boolean mounted = this.isVehicle();
+    @Override
+    protected boolean shouldPlaySitUpWhenMounted() {
+        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
+    }
 
-        if (mounted && !wasVehicleLastTick) {
-            clearSitProgress();
-            isSittingDown = false;
-            isStandingUp = false;
-            sitTransitionTicks = 0;
+    @Override
+    protected void clearLocalSitTransitionForMount() {
+        clearSitProgress();
+        isSittingDown = false;
+        isStandingUp = false;
+        sitTransitionTicks = 0;
+    }
 
-            if (this.isOrderedToSit()) {
-                this.setOrderedToSit(false);
-                if (this.getCommand() == 1) {
-                    this.setCommand(0);
-                }
-            }
-
-            if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
-                wakeUpImmediately();
-                suppressSleep(300);
-            }
-        }
-
-        if (!mounted && wasVehicleLastTick) {
-            clearSitProgress();
-            isSittingDown = false;
-            isStandingUp = false;
-            sitTransitionTicks = 0;
-        }
-
-        wasVehicleLastTick = mounted;
+    @Override
+    protected void playSitUpWhenMounted() {
+        animationHandler.triggerSitUpAnimation();
     }
 
     private void startWildRideSequence() {

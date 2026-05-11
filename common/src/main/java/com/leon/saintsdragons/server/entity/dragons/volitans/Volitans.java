@@ -3063,6 +3063,24 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
+    protected boolean shouldPlaySitUpWhenMounted() {
+        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
+    }
+
+    @Override
+    protected void clearLocalSitTransitionForMount() {
+        clearSitProgress();
+        isSittingDown = false;
+        isStandingUp = false;
+        sitTransitionTicks = 0;
+    }
+
+    @Override
+    protected void playSitUpWhenMounted() {
+        animationHandler.triggerSitUpAnimation();
+    }
+
+    @Override
     protected float getBodyTurnSpeed() {
         return 0.55F;
     }
