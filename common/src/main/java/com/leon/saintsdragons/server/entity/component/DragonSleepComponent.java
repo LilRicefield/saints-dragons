@@ -242,10 +242,8 @@ public final class DragonSleepComponent {
         boolean waterSleeperAtRest = dragon.canSleepInWater() && dragon.isInWaterOrBubble();
         if (!alreadySleepingOrTransitioning) {
             if (!dragon.onGround() && !waterSleeperAtRest && !(ownerBedSleep && ownerSitCommand)) return false;
-            if (dragon instanceof com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable flyer) {
-                if (flyer.isFlying() || flyer.isHovering() || flyer.isTakeoff() || flyer.isLanding()) {
-                    return false;
-                }
+            if (dragon.isAerial()) {
+                return false;
             }
         }
 

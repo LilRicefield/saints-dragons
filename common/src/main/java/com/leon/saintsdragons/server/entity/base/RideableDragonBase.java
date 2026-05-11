@@ -175,7 +175,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     protected boolean shouldUpdateRiderGroundMoveState() {
-        return !isFlying() && !isTakeoff() && !isLanding() && !isHovering();
+        return !isAerial();
     }
 
     protected int getRiderGroundMoveState(float forward, float strafe) {
@@ -566,7 +566,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         if (!level().isClientSide) {
             int initialGroundState = 0;
             int initialFlightMode = -1;
-            if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
+            if (!isAerial()) {
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
                 if (velSqr > 0.02) initialGroundState = 2;
                 else if (velSqr > 0.0008) initialGroundState = 1;
@@ -582,7 +582,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     public void resetAnimationState() {
         if (!level().isClientSide) {
             int currentGroundState = 0;
-            if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
+            if (!isAerial()) {
                 double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
                 if (velSqr > 0.02) currentGroundState = 2;
                 else if (velSqr > 0.0008) currentGroundState = 1;
@@ -629,7 +629,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     @Override
     public void tickAnimationStates() {
         int moveState = 0;
-        if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
+        if (!isAerial()) {
             if (getControllingPassenger() != null) {
                 float fwd = this.entityData.get(getRiderForwardAccessor());
                 float str = this.entityData.get(getRiderStrafeAccessor());

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -46,7 +47,7 @@ public class DirectSwimWanderGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null || isAerialDragonState()) {
+        if (!canUseSwimMovement() || !mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null || isAerialDragonState()) {
             return false;
         }
 
@@ -60,7 +61,7 @@ public class DirectSwimWanderGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (!mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null || isAerialDragonState()) {
+        if (!canUseSwimMovement() || !mob.isInWaterOrBubble() || mob.isVehicle() || mob.getTarget() != null || isAerialDragonState()) {
             return false;
         }
 
@@ -363,7 +364,10 @@ public class DirectSwimWanderGoal extends Goal {
     }
 
     private boolean isAerialDragonState() {
-        return mob instanceof RideableDragonBase dragon
-                && (dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering());
+        return mob instanceof RideableDragonBase dragon && dragon.isAerial();
+    }
+
+    private boolean canUseSwimMovement() {
+        return preferShore || !(mob instanceof DragonMovementCapable dragon) || dragon.canSwim();
     }
 }

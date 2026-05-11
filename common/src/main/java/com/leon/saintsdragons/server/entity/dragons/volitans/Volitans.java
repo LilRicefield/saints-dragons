@@ -45,6 +45,7 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSo
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansTamingHandler;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
@@ -99,10 +100,20 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
+import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen {
+    @Override
+    public EnumSet<DragonMovementCapability> movementCapabilities() {
+        return EnumSet.of(
+                DragonMovementCapability.WALK,
+                DragonMovementCapability.FLY,
+                DragonMovementCapability.SWIM
+        );
+    }
+
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.VOLITANS_ID;
@@ -380,7 +391,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (this.level().isClientSide) {
             return;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing()) {
+        if (isAerial() || isInWaterOrBubble() || isBurrowing()) {
             return;
         }
 
@@ -1034,7 +1045,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         tickPitchingLogic();
 
         this.noPhysics = false;
-        boolean shouldUseAirNavigation = isFlying() || isTakeoff() || isLanding() || isHovering();
+        boolean shouldUseAirNavigation = isAerial();
         if (shouldUseAirNavigation) {
             this.setNoGravity(true);
             switchToAirNavigation();
@@ -1463,7 +1474,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             setInvulnerable(false);
         }
         setBurrowing(false);
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isAerial()) {
             switchToAirNavigation();
             setNoGravity(true);
         } else {
@@ -2065,7 +2076,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private boolean tryReactiveGroundDodge(@Nullable LivingEntity threat) {
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing() || (isTamingStunned() && !isTame())) {
+        if (isAerial() || isInWaterOrBubble() || isBurrowing() || (isTamingStunned() && !isTame())) {
             return false;
         }
         if (isGroundMobilityActive() || aiGroundMobilityCooldownTicks > 0 || areRiderControlsLocked()) {
@@ -2102,7 +2113,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private boolean tryReactiveGroundBackstep(@Nullable LivingEntity threat) {
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || isBurrowing() || (isTamingStunned() && !isTame())) {
+        if (isAerial() || isInWaterOrBubble() || isBurrowing() || (isTamingStunned() && !isTame())) {
             return false;
         }
         if (isGroundMobilityActive() || aiGroundMobilityCooldownTicks > 0 || riderBackDashCooldownTicks > 0 || areRiderControlsLocked()) {

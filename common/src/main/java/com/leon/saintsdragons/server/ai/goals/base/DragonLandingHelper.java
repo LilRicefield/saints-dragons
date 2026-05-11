@@ -29,11 +29,14 @@ public final class DragonLandingHelper {
             @Nullable LivingEntity target,
             double landingSpeed
     ) {
+        if (!dragon.canFly()) {
+            return false;
+        }
         if (!(dragon instanceof DragonFlightCapable flightCapable)) {
             return false;
         }
         if (dragon.onGround()) {
-            if (flightCapable.isFlying() || flightCapable.isHovering() || flightCapable.isLanding() || flightCapable.isTakeoff()) {
+            if (dragon.isAerial()) {
                 flightCapable.markLandedNow();
                 dragon.getNavigation().stop();
                 return true;

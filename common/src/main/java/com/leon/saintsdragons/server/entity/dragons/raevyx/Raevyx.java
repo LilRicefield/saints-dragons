@@ -476,7 +476,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (this.level().isClientSide) {
             return;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble()) {
+        if (isAerial() || isInWaterOrBubble()) {
             return;
         }
 
@@ -1270,7 +1270,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (isGroundRending() || areRiderControlsLocked()) {
             return;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble()) {
+        if (isAerial() || isInWaterOrBubble()) {
             return;
         }
         if (dashMotion.getCooldownTicks() > 0) {

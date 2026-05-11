@@ -480,7 +480,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (targetCooldown > 0) {
             targetCooldown--;
         }
-        if (!level().isClientSide && (isFlying() || isTakeoff() || isLanding() || isHovering())) {
+        if (!level().isClientSide && isAerial()) {
             this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
         tickAsyncFlightNavigation();
@@ -637,7 +637,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (groundStepSoundCooldownTicks > 0) {
             groundStepSoundCooldownTicks--;
         }
-        if (isBaby() || isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
+        if (isBaby() || isAerial() || isInWaterOrBubble() || !onGround()) {
             groundStepSoundCooldownTicks = 0;
             return;
         }

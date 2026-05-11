@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
@@ -39,7 +40,7 @@ public class DirectSwimToTargetGoal extends Goal {
     @Override
     public boolean canUse() {
         // Only use when in water and has a target
-        if (!mob.isInWaterOrBubble() || mob.isVehicle()) {
+        if (!canUseSwimMovement() || !mob.isInWaterOrBubble() || mob.isVehicle()) {
             return false;
         }
 
@@ -60,7 +61,7 @@ public class DirectSwimToTargetGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        if (!mob.isInWaterOrBubble() || mob.isVehicle()) {
+        if (!canUseSwimMovement() || !mob.isInWaterOrBubble() || mob.isVehicle()) {
             return false;
         }
 
@@ -177,6 +178,10 @@ public class DirectSwimToTargetGoal extends Goal {
             }
         }
         return null;
+    }
+
+    private boolean canUseSwimMovement() {
+        return !(mob instanceof DragonMovementCapable dragon) || dragon.canSwim();
     }
 
     private boolean isBabyParentTarget(LivingEntity target) {

@@ -195,7 +195,7 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
      * Flying dragons should stay grounded with their young.
      */
     private void preventFlight() {
-        if (this.dragon instanceof DragonFlightCapable flightCapable) {
+        if (this.dragon.canFly() && this.dragon instanceof DragonFlightCapable flightCapable) {
             if (flightCapable.isLanding()) {
                 return;
             }
@@ -203,7 +203,7 @@ public class DragonProtectBabiesGoal<T extends DragonEntity> extends TargetGoal 
             // If a parent is airborne near its babies, request a proper landing state once.
             // Directly clearing flying each tick can strand the dragon between takeoff/landing states
             // and create a visible takeoff-land loop.
-            if (flightCapable.isFlying() || flightCapable.isTakeoff() || flightCapable.isHovering()) {
+            if (this.dragon.isAerial()) {
                 flightCapable.beginAiLanding();
             } else {
                 flightCapable.setTakeoff(false);

@@ -444,7 +444,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             timeFlying = 0;
         }
 
-        if (!level().isClientSide && (isFlying() || isTakeoff() || isLanding() || isHovering())) {
+        if (!level().isClientSide && isAerial()) {
             this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
         }
 
@@ -466,7 +466,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
         if (!level().isClientSide) {
             if (isBaby()) {
-                if (isFlying() || isHovering() || isTakeoff() || isLanding()) {
+                if (isAerial()) {
                     setFlying(false);
                     setHovering(false);
                     setTakeoff(false);
@@ -847,7 +847,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                         phase2Active = false;
                         this.entityData.set(DATA_PHASE2, false);
                         phase2CooldownTicks = 40;
-                        if (!isFlying() && !isTakeoff() && !isLanding() && !isHovering()) {
+                        if (!isAerial()) {
                             animationHandler.triggerPhase2ExitAnimation();
                         }
                     }
@@ -1360,7 +1360,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isPhaseTwoRidingAbilityBlocked(abilityName)) {
             return null;
         }
-        if ((isFlying() || isTakeoff() || isLanding() || isHovering())
+        if (isAerial()
                 && IgnivorusAbilities.IGNIVORUS_ROAR_ID.equals(abilityName)) {
             abilityName = IgnivorusAbilities.IGNIVORUS_FIREBALL_ID;
         }
@@ -1589,7 +1589,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isBaby()) {
             return null;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isAerial()) {
             return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.HOLD);
         }
         if (isPhase2Active()) {
@@ -1657,7 +1657,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onRiderToggleMelee(Player player) {
-        if ((isFlying() || isTakeoff() || isLanding() || isHovering()) && player instanceof ServerPlayer serverPlayer && !level().isClientSide) {
+        if (isAerial() && player instanceof ServerPlayer serverPlayer && !level().isClientSide) {
             serverPlayer.displayClientMessage(
                     Component.translatable("saintsdragons.message.ignivorus_secondary_ground_only"),
                     true
@@ -1676,7 +1676,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isBaby()) {
             return;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isAerial()) {
             return;
         }
         if (areRiderControlsLocked()) {
@@ -1729,7 +1729,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (!isPhase2Active()) {
             return false;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isAerial()) {
             return false;
         }
         if (isAiSpecialCombatActive()) {
@@ -1807,7 +1807,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
 
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isAerial()) {
             return;
         }
 
@@ -1863,7 +1863,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isVehicle() || getControllingPassenger() != null) {
             return false;
         }
-        if (isFlying() || isTakeoff() || isLanding() || isHovering()) {
+        if (isAerial()) {
             return false;
         }
         if (bulldozing || leaping) {
@@ -2881,7 +2881,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (groundStepSoundCooldownTicks > 0) {
             groundStepSoundCooldownTicks--;
         }
-        if (isBaby() || isFlying() || isTakeoff() || isLanding() || isHovering() || isInWaterOrBubble() || !onGround()) {
+        if (isBaby() || isAerial() || isInWaterOrBubble() || !onGround()) {
             groundStepSoundCooldownTicks = 0;
             return;
         }

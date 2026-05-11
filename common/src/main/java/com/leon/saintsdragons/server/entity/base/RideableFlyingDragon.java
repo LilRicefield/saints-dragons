@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
 import com.leon.saintsdragons.server.flight.DragonFallRecovery;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
@@ -39,6 +40,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import java.util.EnumSet;
 import java.util.function.BooleanSupplier;
 
 public abstract class RideableFlyingDragon extends RideableDragonBase implements FlyingAnimal, DragonFlightCapable {
@@ -121,6 +123,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         this.moveControl = this.groundMoveControl;
         this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
+    }
+
+    @Override
+    public EnumSet<DragonMovementCapability> movementCapabilities() {
+        return EnumSet.of(DragonMovementCapability.WALK, DragonMovementCapability.FLY);
     }
 
     @Override
@@ -1534,7 +1541,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected boolean isInFlightState() {
-        return isFlying() || isTakeoff() || isLanding() || isHovering();
+        return isAerial();
     }
 
     protected interface RiderLandingBlendHooks {

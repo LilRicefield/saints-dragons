@@ -78,8 +78,9 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         if (!canPackFollow()) {
             if (member instanceof RideableDragonBase rideableMember
                     && member instanceof DragonFlightCapable flightMember
+                    && rideableMember.canFly()
                     && !flightMember.isLanding()
-                    && (flightMember.isFlying() || flightMember.isTakeoff() || flightMember.isHovering())) {
+                    && rideableMember.isAerial()) {
                 DragonLandingHelper.beginAggroLanding(rideableMember, member, getAirFollowSpeed(flightMember));
                 return true;
             }
@@ -106,7 +107,9 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     @Override
     public void stop() {
         member.getNavigation().stop();
-        if (member instanceof DragonFlightCapable flightMember && member instanceof RideableDragonBase) {
+        if (member instanceof DragonFlightCapable flightMember
+                && member instanceof RideableDragonBase rideableMember
+                && rideableMember.canFly()) {
             flightMember.setHovering(false);
         }
         leader = null;
@@ -354,10 +357,14 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     }
 
     private boolean handleAirPackFollowing(T currentLeader) {
-        if (!(member instanceof RideableDragonBase rideableMember) || !(member instanceof DragonFlightCapable flightMember)) {
+        if (!(member instanceof RideableDragonBase rideableMember)
+                || !rideableMember.canFly()
+                || !(member instanceof DragonFlightCapable flightMember)) {
             return false;
         }
-        if (!(currentLeader instanceof DragonFlightCapable flightLeader)) {
+        if (!(currentLeader instanceof RideableDragonBase rideableLeader)
+                || !rideableLeader.canFly()
+                || !(currentLeader instanceof DragonFlightCapable flightLeader)) {
             return false;
         }
 
@@ -368,11 +375,8 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         boolean leaderAirborne = isDragonAirborne(flightLeader, currentLeader);
         boolean memberAirborne = isDragonAirborne(flightMember, rideableMember);
         if (member.isBaby()) {
-            if (flightMember.isFlying() || flightMember.isTakeoff() || flightMember.isHovering() || flightMember.isLanding()) {
-                flightMember.setFlying(false);
-                flightMember.setTakeoff(false);
-                flightMember.setHovering(false);
-                flightMember.setLanding(false);
+            if (rideableMember.isAerial()) {
+                rideableMember.clearAerialState();
             }
             return false;
         }
@@ -415,7 +419,7 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     }
 
     private boolean isDragonAirborne(DragonFlightCapable dragon, Entity entity) {
-        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering() || dragon.isLanding()) {
+        if (entity instanceof RideableDragonBase rideableDragon && rideableDragon.isAerial()) {
             return true;
         }
         if (entity.onGround()) {

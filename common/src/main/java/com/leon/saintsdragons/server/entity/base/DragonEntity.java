@@ -23,6 +23,8 @@ import com.leon.saintsdragons.server.entity.controller.DragonLookControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
@@ -88,8 +90,9 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import java.util.List;
 import java.util.UUID;
+import java.util.EnumSet;
 
-public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon {
+public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon, DragonMovementCapable {
     protected static final int DAMAGE_SLEEP_SUPPRESSION_TICKS = 20 * 30;
     private static final DragonVariantSet DEFAULT_VARIANTS = DragonVariantSet.of(
             DragonVariant.of(0, "default", 1)
@@ -181,6 +184,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public DragonSoundHandler getSoundHandler() {
         return soundHandler;
+    }
+
+    @Override
+    public EnumSet<DragonMovementCapability> movementCapabilities() {
+        return EnumSet.of(DragonMovementCapability.WALK);
     }
 
     protected void handleAnimationSound(String soundKey) {

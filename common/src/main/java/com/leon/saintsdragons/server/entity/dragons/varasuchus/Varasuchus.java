@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponen
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.*;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
@@ -73,12 +74,18 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import javax.annotation.Nonnull;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen {
+    @Override
+    public EnumSet<DragonMovementCapability> movementCapabilities() {
+        return EnumSet.of(DragonMovementCapability.WALK, DragonMovementCapability.SWIM);
+    }
+
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.VARASUCHUS_ID;
@@ -469,7 +476,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.goalSelector.addGoal(3, new DirectSwimToTargetGoal(this, 8.0F, 0.30D, true));
         this.goalSelector.addGoal(5, new DragonLeaveWaterGoal<>(this));
         this.goalSelector.addGoal(6, new DragonFindWaterGoal<>(this));
-        this.goalSelector.addGoal(7, new VarasuchusFollowOwnerGoal(this));
+        this.goalSelector.addGoal(7, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forVarasuchus()) {
+            @Override
+            protected void setFastFollowing(boolean fast) {
+                Varasuchus.this.setAccelerating(fast);
+            }
+        });
         this.goalSelector.addGoal(8, new DirectSwimToTargetGoal(this, 8.0F, 0.25D, false));
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
         this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100) {

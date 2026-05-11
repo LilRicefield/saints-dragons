@@ -24,7 +24,7 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
     @Override
     protected boolean canUseAdditional() {
         // Only wander on ground
-        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering()) {
+        if (dragon.isAerial()) {
             return false;
         }
 
@@ -49,7 +49,7 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
     @Override
     protected boolean canContinueAdditional() {
         // Stop if flying
-        if (dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering()) {
+        if (dragon.isAerial()) {
             return false;
         }
 
@@ -80,7 +80,7 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
     @Override
     public void stop() {
         dragon.setGroundMoveStateFromAI(0); // Idle
-        if (!dragon.isFlying() && !dragon.isTakeoff() && !dragon.isLanding() && !dragon.isHovering()) {
+        if (!dragon.isAerial()) {
             dragon.getNavigation().stop();
         }
     }

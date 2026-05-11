@@ -174,20 +174,13 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         if (dragon.canTakeoff()) {
             dragon.beginAiFlight();
         } else {
-            dragon.setFlying(false);
-            dragon.setTakeoff(false);
-            dragon.setLanding(false);
-            dragon.setHovering(false);
+            dragon.clearAerialState();
         }
         resetPathTracking();
     }
 
     protected boolean canTeleportToOwner() {
-        return dragon.onGround()
-                && !dragon.isFlying()
-                && !dragon.isTakeoff()
-                && !dragon.isLanding()
-                && !dragon.isHovering();
+        return dragon.isGroundedForTeleport();
     }
 
     public static boolean attemptOwnerTeleport(RideableDragonBase dragon, LivingEntity owner) {
@@ -371,6 +364,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     private boolean canTriggerFlight() {
         return !dragon.isOrderedToSit()
+                && dragon.canFly()
                 && !dragon.isBaby()
                 && (dragon.onGround() || dragon.isInWater())
                 && dragon.getPassengers().isEmpty()
@@ -380,7 +374,8 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     }
 
     private boolean shouldUseWaterFollowing(LivingEntity owner) {
-        return dragon instanceof SemiAquaticDragon
+        return dragon.canSwim()
+                && dragon instanceof SemiAquaticDragon
                 && (dragon.isInWaterOrBubble() || owner.isInWaterOrBubble());
     }
 

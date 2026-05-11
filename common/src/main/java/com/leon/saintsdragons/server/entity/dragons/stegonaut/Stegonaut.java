@@ -145,7 +145,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.goalSelector.addGoal(2, new DragonFollowParentGoal<>(this, Stegonaut.class, 0.70D));
         this.goalSelector.addGoal(3, new DragonBreedGoal<>(this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         this.goalSelector.addGoal(4, new StegonautCombatGoal(this));
-        this.goalSelector.addGoal(5, new StegonautFollowOwnerGoal(this));
+        this.goalSelector.addGoal(5, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forStegonaut()));
         this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Stegonaut.class, 0.75D, 16.0D, 8.0D));
         this.goalSelector.addGoal(7, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
         this.goalSelector.addGoal(7, new StegonautGroundWanderGoal(this, 0.35D, 120));
