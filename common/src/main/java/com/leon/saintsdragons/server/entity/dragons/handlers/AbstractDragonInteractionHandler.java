@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.handlers;
 
 import com.leon.saintsdragons.common.registry.ModItems;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +11,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public abstract class AbstractDragonInteractionHandler<T extends DragonEntity> {
+public abstract class AbstractDragonInteractionHandler<T extends RideableDragonBase> {
     protected final T dragon;
 
     protected AbstractDragonInteractionHandler(T dragon) {
@@ -60,6 +60,50 @@ public abstract class AbstractDragonInteractionHandler<T extends DragonEntity> {
 
     protected boolean checkBreedingEnabled(Player player) {
         return DragonBreedingRules.checkEnabled(player);
+    }
+
+    protected void consumeHeldItem(Player player, ItemStack stack) {
+        if (!player.getAbilities().instabuild) {
+            stack.shrink(1);
+        }
+    }
+
+    protected InteractionResult handleCommandCycling(Player player, String messagePrefix) {
+        boolean client = dragon.level().isClientSide;
+        if (dragon.isInSitTransition()) {
+            if (!client) {
+                String key = dragon.isSittingDownAnimation()
+                        ? messagePrefix + ".sitting_down"
+                        : dragon.isStandingUpAnimation()
+                        ? messagePrefix + ".standing_up"
+                        : messagePrefix + ".transitioning";
+                player.displayClientMessage(Component.translatable(key, dragon.getName()), true);
+            }
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        int nextCommand = dragon.getNextCommand();
+        dragon.setCommand(nextCommand);
+        if (!client) {
+            player.displayClientMessage(
+                    Component.translatable("entity.saintsdragons.all.command_" + nextCommand, dragon.getName()),
+                    true
+            );
+        }
+        return InteractionResult.SUCCESS;
+    }
+
+    protected InteractionResult handleStandardMounting(Player player) {
+        if (!dragon.canOwnerMount(player) || dragon.isVehicle()) {
+            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        }
+        if (!dragon.level().isClientSide) {
+            dragon.prepareForMounting();
+            if (!player.startRiding(dragon)) {
+                return InteractionResult.FAIL;
+            }
+        }
+        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
     }
 
     protected abstract Item getBinderItem();

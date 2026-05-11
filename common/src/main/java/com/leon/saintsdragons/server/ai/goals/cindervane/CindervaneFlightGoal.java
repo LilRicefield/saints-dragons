@@ -18,6 +18,9 @@ public class CindervaneFlightGoal extends DragonAutonomousFlightGoal<Cindervane>
         if (!super.canUseAutonomousFlight()) {
             return false;
         }
+        if (dragon.isTame()) {
+            return false;
+        }
         if (isFollowingPackLeader() || isInOwnerFollowMode()) {
             return false;
         }
@@ -39,6 +42,9 @@ public class CindervaneFlightGoal extends DragonAutonomousFlightGoal<Cindervane>
         if (isFollowingPackLeader() || isInOwnerFollowMode()) {
             return false;
         }
+        if (dragon.isTame()) {
+            return false;
+        }
         if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
             return false;
         }
@@ -56,6 +62,7 @@ public class CindervaneFlightGoal extends DragonAutonomousFlightGoal<Cindervane>
         return dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava()
+                || dragon.isTame()
                 || (dragon.isTame() && dragon.getCommand() == 2)
                 || (dragon.hasNearbyAssignedBabies(Cindervane.class) && !dragon.isOverStandardFlightDanger());
     }

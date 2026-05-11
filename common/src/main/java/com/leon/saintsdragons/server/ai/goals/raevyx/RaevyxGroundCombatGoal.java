@@ -17,6 +17,7 @@ import java.util.EnumSet;
 public class RaevyxGroundCombatGoal extends Goal {
     private final Raevyx wyvern;
     private final double biteRange = 3.0;
+    private final double biteOnlyPreyRange = 1.35;
     private final double goreRange = 4.5;
     private final double groundRendRange = 8.5;
     private final double groundRendMinRange = 3.4;
@@ -178,7 +179,8 @@ public class RaevyxGroundCombatGoal extends Goal {
                 handleWaterCombat(target);
                 return;
             }
-            if (!hasUsedRoarOpener) {
+            boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(target);
+            if (!biteOnlyPrey && !hasUsedRoarOpener) {
                 if (wyvern.isSleepTransitioning()) {
                     roarOpenerDelay = Math.max(roarOpenerDelay, 8);
                     updateChasePath(target);
@@ -203,24 +205,26 @@ public class RaevyxGroundCombatGoal extends Goal {
             double gap = getGapToTarget(target);
             boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
             boolean beamReady = beamCooldown <= 0;
-            tickCombatPacing(target, gap, hasLineOfSight, beamReady);
-            if (tryGroundRendPressure(target, gap, hasLineOfSight)) {
+            if (!biteOnlyPrey) {
+                tickCombatPacing(target, gap, hasLineOfSight, beamReady);
+            }
+            if (!biteOnlyPrey && tryGroundRendPressure(target, gap, hasLineOfSight)) {
                 return;
             }
 
-            if (shouldTryDash(gap, isCurrentlyAttacking())) {
+            if (!biteOnlyPrey && shouldTryDash(gap, isCurrentlyAttacking())) {
                 if (tryAIGroundDash(target)) {
                     attackCooldown = Math.max(attackCooldown, 12);
                     return;
                 }
             }
 
-            if (tryPostRoarGroundRend(target, gap, hasLineOfSight)) {
+            if (!biteOnlyPrey && tryPostRoarGroundRend(target, gap, hasLineOfSight)) {
                 return;
             }
 
-            if (tryDirectedBeam(target, hasLineOfSight, beamReady)) {
-            } else if (gap > goreRange) {
+            if (!biteOnlyPrey && tryDirectedBeam(target, hasLineOfSight, beamReady)) {
+            } else if (gap > getMeleeStopRange(target)) {
                 if (!isCurrentlyAttacking()) {
                     updateChasePath(target);
                 }
@@ -250,6 +254,15 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
 
         double gap = getGapToTarget(target);
+
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+            if (gap <= biteOnlyPreyRange && canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
+                if (startAiAbility(RaevyxAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
+                    attackCooldown = 20;
+                }
+            }
+            return;
+        }
 
         if (gap <= groundRendRange && gap > groundRendMinRange && groundRendCooldown <= 0) {
             if (startGroundRend()) {
@@ -487,6 +500,10 @@ public class RaevyxGroundCombatGoal extends Goal {
         return Math.max(0.0, centerDistance - combinedRadii);
     }
 
+    private double getMeleeStopRange(LivingEntity target) {
+        return DragonTargetingHelper.isBiteOnlyPreyTarget(target) ? biteOnlyPreyRange : goreRange;
+    }
+
     private double getMaxAggroDistanceSqr() {
         double followRange = this.wyvern.getAttributeValue(Attributes.FOLLOW_RANGE);
         if (followRange <= 0.0D) {
@@ -529,7 +546,7 @@ public class RaevyxGroundCombatGoal extends Goal {
 
         boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
         double gap = getGapToTarget(target);
-        boolean inAttackRange = gap <= goreRange;
+        boolean inAttackRange = gap <= getMeleeStopRange(target);
         Vec3 current = wyvern.getDeltaMovement();
         Vec3 toTarget = target.position().subtract(wyvern.position());
         Vec3 horizontal = new Vec3(toTarget.x, 0.0, toTarget.z);

@@ -242,7 +242,9 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        if (!hasUsedUltimateTrigger && shouldTriggerLowHealthUltimate()) {
+        boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(target);
+
+        if (!biteOnlyPrey && !hasUsedUltimateTrigger && shouldTriggerLowHealthUltimate()) {
             if (canUseAiAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE, true)) {
                 dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
                 dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_ULTIMATE, 20, 140, true, 180, 100);
@@ -262,24 +264,26 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return;
         }
 
-        maybeTogglePhase2(target, gap, hasLineOfSight);
+        if (!biteOnlyPrey) {
+            maybeTogglePhase2(target, gap, hasLineOfSight);
+        }
 
-        if (handleFireballActive(target)) {
+        if (!biteOnlyPrey && handleFireballActive(target)) {
             updateGroundMoveState();
             return;
         }
 
-        if (maybeStartPhase2GapCloseLeap(target, gap)) {
+        if (!biteOnlyPrey && maybeStartPhase2GapCloseLeap(target, gap)) {
             updateGroundMoveState();
             return;
         }
 
-        if (maybeStartFireball(target, gap, hasLineOfSight)) {
+        if (!biteOnlyPrey && maybeStartFireball(target, gap, hasLineOfSight)) {
             updateGroundMoveState();
             return;
         }
 
-        if (tryRandomBreath(target, hasLineOfSight)) {
+        if (!biteOnlyPrey && tryRandomBreath(target, hasLineOfSight)) {
             updateGroundMoveState();
             return;
         } else if (gap > meleeEngageRange) {
@@ -330,6 +334,15 @@ public class IgnivorusGroundCombatGoal extends Goal {
         double gap = getGapToTarget(target);
 
         if (gap <= meleeEngageRange) {
+            if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+                if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BITE, false)) {
+                    return;
+                }
+                dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BITE);
+                dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
+                attackCooldown = 30;
+                return;
+            }
             if (dragon.isPhase2Active()) {
                 if (dragon.getRandom().nextBoolean()) {
                     if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_STOMP, false)) {

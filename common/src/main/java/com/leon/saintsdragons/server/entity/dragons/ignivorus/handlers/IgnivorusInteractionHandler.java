@@ -71,9 +71,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             }
         }
         if (!client) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
+            consumeHeldItem(player, itemstack);
             dragon.triggerAnim("action", "eat");
             playEatSound();
             dragon.setFeedingCooldown(20);
@@ -176,9 +174,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         }
 
         if (!client) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
+            consumeHeldItem(player, itemstack);
 
             dragon.triggerAnim("action", "eat");
             playEatSound();
@@ -239,9 +235,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         }
 
         if (!dragon.level().isClientSide) {
-            if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
-            }
+            consumeHeldItem(player, itemstack);
             dragon.triggerAnim("action", "eat");
             playEatSound();
             dragon.setFeedingCooldown(23);
@@ -284,36 +278,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
 
     private InteractionResult handleCommandCycling(Player player) {
-        boolean client = dragon.level().isClientSide;
-        boolean isTransitioning = dragon.isInSitTransition();
-        if (isTransitioning) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                boolean sittingDown = dragon.isSittingDownAnimation();
-                boolean standingUp = dragon.isStandingUpAnimation();
-                String messageKey = sittingDown
-                        ? "entity.saintsdragons.ignivorus.sitting_down"
-                        : standingUp
-                        ? "entity.saintsdragons.ignivorus.standing_up"
-                        : "entity.saintsdragons.ignivorus.transitioning";
-
-                serverPlayer.displayClientMessage(
-                        Component.translatable(messageKey, dragon.getName()),
-                        true
-                );
-            }
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (client) {
-            return InteractionResult.SUCCESS;
-        }
-
-        int nextCommand = dragon.getNextCommand();
-        dragon.setCommand(nextCommand);
-        String messageKey = "entity.saintsdragons.all.command_" + nextCommand;
-        player.displayClientMessage(Component.translatable(messageKey, dragon.getName()), true);
-
-        return InteractionResult.CONSUME;
+        return super.handleCommandCycling(player, "entity.saintsdragons.ignivorus");
     }
 
     private void playEatSound() {
@@ -324,17 +289,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     }
 
     private InteractionResult handleMounting(Player player) {
-        if (!dragon.canOwnerMount(player) || dragon.isVehicle()) {
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
-        }
-
-        if (!dragon.level().isClientSide) {
-            dragon.prepareForMounting();
-            if (!player.startRiding(dragon)) {
-                return InteractionResult.FAIL;
-            }
-        }
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return handleStandardMounting(player);
     }
 
     private Float nextFailureHealTarget() {

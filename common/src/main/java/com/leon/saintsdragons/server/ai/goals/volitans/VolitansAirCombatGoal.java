@@ -1,15 +1,14 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
@@ -17,14 +16,13 @@ public class VolitansAirCombatGoal extends Goal {
     private static final double MELEE_RANGE = 6.0D;
     private static final double BREATH_MIN_RANGE = 10.0D;
     private static final double BREATH_MAX_RANGE = 24.0D;
-    private static final double POISON_MIN_RANGE = 14.0D;
     private static final double POISON_MAX_RANGE = 32.0D;
-    private static final double ROAR_MIN_RANGE = 6.0D;
     private static final double ROAR_MAX_RANGE = 12.0D;
     private static final double CHASE_HEIGHT_OFFSET = 2.0D;
+    private static final double MELEE_HEIGHT_OFFSET = 0.0D;
     private static final double CHASE_SPEED = 2.0D;
     private static final double POSITION_SPEED = 0.85D;
-    private static final double BITE_APPROACH_DISTANCE = 3.75D;
+    private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private final Volitans dragon;
@@ -85,7 +83,7 @@ public class VolitansAirCombatGoal extends Goal {
             return true;
         }
         if (!isTargetAirborne(target)) {
-            if (dragon.isFlying() || dragon.isHovering()) {
+            if (dragon.isAerial()) {
                 DragonLandingHelper.beginAggroLanding(dragon, target, 1.0D);
                 return true;
             }
@@ -101,17 +99,11 @@ public class VolitansAirCombatGoal extends Goal {
 
     @Override
     public void start() {
-        dragon.setAggressive(true);
-        if (dragon.onGround() && !dragon.isFlying() && !dragon.isTakeoff() && !dragon.isHovering() && !dragon.isLanding()) {
-            dragon.beginAiTakeoff();
-        } else {
-            dragon.beginAiFlight();
-        }
+        DragonAirCombatHelper.startAirCombat(dragon, Volitans.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override
     public void stop() {
-        dragon.setAggressive(false);
         dragon.setAiSpecialCombatReserved(false);
         LivingEntity target = dragon.getTarget();
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
@@ -120,18 +112,7 @@ public class VolitansAirCombatGoal extends Goal {
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
             dragon.forceEndActiveAbility();
         }
-        if (target != null
-                && dragon.isTargetValid(target)
-                && !isTargetAirborne(target)
-                && (dragon.isFlying() || dragon.isHovering())) {
-            DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.0D);
-            return;
-        }
-        if (target == null || dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
-            dragon.setTarget(null);
-            dragon.setLanding(false);
-            dragon.setHovering(false);
-        }
+        DragonAirCombatHelper.stopAirCombat(dragon, target, 1.0D, this::isTargetAirborne, true);
     }
 
     @Override
@@ -152,6 +133,9 @@ public class VolitansAirCombatGoal extends Goal {
         }
 
         LivingEntity target = dragon.getTarget();
+        if (DragonAirCombatHelper.stopIfTargetInvalid(dragon, this::stop)) {
+            return;
+        }
         if (!isValidTarget(target)) {
             dragon.setTarget(null);
             stop();
@@ -195,13 +179,13 @@ public class VolitansAirCombatGoal extends Goal {
 
         if (distance <= MELEE_RANGE && hasLineOfSight) {
             if (dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0) {
-                tryMelee();
+                tryMelee(target);
             }
             maintainMeleePosition(target);
             return;
         }
 
-        if (distance >= POISON_MIN_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
+        if (distance > ROAR_MAX_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
             if (!startAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true, 14, 120, 90, 36)) {
                 return;
             }
@@ -220,7 +204,7 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (distance >= ROAR_MIN_RANGE && distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
+        if (distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
             if (!startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 12, 140, 120, 48)) {
                 return;
             }
@@ -231,7 +215,13 @@ public class VolitansAirCombatGoal extends Goal {
         flyTowardTarget(target, CHASE_SPEED, CHASE_HEIGHT_OFFSET);
     }
 
-    private void tryMelee() {
+    private void tryMelee(LivingEntity target) {
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+            if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
+                startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            }
+            return;
+        }
         float roll = dragon.getRandom().nextFloat();
         if (roll < 0.40F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
             startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
@@ -263,31 +253,18 @@ public class VolitansAirCombatGoal extends Goal {
     }
 
     private void maintainMeleePosition(LivingEntity target) {
-        double targetY = target.getY() + target.getBbHeight() * 0.5D + CHASE_HEIGHT_OFFSET;
-        Vec3 toTarget = new Vec3(target.getX() - dragon.getX(), targetY - dragon.getY(), target.getZ() - dragon.getZ());
-        double dist = toTarget.length();
-        if (dist < 1.0E-4D) {
-            return;
-        }
-        Vec3 dir = toTarget.scale(1.0D / dist);
-        Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
-        flyToward(desired, dist > BITE_APPROACH_DISTANCE ? POSITION_SPEED : POSITION_SPEED * 0.6D);
-    }
-
-    private void flyTowardTarget(LivingEntity target, double speedScale, double heightOffset) {
-        DragonAsyncAirMovementHelper.chasePredictedTarget(
+        DragonAirCombatHelper.holdMeleePosition(
                 dragon,
                 target,
-                5.0D,
-                heightOffset,
-                0.12D,
-                0.5D,
-                speedScale
+                MELEE_HEIGHT_OFFSET,
+                BITE_APPROACH_DISTANCE,
+                1.2D,
+                0.7D
         );
     }
 
-    private void flyToward(Vec3 destination, double speedScale) {
-        DragonAsyncAirMovementHelper.moveToward(dragon, destination, speedScale);
+    private void flyTowardTarget(LivingEntity target, double speedScale, double heightOffset) {
+        DragonAirCombatHelper.chasePredicted(dragon, target, 5.0D, heightOffset, 0.12D, 0.5D, speedScale);
     }
 
     private boolean isValidTarget(LivingEntity target) {
@@ -301,24 +278,10 @@ public class VolitansAirCombatGoal extends Goal {
     }
 
     private double getMaxAggroDistanceSqr() {
-        double followRange = dragon.getAttributeValue(Attributes.FOLLOW_RANGE);
-        if (followRange <= 0.0D) {
-            followRange = 48.0D;
-        }
-        return followRange * followRange;
+        return DragonAirCombatHelper.maxAggroDistanceSqr(dragon, 48.0D);
     }
 
     private boolean isTargetAirborne(LivingEntity target) {
-        if (target.onGround()) {
-            return false;
-        }
-        if (target.isPassenger() && target.getVehicle() != null) {
-            return true;
-        }
-        if (target instanceof Player player && player.isFallFlying()) {
-            return true;
-        }
-        double groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        return target.getY() - groundY > 8.0D;
+        return DragonAirCombatHelper.isTargetAirborne(dragon, target, 8.0D);
     }
 }

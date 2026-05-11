@@ -75,7 +75,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
         }
         if (!client) {
             if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
+                consumeHeldItem(player, itemstack);
             }
 
             dragon.triggerAnim("action", "eat");
@@ -221,7 +221,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
         if (!client) {
             if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
+                consumeHeldItem(player, itemstack);
             }
 
             dragon.triggerAnim("action", "eat");
@@ -243,7 +243,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
         if (!dragon.level().isClientSide) {
             if (!player.getAbilities().instabuild) {
-                itemstack.shrink(1);
+                consumeHeldItem(player, itemstack);
             }
             dragon.triggerAnim("action", "eat");
             dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
@@ -276,39 +276,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
     }
 
     private InteractionResult handleCommandCycling(Player player) {
-        boolean isTransitioning = dragon.isInSitTransition();
-
-        if (isTransitioning) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                boolean sittingDown = dragon.isSittingDownAnimation();
-                boolean standingUp = dragon.isStandingUpAnimation();
-                String messageKey = sittingDown
-                    ? "entity.saintsdragons.raevyx.sitting_down"
-                    : standingUp
-                        ? "entity.saintsdragons.raevyx.standing_up"
-                        : "entity.saintsdragons.raevyx.transitioning";
-
-                serverPlayer.displayClientMessage(
-                    Component.translatable(messageKey, dragon.getName()),
-                    true
-                );
-            }
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
-        }
-
-        int nextCommand = dragon.getNextCommand();
-        dragon.setCommand(nextCommand);
-        if (!dragon.level().isClientSide) {
-            player.displayClientMessage(
-                Component.translatable(
-                    "entity.saintsdragons.all.command_" + nextCommand,
-                        dragon.getName()
-                ),
-                true
-            );
-        }
-
-        return InteractionResult.SUCCESS;
+        return super.handleCommandCycling(player, "entity.saintsdragons.raevyx");
     }
 
     private Float nextFailureHealTarget() {
@@ -316,23 +284,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
     }
 
     private InteractionResult handleMounting(Player player) {
-        if (dragon.isVehicle()) {
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
-        }
-
-        if (dragon.isOrderedToSit()) {
-            dragon.setOrderedToSit(false);
-        }
-        if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
-            dragon.wakeUpImmediately();
-            dragon.suppressSleep(300);
-        }
-        dragon.clearAllStatesForMounting();
-        if (!dragon.level().isClientSide) {
-            player.startRiding(dragon);
-        }
-
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return handleStandardMounting(player);
     }
 
     private void triggerTamingAdvancement(Player player) {

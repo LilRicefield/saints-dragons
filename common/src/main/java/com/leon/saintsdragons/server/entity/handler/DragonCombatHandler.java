@@ -2,12 +2,14 @@ package com.leon.saintsdragons.server.entity.handler;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.world.entity.LivingEntity;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -86,6 +88,10 @@ public class DragonCombatHandler {
             return false;
         }
 
+        if (!canUseAiAbilityAgainstCurrentTarget(abilityType)) {
+            return false;
+        }
+
         if (isOverlayAbilityType(abilityType)) {
             return overlayAbility == null || !overlayAbility.isUsing();
         }
@@ -119,6 +125,9 @@ public class DragonCombatHandler {
             return false;
         }
         if (dragon.areRiderControlsLocked()) {
+            return false;
+        }
+        if (!canUseAiAbilityAgainstCurrentTarget(abilityType)) {
             return false;
         }
         if (!canStart(abilityType)) {
@@ -178,6 +187,9 @@ public class DragonCombatHandler {
         if (abilityType == null || dragon.level().isClientSide) {
             return;
         }
+        if (!canUseAiAbilityAgainstCurrentTarget(abilityType) && !isInternalStateAbility(abilityType)) {
+            return;
+        }
 
         processingAbility = true;
         try {
@@ -216,6 +228,31 @@ public class DragonCombatHandler {
             setActiveAbility(null);
         }
         return true;
+    }
+
+    private boolean canUseAiAbilityAgainstCurrentTarget(DragonAbilityType<?, ?> abilityType) {
+        if (abilityType == null || dragon.isVehicle()) {
+            return true;
+        }
+        LivingEntity target = dragon.getTarget();
+        if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+            return true;
+        }
+        return isBiteAbility(abilityType);
+    }
+
+    private boolean isBiteAbility(DragonAbilityType<?, ?> abilityType) {
+        String name = AbilityRegistry.getName(abilityType);
+        return name != null && name.toLowerCase(java.util.Locale.ROOT).contains("bite");
+    }
+
+    private boolean isInternalStateAbility(DragonAbilityType<?, ?> abilityType) {
+        String name = AbilityRegistry.getName(abilityType);
+        if (name == null) {
+            return false;
+        }
+        String lowerName = name.toLowerCase(java.util.Locale.ROOT);
+        return lowerName.endsWith("_hurt") || lowerName.endsWith("_die");
     }
 
     public void forceEndActiveAbility() {
@@ -317,6 +354,13 @@ public class DragonCombatHandler {
         }
 
         if (activeAbility != null) {
+            if (!dragon.isVehicle()
+                    && DragonTargetingHelper.isBiteOnlyPreyTarget(dragon.getTarget())
+                    && !isBiteAbility(activeAbility.getAbilityType())
+                    && !isInternalStateAbility(activeAbility.getAbilityType())) {
+                forceEndActiveAbility();
+                return;
+            }
             if (activeAbility.isUsing()) {
                 activeAbility.tick();
             } else {

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.varasuchus;
 
 import com.leon.saintsdragons.common.registry.varasuchus.VarasuchusAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.util.Mth;
@@ -17,6 +18,7 @@ public class VarasuchusCombatGoal extends Goal {
     private static final double WATER_CHASE_RECALC_MULTIPLIER = 0.66D;
     private static final double WATER_CHASE_FAR_BOOST = 1.12D;
     private static final double BITE_RANGE = 5.0D;
+    private static final double LAND_PREY_BITE_RANGE = 1.45D;
     private static final double HORN_RANGE = 5.0D;
     private static final double CLAW_RANGE = 3.5D;
     private static final double DASH_MIN_GAP = 9.0D;
@@ -130,8 +132,9 @@ public class VarasuchusCombatGoal extends Goal {
             }
         }
 
+        double meleeStopRange = getMeleeStopRange(target);
         if (gap <= HORN_RANGE) {
-            if (gap <= BITE_RANGE || isPerformingAttack()) {
+            if (gap <= meleeStopRange || isPerformingAttack()) {
                 if (drake.isInWaterOrBubble()) {
                     drake.setDeltaMovement(drake.getDeltaMovement().scale(0.85D));
                 } else {
@@ -169,6 +172,14 @@ public class VarasuchusCombatGoal extends Goal {
     private DragonAbilityType<Varasuchus, ?> choosePrimaryAttack(LivingEntity target) {
         double gap = getGapToTarget(target);
         boolean phaseTwo = drake.isPhaseTwoActive();
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+            double biteRange = getMeleeStopRange(target);
+            if (gap <= biteRange) {
+                return phaseTwo ? VarasuchusAbilities.VARASUCHUS_BITE2 : VarasuchusAbilities.VARASUCHUS_BITE;
+            }
+            return null;
+        }
+
         if (gap <= CLAW_RANGE) {
             return VarasuchusAbilities.VARASUCHUS_HORN_GORE;
         }
@@ -237,6 +248,12 @@ public class VarasuchusCombatGoal extends Goal {
         double distance = drake.distanceTo(target);
         double combinedRadii = (drake.getBbWidth() + target.getBbWidth()) * 0.5;
         return Math.max(0.0D, distance - combinedRadii);
+    }
+
+    private double getMeleeStopRange(LivingEntity target) {
+        return DragonTargetingHelper.isBiteOnlyPreyTarget(target) && !drake.isInWaterOrBubble()
+                ? LAND_PREY_BITE_RANGE
+                : BITE_RANGE;
     }
 
     private void updateChasePath(LivingEntity target) {

@@ -267,7 +267,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
                 this,
                 80,
-                this::shouldAggroOnSight,
+                () -> true,
                 target -> target instanceof Sheep || target instanceof Pig
         ));
     }

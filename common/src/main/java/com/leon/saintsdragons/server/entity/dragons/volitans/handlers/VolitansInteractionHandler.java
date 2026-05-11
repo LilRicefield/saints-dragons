@@ -310,9 +310,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
     }
 
     private void consumeItem(Player player, ItemStack food) {
-        if (!player.getAbilities().instabuild) {
-            food.shrink(1);
-        }
+        consumeHeldItem(player, food);
     }
 
     private boolean isVolitansFood(ItemStack stack) {

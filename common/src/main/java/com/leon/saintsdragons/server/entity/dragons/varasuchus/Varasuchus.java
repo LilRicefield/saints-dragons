@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.varasuchus.*;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
+import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
@@ -541,7 +542,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
                     this,
                     80,
-                    this::isWildAggressionEnabled,
+                    () -> true,
                     target -> target instanceof Salmon
                             || target instanceof Cod
                             || target instanceof Cow
@@ -1172,28 +1173,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         if (!level().isClientSide && this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            boolean useKeyPitch = isRiderPitchKeyMode();
             float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
             float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
             boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
             prevSwimPitchRad = swimPitchRad;
-            float targetPitchRad = 0f;
-            if (useKeyPitch) {
-                float rawKeyPitchRad = 0f;
-                if (isGoingUp()) {
-                    rawKeyPitchRad = (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
-                } else if (isGoingDown()) {
-                    rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
-                }
-                smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
-                targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-            } else if (hasMovementInput) {
-                float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
-                smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
-                targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-            } else {
-                smoothedPlayerSwimPitchRad = 0f;
-            }
+            float targetPitchRad = getRiderSwimVisualPitchRadians(player, hasMovementInput);
 
             swimPitchRad = Mth.lerp(0.35f, swimPitchRad, targetPitchRad);
             this.entityData.set(DATA_SWIM_PITCH_RAD, swimPitchRad);
@@ -1385,32 +1369,13 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         double strafeInput = input.x;
         boolean hasInput = Math.abs(forwardInput) > 0.01 || Math.abs(strafeInput) > 0.01;
         boolean hasRiderInput = Math.abs(player.zza) > 0.01f || Math.abs(player.xxa) > 0.01f;
-        boolean useKeyPitch = isRiderPitchKeyMode();
-        float targetPitchRad = 0f;
-        if (useKeyPitch) {
-            float rawKeyPitchRad = 0f;
-            if (isGoingUp()) {
-                rawKeyPitchRad = (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
-            } else if (isGoingDown()) {
-                rawKeyPitchRad = (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
-            }
-            smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
-            targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-        } else if (hasRiderInput) {
-            float rawPlayerPitchRad = -(float)Math.toRadians(player.getXRot());
-            smoothedPlayerSwimPitchRad = smoothedPlayerSwimPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
-
-            targetPitchRad = Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-        } else {
-            smoothedPlayerSwimPitchRad = 0f;
-            targetPitchRad = 0f;
-        }
+        float targetPitchRad = getRiderSwimVisualPitchRadians(player, hasRiderInput);
         prevSwimPitchRad = swimPitchRad;
         swimPitchRad = Mth.lerp(0.35f, swimPitchRad, targetPitchRad);
 
         this.entityData.set(DATA_SWIM_PITCH_RAD, swimPitchRad);
         float yawRad = (float) Math.toRadians(this.getYRot());
-        float pitchRad = useKeyPitch ? getKeyPitchRadians() : (float) Math.toRadians(player.getXRot());
+        float pitchRad = DragonRiderControllerHelper.resolveRiderPitchRadians(this, player, RIDER_KEY_PITCH_DEG);
         double forwardXZ = Math.cos(pitchRad);
         double forwardX = -Math.sin(yawRad) * forwardXZ;
         double forwardY = -Math.sin(pitchRad);
@@ -1452,14 +1417,17 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.move(MoverType.SELF, this.getDeltaMovement());
     }
 
-    private float getKeyPitchRadians() {
-        if (isGoingUp()) {
-            return (float) -Math.toRadians(RIDER_KEY_PITCH_DEG);
-        }
-        if (isGoingDown()) {
-            return (float) Math.toRadians(RIDER_KEY_PITCH_DEG);
-        }
-        return 0.0f;
+    private float getRiderSwimVisualPitchRadians(Player player, boolean hasMovementInput) {
+        float rawPitchRad = DragonRiderControllerHelper.resolveRiderSwimVisualPitchRadians(
+                this,
+                player,
+                RIDER_KEY_PITCH_DEG,
+                hasMovementInput
+        );
+        smoothedPlayerSwimPitchRad = rawPitchRad == 0.0F
+                ? 0.0F
+                : smoothedPlayerSwimPitchRad * 0.65f + rawPitchRad * 0.35f;
+        return Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
     }
     @Override
     public boolean isGoingUp() {

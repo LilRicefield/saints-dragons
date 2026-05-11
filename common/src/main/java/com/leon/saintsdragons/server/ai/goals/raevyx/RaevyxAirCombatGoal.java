@@ -1,26 +1,26 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 
 public class RaevyxAirCombatGoal extends Goal {
     private final Raevyx dragon;
-    private static final double DIRECT_CHASE_SPEED = 6.0D;
+    private static final double CHASE_SPEED = 6.0D;
     private static final double BITE_TRIGGER_RANGE = 7.0;
     private static final double ENGAGEMENT_DISTANCE = 30.0;
-    private static final double BITE_APPROACH_DISTANCE = 10.0;
-    private final double beamMinRange = 20.0;
-    private final double beamMaxRange = 70.0;
+    private static final double BITE_APPROACH_DISTANCE = 3.5D;
+    private static final double BEAM_MIN_RANGE = 20.0D;
+    private static final double BEAM_MAX_RANGE = 70.0D;
     private int attackCooldown = 0;
     private int repositionCooldown = 0;
     private int beamCooldown = 0;
@@ -52,7 +52,7 @@ public class RaevyxAirCombatGoal extends Goal {
             return false;
         }
 
-        boolean dragonAirborne = dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding();
+        boolean dragonAirborne = dragon.isAerial();
         boolean targetAirborne = isTargetAirborne(target);
         if (!targetAirborne && !dragonAirborne) {
             return false;
@@ -99,7 +99,7 @@ public class RaevyxAirCombatGoal extends Goal {
         }
 
         if (!isTargetAirborne(target)) {
-            if (dragon.isFlying() || dragon.isHovering()) {
+            if (dragon.isAerial()) {
                 DragonLandingHelper.beginAggroLanding(dragon, target, 1.6D);
                 return true;
             }
@@ -120,28 +120,14 @@ public class RaevyxAirCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        dragon.setAggressive(false);
         attackCooldown = 0;
         repositionCooldown = 0;
-        LivingEntity target = dragon.getTarget();
-        if (target != null
-                && dragon.isTargetValid(target)
-                && !isTargetAirborne(target)
-                && (dragon.isFlying() || dragon.isHovering())
-                && !dragon.isLanding()) {
-            DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
-        }
+        DragonAirCombatHelper.stopAirCombat(dragon, dragon.getTarget(), 1.6D, this::isTargetAirborne, false);
     }
 
     @Override
     public void start() {
-        dragon.setAggressive(true);
-
-        if (dragon.onGround() && !dragon.isFlying() && !dragon.isHovering() && !dragon.isTakeoff() && !dragon.isLanding()) {
-            dragon.beginAiTakeoff(Raevyx.TAKEOFF_ANIMATION_TICKS);
-        } else if (dragon.isFlying() || dragon.isHovering()) {
-            dragon.beginAiFlight();
-        }
+        DragonAirCombatHelper.startAirCombat(dragon, Raevyx.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override
@@ -177,14 +163,12 @@ public class RaevyxAirCombatGoal extends Goal {
         }
 
         LivingEntity target = dragon.getTarget();
-        if (!dragon.isTargetValid(target)) {
-            dragon.setTarget(null);
-            stop();
+        if (DragonAirCombatHelper.stopIfTargetInvalid(dragon, this::stop)) {
             return;
         }
 
         if (!isTargetAirborne(target)) {
-            if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff()) {
+            if (dragon.isAerial()) {
                 DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
             }
             return;
@@ -201,7 +185,11 @@ public class RaevyxAirCombatGoal extends Goal {
                 tryAttack(target, distance);
             }
             maintainBitePosition(target);
-        } else if (distance >= beamMinRange && distance <= beamMaxRange && hasLineOfSight && beamCooldown <= 0) {
+        } else if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)
+                && distance >= BEAM_MIN_RANGE
+                && distance <= BEAM_MAX_RANGE
+                && hasLineOfSight
+                && beamCooldown <= 0) {
             if (!isCurrentlyAttacking()) {
                 tryAttack(target, distance);
             }
@@ -237,7 +225,10 @@ public class RaevyxAirCombatGoal extends Goal {
             if (startAiAbility(RaevyxAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
                 attackCooldown = 20;
             }
-        } else if (distance >= beamMinRange && distance <= beamMaxRange && beamCooldown <= 0) {
+        } else if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)
+                && distance >= BEAM_MIN_RANGE
+                && distance <= BEAM_MAX_RANGE
+                && beamCooldown <= 0) {
             if (!canUseAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
                 return;
             }
@@ -250,15 +241,7 @@ public class RaevyxAirCombatGoal extends Goal {
 
 
     private void chaseTarget(LivingEntity target) {
-        DragonAsyncAirMovementHelper.chasePredictedTarget(
-                dragon,
-                target,
-                5.0D,
-                0.5D,
-                0.15D,
-                0.5D,
-                DIRECT_CHASE_SPEED
-        );
+        DragonAirCombatHelper.chasePredicted(dragon, target, 5.0D, 0.5D, 0.15D, 0.5D, CHASE_SPEED);
     }
 
     private void maintainCombatPosition(LivingEntity target) {
@@ -283,40 +266,11 @@ public class RaevyxAirCombatGoal extends Goal {
     }
 
     private void maintainBitePosition(LivingEntity target) {
-        double targetY = target.getY() + target.getBbHeight() * 0.5D;
-
-        Vec3 toTarget = new Vec3(
-            target.getX() - dragon.getX(),
-            targetY - dragon.getY(),
-            target.getZ() - dragon.getZ()
-        );
-
-        double dist = toTarget.length();
-        if (dist < 1.0E-4) {
-            return;
-        }
-
-        Vec3 dir = toTarget.scale(1.0 / dist);
-        Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(BITE_APPROACH_DISTANCE));
-
-        double speed = dist > BITE_APPROACH_DISTANCE ? 1.2 : 0.6;
-        DragonAsyncAirMovementHelper.moveToward(dragon, desired, speed);
+        DragonAirCombatHelper.holdMeleePosition(dragon, target, 0.0D, BITE_APPROACH_DISTANCE, 1.2D, 0.6D);
     }
 
     private boolean isTargetAirborne(LivingEntity target) {
-        if (target.onGround()) {
-            return false;
-        }
-
-        if (target.isPassenger() && target.getVehicle() != null) {
-            return true;
-        }
-        double groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        if (target.getY() - groundY > 8.0) {
-            return true;
-        }
-
-        return false;
+        return DragonAirCombatHelper.isTargetAirborne(dragon, target, 8.0D);
     }
 
     private void checkEmergencyLanding(LivingEntity target) {
@@ -345,20 +299,11 @@ public class RaevyxAirCombatGoal extends Goal {
     }
 
     private double getMaxAggroDistanceSqr() {
-        double followRange = this.dragon.getAttributeValue(Attributes.FOLLOW_RANGE);
-        if (followRange <= 0.0D) {
-            followRange = 64.0D;
-        }
-        return followRange * followRange;
+        return DragonAirCombatHelper.maxAggroDistanceSqr(dragon, 64.0D);
     }
 
     private boolean canTriggerFlight() {
-        return !dragon.isOrderedToSit() &&
-                !dragon.isBaby() &&
-                (dragon.onGround() || dragon.isInWater()) &&
-                dragon.getPassengers().isEmpty() &&
-                dragon.getControllingPassenger() == null &&
-                dragon.getActiveAbility() == null;
+        return DragonAirCombatHelper.canTriggerAiFlight(dragon);
     }
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {

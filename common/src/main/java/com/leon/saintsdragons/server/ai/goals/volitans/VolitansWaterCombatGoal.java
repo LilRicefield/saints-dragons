@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -98,7 +99,7 @@ public class VolitansWaterCombatGoal extends Goal {
         }
 
         if (gap <= GORE_RANGE) {
-            tryMelee(gap);
+            tryMelee(target, gap);
             return;
         }
 
@@ -160,8 +161,14 @@ public class VolitansWaterCombatGoal extends Goal {
         return true;
     }
 
-    private void tryMelee(double gap) {
+    private void tryMelee(LivingEntity target, double gap) {
         if (gap <= BITE_RANGE) {
+            if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+                if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
+                    startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+                }
+                return;
+            }
             float roll = dragon.getRandom().nextFloat();
             if (roll < 0.42F) {
                 if (canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {

@@ -538,7 +538,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
                     this,
                     80,
-                    this::shouldAggroOnSight,
+                    () -> true,
                     this::shouldRandomlyAggroSeaLife
             ));
         }
@@ -2587,7 +2587,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private boolean shouldRandomlyAggroSeaLife(@Nullable LivingEntity target) {
-        if (!shouldAggroOnSight() || target == null) {
+        if (target == null) {
             return false;
         }
         return target instanceof Dolphin

@@ -171,7 +171,7 @@ public class VolitansGroundCombatGoal extends Goal {
                 updateChasePath(target);
             }
             if (dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0 && !dragon.isGroundCombatAbilityActive()) {
-                tryMelee(gap);
+                tryMelee(target, gap);
                 return;
             }
             if (gap > BITE_RANGE) {
@@ -320,12 +320,18 @@ public class VolitansGroundCombatGoal extends Goal {
         return true;
     }
 
-    private void tryMelee(double gap) {
+    private void tryMelee(LivingEntity target, double gap) {
         if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundCombatAbilityActive()) {
             return;
         }
 
         if (gap <= BITE_RANGE) {
+            if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+                if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
+                    startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+                }
+                return;
+            }
             float roll = dragon.getRandom().nextFloat();
             if (roll < 0.42F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
                 startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);

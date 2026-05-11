@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.controller.volitans;
 
-import com.leon.saintsdragons.server.flight.DragonRiderFlightPhysics;
+import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
@@ -34,32 +34,21 @@ public final class VolitansRiderController {
 
     @Nullable
     public Player getRidingPlayer() {
-        if (dragon.getControllingPassenger() instanceof Player player) {
-            return player;
-        }
-        return null;
+        return DragonRiderControllerHelper.getRidingPlayer(dragon);
     }
 
     public Vec3 getRiddenInput(Player rider, Vec3 deltaIn) {
-        float forward = rider.zza;
-        float strafe = rider.xxa;
-        if (forward < 0.0F) {
-            forward *= 0.5F;
-        }
-
         if (dragon.isFlying()) {
-            return new Vec3(strafe * 0.45F, 0.0D, forward * 0.9F);
+            return DragonRiderControllerHelper.riddenInput(rider, true, 0.4D, 0.8D, 0.45D, 0.9D);
         }
         if (dragon.isInWaterOrBubble()) {
-            return new Vec3(strafe * 0.6F, 0.0D, forward);
+            return DragonRiderControllerHelper.riddenInput(rider, true, 0.4D, 0.8D, 0.6D, 1.0D);
         }
-        return new Vec3(strafe * 0.4F, 0.0D, forward * 0.8F);
+        return DragonRiderControllerHelper.riddenInput(rider, false, 0.4D, 0.8D, 0.45D, 0.9D);
     }
 
     public void tickRidden(Player rider) {
-        rider.fallDistance = 0.0F;
-        dragon.fallDistance = 0.0F;
-        dragon.setTarget(null);
+        DragonRiderControllerHelper.clearRiderFallAndTarget(dragon, rider);
 
         if ((dragon.isFlying() || dragon.isInWaterOrBubble()) && !dragon.isRiderPitchKeyMode()) {
             syncRiderLook(rider);
@@ -71,10 +60,7 @@ public final class VolitansRiderController {
 
     private void syncRiderLook(Player rider) {
         syncRiderYaw(rider);
-        float targetPitch = Mth.clamp(rider.getXRot(), -45.0F, 45.0F);
-        float blendedPitch = Mth.lerp(0.18F, dragon.getXRot(), targetPitch);
-        dragon.xRotO = dragon.getXRot();
-        dragon.setXRot(blendedPitch);
+        DragonRiderControllerHelper.syncPitchToRider(dragon, rider, 0.18F, 45.0F);
     }
 
     private void syncRiderYaw(Player rider) {
@@ -138,7 +124,7 @@ public final class VolitansRiderController {
         boolean hasInput = Math.abs(forwardInput) > 0.01D || Math.abs(strafeInput) > 0.01D;
 
         float yawRad = (float) Math.toRadians(dragon.getYRot());
-        float pitchRad = resolveRiderPitchRad(rider);
+        float pitchRad = DragonRiderControllerHelper.resolveRiderPitchRadians(dragon, rider, RIDER_KEY_PITCH_DEG);
         double forwardXZ = Math.cos(pitchRad);
         double forwardX = -Math.sin(yawRad) * forwardXZ;
         double forwardY = -Math.sin(pitchRad);
@@ -180,83 +166,26 @@ public final class VolitansRiderController {
 
     public void handleFlightTravel(Player rider, Vec3 motion) {
         dragon.setRunning(false);
-        double baseSpeed = dragon.getFlightSpeed();
-        double targetSpeed = (dragon.isAccelerating() ? SPRINT_SPEED_MULT : CRUISE_SPEED_MULT) * baseSpeed;
-
-        float pitchDeg = resolveRiderPitchDeg(rider);
-        DragonRiderFlightPhysics.DiveResponse diveResponse =
-                DragonRiderFlightPhysics.computeDiveResponse(pitchDeg, dragon.isRiderPitchKeyMode());
-        double diveAcceleration = diveResponse.acceleration();
-        double diveDrag = diveResponse.drag();
-        targetSpeed *= diveResponse.speedMultiplier();
-
-        double forwardInput = motion.z;
-        double strafeInput = motion.x;
-        float yawRad = (float) Math.toRadians(dragon.getYRot());
-        float pitchRad = resolveRiderPitchRad(rider);
-
-        double forwardXZ = Math.cos(pitchRad);
-        double forwardX = -Math.sin(yawRad) * forwardXZ;
-        double forwardY = -Math.sin(pitchRad);
-        double forwardZ = Math.cos(yawRad) * forwardXZ;
-        double strafeX = Math.cos(yawRad);
-        double strafeZ = Math.sin(yawRad);
-
-        Vec3 targetDir = new Vec3(
-                forwardX * forwardInput + strafeX * strafeInput * STRAFE_POWER,
-                forwardY * forwardInput,
-                forwardZ * forwardInput + strafeZ * strafeInput * STRAFE_POWER
+        float pitchRad = DragonRiderControllerHelper.resolveRiderPitchRadians(dragon, rider, RIDER_KEY_PITCH_DEG);
+        Vec3 velocity = DragonRiderControllerHelper.computeFlightVelocity(
+                dragon,
+                rider,
+                motion,
+                pitchRad,
+                dragon.isRiderPitchKeyMode(),
+                dragon.getFlightSpeed(),
+                CRUISE_SPEED_MULT,
+                SPRINT_SPEED_MULT,
+                STRAFE_POWER,
+                0.5D,
+                ASCEND_THRUST,
+                DESCEND_THRUST,
+                TERMINAL_VELOCITY,
+                ASCEND_THRUST * 0.65D,
+                false
         );
-        if (targetDir.lengthSqr() > 1.0E-6D) {
-            targetDir = targetDir.normalize();
-        }
-
-        Vec3 current = dragon.getDeltaMovement();
-        Vec3 targetVel = targetDir.scale(targetSpeed);
-        Vec3 blended = new Vec3(
-                Mth.lerp((float) diveAcceleration, current.x, targetVel.x),
-                Mth.lerp((float) diveAcceleration, current.y, targetVel.y),
-                Mth.lerp((float) diveAcceleration, current.z, targetVel.z)
-        ).scale(1.0D - diveDrag);
-
-        double verticalVel = blended.y;
-        boolean hasInput = Math.abs(motion.z) > 0.01D || Math.abs(motion.x) > 0.01D;
-        boolean isDiving = !dragon.isRiderPitchKeyMode() && pitchDeg >= 45.0F && hasInput;
-
-        if (!isDiving) {
-            if (dragon.isGoingUp()) {
-                verticalVel += ASCEND_THRUST;
-            } else if (dragon.isGoingDown()) {
-                verticalVel -= DESCEND_THRUST;
-            }
-        }
-        verticalVel = Mth.clamp(verticalVel, -TERMINAL_VELOCITY, TERMINAL_VELOCITY);
-
-        if (blended.length() > targetSpeed) {
-            blended = blended.normalize().scale(targetSpeed);
-        }
-
-        blended = new Vec3(blended.x, verticalVel, blended.z);
-        dragon.setSpeed((float) targetSpeed);
-        dragon.move(MoverType.SELF, blended);
-        dragon.setDeltaMovement(blended);
+        dragon.move(MoverType.SELF, velocity);
+        dragon.setDeltaMovement(velocity);
         dragon.calculateEntityAnimation(true);
-    }
-
-    private float resolveRiderPitchDeg(Player rider) {
-        if (!dragon.isRiderPitchKeyMode()) {
-            return rider.getXRot();
-        }
-        if (dragon.isGoingUp()) {
-            return -RIDER_KEY_PITCH_DEG;
-        }
-        if (dragon.isGoingDown()) {
-            return RIDER_KEY_PITCH_DEG;
-        }
-        return 0.0F;
-    }
-
-    private float resolveRiderPitchRad(Player rider) {
-        return (float) Math.toRadians(resolveRiderPitchDeg(rider));
     }
 }

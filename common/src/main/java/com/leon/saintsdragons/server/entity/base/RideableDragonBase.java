@@ -240,6 +240,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     public void setRiderPitchKeyMode(boolean enabled) {
     }
 
+    public boolean isRiderPitchKeyMode() {
+        return false;
+    }
+
     private void warnMissingAction(String action) {
         if (warnedMissingActions.add(action)) {
             LOGGER.warn("{} does not support rider action '{}'", this, action);

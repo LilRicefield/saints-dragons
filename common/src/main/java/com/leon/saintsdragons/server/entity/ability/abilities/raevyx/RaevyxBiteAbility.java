@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -83,7 +84,9 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             }
             if (primary != null) {
                 bitePrimary(primary);
-                chainFrom(primary);
+                if (!DragonTargetingHelper.isBiteOnlyPreyTarget(primary)) {
+                    chainFrom(primary);
+                }
             }
             didHitThisActive = true;
         }
@@ -98,7 +101,6 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 1.5D)) {
                 return target;
             }
-            return null;
         }
 
         List<LivingEntity> candidates = DragonMeleeGeometry.findForwardTargets(
