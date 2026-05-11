@@ -134,8 +134,8 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
         double distance = dragon.distanceTo(owner);
 
-        // Emergency teleport if too far
-        if (distance > config.teleportDist) {
+        // Emergency teleport if too far while grounded.
+        if (distance > config.teleportDist && canTeleportToOwner()) {
             handleTeleportToOwner(owner);
             return;
         }
@@ -180,6 +180,14 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             dragon.setHovering(false);
         }
         resetPathTracking();
+    }
+
+    protected boolean canTeleportToOwner() {
+        return dragon.onGround()
+                && !dragon.isFlying()
+                && !dragon.isTakeoff()
+                && !dragon.isLanding()
+                && !dragon.isHovering();
     }
 
     public static boolean attemptOwnerTeleport(RideableDragonBase dragon, LivingEntity owner) {

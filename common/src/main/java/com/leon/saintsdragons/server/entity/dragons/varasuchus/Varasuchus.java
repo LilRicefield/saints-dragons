@@ -1344,7 +1344,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
         boolean running = moveState == 2;
         if (this.isPhaseTwoActive()) {
-            int duration = running ? 24 : 38;
+            int duration = running ? 24 : 45;
             this.getSoundHandler().playMovingEntitySound(
                     running ? ModSounds.VARASUCHUS_RUN2.get() : ModSounds.VARASUCHUS_WALK2.get(),
                     1.0f, 1.0f, duration
@@ -1352,7 +1352,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             groundStepSoundCooldownTicks = duration;
             return;
         }
-        int duration = running ? 27 : 35;
+        int duration = running ? 27 : 40;
         this.getSoundHandler().playMovingEntitySound(
                 running ? ModSounds.VARASUCHUS_RUN.get() : ModSounds.VARASUCHUS_WALK.get(),
                 1.0f, 1.0f, duration
