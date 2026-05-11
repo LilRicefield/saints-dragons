@@ -46,6 +46,7 @@ public final class SaintsDragonsConfig {
     public static final boolean SCREEN_SHAKE_ENABLED_DEFAULT = true;
     public static final boolean BARREL_ROLL_ENABLED_DEFAULT = true;
     public static final boolean STEGONAUT_BUFFS_ENABLED_DEFAULT = true;
+    public static final boolean DRAGON_BREEDING_ENABLED_DEFAULT = true;
     public static final boolean HUNGER_DECAY_ENABLED_DEFAULT = true;
     public static final boolean HAPPINESS_DECAY_ENABLED_DEFAULT = true;
     public static final boolean IVY_HOUSE_ENABLED_DEFAULT = true;
@@ -99,6 +100,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
     public static ConfigHelper.BooleanValue BARREL_ROLL_ENABLED;
     public static ConfigHelper.BooleanValue STEGONAUT_BUFFS_ENABLED;
+    public static ConfigHelper.BooleanValue DRAGON_BREEDING_ENABLED;
     public static ConfigHelper.BooleanValue HUNGER_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue HAPPINESS_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue IVY_HOUSE_ENABLED;
@@ -212,6 +214,8 @@ public final class SaintsDragonsConfig {
         BARREL_ROLL_ENABLED = serverBuilder.defineBoolean("barrelRollEnabled", BARREL_ROLL_ENABLED_DEFAULT);
         serverBuilder.comment("Global toggle for Stegonaut passive aura buffs and portable binder buffs.");
         STEGONAUT_BUFFS_ENABLED = serverBuilder.defineBoolean("stegonautBuffsEnabled", STEGONAUT_BUFFS_ENABLED_DEFAULT);
+        serverBuilder.comment("Server-authoritative toggle for dragon breeding. If false, players cannot ready dragons for breeding and dragons cannot produce eggs.");
+        DRAGON_BREEDING_ENABLED = serverBuilder.defineBoolean("dragonBreedingEnabled", DRAGON_BREEDING_ENABLED_DEFAULT);
         serverBuilder.comment("Global toggle for tame dragon hunger decay.");
         HUNGER_DECAY_ENABLED = serverBuilder.defineBoolean("hungerDecayEnabled", HUNGER_DECAY_ENABLED_DEFAULT);
         serverBuilder.comment("Global toggle for tame dragon happiness decay.");
@@ -234,6 +238,10 @@ public final class SaintsDragonsConfig {
 
     public static int getIvyRestockInterval() {
         return IVY_RESTOCK_INTERVAL == null ? IVY_RESTOCK_INTERVAL_DEFAULT : IVY_RESTOCK_INTERVAL.get();
+    }
+
+    public static boolean isDragonBreedingEnabled() {
+        return DRAGON_BREEDING_ENABLED == null || DRAGON_BREEDING_ENABLED.get();
     }
 
     private SaintsDragonsConfig() {

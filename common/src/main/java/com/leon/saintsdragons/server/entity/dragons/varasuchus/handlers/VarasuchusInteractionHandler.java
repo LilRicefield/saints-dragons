@@ -137,6 +137,9 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBreeding(Player player, ItemStack food) {
         boolean client = dragon.level().isClientSide;
+        if (!client && !checkBreedingEnabled(player)) {
+            return InteractionResult.CONSUME;
+        }
         var baby = dragon.getBabyComponent();
 
         if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.varasuchus", dragon.canFeed())) {

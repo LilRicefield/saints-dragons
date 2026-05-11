@@ -331,6 +331,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
                 SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
                 SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
+                SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.save();
                 SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
                 SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
                 SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
@@ -481,6 +482,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             ).setDefaultValue(SaintsDragonsConfig.BARREL_ROLL_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.barrel_roll.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(value))
+              .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.dragon_breeding"),
+                    SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.DRAGON_BREEDING_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_breeding.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.set(value))
               .build());
         }
         others.addEntry(entryBuilder.startBooleanToggle(

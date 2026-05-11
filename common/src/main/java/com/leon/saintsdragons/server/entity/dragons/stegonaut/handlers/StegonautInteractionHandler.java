@@ -142,6 +142,9 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
 
     private InteractionResult handleBreeding(Player player, ItemStack heldItem) {
         boolean client = dragon.level().isClientSide;
+        if (!client && !checkBreedingEnabled(player)) {
+            return InteractionResult.CONSUME;
+        }
 
         if (dragon.isBaby()) {
             sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_too_young");

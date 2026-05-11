@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
+import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.advancements.CriteriaTriggers;
@@ -133,7 +134,8 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
     }
 
     protected boolean isBreedingAllowed() {
-        return this.dragon.isInLove()
+        return DragonBreedingRules.isEnabled()
+                && this.dragon.isInLove()
                 && !this.dragon.isFlying();
     }
 
@@ -174,6 +176,13 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
 
     protected void handleBreed() {
         if (!(this.level instanceof ServerLevel serverlevel)) {
+            return;
+        }
+        if (!DragonBreedingRules.isEnabled()) {
+            this.dragon.resetLove();
+            if (this.partner != null) {
+                this.partner.resetLove();
+            }
             return;
         }
 

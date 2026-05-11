@@ -205,6 +205,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "screenShakeEnabled" -> () -> serverHolder().getConfig().screenShakeEnabled;
             case "barrelRollEnabled" -> () -> serverHolder().getConfig().barrelRollEnabled;
             case "stegonautBuffsEnabled" -> () -> serverHolder().getConfig().stegonautBuffsEnabled;
+            case "dragonBreedingEnabled" -> () -> serverHolder().getConfig().dragonBreedingEnabled;
             case "hungerDecayEnabled" -> () -> serverHolder().getConfig().hungerDecayEnabled;
             case "happinessDecayEnabled" -> () -> serverHolder().getConfig().happinessDecayEnabled;
             case "ivyHouseEnabled" -> () -> serverHolder().getConfig().ivyHouseEnabled;
@@ -223,6 +224,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "screenShakeEnabled" -> value -> serverHolder().getConfig().screenShakeEnabled = value;
             case "barrelRollEnabled" -> value -> serverHolder().getConfig().barrelRollEnabled = value;
             case "stegonautBuffsEnabled" -> value -> serverHolder().getConfig().stegonautBuffsEnabled = value;
+            case "dragonBreedingEnabled" -> value -> serverHolder().getConfig().dragonBreedingEnabled = value;
             case "hungerDecayEnabled" -> value -> serverHolder().getConfig().hungerDecayEnabled = value;
             case "happinessDecayEnabled" -> value -> serverHolder().getConfig().happinessDecayEnabled = value;
             case "ivyHouseEnabled" -> value -> serverHolder().getConfig().ivyHouseEnabled = value;

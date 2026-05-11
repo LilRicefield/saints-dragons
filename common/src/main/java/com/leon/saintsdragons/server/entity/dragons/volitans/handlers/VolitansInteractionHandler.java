@@ -184,6 +184,9 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
 
     private InteractionResult handleBreeding(Player player, ItemStack food) {
         boolean client = dragon.level().isClientSide;
+        if (!client && !checkBreedingEnabled(player)) {
+            return InteractionResult.CONSUME;
+        }
 
         if (!dragon.canFeed()) {
             if (!client && player instanceof ServerPlayer serverPlayer) {

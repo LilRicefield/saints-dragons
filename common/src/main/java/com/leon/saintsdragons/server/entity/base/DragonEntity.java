@@ -25,6 +25,7 @@ import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -473,6 +474,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public boolean canMate(@NotNull Animal otherAnimal) {
+        if (!DragonBreedingRules.isEnabled()) {
+            return false;
+        }
         if (otherAnimal == this || otherAnimal.getClass() != this.getClass()) {
             return false;
         }

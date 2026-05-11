@@ -363,6 +363,7 @@
   "entity.saintsdragons.ignivorus.breeding_cooling_down": "%s is not ready to breed yet",
   "entity.saintsdragons.ignivorus.breeding_already_ready": "%s is already ready to breed",
   "entity.saintsdragons.ignivorus.breeding_ready": "%s is ready to breed!",
+  "entity.saintsdragons.dragon.breeding_disabled": "Dragon breeding is disabled on this server",
   "advancement.saintsdragons.why.title": "Why?",
   "advancement.saintsdragons.why.description": "Did you just hit a baby?",
   
@@ -804,6 +805,8 @@
   "saintsdragons.config_screen.others.screen_shake.tooltip": "Disables dragon and ability-driven camera shake effects when turned off",
   "saintsdragons.config_screen.others.barrel_roll": "Enable Barrel Roll",
   "saintsdragons.config_screen.others.barrel_roll.tooltip": "Disables rider-triggered barrel roll for all flying dragons when turned off",
+  "saintsdragons.config_screen.others.dragon_breeding": "Enable Dragon Breeding",
+  "saintsdragons.config_screen.others.dragon_breeding.tooltip": "Server setting. When turned off, players cannot ready dragons for breeding and dragons cannot produce eggs",
   "saintsdragons.config_screen.others.first_person_banking_camera": "Enable First-Person Banking Camera",
   "saintsdragons.config_screen.others.first_person_banking_camera.tooltip": "Disables first-person banking and barrel-roll camera effects while riding dragons when turned off",
   "saintsdragons.config_screen.others.stegonaut_buffs": "Enable Stegonaut Buffs",

@@ -46,6 +46,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                     SaintsDragonsConfig.BARREL_ROLL_ENABLED::set,
                     SaintsDragonsConfig.BARREL_ROLL_ENABLED::save
             ));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.dragon_breeding"),
+                    SaintsDragonsConfig.DRAGON_BREEDING_ENABLED::get,
+                    SaintsDragonsConfig.DRAGON_BREEDING_ENABLED::set,
+                    SaintsDragonsConfig.DRAGON_BREEDING_ENABLED::save
+            ));
         }
 
         entries.add(new SectionEntry(Component.literal("Client")));

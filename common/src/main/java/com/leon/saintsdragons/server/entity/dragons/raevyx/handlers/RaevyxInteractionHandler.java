@@ -196,6 +196,9 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
+        if (!client && !checkBreedingEnabled(player)) {
+            return InteractionResult.CONSUME;
+        }
         var baby = dragon.getBabyComponent();
         if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.raevyx", dragon.canFeed())) {
             return InteractionResult.CONSUME;

@@ -25,6 +25,10 @@ public final class SaintsDragonsFabricServerConfig implements ConfigData {
 
     @ConfigEntry.Category("gameplay")
     @ConfigEntry.Gui.Tooltip
+    public boolean dragonBreedingEnabled = SaintsDragonsConfig.DRAGON_BREEDING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("gameplay")
+    @ConfigEntry.Gui.Tooltip
     public boolean hungerDecayEnabled = SaintsDragonsConfig.HUNGER_DECAY_ENABLED_DEFAULT;
 
     @ConfigEntry.Category("gameplay")

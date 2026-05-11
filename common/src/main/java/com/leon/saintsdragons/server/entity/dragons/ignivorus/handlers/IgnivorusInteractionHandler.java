@@ -146,6 +146,9 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
+        if (!client && !checkBreedingEnabled(player)) {
+            return InteractionResult.CONSUME;
+        }
 
         if (!dragon.canFeed()) {
             if (!client && player instanceof ServerPlayer serverPlayer) {

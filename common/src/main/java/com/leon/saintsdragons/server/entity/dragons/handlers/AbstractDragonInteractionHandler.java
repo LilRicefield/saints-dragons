@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.handlers;
 
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -55,6 +56,10 @@ public abstract class AbstractDragonInteractionHandler<T extends DragonEntity> {
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.displayClientMessage(Component.translatable(key, args), true);
         }
+    }
+
+    protected boolean checkBreedingEnabled(Player player) {
+        return DragonBreedingRules.checkEnabled(player);
     }
 
     protected abstract Item getBinderItem();

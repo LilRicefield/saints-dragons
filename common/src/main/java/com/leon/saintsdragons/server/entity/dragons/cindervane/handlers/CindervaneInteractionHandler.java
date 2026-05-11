@@ -179,6 +179,9 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
 
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
         boolean client = dragon.level().isClientSide;
+        if (!client && !checkBreedingEnabled(player)) {
+            return InteractionResult.CONSUME;
+        }
         var baby = dragon.getBabyComponent();
 
         if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.cindervane", dragon.canFeed())) {
