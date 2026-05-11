@@ -84,9 +84,12 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -1081,6 +1084,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             }
             fireBodyCrashArmed = true;
         }
+        if (fireActive && isFireBodyForwardCrashImpact()) {
+            triggerFireBodyCrash(findFireBodyForwardCrashImpact());
+            fireBodyCrashArmed = false;
+            fireBodyCrashMaxHeight = 0.0D;
+            return;
+        }
         if (fireBodyCrashArmed && !airborne && fireActive) {
             double dropDistance = fireBodyCrashMaxHeight - this.getY();
             if (dropDistance >= FIRE_BODY_CRASH_MIN_DROP) {
@@ -1095,14 +1104,97 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
     }
 
+    private boolean isFireBodyForwardCrashImpact() {
+        if (this.onGround() || !this.isAerial()) {
+            return false;
+        }
+        return this.horizontalCollision || isFireBodyForwardCrashBlockedAhead();
+    }
+
+    private boolean isFireBodyForwardCrashBlockedAhead() {
+        if (!(level() instanceof ServerLevel server)) {
+            return false;
+        }
+        Vec3 direction = getFireBodyForwardCrashDirection();
+        if (direction == null) {
+            return false;
+        }
+
+        Vec3 origin = this.position().add(0.0D, this.getBbHeight() * 0.55D, 0.0D);
+        double reach = getFireBodyForwardCrashProbeDistance();
+        BlockHitResult hit = server.clip(new ClipContext(
+                origin,
+                origin.add(direction.scale(reach)),
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                this
+        ));
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            return true;
+        }
+
+        AABB probe = this.getBoundingBox()
+                .move(direction.scale(reach))
+                .inflate(0.08D, 0.08D, 0.08D);
+        return !server.noCollision(this, probe);
+    }
+
+    private Vec3 findFireBodyForwardCrashImpact() {
+        if (!(level() instanceof ServerLevel server)) {
+            return this.position();
+        }
+        Vec3 direction = getFireBodyForwardCrashDirection();
+        if (direction == null) {
+            return this.position();
+        }
+
+        Vec3 origin = this.position().add(0.0D, this.getBbHeight() * 0.55D, 0.0D);
+        double reach = getFireBodyForwardCrashProbeDistance();
+        BlockHitResult hit = server.clip(new ClipContext(
+                origin,
+                origin.add(direction.scale(reach)),
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE,
+                this
+        ));
+        if (hit.getType() == HitResult.Type.BLOCK) {
+            return hit.getLocation();
+        }
+        return this.position().add(direction.scale(this.getBbWidth() * 0.5D + 0.75D));
+    }
+
+    @Nullable
+    private Vec3 getFireBodyForwardCrashDirection() {
+        Vec3 movement = this.getDeltaMovement();
+        Vec3 direction = new Vec3(movement.x, 0.0D, movement.z);
+        if (direction.lengthSqr() < 1.0E-4D) {
+            Vec3 look = this.getLookAngle();
+            direction = new Vec3(look.x, 0.0D, look.z);
+        }
+        if (direction.lengthSqr() < 1.0E-4D) {
+            return null;
+        }
+        return direction.normalize();
+    }
+
+    private double getFireBodyForwardCrashProbeDistance() {
+        Vec3 movement = this.getDeltaMovement();
+        double horizontalSpeed = Math.sqrt(movement.x * movement.x + movement.z * movement.z);
+        return Mth.clamp(this.getBbWidth() * 0.75D + horizontalSpeed * 2.0D + 0.75D, 1.5D, 4.0D);
+    }
+
     private void triggerFireBodyCrash() {
+        triggerFireBodyCrash(this.position());
+    }
+
+    private void triggerFireBodyCrash(Vec3 impact) {
         if (!(level() instanceof ServerLevel server)) {
             return;
         }
         boolean allowGriefing = DragonGriefingRules.canDestroyBlocks(server);
-        double x = this.getX();
-        double y = this.getY();
-        double z = this.getZ();
+        double x = impact.x;
+        double y = impact.y;
+        double z = impact.z;
         List<Entity> immune = new ArrayList<>(this.getPassengers());
         for (Entity passenger : immune) {
             if (passenger instanceof LivingEntity livingPassenger) {
@@ -1168,7 +1260,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
         if (allowGriefing) {
             BlockPos.MutableBlockPos flamePos = new BlockPos.MutableBlockPos();
-            int baseY = this.getBlockY();
+            int baseY = Mth.floor(y);
             for (int dx = -3; dx <= 3; dx++) {
                 for (int dz = -3; dz <= 3; dz++) {
                     if (this.getRandom().nextFloat() > 0.45F) {
