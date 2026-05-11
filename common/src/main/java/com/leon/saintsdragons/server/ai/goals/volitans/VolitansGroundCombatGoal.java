@@ -27,6 +27,7 @@ public class VolitansGroundCombatGoal extends Goal {
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private final Volitans dragon;
+    private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
     private int burrowCooldown = 0;
     private int poisonBallHoldTicks = 0;
@@ -98,6 +99,7 @@ public class VolitansGroundCombatGoal extends Goal {
     public void stop() {
         dragon.getNavigation().stop();
         dragon.setAggressive(false);
+        attackCooldown = 0;
         pathRecalcCooldown = 0;
         poisonBallHoldTicks = 0;
         breathHoldTicks = 0;
@@ -116,6 +118,7 @@ public class VolitansGroundCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (attackCooldown > 0) attackCooldown--;
         if (burrowCooldown > 0) burrowCooldown--;
 
         LivingEntity target = dragon.getTarget();
@@ -170,7 +173,7 @@ public class VolitansGroundCombatGoal extends Goal {
             } else {
                 updateChasePath(target);
             }
-            if (dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0 && !dragon.isGroundCombatAbilityActive()) {
+            if (attackCooldown <= 0 && dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0 && !dragon.isGroundCombatAbilityActive()) {
                 tryMelee(target, gap);
                 return;
             }
@@ -258,7 +261,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryRoarPunish(double gap) {
-        if (!canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true) || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || !canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < 4.5D || gap > 10.0D) {
@@ -269,7 +272,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryPoisonBall(double gap) {
-        if (!canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true) || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || !canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < POISON_BALL_MIN_RANGE || gap > POISON_BALL_MAX_RANGE) {
@@ -284,7 +287,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryBurrowApproach(LivingEntity target, double gap, boolean hasLineOfSight) {
-        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || burrowCooldown > 0 || dragon.isGroundCombatAbilityActive() || dragon.isGroundMobilityActive()) {
+        if (attackCooldown > 0 || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || burrowCooldown > 0 || dragon.isGroundCombatAbilityActive() || dragon.isGroundMobilityActive()) {
             return false;
         }
         if (gap < BURROW_MIN_RANGE || gap > BURROW_MAX_RANGE) {
@@ -302,7 +305,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryBreath(double gap) {
-        if (!canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true) || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || !canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < BREATH_MIN_RANGE || gap > BREATH_MAX_RANGE) {
@@ -321,7 +324,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private void tryMelee(LivingEntity target, double gap) {
-        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundCombatAbilityActive()) {
             return;
         }
 
@@ -367,7 +370,7 @@ public class VolitansGroundCombatGoal extends Goal {
                                    int abilityCooldownTicks,
                                    int majorCooldownTicks,
                                    int repeatLockoutTicks) {
-        return dragon.combatManager.tryUseAiAbility(
+        boolean started = dragon.combatManager.tryUseAiAbility(
                 abilityType,
                 majorAbility,
                 cadenceTicks,
@@ -375,6 +378,10 @@ public class VolitansGroundCombatGoal extends Goal {
                 majorCooldownTicks,
                 repeatLockoutTicks
         );
+        if (started) {
+            attackCooldown = Math.max(attackCooldown, cadenceTicks);
+        }
+        return started;
     }
 
     private double getGapToTarget(LivingEntity target) {

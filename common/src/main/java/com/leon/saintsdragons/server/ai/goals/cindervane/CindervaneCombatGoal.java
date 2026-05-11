@@ -16,6 +16,7 @@ public class CindervaneCombatGoal extends Goal {
     private final double attackRange = 4.5; // Amphithere has longer neck, slightly more range
     private final double fireBodyActivationRange = 8.0; // Activate FireBody when enemy is within this range
     private final double chaseSpeed = 1.0D;
+    private int attackCooldown = 0;
     private int fireBodyCheckCooldown = 0;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
@@ -82,6 +83,7 @@ public class CindervaneCombatGoal extends Goal {
     public void stop() {
         amphithere.getNavigation().stop();
         deactivateFireBodyIfActive();
+        attackCooldown = 0;
         pathRecalcCooldown = 0;
     }
 
@@ -102,6 +104,9 @@ public class CindervaneCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (attackCooldown > 0) {
+            attackCooldown--;
+        }
         if (fireBodyCheckCooldown > 0) {
             fireBodyCheckCooldown--;
         }
@@ -141,7 +146,7 @@ public class CindervaneCombatGoal extends Goal {
     }
 
     private void tryPerformBite(LivingEntity target) {
-        if (amphithere.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isCurrentlyBiting()) {
+        if (attackCooldown > 0 || amphithere.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isCurrentlyBiting()) {
             return;
         }
 
@@ -156,6 +161,7 @@ public class CindervaneCombatGoal extends Goal {
 
         amphithere.combatManager.tryUseAbility(CindervaneAbilities.BITE);
         amphithere.getAiCombatPacing().recordUse(CindervaneAbilities.BITE, 40, 40, false, 0, 28);
+        attackCooldown = 40;
     }
 
     /**

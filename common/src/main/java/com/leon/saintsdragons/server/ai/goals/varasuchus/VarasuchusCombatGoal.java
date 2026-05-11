@@ -28,6 +28,7 @@ public class VarasuchusCombatGoal extends Goal {
 
     private final Varasuchus drake;
     private int aiDashCooldown;
+    private int attackCooldown;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
     private double lastTargetY;
@@ -88,6 +89,7 @@ public class VarasuchusCombatGoal extends Goal {
     public void stop() {
         drake.getNavigation().stop();
         drake.setAggressive(false);
+        attackCooldown = 0;
         pathRecalcCooldown = 0;
     }
 
@@ -100,6 +102,9 @@ public class VarasuchusCombatGoal extends Goal {
     public void tick() {
         if (aiDashCooldown > 0) {
             aiDashCooldown--;
+        }
+        if (attackCooldown > 0) {
+            attackCooldown--;
         }
 
         LivingEntity target = drake.getTarget();
@@ -154,7 +159,7 @@ public class VarasuchusCombatGoal extends Goal {
     }
 
     private void tryPerformAttacks(LivingEntity target) {
-        if (drake.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isPerformingAttack()) {
+        if (attackCooldown > 0 || drake.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isPerformingAttack()) {
             return;
         }
 
@@ -166,6 +171,7 @@ public class VarasuchusCombatGoal extends Goal {
         if (ability != null && drake.combatManager.canStart(ability) && drake.getAiCombatPacing().canUse(ability, false)) {
             drake.combatManager.tryUseAbility(ability);
             drake.getAiCombatPacing().recordUse(ability, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, false, 0, 24);
+            attackCooldown = MELEE_CADENCE_TICKS;
         }
     }
 
@@ -222,6 +228,7 @@ public class VarasuchusCombatGoal extends Goal {
     private boolean shouldUseAIDash(double gap, boolean hasLineOfSight, LivingEntity target) {
         if (!drake.isPhaseTwoActive()) return false;
         if (aiDashCooldown > 0) return false;
+        if (attackCooldown > 0) return false;
         if (!hasLineOfSight) return false;
         if (gap < DASH_MIN_GAP) return false;
         if (drake.getAiCombatPacing().getCadenceCooldownTicks() > 0) return false;

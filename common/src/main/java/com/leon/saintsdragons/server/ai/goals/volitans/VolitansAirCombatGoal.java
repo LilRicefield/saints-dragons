@@ -26,6 +26,7 @@ public class VolitansAirCombatGoal extends Goal {
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private final Volitans dragon;
+    private int attackCooldown = 0;
     private int breathHoldTicks = 0;
     private int poisonHoldTicks = 0;
 
@@ -108,6 +109,7 @@ public class VolitansAirCombatGoal extends Goal {
     @Override
     public void stop() {
         dragon.setAiSpecialCombatReserved(false);
+        attackCooldown = 0;
         LivingEntity target = dragon.getTarget();
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
             dragon.requestPoisonBallRelease();
@@ -120,6 +122,10 @@ public class VolitansAirCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (attackCooldown > 0) {
+            attackCooldown--;
+        }
+
         if (dragon.isLanding()) {
             if (!dragon.getNavigation().isInProgress()) {
                 LivingEntity landingTarget = dragon.getTarget();
@@ -181,14 +187,14 @@ public class VolitansAirCombatGoal extends Goal {
         }
 
         if (distance <= MELEE_RANGE && hasLineOfSight) {
-            if (dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0) {
+            if (attackCooldown <= 0 && dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0) {
                 tryMelee(target);
             }
             maintainMeleePosition(target);
             return;
         }
 
-        if (distance > ROAR_MAX_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
+        if (attackCooldown <= 0 && distance > ROAR_MAX_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
             if (!startAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true, 14, 120, 90, 36)) {
                 return;
             }
@@ -197,7 +203,7 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true)) {
+        if (attackCooldown <= 0 && distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true)) {
             dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
             if (!startAiAbility(VolitansAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
                 return;
@@ -207,7 +213,7 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
+        if (attackCooldown <= 0 && distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
             if (!startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 12, 140, 120, 48)) {
                 return;
             }
@@ -219,6 +225,9 @@ public class VolitansAirCombatGoal extends Goal {
     }
 
     private void tryMelee(LivingEntity target) {
+        if (attackCooldown > 0) {
+            return;
+        }
         if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
             if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
                 startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
@@ -245,7 +254,7 @@ public class VolitansAirCombatGoal extends Goal {
                                    int abilityCooldownTicks,
                                    int majorCooldownTicks,
                                    int repeatLockoutTicks) {
-        return dragon.combatManager.tryUseAiAbility(
+        boolean started = dragon.combatManager.tryUseAiAbility(
                 abilityType,
                 majorAbility,
                 cadenceTicks,
@@ -253,6 +262,10 @@ public class VolitansAirCombatGoal extends Goal {
                 majorCooldownTicks,
                 repeatLockoutTicks
         );
+        if (started) {
+            attackCooldown = Math.max(attackCooldown, cadenceTicks);
+        }
+        return started;
     }
 
     private void maintainMeleePosition(LivingEntity target) {

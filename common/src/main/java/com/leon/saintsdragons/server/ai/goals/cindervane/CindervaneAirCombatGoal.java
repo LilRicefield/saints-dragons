@@ -19,6 +19,7 @@ public class CindervaneAirCombatGoal extends Goal {
     private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_GROUND = 8.0D;
     private static final double TAKEOFF_CHASE_MIN_HEIGHT_ABOVE_DRAGON = 5.0D;
     private final Cindervane amphithere;
+    private int attackCooldown = 0;
     private int fireBodyCheckCooldown = 0;
     private int lostSightTicks = 0;
     public CindervaneAirCombatGoal(Cindervane amphithere) {
@@ -89,12 +90,14 @@ public class CindervaneAirCombatGoal extends Goal {
 
     @Override
     public void start() {
+        attackCooldown = 0;
         lostSightTicks = 0;
         DragonAirCombatHelper.startAirCombat(amphithere, Cindervane.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override
     public void stop() {
+        attackCooldown = 0;
         lostSightTicks = 0;
         deactivateFireBodyIfActive();
         DragonAirCombatHelper.stopAirCombat(amphithere, amphithere.getTarget(), LANDING_SPEED, this::isTargetAirborne, true);
@@ -102,6 +105,9 @@ public class CindervaneAirCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (attackCooldown > 0) {
+            attackCooldown--;
+        }
         if (fireBodyCheckCooldown > 0) {
             fireBodyCheckCooldown--;
         }
@@ -162,7 +168,7 @@ public class CindervaneAirCombatGoal extends Goal {
     }
 
     private void tryPerformBite(LivingEntity target) {
-        if (amphithere.getAiCombatPacing().getCadenceCooldownTicks() > 0 || amphithere.isAbilityActive(CindervaneAbilities.BITE)) {
+        if (attackCooldown > 0 || amphithere.getAiCombatPacing().getCadenceCooldownTicks() > 0 || amphithere.isAbilityActive(CindervaneAbilities.BITE)) {
             return;
         }
         if (!amphithere.getSensing().hasLineOfSight(target)) {
@@ -175,6 +181,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
         amphithere.combatManager.tryUseAbility(CindervaneAbilities.BITE);
         amphithere.getAiCombatPacing().recordUse(CindervaneAbilities.BITE, 40, 40, false, 0, 28);
+        attackCooldown = 40;
     }
 
     private void handleFireBodyActivation(LivingEntity target) {

@@ -22,6 +22,7 @@ public class VolitansWaterCombatGoal extends Goal {
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private final Volitans dragon;
+    private int attackCooldown = 0;
     private int breathHoldTicks = 0;
 
     public VolitansWaterCombatGoal(Volitans dragon) {
@@ -69,6 +70,7 @@ public class VolitansWaterCombatGoal extends Goal {
     @Override
     public void stop() {
         dragon.setAggressive(false);
+        attackCooldown = 0;
         if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
             dragon.forceEndActiveAbility();
         }
@@ -76,6 +78,10 @@ public class VolitansWaterCombatGoal extends Goal {
 
     @Override
     public void tick() {
+        if (attackCooldown > 0) {
+            attackCooldown--;
+        }
+
         LivingEntity target = dragon.getTarget();
         if (!dragon.isTargetValid(target)) {
             return;
@@ -94,7 +100,7 @@ public class VolitansWaterCombatGoal extends Goal {
             return;
         }
 
-        if (dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundMobilityActive()) {
+        if (attackCooldown > 0 || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundMobilityActive()) {
             return;
         }
 
@@ -210,7 +216,7 @@ public class VolitansWaterCombatGoal extends Goal {
                                    int abilityCooldownTicks,
                                    int majorCooldownTicks,
                                    int repeatLockoutTicks) {
-        return dragon.combatManager.tryUseAiAbility(
+        boolean started = dragon.combatManager.tryUseAiAbility(
                 abilityType,
                 majorAbility,
                 cadenceTicks,
@@ -218,6 +224,10 @@ public class VolitansWaterCombatGoal extends Goal {
                 majorCooldownTicks,
                 repeatLockoutTicks
         );
+        if (started) {
+            attackCooldown = Math.max(attackCooldown, cadenceTicks);
+        }
+        return started;
     }
 
     private double getGapToTarget(LivingEntity target) {
