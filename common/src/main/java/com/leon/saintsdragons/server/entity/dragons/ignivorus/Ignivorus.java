@@ -200,7 +200,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private static final int LEAP_STATE_TAKEOFF = 1;
     private static final int LEAP_IMPACT_RECOVERY_DURATION = 20;
     private static final int FLEX_CONTROL_LOCK_TICKS = 170;
-    private static final int FLEX_COOLDOWN_TICKS = 40;
+    private static final int FLEX_COOLDOWN_TICKS = 200;
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
@@ -248,7 +248,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private boolean bulldozeWasVehicle = false;
     private boolean phase2Active = false;
     private int phase2CooldownTicks = 0;
-    private int flexCooldownTicks = 0;
     private boolean useRightWingSwipe = true;
     private boolean phase2WasVehicle = false;
     private int aiPhase2LockTicks = 0;
@@ -399,7 +398,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 ABILITY_USE, ABILITY_STOP, FLEX -> true;
+                 ABILITY_USE, ABILITY_STOP -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -426,7 +425,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         tickRiderControlLock();
-        tickFlexCooldown();
         tickBulldozeState();
         tickPhase2State();
         tickLeapState();
@@ -539,23 +537,12 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected boolean shouldPlaySitUpWhenMounted() {
-        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
-    }
-
-    @Override
     protected void clearLocalSitTransitionForMount() {
         clearSitProgress();
         isSittingDown = false;
         isStandingUp = false;
         sitTransitionTicks = 0;
         setInSittingPose(false);
-        flexCooldownTicks = 0;
-    }
-
-    @Override
-    protected void playSitUpWhenMounted() {
-        animationHandler.triggerSitUpAnimation();
     }
 
     @Override
@@ -1364,6 +1351,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID)
                 && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID)
                 && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID)
+                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ROAR_ID)
                 && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID)
                 && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID)
                 && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID);
@@ -1379,10 +1367,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
         if (isPhaseTwoRidingAbilityBlocked(abilityName)) {
             return null;
-        }
-        if (isAerial()
-                && IgnivorusAbilities.IGNIVORUS_ROAR_ID.equals(abilityName)) {
-            abilityName = IgnivorusAbilities.IGNIVORUS_FIREBALL_ID;
         }
         return super.resolveRidingAbilityType(abilityName);
     }
@@ -1430,37 +1414,33 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (locked) {
             return false;
         }
-        if (action == DragonRiderAction.FLEX) {
-            if (!canRiderFlex()) {
-                return true;
-            }
-            lockRiderControls(FLEX_CONTROL_LOCK_TICKS);
-            flexCooldownTicks = FLEX_COOLDOWN_TICKS;
-            getNavigation().stop();
-            setDeltaMovement(Vec3.ZERO);
-            getSoundHandler().playVocal("ignivorus_flex");
-            return true;
-        }
         return false;
     }
 
-    private boolean canRiderFlex() {
-        return !isBaby()
+    @Override
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return new RiderFlexSpec(FLEX_CONTROL_LOCK_TICKS, FLEX_COOLDOWN_TICKS);
+    }
+
+    @Override
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return super.canRiderFlex(player, spec)
+                && !isBaby()
                 && onGround()
                 && !isPhase2Active()
                 && !isFlying()
                 && !isTakeoff()
                 && !isLanding()
                 && !isInWaterOrBubble()
-                && flexCooldownTicks <= 0
                 && !bulldozing
                 && !leaping;
     }
 
-    private void tickFlexCooldown() {
-        if (!level().isClientSide && flexCooldownTicks > 0) {
-            flexCooldownTicks--;
-        }
+    @Override
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
+        getSoundHandler().playVocal("ignivorus_flex");
     }
 
     public void setGroundMoveStateFromAI(int state) {
@@ -1608,12 +1588,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     public RiderAbilityBinding getPrimaryRiderAbility() {
         if (isBaby()) {
             return null;
-        }
-        if (isAerial()) {
-            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.HOLD);
-        }
-        if (isPhase2Active()) {
-            return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, RiderAbilityBinding.Activation.HOLD);
         }
         return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
     }

@@ -72,6 +72,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
 
     private int riderControlLockTicks = 0;
+    private int riderFlexCooldownTicks = 0;
     private boolean wasVehicleLastTick = false;
     private boolean riderWasAirborneForLanding = false;
     private int riderAirborneTicksForLanding = 0;
@@ -214,6 +215,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case ABILITY_USE -> { if (!locked) onRiderAbilityUse(player, abilityName); }
             case ABILITY_STOP -> { if (!locked) onRiderAbilityStop(player, abilityName); }
             case TOGGLE_MELEE -> { if (!locked) onRiderToggleMelee(player); }
+            case FLEX -> { if (!locked) onRiderFlex(player); }
             case START_PITCH_MODE -> { if (!locked) setRiderPitchKeyMode(true); }
             case STOP_PITCH_MODE -> setRiderPitchKeyMode(false);
             case DOUBLE_TAP_A -> { if (!locked) onRiderDodge(player, true); }
@@ -233,9 +235,43 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             case TAKEOFF_REQUEST, ACCELERATE, STOP_ACCELERATE, TOGGLE_MELEE, START_PITCH_MODE, STOP_PITCH_MODE -> true;
             case ABILITY_USE, ABILITY_STOP,
                  DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,
-                 FLEX, OPEN_INVENTORY -> false;
+                 OPEN_INVENTORY -> false;
+            case FLEX -> hasRiderFlex();
             default -> true;
         };
+    }
+
+    protected record RiderFlexSpec(int controlLockTicks, int cooldownTicks) {
+        public RiderFlexSpec {
+        }
+    }
+
+    protected boolean hasRiderFlex() {
+        return getRiderFlexSpec() != null;
+    }
+
+    @Nullable
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return null;
+    }
+
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return spec != null && riderFlexCooldownTicks <= 0;
+    }
+
+    protected void onRiderFlex(ServerPlayer player) {
+        RiderFlexSpec spec = getRiderFlexSpec();
+        if (!canRiderFlex(player, spec)) {
+            return;
+        }
+        if (spec.controlLockTicks() > 0) {
+            lockRiderControls(spec.controlLockTicks());
+        }
+        riderFlexCooldownTicks = Math.max(0, spec.cooldownTicks());
+        playRiderFlex(player, spec);
+    }
+
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
     }
 
     public void setRiderPitchKeyMode(boolean enabled) {
@@ -891,6 +927,13 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             resetAnimationState();
         }
         tickMountedState();
+        tickRiderFlexCooldown();
+    }
+
+    private void tickRiderFlexCooldown() {
+        if (!level().isClientSide && riderFlexCooldownTicks > 0) {
+            riderFlexCooldownTicks--;
+        }
     }
 
     private void tickMountedState() {
@@ -908,16 +951,11 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
     protected void onMountedStateStarted() {
-        boolean shouldPlaySitUp = shouldPlaySitUpWhenMounted();
         clearStateForMountedRider();
         clearLocalSitTransitionForMount();
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             wakeUpImmediately();
             suppressSleep(300);
-        }
-        afterMountedStateStartedClear();
-        if (shouldPlaySitUp) {
-            playSitUpWhenMounted();
         }
     }
 
@@ -929,17 +967,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         clearLocalSitTransitionForMount();
     }
 
-    protected boolean shouldPlaySitUpWhenMounted() {
-        return isOrderedToSit() || getSitProgress() > 0.0F || isInSittingPose();
-    }
-
     protected void clearLocalSitTransitionForMount() {
-    }
-
-    protected void afterMountedStateStartedClear() {
-    }
-
-    protected void playSitUpWhenMounted() {
     }
 
     protected void clearStateForMountedRider() {

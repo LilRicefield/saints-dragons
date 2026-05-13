@@ -136,6 +136,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final int SIT_UP_ANIMATION_TICKS = 25;
     private static final int FALL_ASLEEP_ANIMATION_TICKS = 42;
     private static final int WAKE_UP_ANIMATION_TICKS = 129;
+    private static final int FLEX_CONTROL_LOCK_TICKS = 70;
+    private static final int FLEX2_CONTROL_LOCK_TICKS = 140;
+    private static final int FLEX_COOLDOWN_TICKS = 60;
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VarasuchusAnimationHandler animationHandler = new VarasuchusAnimationHandler(this);
     private final VarasuchusInteractionHandler interactionHandler = new VarasuchusInteractionHandler(this);
@@ -285,6 +288,44 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             }
             default -> super.handleCustomRiderAction(player, action, abilityName, locked);
         };
+    }
+
+    @Override
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return new RiderFlexSpec(
+                isPhaseTwoActive() ? FLEX2_CONTROL_LOCK_TICKS : FLEX_CONTROL_LOCK_TICKS,
+                FLEX_COOLDOWN_TICKS
+        );
+    }
+
+    @Override
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return super.canRiderFlex(player, spec)
+                && !isBaby()
+                && !isDying()
+                && onGround()
+                && !isSwimming()
+                && !isInWaterOrBubble()
+                && !isOrderedToSit()
+                && !isInSitTransition()
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && !isGroundDashing()
+                && !isWildRideActive()
+                && getActiveAbility() == null
+                && !isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT);
+    }
+
+    @Override
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        animationHandler.triggerFlexAnimation();
+        this.getSoundHandler().playClientSound(
+                this,
+                this.position(),
+                isPhaseTwoActive() ? ModSounds.VARASUCHUS_FLEX2.get() : ModSounds.VARASUCHUS_FLEX.get(),
+                2.0f,
+                1.0f
+        );
     }
 
     @Override
@@ -1427,6 +1468,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 : smoothedPlayerSwimPitchRad * 0.65f + rawPitchRad * 0.35f;
         return Mth.clamp(smoothedPlayerSwimPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
     }
+
     @Override
     public boolean isGoingUp() {
         return this.entityData.get(DATA_GOING_UP);
@@ -1514,21 +1556,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    protected boolean shouldPlaySitUpWhenMounted() {
-        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
-    }
-
-    @Override
     protected void clearLocalSitTransitionForMount() {
         clearSitProgress();
         isSittingDown = false;
         isStandingUp = false;
         sitTransitionTicks = 0;
-    }
-
-    @Override
-    protected void playSitUpWhenMounted() {
-        animationHandler.triggerSitUpAnimation();
     }
 
     private void startWildRideSequence() {

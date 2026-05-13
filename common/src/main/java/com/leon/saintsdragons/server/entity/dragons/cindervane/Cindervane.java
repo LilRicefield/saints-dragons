@@ -517,7 +517,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    protected void afterMountedStateStartedClear() {
+    protected void onMountedStateStarted() {
+        super.onMountedStateStarted();
         clearStatesWhenMounted();
     }
 
@@ -531,21 +532,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    protected boolean shouldPlaySitUpWhenMounted() {
-        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
-    }
-
-    @Override
     protected void clearLocalSitTransitionForMount() {
         clearSitProgress();
         isSittingDown = false;
         isStandingUp = false;
         sitTransitionTicks = 0;
-    }
-
-    @Override
-    protected void playSitUpWhenMounted() {
-        animationHandler.triggerSitUpAnimation();
     }
 
     private static class CindervaneFamilyData extends AgeableMob.AgeableMobGroupData {

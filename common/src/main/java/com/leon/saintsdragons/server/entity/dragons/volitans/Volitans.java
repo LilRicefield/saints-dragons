@@ -183,6 +183,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = 30;
     private static final int RIDER_DASH_SOUND_TICKS = 60; // 3.0s
     private static final int RIDER_DODGE_SOUND_TICKS = 60; // 3.0s
+    private static final int FLEX_CONTROL_LOCK_TICKS = 65;
+    private static final int FLEX_COOLDOWN_TICKS = 65;
     private static final int RIDER_BACK_DASH_LOCK_TICKS = 0;
     private static final double RIDER_BACK_DASH_SPEED = 2.60D;
     private static final double RIDER_BACK_DASH_GROUND_LIFT = 0.0D;
@@ -550,6 +552,40 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_S -> true;
             default -> super.supportsRiderAction(action);
         };
+    }
+
+    @Override
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return new RiderFlexSpec(FLEX_CONTROL_LOCK_TICKS, FLEX_COOLDOWN_TICKS);
+    }
+
+    @Override
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return super.canRiderFlex(player, spec)
+                && !isBaby()
+                && !isDying()
+                && onGround()
+                && !isFlying()
+                && !isTakeoff()
+                && !isLanding()
+                && !isHovering()
+                && !isSwimming()
+                && !isInWaterOrBubble()
+                && !isOrderedToSit()
+                && !isInSitTransition()
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && !isBurrowing()
+                && !isUltimateSlamActive()
+                && getActiveAbility() == null;
+    }
+
+    @Override
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        triggerAnim("instant", "roar");
+        if (!level().isClientSide) {
+            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f, spec.controlLockTicks());
+        }
     }
 
     @Override
@@ -3063,21 +3099,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected boolean shouldPlaySitUpWhenMounted() {
-        return super.shouldPlaySitUpWhenMounted() || isSittingDown || isStandingUp || sitTransitionTicks > 0;
-    }
-
-    @Override
     protected void clearLocalSitTransitionForMount() {
         clearSitProgress();
         isSittingDown = false;
         isStandingUp = false;
         sitTransitionTicks = 0;
-    }
-
-    @Override
-    protected void playSitUpWhenMounted() {
-        animationHandler.triggerSitUpAnimation();
     }
 
     @Override

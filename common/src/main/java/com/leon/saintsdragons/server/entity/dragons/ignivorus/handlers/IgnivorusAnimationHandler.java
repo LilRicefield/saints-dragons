@@ -68,6 +68,15 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
+        float sitProgress = dragon.getSitProgress();
+        float maxSit = dragon.maxSitTicks();
+        if (!aerialState && sitProgress >= maxSit) {
+            state.setAndContinue(SIT);
+            return PlayState.CONTINUE;
+        } else if (!aerialState && sitProgress > 0f) {
+            return PlayState.STOP;
+        }
+
         if (!aerialState && dragon.getEntityData().get(Ignivorus.DATA_BULLDOZING)) {
             float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
             float riderStrafe = dragon.getEntityData().get(Ignivorus.DATA_RIDER_STRAFE);

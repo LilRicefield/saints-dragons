@@ -140,6 +140,8 @@
   "subtitles.saintsdragons.varasuchus_hurt": "Varasuchus gets hurt",
   "subtitles.saintsdragons.varasuchus_die": "Varasuchus dying",
   "subtitles.saintsdragons.varasuchus_eat": "Varasuchus eats",
+  "subtitles.saintsdragons.varasuchus_flex": "Varasuchus flexes",
+  "subtitles.saintsdragons.varasuchus_flex2": "Varasuchus flexes",
   "subtitles.saintsdragons.ignivorus_bite": "Ignivorus bites",
   "subtitles.saintsdragons.ignivorus_wing_swipe": "Ignivorus swipes with its wing",
   "subtitles.saintsdragons.ignivorus_bulldozing": "Ignivorus charges",
@@ -376,7 +378,7 @@
   "key.saintsdragons.ability_secondary": "Secondary Ability",
   "key.saintsdragons.ability_tertiary": "Channel Ability",
   "key.saintsdragons.toggle_melee": "Toggle Melee Mode",
-  "key.saintsdragons.flex": "Flex (Ctrl+4)",
+  "key.saintsdragons.flex": "Flex",
   "key.saintsdragons.toggle_dragon_ui": "Toggle Dragon UI",
   "key.saintsdragons.toggle_ability_debug": "Toggle Ability Debug",
 

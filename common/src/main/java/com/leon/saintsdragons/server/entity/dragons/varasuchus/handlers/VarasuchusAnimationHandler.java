@@ -30,6 +30,8 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.varasuchus.wake_up");
     private static final RawAnimation SIT_DOWN2 = RawAnimation.begin().thenPlay("animation.varasuchus.down2");
     private static final RawAnimation SIT_UP2 = RawAnimation.begin().thenPlay("animation.varasuchus.up2");
+    private static final RawAnimation FLEX = RawAnimation.begin().thenPlay("animation.varasuchus.flex");
+    private static final RawAnimation FLEX2 = RawAnimation.begin().thenPlay("animation.varasuchus.flex2");
     private static final int MOVEMENT_TRANSITION_TICKS = 6;
     private static final int SWIM_TRANSITION_TICKS = 7;
 
@@ -176,7 +178,12 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     public void triggerWakeUpAnimation() {
         drake.triggerAnim("action", "wake_up");
     }
+    public void triggerFlexAnimation() {
+        drake.triggerAnim("instant", drake.isPhaseTwoActive() ? "flex2" : "flex");
+    }
     public void setupInstantActionController(AnimationController<Varasuchus> controller) {
+        controller.triggerableAnim("flex", FLEX);
+        controller.triggerableAnim("flex2", FLEX2);
         controller.triggerableAnim("tail_swipe_left",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_swipe_left"));
         controller.triggerableAnim("tail_attack_left",
