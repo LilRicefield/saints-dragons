@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.renderer.cindervane;
 
 import com.leon.saintsdragons.client.renderer.RiderConfig;
-import com.leon.saintsdragons.client.renderer.RideableDragonRenderer;
+import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -10,7 +10,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
-public class CindervaneRenderer extends RideableDragonRenderer<Cindervane> {
+public class CindervaneGeoEntityRenderer extends DragonGeoEntityRenderer<Cindervane> {
     private static final float PASSENGER_SEAT0_X = 0.0f, PASSENGER_SEAT0_Y = -3.0f, PASSENGER_SEAT0_Z = 0.0f;
     private static final float PASSENGER_SEAT1_X = 0.0f, PASSENGER_SEAT1_Y = -3.0f, PASSENGER_SEAT1_Z = 0.0f;
     private static final String AUTO_MOUNT_BONE = "automountBoneRight";
@@ -22,7 +22,7 @@ public class CindervaneRenderer extends RideableDragonRenderer<Cindervane> {
     private static final double SNAPSHOT_PRECISION = 1000.0;
     private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
-    public CindervaneRenderer(EntityRendererProvider.Context renderManager) {
+    public CindervaneGeoEntityRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CindervaneModel());
     }
 

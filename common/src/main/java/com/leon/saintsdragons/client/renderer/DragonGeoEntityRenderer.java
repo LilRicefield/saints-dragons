@@ -19,10 +19,10 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-public abstract class RideableDragonRenderer<T extends RideableDragonBase> extends GeoEntityRenderer<T> {
+public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> extends GeoEntityRenderer<T> {
     protected BakedGeoModel lastBakedModel;
 
-    protected RideableDragonRenderer(EntityRendererProvider.Context context, GeoModel<T> model) {
+    protected DragonGeoEntityRenderer(EntityRendererProvider.Context context, GeoModel<T> model) {
         super(context, model);
     }
 

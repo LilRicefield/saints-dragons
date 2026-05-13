@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.renderer.ignivorus;
 
-import com.leon.saintsdragons.client.renderer.RideableDragonRenderer;
+import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmokeLayer;
@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
-public class IgnivorusRenderer extends RideableDragonRenderer<Ignivorus> {
+public class IgnivorusGeoEntityRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
     private static final String FIRE_BONE = "fireBone";
     private static final String PASSENGER_BONE = "passengerBone";
@@ -34,7 +34,7 @@ public class IgnivorusRenderer extends RideableDragonRenderer<Ignivorus> {
     private static final double SNAPSHOT_PRECISION = 1000.0D;
     private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
-    public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
+    public IgnivorusGeoEntityRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IgnivorusModel());
         this.addRenderLayer(new IgnivorusMouthSmokeLayer());
         this.addRenderLayer(new IgnivorusGlowLayer(this));

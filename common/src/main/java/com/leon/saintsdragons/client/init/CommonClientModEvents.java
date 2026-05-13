@@ -2,21 +2,21 @@ package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneMagmaBlockRenderer;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.client.renderer.cindervane.CindervaneRenderer;
+import com.leon.saintsdragons.client.renderer.cindervane.CindervaneGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusFlameRenderer;
-import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusRenderer;
+import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaBlockRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaPillarRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusNovaRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusNovaRingRenderer;
-import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
-import com.leon.saintsdragons.client.renderer.varasuchus.VarasuchusRenderer;
+import com.leon.saintsdragons.client.renderer.nulljaw.NulljawGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.varasuchus.VarasuchusGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxGroundRendTrailRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
-import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
+import com.leon.saintsdragons.client.renderer.raevyx.RaevyxGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRenderer;
-import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
-import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
+import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.volitans.VolitansGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansPoisonBallRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansSpineRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansWaterBreathRenderer;
@@ -34,15 +34,15 @@ public final class CommonClientModEvents {
     }
 
     public static void registerEntityRenderers(RendererRegistrar registrar) {
-        registrar.register(ModEntities.RAEVYX.get(), RaevyxRenderer::new);
+        registrar.register(ModEntities.RAEVYX.get(), RaevyxGeoEntityRenderer::new);
         registrar.register(ModEntities.RAEVYX_LIGHTNING_CHAIN.get(), RaevyxLightningChainRenderer::new);
         registrar.register(ModEntities.RAEVYX_GROUND_REND_TRAIL.get(), RaevyxGroundRendTrailRenderer::new);
-        registrar.register(ModEntities.STEGONAUT.get(), StegonautRenderer::new);
-        registrar.register(ModEntities.CINDERVANE.get(), CindervaneRenderer::new);
-        registrar.register(ModEntities.VARASUCHUS.get(), VarasuchusRenderer::new);
-        registrar.register(ModEntities.IGNIVORUS.get(), IgnivorusRenderer::new);
-        registrar.register(ModEntities.VOLITANS.get(), VolitansRenderer::new);
-        registrar.register(ModEntities.NULLJAW.get(), NulljawRenderer::new);
+        registrar.register(ModEntities.STEGONAUT.get(), StegonautGeoEntityRenderer::new);
+        registrar.register(ModEntities.CINDERVANE.get(), CindervaneGeoEntityRenderer::new);
+        registrar.register(ModEntities.VARASUCHUS.get(), VarasuchusGeoEntityRenderer::new);
+        registrar.register(ModEntities.IGNIVORUS.get(), IgnivorusGeoEntityRenderer::new);
+        registrar.register(ModEntities.VOLITANS.get(), VolitansGeoEntityRenderer::new);
+        registrar.register(ModEntities.NULLJAW.get(), NulljawGeoEntityRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);

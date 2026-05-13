@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.renderer.volitans;
 
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
-import com.leon.saintsdragons.client.renderer.RideableDragonRenderer;
+import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
-public class VolitansRenderer extends RideableDragonRenderer<Volitans> {
+public class VolitansGeoEntityRenderer extends DragonGeoEntityRenderer<Volitans> {
     private static final float PASSENGER_X = 0.0f;
     private static final float PASSENGER_Y = -3.0f;
     private static final float PASSENGER_Z = 0.0f;
@@ -21,7 +21,7 @@ public class VolitansRenderer extends RideableDragonRenderer<Volitans> {
     private static final int SYNC_INTERVAL_TICKS = 2;
     private final java.util.Map<Integer, Integer> lastBreathSnapshotHashes = new java.util.HashMap<>();
 
-    public VolitansRenderer(EntityRendererProvider.Context context) {
+    public VolitansGeoEntityRenderer(EntityRendererProvider.Context context) {
         super(context, new VolitansModel());
     }
 

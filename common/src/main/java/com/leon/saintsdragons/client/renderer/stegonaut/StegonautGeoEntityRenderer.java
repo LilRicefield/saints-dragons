@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.renderer.stegonaut;
 
-import com.leon.saintsdragons.client.renderer.RideableDragonRenderer;
+import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.fabricmc.api.EnvType;
@@ -8,13 +8,13 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 @Environment(EnvType.CLIENT)
-public class StegonautRenderer extends RideableDragonRenderer<Stegonaut> {
+public class StegonautGeoEntityRenderer extends DragonGeoEntityRenderer<Stegonaut> {
     private static final String PASSENGER_BONE = "passengerBone";
     private static final float PASSENGER_X = 0.0f;
     private static final float PASSENGER_Y = -3.0f;
     private static final float PASSENGER_Z = 0.0f;
     
-    public StegonautRenderer(EntityRendererProvider.Context renderManager) {
+    public StegonautGeoEntityRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new StegonautModel());
     }
 
