@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.forge.client.ForgeConfigRootScreen;
+import com.leon.saintsdragons.forge.data.SaintsDragonBiomeTagsProvider;
 import com.leon.saintsdragons.forge.data.SaintsDragonBlockTagsProvider;
 import com.leon.saintsdragons.forge.data.SaintsDragonEntityTypeTagsProvider;
 import com.leon.saintsdragons.forge.data.SaintsDragonItemTagsProvider;
@@ -193,6 +194,8 @@ public final class SaintsDragonsForge {
                 new SaintsDragonItemTagsProvider(output, lookupProvider, blockTags.contentsGetter(), existingFileHelper));
         generator.addProvider(event.includeServer(),
                 new SaintsDragonEntityTypeTagsProvider(output, lookupProvider, existingFileHelper));
+        generator.addProvider(event.includeServer(),
+                new SaintsDragonBiomeTagsProvider(output, lookupProvider));
     }
 
     private void onAddReloadListeners(AddReloadListenerEvent event) {

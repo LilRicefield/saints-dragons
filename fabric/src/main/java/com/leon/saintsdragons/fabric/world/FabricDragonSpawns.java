@@ -2,13 +2,13 @@ package com.leon.saintsdragons.fabric.world;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
@@ -19,10 +19,6 @@ import java.util.function.Supplier;
 
 
 public final class FabricDragonSpawns {
-    private static final TagKey<Biome> HAS_CINDERVANE =
-            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_cindervane"));
-    private static final TagKey<Biome> HAS_VARASUCHUS_EGGS =
-            TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl("has_varasuchus_eggs"));
     private static final ResourceKey<PlacedFeature> CINDERVANE_EGG_PATCH =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
     private static final ResourceKey<PlacedFeature> VARASUCHUS_EGG_PATCH =
@@ -68,7 +64,7 @@ public final class FabricDragonSpawns {
                 context -> DragonBiomeMatcher.isAllowed(
                         context.getBiomeKey().location(),
                         context::hasTag,
-                        HAS_CINDERVANE,
+                        ModTags.Biomes.HAS_CINDERVANE,
                         SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES,
                         SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES
                 ),
@@ -85,7 +81,7 @@ public final class FabricDragonSpawns {
                 context -> DragonBiomeMatcher.isAllowed(
                         context.getBiomeKey().location(),
                         context::hasTag,
-                        HAS_VARASUCHUS_EGGS,
+                        ModTags.Biomes.HAS_VARASUCHUS_EGGS,
                         SaintsDragonsConfig.VARASUCHUS_ADDITIONAL_BIOMES,
                         SaintsDragonsConfig.VARASUCHUS_EXCLUDED_BIOMES
                 ),
@@ -94,7 +90,7 @@ public final class FabricDragonSpawns {
         );
     }
 
-    private static void registerSpawn(TagKey<Biome> biomeTag,
+    private static void registerSpawn(net.minecraft.tags.TagKey<Biome> biomeTag,
                                       ConfigHelper.ListValue additionalBiomes,
                                       ConfigHelper.ListValue excludedBiomes,
                                       MobCategory category,

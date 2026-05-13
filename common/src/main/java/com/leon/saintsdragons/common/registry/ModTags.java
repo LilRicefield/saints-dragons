@@ -5,6 +5,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 
 public final class ModTags {
@@ -64,6 +65,25 @@ public final class ModTags {
 
         private static TagKey<Block> tag(String name) {
             return TagKey.create(Registries.BLOCK, SaintsDragonsCommon.rl(name));
+        }
+    }
+
+    public static final class Biomes {
+        public static final TagKey<Biome> HAS_CINDERVANE = tag("has_cindervane");
+        public static final TagKey<Biome> HAS_IGNIVORUS = tag("has_ignivorus");
+        public static final TagKey<Biome> HAS_IVY_HOUSE = tag("has_ivy_house");
+        public static final TagKey<Biome> HAS_NULLJAW = tag("has_nulljaw");
+        public static final TagKey<Biome> HAS_RAEVYX = tag("has_raevyx");
+        public static final TagKey<Biome> HAS_STEGONAUT = tag("has_stegonaut");
+        public static final TagKey<Biome> HAS_VARASUCHUS = tag("has_varasuchus");
+        public static final TagKey<Biome> HAS_VARASUCHUS_EGGS = tag("has_varasuchus_eggs");
+        public static final TagKey<Biome> HAS_VOLITANS = tag("has_volitans");
+
+        private Biomes() {
+        }
+
+        private static TagKey<Biome> tag(String name) {
+            return TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl(name));
         }
     }
 }

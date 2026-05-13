@@ -3,8 +3,8 @@ package com.leon.saintsdragons.common.world;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.platform.ConfigHelper;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
@@ -32,7 +32,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("raevyx"),
                 ModEntities.RAEVYX,
-                "has_raevyx",
+                ModTags.Biomes.HAS_RAEVYX,
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.get(),
@@ -43,7 +43,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("stegonaut"),
                 ModEntities.STEGONAUT,
-                "has_stegonaut",
+                ModTags.Biomes.HAS_STEGONAUT,
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.get(),
@@ -54,7 +54,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("cindervane"),
                 ModEntities.CINDERVANE,
-                "has_cindervane",
+                ModTags.Biomes.HAS_CINDERVANE,
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.get(),
@@ -65,7 +65,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("varasuchus"),
                 ModEntities.VARASUCHUS,
-                "has_varasuchus",
+                ModTags.Biomes.HAS_VARASUCHUS,
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.get(),
@@ -76,7 +76,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("ignivorus"),
                 ModEntities.IGNIVORUS,
-                "has_ignivorus",
+                ModTags.Biomes.HAS_IGNIVORUS,
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.get(),
@@ -87,7 +87,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("nulljaw"),
                 ModEntities.NULLJAW,
-                "has_nulljaw",
+                ModTags.Biomes.HAS_NULLJAW,
                 MobCategory.MONSTER,
                 () -> SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
@@ -101,7 +101,7 @@ public final class DragonSpawnRegistry {
     private static void add(List<DragonSpawnEntry> entries,
                             ResourceLocation id,
                             Supplier<? extends EntityType<?>> entityType,
-                            String biomeTagPath,
+                            TagKey<Biome> biomeTag,
                             MobCategory category,
                             IntSupplier weight,
                             IntSupplier minGroupSize,
@@ -111,7 +111,7 @@ public final class DragonSpawnRegistry {
         entries.add(new DragonSpawnEntry(
                 id,
                 entityType,
-                TagKey.create(Registries.BIOME, SaintsDragonsCommon.rl(biomeTagPath)),
+                biomeTag,
                 category,
                 weight,
                 minGroupSize,
