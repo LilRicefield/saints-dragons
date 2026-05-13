@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.client.model.cindervane;
 
+import com.leon.saintsdragons.client.model.DragonGeoModel;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -8,25 +11,24 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
-public class CindervaneModel extends DefaultedEntityGeoModel<Cindervane> {
+public class CindervaneModel extends DragonGeoModel<Cindervane> {
+    private static final WeightedBoneChain NECK = WeightedBoneChain.of(
+            new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller", "headController"},
+            0.15f, 0.30f, 0.45f, 0.60f, 0.75f
+    );
+    private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
+            new String[] {"bone", "tail1", "tail2", "tail3", "tail4"},
+            0.25f, 0.50f, 0.75f, 1.0f, 1.25f
+    );
 
 public CindervaneModel() {
-    super(SaintsDragonsCommon.rl("cindervane"));
+    super("cindervane");
 }
 
-    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/cindervane.geo.json");
-    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_cindervane.geo.json");
-    private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/cindervane.animation.json");
-    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_cindervane.animation.json");
-    private static final ResourceLocation MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane.png");
-    private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_female.png");
     private static final ResourceLocation ALBINO_MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino.png");
     private static final ResourceLocation ALBINO_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino_female.png");
-    private static final ResourceLocation BABY_MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/baby_cindervane.png");
-    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/baby_cindervane_female.png");
     @Override
     public void setCustomAnimations(Cindervane entity, long instanceId, AnimationState<Cindervane> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
@@ -55,37 +57,15 @@ public CindervaneModel() {
     }
 
     @Override
-    public ResourceLocation getModelResource(Cindervane entity) {
-        return entity.isBaby() ? BABY_MODEL : MODEL;
-    }
-
-    @Override
-    public ResourceLocation getTextureResource(Cindervane entity) {
-        if (entity.isBaby()) {
-            return entity.isFemale() ? BABY_FEMALE_TEXTURE : BABY_MALE_TEXTURE;
-        }
+    protected ResourceLocation getAdultTexture(Cindervane entity) {
         if (entity.getTextureVariant() == 1) {
             return entity.isFemale() ? ALBINO_FEMALE_TEXTURE : ALBINO_MALE_TEXTURE;
         }
-        return entity.isFemale() ? FEMALE_TEXTURE : MALE_TEXTURE;
+        return super.getAdultTexture(entity);
     }
 
-    @Override
-    public ResourceLocation getAnimationResource(Cindervane entity) {
-        return entity.isBaby() ? BABY_ANIM : ANIM;
-    }
     private void applyBodyRotationDeviation(Cindervane entity, float partialTick) {
-        var rootOpt = getBone("root");
-        if (rootOpt.isEmpty()) {
-            return;
-        }
-
-        GeoBone root = rootOpt.get();
-        var snap = root.getInitialSnapshot();
-        double deviation = entity.getBodyRotDeviation().get(partialTick);
-        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
-
-        root.setRotY(snap.getRotY() - deviationRad);
+        DragonModelPoseHelper.applyBodyYawDeviation(this, entity, "root", partialTick, -1.0f, true);
     }
 
     private void applyBankingRoll(Cindervane entity, AnimationState<Cindervane> state) {
@@ -127,11 +107,7 @@ public CindervaneModel() {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
 
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.15f);
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.30f);
-        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.45f);
-        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.60f);
-        applyNeckBoneRotation("headController", neckLeanRad * 0.75f);
+        DragonModelPoseHelper.applyWeightedRotationY(this, NECK, neckLeanRad);
     }
 
     private void applyGroundNeckTurn(Cindervane entity, float partialTick) {
@@ -139,78 +115,21 @@ public CindervaneModel() {
             return;
         }
 
-        double velocity = entity.getYawVelocity().get(partialTick);
-
-        velocity = Mth.clamp(velocity, -25.0, 25.0);
-
-        float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
-
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.15f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 0.30f);
-        applyNeckBoneRotation("neck3Controller", turnRad * 0.45f);
-        applyNeckBoneRotation("neck4Controller", turnRad * 0.60f);
-        applyNeckBoneRotation("headController", turnRad * 0.75f);
-    }
-
-    private void applyNeckBoneRotation(String boneName, float rotationY) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-
-        GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK, 25.0);
     }
 
     private void applyNeckFollow(Cindervane entity, EntityModelData modelData, float partialTick) {
 
-        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         if (entity.isFlying()) {
             lookPitchRad *= 0.5f;
         }
 
-        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
-        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
-        float totalYawRad = lookYawRad + structuralYawRad;
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.15f);
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.30f);
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.45f);
-        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.60f);
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.75f);
-    }
-
-    private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) return;
-
-        GeoBone bone = boneOpt.get();
-        float addX = headDeltaX * weight;
-        float addY = headDeltaY * weight;
-
-        bone.setRotX(bone.getRotX() + addX);
-        bone.setRotY(bone.getRotY() + addY);
+        float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Cindervane entity, float partialTick) {
-        double velocity = entity.getYawVelocity().get(partialTick);
-        velocity = Mth.clamp(velocity, -30.0, 30.0);
-        float targetVelocity = (float) velocity;
-        float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
-        float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
-        applyTailBoneRotation("bone", velocityRad * 0.25f);
-        applyTailBoneRotation("tail1", velocityRad * 0.50f);
-        applyTailBoneRotation("tail2", velocityRad * 0.75f);
-        applyTailBoneRotation("tail3", velocityRad * 1.0f);
-        applyTailBoneRotation("tail4", velocityRad * 1.25f);
-    }
-
-    private void applyTailBoneRotation(String boneName, float rotationY) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-        GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        DragonModelPoseHelper.applyTailDrag(this, entity, partialTick, TAIL, 30.0);
     }
 }

@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.client.model.volitans;
 
+import com.leon.saintsdragons.client.model.DragonGeoModel;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -8,45 +11,31 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
-public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
-    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/volitans.geo.json");
-    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_volitans.geo.json");
-    private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/volitans.animation.json");
-    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_volitans.animation.json");
-    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans.png");
-    private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans_female.png");
+public class VolitansModel extends DragonGeoModel<Volitans> {
+    private static final WeightedBoneChain NECK = WeightedBoneChain.of(
+            new String[] {"neck1Controller", "neck2Controller", "headController"},
+            0.25f, 0.50f, 1.0f
+    );
+    private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
+            new String[] {"tail1", "tail2", "tail3", "tail4"},
+            0.5f, 0.75f, 1.0f, 1.25f
+    );
     private static final ResourceLocation BLOODSHOT_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans_bloodshot.png");
     private static final ResourceLocation BLOODSHOT_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/volitans_bloodshot_female.png");
-    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/baby_volitans.png");
-    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/volitans/baby_volitans_female.png");
 
     public VolitansModel() {
-        super(SaintsDragonsCommon.rl("volitans"));
+        super("volitans");
     }
 
     @Override
-    public ResourceLocation getModelResource(Volitans animatable) {
-        return animatable.isBaby() ? BABY_MODEL : MODEL;
-    }
-
-    @Override
-    public ResourceLocation getTextureResource(Volitans animatable) {
-        if (animatable.isBaby()) {
-            return animatable.isFemale() ? BABY_FEMALE_TEXTURE : BABY_TEXTURE;
+    protected ResourceLocation getAdultTexture(Volitans entity) {
+        boolean bloodshot = entity.getTextureVariant() == Volitans.VARIANT_BLOODSHOT;
+        if (entity.isFemale()) {
+            return bloodshot ? BLOODSHOT_FEMALE_TEXTURE : femaleTexture;
         }
-        boolean bloodshot = animatable.getTextureVariant() == Volitans.VARIANT_BLOODSHOT;
-        if (animatable.isFemale()) {
-            return bloodshot ? BLOODSHOT_FEMALE_TEXTURE : FEMALE_TEXTURE;
-        }
-        return bloodshot ? BLOODSHOT_TEXTURE : TEXTURE;
-    }
-
-    @Override
-    public ResourceLocation getAnimationResource(Volitans animatable) {
-        return animatable.isBaby() ? BABY_ANIM : ANIM;
+        return bloodshot ? BLOODSHOT_TEXTURE : maleTexture;
     }
 
     @Override
@@ -82,17 +71,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     }
 
     private void applyBodyRotationDeviation(Volitans entity, float partialTick) {
-        var rootOpt = getBone("root");
-        if (rootOpt.isEmpty()) {
-            return;
-        }
-
-        GeoBone root = rootOpt.get();
-        var snap = root.getInitialSnapshot();
-        double deviation = entity.getBodyRotDeviation().get(partialTick);
-        float deviationRad = (float)(deviation * net.minecraft.util.Mth.DEG_TO_RAD);
-
-        root.setRotY(snap.getRotY() - deviationRad);
+        DragonModelPoseHelper.applyBodyYawDeviation(this, entity, "root", partialTick, -1.0f, true);
     }
 
     private void applyBankingRoll(Volitans entity, AnimationState<Volitans> state) {
@@ -126,18 +105,13 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     }
 
     private void applyNeckFollow(Volitans entity, EntityModelData modelData, float partialTick) {
-        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
-        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
-        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
-        float totalYawRad = lookYawRad + structuralYawRad;
+        float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         if (entity.isFlying()) {
             lookPitchRad *= 0.5f;
         }
 
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.25f);
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.50f);
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 1.0f);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK, lookPitchRad, totalYawRad);
     }
 
     private void applyNeckBankingLean(Volitans entity, float partialTick) {
@@ -147,9 +121,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 30.0f * Mth.DEG_TO_RAD;
 
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.25f);
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.50f);
-        applyNeckBoneRotation("headController", neckLeanRad * 1.0f);
+        DragonModelPoseHelper.applyWeightedRotationY(this, NECK, neckLeanRad);
     }
 
     private void applyGroundNeckTurn(Volitans entity, float partialTick) {
@@ -157,34 +129,7 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
             return;
         }
 
-        double velocity = entity.getYawVelocity().get(partialTick);
-        velocity = Mth.clamp(velocity, -25.0, 25.0);
-        float turnRad = (float) (-velocity * Mth.DEG_TO_RAD);
-
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.25f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 0.50f);
-        applyNeckBoneRotation("headController", turnRad * 1.0f);
-    }
-
-    private void applyNeckBoneRotation(String boneName, float rotationY) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-        GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
-    }
-
-    private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) return;
-
-        GeoBone bone = boneOpt.get();
-        float addX = headDeltaX * weight;
-        float addY = headDeltaY * weight;
-
-        bone.setRotX(bone.getRotX() + addX);
-        bone.setRotY(bone.getRotY() + addY);
+        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK, 25.0);
     }
 
     private void applySwimPitch(Volitans entity, float partialTick) {
@@ -220,23 +165,6 @@ public class VolitansModel extends DefaultedEntityGeoModel<Volitans> {
     }
 
     private void applyTailDrag(Volitans entity, float partialTick) {
-        double velocity = entity.getYawVelocity().get(partialTick);
-        velocity = Mth.clamp(velocity, -30.0, 30.0);
-        float smoothedVelocity = entity.smoothTailDragVelocity((float) velocity);
-        float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
-
-        applyTailBoneRotation("tail1", velocityRad * 0.5f);
-        applyTailBoneRotation("tail2", velocityRad * 0.75f);
-        applyTailBoneRotation("tail3", velocityRad * 1.0f);
-        applyTailBoneRotation("tail4", velocityRad * 1.25f);
-    }
-
-    private void applyTailBoneRotation(String boneName, float rotationY) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-        GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        DragonModelPoseHelper.applyTailDrag(this, entity, partialTick, TAIL, 30.0);
     }
 }

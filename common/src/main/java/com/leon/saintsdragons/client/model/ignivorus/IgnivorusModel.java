@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.client.model.ignivorus;
 
+import com.leon.saintsdragons.client.model.DragonGeoModel;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
+import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -8,52 +11,37 @@ import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
-import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
-public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
+public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
+    private static final WeightedBoneChain NECK = WeightedBoneChain.of(
+            new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller", "headController"},
+            0.40f, 0.41f, 0.42f, 0.43f, 0.44f
+    );
+    private static final WeightedBoneChain NECK_FOLLOW = WeightedBoneChain.of(
+            new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller", "headController"},
+            0.30f, 0.35f, 0.40f, 0.42f, 0.45f
+    );
+    private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
+            new String[] {"tail1", "tail2", "tail3", "tail4"},
+            0.5f, 0.75f, 1.0f, 1.25f
+    );
 
     public IgnivorusModel() {
-        super(SaintsDragonsCommon.rl("ignivorus"));
+        super("ignivorus");
     }
-    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/ignivorus.geo.json");
-    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_ignivorus.geo.json");
-    private static final ResourceLocation ANIM = SaintsDragonsCommon.rl("animations/entity/ignivorus.animation.json");
-    private static final ResourceLocation BABY_ANIM = SaintsDragonsCommon.rl("animations/entity/baby_ignivorus.animation.json");
-    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus.png");
-    private static final ResourceLocation FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/ignivorus_female.png");
-    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus.png");
-    private static final ResourceLocation BABY_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/baby_ignivorus_female.png");
+
     private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus.png");
     private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus_female.png");
 
     @Override
-    public ResourceLocation getModelResource(Ignivorus entity) {
-        return entity != null && entity.isBaby() ? BABY_MODEL : MODEL;
-    }
-
-    @Override
-    public ResourceLocation getTextureResource(Ignivorus entity) {
-        if (entity == null) {
-            return TEXTURE;
-        }
-
+    protected ResourceLocation getAdultTexture(Ignivorus entity) {
         int variant = entity.getTextureVariant();
         boolean isFemale = entity.isFemale();
-
-        if (entity.isBaby()) {
-            return isFemale ? BABY_FEMALE_TEXTURE : BABY_TEXTURE;
-        }
         if (variant == 1) {
             return isFemale ? FEMALE_TEXTURE_SECOND_VARIANT : TEXTURE_SECOND_VARIANT;
-        } else {
-            return isFemale ? FEMALE_TEXTURE : TEXTURE;
         }
-    }
-
-    @Override
-    public ResourceLocation getAnimationResource(Ignivorus entity) {
-        return entity != null && entity.isBaby() ? BABY_ANIM : ANIM;
+        return super.getAdultTexture(entity);
     }
 
     @Override
@@ -88,14 +76,7 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
     }
 
     private void applyBodyRotationDeviation(Ignivorus entity, float partialTick) {
-        var rootOpt = getBone("root");
-        if (rootOpt.isEmpty()) return;
-
-        GeoBone root = rootOpt.get();
-        var snap = root.getInitialSnapshot();
-        double deviation = entity.getBodyRotDeviation().get(partialTick);
-        float deviationRad = (float)(deviation * Mth.DEG_TO_RAD);
-        root.setRotY(snap.getRotY() - deviationRad);
+        DragonModelPoseHelper.applyBodyYawDeviation(this, entity, "root", partialTick, -1.0f, true);
     }
 
     private void applyBankingRoll(Ignivorus entity, AnimationState<Ignivorus> state) {
@@ -131,84 +112,27 @@ public class IgnivorusModel extends DefaultedEntityGeoModel<Ignivorus> {
         }
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 32.0f * Mth.DEG_TO_RAD;
-        applyNeckBoneRotation("neck1Controller", neckLeanRad * 0.4f);
-        applyNeckBoneRotation("neck2Controller", neckLeanRad * 0.41f);
-        applyNeckBoneRotation("neck3Controller", neckLeanRad * 0.42f);
-        applyNeckBoneRotation("neck4Controller", neckLeanRad * 0.43f);
-        applyNeckBoneRotation("headController", neckLeanRad * 0.44f);
+        DragonModelPoseHelper.applyWeightedRotationY(this, NECK, neckLeanRad);
     }
 
     private void applyGroundNeckTurn(Ignivorus entity, float partialTick) {
         if (entity.isFlying()) {
             return;
         }
-        double velocity = entity.getYawVelocity().get(partialTick);
-        velocity = Mth.clamp(velocity, -25.0, 25.0);
-        float turnRad = (float)(-velocity * Mth.DEG_TO_RAD);
-        applyNeckBoneRotation("neck1Controller", turnRad * 0.4f);
-        applyNeckBoneRotation("neck2Controller", turnRad * 0.41f);
-        applyNeckBoneRotation("neck3Controller", turnRad * 0.42f);
-        applyNeckBoneRotation("neck4Controller", turnRad * 0.43f);
-        applyNeckBoneRotation("headController", turnRad * 0.44f);
-    }
-
-    private void applyNeckBoneRotation(String boneName, float rotationY) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) {
-            return;
-        }
-        GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK, 25.0);
     }
 
     private void applyNeckFollow(Ignivorus entity, EntityModelData modelData, float partialTick) {
-        double bodyDeviation = entity.getBodyRotDeviation().get(partialTick);
-        float lookYawRad = modelData.netHeadYaw() * Mth.DEG_TO_RAD;
-        float structuralYawRad = (float)(bodyDeviation * 2.0 * Mth.DEG_TO_RAD);
-        float totalYawRad = lookYawRad + structuralYawRad;
+        float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         if (entity.isFlying()) {
             lookPitchRad *= 0.5f;
         }
 
-        applyNeckBoneFollow("neck1Controller", lookPitchRad, totalYawRad, 0.30f);
-        applyNeckBoneFollow("neck2Controller", lookPitchRad, totalYawRad, 0.35f);
-        applyNeckBoneFollow("neck3Controller", lookPitchRad, totalYawRad, 0.40f);
-        applyNeckBoneFollow("neck4Controller", lookPitchRad, totalYawRad, 0.42f);
-        applyNeckBoneFollow("headController", lookPitchRad, totalYawRad, 0.45f);
-    }
-
-    private void applyNeckBoneFollow(String boneName, float headDeltaX, float headDeltaY, float weight) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) return;
-
-        GeoBone bone = boneOpt.get();
-        float addX = headDeltaX * weight;
-        float addY = headDeltaY * weight;
-
-        bone.setRotX(bone.getRotX() + addX);
-        bone.setRotY(bone.getRotY() + addY);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_FOLLOW, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Ignivorus entity, float partialTick) {
-
-
-        double velocity = entity.getYawVelocity().get(partialTick);
-        velocity = Mth.clamp(velocity, -30.0, 30.0);
-        float targetVelocity = (float) velocity;
-        float smoothedVelocity = entity.smoothTailDragVelocity(targetVelocity);
-        float velocityRad = smoothedVelocity * Mth.DEG_TO_RAD;
-
-        applyTailBoneRotation("tail1", velocityRad * 0.5f);
-        applyTailBoneRotation("tail2", velocityRad * 0.75f);
-        applyTailBoneRotation("tail3", velocityRad * 1.0f);
-        applyTailBoneRotation("tail4", velocityRad * 1.25f);
-    }
-
-    private void applyTailBoneRotation(String boneName, float rotationY) {
-        var boneOpt = getBone(boneName);
-        if (boneOpt.isEmpty()) return;
-        GeoBone bone = boneOpt.get();
-        bone.setRotY(bone.getRotY() + rotationY);
+        DragonModelPoseHelper.applyTailDrag(this, entity, partialTick, TAIL, 30.0);
     }
 }

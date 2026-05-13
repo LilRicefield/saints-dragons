@@ -1867,8 +1867,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void tickBankingLogic() {
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
-        boolean shouldBank = !(inWater || areRiderControlsLocked() || !isFlying() || isOrderedToSit());
+        boolean shouldBank = isFlying() && !isLanding() && !isHovering();
         DragonFlightVisuals.tickBanking(
                 this.flightVisualState,
                 shouldBank,

@@ -511,8 +511,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     private void tickSittingState() {
-        if (!this.level().isClientSide && this.isVehicle() && this.isOrderedToSit()) {
-            this.setOrderedToSit(false);
+        if (!this.level().isClientSide && this.isVehicle()
+                && (this.isOrderedToSit() || this.getCommand() == 1 || this.getSitProgress() != 0f || this.isInSittingPose())) {
+            clearStateForMountedRider();
+            clearLocalSitTransitionForMount();
         }
     }
 
@@ -537,6 +539,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         isSittingDown = false;
         isStandingUp = false;
         sitTransitionTicks = 0;
+        setInSittingPose(false);
     }
 
     private static class CindervaneFamilyData extends AgeableMob.AgeableMobGroupData {
@@ -695,8 +698,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     private void tickBankingLogic() {
-        boolean shouldBank = isFlying() && !isLanding() && !isHovering()
-                && (!isOrderedToSit() || riderOverridesSittingCommand());
+        boolean shouldBank = isFlying() && !isLanding() && !isHovering();
         DragonFlightVisuals.tickBanking(
                 this.flightVisualState,
                 shouldBank,
@@ -789,7 +791,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected boolean shouldResetStandardPitchForSit() {
-        return isOrderedToSit() && !riderOverridesSittingCommand();
+        return isOrderedToSit();
     }
 
     private void tickScreenShake() {
@@ -1662,10 +1664,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
     }
 
-    private boolean riderOverridesSittingCommand() {
-        return this.isVehicle() && this.getControllingPassenger() instanceof Player;
-    }
-
     @Override
     protected void onLandingDataSet(boolean landing) {
         landingTicks = 0;
@@ -1697,11 +1695,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (!this.onGround()) {
             return false;
         }
-        boolean riderOverride = this.isVehicle() && this.getControllingPassenger() instanceof Player;
 
-        if (!riderOverride && this.isOrderedToSit()) {
-            return false;
-        }
         return true;
     }
 
