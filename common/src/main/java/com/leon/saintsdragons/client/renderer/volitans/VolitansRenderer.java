@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
-public class VolitansGeoEntityRenderer extends DragonGeoEntityRenderer<Volitans> {
+public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     private static final float PASSENGER_X = 0.0f;
     private static final float PASSENGER_Y = -3.0f;
     private static final float PASSENGER_Z = 0.0f;
@@ -21,7 +21,7 @@ public class VolitansGeoEntityRenderer extends DragonGeoEntityRenderer<Volitans>
     private static final int SYNC_INTERVAL_TICKS = 2;
     private final java.util.Map<Integer, Integer> lastBreathSnapshotHashes = new java.util.HashMap<>();
 
-    public VolitansGeoEntityRenderer(EntityRendererProvider.Context context) {
+    public VolitansRenderer(EntityRendererProvider.Context context) {
         super(context, new VolitansModel());
     }
 

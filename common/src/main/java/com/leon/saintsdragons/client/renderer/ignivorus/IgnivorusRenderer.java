@@ -11,7 +11,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
-public class IgnivorusGeoEntityRenderer extends DragonGeoEntityRenderer<Ignivorus> {
+public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
     private static final String FIRE_BONE = "fireBone";
     private static final String PASSENGER_BONE = "passengerBone";
@@ -34,7 +34,7 @@ public class IgnivorusGeoEntityRenderer extends DragonGeoEntityRenderer<Ignivoru
     private static final double SNAPSHOT_PRECISION = 1000.0D;
     private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
-    public IgnivorusGeoEntityRenderer(EntityRendererProvider.Context renderManager) {
+    public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IgnivorusModel());
         this.addRenderLayer(new IgnivorusMouthSmokeLayer());
         this.addRenderLayer(new IgnivorusGlowLayer(this));

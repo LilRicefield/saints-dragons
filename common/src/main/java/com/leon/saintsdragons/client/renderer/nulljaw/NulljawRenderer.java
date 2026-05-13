@@ -8,13 +8,13 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
 @Environment(EnvType.CLIENT)
-public final class NulljawGeoEntityRenderer extends DragonGeoEntityRenderer<Nulljaw> {
+public final class NulljawRenderer extends DragonGeoEntityRenderer<Nulljaw> {
     private static final String PASSENGER_BONE = "passengerBone";
     private static final float PASSENGER_X = -0.5f;
     private static final float PASSENGER_Y = 1.0f;
     private static final float PASSENGER_Z = 0.0f;
 
-    public NulljawGeoEntityRenderer(EntityRendererProvider.Context context) {
+    public NulljawRenderer(EntityRendererProvider.Context context) {
         super(context, new NulljawModel());
         this.shadowRadius = 1.3F;
     }

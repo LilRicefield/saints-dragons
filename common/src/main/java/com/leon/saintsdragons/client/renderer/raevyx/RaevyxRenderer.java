@@ -14,7 +14,7 @@ import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLa
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxGlowLayer;
 
 @Environment(EnvType.CLIENT)
-public class RaevyxGeoEntityRenderer extends DragonGeoEntityRenderer<Raevyx> {
+public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
     private static final ResourceLocation TEXTURE_MALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx.png");
     private static final ResourceLocation TEXTURE_FEMALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_female.png");
     private static final ResourceLocation TEXTURE_NIGHT_GOLD_MALE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_night_gold.png");
@@ -27,7 +27,7 @@ public class RaevyxGeoEntityRenderer extends DragonGeoEntityRenderer<Raevyx> {
     private static final float PASSENGER_Y = -3.0f;
     private static final float PASSENGER_Z = 0.0f;
 
-    public RaevyxGeoEntityRenderer(EntityRendererProvider.Context renderManager) {
+    public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RaevyxModel());
         this.addRenderLayer(new RaevyxGlowLayer(this));
         this.addRenderLayer(new RaevyxLightningBeamLayer());
