@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.platform.Services;
-import com.leon.saintsdragons.common.registry.DragonType;
+import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import net.minecraft.network.FriendlyByteBuf;
@@ -78,7 +78,7 @@ public class MessageDraconicCodexList {
     }
 
     private static String getDragonTypeName(DragonEntity dragon) {
-        DragonType type = DragonType.fromEntity(dragon);
+        Dragons type = Dragons.fromEntity(dragon);
         if (type != null) {
             return type.getName();
         }

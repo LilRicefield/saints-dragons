@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
-import com.leon.saintsdragons.common.registry.DragonType;
+import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -148,7 +148,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private final SmoothValue fallbackYawVelocity = SmoothValue.value(0.0);
     private float clientTailDragVelocity = 0.0f;
     @Nullable
-    private DragonType cachedDragonType;
+    private Dragons cachedDragonType;
     private boolean dying = false;
     @Nullable
     private LivingEntity lastDamager;
@@ -1064,9 +1064,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     @Nullable
-    public DragonType getDragonType() {
+    public Dragons getDragonType() {
         if (cachedDragonType == null) {
-            cachedDragonType = DragonType.fromEntity(this);
+            cachedDragonType = Dragons.fromEntity(this);
         }
         return cachedDragonType;
     }

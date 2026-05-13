@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
-import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -168,19 +168,19 @@ public class CindervaneAirCombatGoal extends Goal {
     }
 
     private void tryPerformBite(LivingEntity target) {
-        if (attackCooldown > 0 || amphithere.getAiCombatPacing().getCadenceCooldownTicks() > 0 || amphithere.isAbilityActive(CindervaneAbilities.BITE)) {
+        if (attackCooldown > 0 || amphithere.getAiCombatPacing().getCadenceCooldownTicks() > 0 || amphithere.isAbilityActive(ModAbilities.CINDERVANE_BITE)) {
             return;
         }
         if (!amphithere.getSensing().hasLineOfSight(target)) {
             return;
         }
-        if (!amphithere.combatManager.canStart(CindervaneAbilities.BITE)
-                || !amphithere.getAiCombatPacing().canUse(CindervaneAbilities.BITE, false)) {
+        if (!amphithere.combatManager.canStart(ModAbilities.CINDERVANE_BITE)
+                || !amphithere.getAiCombatPacing().canUse(ModAbilities.CINDERVANE_BITE, false)) {
             return;
         }
 
-        amphithere.combatManager.tryUseAbility(CindervaneAbilities.BITE);
-        amphithere.getAiCombatPacing().recordUse(CindervaneAbilities.BITE, 40, 40, false, 0, 28);
+        amphithere.combatManager.tryUseAbility(ModAbilities.CINDERVANE_BITE);
+        amphithere.getAiCombatPacing().recordUse(ModAbilities.CINDERVANE_BITE, 40, 40, false, 0, 28);
         attackCooldown = 40;
     }
 
@@ -189,21 +189,21 @@ public class CindervaneAirCombatGoal extends Goal {
             return;
         }
 
-        boolean fireBodyActive = amphithere.isAbilityActive(CindervaneAbilities.FIRE_BODY);
+        boolean fireBodyActive = amphithere.isAbilityActive(ModAbilities.CINDERVANE_FIRE_BODY);
         double distanceToTarget = amphithere.distanceTo(target);
 
         if (!fireBodyActive && distanceToTarget < FIRE_BODY_ACTIVATION_RANGE) {
-            amphithere.combatManager.tryUseAbility(CindervaneAbilities.FIRE_BODY);
+            amphithere.combatManager.tryUseAbility(ModAbilities.CINDERVANE_FIRE_BODY);
             fireBodyCheckCooldown = 40;
         } else if (fireBodyActive && distanceToTarget > FIRE_BODY_ACTIVATION_RANGE * 1.5D) {
-            amphithere.forceEndAbility(CindervaneAbilities.FIRE_BODY);
+            amphithere.forceEndAbility(ModAbilities.CINDERVANE_FIRE_BODY);
             fireBodyCheckCooldown = 40;
         }
     }
 
     private void deactivateFireBodyIfActive() {
-        if (!amphithere.isVehicle() && amphithere.isAbilityActive(CindervaneAbilities.FIRE_BODY)) {
-            amphithere.forceEndAbility(CindervaneAbilities.FIRE_BODY);
+        if (!amphithere.isVehicle() && amphithere.isAbilityActive(ModAbilities.CINDERVANE_FIRE_BODY)) {
+            amphithere.forceEndAbility(ModAbilities.CINDERVANE_FIRE_BODY);
         }
     }
 

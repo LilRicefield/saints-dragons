@@ -6,7 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
@@ -100,7 +100,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 dragon.tame(player);
                 dragon.setOrderedToSit(true);
                 dragon.setCommand(1);
-                dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+                dragon.combatManager.clearAbilityCooldown(ModAbilities.IGNIVORUS_ULTIMATE);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
                 if (!legacyTaming) {
                     dragon.resetTamingFailures();
@@ -222,7 +222,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                     dragon.tame(player);
                     dragon.setOrderedToSit(true);
                     dragon.setCommand(1);
-                    dragon.combatManager.clearAbilityCooldown(IgnivorusAbilities.IGNIVORUS_ULTIMATE);
+                    dragon.combatManager.clearAbilityCooldown(ModAbilities.IGNIVORUS_ULTIMATE);
                     triggerTamingAdvancement(player);
                 }
         );

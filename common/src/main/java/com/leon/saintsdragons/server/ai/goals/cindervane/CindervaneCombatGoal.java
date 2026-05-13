@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
-import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -142,7 +142,7 @@ public class CindervaneCombatGoal extends Goal {
     }
 
     private boolean isCurrentlyBiting() {
-        return amphithere.isAbilityActive(CindervaneAbilities.BITE);
+        return amphithere.isAbilityActive(ModAbilities.CINDERVANE_BITE);
     }
 
     private void tryPerformBite(LivingEntity target) {
@@ -154,13 +154,13 @@ public class CindervaneCombatGoal extends Goal {
             return;
         }
 
-        if (!amphithere.combatManager.canStart(CindervaneAbilities.BITE)
-                || !amphithere.getAiCombatPacing().canUse(CindervaneAbilities.BITE, false)) {
+        if (!amphithere.combatManager.canStart(ModAbilities.CINDERVANE_BITE)
+                || !amphithere.getAiCombatPacing().canUse(ModAbilities.CINDERVANE_BITE, false)) {
             return;
         }
 
-        amphithere.combatManager.tryUseAbility(CindervaneAbilities.BITE);
-        amphithere.getAiCombatPacing().recordUse(CindervaneAbilities.BITE, 40, 40, false, 0, 28);
+        amphithere.combatManager.tryUseAbility(ModAbilities.CINDERVANE_BITE);
+        amphithere.getAiCombatPacing().recordUse(ModAbilities.CINDERVANE_BITE, 40, 40, false, 0, 28);
         attackCooldown = 40;
     }
 
@@ -183,14 +183,14 @@ public class CindervaneCombatGoal extends Goal {
             return;
         }
 
-        boolean fireBodyActive = amphithere.isAbilityActive(CindervaneAbilities.FIRE_BODY);
+        boolean fireBodyActive = amphithere.isAbilityActive(ModAbilities.CINDERVANE_FIRE_BODY);
         double distanceToTarget = amphithere.distanceTo(target);
 
         if (!fireBodyActive && distanceToTarget < fireBodyActivationRange) {
-            amphithere.combatManager.tryUseAbility(CindervaneAbilities.FIRE_BODY);
+            amphithere.combatManager.tryUseAbility(ModAbilities.CINDERVANE_FIRE_BODY);
             fireBodyCheckCooldown = 40; // 2 second cooldown before checking again
         } else if (fireBodyActive && distanceToTarget > fireBodyActivationRange * 1.5) {
-            amphithere.forceEndAbility(CindervaneAbilities.FIRE_BODY);
+            amphithere.forceEndAbility(ModAbilities.CINDERVANE_FIRE_BODY);
             fireBodyCheckCooldown = 40;
         }
     }
@@ -201,8 +201,8 @@ public class CindervaneCombatGoal extends Goal {
             return;
         }
 
-        if (amphithere.isAbilityActive(CindervaneAbilities.FIRE_BODY)) {
-            amphithere.forceEndAbility(CindervaneAbilities.FIRE_BODY);
+        if (amphithere.isAbilityActive(ModAbilities.CINDERVANE_FIRE_BODY)) {
+            amphithere.forceEndAbility(ModAbilities.CINDERVANE_FIRE_BODY);
         }
     }
 

@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.data;
 
-import com.leon.saintsdragons.common.registry.DragonType;
+import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -433,7 +433,7 @@ public class DragonCodexSavedData extends SavedData {
     }
 
     private static String resolveDragonType(DragonEntity dragon) {
-        DragonType type = DragonType.fromEntity(dragon);
+        Dragons type = Dragons.fromEntity(dragon);
         if (type != null) {
             return type.getName();
         }

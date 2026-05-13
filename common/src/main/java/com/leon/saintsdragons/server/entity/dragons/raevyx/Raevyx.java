@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.raevyx;
 import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.ai.goals.base.*;
@@ -91,7 +91,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return DragonAttributeConfigLoader.RAEVYX_ID;
     }
 
-    public static final double RIDER_WALK_SPEED = 0.15D;
+    public static final double RIDER_WALK_SPEED = 0.20D;
     public static final double RIDER_RUN_SPEED = 0.35D;
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
     private static final float DEFAULT_DASH_DAMAGE = 10.0F;
@@ -555,12 +555,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
-        return abilityType == RaevyxAbilities.RAEVYX_BITE
-            || abilityType == RaevyxAbilities.RAEVYX_HORN_GORE
-            || abilityType == RaevyxAbilities.RAEVYX_LIGHTNING_BEAM
-            || abilityType == RaevyxAbilities.RAEVYX_SUMMON_STORM
-            || abilityType == RaevyxAbilities.RAEVYX_GROUND_REND
-            || abilityType == RaevyxAbilities.RAEVYX_ROAR;
+        return abilityType == ModAbilities.RAEVYX_BITE
+            || abilityType == ModAbilities.RAEVYX_HORN_GORE
+            || abilityType == ModAbilities.RAEVYX_LIGHTNING_BEAM
+            || abilityType == ModAbilities.RAEVYX_SUMMON_STORM
+            || abilityType == ModAbilities.RAEVYX_GROUND_REND
+            || abilityType == ModAbilities.RAEVYX_ROAR;
     }
 
     @Override
@@ -956,28 +956,39 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
-        return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM.getName(), RiderAbilityBinding.Activation.HOLD);
+        if (isBaby()) {
+            return null;
+        }
+        return new RiderAbilityBinding(ModAbilities.RAEVYX_LIGHTNING_BEAM.getName(), RiderAbilityBinding.Activation.HOLD);
     }
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
-        return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
+        if (isBaby()) {
+            return null;
+        }
+        return new RiderAbilityBinding(ModAbilities.RAEVYX_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
-        return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_SUMMON_STORM.getName(), RiderAbilityBinding.Activation.PRESS);
+        if (isBaby()) {
+            return null;
+        }
+        return new RiderAbilityBinding(ModAbilities.RAEVYX_SUMMON_STORM.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
+        if (isBaby()) {
+            return null;
+        }
         if (getMeleeMode() == 0) {
-            return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
+            return new RiderAbilityBinding(ModAbilities.RAEVYX_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
         } else {
-            return new RiderAbilityBinding(RaevyxAbilities.RAEVYX_HORN_GORE.getName(), RiderAbilityBinding.Activation.PRESS);
+            return new RiderAbilityBinding(ModAbilities.RAEVYX_HORN_GORE.getName(), RiderAbilityBinding.Activation.PRESS);
         }
     }
-
 
     // ===== RIDING SUPPORT =====
     @Override
@@ -1964,12 +1975,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return RaevyxAbilities.HURT;
+        return ModAbilities.RAEVYX_HURT;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
-        return RaevyxAbilities.DIE;
+        return ModAbilities.RAEVYX_DIE;
     }
 
     @Override
@@ -2806,18 +2817,18 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         return getMeleeMode() == 0 ?
-            RaevyxAbilities.RAEVYX_BITE :
-            RaevyxAbilities.RAEVYX_HORN_GORE;
+            ModAbilities.RAEVYX_BITE :
+            ModAbilities.RAEVYX_HORN_GORE;
     }
 
     @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
-        return RaevyxAbilities.RAEVYX_ROAR;
+        return ModAbilities.RAEVYX_ROAR;
     }
 
     @Override
     public DragonAbilityType<?, ?> getChannelingAbility() {
-        return RaevyxAbilities.RAEVYX_SUMMON_STORM;
+        return ModAbilities.RAEVYX_SUMMON_STORM;
     }
 
     @Override

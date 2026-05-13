@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
-import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
@@ -78,12 +78,12 @@ public class VolitansAirCombatGoal extends Goal {
         if (!isValidTarget(target)) {
             return false;
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_ROAR)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_BITE)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_CLAW)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_HORN_GORE)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_ROAR)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_BITE)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_CLAW)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_HORN_GORE)) {
             return true;
         }
         if (!isTargetAirborne(target)) {
@@ -111,10 +111,10 @@ public class VolitansAirCombatGoal extends Goal {
         dragon.setAiSpecialCombatReserved(false);
         attackCooldown = 0;
         LivingEntity target = dragon.getTarget();
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
             dragon.requestPoisonBallRelease();
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             dragon.forceEndActiveAbility();
         }
         DragonAirCombatHelper.stopAirCombat(dragon, target, 1.0D, this::isTargetAirborne, true);
@@ -165,7 +165,7 @@ public class VolitansAirCombatGoal extends Goal {
         double distance = dragon.distanceTo(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
             flyTowardTarget(target, POSITION_SPEED * 0.75D, CHASE_HEIGHT_OFFSET);
             if (--poisonHoldTicks <= 0 || !hasLineOfSight || distance < 8.0D || distance > 36.0D) {
                 dragon.requestPoisonBallRelease();
@@ -173,7 +173,7 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             flyTowardTarget(target, POSITION_SPEED * 0.65D, CHASE_HEIGHT_OFFSET);
             if (--breathHoldTicks <= 0 || !hasLineOfSight || distance < 7.0D || distance > 26.0D) {
                 dragon.forceEndActiveAbility();
@@ -181,7 +181,7 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_ROAR)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_ROAR)) {
             flyTowardTarget(target, POSITION_SPEED * 0.85D, CHASE_HEIGHT_OFFSET);
             return;
         }
@@ -194,8 +194,8 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (attackCooldown <= 0 && distance > ROAR_MAX_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true)) {
-            if (!startAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true, 14, 120, 90, 36)) {
+        if (attackCooldown <= 0 && distance > ROAR_MAX_RANGE && distance <= POISON_MAX_RANGE && hasLineOfSight && canUseAiAbility(ModAbilities.VOLITANS_POISON_BALL, true)) {
+            if (!startAiAbility(ModAbilities.VOLITANS_POISON_BALL, true, 14, 120, 90, 36)) {
                 return;
             }
             poisonHoldTicks = 20 + dragon.getRandom().nextInt(8);
@@ -203,9 +203,9 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (attackCooldown <= 0 && distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true)) {
+        if (attackCooldown <= 0 && distance >= BREATH_MIN_RANGE && distance <= BREATH_MAX_RANGE && hasLineOfSight && canUseAiAbility(ModAbilities.VOLITANS_BREATH, true)) {
             dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
-            if (!startAiAbility(VolitansAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
+            if (!startAiAbility(ModAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
                 return;
             }
             breathHoldTicks = 50 + dragon.getRandom().nextInt(30);
@@ -213,8 +213,8 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        if (attackCooldown <= 0 && distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
-            if (!startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 12, 140, 120, 48)) {
+        if (attackCooldown <= 0 && distance <= ROAR_MAX_RANGE && hasLineOfSight && canUseAiAbility(ModAbilities.VOLITANS_ROAR, true)) {
+            if (!startAiAbility(ModAbilities.VOLITANS_ROAR, true, 12, 140, 120, 48)) {
                 return;
             }
             flyTowardTarget(target, POSITION_SPEED * 0.9D, CHASE_HEIGHT_OFFSET);
@@ -229,18 +229,18 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
         if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
-            if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            if (canUseAiAbility(ModAbilities.VOLITANS_BITE, false)) {
+                startAiAbility(ModAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
             }
             return;
         }
         float roll = dragon.getRandom().nextFloat();
-        if (roll < 0.40F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
-        } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
-        } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+        if (roll < 0.40F && canUseAiAbility(ModAbilities.VOLITANS_BITE, false)) {
+            startAiAbility(ModAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+        } else if (roll < 0.72F && canUseAiAbility(ModAbilities.VOLITANS_CLAW, false)) {
+            startAiAbility(ModAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+        } else if (canUseAiAbility(ModAbilities.VOLITANS_HORN_GORE, false)) {
+            startAiAbility(ModAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
         }
     }
 

@@ -268,9 +268,8 @@ public class ModItems {
                             new Item.Properties()
                                     .stacksTo(16)
                                     .food(new FoodProperties.Builder()
-                                            .nutrition(10)       // heals dragons for a lot
-                                            .saturationMod(1.2f) // hearty saturation feel
-                                            .alwaysEat()         // dragons can eat even when "full"
+                                            .nutrition(10)
+                                            .saturationMod(1.2f)
                                             .build())
                     ));
 
@@ -284,9 +283,6 @@ public class ModItems {
                                     .rarity(Rarity.RARE),
                             20 * 104
                     ));
-
-    private ModItems() {
-    }
 
     public static boolean isDragonBrush(ItemStack stack) {
         return stack.is(DRAGON_BRUSH.get()) || stack.is(GOLDEN_DRAGON_BRUSH.get());

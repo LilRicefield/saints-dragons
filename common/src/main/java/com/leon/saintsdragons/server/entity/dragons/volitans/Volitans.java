@@ -8,7 +8,7 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFindWaterGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
@@ -795,10 +795,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void onRiderAbilityUse(Player player, String abilityName) {
         if (isBurrowing()) {
-            if (VolitansAbilities.VOLITANS_BURROW_ID.equals(abilityName)) {
+            if (ModAbilities.VOLITANS_BURROW.getName().equals(abilityName)) {
                 var active = combatManager.getActiveAbility();
                 if (active instanceof VolitansBurrowAbility burrowAbility
-                        && active.getAbilityType() == VolitansAbilities.VOLITANS_BURROW) {
+                        && active.getAbilityType() == ModAbilities.VOLITANS_BURROW) {
                     burrowAbility.requestExit(true);
                 } else {
                     setBurrowing(false);
@@ -807,10 +807,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
         if (abilityName != null && !abilityName.isEmpty()) {
-            if (VolitansAbilities.VOLITANS_BURROW_ID.equals(abilityName)) {
+            if (ModAbilities.VOLITANS_BURROW.getName().equals(abilityName)) {
                 var active = combatManager.getActiveAbility();
                 if (active instanceof VolitansBurrowAbility burrowAbility
-                        && active.getAbilityType() == VolitansAbilities.VOLITANS_BURROW) {
+                        && active.getAbilityType() == ModAbilities.VOLITANS_BURROW) {
                     burrowAbility.requestExit(true);
                     return;
                 }
@@ -842,9 +842,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (isBurrowing()) {
             return true;
         }
-        if (VolitansAbilities.VOLITANS_POISON_BALL_ID.equals(abilityName)) {
+        if (ModAbilities.VOLITANS_POISON_BALL.getName().equals(abilityName)) {
             var active = combatManager.getActiveAbility();
-            if (active != null && active.getAbilityType() == VolitansAbilities.VOLITANS_POISON_BALL) {
+            if (active != null && active.getAbilityType() == ModAbilities.VOLITANS_POISON_BALL) {
                 ((VolitansPoisonBallAbility) active).requestRelease();
                 return true;
             }
@@ -879,7 +879,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
 
         if (action == DragonRiderAction.TOGGLE_MELEE && !locked) {
-            if (combatManager.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
+            if (combatManager.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
                 toggleBreathMode();
                 player.displayClientMessage(
                         Component.translatable(
@@ -1294,48 +1294,48 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return getMeleeMode() == 0 ? VolitansAbilities.VOLITANS_BITE : VolitansAbilities.VOLITANS_HORN_GORE;
+        return getMeleeMode() == 0 ? ModAbilities.VOLITANS_BITE : ModAbilities.VOLITANS_HORN_GORE;
     }
 
     @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
-        return VolitansAbilities.VOLITANS_ROAR;
+        return ModAbilities.VOLITANS_ROAR;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return VolitansAbilities.HURT;
+        return ModAbilities.VOLITANS_HURT;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
-        return VolitansAbilities.DIE;
+        return ModAbilities.VOLITANS_DIE;
     }
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
-        return new RiderAbilityBinding(VolitansAbilities.VOLITANS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VOLITANS_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
         String abilityId = (isFlying() || !onGround())
-                ? VolitansAbilities.VOLITANS_ULTIMATE_ID
-                : VolitansAbilities.VOLITANS_BURROW_ID;
+                ? ModAbilities.VOLITANS_ULTIMATE.getName()
+                : ModAbilities.VOLITANS_BURROW.getName();
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
         String abilityId = getMeleeMode() == 0
-                ? VolitansAbilities.VOLITANS_BITE_ID
-                : VolitansAbilities.VOLITANS_HORN_GORE_ID;
+                ? ModAbilities.VOLITANS_BITE.getName()
+                : ModAbilities.VOLITANS_HORN_GORE.getName();
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
-        return new RiderAbilityBinding(VolitansAbilities.VOLITANS_CLAW_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VOLITANS_CLAW.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     public Vec3 getBreathOrigin() {
@@ -1819,14 +1819,14 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
-        return abilityType == VolitansAbilities.VOLITANS_ROAR
-                || abilityType == VolitansAbilities.VOLITANS_BURROW
-                || abilityType == VolitansAbilities.VOLITANS_BITE
-                || abilityType == VolitansAbilities.VOLITANS_CLAW
-                || abilityType == VolitansAbilities.VOLITANS_BREATH
-                || abilityType == VolitansAbilities.VOLITANS_POISON_BALL
-                || abilityType == VolitansAbilities.VOLITANS_HORN_GORE
-                || abilityType == VolitansAbilities.VOLITANS_ULTIMATE;
+        return abilityType == ModAbilities.VOLITANS_ROAR
+                || abilityType == ModAbilities.VOLITANS_BURROW
+                || abilityType == ModAbilities.VOLITANS_BITE
+                || abilityType == ModAbilities.VOLITANS_CLAW
+                || abilityType == ModAbilities.VOLITANS_BREATH
+                || abilityType == ModAbilities.VOLITANS_POISON_BALL
+                || abilityType == ModAbilities.VOLITANS_HORN_GORE
+                || abilityType == ModAbilities.VOLITANS_ULTIMATE;
     }
 
     public int getBreathMode() {
@@ -2064,23 +2064,23 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public boolean isGroundCombatAbilityActive() {
-        return isAbilityActive(VolitansAbilities.VOLITANS_BITE)
-                || isAbilityActive(VolitansAbilities.VOLITANS_CLAW)
-                || isAbilityActive(VolitansAbilities.VOLITANS_HORN_GORE)
-                || isAbilityActive(VolitansAbilities.VOLITANS_ROAR)
-                || isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)
-                || isAbilityActive(VolitansAbilities.VOLITANS_BREATH)
-                || isAbilityActive(VolitansAbilities.VOLITANS_BURROW);
+        return isAbilityActive(ModAbilities.VOLITANS_BITE)
+                || isAbilityActive(ModAbilities.VOLITANS_CLAW)
+                || isAbilityActive(ModAbilities.VOLITANS_HORN_GORE)
+                || isAbilityActive(ModAbilities.VOLITANS_ROAR)
+                || isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)
+                || isAbilityActive(ModAbilities.VOLITANS_BREATH)
+                || isAbilityActive(ModAbilities.VOLITANS_BURROW);
     }
 
     public boolean isAiRootedByAbility() {
-        if (isAbilityActive(VolitansAbilities.VOLITANS_ROAR) && !isFlying() && !isInWaterOrBubble()) {
+        if (isAbilityActive(ModAbilities.VOLITANS_ROAR) && !isFlying() && !isInWaterOrBubble()) {
             return true;
         }
-        if (isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL) && !isFlying() && !isInWaterOrBubble()) {
+        if (isAbilityActive(ModAbilities.VOLITANS_POISON_BALL) && !isFlying() && !isInWaterOrBubble()) {
             return true;
         }
-        if (isAbilityActive(VolitansAbilities.VOLITANS_BURROW) && !isBurrowing()) {
+        if (isAbilityActive(ModAbilities.VOLITANS_BURROW) && !isBurrowing()) {
             return true;
         }
         return false;
@@ -2088,13 +2088,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean shouldAiHoldPositionForAbility() {
         return isAiRootedByAbility()
-                || (isAbilityActive(VolitansAbilities.VOLITANS_BREATH) && !isFlying());
+                || (isAbilityActive(ModAbilities.VOLITANS_BREATH) && !isFlying());
     }
 
     public boolean requestPoisonBallRelease() {
         var active = combatManager.getActiveAbility();
         if (active instanceof VolitansPoisonBallAbility poisonBallAbility
-                && active.getAbilityType() == VolitansAbilities.VOLITANS_POISON_BALL) {
+                && active.getAbilityType() == ModAbilities.VOLITANS_POISON_BALL) {
             poisonBallAbility.requestRelease();
             return true;
         }
@@ -2104,7 +2104,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     public boolean requestBurrowExit(boolean withBurst) {
         var active = combatManager.getActiveAbility();
         if (active instanceof VolitansBurrowAbility burrowAbility
-                && active.getAbilityType() == VolitansAbilities.VOLITANS_BURROW) {
+                && active.getAbilityType() == ModAbilities.VOLITANS_BURROW) {
             burrowAbility.requestExit(withBurst);
             return true;
         }
@@ -2600,7 +2600,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private boolean shouldSuppressTakeoffInput() {
         var activeAbility = combatManager.getActiveAbility();
         boolean activeAbilityBlocksTakeoff = activeAbility != null
-                && activeAbility.getAbilityType() != VolitansAbilities.VOLITANS_POISON_BALL;
+                && activeAbility.getAbilityType() != ModAbilities.VOLITANS_POISON_BALL;
         return isBurrowing()
                 || takeoffInputBlockTicks > 0
                 || riderForwardDashing

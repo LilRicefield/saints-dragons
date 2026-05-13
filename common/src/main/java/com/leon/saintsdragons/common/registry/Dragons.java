@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import java.util.function.Supplier;
 
-public enum DragonType {
+public enum Dragons {
 
     RAEVYX("raevyx",
         DragonAttributeConfigLoader.RAEVYX_ID,
@@ -47,10 +47,10 @@ public enum DragonType {
     private final Class<? extends DragonEntity> entityClass;
     private final Supplier<? extends EntityType<? extends DragonEntity>> entityType;
 
-    DragonType(String name,
-               ResourceLocation configId,
-               Class<? extends DragonEntity> entityClass,
-               Supplier<? extends EntityType<? extends DragonEntity>> entityType) {
+    Dragons(String name,
+            ResourceLocation configId,
+            Class<? extends DragonEntity> entityClass,
+            Supplier<? extends EntityType<? extends DragonEntity>> entityType) {
         this.name = name;
         this.configId = configId;
         this.entityClass = entityClass;
@@ -81,8 +81,8 @@ public enum DragonType {
         return entityClass.isInstance(entity);
     }
 
-    public static DragonType fromEntityClass(Class<? extends DragonEntity> entityClass) {
-        for (DragonType type : values()) {
+    public static Dragons fromEntityClass(Class<? extends DragonEntity> entityClass) {
+        for (Dragons type : values()) {
             if (type.entityClass.isAssignableFrom(entityClass)) {
                 return type;
             }
@@ -90,7 +90,7 @@ public enum DragonType {
         return null;
     }
 
-    public static DragonType fromEntity(DragonEntity entity) {
+    public static Dragons fromEntity(DragonEntity entity) {
         return fromEntityClass(entity.getClass());
     }
 }

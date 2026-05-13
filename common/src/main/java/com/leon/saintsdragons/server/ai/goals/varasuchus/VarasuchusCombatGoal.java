@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.varasuchus;
 
-import com.leon.saintsdragons.common.registry.varasuchus.VarasuchusAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
@@ -114,13 +114,13 @@ public class VarasuchusCombatGoal extends Goal {
 
         drake.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        if (drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT)) {
+        if (drake.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) {
             return;
         }
 
         if (shouldEnterPhaseTwo()) {
-            drake.combatManager.tryUseAbility(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT);
-            if (drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT)) {
+            drake.combatManager.tryUseAbility(ModAbilities.VARASUCHUS_PHASE_SHIFT);
+            if (drake.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) {
                 return;
             }
         }
@@ -181,48 +181,48 @@ public class VarasuchusCombatGoal extends Goal {
         if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
             double biteRange = getMeleeStopRange(target);
             if (gap <= biteRange) {
-                return phaseTwo ? VarasuchusAbilities.VARASUCHUS_BITE2 : VarasuchusAbilities.VARASUCHUS_BITE;
+                return phaseTwo ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
             }
             return null;
         }
 
         if (gap <= CLAW_RANGE) {
-            return VarasuchusAbilities.VARASUCHUS_HORN_GORE;
+            return ModAbilities.VARASUCHUS_HORN_GORE;
         }
 
         if (phaseTwo && gap <= BITE_RANGE && drake.getRandom().nextFloat() < 0.30F) {
-            return VarasuchusAbilities.VARASUCHUS_SLASH_BARRAGE;
+            return ModAbilities.VARASUCHUS_SLASH_BARRAGE;
         }
 
         if (phaseTwo && gap <= HORN_RANGE) {
             return drake.getRandom().nextBoolean()
-                    ? VarasuchusAbilities.VARASUCHUS_BITE2
-                    : VarasuchusAbilities.VARASUCHUS_CLAW;
+                    ? ModAbilities.VARASUCHUS_BITE2
+                    : ModAbilities.VARASUCHUS_CLAW;
         }
 
         if (!phaseTwo && gap > CLAW_RANGE && gap <= HORN_RANGE && drake.getRandom().nextFloat() < 0.35f) {
-            return VarasuchusAbilities.VARASUCHUS_TAIL_ATTACK;
+            return ModAbilities.VARASUCHUS_TAIL_ATTACK;
         }
 
         if (gap <= BITE_RANGE) {
-            return phaseTwo ? VarasuchusAbilities.VARASUCHUS_BITE2 : VarasuchusAbilities.VARASUCHUS_BITE;
+            return phaseTwo ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
         }
 
         if (gap <= HORN_RANGE) {
-            return VarasuchusAbilities.VARASUCHUS_HORN_GORE;
+            return ModAbilities.VARASUCHUS_HORN_GORE;
         }
 
         return null;
     }
 
     private boolean isPerformingAttack() {
-        return drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_BITE)
-            || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_BITE2)
-            || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_SLASH_BARRAGE)
-            || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_CLAW)
-            || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_HORN_GORE)
-            || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_TAIL_ATTACK)
-            || drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_ROAR);
+        return drake.isAbilityActive(ModAbilities.VARASUCHUS_BITE)
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_BITE2)
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_SLASH_BARRAGE)
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_CLAW)
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_HORN_GORE)
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_TAIL_ATTACK)
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_ROAR);
     }
 
     private boolean shouldUseAIDash(double gap, boolean hasLineOfSight, LivingEntity target) {
@@ -233,7 +233,7 @@ public class VarasuchusCombatGoal extends Goal {
         if (gap < DASH_MIN_GAP) return false;
         if (drake.getAiCombatPacing().getCadenceCooldownTicks() > 0) return false;
         if (isPerformingAttack()) return false;
-        if (drake.isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT)) return false;
+        if (drake.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) return false;
         return isWithinAggroRange(target);
     }
 

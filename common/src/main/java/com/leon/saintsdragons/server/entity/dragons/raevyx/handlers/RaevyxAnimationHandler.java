@@ -236,8 +236,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             }
 
             if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(FLAP);
+                RawAnimation flap = FLAP;
+                if (currentFlightAnimation != flap) {
+                    state.getController().transitionLength(4);
+                    currentFlightAnimation = flap;
+                }
+                state.setAndContinue(flap);
                 return PlayState.CONTINUE;
             }
 

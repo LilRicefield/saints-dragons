@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.ignivorus;
 
-import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
@@ -113,8 +113,8 @@ public class IgnivorusAirCombatGoal extends Goal {
             return false;
         }
 
-        if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
-            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)) {
+        if (dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIRE_BREATH)
+            || dragon.isAbilityActive(ModAbilities.IGNIVORUS_BITE)) {
             return true;
         }
 
@@ -209,7 +209,7 @@ public class IgnivorusAirCombatGoal extends Goal {
             if (!isCurrentlyAttacking()) {
                 tryAttack(target, distance);
             }
-            if (dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)) {
+            if (dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIRE_BREATH)) {
                 DragonAsyncAirMovementHelper.holdPosition(dragon);
             } else {
                 maintainCombatPosition(target);
@@ -220,8 +220,8 @@ public class IgnivorusAirCombatGoal extends Goal {
     }
 
     private boolean isCurrentlyAttacking() {
-        return dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_BITE)
-            || dragon.isAbilityActive(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH)
+        return dragon.isAbilityActive(ModAbilities.IGNIVORUS_BITE)
+            || dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIRE_BREATH)
             || dragon.isLeaping()
             || dragon.isLeapImpactRecovering();
     }
@@ -236,21 +236,21 @@ public class IgnivorusAirCombatGoal extends Goal {
         }
 
         if (distance <= BITE_RANGE) {
-            if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_BITE, false)) {
+            if (!canUseAiAbility(ModAbilities.IGNIVORUS_BITE, false)) {
                 return;
             }
-            dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_BITE);
-            dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
+            dragon.combatManager.tryUseAbility(ModAbilities.IGNIVORUS_BITE);
+            dragon.getAiCombatPacing().recordUse(ModAbilities.IGNIVORUS_BITE, 30, 30, false, 0, 24);
             attackCooldown = 30;
         } else if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)
                 && distance >= FIRE_BREATH_MIN_RANGE
                 && distance <= FIRE_BREATH_MAX_RANGE
                 && breathCooldown <= 0) {
-            if (!canUseAiAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, true)) {
+            if (!canUseAiAbility(ModAbilities.IGNIVORUS_FIRE_BREATH, true)) {
                 return;
             }
-            dragon.combatManager.tryUseAbility(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH);
-            dragon.getAiCombatPacing().recordUse(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH, 60, BREATH_COOLDOWN_TICKS, true, 180, 80);
+            dragon.combatManager.tryUseAbility(ModAbilities.IGNIVORUS_FIRE_BREATH);
+            dragon.getAiCombatPacing().recordUse(ModAbilities.IGNIVORUS_FIRE_BREATH, 60, BREATH_COOLDOWN_TICKS, true, 180, 80);
             attackCooldown = 60;
             breathCooldown = BREATH_COOLDOWN_TICKS;
         }

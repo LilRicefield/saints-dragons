@@ -1,8 +1,6 @@
 package com.leon.saintsdragons.client.input;
 
-import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
-import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
-import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
@@ -391,7 +389,7 @@ public final class DragonRideInputHandler {
             volitansTertiaryHoldTicks++;
             if (!volitansBreathActive && volitansTertiaryHoldTicks >= VOLITANS_TERTIARY_HOLD_TICKS) {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        VolitansAbilities.VOLITANS_BREATH_ID, forward, strafe, yaw);
+                        ModAbilities.VOLITANS_BREATH.getName(), forward, strafe, yaw);
                 volitansBreathActive = true;
             }
             return;
@@ -400,10 +398,10 @@ public final class DragonRideInputHandler {
         if (previousDown) {
             if (volitansBreathActive) {
                 sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                        VolitansAbilities.VOLITANS_BREATH_ID, forward, strafe, yaw);
+                        ModAbilities.VOLITANS_BREATH.getName(), forward, strafe, yaw);
             } else {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        VolitansAbilities.VOLITANS_CLAW_ID, forward, strafe, yaw);
+                        ModAbilities.VOLITANS_CLAW.getName(), forward, strafe, yaw);
             }
         }
         volitansTertiaryHoldTicks = 0;
@@ -425,7 +423,7 @@ public final class DragonRideInputHandler {
                     && volitansPrimaryPressStartedAtMs > 0L
                     && now - volitansPrimaryPressStartedAtMs >= DUAL_PRIMARY_HOLD_MS) {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                        ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe, yaw);
                 volitansPoisonBallActive = true;
             }
             return;
@@ -434,17 +432,17 @@ public final class DragonRideInputHandler {
         if (previousDown) {
             if (volitansPoisonBallActive) {
                 sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                        VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                        ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe, yaw);
             } else {
                 long heldMs = volitansPrimaryPressStartedAtMs > 0L ? now - volitansPrimaryPressStartedAtMs : 0L;
                 if (heldMs >= DUAL_PRIMARY_HOLD_MS) {
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                            ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe, yaw);
                     sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                            VolitansAbilities.VOLITANS_POISON_BALL_ID, forward, strafe, yaw);
+                            ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe, yaw);
                 } else {
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            VolitansAbilities.VOLITANS_ROAR_ID, forward, strafe, yaw);
+                            ModAbilities.VOLITANS_ROAR.getName(), forward, strafe, yaw);
                 }
             }
         }
@@ -468,7 +466,7 @@ public final class DragonRideInputHandler {
                     && ignivorusPrimaryPressStartedAtMs > 0L
                     && now - ignivorusPrimaryPressStartedAtMs >= DUAL_PRIMARY_HOLD_MS) {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, forward, strafe, yaw);
+                        ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe, yaw);
                 ignivorusFireballActive = true;
             }
             return;
@@ -477,17 +475,17 @@ public final class DragonRideInputHandler {
         if (previousDown) {
             if (ignivorusFireballActive) {
                 sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                        IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, forward, strafe, yaw);
+                        ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe, yaw);
             } else {
                 long heldMs = ignivorusPrimaryPressStartedAtMs > 0L ? now - ignivorusPrimaryPressStartedAtMs : 0L;
                 if (heldMs >= DUAL_PRIMARY_HOLD_MS) {
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, forward, strafe, yaw);
+                            ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe, yaw);
                     sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                            IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, forward, strafe, yaw);
+                            ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe, yaw);
                 } else {
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            IgnivorusAbilities.IGNIVORUS_ROAR_ID, forward, strafe, yaw);
+                            ModAbilities.IGNIVORUS_ROAR.getName(), forward, strafe, yaw);
                 }
             }
         }
@@ -509,7 +507,7 @@ public final class DragonRideInputHandler {
             raevyxSecondaryHoldTicks++;
             if (!raevyxGroundRendTriggered && raevyxSecondaryHoldTicks >= RAEVYX_SECONDARY_HOLD_TICKS) {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        RaevyxAbilities.RAEVYX_GROUND_REND.getName(), forward, strafe, yaw);
+                        ModAbilities.RAEVYX_GROUND_REND.getName(), forward, strafe, yaw);
                 raevyxGroundRendTriggered = true;
             }
             return;
@@ -517,7 +515,7 @@ public final class DragonRideInputHandler {
 
         if (previousDown && !raevyxGroundRendTriggered) {
             sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                    RaevyxAbilities.RAEVYX_SUMMON_STORM.getName(), forward, strafe, yaw);
+                    ModAbilities.RAEVYX_SUMMON_STORM.getName(), forward, strafe, yaw);
         }
 
         raevyxSecondaryHoldTicks = 0;
@@ -535,10 +533,10 @@ public final class DragonRideInputHandler {
 
         if (dragon instanceof Volitans) {
             if (volitansBreathActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP, VolitansAbilities.VOLITANS_BREATH_ID, 0f, 0f, 0f);
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP, ModAbilities.VOLITANS_BREATH.getName(), 0f, 0f, 0f);
             }
             if (volitansPoisonBallActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP, VolitansAbilities.VOLITANS_POISON_BALL_ID, 0f, 0f, 0f);
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP, ModAbilities.VOLITANS_POISON_BALL.getName(), 0f, 0f, 0f);
             }
             volitansTertiaryHoldTicks = 0;
             volitansBreathActive = false;
@@ -546,7 +544,7 @@ public final class DragonRideInputHandler {
             volitansPoisonBallActive = false;
         } else if (dragon instanceof Ignivorus) {
             if (ignivorusFireballActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP, IgnivorusAbilities.IGNIVORUS_FIREBALL_ID, 0f, 0f, 0f);
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP, ModAbilities.IGNIVORUS_FIREBALL.getName(), 0f, 0f, 0f);
             }
             ignivorusPrimaryPressStartedAtMs = 0L;
             ignivorusFireballActive = false;

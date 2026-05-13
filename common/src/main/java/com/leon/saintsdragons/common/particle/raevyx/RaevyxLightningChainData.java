@@ -15,10 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 import java.util.Locale;
 
-/**
- * ParticleOptions for animated lightning chain effects.
- * Carries start and end positions for the lightning arc.
- */
 public record RaevyxLightningChainData(float size, Vec3 startPos, Vec3 endPos) implements ParticleOptions {
     public static final ParticleOptions.Deserializer<RaevyxLightningChainData> DESERIALIZER = new ParticleOptions.Deserializer<>() {
         @Override

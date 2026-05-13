@@ -6,7 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
-import com.leon.saintsdragons.common.registry.varasuchus.VarasuchusAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.varasuchus.*;
@@ -313,7 +313,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 && !isGroundDashing()
                 && !isWildRideActive()
                 && getActiveAbility() == null
-                && !isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT);
+                && !isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT);
     }
 
     @Override
@@ -620,12 +620,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return VarasuchusAbilities.HURT;
+        return ModAbilities.VARASUCHUS_HURT;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
-        return VarasuchusAbilities.DIE;
+        return ModAbilities.VARASUCHUS_DIE;
     }
 
     @Override
@@ -851,7 +851,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     protected boolean canRiderGroundRun() {
-        if (this.isAbilityActive(VarasuchusAbilities.VARASUCHUS_SLASH_BARRAGE)) {
+        if (this.isAbilityActive(ModAbilities.VARASUCHUS_SLASH_BARRAGE)) {
             this.setAccelerating(false);
             return false;
         }
@@ -1085,9 +1085,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         boolean useHornGore = getMeleeMode() == 1;
         if (isPhaseTwoActive()) {
-            return useHornGore ? VarasuchusAbilities.VARASUCHUS_HORN_GORE : VarasuchusAbilities.VARASUCHUS_BITE2;
+            return useHornGore ? ModAbilities.VARASUCHUS_HORN_GORE : ModAbilities.VARASUCHUS_BITE2;
         }
-        return useHornGore ? VarasuchusAbilities.VARASUCHUS_HORN_GORE : VarasuchusAbilities.VARASUCHUS_BITE;
+        return useHornGore ? ModAbilities.VARASUCHUS_HORN_GORE : ModAbilities.VARASUCHUS_BITE;
     }
 
     public static boolean canSpawnHere(EntityType<? extends Varasuchus> type,
@@ -1315,42 +1315,42 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
         if (getMeleeMode() == 1) {
-            return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_HORN_GORE_ID, RiderAbilityBinding.Activation.PRESS);
+            return new RiderAbilityBinding(ModAbilities.VARASUCHUS_HORN_GORE.getName(), RiderAbilityBinding.Activation.PRESS);
         } else {
             try {
                 if (isPhaseTwoActive()) {
-                    return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_BITE2_ID, RiderAbilityBinding.Activation.PRESS);
+                    return new RiderAbilityBinding(ModAbilities.VARASUCHUS_BITE2.getName(), RiderAbilityBinding.Activation.PRESS);
                 }
             } catch (Exception e) {
             }
-            return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_BITE_ID, RiderAbilityBinding.Activation.PRESS);
+            return new RiderAbilityBinding(ModAbilities.VARASUCHUS_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
         }
     }
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
         if (isPhaseTwoActive()) {
-            return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_SLASH_BARRAGE_ID, RiderAbilityBinding.Activation.PRESS);
+            return new RiderAbilityBinding(ModAbilities.VARASUCHUS_SLASH_BARRAGE.getName(), RiderAbilityBinding.Activation.PRESS);
         }
-        return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
-        return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_PHASE_SHIFT.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
         if (isPhaseTwoActive()) {
-            return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_CLAW_ID, RiderAbilityBinding.Activation.PRESS);
+            return new RiderAbilityBinding(ModAbilities.VARASUCHUS_CLAW.getName(), RiderAbilityBinding.Activation.PRESS);
         }
-        return new RiderAbilityBinding(VarasuchusAbilities.VARASUCHUS_TAIL_ATTACK_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_TAIL_ATTACK.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public DragonAbilityType<?, ?> getChannelingAbility() {
-        return VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT;
+        return ModAbilities.VARASUCHUS_PHASE_SHIFT;
     }
 
     private void tickGroundStepAudio() {
@@ -1794,7 +1794,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             return;
         }
 
-        if (this.isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT)) {
+        if (this.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) {
             return;
         }
 
@@ -1809,7 +1809,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             }
 
             if (phaseTwoLingerTicks <= 0) {
-                this.combatManager.tryUseAbility(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT);
+                this.combatManager.tryUseAbility(ModAbilities.VARASUCHUS_PHASE_SHIFT);
             }
         } else {
             phaseTwoLingerTicks = 0;
@@ -2067,7 +2067,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return !isDying()
                 && !isAccelerating()
                 && !areRiderControlsLocked()
-                && !isAbilityActive(VarasuchusAbilities.VARASUCHUS_PHASE_SHIFT);
+                && !isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT);
     }
 
 

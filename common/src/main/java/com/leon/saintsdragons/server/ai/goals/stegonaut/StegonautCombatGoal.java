@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.stegonaut;
 
-import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -124,8 +124,8 @@ public class StegonautCombatGoal extends Goal {
     }
 
     private boolean isCurrentlyAttacking() {
-        return dragon.combatManager.isAbilityActive(StegonautAbilities.STEGONAUT_BITE)
-                || dragon.combatManager.isAbilityActive(StegonautAbilities.STEGONAUT_CHIN_SLAM);
+        return dragon.combatManager.isAbilityActive(ModAbilities.STEGONAUT_BITE)
+                || dragon.combatManager.isAbilityActive(ModAbilities.STEGONAUT_CHIN_SLAM);
     }
 
     private double getAttackReachSqr(LivingEntity target, boolean inWater) {

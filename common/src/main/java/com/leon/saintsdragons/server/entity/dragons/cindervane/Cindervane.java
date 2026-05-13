@@ -6,7 +6,7 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.cindervane.CindervaneAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.cindervane.*;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -862,24 +862,24 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
-        return new RiderAbilityBinding(CindervaneAbilities.FIRE_BODY_ID, RiderAbilityBinding.Activation.HOLD);
+        return new RiderAbilityBinding(ModAbilities.CINDERVANE_FIRE_BODY.getName(), RiderAbilityBinding.Activation.HOLD);
     }
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
-        return new RiderAbilityBinding(CindervaneAbilities.ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.CINDERVANE_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
-        return new RiderAbilityBinding(CindervaneAbilities.FIRE_BREATH_VOLLEY_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.CINDERVANE_FIRE_BREATH_VOLLEY.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
         String abilityId = getMeleeMode() == 0
-                ? CindervaneAbilities.BITE_ID
-                : CindervaneAbilities.SLASH_GRAB_ID;
+                ? ModAbilities.CINDERVANE_BITE.getName()
+                : ModAbilities.CINDERVANE_SLASH_GRAB.getName();
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
@@ -1421,8 +1421,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         return getMeleeMode() == 0
-                ? CindervaneAbilities.BITE
-                : CindervaneAbilities.SLASH_GRAB;
+                ? ModAbilities.CINDERVANE_BITE
+                : ModAbilities.CINDERVANE_SLASH_GRAB;
     }
 
     @Override
@@ -1432,12 +1432,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
-        return CindervaneAbilities.ROAR;
+        return ModAbilities.CINDERVANE_ROAR;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return CindervaneAbilities.HURT;
+        return ModAbilities.CINDERVANE_HURT;
     }
 
     @Override
@@ -1490,16 +1490,16 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
-        return CindervaneAbilities.DIE;
+        return ModAbilities.CINDERVANE_DIE;
     }
 
     @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
-        return abilityType == CindervaneAbilities.BITE
-                || abilityType == CindervaneAbilities.SLASH_GRAB
-                || abilityType == CindervaneAbilities.FIRE_BODY
-                || abilityType == CindervaneAbilities.ROAR
-                || abilityType == CindervaneAbilities.FIRE_BREATH_VOLLEY;
+        return abilityType == ModAbilities.CINDERVANE_BITE
+                || abilityType == ModAbilities.CINDERVANE_SLASH_GRAB
+                || abilityType == ModAbilities.CINDERVANE_FIRE_BODY
+                || abilityType == ModAbilities.CINDERVANE_ROAR
+                || abilityType == ModAbilities.CINDERVANE_FIRE_BREATH_VOLLEY;
     }
 
     @Override
@@ -1734,7 +1734,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public DragonAbilityType<?, ?> getChannelingAbility() {
-        return CindervaneAbilities.FIRE_BREATH_VOLLEY;
+        return ModAbilities.CINDERVANE_FIRE_BREATH_VOLLEY;
     }
 
     public void setServerBonePosition(String boneName, Vec3 position) {

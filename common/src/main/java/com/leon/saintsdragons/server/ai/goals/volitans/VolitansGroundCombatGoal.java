@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
-import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
@@ -105,13 +105,13 @@ public class VolitansGroundCombatGoal extends Goal {
         breathHoldTicks = 0;
         wasAbilityHoldingLastTick = false;
         wasBurrowAbilityHoldingLastTick = false;
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
             dragon.requestPoisonBallRelease();
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             dragon.forceEndActiveAbility();
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BURROW)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BURROW)) {
             dragon.requestBurrowExit(false);
         }
     }
@@ -147,13 +147,13 @@ public class VolitansGroundCombatGoal extends Goal {
             updateChasePath(target);
         }
 
-        if (!usedRoarOpener && hasLineOfSight && gap >= 5.0D && gap <= ROAR_OPEN_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true)) {
+        if (!usedRoarOpener && hasLineOfSight && gap >= 5.0D && gap <= ROAR_OPEN_RANGE && canUseAiAbility(ModAbilities.VOLITANS_ROAR, true)) {
             if (roarOpenerDelay > 0) {
                 roarOpenerDelay--;
                 updateChasePath(target);
             } else {
                 dragon.getNavigation().stop();
-                if (startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48)) {
+                if (startAiAbility(ModAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48)) {
                     usedRoarOpener = true;
                 }
             }
@@ -222,21 +222,21 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean handleActiveAbility(LivingEntity target, double gap, boolean hasLineOfSight) {
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
             dragon.getNavigation().stop();
             if (--poisonBallHoldTicks <= 0 || !hasLineOfSight || gap < 5.0D || gap > 28.0D) {
                 dragon.requestPoisonBallRelease();
             }
             return true;
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             dragon.getNavigation().stop();
             if (--breathHoldTicks <= 0 || !hasLineOfSight || gap < 4.5D || gap > 18.0D) {
                 dragon.forceEndActiveAbility();
             }
             return true;
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BURROW)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BURROW)) {
             wasBurrowAbilityHoldingLastTick = true;
             if (!dragon.isTargetValid(target) || dragon.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
                 dragon.requestBurrowExit(false);
@@ -261,25 +261,25 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryRoarPunish(double gap) {
-        if (attackCooldown > 0 || !canUseAiAbility(VolitansAbilities.VOLITANS_ROAR, true) || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || !canUseAiAbility(ModAbilities.VOLITANS_ROAR, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < 4.5D || gap > 10.0D) {
             return false;
         }
         dragon.getNavigation().stop();
-        return startAiAbility(VolitansAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48);
+        return startAiAbility(ModAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48);
     }
 
     private boolean tryPoisonBall(double gap) {
-        if (attackCooldown > 0 || !canUseAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true) || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || !canUseAiAbility(ModAbilities.VOLITANS_POISON_BALL, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < POISON_BALL_MIN_RANGE || gap > POISON_BALL_MAX_RANGE) {
             return false;
         }
         dragon.getNavigation().stop();
-        if (!startAiAbility(VolitansAbilities.VOLITANS_POISON_BALL, true, 16, 110, 90, 36)) {
+        if (!startAiAbility(ModAbilities.VOLITANS_POISON_BALL, true, 16, 110, 90, 36)) {
             return false;
         }
         poisonBallHoldTicks = 18 + dragon.getRandom().nextInt(8);
@@ -297,7 +297,7 @@ public class VolitansGroundCombatGoal extends Goal {
             return false;
         }
         dragon.getNavigation().stop();
-        if (!startAiAbility(VolitansAbilities.VOLITANS_BURROW, true, 14, 0, 80, 28)) {
+        if (!startAiAbility(ModAbilities.VOLITANS_BURROW, true, 14, 0, 80, 28)) {
             return false;
         }
         burrowCooldown = 220;
@@ -305,7 +305,7 @@ public class VolitansGroundCombatGoal extends Goal {
     }
 
     private boolean tryBreath(double gap) {
-        if (attackCooldown > 0 || !canUseAiAbility(VolitansAbilities.VOLITANS_BREATH, true) || dragon.isGroundCombatAbilityActive()) {
+        if (attackCooldown > 0 || !canUseAiAbility(ModAbilities.VOLITANS_BREATH, true) || dragon.isGroundCombatAbilityActive()) {
             return false;
         }
         if (gap < BREATH_MIN_RANGE || gap > BREATH_MAX_RANGE) {
@@ -316,7 +316,7 @@ public class VolitansGroundCombatGoal extends Goal {
         }
         dragon.getNavigation().stop();
         dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
-        if (!startAiAbility(VolitansAbilities.VOLITANS_BREATH, true, 18, 150, 110, 42)) {
+        if (!startAiAbility(ModAbilities.VOLITANS_BREATH, true, 18, 150, 110, 42)) {
             return false;
         }
         breathHoldTicks = 60 + dragon.getRandom().nextInt(35);
@@ -330,33 +330,33 @@ public class VolitansGroundCombatGoal extends Goal {
 
         if (gap <= BITE_RANGE) {
             if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
-                if (canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-                    startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+                if (canUseAiAbility(ModAbilities.VOLITANS_BITE, false)) {
+                    startAiAbility(ModAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
                 }
                 return;
             }
             float roll = dragon.getRandom().nextFloat();
-            if (roll < 0.42F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
-            } else if (roll < 0.72F && canUseAiAbility(VolitansAbilities.VOLITANS_BITE, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
-            } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            if (roll < 0.42F && canUseAiAbility(ModAbilities.VOLITANS_CLAW, false)) {
+                startAiAbility(ModAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            } else if (roll < 0.72F && canUseAiAbility(ModAbilities.VOLITANS_BITE, false)) {
+                startAiAbility(ModAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            } else if (canUseAiAbility(ModAbilities.VOLITANS_HORN_GORE, false)) {
+                startAiAbility(ModAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
             }
             return;
         }
 
         if (gap <= CLAW_RANGE) {
-            if (dragon.getRandom().nextFloat() < 0.58F && canUseAiAbility(VolitansAbilities.VOLITANS_CLAW, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
-            } else if (canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-                startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            if (dragon.getRandom().nextFloat() < 0.58F && canUseAiAbility(ModAbilities.VOLITANS_CLAW, false)) {
+                startAiAbility(ModAbilities.VOLITANS_CLAW, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+            } else if (canUseAiAbility(ModAbilities.VOLITANS_HORN_GORE, false)) {
+                startAiAbility(ModAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
             }
             return;
         }
 
-        if (gap <= GORE_RANGE && canUseAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false)) {
-            startAiAbility(VolitansAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
+        if (gap <= GORE_RANGE && canUseAiAbility(ModAbilities.VOLITANS_HORN_GORE, false)) {
+            startAiAbility(ModAbilities.VOLITANS_HORN_GORE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
         }
     }
 

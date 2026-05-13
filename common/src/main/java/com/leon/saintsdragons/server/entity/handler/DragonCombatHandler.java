@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.entity.handler;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
-import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -121,7 +121,7 @@ public class DragonCombatHandler {
         }
         if (dragon instanceof Volitans volitans
                 && (volitans.isAiSpecialCombatActive() || volitans.isAiSpecialCombatReserved())
-                && abilityType != VolitansAbilities.VOLITANS_ULTIMATE) {
+                && abilityType != ModAbilities.VOLITANS_ULTIMATE) {
             return false;
         }
         if (dragon.areRiderControlsLocked()) {

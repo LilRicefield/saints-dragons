@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
-import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
@@ -95,8 +95,8 @@ public class RaevyxAirCombatGoal extends Goal {
             return false;
         }
 
-        if (dragon.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)
-            || dragon.isAbilityActive(RaevyxAbilities.RAEVYX_BITE)) {
+        if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)
+            || dragon.isAbilityActive(ModAbilities.RAEVYX_BITE)) {
             return true;
         }
 
@@ -195,7 +195,7 @@ public class RaevyxAirCombatGoal extends Goal {
             if (!isCurrentlyAttacking()) {
                 tryAttack(target, distance);
             }
-            if (dragon.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)) {
+            if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) {
                 DragonAsyncAirMovementHelper.holdPosition(dragon);
             } else {
                 maintainCombatPosition(target);
@@ -206,8 +206,8 @@ public class RaevyxAirCombatGoal extends Goal {
     }
 
     private boolean isCurrentlyAttacking() {
-        return dragon.isAbilityActive(RaevyxAbilities.RAEVYX_BITE)
-            || dragon.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM);
+        return dragon.isAbilityActive(ModAbilities.RAEVYX_BITE)
+            || dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM);
     }
 
 
@@ -221,20 +221,20 @@ public class RaevyxAirCombatGoal extends Goal {
         }
 
         if (distance <= BITE_TRIGGER_RANGE) {
-            if (!canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
+            if (!canUseAiAbility(ModAbilities.RAEVYX_BITE, false)) {
                 return;
             }
-            if (startAiAbility(RaevyxAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
+            if (startAiAbility(ModAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
                 attackCooldown = 20;
             }
         } else if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)
                 && distance >= BEAM_MIN_RANGE
                 && distance <= BEAM_MAX_RANGE
                 && beamCooldown <= 0) {
-            if (!canUseAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
+            if (!canUseAiAbility(ModAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
                 return;
             }
-            if (startAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
+            if (startAiAbility(ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
                 attackCooldown = 60;
                 beamCooldown = BEAM_COOLDOWN_TICKS;
             }

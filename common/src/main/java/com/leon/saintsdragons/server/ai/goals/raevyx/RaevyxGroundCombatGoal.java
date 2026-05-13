@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
-import com.leon.saintsdragons.common.registry.raevyx.RaevyxAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -190,11 +190,11 @@ public class RaevyxGroundCombatGoal extends Goal {
                     roarOpenerDelay--;
                     updateChasePath(target);
                 } else {
-                    if (!canUseAiAbility(RaevyxAbilities.RAEVYX_ROAR, true)) {
+                    if (!canUseAiAbility(ModAbilities.RAEVYX_ROAR, true)) {
                         updateChasePath(target);
                         return;
                     }
-                    if (startAiAbility(RaevyxAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
+                    if (startAiAbility(ModAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
                         hasUsedRoarOpener = true;
                         attackCooldown = 40;
                         postRoarGroundRendTicks = 40;
@@ -237,11 +237,11 @@ public class RaevyxGroundCombatGoal extends Goal {
     }
 
     private boolean isCurrentlyAttacking() {
-        return wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_BITE)
-            || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_HORN_GORE)
-            || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_GROUND_REND)
-            || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM)
-            || wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_ROAR);
+        return wyvern.isAbilityActive(ModAbilities.RAEVYX_BITE)
+            || wyvern.isAbilityActive(ModAbilities.RAEVYX_HORN_GORE)
+            || wyvern.isAbilityActive(ModAbilities.RAEVYX_GROUND_REND)
+            || wyvern.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)
+            || wyvern.isAbilityActive(ModAbilities.RAEVYX_ROAR);
     }
 
     private void tryAttack(LivingEntity target) {
@@ -256,8 +256,8 @@ public class RaevyxGroundCombatGoal extends Goal {
         double gap = getGapToTarget(target);
 
         if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
-            if (gap <= biteOnlyPreyRange && canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
-                if (startAiAbility(RaevyxAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
+            if (gap <= biteOnlyPreyRange && canUseAiAbility(ModAbilities.RAEVYX_BITE, false)) {
+                if (startAiAbility(ModAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
                     attackCooldown = 20;
                 }
             }
@@ -273,17 +273,17 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
 
         if (gap <= biteRange) {
-            if (!canUseAiAbility(RaevyxAbilities.RAEVYX_BITE, false)) {
+            if (!canUseAiAbility(ModAbilities.RAEVYX_BITE, false)) {
                 return;
             }
-            if (startAiAbility(RaevyxAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
+            if (startAiAbility(ModAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {
                 attackCooldown = 20;
             }
         } else if (gap <= goreRange) {
-            if (!canUseAiAbility(RaevyxAbilities.RAEVYX_HORN_GORE, false)) {
+            if (!canUseAiAbility(ModAbilities.RAEVYX_HORN_GORE, false)) {
                 return;
             }
-            if (startAiAbility(RaevyxAbilities.RAEVYX_HORN_GORE, false, 20, 22, 0, 22)) {
+            if (startAiAbility(ModAbilities.RAEVYX_HORN_GORE, false, 20, 22, 0, 22)) {
                 attackCooldown = 20;
             }
         }
@@ -293,12 +293,12 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (!shouldTryBeam(getGapToTarget(target), hasLineOfSight, beamReady, isCurrentlyAttacking(), attackCooldown)) {
             return false;
         }
-        if (!canUseAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
+        if (!canUseAiAbility(ModAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
             return false;
         }
         wyvern.getNavigation().stop();
         pathRecalcCooldown = 0;
-        if (!startAiAbility(RaevyxAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
+        if (!startAiAbility(ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
             return false;
         }
         attackCooldown = 60;
@@ -368,11 +368,11 @@ public class RaevyxGroundCombatGoal extends Goal {
     }
 
     private boolean startGroundRend() {
-        if (!canUseAiAbility(RaevyxAbilities.RAEVYX_GROUND_REND, true)) {
+        if (!canUseAiAbility(ModAbilities.RAEVYX_GROUND_REND, true)) {
             return false;
         }
-        return startAiAbility(RaevyxAbilities.RAEVYX_GROUND_REND, true, 26, GROUND_REND_COOLDOWN_TICKS, 100, 34)
-                && wyvern.isAbilityActive(RaevyxAbilities.RAEVYX_GROUND_REND);
+        return startAiAbility(ModAbilities.RAEVYX_GROUND_REND, true, 26, GROUND_REND_COOLDOWN_TICKS, 100, 34)
+                && wyvern.isAbilityActive(ModAbilities.RAEVYX_GROUND_REND);
     }
 
     private void resetCombatPacing() {
@@ -534,10 +534,10 @@ public class RaevyxGroundCombatGoal extends Goal {
             } else if (roarOpenerDelay > 0) {
                 roarOpenerDelay--;
             } else {
-                if (!canUseAiAbility(RaevyxAbilities.RAEVYX_ROAR, true)) {
+                if (!canUseAiAbility(ModAbilities.RAEVYX_ROAR, true)) {
                     return;
                 }
-                if (startAiAbility(RaevyxAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
+                if (startAiAbility(ModAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
                     hasUsedRoarOpener = true;
                     attackCooldown = 40;
                 }

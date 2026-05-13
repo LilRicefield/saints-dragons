@@ -9,7 +9,7 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.ignivorus.IgnivorusAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal;
@@ -1348,13 +1348,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     private boolean isPhaseTwoRidingAbilityBlocked(String abilityName) {
         return isPhase2Active()
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID)
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_STOMP_ID)
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_BITE_ID)
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ROAR_ID)
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID)
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_FIREBALL_ID)
-                && !abilityName.equals(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID);
+                && !abilityName.equals(ModAbilities.IGNIVORUS_WING_SWIPE.getName())
+                && !abilityName.equals(ModAbilities.IGNIVORUS_STOMP.getName())
+                && !abilityName.equals(ModAbilities.IGNIVORUS_BITE.getName())
+                && !abilityName.equals(ModAbilities.IGNIVORUS_ROAR.getName())
+                && !abilityName.equals(ModAbilities.IGNIVORUS_FIRE_BREATH.getName())
+                && !abilityName.equals(ModAbilities.IGNIVORUS_FIREBALL.getName())
+                && !abilityName.equals(ModAbilities.IGNIVORUS_ULTIMATE.getName());
     }
 
     @Override
@@ -1373,9 +1373,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected boolean tryReleaseHeldRidingAbility(String abilityName) {
-        if (IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)) {
+        if (ModAbilities.IGNIVORUS_FIREBALL.getName().equals(abilityName)) {
             var active = combatManager.getActiveAbility();
-            if (active != null && active.getAbilityType() == IgnivorusAbilities.IGNIVORUS_FIREBALL) {
+            if (active != null && active.getAbilityType() == ModAbilities.IGNIVORUS_FIREBALL) {
                 ((IgnivorusFireballAbility) active).requestRelease();
                 return true;
             }
@@ -1553,14 +1553,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private boolean isBabyAbilityBlocked(String abilityName) {
-        return IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_ROAR_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_FIREBALL_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_BODY_SLAM_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_BITE_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID.equals(abilityName)
-                || IgnivorusAbilities.IGNIVORUS_STOMP_ID.equals(abilityName);
+        return ModAbilities.IGNIVORUS_ULTIMATE.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_ROAR.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_FIREBALL.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_BODY_SLAM.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_BITE.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_FIRE_BREATH.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_WING_SWIPE.getName().equals(abilityName)
+                || ModAbilities.IGNIVORUS_STOMP.getName().equals(abilityName);
     }
 
     @Override
@@ -1573,7 +1573,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public void forceEndAbility(DragonAbilityType<?, ?> abilityType) {
         combatManager.forceEndAbility(abilityType);
-        if (abilityType == IgnivorusAbilities.IGNIVORUS_FIRE_BREATH) {
+        if (abilityType == ModAbilities.IGNIVORUS_FIRE_BREATH) {
             clearFireBreathPath();
             setBreathingFire(false);
         }
@@ -1589,7 +1589,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isBaby()) {
             return null;
         }
-        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ROAR_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.IGNIVORUS_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -1597,7 +1597,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isBaby()) {
             return null;
         }
-        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_ULTIMATE_ID, RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.IGNIVORUS_ULTIMATE.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -1605,7 +1605,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (isBaby()) {
             return null;
         }
-        return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_FIRE_BREATH_ID, RiderAbilityBinding.Activation.HOLD);
+        return new RiderAbilityBinding(ModAbilities.IGNIVORUS_FIRE_BREATH.getName(), RiderAbilityBinding.Activation.HOLD);
     }
 
     @Override
@@ -1615,16 +1615,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
         if (isPhase2Active()) {
             if (isFlying()) {
-                return new RiderAbilityBinding(IgnivorusAbilities.IGNIVORUS_BITE_ID, RiderAbilityBinding.Activation.PRESS);
+                return new RiderAbilityBinding(ModAbilities.IGNIVORUS_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
             }
             String abilityId = getMeleeMode() == 1
-                    ? IgnivorusAbilities.IGNIVORUS_STOMP_ID
-                    : IgnivorusAbilities.IGNIVORUS_WING_SWIPE_ID;
+                    ? ModAbilities.IGNIVORUS_STOMP.getName()
+                    : ModAbilities.IGNIVORUS_WING_SWIPE.getName();
             return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
         }
         String abilityId = getMeleeMode() == 1
-                ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM_ID
-                : IgnivorusAbilities.IGNIVORUS_BITE_ID;
+                ? ModAbilities.IGNIVORUS_BODY_SLAM.getName()
+                : ModAbilities.IGNIVORUS_BITE.getName();
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
@@ -2369,12 +2369,12 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
         if (isPhase2Active()) {
             if (isFlying()) {
-                return IgnivorusAbilities.IGNIVORUS_BITE;
+                return ModAbilities.IGNIVORUS_BITE;
             }
-            return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_STOMP : IgnivorusAbilities.IGNIVORUS_WING_SWIPE;
+            return getMeleeMode() == 1 ? ModAbilities.IGNIVORUS_STOMP : ModAbilities.IGNIVORUS_WING_SWIPE;
         }
 
-        return getMeleeMode() == 1 ? IgnivorusAbilities.IGNIVORUS_BODY_SLAM : IgnivorusAbilities.IGNIVORUS_BITE;
+        return getMeleeMode() == 1 ? ModAbilities.IGNIVORUS_BODY_SLAM : ModAbilities.IGNIVORUS_BITE;
     }
 
     private void enforcePrimaryMeleeForFlight(@Nullable Player rider) {
@@ -2394,12 +2394,12 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return IgnivorusAbilities.IGNIVORUS_HURT;
+        return ModAbilities.IGNIVORUS_HURT;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
-        return IgnivorusAbilities.IGNIVORUS_DIE;
+        return ModAbilities.IGNIVORUS_DIE;
     }
 
     @Override

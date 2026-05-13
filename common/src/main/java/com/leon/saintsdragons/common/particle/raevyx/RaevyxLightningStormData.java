@@ -14,10 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nonnull;
 import java.util.Locale;
 
-/**
- * Server-safe ParticleOptions payload for the lightning_storm particle.
- * Holds the visual size and texture variant for Raevyx lightning storm particles.
- */
 public record RaevyxLightningStormData(float size, boolean nightGold) implements ParticleOptions {
     public RaevyxLightningStormData(float size) {
         this(size, false);

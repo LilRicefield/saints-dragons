@@ -15,7 +15,6 @@ public class SaintsCreativeTab {
     public static final RegistryHelper.RegistryWrapper<CreativeModeTab> REGISTER = Services.PLATFORM.getRegistryHelper()
             .create((Registries.CREATIVE_MODE_TAB), () -> BuiltInRegistries.CREATIVE_MODE_TAB, SaintsDragonsCommon.MOD_ID);
 
-
     public static final Supplier<CreativeModeTab> SD_CREATIVE_TAB =
             REGISTER.register("saintsdragons_tab",
                     () -> CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)

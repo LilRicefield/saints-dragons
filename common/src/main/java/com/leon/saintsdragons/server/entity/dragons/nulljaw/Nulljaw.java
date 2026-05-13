@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
-import com.leon.saintsdragons.common.registry.nulljaw.NulljawAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -874,7 +874,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return NulljawAbilities.HURT;
+        return ModAbilities.NULLJAW_HURT;
     }
 
     @Override

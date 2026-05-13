@@ -50,7 +50,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.registry.stegonaut.StegonautAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import net.minecraft.world.damagesource.DamageSource;
@@ -184,9 +184,9 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected boolean tryReleaseHeldRidingAbility(String abilityName) {
-        if (StegonautAbilities.STEGONAUT_GROUND_EATING_ID.equals(abilityName)) {
+        if (ModAbilities.STEGONAUT_GROUND_EATING.getName().equals(abilityName)) {
             var active = combatManager.getActiveAbility();
-            if (active != null && active.getAbilityType() == StegonautAbilities.STEGONAUT_GROUND_EATING) {
+            if (active != null && active.getAbilityType() == ModAbilities.STEGONAUT_GROUND_EATING) {
                 ((StegonautGroundEatingAbility) active).requestRelease();
                 return true;
             }
@@ -249,39 +249,39 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
         return getMeleeMode() == 0
-                ? StegonautAbilities.STEGONAUT_BITE
-                : StegonautAbilities.STEGONAUT_CHIN_SLAM;
+                ? ModAbilities.STEGONAUT_BITE
+                : ModAbilities.STEGONAUT_CHIN_SLAM;
     }
 
     public DragonAbilityType<?, ?> getRandomAiAttackAbility() {
         return this.getRandom().nextBoolean()
-                ? StegonautAbilities.STEGONAUT_BITE
-                : StegonautAbilities.STEGONAUT_CHIN_SLAM;
+                ? ModAbilities.STEGONAUT_BITE
+                : ModAbilities.STEGONAUT_CHIN_SLAM;
     }
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
         String abilityId = getMeleeMode() == 0
-                ? StegonautAbilities.STEGONAUT_BITE_ID
-                : StegonautAbilities.STEGONAUT_CHIN_SLAM_ID;
+                ? ModAbilities.STEGONAUT_BITE.getName()
+                : ModAbilities.STEGONAUT_CHIN_SLAM.getName();
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
-        return new RiderAbilityBinding(StegonautAbilities.STEGONAUT_GROUND_EATING_ID, RiderAbilityBinding.Activation.HOLD);
+        return new RiderAbilityBinding(ModAbilities.STEGONAUT_GROUND_EATING.getName(), RiderAbilityBinding.Activation.HOLD);
     }
 
     @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
-        return abilityType == StegonautAbilities.STEGONAUT_BITE
-                || abilityType == StegonautAbilities.STEGONAUT_CHIN_SLAM
-                || abilityType == StegonautAbilities.STEGONAUT_GROUND_EATING;
+        return abilityType == ModAbilities.STEGONAUT_BITE
+                || abilityType == ModAbilities.STEGONAUT_CHIN_SLAM
+                || abilityType == ModAbilities.STEGONAUT_GROUND_EATING;
     }
 
     @Override
     protected DragonAbilityType<?, ?> getHurtAbilityType() {
-        return StegonautAbilities.STEGONAUT_HURT;
+        return ModAbilities.STEGONAUT_HURT;
     }
 
     @Override
@@ -345,7 +345,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
-        return StegonautAbilities.STEGONAUT_DIE;
+        return ModAbilities.STEGONAUT_DIE;
     }
 
     @Override

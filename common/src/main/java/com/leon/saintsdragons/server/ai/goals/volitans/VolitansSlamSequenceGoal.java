@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
-import com.leon.saintsdragons.common.registry.volitans.VolitansAbilities;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -92,7 +92,7 @@ public class VolitansSlamSequenceGoal extends Goal {
             return false;
         }
         if (phase == Phase.SLAM) {
-            return dragon.isAbilityActive(VolitansAbilities.VOLITANS_ULTIMATE) || dragon.isUltimateSlamActive();
+            return dragon.isAbilityActive(ModAbilities.VOLITANS_ULTIMATE) || dragon.isUltimateSlamActive();
         }
         if (phase == Phase.LAND) {
             return !dragon.onGround() && phaseTicks <= LAND_MAX_TICKS;
@@ -175,8 +175,8 @@ public class VolitansSlamSequenceGoal extends Goal {
         }
 
         if (phaseTicks >= TRACK_TICKS && ((phaseTicks - TRACK_TICKS) % SLAM_FORCE_RETRY_INTERVAL_TICKS == 0)) {
-            dragon.combatManager.forceUseAbility(VolitansAbilities.VOLITANS_ULTIMATE);
-            if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_ULTIMATE) || dragon.isUltimateSlamActive()) {
+            dragon.combatManager.forceUseAbility(ModAbilities.VOLITANS_ULTIMATE);
+            if (dragon.isAbilityActive(ModAbilities.VOLITANS_ULTIMATE) || dragon.isUltimateSlamActive()) {
                 transitionTo(Phase.SLAM);
             } else {
                 if (dragon.onGround()) {
@@ -189,7 +189,7 @@ public class VolitansSlamSequenceGoal extends Goal {
     }
 
     private void tickSlam() {
-        if (!dragon.isAbilityActive(VolitansAbilities.VOLITANS_ULTIMATE) && !dragon.isUltimateSlamActive()) {
+        if (!dragon.isAbilityActive(ModAbilities.VOLITANS_ULTIMATE) && !dragon.isUltimateSlamActive()) {
             transitionTo(Phase.LAND);
         }
     }
@@ -248,20 +248,20 @@ public class VolitansSlamSequenceGoal extends Goal {
     }
 
     private void cancelPreSequenceAbilities() {
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_ULTIMATE) || dragon.isUltimateSlamActive()) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_ULTIMATE) || dragon.isUltimateSlamActive()) {
             return;
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_BURROW)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BURROW)) {
             dragon.requestBurrowExit(false);
             dragon.forceEndActiveAbility();
             return;
         }
-        if (dragon.isAbilityActive(VolitansAbilities.VOLITANS_ROAR)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_BREATH)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_POISON_BALL)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_BITE)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_CLAW)
-                || dragon.isAbilityActive(VolitansAbilities.VOLITANS_HORN_GORE)) {
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_ROAR)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_BITE)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_CLAW)
+                || dragon.isAbilityActive(ModAbilities.VOLITANS_HORN_GORE)) {
             dragon.forceEndActiveAbility();
         }
     }
