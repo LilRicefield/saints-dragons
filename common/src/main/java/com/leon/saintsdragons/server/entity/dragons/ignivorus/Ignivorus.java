@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.*;
@@ -1644,9 +1645,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public boolean isFood(@NotNull ItemStack stack) {
-        return stack.is(Items.SALMON) ||
-               stack.is(Items.COD) ||
-               stack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        return stack.is(ModTags.Items.IGNIVORUS_FOODS);
     }
 
     @Override

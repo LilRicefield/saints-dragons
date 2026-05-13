@@ -285,7 +285,7 @@ public class ModItems {
                     ));
 
     public static boolean isDragonBrush(ItemStack stack) {
-        return stack.is(DRAGON_BRUSH.get()) || stack.is(GOLDEN_DRAGON_BRUSH.get());
+        return stack.is(ModTags.Items.DRAGON_BRUSHES);
     }
 
     public static void register() {

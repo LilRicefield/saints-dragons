@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -302,7 +303,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 Nulljaw.this.flyToward(targetPos, getFlightFollowSpeed());
             }
         });
-        this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, Ingredient.of(Items.CHORUS_FRUIT), false));
+        this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
         this.goalSelector.addGoal(3, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
         this.goalSelector.addGoal(4, new NulljawFloatGoal(this));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 12.0F));
@@ -584,7 +585,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         }
 
 
-        if (heldItem.is(Items.CHORUS_FRUIT)) {
+        if (heldItem.is(ModTags.Items.NULLJAW_FOODS)) {
             if (this.isTame()) {
                 if (!canFeed()) {
                     if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
@@ -677,7 +678,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public boolean isFood(@NotNull ItemStack stack) {
-        return stack.is(Items.CHORUS_FRUIT);
+        return stack.is(ModTags.Items.NULLJAW_FOODS);
     }
 
     @Override

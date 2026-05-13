@@ -194,7 +194,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         boolean cod = itemstack.is(net.minecraft.world.item.Items.COD);
         boolean salmon = itemstack.is(net.minecraft.world.item.Items.SALMON);
         boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
-        boolean validFood = dragon.isFood(itemstack) || cod || salmon || beef || hearty;
+        boolean validFood = dragon.isFood(itemstack);
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
@@ -312,10 +312,6 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     }
 
     private boolean isIgnivorusFood(ItemStack itemstack) {
-        return dragon.isFood(itemstack)
-                || itemstack.is(net.minecraft.world.item.Items.SALMON)
-                || itemstack.is(net.minecraft.world.item.Items.COD)
-                || itemstack.is(net.minecraft.world.item.Items.BEEF)
-                || itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        return dragon.isFood(itemstack);
     }
 }

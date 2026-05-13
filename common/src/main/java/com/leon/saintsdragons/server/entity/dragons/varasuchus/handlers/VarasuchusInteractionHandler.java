@@ -325,11 +325,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     private boolean isVarasuchusFood(ItemStack itemstack) {
-        return dragon.isFood(itemstack)
-                || itemstack.is(Items.SALMON)
-                || itemstack.is(Items.COD)
-                || itemstack.is(Items.TROPICAL_FISH)
-                || itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        return dragon.isFood(itemstack);
     }
 
 

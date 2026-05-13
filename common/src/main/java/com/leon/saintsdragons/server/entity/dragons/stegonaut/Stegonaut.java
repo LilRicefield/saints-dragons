@@ -49,6 +49,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
@@ -233,13 +234,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     public boolean isFood(@Nonnull ItemStack stack) {
-        return stack.is(Items.BEEF) ||
-                stack.is(Items.PORKCHOP) ||
-                stack.is(Items.CHICKEN) ||
-                stack.is(Items.MUTTON) ||
-                stack.is(Items.COD) ||
-                stack.is(Items.SALMON) ||
-                stack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        return stack.is(ModTags.Items.STEGONAUT_FOODS);
     }
 
     public Vec3 getGroundEatingProjectileOrigin() {

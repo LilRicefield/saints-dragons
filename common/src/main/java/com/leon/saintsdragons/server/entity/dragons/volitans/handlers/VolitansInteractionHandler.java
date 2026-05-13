@@ -146,12 +146,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
-        boolean validFood = dragon.isFood(itemstack)
-                || itemstack.is(Items.COD)
-                || itemstack.is(Items.SALMON)
-                || itemstack.is(Items.PUFFERFISH)
-                || itemstack.is(Items.TROPICAL_FISH)
-                || hearty;
+        boolean validFood = dragon.isFood(itemstack);
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }

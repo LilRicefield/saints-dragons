@@ -24,6 +24,18 @@ loom {
             runDir("../run")
             programArgs("--nogui")
         }
+        data {
+            data()
+            setConfigName("Forge Data")
+            ideConfigGenerated(true)
+            runDir("../run")
+            programArgs(
+                    "--mod", project.rootProject.mod_id.toString(),
+                    "--all",
+                    "--output", file("../common/src/generated/resources").absolutePath,
+                    "--existing", file("../common/src/main/resources").absolutePath
+            )
+        }
     }
 }
 
@@ -94,6 +106,16 @@ processResources {
     // Ensure the mod logo is included for Forge (dev and built jars)
     from("$rootDir/common/src/main/resources/assets/saintsdragons/saintsdragons.png") {
         into "assets/saintsdragons"
+    }
+}
+
+sourceSets {
+    main {
+        resources.srcDirs = [
+                'src/main/resources',
+                '../common/src/main/resources',
+                '../common/src/generated/resources'
+        ]
     }
 }
 

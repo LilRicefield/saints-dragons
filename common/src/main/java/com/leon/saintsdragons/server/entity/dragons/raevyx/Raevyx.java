@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
@@ -2661,9 +2662,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public boolean isFood(@Nonnull ItemStack stack) {
-        return stack.is(Items.SALMON) ||
-                stack.is(Items.COD) ||
-                stack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        return stack.is(ModTags.Items.RAEVYX_FOODS);
     }
 
     @Override

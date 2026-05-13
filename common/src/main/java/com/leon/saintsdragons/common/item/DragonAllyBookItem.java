@@ -17,10 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-/**
- * Item used to open the dragon player ally management GUI.
- * Right-click on a dragon to manage its player allies.
- */
 public class DragonAllyBookItem extends Item {
     public DragonAllyBookItem(Properties properties) {
         super(properties);
