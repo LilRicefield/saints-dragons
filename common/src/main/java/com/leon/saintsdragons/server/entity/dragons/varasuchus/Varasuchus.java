@@ -53,9 +53,6 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.animal.Cod;
-import net.minecraft.world.entity.animal.Cow;
-import net.minecraft.world.entity.animal.Salmon;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -584,9 +581,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     this,
                     80,
                     () -> true,
-                    target -> target instanceof Salmon
-                            || target instanceof Cod
-                            || target instanceof Cow
+                    target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.VARASUCHUS_TARGETS)
             ));
         }
     }

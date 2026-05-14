@@ -130,6 +130,15 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return EnumSet.of(DragonMovementCapability.WALK, DragonMovementCapability.FLY);
     }
 
+    public boolean canRiderShiftDismount() {
+        boolean groundedAndStable = onGround()
+                && !isFlying()
+                && !isTakeoff()
+                && !isLanding()
+                && !isHovering();
+        return isInWaterOrBubble() || groundedAndStable;
+    }
+
     @Override
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
         return new DragonPathNavigateGround(this, level);

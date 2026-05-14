@@ -19,6 +19,12 @@ public final class ModTags {
         public static final TagKey<EntityType<?>> FLYING_DRAGONS = tag("flying_dragons");
         public static final TagKey<EntityType<?>> GROUNDED_DRAGONS = tag("grounded_dragons");
         public static final TagKey<EntityType<?>> SWIMMING_DRAGONS = tag("swimming_dragons");
+        public static final TagKey<EntityType<?>> CINDERVANE_TARGETS = tag("targets/cindervane");
+        public static final TagKey<EntityType<?>> IGNIVORUS_TARGETS = tag("targets/ignivorus");
+        public static final TagKey<EntityType<?>> RAEVYX_TARGETS = tag("targets/raevyx");
+        public static final TagKey<EntityType<?>> STEGONAUT_TARGETS = tag("targets/stegonaut");
+        public static final TagKey<EntityType<?>> VARASUCHUS_TARGETS = tag("targets/varasuchus");
+        public static final TagKey<EntityType<?>> VOLITANS_TARGETS = tag("targets/volitans");
 
         private EntityTypes() {
         }
@@ -34,6 +40,11 @@ public final class ModTags {
         public static final TagKey<Item> DRAGON_BINDERS = tag("dragon_binders");
         public static final TagKey<Item> DRAGON_BRUSHES = tag("dragon_brushes");
         public static final TagKey<Item> DRAGON_SCALES = tag("dragon_scales");
+        public static final TagKey<Item> DRAGON_TEETH = tag("dragon_teeth");
+        public static final TagKey<Item> DRAGON_HEARTS = tag("dragon_hearts");
+        public static final TagKey<Item> DRAGON_SPINES = tag("dragon_spines");
+        public static final TagKey<Item> DRAGON_PARTS = tag("dragon_parts");
+        public static final TagKey<Item> DRAGON_DROPS = tag("dragon_drops");
         public static final TagKey<Item> DRAGON_SPAWN_EGGS = tag("dragon_spawn_eggs");
         public static final TagKey<Item> CINDERVANE_FOODS = tag("foods/cindervane");
         public static final TagKey<Item> IGNIVORUS_FOODS = tag("foods/ignivorus");

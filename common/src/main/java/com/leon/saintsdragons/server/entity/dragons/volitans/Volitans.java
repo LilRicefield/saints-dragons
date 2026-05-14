@@ -10,16 +10,7 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFindWaterGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtByTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonOwnerHurtTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonRandomHuntTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonLeaveWaterGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DirectSwimToTargetGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
+import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFindSleepDepthGoal;
@@ -82,7 +73,6 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.animal.Dolphin;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -93,8 +83,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.animal.Squid;
-import net.minecraft.world.entity.animal.TropicalFish;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -542,7 +530,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                     this,
                     80,
                     () -> true,
-                    this::shouldRandomlyAggroSeaLife
+                    target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.VOLITANS_TARGETS)
             ));
         }
     }
@@ -2617,17 +2605,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
         return config.extraBoolean("aggressive_wild", true);
-    }
-
-    private boolean shouldRandomlyAggroSeaLife(@Nullable LivingEntity target) {
-        if (target == null) {
-            return false;
-        }
-        return target instanceof Dolphin
-                || target instanceof Squid
-                || target instanceof GlowSquid
-                || target instanceof TropicalFish
-                || target instanceof Pufferfish;
     }
 
     @Override

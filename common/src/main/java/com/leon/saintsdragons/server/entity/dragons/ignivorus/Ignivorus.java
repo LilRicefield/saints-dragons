@@ -58,9 +58,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.animal.Cow;
-import net.minecraft.world.entity.animal.Pig;
-import net.minecraft.world.entity.animal.Sheep;
 import javax.annotation.Nonnull;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -389,7 +386,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                     this,
                     80,
                     () -> true,
-                    target -> target instanceof Sheep || target instanceof Cow || target instanceof Pig
+                    target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.IGNIVORUS_TARGETS)
             ));
         }
 

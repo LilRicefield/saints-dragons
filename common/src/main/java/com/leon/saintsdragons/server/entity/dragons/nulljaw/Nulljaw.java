@@ -942,6 +942,16 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
+    public boolean canRiderShiftDismount() {
+        return true;
+    }
+
+    @Override
+    public boolean canAcceptSitCommand() {
+        return true;
+    }
+
+    @Override
     public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
         this.setFlying(true);
         this.setTakeoff(true);

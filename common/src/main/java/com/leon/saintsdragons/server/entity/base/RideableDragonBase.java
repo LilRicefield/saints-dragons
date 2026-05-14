@@ -38,8 +38,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     private static final int MAX_PERSISTED_FLIGHT_MODE = 5;
     private final Set<String> warnedMissingActions = new HashSet<>();
     protected final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
-    private static final EntityDataAccessor<Byte> DATA_TRACKER_COMPAT_PADDING =
-            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
     private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
@@ -50,12 +48,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_HOVERING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Byte> DATA_LANDING_TRACKER_COMPAT_PADDING =
-            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
     public static final EntityDataAccessor<Boolean> DATA_LANDING =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Byte> DATA_MOVEMENT_TRACKER_COMPAT_PADDING =
-            SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.BYTE);
     public static final EntityDataAccessor<Integer> DATA_GROUND_MOVE_STATE =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Integer> DATA_FLIGHT_MODE =

@@ -1,10 +1,16 @@
 package com.leon.saintsdragons.client.ui.codex;
 
+import com.leon.saintsdragons.common.registry.ModTags;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,62 +24,27 @@ public class CodexEcologyPanel {
     private static final int SCROLLBAR_WIDTH = 4;
     private static final int SCROLLBAR_GAP = 25;
     private final List<CodexPageLink> ecologyPageLinks = new ArrayList<>();
-    private static final List<ResourceLocation> IGNIVORUS_FAVORITE_FOODS = List.of(
-            new ResourceLocation("minecraft", "salmon"),
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("minecraft", "beef"),
-            new ResourceLocation("saintsdragons", "hearty_dragon_meal")
-    );
     private static final List<ResourceLocation> IGNIVORUS_DROPS = List.of(
             new ResourceLocation("saintsdragons", "ignivorus_scale"),
             new ResourceLocation("saintsdragons", "ignivorus_tooth"),
             new ResourceLocation("saintsdragons", "ignivorus_heart"),
             new ResourceLocation("saintsdragons", "ignivorus_egg")
     );
-    private static final List<ResourceLocation> RAEVYX_FAVORITE_FOODS = List.of(
-            new ResourceLocation("minecraft", "salmon"),
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("saintsdragons", "hearty_dragon_meal")
-    );
     private static final List<ResourceLocation> RAEVYX_DROPS = List.of(
             new ResourceLocation("saintsdragons", "raevyx_scale"),
             new ResourceLocation("saintsdragons", "raevyx_egg")
-    );
-    private static final List<ResourceLocation> VARASUCHUS_FAVORITE_FOODS = List.of(
-            new ResourceLocation("minecraft", "salmon"),
-            new ResourceLocation("minecraft", "tropical_fish"),
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
     private static final List<ResourceLocation> VARASUCHUS_DROPS = List.of(
             new ResourceLocation("saintsdragons", "varasuchus_scale"),
             new ResourceLocation("saintsdragons", "varasuchus_egg")
     );
-    private static final List<ResourceLocation> CINDERVANE_FAVORITE_FOODS = List.of(
-            new ResourceLocation("saintsdragons", "hearty_dragon_meal"),
-            new ResourceLocation("minecraft", "chicken"),
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("minecraft", "salmon")
-    );
     private static final List<ResourceLocation> CINDERVANE_DROPS = List.of(
             new ResourceLocation("saintsdragons", "cindervane_scale"),
             new ResourceLocation("saintsdragons", "cindervane_egg")
     );
-    private static final List<ResourceLocation> STEGONAUT_FAVORITE_FOODS = List.of(
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("minecraft", "salmon"),
-            new ResourceLocation("saintsdragons", "hearty_dragon_meal")
-    );
     private static final List<ResourceLocation> STEGONAUT_DROPS = List.of(
             new ResourceLocation("saintsdragons", "stegonaut_scale"),
             new ResourceLocation("saintsdragons", "stegonaut_egg")
-    );
-    private static final List<ResourceLocation> VOLITANS_FAVORITE_FOODS = List.of(
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("minecraft", "salmon"),
-            new ResourceLocation("minecraft", "pufferfish"),
-            new ResourceLocation("minecraft", "tropical_fish"),
-            new ResourceLocation("saintsdragons", "hearty_dragon_meal")
     );
     private static final List<ResourceLocation> VOLITANS_DROPS = List.of(
             new ResourceLocation("saintsdragons", "volitans_scale"),
@@ -234,7 +205,7 @@ public class CodexEcologyPanel {
         switch (selected.dragonType()) {
             case "ignivorus" -> {
                 if (ecologyPage == 4) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, IGNIVORUS_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.IGNIVORUS_FOODS);
                 }
                 if (ecologyPage == 5) {
                     drawDrops(guiGraphics, font, contentX, startY, IGNIVORUS_DROPS);
@@ -242,7 +213,7 @@ public class CodexEcologyPanel {
             }
             case "raevyx" -> {
                 if (ecologyPage == 2) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, RAEVYX_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.RAEVYX_FOODS);
                 }
                 if (ecologyPage == 3) {
                     drawDrops(guiGraphics, font, contentX, startY, RAEVYX_DROPS);
@@ -250,7 +221,7 @@ public class CodexEcologyPanel {
             }
             case "varasuchus" -> {
                 if (ecologyPage == 4) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, VARASUCHUS_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.VARASUCHUS_FOODS);
                 }
                 if (ecologyPage == 5) {
                     drawDrops(guiGraphics, font, contentX, startY, VARASUCHUS_DROPS);
@@ -258,7 +229,7 @@ public class CodexEcologyPanel {
             }
             case "cindervane" -> {
                 if (ecologyPage == 3) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, CINDERVANE_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.CINDERVANE_FOODS);
                 }
                 if (ecologyPage == 4) {
                     drawDrops(guiGraphics, font, contentX, startY, CINDERVANE_DROPS);
@@ -266,7 +237,7 @@ public class CodexEcologyPanel {
             }
             case "stegonaut" -> {
                 if (ecologyPage == 3) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, STEGONAUT_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.STEGONAUT_FOODS);
                 }
                 if (ecologyPage == 4) {
                     drawDrops(guiGraphics, font, contentX, startY, STEGONAUT_DROPS);
@@ -274,7 +245,7 @@ public class CodexEcologyPanel {
             }
             case "volitans" -> {
                 if (ecologyPage == 4) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, VOLITANS_FAVORITE_FOODS);
+                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.VOLITANS_FOODS);
                 }
                 if (ecologyPage == 5) {
                     drawDrops(guiGraphics, font, contentX, startY, VOLITANS_DROPS);
@@ -291,22 +262,13 @@ public class CodexEcologyPanel {
     }
 
     private void drawFavoriteFoods(GuiGraphics guiGraphics, Font font, int contentX, int startY,
-                                   List<ResourceLocation> foods) {
+                                   TagKey<Item> foods) {
         int itemX = contentX + 2;
         int itemY = startY + 10;
         int rowGap = 18;
 
-        net.minecraft.client.Minecraft minecraft = net.minecraft.client.Minecraft.getInstance();
-        net.minecraft.core.Registry<net.minecraft.world.item.Item> registry =
-                net.minecraft.core.registries.BuiltInRegistries.ITEM;
-
-        for (ResourceLocation id : foods) {
-            net.minecraft.world.item.Item item = registry.get(id);
-            if (item == net.minecraft.world.item.Items.AIR) {
-                itemY += rowGap;
-                continue;
-            }
-            net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item);
+        for (Holder<Item> holder : BuiltInRegistries.ITEM.getTagOrEmpty(foods)) {
+            ItemStack stack = new ItemStack(holder.value());
             guiGraphics.renderItem(stack, itemX, itemY);
             guiGraphics.drawString(font, stack.getHoverName().getString(), itemX + 18, itemY + 4,
                     CodexLayout.TEXT_COLOR, false);

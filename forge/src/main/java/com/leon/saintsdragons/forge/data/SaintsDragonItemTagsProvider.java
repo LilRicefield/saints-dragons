@@ -53,6 +53,25 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.VARASUCHUS_SCALE.get())
                 .add(ModItems.VOLITANS_SCALE.get());
 
+        tag(ModTags.Items.DRAGON_TEETH)
+                .add(ModItems.IGNIVORUS_TOOTH.get());
+
+        tag(ModTags.Items.DRAGON_HEARTS)
+                .add(ModItems.IGNIVORUS_HEART.get());
+
+        tag(ModTags.Items.DRAGON_SPINES)
+                .add(ModItems.VOLITANS_SPINE.get());
+
+        tag(ModTags.Items.DRAGON_PARTS)
+                .addTag(ModTags.Items.DRAGON_SCALES)
+                .addTag(ModTags.Items.DRAGON_TEETH)
+                .addTag(ModTags.Items.DRAGON_HEARTS)
+                .addTag(ModTags.Items.DRAGON_SPINES);
+
+        tag(ModTags.Items.DRAGON_DROPS)
+                .addTag(ModTags.Items.DRAGON_PARTS)
+                .addTag(ModTags.Items.DRAGON_EGGS);
+
         tag(ModTags.Items.DRAGON_SPAWN_EGGS)
                 .add(ModItems.CINDERVANE_SPAWN_EGG.get())
                 .add(ModItems.IGNIVORUS_SPAWN_EGG.get())

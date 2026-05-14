@@ -60,8 +60,6 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.animal.Pig;
-import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.server.level.ServerPlayer;
@@ -268,7 +266,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 this,
                 80,
                 () -> true,
-                target -> target instanceof Sheep || target instanceof Pig
+                target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.RAEVYX_TARGETS)
         ));
     }
 

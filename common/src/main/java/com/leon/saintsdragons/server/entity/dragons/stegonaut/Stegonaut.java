@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -158,6 +159,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Stegonaut.class, 36.0D));
         this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, target -> isAggressiveWild()));
+        this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(this, 80, () -> true,
+                target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.STEGONAUT_TARGETS)));
     }
 
     @Override

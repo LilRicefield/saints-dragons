@@ -1818,7 +1818,19 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public int getNextCommand() {
-        return (getCommand() + 1) % 3;
+        int nextCommand = (getCommand() + 1) % 3;
+        if (nextCommand == 1 && !canAcceptSitCommand()) {
+            nextCommand = (nextCommand + 1) % 3;
+        }
+        return nextCommand;
+    }
+
+    public boolean canAcceptSitCommand() {
+        return !isAirborneForSitCommandProtection();
+    }
+
+    protected boolean isAirborneForSitCommandProtection() {
+        return !onGround() && !isInWaterOrBubble();
     }
 
     public void applyCommandState(int command) {

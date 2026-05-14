@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.Animal;
@@ -43,5 +45,9 @@ public final class DragonTargetingHelper {
                 || category == MobCategory.UNDERGROUND_WATER_CREATURE
                 || category == MobCategory.AMBIENT
                 || category == MobCategory.AXOLOTLS;
+    }
+
+    public static boolean isTaggedHuntTarget(LivingEntity target, TagKey<EntityType<?>> tag) {
+        return target != null && target.getType().is(tag);
     }
 }

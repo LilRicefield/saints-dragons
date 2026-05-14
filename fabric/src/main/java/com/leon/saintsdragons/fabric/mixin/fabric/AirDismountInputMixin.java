@@ -41,14 +41,7 @@ public abstract class AirDismountInputMixin {
 
     @Unique
     private static boolean saintsdragons$shouldBlockDismount(RideableFlyingDragon dragon) {
-        if (dragon.isInWaterOrBubble()) {
-            return false;
-        }
-        return !dragon.onGround()
-                || dragon.isFlying()
-                || dragon.isTakeoff()
-                || dragon.isLanding()
-                || dragon.isHovering();
+        return !dragon.canRiderShiftDismount();
     }
 
     @Unique

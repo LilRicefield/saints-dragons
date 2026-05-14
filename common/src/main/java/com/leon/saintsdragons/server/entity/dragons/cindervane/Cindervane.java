@@ -37,7 +37,6 @@ import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Explosion;
@@ -398,7 +397,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Cindervane.class, 36.0D));
         this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, target -> shouldAggroOnSight()));
-        this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(this, 80, () -> true, target -> target instanceof Chicken));
+        this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(this, 80, () -> true,
+                target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.CINDERVANE_TARGETS)));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {@Override public boolean canUse() {return !Cindervane.this.isVehicle() && super.canUse();}});
         this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {@Override public boolean canUse() {
                 return !Cindervane.this.isVehicle() && super.canUse();

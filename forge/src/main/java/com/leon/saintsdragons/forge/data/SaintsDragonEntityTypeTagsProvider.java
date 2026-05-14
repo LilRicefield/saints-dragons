@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.registry.ModTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.EntityTypeTagsProvider;
+import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,5 +49,31 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
         tag(ModTags.EntityTypes.SWIMMING_DRAGONS)
                 .add(ModEntities.VARASUCHUS.get())
                 .add(ModEntities.VOLITANS.get());
+
+        tag(ModTags.EntityTypes.CINDERVANE_TARGETS)
+                .add(EntityType.CHICKEN);
+
+        tag(ModTags.EntityTypes.IGNIVORUS_TARGETS)
+                .add(EntityType.SHEEP)
+                .add(EntityType.COW)
+                .add(EntityType.PIG);
+
+        tag(ModTags.EntityTypes.RAEVYX_TARGETS)
+                .add(EntityType.SHEEP)
+                .add(EntityType.PIG);
+
+        tag(ModTags.EntityTypes.STEGONAUT_TARGETS);
+
+        tag(ModTags.EntityTypes.VARASUCHUS_TARGETS)
+                .add(EntityType.SALMON)
+                .add(EntityType.COD)
+                .add(EntityType.COW);
+
+        tag(ModTags.EntityTypes.VOLITANS_TARGETS)
+                .add(EntityType.DOLPHIN)
+                .add(EntityType.SQUID)
+                .add(EntityType.GLOW_SQUID)
+                .add(EntityType.TROPICAL_FISH)
+                .add(EntityType.PUFFERFISH);
     }
 }
