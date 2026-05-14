@@ -53,6 +53,8 @@ public class CodexAllyPanel {
                 14, 14,
                 button -> addAllyFromInput(addCallback)
         );
+        addAllyButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.translatable("saintsdragons.gui.draconic_codex.ally.add")));
         addWidget.accept(addAllyButton);
 
         removeAllyButton = new ImageButton(
@@ -62,6 +64,8 @@ public class CodexAllyPanel {
                 14, 14,
                 button -> removeAllyFromInput(removeCallback)
         );
+        removeAllyButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.translatable("saintsdragons.gui.draconic_codex.ally.remove")));
         addWidget.accept(removeAllyButton);
     }
 

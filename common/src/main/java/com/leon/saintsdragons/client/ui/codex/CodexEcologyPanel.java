@@ -86,6 +86,8 @@ public class CodexEcologyPanel {
                         })
                 .bounds(centerX - 20, navY, 10, 10)
                 .build();
+        ecologyPrevPageButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.translatable("saintsdragons.gui.draconic_codex.page.previous")));
         addWidget.accept(ecologyPrevPageButton);
 
         ecologyNextPageButton = Button.builder(
@@ -103,6 +105,8 @@ public class CodexEcologyPanel {
                         })
                 .bounds(centerX + 13, navY, 10, 10)
                 .build();
+        ecologyNextPageButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+                Component.translatable("saintsdragons.gui.draconic_codex.page.next")));
         addWidget.accept(ecologyNextPageButton);
 
         updateWidgetVisibility(false, null, pageSupplier.getAsInt());
@@ -332,55 +336,55 @@ public class CodexEcologyPanel {
         switch (dragonType) {
             case "ignivorus" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 3),
-                        new SectionLink("2. Favorite Food", 4, ecologyPage == 4),
-                        new SectionLink("3. Drops", 5, ecologyPage == 5)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 3),
+                        new SectionLink(sectionLabel(2, "favorite_food"), 4, ecologyPage == 4),
+                        new SectionLink(sectionLabel(3, "drops"), 5, ecologyPage == 5)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
             case "raevyx" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage == 1),
-                        new SectionLink("2. Favorite Food", 2, ecologyPage == 2),
-                        new SectionLink("3. Drops", 3, ecologyPage == 3)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage == 1),
+                        new SectionLink(sectionLabel(2, "favorite_food"), 2, ecologyPage == 2),
+                        new SectionLink(sectionLabel(3, "drops"), 3, ecologyPage == 3)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
             case "varasuchus" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 3),
-                        new SectionLink("2. Favorite Food", 4, ecologyPage == 4),
-                        new SectionLink("3. Drops", 5, ecologyPage == 5)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 3),
+                        new SectionLink(sectionLabel(2, "favorite_food"), 4, ecologyPage == 4),
+                        new SectionLink(sectionLabel(3, "drops"), 5, ecologyPage == 5)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
             case "cindervane" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 2),
-                        new SectionLink("2. Favorite Food", 3, ecologyPage == 3),
-                        new SectionLink("3. Drops", 4, ecologyPage == 4)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 2),
+                        new SectionLink(sectionLabel(2, "favorite_food"), 3, ecologyPage == 3),
+                        new SectionLink(sectionLabel(3, "drops"), 4, ecologyPage == 4)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
             case "stegonaut" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 2),
-                        new SectionLink("2. Favorite Food", 3, ecologyPage == 3),
-                        new SectionLink("3. Drops", 4, ecologyPage == 4)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 2),
+                        new SectionLink(sectionLabel(2, "favorite_food"), 3, ecologyPage == 3),
+                        new SectionLink(sectionLabel(3, "drops"), 4, ecologyPage == 4)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
             case "volitans" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage >= 1 && ecologyPage <= 3),
-                        new SectionLink("2. Favorite Food", 4, ecologyPage == 4),
-                        new SectionLink("3. Drops", 5, ecologyPage == 5)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 3),
+                        new SectionLink(sectionLabel(2, "favorite_food"), 4, ecologyPage == 4),
+                        new SectionLink(sectionLabel(3, "drops"), 5, ecologyPage == 5)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
             case "nulljaw" -> {
                 List<SectionLink> sections = List.of(
-                        new SectionLink("1. Overview", 1, ecologyPage == 1)
+                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage == 1)
                 );
                 drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
             }
@@ -390,6 +394,14 @@ public class CodexEcologyPanel {
     }
 
     private record SectionLink(String label, int page, boolean active) {
+    }
+
+    private String sectionLabel(int index, String key) {
+        return Component.translatable(
+                "saintsdragons.gui.draconic_codex.ecology.section",
+                index,
+                Component.translatable("saintsdragons.gui.draconic_codex.ecology.section." + key)
+        ).getString();
     }
 
     private void drawSectionList(GuiGraphics guiGraphics, Font font, int contentX, int navY,
