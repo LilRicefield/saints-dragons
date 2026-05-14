@@ -1,18 +1,49 @@
 {
-  "replace": false,
   "values": [
-    {"id": "#minecraft:is_mountain", "required": false},
-    {"id": "#c:mountain", "required": false},
-    {"id": "#c:mountain_peak", "required": false},
-    {"id": "#c:mountain_slope", "required": false},
-    {"id": "#c:is_mountain", "required": false},
-    {"id": "#c:is_mountain/peak", "required": false},
-    {"id": "#forge:is_mountain", "required": false},
-    {"id": "#forge:is_peak", "required": false},
-    {"id": "#forge:is_slope", "required": false},
-    {"id": "#terralith:skylands", "required": false},
-    {"id": "#terralith:volcanic", "required": false},
-    {"id": "#biomeswevegone:mountain", "required": false},
+    {
+      "id": "#c:mountain",
+      "required": false
+    },
+    {
+      "id": "#c:mountain_peak",
+      "required": false
+    },
+    {
+      "id": "#c:mountain_slope",
+      "required": false
+    },
+    {
+      "id": "#c:is_mountain",
+      "required": false
+    },
+    {
+      "id": "#c:is_mountain/peak",
+      "required": false
+    },
+    {
+      "id": "#forge:is_mountain",
+      "required": false
+    },
+    {
+      "id": "#forge:is_peak",
+      "required": false
+    },
+    {
+      "id": "#forge:is_slope",
+      "required": false
+    },
+    {
+      "id": "#terralith:skylands",
+      "required": false
+    },
+    {
+      "id": "#terralith:volcanic",
+      "required": false
+    },
+    {
+      "id": "#biomeswevegone:mountain",
+      "required": false
+    },
     "minecraft:stony_peaks",
     "minecraft:jagged_peaks",
     "minecraft:frozen_peaks",

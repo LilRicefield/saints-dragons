@@ -1,12 +1,27 @@
 {
-  "replace": false,
   "values": [
-    "#minecraft:is_beach",
-    {"id": "#c:beach", "required": false},
-    {"id": "#c:stony_shores", "required": false},
-    {"id": "#c:is_beach", "required": false},
-    {"id": "#c:is_stony_shores", "required": false},
-    {"id": "#forge:is_beach", "required": false},
+    {
+      "id": "#c:beach",
+      "required": false
+    },
+    {
+      "id": "#c:stony_shores",
+      "required": false
+    },
+    {
+      "id": "#c:is_beach",
+      "required": false
+    },
+    {
+      "id": "#c:is_stony_shores",
+      "required": false
+    },
+    {
+      "id": "#forge:is_beach",
+      "required": false
+    },
+    "minecraft:beach",
+    "minecraft:snowy_beach",
     "minecraft:stony_shore"
   ]
 }

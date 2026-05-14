@@ -1,6 +1,25 @@
 {
-  "replace": false,
   "values": [
-    "#minecraft:is_forest"
+    {
+      "id": "#c:forest",
+      "required": false
+    },
+    {
+      "id": "#c:is_forest",
+      "required": false
+    },
+    {
+      "id": "#forge:is_forest",
+      "required": false
+    },
+    "minecraft:forest",
+    "minecraft:birch_forest",
+    "minecraft:old_growth_birch_forest",
+    "minecraft:dark_forest",
+    "minecraft:flower_forest",
+    "minecraft:taiga",
+    "minecraft:old_growth_pine_taiga",
+    "minecraft:old_growth_spruce_taiga",
+    "minecraft:snowy_taiga"
   ]
 }

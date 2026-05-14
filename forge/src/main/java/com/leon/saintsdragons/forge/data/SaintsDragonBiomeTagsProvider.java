@@ -5,7 +5,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.BiomeTagsProvider;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.BiomeTags;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
         tag(ModTags.Biomes.HAS_CINDERVANE)
-                .addTag(BiomeTags.IS_MOUNTAIN)
                 .addOptionalTag(rl("c", "mountain"))
                 .addOptionalTag(rl("c", "mountain_peak"))
                 .addOptionalTag(rl("c", "mountain_slope"))
@@ -41,8 +39,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.MEADOW);
 
         tag(ModTags.Biomes.HAS_IGNIVORUS)
-                .addTag(BiomeTags.IS_MOUNTAIN)
-                .addTag(BiomeTags.IS_HILL)
                 .addOptionalTag(rl("c", "climate_hot"))
                 .addOptionalTag(rl("c", "is_hot/overworld"))
                 .addOptionalTag(rl("c", "is_plains"))
@@ -67,14 +63,23 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.SUNFLOWER_PLAINS);
 
         tag(ModTags.Biomes.HAS_IVY_HOUSE)
-                .addTag(BiomeTags.IS_FOREST);
+                .addOptionalTag(rl("c", "forest"))
+                .addOptionalTag(rl("c", "is_forest"))
+                .addOptionalTag(rl("forge", "is_forest"))
+                .add(Biomes.FOREST)
+                .add(Biomes.BIRCH_FOREST)
+                .add(Biomes.OLD_GROWTH_BIRCH_FOREST)
+                .add(Biomes.DARK_FOREST)
+                .add(Biomes.FLOWER_FOREST)
+                .add(Biomes.TAIGA)
+                .add(Biomes.OLD_GROWTH_PINE_TAIGA)
+                .add(Biomes.OLD_GROWTH_SPRUCE_TAIGA)
+                .add(Biomes.SNOWY_TAIGA);
 
         tag(ModTags.Biomes.HAS_NULLJAW)
                 .add(Biomes.END_BARRENS);
 
         tag(ModTags.Biomes.HAS_RAEVYX)
-                .addTag(BiomeTags.IS_MOUNTAIN)
-                .addTag(BiomeTags.IS_HILL)
                 .addOptionalTag(rl("c", "mountain"))
                 .addOptionalTag(rl("c", "mountain_peak"))
                 .addOptionalTag(rl("c", "mountain_slope"))
@@ -107,20 +112,29 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
         addVarasuchusBiomes(ModTags.Biomes.HAS_VARASUCHUS_EGGS);
 
         tag(ModTags.Biomes.HAS_VOLITANS)
-                .addTag(BiomeTags.IS_OCEAN)
                 .addOptionalTag(rl("c", "ocean"))
                 .addOptionalTag(rl("c", "is_ocean"))
-                .addOptionalTag(rl("forge", "is_ocean"));
+                .addOptionalTag(rl("forge", "is_ocean"))
+                .add(Biomes.OCEAN)
+                .add(Biomes.DEEP_OCEAN)
+                .add(Biomes.COLD_OCEAN)
+                .add(Biomes.DEEP_COLD_OCEAN)
+                .add(Biomes.FROZEN_OCEAN)
+                .add(Biomes.DEEP_FROZEN_OCEAN)
+                .add(Biomes.LUKEWARM_OCEAN)
+                .add(Biomes.DEEP_LUKEWARM_OCEAN)
+                .add(Biomes.WARM_OCEAN);
     }
 
     private void addVarasuchusBiomes(net.minecraft.tags.TagKey<Biome> tag) {
         tag(tag)
-                .addTag(BiomeTags.IS_BEACH)
                 .addOptionalTag(rl("c", "beach"))
                 .addOptionalTag(rl("c", "stony_shores"))
                 .addOptionalTag(rl("c", "is_beach"))
                 .addOptionalTag(rl("c", "is_stony_shores"))
                 .addOptionalTag(rl("forge", "is_beach"))
+                .add(Biomes.BEACH)
+                .add(Biomes.SNOWY_BEACH)
                 .add(Biomes.STONY_SHORE);
     }
 
