@@ -274,6 +274,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
+        if (action == DragonRiderAction.ABILITY_STOP
+                && ModAbilities.VARASUCHUS_TAILGUARD.getName().equals(abilityName)
+                && tryReleaseHeldRidingAbility(abilityName)) {
+            return true;
+        }
+
         if (locked) {
             return false;
         }
@@ -413,7 +419,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         leapDamageApplied = false;
         if (phaseTwo) {
             lastDashWasRight = !lastDashWasRight;
-            triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
+            triggerAnim(VarasuchusAnimationHandler.ACTION_CONTROLLER, lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
             if (!this.level().isClientSide) {
                 this.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_PHASE2_DASH.get(), 1.0f, 1.0f, LEAP_DURATION);
             }
@@ -1336,7 +1342,19 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (isPhaseTwoActive()) {
             return new RiderAbilityBinding(ModAbilities.VARASUCHUS_SLASH_BARRAGE.getName(), RiderAbilityBinding.Activation.PRESS);
         }
-        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_TAILGUARD.getName(), RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_TAILGUARD.getName(), RiderAbilityBinding.Activation.HOLD);
+    }
+
+    @Override
+    protected boolean tryReleaseHeldRidingAbility(String abilityName) {
+        if (ModAbilities.VARASUCHUS_TAILGUARD.getName().equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == ModAbilities.VARASUCHUS_TAILGUARD) {
+                ((VarasuchusTailguardAbility) active).requestRelease();
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

@@ -13,13 +13,13 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.model.data.EntityModelData;
 public class RaevyxModel extends DragonGeoModel<Raevyx> {
-    private static final WeightedBoneChain NECK = WeightedBoneChain.of(
+    private static final WeightedBoneChain NECK_FOLLOW = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "headController"},
             0.20f, 0.25f, 0.30f, 0.35f
     );
-    private static final WeightedBoneChain NECK_FOLLOW = WeightedBoneChain.of(
+    private static final WeightedBoneChain NECK_TURN = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "headController"},
-            0.15f, 0.20f, 0.25f, 0.30f
+            0.35f, 0.45f, 0.55f, 0.60f
     );
     private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
             new String[] {"tail1", "tail2", "tail3", "tail4", "tail5"},
@@ -114,7 +114,7 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
         }
         float bankAngleDeg = entity.getBankAngleDegrees(partialTick);
         float neckLeanRad = -(bankAngleDeg / 45.0f) * 35.0f * Mth.DEG_TO_RAD;
-        DragonModelPoseHelper.applyWeightedRotationY(this, NECK, neckLeanRad);
+        DragonModelPoseHelper.applyWeightedRotationY(this, NECK_FOLLOW, neckLeanRad);
     }
 
     private void applyGroundNeckTurn(Raevyx entity, float partialTick) {
@@ -122,7 +122,7 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             return;
         }
 
-        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK, 25.0);
+        DragonModelPoseHelper.applyGroundNeckTurn(this, entity, partialTick, NECK_FOLLOW, 25.0);
     }
 
     private void applyNeckFollow(Raevyx entity, EntityModelData modelData, float partialTick) {
@@ -133,7 +133,7 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             lookPitchRad *= 0.5f;
         }
 
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_FOLLOW, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_TURN, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Raevyx entity, float partialTick) {

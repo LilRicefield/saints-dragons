@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.model.DragonGeoModel;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -22,7 +23,7 @@ public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
     );
     private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
             new String[] {"tail1", "tail2", "tail3", "tail4"},
-            1.0f, 1.5f, 2.0f, 2.5f
+            0.25f, 0.5f, 0.75f, 1.0f
     );
 
     public VarasuchusModel() {

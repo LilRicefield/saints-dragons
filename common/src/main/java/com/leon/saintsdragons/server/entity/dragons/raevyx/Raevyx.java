@@ -166,7 +166,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             .add("roar", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("flex", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
+            .add("flex", RaevyxAnimationHandler.ACTION_CONTROLLER, "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
             .add("raevyx_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
             .add("raevyx_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
@@ -498,7 +498,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.25D) // Hardcoded AI pathfinding speed
+                .add(Attributes.MOVEMENT_SPEED, 0.55D)
                 .add(Attributes.FOLLOW_RANGE, 80.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)

@@ -244,6 +244,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             RawAnimation.begin().thenPlay("animation.ignivorus.body_slam"));
         controller.triggerableAnim("roar",
             RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
+        controller.triggerableAnim("fire_breath_start",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_start"));
+        controller.triggerableAnim("fire_breathing",
+                RawAnimation.begin().thenLoop("animation.ignivorus.fire_breathing"));
+        controller.triggerableAnim("fire_breath_stop",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
     }
 
     public void setupStateController(AnimationController<Ignivorus> controller) {
@@ -293,12 +299,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
         controller.triggerableAnim("leap_impact",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
-        controller.triggerableAnim("fire_breath_start",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_start"));
-        controller.triggerableAnim("fire_breathing",
-                RawAnimation.begin().thenLoop("animation.ignivorus.fire_breathing"));
-        controller.triggerableAnim("fire_breath_stop",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
         controller.triggerableAnim("fireball_level1_charge",
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge"));
         controller.triggerableAnim("fireball_level2_charge",

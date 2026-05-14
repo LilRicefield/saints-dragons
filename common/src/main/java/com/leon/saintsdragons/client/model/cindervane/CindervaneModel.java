@@ -20,7 +20,7 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
     );
     private static final WeightedBoneChain TAIL = WeightedBoneChain.of(
             new String[] {"bone", "tail1", "tail2", "tail3", "tail4"},
-            0.25f, 0.50f, 0.75f, 1.0f, 1.25f
+            0.25f, 0.50f, 0.75f, 0.80f, 0.95f
     );
 
 public CindervaneModel() {

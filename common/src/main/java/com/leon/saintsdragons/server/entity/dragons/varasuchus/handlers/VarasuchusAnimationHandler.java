@@ -48,6 +48,12 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 RawAnimation.begin().thenPlay("animation.varasuchus.horn_gore"));
         controller.triggerableAnim("tail_swipe_left",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_swipe_left"));
+        controller.triggerableAnim("phase2_dash_left",
+                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_left"));
+        controller.triggerableAnim("phase2_dash_right",
+                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_right"));
+        controller.triggerableAnim("flex", FLEX);
+        controller.triggerableAnim("flex2", FLEX2);
     }
 
     public PlayState movementPredicate(AnimationState<Varasuchus> state) {
@@ -167,11 +173,9 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
     }
     public void triggerFlexAnimation() {
-        drake.triggerAnim(FAST_ACTION_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");
+        drake.triggerAnim(ACTION_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");
     }
     public void setupFastActionController(AnimationController<Varasuchus> controller) {
-        controller.triggerableAnim("flex", FLEX);
-        controller.triggerableAnim("flex2", FLEX2);
         controller.triggerableAnim("phase1",
                 RawAnimation.begin().thenPlay("animation.varasuchus.phase1"));
         controller.triggerableAnim("phase2",
@@ -184,10 +188,6 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_attack_right"));
         controller.triggerableAnim("tail_attack_left",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_attack_left"));
-        controller.triggerableAnim("phase2_dash_left",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_left"));
-        controller.triggerableAnim("phase2_dash_right",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_right"));
         controller.triggerableAnim("claw_left",
                 RawAnimation.begin().thenPlay("animation.varasuchus.claw_left"));
         controller.triggerableAnim("claw_right",
@@ -200,6 +200,10 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 RawAnimation.begin().thenPlay("animation.varasuchus.slash_barrage"));
         controller.triggerableAnim("tailguard",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tailguard"));
+        controller.triggerableAnim("tailguard_hold",
+                RawAnimation.begin().thenLoop("animation.varasuchus.tailguard_hold"));
+        controller.triggerableAnim("tailguard_cancel",
+                RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_cancel"));
         controller.triggerableAnim("tailguard_parry",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_parry"));
     }
