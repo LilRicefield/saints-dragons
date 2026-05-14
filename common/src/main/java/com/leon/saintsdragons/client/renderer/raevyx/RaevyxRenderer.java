@@ -38,6 +38,9 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
         if (entity.isBaby()) {
             return entity.isFemale() ? TEXTURE_BABY_FEMALE : TEXTURE_BABY_MALE;
         }
+        if (entity.hasCustomTextureVariant()) {
+            return entity.getCustomAdultTextureResource(entity.isFemale());
+        }
         if (entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD) {
             return entity.isFemale() ? TEXTURE_NIGHT_GOLD_FEMALE : TEXTURE_NIGHT_GOLD_MALE;
         }

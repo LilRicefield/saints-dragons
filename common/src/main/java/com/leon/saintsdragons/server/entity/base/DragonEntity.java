@@ -28,6 +28,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
+import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import java.lang.reflect.Method;
 import java.util.Collections;
@@ -115,6 +116,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_PENDING_ADULT_TEXTURE_VARIANT =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> DATA_TEXTURE_VARIANT_ID =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<String> DATA_PENDING_ADULT_TEXTURE_VARIANT_ID =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.STRING);
     public static final int HUNGER_MAX = DragonHungerComponent.HUNGER_MAX;
     public static final int HAPPINESS_MAX = DragonHappinessComponent.HAPPINESS_MAX;
     private DragonAbility<?> activeAbility = null;
@@ -340,6 +345,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
+        this.entityData.define(DATA_TEXTURE_VARIANT_ID, SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID.toString());
+        this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT_ID, "");
     }
 
     public float smoothTailDragVelocity(float targetDegrees) {
@@ -598,37 +605,79 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public int getTextureVariant() {
-        return this.entityData.get(DATA_TEXTURE_VARIANT);
+        return SaintsDragonVariantRegistry.variantIdToLegacy(getDragonVariantTypeId(), getTextureVariantId());
     }
 
     public void setTextureVariant(int variant) {
-        int clamped = Math.max(0, Math.min(getMaxTextureVariant(), variant));
-        this.entityData.set(DATA_TEXTURE_VARIANT, clamped);
+        setTextureVariantId(SaintsDragonVariantRegistry.legacyToVariantId(getDragonVariantTypeId(), variant));
+    }
+
+    public ResourceLocation getTextureVariantId() {
+        return parseVariantId(this.entityData.get(DATA_TEXTURE_VARIANT_ID), SaintsDragonVariantRegistry.defaultVariantId(getDragonVariantTypeId()));
+    }
+
+    public void setTextureVariantId(ResourceLocation variantId) {
+        ResourceLocation dragonId = getDragonVariantTypeId();
+        ResourceLocation normalized = SaintsDragonVariantRegistry.normalize(dragonId, variantId);
+        this.entityData.set(DATA_TEXTURE_VARIANT_ID, normalized.toString());
+        this.entityData.set(DATA_TEXTURE_VARIANT, SaintsDragonVariantRegistry.variantIdToLegacy(dragonId, normalized));
     }
 
     protected boolean shouldPersistAdultTextureVariantOnBabies() {
-        return getMaxTextureVariant() > 0;
+        return SaintsDragonVariantRegistry.getVariants(getDragonVariantTypeId()).size() > 1;
     }
 
     protected int chooseAdultTextureVariant() {
-        return getVariantSet().roll(this.getRandom());
+        return SaintsDragonVariantRegistry.variantIdToLegacy(getDragonVariantTypeId(), chooseAdultTextureVariantId());
+    }
+
+    protected ResourceLocation chooseAdultTextureVariantId() {
+        if (this.level() instanceof ServerLevelAccessor serverLevelAccessor) {
+            return SaintsDragonVariantRegistry.chooseSpawnVariant(serverLevelAccessor, this);
+        }
+        return SaintsDragonVariantRegistry.legacyToVariantId(getDragonVariantTypeId(), getVariantSet().roll(this.getRandom()));
     }
 
     public int getPendingAdultTextureVariant() {
-        return this.entityData.get(DATA_PENDING_ADULT_TEXTURE_VARIANT);
+        ResourceLocation pending = getPendingAdultTextureVariantId();
+        return pending == null ? -1 : SaintsDragonVariantRegistry.variantIdToLegacy(getDragonVariantTypeId(), pending);
     }
 
     public void setPendingAdultTextureVariant(int variant) {
-        int clamped = Math.max(-1, Math.min(getMaxTextureVariant(), variant));
-        this.entityData.set(DATA_PENDING_ADULT_TEXTURE_VARIANT, clamped);
+        if (variant < 0) {
+            setPendingAdultTextureVariantId(null);
+            return;
+        }
+        setPendingAdultTextureVariantId(SaintsDragonVariantRegistry.legacyToVariantId(getDragonVariantTypeId(), variant));
+    }
+
+    @Nullable
+    public ResourceLocation getPendingAdultTextureVariantId() {
+        String value = this.entityData.get(DATA_PENDING_ADULT_TEXTURE_VARIANT_ID);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return parseVariantId(value, null);
+    }
+
+    public void setPendingAdultTextureVariantId(@Nullable ResourceLocation variantId) {
+        ResourceLocation dragonId = getDragonVariantTypeId();
+        if (variantId == null) {
+            this.entityData.set(DATA_PENDING_ADULT_TEXTURE_VARIANT_ID, "");
+            this.entityData.set(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
+            return;
+        }
+        ResourceLocation normalized = SaintsDragonVariantRegistry.normalize(dragonId, variantId);
+        this.entityData.set(DATA_PENDING_ADULT_TEXTURE_VARIANT_ID, normalized.toString());
+        this.entityData.set(DATA_PENDING_ADULT_TEXTURE_VARIANT, SaintsDragonVariantRegistry.variantIdToLegacy(dragonId, normalized));
     }
 
     protected void ensurePendingAdultTextureVariant() {
         if (!shouldPersistAdultTextureVariantOnBabies()) {
             return;
         }
-        if (getPendingAdultTextureVariant() < 0) {
-            setPendingAdultTextureVariant(chooseAdultTextureVariant());
+        if (getPendingAdultTextureVariantId() == null) {
+            setPendingAdultTextureVariantId(chooseAdultTextureVariantId());
         }
     }
 
@@ -636,22 +685,26 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (!shouldPersistAdultTextureVariantOnBabies()) {
             return;
         }
-        int pending = getPendingAdultTextureVariant();
-        if (pending < 0) {
-            pending = chooseAdultTextureVariant();
+        ResourceLocation pending = getPendingAdultTextureVariantId();
+        if (pending == null) {
+            pending = chooseAdultTextureVariantId();
         }
-        setTextureVariant(pending);
-        setPendingAdultTextureVariant(-1);
+        setTextureVariantId(pending);
+        setPendingAdultTextureVariantId(null);
     }
 
     public int getCodexTextureVariant() {
+        return SaintsDragonVariantRegistry.variantIdToLegacy(getDragonVariantTypeId(), getCodexTextureVariantId());
+    }
+
+    public ResourceLocation getCodexTextureVariantId() {
         if (this.isBaby() && shouldPersistAdultTextureVariantOnBabies()) {
-            int pending = getPendingAdultTextureVariant();
-            if (pending >= 0) {
+            ResourceLocation pending = getPendingAdultTextureVariantId();
+            if (pending != null) {
                 return pending;
             }
         }
-        return getTextureVariant();
+        return getTextureVariantId();
     }
 
     protected int getMaxTextureVariant() {
@@ -660,7 +713,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
 
     public Map<String, Integer> getTextureVariantNameMap() {
-        return getVariantSet().nameMap();
+        return SaintsDragonVariantRegistry.legacyNameMap(getDragonVariantTypeId());
+    }
+
+    public Map<String, ResourceLocation> getTextureVariantIdNameMap() {
+        return SaintsDragonVariantRegistry.variantNameMap(getDragonVariantTypeId());
+    }
+
+    public List<String> getTextureVariantCommandSuggestions() {
+        return SaintsDragonVariantRegistry.commandSuggestions(getDragonVariantTypeId());
     }
 
     protected DragonVariantSet getVariantSet() {
@@ -668,17 +729,23 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public String getTextureVariantName(int variantId) {
-        int clamped = Math.max(0, Math.min(getMaxTextureVariant(), variantId));
-        for (Map.Entry<String, Integer> entry : getTextureVariantNameMap().entrySet()) {
-            if (entry.getValue() == clamped) {
-                return entry.getKey();
-            }
-        }
-        return "default";
+        return getTextureVariantName(SaintsDragonVariantRegistry.legacyToVariantId(getDragonVariantTypeId(), variantId));
+    }
+
+    public String getTextureVariantName(ResourceLocation variantId) {
+        ResourceLocation normalized = SaintsDragonVariantRegistry.normalize(getDragonVariantTypeId(), variantId);
+        var definition = SaintsDragonVariantRegistry.get(getDragonVariantTypeId(), normalized);
+        return definition != null ? definition.name() : normalized.getPath();
     }
 
     public String getTextureVariantTranslationKey(int variantId) {
-        return "saintsdragons.variant." + getTextureVariantName(variantId);
+        return getTextureVariantTranslationKey(SaintsDragonVariantRegistry.legacyToVariantId(getDragonVariantTypeId(), variantId));
+    }
+
+    public String getTextureVariantTranslationKey(ResourceLocation variantId) {
+        ResourceLocation normalized = SaintsDragonVariantRegistry.normalize(getDragonVariantTypeId(), variantId);
+        var definition = SaintsDragonVariantRegistry.get(getDragonVariantTypeId(), normalized);
+        return definition != null ? definition.translationKey() : "saintsdragons.variant." + normalized.getNamespace() + "." + normalized.getPath().replace('/', '.');
     }
 
     protected int chooseSpawnTextureVariant(@NotNull ServerLevelAccessor levelAccessor,
@@ -686,7 +753,41 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                                             @NotNull MobSpawnType reason,
                                             @Nullable SpawnGroupData spawnData,
                                             @Nullable CompoundTag spawnTag) {
-        return chooseAdultTextureVariant();
+        return SaintsDragonVariantRegistry.variantIdToLegacy(getDragonVariantTypeId(),
+                chooseSpawnTextureVariantId(levelAccessor, difficulty, reason, spawnData, spawnTag));
+    }
+
+    protected ResourceLocation chooseSpawnTextureVariantId(@NotNull ServerLevelAccessor levelAccessor,
+                                                          @NotNull DifficultyInstance difficulty,
+                                                          @NotNull MobSpawnType reason,
+                                                          @Nullable SpawnGroupData spawnData,
+                                                          @Nullable CompoundTag spawnTag) {
+        return SaintsDragonVariantRegistry.chooseSpawnVariant(levelAccessor, this);
+    }
+
+    public boolean hasCustomTextureVariant() {
+        ResourceLocation variantId = getTextureVariantId();
+        return !SaintsDragonVariantRegistry.isLegacyVariant(getDragonVariantTypeId(), variantId);
+    }
+
+    public ResourceLocation getCustomAdultTextureResource(boolean female) {
+        return SaintsDragonVariantRegistry.adultTexture(getDragonVariantTypeId(), getTextureVariantId(), female);
+    }
+
+    protected ResourceLocation getDragonVariantTypeId() {
+        return SaintsDragonVariantRegistry.dragonId(this);
+    }
+
+    @Nullable
+    private static ResourceLocation parseVariantId(@Nullable String value, @Nullable ResourceLocation fallback) {
+        if (value == null || value.isBlank()) {
+            return fallback;
+        }
+        try {
+            return new ResourceLocation(value);
+        } catch (Exception ignored) {
+            return fallback;
+        }
     }
 
     public boolean tryBrush(Player player, ItemStack brushStack) {
@@ -726,12 +827,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                                                  @Nullable SpawnGroupData spawnData, @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
         ensureGenderInitialized();
-        int chosenVariant = chooseSpawnTextureVariant(levelAccessor, difficulty, reason, spawnData, spawnTag);
+        ResourceLocation chosenVariant = chooseSpawnTextureVariantId(levelAccessor, difficulty, reason, spawnData, spawnTag);
         if (this.isBaby() && shouldPersistAdultTextureVariantOnBabies()) {
-            setPendingAdultTextureVariant(chosenVariant);
+            setPendingAdultTextureVariantId(chosenVariant);
             setTextureVariant(0);
         } else {
-            setTextureVariant(chosenVariant);
+            setTextureVariantId(chosenVariant);
         }
 
         if (this.isBaby() && reason == MobSpawnType.SPAWN_EGG) {
@@ -1955,6 +2056,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
         tag.putInt("TextureVariant", getTextureVariant());
         tag.putInt("PendingAdultTextureVariant", getPendingAdultTextureVariant());
+        tag.putString("TextureVariantId", getTextureVariantId().toString());
+        ResourceLocation pendingAdultVariantId = getPendingAdultTextureVariantId();
+        if (pendingAdultVariantId != null) {
+            tag.putString("PendingAdultTextureVariantId", pendingAdultVariantId.toString());
+        }
         tag.putBoolean("BoundInBinder", this.boundInBinder);
         if (assignedParentUuid != null) {
             tag.putUUID("AssignedParentUuid", assignedParentUuid);
@@ -1994,10 +2100,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (sleepComponent != null) {
             sleepComponent.loadFromNBT(tag);
         }
-        if (tag.contains("TextureVariant")) {
+        if (tag.contains("TextureVariantId")) {
+            setTextureVariantId(parseVariantId(tag.getString("TextureVariantId"), SaintsDragonVariantRegistry.defaultVariantId(getDragonVariantTypeId())));
+        } else if (tag.contains("TextureVariant")) {
             setTextureVariant(tag.getInt("TextureVariant"));
         }
-        if (tag.contains("PendingAdultTextureVariant")) {
+        if (tag.contains("PendingAdultTextureVariantId")) {
+            setPendingAdultTextureVariantId(parseVariantId(tag.getString("PendingAdultTextureVariantId"), null));
+        } else if (tag.contains("PendingAdultTextureVariant")) {
             setPendingAdultTextureVariant(tag.getInt("PendingAdultTextureVariant"));
         }
         this.assignedParentUuid = tag.hasUUID("AssignedParentUuid") ? tag.getUUID("AssignedParentUuid") : null;

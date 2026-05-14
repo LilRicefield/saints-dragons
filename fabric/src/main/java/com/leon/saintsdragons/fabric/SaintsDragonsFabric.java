@@ -8,6 +8,7 @@ import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
 import com.leon.saintsdragons.fabric.loot.FabricLootTableModifier;
 import com.leon.saintsdragons.fabric.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.fabric.resource.FabricDragonAttributeReloadListener;
+import com.leon.saintsdragons.fabric.resource.FabricDragonVariantReloadListener;
 import com.leon.saintsdragons.fabric.server.FabricServerEvents;
 import com.leon.saintsdragons.fabric.world.FabricDragonSpawns;
 import net.fabricmc.api.ModInitializer;
@@ -48,6 +49,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
         raiseVanillaAttributeCaps();
         FabricPartEntities.register();
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonAttributeReloadListener());
+        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonVariantReloadListener());
         FabricServerEvents.init();
         FabricLootTableModifier.register();
         CommonModEvents.registerEntityAttributes(SaintsDragonsFabric::registerDefaultAttributes);

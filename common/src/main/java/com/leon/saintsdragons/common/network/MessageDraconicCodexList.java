@@ -31,6 +31,7 @@ public class MessageDraconicCodexList {
             double hunger = buffer.readDouble();
             double happiness = buffer.readDouble();
             int variantId = buffer.readInt();
+            String variantResourceId = buffer.readUtf(128);
             byte genderId = buffer.readByte();
             boolean genderKnown = buffer.readBoolean();
             String dragonType = buffer.readUtf(32);
@@ -40,7 +41,7 @@ public class MessageDraconicCodexList {
             double posZ = buffer.readDouble();
             String biomeId = buffer.readUtf(128);
             entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness,
-                    variantId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
+                    variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
         }
     }
 
@@ -61,6 +62,7 @@ public class MessageDraconicCodexList {
                     dragon.getHunger(),
                     dragon.getHappiness(),
                     dragon.getCodexTextureVariant(),
+                    dragon.getCodexTextureVariantId().toString(),
                     dragon.getGender().getId(),
                     dragon.hasGender(),
                     dragonType,
@@ -97,6 +99,7 @@ public class MessageDraconicCodexList {
                     entry.hunger(),
                     entry.happiness(),
                     entry.variantId(),
+                    entry.variantResourceId(),
                     entry.genderId(),
                     entry.genderKnown(),
                     entry.dragonType(),
@@ -121,6 +124,7 @@ public class MessageDraconicCodexList {
             buffer.writeDouble(entry.hunger());
             buffer.writeDouble(entry.happiness());
             buffer.writeInt(entry.variantId());
+            buffer.writeUtf(entry.variantResourceId(), 128);
             buffer.writeByte(entry.genderId());
             buffer.writeBoolean(entry.genderKnown());
             buffer.writeUtf(entry.dragonType(), 32);
@@ -141,7 +145,7 @@ public class MessageDraconicCodexList {
     }
 
     public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth,
-                        double armor, double hunger, double happiness, int variantId, byte genderId,
+                        double armor, double hunger, double happiness, int variantId, String variantResourceId, byte genderId,
                         boolean genderKnown, String dragonType, boolean isBaby,
                         double posX, double posY, double posZ, String biomeId) {
     }

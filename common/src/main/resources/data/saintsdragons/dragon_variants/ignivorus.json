@@ -1,0 +1,14 @@
+{
+  "variants": [
+    {
+      "id": "saintsdragons:default",
+      "name": "default",
+      "weight": 95
+    },
+    {
+      "id": "saintsdragons:crimson",
+      "name": "crimson",
+      "weight": 5
+    }
+  ]
+}

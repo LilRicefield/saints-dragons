@@ -34,6 +34,7 @@ public final class ClientPacketHandlers {
                         entry.hunger(),
                         entry.happiness(),
                         entry.variantId(),
+                        entry.variantResourceId(),
                         entry.genderId(),
                         entry.genderKnown(),
                         entry.dragonType(),

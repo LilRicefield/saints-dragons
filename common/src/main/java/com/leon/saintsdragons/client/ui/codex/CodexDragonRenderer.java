@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 
@@ -148,7 +149,7 @@ public class CodexDragonRenderer {
             dragon.setBaby(true);
         }
 
-        dragon.setTextureVariant(entry.variantId());
+        dragon.setTextureVariantId(parseVariantId(entry.variantResourceId()));
 
         dragon.setGender(DragonGender.fromId(entry.genderId()));
         return dragon;
@@ -164,5 +165,13 @@ public class CodexDragonRenderer {
             case "stegonaut" -> ModEntities.STEGONAUT.get();
             default -> null;
         };
+    }
+
+    private ResourceLocation parseVariantId(String id) {
+        try {
+            return new ResourceLocation(id);
+        } catch (Exception ignored) {
+            return com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID;
+        }
     }
 }

@@ -54,6 +54,7 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setHunger(dragon.getHunger());
                 entry.setHappiness(dragon.getHappiness());
                 entry.setVariantId(resolveVariantId(dragon));
+                entry.setVariantResourceId(resolveVariantResourceId(dragon));
                 entry.setGenderId(dragon.getGender().getId());
                 entry.setGenderKnown(dragon.hasGender());
                 entry.setDragonType(resolveDragonType(dragon));
@@ -74,6 +75,7 @@ public class DragonCodexSavedData extends SavedData {
                 dragon.getHunger(),
                 dragon.getHappiness(),
                 resolveVariantId(dragon),
+                resolveVariantResourceId(dragon),
                 dragon.getGender().getId(),
                 dragon.hasGender(),
                 resolveDragonType(dragon),
@@ -196,6 +198,7 @@ public class DragonCodexSavedData extends SavedData {
                 dragonTag.putDouble("Hunger", dragonEntry.hunger());
                 dragonTag.putDouble("Happiness", dragonEntry.happiness());
                 dragonTag.putInt("VariantId", dragonEntry.variantId());
+                dragonTag.putString("VariantResourceId", dragonEntry.variantResourceId());
                 dragonTag.putByte("GenderId", dragonEntry.genderId());
                 dragonTag.putBoolean("GenderKnown", dragonEntry.genderKnown());
                 dragonTag.putString("DragonType", dragonEntry.dragonType());
@@ -240,6 +243,7 @@ public class DragonCodexSavedData extends SavedData {
                         double hunger = dragonTag.contains("Hunger") ? dragonTag.getDouble("Hunger") : DragonEntity.HUNGER_MAX;
                         double happiness = dragonTag.contains("Happiness") ? dragonTag.getDouble("Happiness") : DragonEntity.HAPPINESS_MAX;
                         int variantId = dragonTag.contains("VariantId") ? dragonTag.getInt("VariantId") : 0;
+                        String variantResourceId = dragonTag.contains("VariantResourceId") ? dragonTag.getString("VariantResourceId") : legacyVariantResourceId(dragonTag, variantId);
                         byte genderId = dragonTag.contains("GenderId") ? dragonTag.getByte("GenderId") : 0;
                         boolean genderKnown = dragonTag.contains("GenderKnown") && dragonTag.getBoolean("GenderKnown");
                         String dragonType = dragonTag.contains("DragonType") ? dragonTag.getString("DragonType") : "ignivorus";
@@ -250,7 +254,7 @@ public class DragonCodexSavedData extends SavedData {
                         double posZ = dragonTag.contains("PosZ") ? dragonTag.getDouble("PosZ") : 0.0D;
                         String biomeId = dragonTag.contains("BiomeId") ? dragonTag.getString("BiomeId") : "minecraft:unknown";
                         entries.add(new DragonCodexEntry(dragonId, name, maxHealth, currentHealth, armor, hunger, happiness,
-                                variantId, genderId, genderKnown, dragonType, isBaby, boundInBinder, posX, posY, posZ, biomeId));
+                                variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, boundInBinder, posX, posY, posZ, biomeId));
                     }
                 }
                 data.entriesByOwner.put(ownerId, entries);
@@ -268,6 +272,7 @@ public class DragonCodexSavedData extends SavedData {
         private double hunger;
         private double happiness;
         private int variantId;
+        private String variantResourceId;
         private byte genderId;
         private boolean genderKnown;
         private String dragonType;
@@ -279,7 +284,7 @@ public class DragonCodexSavedData extends SavedData {
         private String biomeId;
 
         public DragonCodexEntry(UUID dragonId, String displayName, double maxHealth, double currentHealth, double armor,
-                                double hunger, double happiness, int variantId, byte genderId, boolean genderKnown,
+                                double hunger, double happiness, int variantId, String variantResourceId, byte genderId, boolean genderKnown,
                                 String dragonType, boolean isBaby, boolean boundInBinder,
                                 double posX, double posY, double posZ, String biomeId) {
             this.dragonId = dragonId;
@@ -290,6 +295,7 @@ public class DragonCodexSavedData extends SavedData {
             this.hunger = hunger;
             this.happiness = happiness;
             this.variantId = variantId;
+            this.variantResourceId = variantResourceId;
             this.genderId = genderId;
             this.genderKnown = genderKnown;
             this.dragonType = dragonType;
@@ -361,6 +367,14 @@ public class DragonCodexSavedData extends SavedData {
             this.variantId = variantId;
         }
 
+        public String variantResourceId() {
+            return variantResourceId;
+        }
+
+        public void setVariantResourceId(String variantResourceId) {
+            this.variantResourceId = variantResourceId;
+        }
+
         public byte genderId() {
             return genderId;
         }
@@ -430,6 +444,21 @@ public class DragonCodexSavedData extends SavedData {
 
     private static int resolveVariantId(DragonEntity dragon) {
         return dragon.getCodexTextureVariant();
+    }
+
+    private static String resolveVariantResourceId(DragonEntity dragon) {
+        return dragon.getCodexTextureVariantId().toString();
+    }
+
+    private static String legacyVariantResourceId(CompoundTag dragonTag, int variantId) {
+        String dragonType = dragonTag.contains("DragonType") ? dragonTag.getString("DragonType") : "ignivorus";
+        return switch (dragonType) {
+            case "cindervane" -> variantId == 1 ? "saintsdragons:albino" : "saintsdragons:default";
+            case "ignivorus" -> variantId == 1 ? "saintsdragons:crimson" : "saintsdragons:default";
+            case "raevyx" -> variantId == 1 ? "saintsdragons:night_gold" : "saintsdragons:default";
+            case "volitans" -> variantId == 1 ? "saintsdragons:bloodshot" : "saintsdragons:default";
+            default -> "saintsdragons:default";
+        };
     }
 
     private static String resolveDragonType(DragonEntity dragon) {

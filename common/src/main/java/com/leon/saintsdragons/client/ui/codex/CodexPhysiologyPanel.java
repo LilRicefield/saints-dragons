@@ -123,16 +123,17 @@ public class CodexPhysiologyPanel {
     }
 
     private String resolveVariantTranslationKey(CodexDragonEntry selected) {
-        if (selected.variantId() <= 0) {
+        String id = selected.variantResourceId();
+        if (id == null || id.isBlank() || "saintsdragons:default".equals(id)) {
             return "saintsdragons.variant.default";
         }
-        return switch (selected.dragonType()) {
-            case "ignivorus" -> "saintsdragons.variant.crimson";
-            case "cindervane" -> "saintsdragons.variant.albino";
-            case "raevyx" -> "saintsdragons.variant.night_gold";
-            case "volitans" -> "saintsdragons.variant.bloodshot";
-            default -> "saintsdragons.variant.default";
-        };
+        int separator = id.indexOf(':');
+        String namespace = separator >= 0 ? id.substring(0, separator) : "saintsdragons";
+        String path = separator >= 0 ? id.substring(separator + 1) : id;
+        if ("saintsdragons".equals(namespace)) {
+            return "saintsdragons.variant." + path.replace('/', '.');
+        }
+        return "saintsdragons.variant." + namespace + "." + path.replace('/', '.');
     }
 
     private void drawGenderStat(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected, int leftPos, int topPos) {

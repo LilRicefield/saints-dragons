@@ -60,6 +60,9 @@ public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEn
     }
 
     protected ResourceLocation getAdultTexture(T entity) {
+        if (entity.hasCustomTextureVariant()) {
+            return entity.getCustomAdultTextureResource(entity.isFemale());
+        }
         return entity.isFemale() ? femaleTexture : maleTexture;
     }
 

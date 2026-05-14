@@ -12,6 +12,7 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
@@ -55,7 +56,7 @@ public final class DragonSetVariantCommand {
             UUID dragonId = UuidArgument.getUuid(context, "dragon");
             DragonEntity dragon = findDragon(context.getSource(), dragonId);
             if (dragon != null) {
-                return SharedSuggestionProvider.suggest(dragon.getTextureVariantNameMap().keySet(), builder);
+                return SharedSuggestionProvider.suggest(dragon.getTextureVariantCommandSuggestions(), builder);
             }
         } catch (IllegalArgumentException ignored) {
             // Ignore and fall back to default suggestion.
@@ -77,7 +78,7 @@ public final class DragonSetVariantCommand {
             .requires(source -> source.hasPermission(2))
             .then(Commands.argument("dragon", uuidArgument())
                 .suggests(DRAGON_UUID_SUGGESTIONS)
-                .then(Commands.argument("variant", StringArgumentType.word())
+                .then(Commands.argument("variant", StringArgumentType.greedyString())
                     .suggests(VARIANT_SUGGESTIONS)
                     .executes(DragonSetVariantCommand::setVariant))));
     }
@@ -97,13 +98,13 @@ public final class DragonSetVariantCommand {
             throw ERROR_UNKNOWN_DRAGON.create(dragonId.toString());
         }
 
-        Integer variant = dragon.getTextureVariantNameMap().get(variantStr);
+        ResourceLocation variant = dragon.getTextureVariantIdNameMap().get(variantStr);
         if (variant == null) {
             throw ERROR_INVALID_VARIANT.create();
         }
 
-        int oldVariant = dragon.getTextureVariant();
-        dragon.setTextureVariant(variant);
+        ResourceLocation oldVariant = dragon.getTextureVariantId();
+        dragon.setTextureVariantId(variant);
 
         // Send success message
         String labelKey = dragon.getTextureVariantTranslationKey(variant);
@@ -115,7 +116,7 @@ public final class DragonSetVariantCommand {
         source.sendSuccess(() -> successMessage, false);
 
         // Info message if variant didn't change
-        if (oldVariant == variant) {
+        if (oldVariant.equals(variant)) {
             Component infoMessage = Component.translatable(
                 "saintsdragons.command.setvariant.unchanged",
                 dragon.getDisplayName()

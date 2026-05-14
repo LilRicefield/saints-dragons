@@ -31,10 +31,12 @@ public enum DragonEntityProvider implements IEntityComponentProvider, IServerDat
             tooltip.add(Component.translatable("jade.saintsdragons.gender", genderComponent));
         }
 
-        // Display variant
-        if (serverData.contains("VariantName")) {
-            String variantName = serverData.getString("VariantName");
-            Component variantComponent = Component.translatable("saintsdragons.variant." + variantName);
+        if (serverData.contains("VariantTranslationKey")) {
+            String key = serverData.getString("VariantTranslationKey");
+            String fallback = serverData.contains("VariantFallbackName")
+                    ? serverData.getString("VariantFallbackName")
+                    : serverData.getString("VariantResourceId");
+            Component variantComponent = Component.translatableWithFallback(key, fallback);
             tooltip.add(Component.translatable("jade.saintsdragons.variant", variantComponent));
         }
     }
@@ -51,14 +53,35 @@ public enum DragonEntityProvider implements IEntityComponentProvider, IServerDat
             tag.putString("Gender", gender.name());
         }
 
-        // Send variant name to client
-        int variantId = dragon.getCodexTextureVariant();
-        String variantName = dragon.getTextureVariantName(variantId);
-        tag.putString("VariantName", variantName);
+        ResourceLocation variantId = dragon.getCodexTextureVariantId();
+        tag.putString("VariantResourceId", variantId.toString());
+        tag.putString("VariantTranslationKey", dragon.getTextureVariantTranslationKey(variantId));
+        tag.putString("VariantFallbackName", formatFallbackName(dragon.getTextureVariantName(variantId)));
     }
 
     @Override
     public ResourceLocation getUid() {
         return new ResourceLocation("saintsdragons", "dragon_info");
+    }
+
+    private static String formatFallbackName(String name) {
+        if (name == null || name.isBlank()) {
+            return "Default";
+        }
+        String[] words = name.replace('-', '_').split("_");
+        StringBuilder builder = new StringBuilder();
+        for (String word : words) {
+            if (word.isBlank()) {
+                continue;
+            }
+            if (builder.length() > 0) {
+                builder.append(' ');
+            }
+            builder.append(Character.toUpperCase(word.charAt(0)));
+            if (word.length() > 1) {
+                builder.append(word.substring(1));
+            }
+        }
+        return builder.length() == 0 ? name : builder.toString();
     }
 }

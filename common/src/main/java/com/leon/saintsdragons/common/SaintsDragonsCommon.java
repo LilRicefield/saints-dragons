@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.*;
+import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,7 @@ public final class SaintsDragonsCommon {
         GeckoLib.initialize();
         SaintsDragonsConfig.bootstrap();
         DragonAttributeConfigLoader.bootstrap();
+        SaintsDragonVariantRegistry.bootstrap();
         DragonAnimTickets.bootstrap();
         ModAbilities.register();
         ModEntities.register();

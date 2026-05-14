@@ -1,0 +1,14 @@
+{
+  "variants": [
+    {
+      "id": "saintsdragons:default",
+      "name": "default",
+      "weight": 90
+    },
+    {
+      "id": "saintsdragons:night_gold",
+      "name": "night_gold",
+      "weight": 10
+    }
+  ]
+}
