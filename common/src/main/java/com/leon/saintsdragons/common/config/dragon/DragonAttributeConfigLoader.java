@@ -228,6 +228,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double bitePhase1Damage = 15.0D;
         double bitePhase2Damage = 25.0D;
         double tailAttackDamage = 7.0D;
+        double tailguardParryDamage = 10.0D;
         double dashTailSwipeDamage = 10.0D;
         double dashClawDamage = 15.0D;
         double clawAttackDamage = 8.0D;
@@ -250,6 +251,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 bitePhase1Damage = (double) configClass.getField("VARASUCHUS_BITE_PHASE1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_BITE_PHASE1_DAMAGE").get(null));
                 bitePhase2Damage = (double) configClass.getField("VARASUCHUS_BITE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_BITE_PHASE2_DAMAGE").get(null));
                 tailAttackDamage = (double) configClass.getField("VARASUCHUS_TAIL_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAIL_ATTACK_DAMAGE").get(null));
+                tailguardParryDamage = (double) configClass.getField("VARASUCHUS_TAILGUARD_PARRY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAILGUARD_PARRY_DAMAGE").get(null));
                 dashTailSwipeDamage = (double) configClass.getField("VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE").get(null));
                 dashClawDamage = (double) configClass.getField("VARASUCHUS_DASH_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_DASH_CLAW_DAMAGE").get(null));
                 clawAttackDamage = (double) configClass.getField("VARASUCHUS_CLAW_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_CLAW_ATTACK_DAMAGE").get(null));
@@ -275,6 +277,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "bite_phase1", DragonAbilityOverride.ofDamage(bitePhase1Damage),
                         "bite_phase2", DragonAbilityOverride.ofDamage(bitePhase2Damage),
                         "tail_attack", DragonAbilityOverride.ofDamage(tailAttackDamage),
+                        "tailguard_parry", DragonAbilityOverride.ofDamage(tailguardParryDamage),
                         "dash_tail_swipe", DragonAbilityOverride.ofDamage(dashTailSwipeDamage),
                         "dash_claw", DragonAbilityOverride.ofDamage(dashClawDamage),
                         "claw_attack", DragonAbilityOverride.ofDamage(clawAttackDamage),

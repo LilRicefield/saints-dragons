@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -45,7 +46,7 @@ public class VolitansClawAbility extends DragonAbility<Volitans> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            getUser().triggerAnim("actions", useLeftClaw ? "swipe_left" : "swipe_right");
+            getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, useLeftClaw ? "swipe_left" : "swipe_right");
             if (!getUser().level().isClientSide) {
                 float pitch = 0.96f + getUser().getRandom().nextFloat() * 0.08f;
                 getUser().getSoundHandler().playMovingEntitySound(

@@ -17,12 +17,18 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusTailguardAbility;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
@@ -101,11 +107,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", "action", "animation.varasuchus.grumble1", ModSounds.VARASUCHUS_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("grumble2", "action", "animation.varasuchus.grumble2", ModSounds.VARASUCHUS_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("grumble3", "action", "animation.varasuchus.grumble3", ModSounds.VARASUCHUS_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
-            .add("varasuchus_hurt", "instant", "animation.varasuchus.hurt", ModSounds.VARASUCHUS_HURT, 1.1f, 0.95f, 0.1f, false, true, true)
-            .add("varasuchus_die", "instant", "animation.varasuchus.die", ModSounds.VARASUCHUS_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
+            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.varasuchus.grumble1", ModSounds.VARASUCHUS_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.varasuchus.grumble2", ModSounds.VARASUCHUS_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.varasuchus.grumble3", ModSounds.VARASUCHUS_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, true)
+            .add("varasuchus_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.varasuchus.hurt", ModSounds.VARASUCHUS_HURT, 1.1f, 0.95f, 0.1f, false, true, true)
+            .add("varasuchus_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.varasuchus.die", ModSounds.VARASUCHUS_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
             .build();
     public static final double RIDER_WALK_SPEED = 0.15D;
     public static final double RIDER_RUN_SPEED = 0.30D;
@@ -129,11 +135,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final double BREED_PARTNER_RANGE = 30.0D;
     private static final double BREED_DISTANCE_SQR = 16.0D;
     private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
-    private static final float SIT_PROGRESS_MAX = 25.0F;
-    private static final int SIT_DOWN_ANIMATION_TICKS = 25;
-    private static final int SIT_UP_ANIMATION_TICKS = 25;
-    private static final int FALL_ASLEEP_ANIMATION_TICKS = 42;
-    private static final int WAKE_UP_ANIMATION_TICKS = 129;
     private static final int FLEX_CONTROL_LOCK_TICKS = 70;
     private static final int FLEX2_CONTROL_LOCK_TICKS = 140;
     private static final int FLEX_COOLDOWN_TICKS = 60;
@@ -163,9 +164,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private boolean useLeftTailAttackNext = true;
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
     private final ScreenShakeComponent screenShakeComponent;
-    private boolean isSittingDown = false;
-    private boolean isStandingUp = false;
-    private int sitTransitionTicks = 0;
+    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int phaseTwoLingerTicks = 0;
     private final DragonDashAndDodgeComponent groundDash =
             new DragonDashAndDodgeComponent(this, active -> this.entityData.set(DATA_LEAPING, active));
@@ -414,12 +413,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         leapDamageApplied = false;
         if (phaseTwo) {
             lastDashWasRight = !lastDashWasRight;
-            triggerAnim("instant", lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
+            triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, lastDashWasRight ? "phase2_dash_right" : "phase2_dash_left");
             if (!this.level().isClientSide) {
                 this.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_PHASE2_DASH.get(), 1.0f, 1.0f, LEAP_DURATION);
             }
         } else {
-            triggerAnim("instant", "tail_swipe_left");
+            triggerAnim(VarasuchusAnimationHandler.ACTION_CONTROLLER, "tail_swipe_left");
             if (!this.level().isClientSide) {
                 this.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_TAIL_SWIPE.get(), 1.0f, 1.0f, 100);
             }
@@ -588,20 +587,32 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Varasuchus> movementController =
-                new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
-        AnimationController<Varasuchus> actions =
-                new AnimationController<>(this, "action", 10, animationHandler::actionPredicate);
-        AnimationController<Varasuchus> instantActions =
-                new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
+        AnimationController<Varasuchus> movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        actions.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        instantActions.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        animationHandler.setupActionController(actions);
-        animationHandler.setupInstantActionController(instantActions);
-        controllers.add(movementController);
-        controllers.add(actions);
-        controllers.add(instantActions);
+
+        AnimationController<Varasuchus> actionController = new AnimationController<>(this, VarasuchusAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
+        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Varasuchus> fastActionController = new AnimationController<>(this, VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Varasuchus> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Varasuchus> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Varasuchus> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        animationHandler.setupActionController(actionController);
+        animationHandler.setupFastActionController(fastActionController);
+        animationHandler.setupInteractionController(interactionController);
+        animationHandler.setupStateController(stateController);
+
+        controllers.add(fastActionController, vocalController, interactionController, movementController, actionController, stateController);
+
     }
 
     @Override
@@ -1325,7 +1336,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (isPhaseTwoActive()) {
             return new RiderAbilityBinding(ModAbilities.VARASUCHUS_SLASH_BARRAGE.getName(), RiderAbilityBinding.Activation.PRESS);
         }
-        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.VARASUCHUS_TAILGUARD.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -1550,10 +1561,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     protected void clearLocalSitTransitionForMount() {
-        clearSitProgress();
-        isSittingDown = false;
-        isStandingUp = false;
-        sitTransitionTicks = 0;
+        sitTransitions.clear();
     }
 
     private void startWildRideSequence() {
@@ -1702,61 +1710,19 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         if (this.isInWaterOrBubble()) {
-            if (isSittingDown || isStandingUp || sitTransitionTicks > 0) {
-                isSittingDown = false;
-                isStandingUp = false;
-                sitTransitionTicks = 0;
-            }
+            sitTransitions.clearTransitionOnly();
             if (getSitProgress() != 0f || getPrevSitProgress() != 0f) {
                 clearSitProgress();
             }
             return;
         }
 
-        if (sitTransitionTicks > 0) {
-            sitTransitionTicks--;
-            if (sitTransitionTicks == 0) {
-                isSittingDown = false;
-                isStandingUp = false;
-            }
-        }
-
-        float sitProgress = getSitProgress();
-        if (this.isOrderedToSit()) {
-            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
-                animationHandler.triggerSitDownAnimation();
-                isSittingDown = true;
-                isStandingUp = false;
-                sitTransitionTicks = getSitDownAnimationTicks();
-            }
-
-            if (sitProgress < maxSitTicks()) {
-                sitProgress++;
-                setSitProgress(sitProgress);
-            }
-        } else {
-            if (isVehicle()) {
-                if (sitProgress != 0f) {
-                    clearSitProgress();
-                    isSittingDown = false;
-                    isStandingUp = false;
-                    sitTransitionTicks = 0;
-                }
-            } else if (sitProgress > 0f) {
-                if ((sitProgress >= maxSitTicks() || isSittingDown) && !isStandingUp) {
-                    animationHandler.triggerSitUpAnimation();
-                    isStandingUp = true;
-                    isSittingDown = false;
-                    sitTransitionTicks = getSitUpAnimationTicks();
-                }
-                float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
-                sitProgress -= decrementRate;
-                if (sitProgress < 0f) {
-                    sitProgress = 0f;
-                }
-                setSitProgress(sitProgress);
-            }
-        }
+        sitTransitions.tick(
+                getSitDownAnimationTicks(),
+                getSitUpAnimationTicks(),
+                animationHandler::triggerSitDownAnimation,
+                animationHandler::triggerSitUpAnimation
+        );
     }
 
     private void tickClientSideUpdates() {
@@ -1819,34 +1785,34 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     public boolean isInSitTransition() {
-        return isSittingDown || isStandingUp;
+        return sitTransitions.isInTransition();
     }
     public boolean isSittingDownAnimation() {
-        return isSittingDown;
+        return sitTransitions.isSittingDown();
     }
     public boolean isStandingUpAnimation() {
-        return isStandingUp;
+        return sitTransitions.isStandingUp();
     }
 
     @Override
     public float maxSitTicks() {
-        return SIT_PROGRESS_MAX;
+        return getSitDownAnimationTicks();
     }
 
-    public int getSitDownAnimationTicks() {
-        return SIT_DOWN_ANIMATION_TICKS;
+    private int getSitDownAnimationTicks() {
+        return 22;
     }
 
-    public int getSitUpAnimationTicks() {
-        return SIT_UP_ANIMATION_TICKS;
+    private int getSitUpAnimationTicks() {
+        return 22;
     }
 
-    public int getFallAsleepAnimationTicks() {
-        return FALL_ASLEEP_ANIMATION_TICKS;
+    private int getFallAsleepAnimationTicks() {
+        return 42;
     }
 
-    public int getWakeUpAnimationTicks() {
-        return WAKE_UP_ANIMATION_TICKS;
+    private int getWakeUpAnimationTicks() {
+        return 129;
     }
 
     @Override
@@ -1982,6 +1948,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public boolean hurt(@Nonnull DamageSource damageSource, float amount) {
         if (super.isDying()) {
+            return false;
+        }
+        DragonAbility<?> activeAbility = getActiveAbility();
+        if (activeAbility instanceof VarasuchusTailguardAbility tailguard && tailguard.tryParry(damageSource)) {
             return false;
         }
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {

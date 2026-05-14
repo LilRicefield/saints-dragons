@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.util.Mth;
@@ -42,7 +43,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            getUser().triggerAnim("action", "horn_gore");
+            getUser().triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "horn_gore");
             if (!getUser().level().isClientSide) {
                 float pitch = 0.9f + getUser().getRandom().nextFloat() * 0.2f;
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_HORNGORE.get(), 1.3f, pitch, 19);

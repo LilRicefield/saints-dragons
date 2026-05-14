@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
@@ -52,7 +53,7 @@ public class CindervaneVolleyAbility extends DragonAbility<Cindervane> {
         if (section.sectionType == STARTUP) {
             ticksSinceVolley = VOLLEY_INTERVAL_TICKS;
             volleysFired = 0;
-            getUser().triggerAnim("actions", "magma_blast");
+            getUser().triggerAnim(CindervaneAnimationHandler.ACTION_CONTROLLER, "magma_blast");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_MAGMA_BLAST.get(), 2.0f, 1.0f, 66);
             }

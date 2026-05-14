@@ -63,6 +63,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_BITE_PHASE1_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_BITE_PHASE2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAIL_ATTACK_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAILGUARD_PARRY_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_DASH_CLAW_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_CLAW_ATTACK_DAMAGE;
@@ -263,6 +264,7 @@ public final class ForgeDragonAttributesConfig {
         VARASUCHUS_BITE_PHASE1_DAMAGE = builder.defineInRange("bite_phase1_damage", 15.0, 0.0, 100000.0);
         VARASUCHUS_BITE_PHASE2_DAMAGE = builder.defineInRange("bite_phase2_damage", 25.0, 0.0, 100000.0);
         VARASUCHUS_TAIL_ATTACK_DAMAGE = builder.defineInRange("tail_attack_damage", 7.0, 0.0, 100000.0);
+        VARASUCHUS_TAILGUARD_PARRY_DAMAGE = builder.defineInRange("tailguard_parry_damage", 10.0, 0.0, 100000.0);
         VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE = builder.defineInRange("dash_tail_swipe_damage", 10.0, 0.0, 100000.0);
         VARASUCHUS_DASH_CLAW_DAMAGE = builder.defineInRange("dash_claw_damage", 15.0, 0.0, 100000.0);
         VARASUCHUS_CLAW_ATTACK_DAMAGE = builder.defineInRange("claw_attack_damage", 8.0, 0.0, 100000.0);

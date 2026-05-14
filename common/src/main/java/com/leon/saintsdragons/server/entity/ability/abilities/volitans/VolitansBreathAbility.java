@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -49,7 +50,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     @Override
     protected void endSection(DragonAbilitySection section) {
         if (section != null && section.sectionType == ACTIVE) {
-            getUser().triggerAnim("actions", "breath_end");
+            getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "breath_end");
             getUser().setBreathing(false);
             playBreathEndSound();
             getUser().setBreathMode(0); // always revert to water when breath stops
@@ -67,13 +68,13 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
                 interrupt();
                 return;
             }
-            dragon.triggerAnim("actions", "breath_start");
+            dragon.triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "breath_start");
             dragon.setBreathing(false);
             playBreathStartSound();
             return;
         }
         if (section.sectionType == ACTIVE) {
-            dragon.triggerAnim("actions", "breathing");
+            dragon.triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "breathing");
             dragon.setBreathing(true);
         }
     }
@@ -205,7 +206,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
 
     @Override
     public void interrupt() {
-        getUser().triggerAnim("actions", "breath_end");
+        getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "breath_end");
         getUser().setBreathing(false);
         playBreathEndSound();
         getUser().setBreathMode(0); // always revert to water when breath is interrupted/released

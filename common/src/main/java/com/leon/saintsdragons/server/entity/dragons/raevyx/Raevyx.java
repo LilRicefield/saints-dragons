@@ -12,15 +12,19 @@ import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTamingHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -65,7 +69,6 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
@@ -157,15 +160,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private static final double BABY_MAX_HEALTH = 60.0D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", "action", "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("grumble2", "action", "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("grumble3", "action", "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("roar", "action", "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("roar_ground", "action", "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("roar_air", "action", "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("flex", "action", "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
-            .add("raevyx_hurt", "instant", "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
-            .add("raevyx_die", "instant", "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("roar", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("roar_ground", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("roar_air", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
+            .add("flex", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
+            .add("raevyx_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
+            .add("raevyx_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
     private final ScreenShakeComponent screenShakeComponent;
@@ -198,9 +201,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Nullable
     private Vec3 groundRendRightTrailAnchor = null;
     private boolean allowGroundBeamDuringStorm = false;
-    private int sitTransitionTicks = 0;
-    private boolean isSittingDown = false;
-    private boolean isStandingUp = false;
+    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int postStandUnlockTicks = 0;
     private final RaevyxTamingHandler tamingController = new RaevyxTamingHandler(this);
     private int tamingAbortCalmTicks = 0;
@@ -412,7 +413,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim("action", "landed");
+            triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "landed");
             getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
             suppressSleep(60);
         }
@@ -859,7 +860,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onTakeoffStateStarted() {
-        triggerAnim("instant", getControllingPassenger() != null ? "rider_takeoff" : "takeoff");
+        triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, getControllingPassenger() != null ? "rider_takeoff" : "takeoff");
         float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
         getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
     }
@@ -1523,10 +1524,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void clearLocalSitTransitionForMount() {
-        clearSitProgress();
-        isSittingDown = false;
-        isStandingUp = false;
-        sitTransitionTicks = 0;
+        sitTransitions.clear();
         this.setInSittingPose(false);
     }
     
@@ -1765,58 +1763,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void updateSittingProgress() {
-        if (level().isClientSide) {
-            return;
+        if (!level().isClientSide && super.isInSittingPose() && !isOrderedToSit()) {
+            setInSittingPose(false);
         }
-
-        if (sitTransitionTicks > 0) {
-            sitTransitionTicks--;
-            if (sitTransitionTicks == 0) {
-                isSittingDown = false;
-                isStandingUp = false;
-            }
-        }
-
-        float sitProgress = getSitProgress();
-        if (this.isOrderedToSit()) {
-            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
-                animationHandler.triggerSitDownAnimation();
-                isSittingDown = true;
-                isStandingUp = false; // Cancel the stand-up
-                sitTransitionTicks = getSitDownAnimationTicks();
-            }
-
-            if (sitProgress < maxSitTicks()) {
-                sitProgress++;
-                setSitProgress(sitProgress);
-            }
-        } else {
-            if (!this.level().isClientSide && super.isInSittingPose()) {
-                this.setInSittingPose(false);
-            }
-
-            if (this.isVehicle()) {
-                if (sitProgress != 0f) {
-                    clearSitProgress();
-                    isSittingDown = false;
-                    isStandingUp = false;
-                    sitTransitionTicks = 0;
-                }
-            } else if (sitProgress > 0f) {
-                if ((sitProgress == maxSitTicks() || isSittingDown) && !isStandingUp) {
-                    animationHandler.triggerSitUpAnimation();
-                    isStandingUp = true;
-                    isSittingDown = false;
-                    sitTransitionTicks = getSitUpAnimationTicks();
-                }
-                float decrementRate = maxSitTicks() / (float) getSitUpAnimationTicks();
-                sitProgress -= decrementRate;
-                if (sitProgress < 0f) {
-                    sitProgress = 0f;
-                }
-                setSitProgress(sitProgress);
-            }
-        }
+        sitTransitions.tick(
+                getSitDownAnimationTicks(),
+                getSitUpAnimationTicks(),
+                animationHandler::triggerSitDownAnimation,
+                animationHandler::triggerSitUpAnimation
+        );
     }
     
     private void tickRiderControlLockMovement() {
@@ -1915,7 +1870,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 setFlying(false);
                 setTakeoff(false);
                 timeFlying = 0;
-                triggerAnim("action", "landed");
+                triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "landed");
                 getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
                 lockRiderControls(30);
             }
@@ -2448,16 +2403,16 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     public boolean isInSitTransition() {
-        return isSittingDown || isStandingUp;
+        return sitTransitions.isInTransition();
     }
     public boolean isSittingDownAnimation() {
-        return isSittingDown;
+        return sitTransitions.isSittingDown();
     }
     public boolean isStandingUpAnimation() {
-        return isStandingUp;
+        return sitTransitions.isStandingUp();
     }
     private int getSitDownAnimationTicks() {
-        return 30;
+        return 29;
     }
     private int getSitUpAnimationTicks() {
         return 20;
@@ -2471,7 +2426,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public float maxSitTicks() {
-        return 30.0F;
+        return getSitDownAnimationTicks();
     }
 
     @Override
@@ -2751,10 +2706,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             this.setCommand(0);
             this.setOrderedToSit(false);
             this.setInSittingPose(false);
-            clearSitProgress();
-            this.isSittingDown = false;
-            this.isStandingUp = false;
-            this.sitTransitionTicks = 0;
+            sitTransitions.clear();
             clearSleepCooldowns();
         }
         applyConfiguredAttributes();
@@ -2762,43 +2714,41 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Raevyx> movementController =
-                new AnimationController<>(this, "movement", 5, animationHandler::handleMovementAnimation);
-        AnimationController<Raevyx> actionController =
-                new AnimationController<>(this, "action", 2, state -> {
+        AnimationController<Raevyx> movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Raevyx> actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
                     if (isTamingStunned()) {
                         return PlayState.STOP;
                     }
-                    return PlayState.STOP;
+                    return animationHandler.raevyxActionPredicate(state);
                 });
+        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
-        movementController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
+        AnimationController<Raevyx> fastActionController = new AnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
+        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Raevyx> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Raevyx> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Raevyx> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
+            if (isTamingStunned()) {
+                return PlayState.STOP;
             }
+            return DragonStateAnimationHelper.idle(state);
         });
-        actionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
+        stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
         animationHandler.setupActionController(actionController);
+        animationHandler.setupFastActionController(fastActionController);
+        animationHandler.setupInteractionController(interactionController);
+        animationHandler.setupStateController(stateController);
 
-        AnimationController<Raevyx> instantController =
-                new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
-        animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        controllers.add(instantController);
-
-        controllers.add(movementController);
-        controllers.add(actionController);
+        controllers.add(fastActionController, vocalController, interactionController, movementController, actionController, stateController);
     }
 
     @Override

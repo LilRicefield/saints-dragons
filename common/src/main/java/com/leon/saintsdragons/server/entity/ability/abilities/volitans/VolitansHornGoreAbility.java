@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -43,7 +44,7 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            getUser().triggerAnim("actions", "horn_gore");
+            getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "horn_gore");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(
                         ModSounds.VOLITANS_HORN_GORE.get(),

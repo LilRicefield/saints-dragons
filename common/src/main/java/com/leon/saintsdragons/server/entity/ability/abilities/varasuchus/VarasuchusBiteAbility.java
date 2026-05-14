@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.VarasuchusAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -51,7 +52,7 @@ public class VarasuchusBiteAbility extends DragonAbility<Varasuchus> {
 
         if (section.sectionType == STARTUP) {
             Varasuchus dragon = getUser();
-            dragon.triggerAnim("action", "bite");
+            dragon.triggerAnim(VarasuchusAnimationHandler.ACTION_CONTROLLER, "bite");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_BITE1.get(), 1.0f, 1.0f, SOUND_TICKS);
             }

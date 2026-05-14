@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.VarasuchusAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -42,7 +43,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            getUser().triggerAnim("action", "horn_gore");
+            getUser().triggerAnim(VarasuchusAnimationHandler.ACTION_CONTROLLER, "horn_gore");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_HORNGORE.get(), 1.0f, 1.0f, 24);
             }

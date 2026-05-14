@@ -141,6 +141,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusBuffer.bitePhase1 = varasuchusCurrent.abilityDamage("bite_phase1", 15.0D);
         varasuchusBuffer.bitePhase2 = varasuchusCurrent.abilityDamage("bite_phase2", 25.0D);
         varasuchusBuffer.tailAttack = varasuchusCurrent.abilityDamage("tail_attack", 7.0D);
+        varasuchusBuffer.tailguardParry = varasuchusCurrent.abilityDamage("tailguard_parry", 10.0D);
         varasuchusBuffer.dashTailSwipe = varasuchusCurrent.abilityDamage("dash_tail_swipe", 10.0D);
         varasuchusBuffer.dashClaw = varasuchusCurrent.abilityDamage("dash_claw", 15.0D);
         varasuchusBuffer.clawAttack = varasuchusCurrent.abilityDamage("claw_attack", 8.0D);
@@ -1021,6 +1022,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.tailAttack = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.tailguard_parry"), buffer.tailguardParry)
+                .setDefaultValue(defaults.abilityDamage("tailguard_parry", 10.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.tailguardParry = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_tail_swipe"), buffer.dashTailSwipe)
                 .setDefaultValue(defaults.abilityDamage("dash_tail_swipe", 10.0D))
                 .setMin(0.0D)
@@ -1658,6 +1665,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusAbilities.put("bite_phase1", DragonAbilityOverride.ofDamage(varasuchusBuffer.bitePhase1));
         varasuchusAbilities.put("bite_phase2", DragonAbilityOverride.ofDamage(varasuchusBuffer.bitePhase2));
         varasuchusAbilities.put("tail_attack", DragonAbilityOverride.ofDamage(varasuchusBuffer.tailAttack));
+        varasuchusAbilities.put("tailguard_parry", DragonAbilityOverride.ofDamage(varasuchusBuffer.tailguardParry));
         varasuchusAbilities.put("dash_tail_swipe", DragonAbilityOverride.ofDamage(varasuchusBuffer.dashTailSwipe));
         varasuchusAbilities.put("dash_claw", DragonAbilityOverride.ofDamage(varasuchusBuffer.dashClaw));
         varasuchusAbilities.put("claw_attack", DragonAbilityOverride.ofDamage(varasuchusBuffer.clawAttack));
@@ -1814,6 +1822,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double bitePhase1;
         double bitePhase2;
         double tailAttack;
+        double tailguardParry;
         double dashTailSwipe;
         double dashClaw;
         double clawAttack;

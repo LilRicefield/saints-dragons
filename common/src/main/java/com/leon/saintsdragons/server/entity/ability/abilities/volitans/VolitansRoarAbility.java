@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -71,7 +72,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
             Volitans dragon = getUser();
             airOrWaterRoar = dragon.isFlying() || dragon.isInWaterOrBubble();
             groundedRoar = !airOrWaterRoar;
-            dragon.triggerAnim("instant", airOrWaterRoar ? "roar_air_water" : "roar");
+            dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, airOrWaterRoar ? "roar_air_water" : "roar");
             if (!airOrWaterRoar) {
                 dragon.lockRiderControls(ROAR_ANIM_TOTAL_TICKS);
                 dragon.blockTakeoffInput(ROAR_ANIM_TOTAL_TICKS + GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS);

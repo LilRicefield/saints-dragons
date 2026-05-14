@@ -703,6 +703,7 @@
   "config.saintsdragons.attributes.varasuchus.bite_phase1": "Bite Damage (Phase 1)",
   "config.saintsdragons.attributes.varasuchus.bite_phase2": "Bite Damage (Phase 2)",
   "config.saintsdragons.attributes.varasuchus.tail_attack": "Tail Attack Damage",
+  "config.saintsdragons.attributes.varasuchus.tailguard_parry": "Tailguard Parry Damage",
   "config.saintsdragons.attributes.varasuchus.dash_tail_swipe": "Dash Tail Swipe Damage",
   "config.saintsdragons.attributes.varasuchus.dash_claw": "Dash Claw Damage",
   "config.saintsdragons.attributes.varasuchus.claw_attack": "Claw Attack Damage",

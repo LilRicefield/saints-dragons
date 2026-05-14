@@ -51,7 +51,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             if (!player.getAbilities().instabuild) {
                 heldItem.shrink(1);
             }
-            dragon.triggerAnim("actions", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
             dragon.setFeedingCooldown(44);
             boolean hearty = heldItem.is(ModItems.HEARTY_DRAGON_MEAL.get());
@@ -208,7 +208,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 itemstack.shrink(1);
             }
 
-            dragon.triggerAnim("actions", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
             dragon.setFeedingCooldown(61);
             dragon.setInLove(player);
@@ -228,7 +228,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             if (!player.getAbilities().instabuild) {
                 food.shrink(1);
             }
-            dragon.triggerAnim("actions", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
             dragon.setFeedingCooldown(44);
 
@@ -318,7 +318,7 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
                 44,
                 hearty,
                 () -> {
-                    dragon.triggerAnim("actions", "eat");
+                    dragon.triggerAnim("interaction", "eat");
                     dragon.playEatMovingSound();
                 },
                 dragon::setFeedingCooldown,

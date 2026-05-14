@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -71,7 +72,7 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
         }
         Volitans dragon = getUser();
         if (section.sectionType == STARTUP) {
-            dragon.triggerAnim("instant", "enter_burrow");
+            dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "enter_burrow");
             playEnterBurrowSound(dragon);
             dragon.setBurrowing(false);
             exitRequested = false;
@@ -85,7 +86,7 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
         }
         if (section.sectionType == RECOVERY) {
             dragon.setBurrowing(false);
-            dragon.triggerAnim("actions", "burrow_exit");
+            dragon.triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "burrow_exit");
             playExitBurrowSound(dragon);
             dragon.grantTemporaryInvulnerability(EXIT_TICKS);
             dragon.lockRiderControls(EXIT_TICKS);

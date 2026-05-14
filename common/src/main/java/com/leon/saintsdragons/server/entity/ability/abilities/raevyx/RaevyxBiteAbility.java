@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -52,7 +53,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            getUser().triggerAnim("action", "lightning_bite");
+            getUser().triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_bite");
             if (!getUser().level().isClientSide) {
                 float pitch = 0.95f + getUser().getRandom().nextFloat() * 0.10f;
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_BITE.get(), 1.0f, pitch, 50);

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.VarasuchusAnimationHandler;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -62,7 +63,7 @@ public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
             Varasuchus dragon = getUser();
             dragon.lockRiderControls(CONTROL_LOCK_TICKS);
             String animName = useLeftTail ? "tail_attack_left" : "tail_attack_right";
-            dragon.triggerAnim("instant", animName);
+            dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, animName);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_TAIL_ATTACK.get(), 1.0f, 1.0f, TAIL_ATTACK_SOUND_TICKS);
             }

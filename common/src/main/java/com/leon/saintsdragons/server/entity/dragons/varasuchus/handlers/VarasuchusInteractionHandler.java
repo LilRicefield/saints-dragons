@@ -72,7 +72,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
                 food.shrink(1);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(40);
 
@@ -166,7 +166,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
                 food.shrink(1);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(61);
             dragon.setInLove(player);
@@ -187,7 +187,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
                 food.shrink(1);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(50);
 
@@ -260,7 +260,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
                 50,
                 heartyMeal,
                 () -> {
-                    dragon.triggerAnim("action", "eat");
+                    dragon.triggerAnim("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown,

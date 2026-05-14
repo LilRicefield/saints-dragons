@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.VarasuchusAnimationHandler;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionInstant;
@@ -66,7 +67,7 @@ public class VarasuchusPhaseShiftAbility extends DragonAbility<Varasuchus> {
         phaseToggleApplied = true;
 
         String trigger = resolveAnimationTrigger();
-        dragon.triggerAnim("action", trigger);
+        dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, trigger);
 
         if (enteringPhaseTwo && !dragon.level().isClientSide) {
             dragon.startPhaseShiftScreenShake(transitionTicks, 1.5F);

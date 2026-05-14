@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.ability;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
@@ -36,11 +37,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         String abilityId = this.getAbilityType().getName();
 
         // Trigger death animation using specific metadata when available
-        String controllerId = "action";
-        VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
-        if (deathEntry != null && deathEntry.controllerId() != null) {
-            controllerId = deathEntry.controllerId();
-        }
+        String controllerId = DragonInteractionAnimationHelper.CONTROLLER;
 
         // Use baby die animation if this is a baby dragon
         String animationTrigger = "die";
@@ -50,7 +47,6 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
             animationTrigger = "varasuchus_die";
         } else if ("volitans_die".equals(abilityId)) {
             animationTrigger = "volitans_die";
-            controllerId = "instant";
         }
         dragon.triggerAnim(controllerId, animationTrigger);
     }

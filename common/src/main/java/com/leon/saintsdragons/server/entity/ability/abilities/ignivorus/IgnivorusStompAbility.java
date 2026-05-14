@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -67,7 +68,7 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
             dragon.lockRiderControls(29);
             boolean useRight = dragon.shouldUseRightWingSwipe();
             String animationName = useRight ? "stomp_right" : "stomp_left";
-            dragon.triggerAnim("action", animationName);
+            dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, animationName);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_STOMP.get(), 1.0f, 1.0f, 68);
             }

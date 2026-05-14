@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.VarasuchusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -69,7 +70,7 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         if (section.sectionType == STARTUP) {
             Varasuchus dragon = getUser();
             String animName = getAnimationName(dragon);
-            dragon.triggerAnim("instant", animName);
+            dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, animName);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUSCLAW.get(), 1.0f, 1.0f, 30);
             }

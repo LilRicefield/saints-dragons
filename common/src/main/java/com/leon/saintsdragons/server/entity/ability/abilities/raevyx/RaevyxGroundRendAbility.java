@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType;
 import net.minecraft.server.level.ServerPlayer;
@@ -69,7 +70,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return;
         }
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            getUser().triggerAnim("action", "ground_rend");
+            getUser().triggerAnim(RaevyxAnimationHandler.ACTION_CONTROLLER, "ground_rend");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(
                         ModSounds.RAEVYX_GROUND_REND.get(),

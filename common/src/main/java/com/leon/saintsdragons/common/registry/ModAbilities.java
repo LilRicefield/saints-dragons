@@ -31,7 +31,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.Varasuc
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusClawAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusHornGoreAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusPhaseShiftAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusRoarAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusTailguardAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusSlashBarrageAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusTailAttackAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBiteAbility;
@@ -85,7 +85,7 @@ public final class ModAbilities {
     public static final DragonAbilityType<Varasuchus, VarasuchusClawAbility> VARASUCHUS_CLAW = register("varasuchus_claw", VarasuchusClawAbility::new);
     public static final DragonAbilityType<Varasuchus, VarasuchusHornGoreAbility> VARASUCHUS_HORN_GORE = register("varasuchus_horn_gore", VarasuchusHornGoreAbility::new);
     public static final DragonAbilityType<Varasuchus, VarasuchusTailAttackAbility> VARASUCHUS_TAIL_ATTACK = register("varasuchus_tail_attack", VarasuchusTailAttackAbility::new);
-    public static final DragonAbilityType<Varasuchus, VarasuchusRoarAbility> VARASUCHUS_ROAR = register("varasuchus_roar", VarasuchusRoarAbility::new);
+    public static final DragonAbilityType<Varasuchus, VarasuchusTailguardAbility> VARASUCHUS_TAILGUARD = register("varasuchus_tailguard", VarasuchusTailguardAbility::new);
     public static final DragonAbilityType<Varasuchus, VarasuchusSlashBarrageAbility> VARASUCHUS_SLASH_BARRAGE = register("varasuchus_slash_barrage", VarasuchusSlashBarrageAbility::new);
     public static final DragonAbilityType<Varasuchus, VarasuchusPhaseShiftAbility> VARASUCHUS_PHASE_SHIFT = register("varasuchus_phase_shift", VarasuchusPhaseShiftAbility::new);
     public static final DragonAbilityType<Varasuchus, HurtAbility<Varasuchus>> VARASUCHUS_HURT = register("varasuchus_hurt", HurtAbility::new);

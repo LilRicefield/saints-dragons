@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -17,7 +18,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, DURATION_TICKS)
     };
 
-    private static final String DEFAULT_CONTROLLER = "action";
+    private static final String DEFAULT_CONTROLLER = DragonInteractionAnimationHelper.CONTROLLER;
 
     private final String controllerId;
     private final String animationTrigger;
@@ -46,7 +47,7 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
-            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt", "nulljaw_hurt" -> "instant";
+            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt", "nulljaw_hurt" -> DragonInteractionAnimationHelper.CONTROLLER;
             default -> DEFAULT_CONTROLLER;
         };
     }

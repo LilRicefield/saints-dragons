@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.VarasuchusAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -48,7 +49,7 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
 
         if (section.sectionType == ACTIVE) {
             Varasuchus dragon = getUser();
-            dragon.triggerAnim("instant", "slash_barrage");
+            dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "slash_barrage");
             dragon.lockAbilities(TOTAL_TICKS);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.VARASUCHUS_SLASH_BARRAGE.get(), 1.0f, 1.0f, SOUND_TICKS);

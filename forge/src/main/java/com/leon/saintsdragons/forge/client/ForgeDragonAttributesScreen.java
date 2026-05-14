@@ -422,6 +422,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.tailguard_parry"),
+                ForgeDragonAttributesConfig.VARASUCHUS_TAILGUARD_PARRY_DAMAGE::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_TAILGUARD_PARRY_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.dash_tail_swipe"),
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE::set,
@@ -860,6 +864,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_BITE_PHASE2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAIL_ATTACK_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_TAILGUARD_PARRY_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAILGUARD_PARRY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_DASH_TAIL_SWIPE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_DASH_CLAW_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_CLAW_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_CLAW_ATTACK_DAMAGE.getDefault());

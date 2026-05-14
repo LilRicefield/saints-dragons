@@ -222,7 +222,7 @@ public class VarasuchusCombatGoal extends Goal {
             || drake.isAbilityActive(ModAbilities.VARASUCHUS_CLAW)
             || drake.isAbilityActive(ModAbilities.VARASUCHUS_HORN_GORE)
             || drake.isAbilityActive(ModAbilities.VARASUCHUS_TAIL_ATTACK)
-            || drake.isAbilityActive(ModAbilities.VARASUCHUS_ROAR);
+            || drake.isAbilityActive(ModAbilities.VARASUCHUS_TAILGUARD);
     }
 
     private boolean shouldUseAIDash(double gap, boolean hasLineOfSight, LivingEntity target) {

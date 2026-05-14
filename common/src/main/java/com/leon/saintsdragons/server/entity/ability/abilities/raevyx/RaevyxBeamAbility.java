@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -55,7 +56,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             beamStartPlayed = true;
             wyvern.setBeamGlowActive(true);
             wyvern.setBeaming(false);
-            wyvern.triggerAnim("action", "lightning_beam_start");
+            wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beam_start");
             if (!wyvern.level().isClientSide) {
                 float pitch = 0.9f + wyvern.getRandom().nextFloat() * 0.2f;
                 wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_START.get(), 1.8f, pitch, 28);
@@ -63,7 +64,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
             wyvern.setBeaming(true);
-            wyvern.triggerAnim("action", "lightning_beaming");
+            wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beaming");
             beamLoopActive = true;
             if (!hasBeamFired) {
                 fireBeamOnce();
@@ -134,7 +135,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
     private void triggerBeamStop(Raevyx wyvern) {
         if (beamLoopActive || beamStartPlayed) {
-            wyvern.triggerAnim("action", "lightning_beam_stop");
+            wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beam_stop");
             if (!wyvern.level().isClientSide) {
                 float pitch = 0.95f + wyvern.getRandom().nextFloat() * 0.15f;
                 wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_STOP.get(), 1.6f, pitch, 34);

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -60,7 +61,7 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
         if (section.sectionType == STARTUP) {
             impactApplied = false;
-            dragon.triggerAnim("action", "body_slam");
+            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "body_slam");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BODY_SLAM.get(), 1.0f, 1.0f, 53);
             }

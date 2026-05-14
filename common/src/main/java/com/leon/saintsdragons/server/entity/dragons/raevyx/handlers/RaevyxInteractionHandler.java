@@ -78,7 +78,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
                 consumeHeldItem(player, itemstack);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
             dragon.setFeedingCooldown(61);
             boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
@@ -145,7 +145,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
                 61,
                 hearty,
                 () -> {
-                    dragon.triggerAnim("action", "eat");
+                    dragon.triggerAnim("interaction", "eat");
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
                 },
                 dragon::setFeedingCooldown,
@@ -224,7 +224,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
                 consumeHeldItem(player, itemstack);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
             dragon.setFeedingCooldown(61);
 
@@ -245,7 +245,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             if (!player.getAbilities().instabuild) {
                 consumeHeldItem(player, itemstack);
             }
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
             dragon.setFeedingCooldown(22);
 

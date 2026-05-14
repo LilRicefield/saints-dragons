@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -89,7 +90,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
 
             // Trigger slamming animation (1.67 seconds)
             if (!dragon.level().isClientSide) {
-                dragon.triggerAnim("instant", "slamming");
+                dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "slamming");
                 dragon.getSoundHandler().playMovingEntitySound(
                         ModSounds.VOLITANS_SLAMMING.get(),
                         1.6f,
@@ -169,7 +170,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
 
             // Trigger slammed animation (1 second)
             if (!dragon.level().isClientSide) {
-                dragon.triggerAnim("instant", "slammed");
+                dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "slammed");
                 dragon.playSound(ModSounds.VOLITANS_SLAMMED.get(), 1.9f, 1.0f);
             }
 

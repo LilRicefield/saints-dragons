@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -226,19 +227,19 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
         switch (level) {
             case 1 -> {
-                dragon.triggerAnim("action", "fireball_level1_charge");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level1_charge");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_CHARGE.get(), 1.0f, 1.0f, 54);
                 }
             }
             case 2 -> {
-                dragon.triggerAnim("action", "fireball_level2_charge");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level2_charge");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL2_CHARGE.get(), 1.0f, 1.0f, 68);
                 }
             }
             case 3 -> {
-                dragon.triggerAnim("action", "fireball_level3_charge");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_charge");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_CHARGE.get(), 1.0f, 1.0f, 94);
                 }
@@ -248,26 +249,26 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     }
 
     private void triggerHoldAnimation() {
-        getUser().triggerAnim("action", "fireball_level3_hold");
+        getUser().triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_hold");
     }
 
     private void triggerShootAnimation(int level) {
         Ignivorus dragon = getUser();
         switch (level) {
             case 2 -> {
-                dragon.triggerAnim("action", "fireball_level2_shoot");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level2_shoot");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL2_SHOOTS.get(), 1.0f, 1.0f, 76);
                 }
             }
             case 3 -> {
-                dragon.triggerAnim("action", "fireball_level3_shoot");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_shoot");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_SHOOTS.get(), 1.0f, 1.0f, 45);
                 }
             }
             default -> {
-                dragon.triggerAnim("action", "fireball_level1_shoot");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level1_shoot");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_SHOOTS.get(), 1.0f, 1.0f, 66);
                 }

@@ -16,12 +16,15 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFloatGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
+import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -119,9 +122,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.INT);
 
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", "actions", "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 1.0f, 1.0f, 0.08f, true, true, false)
-            .add("grumble2", "actions", "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 1.0f, 1.0f, 0.08f, true, true, false)
-            .add("grumble3", "actions", "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 1.0f, 1.0f, 0.08f, true, true, false)
+            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.nulljaw.grumble1", ModSounds.NULLJAW_GRUMBLE_1, 1.0f, 1.0f, 0.08f, true, true, false)
+            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.nulljaw.grumble2", ModSounds.NULLJAW_GRUMBLE_2, 1.0f, 1.0f, 0.08f, true, true, false)
+            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.nulljaw.grumble3", ModSounds.NULLJAW_GRUMBLE_3, 1.0f, 1.0f, 0.08f, true, true, false)
             .add("eat", "actions", "animation.nulljaw.eat", ModSounds.NULLJAW_EAT, 1.0f, 1.0f, 0.02f, true, true, false)
             .add("nulljaw_hurt", "instant", "animation.nulljaw.hurt", ModSounds.NULLJAW_HURT, 1.1f, 1.0f, 0.04f, true, true, true)
             .add("nulljaw_die", "instant", "animation.nulljaw.die", ModSounds.NULLJAW_DIE, 1.2f, 1.0f, 0.0f, true, true, true)
@@ -191,7 +194,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        if (com.leon.saintsdragons.server.world.DragonSpawnRules.isNaturalWildSpawn(spawnType)
+        if (DragonSpawnRules.isNaturalWildSpawn(spawnType)
                 && !level.getBiome(pos).is(Biomes.END_BARRENS)) {
             return false;
         }
@@ -225,7 +228,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         if (!(level instanceof ServerLevelAccessor serverLevelAccessor)) {
             return true;
         }
-        if (!com.leon.saintsdragons.server.world.DragonSpawnRules.isNaturalWildSpawn(spawnType)) {
+        if (!DragonSpawnRules.isNaturalWildSpawn(spawnType)) {
             return true;
         }
 
@@ -320,6 +323,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         AnimationController<Nulljaw> instant = new AnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
         animationHandler.setupInstantController(instant);
         controllers.add(instant);
+        AnimationController<Nulljaw> vocal = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        DragonVocalAnimationHelper.registerGrumbles(vocal, this);
+        controllers.add(vocal);
+        AnimationController<Nulljaw> interaction = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        animationHandler.setupInteractionController(interaction);
+        controllers.add(interaction);
     }
 
     @Override
@@ -601,7 +610,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                     if (!player.getAbilities().instabuild) {
                         heldItem.shrink(1);
                     }
-                    this.triggerAnim("actions", "eat");
+                    this.triggerAnim("interaction", "eat");
                     this.playEatMovingSound();
                     this.setFeedingCooldown(24);
 
@@ -625,7 +634,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 if (!player.getAbilities().instabuild) {
                     heldItem.shrink(1);
                 }
-                this.triggerAnim("actions", "eat");
+                this.triggerAnim("interaction", "eat");
                 this.playEatMovingSound();
 
                 if (!this.isTame()) {
@@ -690,7 +699,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     public void die(@NotNull DamageSource cause) {
         if (!this.dead && !this.level().isClientSide && !deathSoundQueued) {
             deathSoundQueued = true;
-            this.triggerAnim("instant", "nulljaw_die");
+            this.triggerAnim(DragonInteractionAnimationHelper.CONTROLLER, "nulljaw_die");
             VocalEntry deathEntry = VOCAL_ENTRIES.get("nulljaw_die");
             if (deathEntry != null && deathEntry.soundSupplier() != null) {
                 float pitch = deathEntry.basePitch();

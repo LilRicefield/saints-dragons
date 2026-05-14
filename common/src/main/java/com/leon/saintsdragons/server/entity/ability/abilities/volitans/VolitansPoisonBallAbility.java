@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
@@ -61,7 +62,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
         shootAnimTriggered = false;
         releaseTicks = 0;
         resolved = false;
-        getUser().triggerAnim("actions", "poison_ball_ready");
+        getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "poison_ball_ready");
         if (!getUser().level().isClientSide) {
             getUser().getSoundHandler().playMovingEntitySound(
                     ModSounds.VOLITANS_POISON_BALL_READY.get(),
@@ -88,7 +89,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
             chargeTicks++;
             if (!holdLoopActive && chargeTicks >= READY_TICKS) {
                 holdLoopActive = true;
-                getUser().triggerAnim("actions", "poison_ball_hold");
+                getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "poison_ball_hold");
             }
             return;
         }
@@ -101,7 +102,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
         if (!shootAnimTriggered) {
             shootAnimTriggered = true;
             releaseTicks = 0;
-            getUser().triggerAnim("actions", "poison_ball_shoot");
+            getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "poison_ball_shoot");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(
                         ModSounds.VOLITANS_POISON_BALL_SHOOT.get(),

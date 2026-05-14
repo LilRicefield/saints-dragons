@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -45,7 +46,7 @@ public class StegonautChinSlamAbility extends DragonAbility<Stegonaut> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            getUser().triggerAnim("action", "chin_slam");
+            getUser().triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "chin_slam");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_CHIN_SLAM.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 51);
             }

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.storage.ServerLevelData;
@@ -88,14 +89,14 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             getUser().lockTakeoff(activeStartupDuration);
 
             if (isGroundCast) {
-                getUser().triggerAnim("action", "summon_storm");
+                getUser().triggerAnim(RaevyxAnimationHandler.ACTION_CONTROLLER, "summon_storm");
                 if (!getUser().level().isClientSide) {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM.get(), 1.6f, 1.0f, GROUND_SOUND_TICKS);
                 }
                 screenShakeActive = false;
                 groundExtraShakeTriggered = false;
             } else {
-                getUser().triggerAnim("action", "summon_storm_air");
+                getUser().triggerAnim(RaevyxAnimationHandler.ACTION_CONTROLLER, "summon_storm_air");
                 if (!getUser().level().isClientSide) {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_SUMMON_STORM_AIR.get(), 1.6f, 1.0f, AIR_SOUND_TICKS);
                 }

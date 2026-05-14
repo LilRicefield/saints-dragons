@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -62,7 +63,7 @@ public class CindervaneSlashGrabAbility extends DragonAbility<Cindervane> {
         }
         if (section.sectionType == STARTUP) {
             Cindervane dragon = getUser();
-            dragon.triggerAnim("actions", "slash_left");
+            dragon.triggerAnim(CindervaneAnimationHandler.ACTION_CONTROLLER, "slash_left");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_SLASH.get(), 1.0f, 1.0f, 40);
             }

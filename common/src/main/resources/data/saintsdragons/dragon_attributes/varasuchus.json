@@ -11,6 +11,9 @@
     "tail_attack": {
       "damage": 7.0
     },
+    "tailguard_parry": {
+      "damage": 10.0
+    },
     "dash_tail_swipe": {
       "damage": 10.0
     },

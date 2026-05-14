@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -58,7 +59,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
             resolved = false;
             releaseTicks = 0;
             shootAnimTriggered = false;
-            getUser().triggerAnim("action", "ground_eating");
+            getUser().triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "ground_eating");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_GROUND_EATING.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 37);
             }
@@ -79,7 +80,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
 
         if (releaseRequested) {
             if (cancelRequested) {
-                getUser().triggerAnim("action", "ground_eating_cancel");
+                getUser().triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "ground_eating_cancel");
                 if (!getUser().level().isClientSide) {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_GROUND_EATING_CANCEL.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 22);
                 }
@@ -89,7 +90,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
             }
 
             if (!shootAnimTriggered) {
-                getUser().triggerAnim("action", "ground_eating_shoot");
+                getUser().triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "ground_eating_shoot");
                 if (!getUser().level().isClientSide) {
                     getUser().getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_GROUND_EATING_SHOOT.get(), 1.0f, getUser().isBaby() ? 1.6f : 1.0f, 75);
                 }
@@ -108,7 +109,7 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
 
         chargeTicks++;
         if (!holdLoopActive && chargeTicks >= HOLD_LOOP_TRIGGER_TICKS) {
-            getUser().triggerAnim("action", "ground_eating_hold");
+            getUser().triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "ground_eating_hold");
             holdLoopActive = true;
         }
     }

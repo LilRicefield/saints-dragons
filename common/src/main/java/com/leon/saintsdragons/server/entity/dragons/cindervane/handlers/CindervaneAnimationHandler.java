@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -8,6 +11,9 @@ import software.bernie.geckolib.core.object.PlayState;
 
 
 public class CindervaneAnimationHandler {
+    public static final String FAST_ACTION_CONTROLLER = "cindervaneFastAction";
+    public static final String ACTION_CONTROLLER = "cindervaneAction";
+
     private final Cindervane amphithere;
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.cindervane.idle");
     private static final RawAnimation GLIDE = RawAnimation.begin().thenLoop("animation.cindervane.glide");
@@ -44,12 +50,9 @@ public class CindervaneAnimationHandler {
         if (amphithere.isTakeoff()) {
             return PlayState.STOP;
         }
-        if (amphithere.isSleeping() && !amphithere.isSleepTransitioning()) {
-            state.getController().transitionLength(6);
-            state.setAndContinue(SLEEP);
-            return PlayState.CONTINUE;
-        } else if (amphithere.isSleepTransitioning()) {
-            return PlayState.STOP;
+        PlayState sleepPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, SLEEP, SIT, 6, 0, false);
+        if (sleepPose != null) {
+            return sleepPose;
         }
 
         boolean inWater = amphithere.isInWater() || amphithere.isInWaterOrBubble();
@@ -122,14 +125,9 @@ public class CindervaneAnimationHandler {
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
-        float sitProgress = amphithere.getSitProgress();
-        float maxSit = amphithere.maxSitTicks();
-
-        if (sitProgress >= maxSit) {
-            state.setAndContinue(SIT);
-            return PlayState.CONTINUE;
-        } else if (sitProgress > 0f) {
-            return PlayState.STOP;
+        PlayState sitPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, null, SIT, 0, 0);
+        if (sitPose != null) {
+            return sitPose;
         }
 
         state.getController().setAnimationSpeed(1.0f);
@@ -183,19 +181,7 @@ public class CindervaneAnimationHandler {
         }
 
         if (!amphithere.isTakeoff() && !amphithere.isLanding() && !amphithere.isHovering()) {
-            int groundState = amphithere.getEffectiveGroundState();
-
-            if (groundState == 2) {
-                state.setAndContinue(RUN);
-            } else if (groundState == 1) {
-                state.setAndContinue(WALK);
-            } else if (amphithere.isRunning()) {
-                state.setAndContinue(RUN);
-            } else if (amphithere.isWalking()) {
-                state.setAndContinue(WALK);
-            } else {
-                state.setAndContinue(IDLE);
-            }
+            return DragonMovementAnimationHelper.handleGroundMovement(state, amphithere, IDLE, WALK, RUN);
         } else {
             state.setAndContinue(IDLE);
         }
@@ -214,16 +200,9 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
         controller.triggerableAnim("slash_left",
                 RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
-        controller.triggerableAnim("eat",
-                RawAnimation.begin().thenPlay("animation.cindervane.eat"));
         controller.triggerableAnim("landed", LANDED);
-        controller.triggerableAnim("down", SIT_DOWN);
-        controller.triggerableAnim("up", SIT_UP);
-        controller.triggerableAnim("fall_asleep", FALL_ASLEEP);
-        controller.triggerableAnim("sleep", SLEEP);
-        controller.triggerableAnim("wake_up", WAKE_UP);
         amphithere.getVocalEntries().forEach((key, entry) -> {
-            if (!"actions".equals(entry.controllerId())) {
+            if (!ACTION_CONTROLLER.equals(entry.controllerId())) {
                 return;
             }
             if (entry.animationId() != null && !entry.animationId().isEmpty()) {
@@ -232,37 +211,50 @@ public class CindervaneAnimationHandler {
         });
     }
 
-    public PlayState instantActionPredicate(AnimationState<Cindervane> state) {
+    public void setupStateController(AnimationController<Cindervane> controller) {
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_DOWN, SIT_DOWN);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_UP, SIT_UP);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.FALL_ASLEEP, FALL_ASLEEP);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SLEEP, SLEEP);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.WAKE_UP, WAKE_UP);
+    }
+
+    public PlayState fastActionPredicate(AnimationState<Cindervane> state) {
         state.getController().transitionLength(1);
         return PlayState.STOP;
     }
 
-    public void setupInstantActionController(AnimationController<Cindervane> controller) {
+    public void setupFastActionController(AnimationController<Cindervane> controller) {
         controller.triggerableAnim("takeoff", TAKEOFF);
+    }
+
+    public void setupInteractionController(AnimationController<Cindervane> controller) {
+        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+                RawAnimation.begin().thenPlay("animation.cindervane.eat"));
         controller.triggerableAnim("cindervane_hurt",
                 RawAnimation.begin().thenPlay("animation.cindervane.hurt"));
-        controller.triggerableAnim("die",
+        controller.triggerableAnim(DragonInteractionAnimationHelper.DIE,
                 RawAnimation.begin().thenPlay("animation.cindervane.die"));
     }
 
     public void triggerSitDownAnimation() {
-        amphithere.triggerAnim("actions", "down");
+        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        amphithere.triggerAnim("actions", "up");
+        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        amphithere.triggerAnim("actions", "fall_asleep");
+        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerSleepAnimation() {
-        amphithere.triggerAnim("actions", "sleep");
+        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        amphithere.triggerAnim("actions", "wake_up");
+        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
     }
 
     public PlayState actionPredicate(AnimationState<Cindervane> state) {

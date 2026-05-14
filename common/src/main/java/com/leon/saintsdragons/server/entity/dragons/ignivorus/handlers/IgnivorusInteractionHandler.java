@@ -72,7 +72,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         }
         if (!client) {
             consumeHeldItem(player, itemstack);
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(20);
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
@@ -176,7 +176,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         if (!client) {
             consumeHeldItem(player, itemstack);
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             playEatSound();
 
             dragon.setFeedingCooldown(61);
@@ -213,7 +213,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 61,
                 hearty,
                 () -> {
-                    dragon.triggerAnim("action", "eat");
+                    dragon.triggerAnim("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown,
@@ -236,7 +236,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
         if (!dragon.level().isClientSide) {
             consumeHeldItem(player, itemstack);
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(23);
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());

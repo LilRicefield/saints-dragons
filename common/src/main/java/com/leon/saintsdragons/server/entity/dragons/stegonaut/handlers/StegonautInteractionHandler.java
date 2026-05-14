@@ -49,7 +49,7 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
                     22,
                     hearty,
                     () -> {
-                        dragon.triggerAnim("action", "eat");
+                        dragon.triggerAnim("interaction", "eat");
                         dragon.playEatMovingSound();
                     },
                     ticks -> {
@@ -74,7 +74,7 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
                 heldItem.shrink(1);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
 
             DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
@@ -166,7 +166,7 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
                 heldItem.shrink(1);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
             dragon.setInLove(player);
             sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_ready");
@@ -182,7 +182,7 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
                 heldItem.shrink(1);
             }
 
-            dragon.triggerAnim("action", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
 
             boolean hearty = heldItem.is(ModItems.HEARTY_DRAGON_MEAL.get());

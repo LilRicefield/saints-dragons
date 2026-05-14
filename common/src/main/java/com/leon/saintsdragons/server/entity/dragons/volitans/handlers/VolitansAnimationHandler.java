@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -8,6 +11,9 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 public final class VolitansAnimationHandler {
+    public static final String FAST_ACTION_CONTROLLER = "volitansFastAction";
+    public static final String ACTION_CONTROLLER = "volitansAction";
+
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.volitans.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.volitans.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.volitans.run");
@@ -40,9 +46,6 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.volitans.swipe_left");
     private static final RawAnimation SWIPE_RIGHT = RawAnimation.begin().thenPlay("animation.volitans.swipe_right");
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.volitans.eat");
-    private static final RawAnimation GRUMBLE_1 = RawAnimation.begin().thenPlay("animation.volitans.grumble1");
-    private static final RawAnimation GRUMBLE_2 = RawAnimation.begin().thenPlay("animation.volitans.grumble2");
-    private static final RawAnimation GRUMBLE_3 = RawAnimation.begin().thenPlay("animation.volitans.grumble3");
     private static final RawAnimation ROAR = RawAnimation.begin().thenPlay("animation.volitans.roar");
     private static final RawAnimation ROAR_AIR_WATER = RawAnimation.begin().thenPlay("animation.volitans.roar_air_water");
     private static final RawAnimation BREATH_START = RawAnimation.begin().thenPlay("animation.volitans.breath_start");
@@ -81,22 +84,9 @@ public final class VolitansAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        if (dragon.isSleeping()) {
-            return PlayState.STOP;
-        }
-
-        if (dragon.isSleepTransitioning()) {
-            return PlayState.STOP;
-        }
-
-        float sitProgress = dragon.getSitProgress();
-        float maxSit = dragon.maxSitTicks();
-        if (sitProgress >= maxSit) {
-            state.setAndContinue(SIT);
-            return PlayState.CONTINUE;
-        } else if (sitProgress > 0f) {
-            // Let action-triggered down/up transitions play without movement override.
-            return PlayState.STOP;
+        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, dragon, null, SIT, 0, 0);
+        if (restPose != null) {
+            return restPose;
         }
 
         if (dragon.isBurrowing() && !dragon.isFlying()) {
@@ -179,16 +169,7 @@ public final class VolitansAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        int groundState = dragon.getEffectiveGroundState();
-        if (groundState == 2 || dragon.isRunning()) {
-            state.setAndContinue(RUN);
-        } else if (groundState == 1 || state.isMoving()) {
-            state.setAndContinue(WALK);
-        } else {
-            state.setAndContinue(IDLE);
-        }
-
-        return PlayState.CONTINUE;
+        return DragonMovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
     }
 
     public PlayState actionPredicate(AnimationState<Volitans> state) {
@@ -196,35 +177,23 @@ public final class VolitansAnimationHandler {
         return PlayState.STOP;
     }
 
-    public PlayState instantActionPredicate(AnimationState<Volitans> state) {
+    public PlayState fastActionPredicate(AnimationState<Volitans> state) {
         state.getController().transitionLength(1);
         return PlayState.STOP;
     }
 
     public void triggerSitDownAnimation() {
-        dragon.triggerAnim("actions", "sit_down");
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        dragon.triggerAnim("actions", "sit_up");
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
     }
 
     public void setupActionController(AnimationController<Volitans> controller) {
-        controller.triggerableAnim("eat", EAT);
-        controller.triggerableAnim("grumble1", GRUMBLE_1);
-        controller.triggerableAnim("grumble2", GRUMBLE_2);
-        controller.triggerableAnim("grumble3", GRUMBLE_3);
         controller.triggerableAnim("horn_gore", HORN_GORE);
         controller.triggerableAnim("swipe_left", SWIPE_LEFT);
         controller.triggerableAnim("swipe_right", SWIPE_RIGHT);
-        controller.triggerableAnim("sit_down", SIT_DOWN);
-        controller.triggerableAnim("sit_up", SIT_UP);
-        controller.triggerableAnim("fall_asleep", FALL_ASLEEP);
-        controller.triggerableAnim("sleep", SLEEP);
-        controller.triggerableAnim("wake_up", WAKE_UP);
-        controller.triggerableAnim("fall_asleep_underwater", FALL_ASLEEP_UNDERWATER);
-        controller.triggerableAnim("sleep_underwater", SLEEP_UNDERWATER);
-        controller.triggerableAnim("wake_up_underwater", WAKE_UP_UNDERWATER);
         controller.triggerableAnim("breathing", BREATHING);
         controller.triggerableAnim("breath_start", BREATH_START);
         controller.triggerableAnim("breath_end", BREATH_END);
@@ -237,7 +206,18 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("landed", LANDED);
     }
 
-    public void setupInstantActionController(AnimationController<Volitans> controller) {
+    public void setupStateController(AnimationController<Volitans> controller) {
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_DOWN, SIT_DOWN);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_UP, SIT_UP);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.FALL_ASLEEP, FALL_ASLEEP);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SLEEP, SLEEP);
+        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.WAKE_UP, WAKE_UP);
+        DragonStateAnimationHelper.register(controller, "fall_asleep_underwater", FALL_ASLEEP_UNDERWATER);
+        DragonStateAnimationHelper.register(controller, "sleep_underwater", SLEEP_UNDERWATER);
+        DragonStateAnimationHelper.register(controller, "wake_up_underwater", WAKE_UP_UNDERWATER);
+    }
+
+    public void setupFastActionController(AnimationController<Volitans> controller) {
         controller.triggerableAnim("takeoff", TAKEOFF);
         controller.triggerableAnim("bite", BITE);
         controller.triggerableAnim("dash_backwards", DASH_BACKWARDS);
@@ -249,6 +229,10 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
         controller.triggerableAnim("slamming", SLAMMING);
         controller.triggerableAnim("slammed", SLAMMED);
+    }
+
+    public void setupInteractionController(AnimationController<Volitans> controller) {
+        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT, EAT);
         controller.triggerableAnim("volitans_hurt", HURT);
         controller.triggerableAnim("volitans_die", DIE);
     }

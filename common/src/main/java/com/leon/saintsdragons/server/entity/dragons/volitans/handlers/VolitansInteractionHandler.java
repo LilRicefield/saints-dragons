@@ -76,7 +76,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
 
         if (!client) {
             consumeItem(player, itemstack);
-            dragon.triggerAnim("actions", "eat");
+            dragon.triggerAnim("interaction", "eat");
             dragon.playEatMovingSound();
             dragon.setFeedingCooldown(61);
 
@@ -163,7 +163,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
                 61,
                 hearty,
                 () -> {
-                    dragon.triggerAnim("actions", "eat");
+                    dragon.triggerAnim("interaction", "eat");
                     dragon.playEatMovingSound();
                 },
                 dragon::setFeedingCooldown,
@@ -296,7 +296,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
     }
 
     private void playEatFeedback(ItemStack food) {
-        dragon.triggerAnim("actions", "eat");
+        dragon.triggerAnim("interaction", "eat");
         dragon.playEatMovingSound();
         dragon.level().broadcastEntityEvent(dragon, (byte) 6);
         if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {

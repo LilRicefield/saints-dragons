@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
@@ -40,7 +41,7 @@ public class CindervaneRoarAbility extends DragonAbility<Cindervane> {
         if (section.sectionType == STARTUP) {
             Cindervane dragon = getUser();
             String animation = dragon.isFlying() ? "roar_air" : "roar";
-            dragon.triggerAnim("actions", animation);
+            dragon.triggerAnim(CindervaneAnimationHandler.ACTION_CONTROLLER, animation);
             soundQueued = true;
         }
     }

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -46,7 +47,7 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
         if (section.sectionType == STARTUP) {
             Cindervane dragon = getUser();
             String animation = dragon.isFlying() ? "bite_air" : "bite";
-            dragon.triggerAnim("actions", animation);
+            dragon.triggerAnim(CindervaneAnimationHandler.ACTION_CONTROLLER, animation);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_BITE.get(), 1.0f, 0.95f, 25);
             }

@@ -18,10 +18,13 @@ import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoa
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -31,6 +34,8 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -78,13 +83,13 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -205,25 +210,25 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new DragonEntity.VocalEntryBuilder()
-                    .add("ignivorus_roar", "action", "animation.ignivorus.roar",
+                    .add("ignivorus_roar", IgnivorusAnimationHandler.ACTION_CONTROLLER, "animation.ignivorus.roar",
                             ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f,
                             false, false, false)
-                    .add("ignivorus_flex", "action", "animation.ignivorus.flex",
+                    .add("ignivorus_flex", IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "animation.ignivorus.flex",
                             ModSounds.IGNIVORUS_FLEX, 2.0f, 0.95f, 0.05f,
                             false, false, true)
-                    .add("ignivorus_grumble1", "action", "animation.ignivorus.grumble1",
+                    .add("ignivorus_grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.ignivorus.grumble1",
                             ModSounds.IGNIVORUS_GRUMBLE_1, 1.1f, 0.95f, 0.08f,
                             true, false, true)
-                    .add("ignivorus_grumble2", "action", "animation.ignivorus.grumble2",
+                    .add("ignivorus_grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.ignivorus.grumble2",
                             ModSounds.IGNIVORUS_GRUMBLE_2, 1.15f, 1.0f, 0.08f,
                             true, false, true)
-                    .add("ignivorus_grumble3", "action", "animation.ignivorus.grumble3",
+                    .add("ignivorus_grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.ignivorus.grumble3",
                             ModSounds.IGNIVORUS_GRUMBLE_3, 1.2f, 0.9f, 0.08f,
                             true, false, true)
-                    .add("ignivorus_hurt", "instant", "animation.ignivorus.hurt",
+                    .add("ignivorus_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.ignivorus.hurt",
                             ModSounds.IGNIVORUS_HURT, 1.6f, 0.95f, 0.1f,
                             true, true, true)
-                    .add("ignivorus_die", "instant", "animation.ignivorus.die",
+                    .add("ignivorus_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.ignivorus.die",
                             ModSounds.IGNIVORUS_DIE, 1.8f, 0.9f, 0.05f,
                             false, true, true)
                     .build();
@@ -268,9 +273,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private static final int MAX_AMBIENT_DELAY = 520;
     private int groundStepSoundCooldownTicks = 0;
     private int teethChipDropCooldownTicks = 0;
-    private int sitTransitionTicks = 0;
-    private boolean isSittingDown = false;
-    private boolean isStandingUp = false;
+    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     public Ignivorus(EntityType<? extends Ignivorus> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
@@ -536,10 +539,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void clearLocalSitTransitionForMount() {
-        clearSitProgress();
-        isSittingDown = false;
-        isStandingUp = false;
-        sitTransitionTicks = 0;
+        sitTransitions.clear();
         setInSittingPose(false);
     }
 
@@ -1492,19 +1492,19 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected int getSleepSitDownDuration() {
-        return 38;
+        return getSitDownAnimationTicks();
     }
     @Override
     protected int getSleepSitUpDuration() {
-        return 38;
+        return getSitUpAnimationTicks();
     }
     @Override
     protected int getSleepFallAsleepDuration() {
-        return 38;
+        return getFallAsleepAnimationTicks();
     }
     @Override
     protected int getSleepWakeUpDuration() {
-        return 38;
+        return getWakeUpAnimationTicks();
     }
     @Override
     protected void onSleepLockCommand(int snapshot) {
@@ -1937,7 +1937,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             long now = level().getGameTime();
             if (now - lastAiLandedAnimTick >= 15L) {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim("action", landedAnim);
+                triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2038,7 +2038,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onTakeoffStateStarted() {
-        triggerAnim("instant", isPhase2Active() ? "phase2_takeoff" : "takeoff");
+        triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, isPhase2Active() ? "phase2_takeoff" : "takeoff");
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
     }
 
@@ -2489,7 +2489,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 setTakeoff(false);
                 timeFlying = 0;
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim("action", landedAnim);
+                triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2734,70 +2734,45 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void updateSittingProgress() {
-        if (level().isClientSide) {
-            return;
-        }
-        if (sitTransitionTicks > 0) {
-            sitTransitionTicks--;
-            if (sitTransitionTicks == 0) {
-                isSittingDown = false;
-                isStandingUp = false;
-            }
-        }
-
-        float sitProgress = getSitProgress();
-        if (this.isOrderedToSit()) {
-            if ((sitProgress == 0f || isStandingUp) && !isSittingDown) {
-                animationHandler.triggerSitDownAnimation();
-                isSittingDown = true;
-                isStandingUp = false;
-                sitTransitionTicks = getSitDownAnimationTicks();
-            }
-            if (sitProgress < maxSitTicks()) {
-                sitProgress++;
-                setSitProgress(sitProgress);
-            }
-        } else {
-            if (this.isVehicle()) {
-                if (sitProgress != 0f) {
-                    clearSitProgress();
-                    isSittingDown = false;
-                    isStandingUp = false;
-                    sitTransitionTicks = 0;
-                }
-            } else if (sitProgress > 0f) {
-                if ((sitProgress == maxSitTicks() || isSittingDown) && !isStandingUp) {
-                    animationHandler.triggerSitUpAnimation();
-                    isStandingUp = true;
-                    isSittingDown = false;
-                    sitTransitionTicks = getSitUpAnimationTicks();
-                }
-                sitProgress--;
-                if (sitProgress < 0f) {
-                    sitProgress = 0f;
-                }
-                setSitProgress(sitProgress);
-            }
-        }
+        sitTransitions.tick(
+                getSitDownAnimationTicks(),
+                getSitUpAnimationTicks(),
+                animationHandler::triggerSitDownAnimation,
+                animationHandler::triggerSitUpAnimation
+        );
     }
 
-    public int getSitDownAnimationTicks() {
+    @Override
+    public float maxSitTicks() {
+        return getSitDownAnimationTicks();
+    }
+
+    private int getSitDownAnimationTicks() {
         return 38;
     }
-    public int getSitUpAnimationTicks() {
+
+    private int getSitUpAnimationTicks() {
+        return 38;
+    }
+
+    private int getFallAsleepAnimationTicks() {
+        return 38;
+    }
+
+    private int getWakeUpAnimationTicks() {
         return 38;
     }
     @Override
     public boolean isInSitTransition() {
-        return isSittingDown || isStandingUp;
+        return sitTransitions.isInTransition();
     }
     @Override
     public boolean isSittingDownAnimation() {
-        return isSittingDown;
+        return sitTransitions.isSittingDown();
     }
     @Override
     public boolean isStandingUpAnimation() {
-        return isStandingUp;
+        return sitTransitions.isStandingUp();
     }
     @Override
     protected float getBarrelRollInputSpeed() {
@@ -2811,41 +2786,42 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Ignivorus> movementController =
-            new AnimationController<>(this, "movement", 8, animationHandler::handleMovementAnimation);
-        movementController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
+        AnimationController<Ignivorus> movementController = new AnimationController<>(this, "movement", 8, animationHandler::movementPredicate);
+        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
-        AnimationController<Ignivorus> actionController =
-            new AnimationController<>(this, "action", 3, state -> {
+        AnimationController<Ignivorus> actionController = new AnimationController<>(this, IgnivorusAnimationHandler.ACTION_CONTROLLER, 4, state -> {
                 if (isTamingStunned()) {
-                    return software.bernie.geckolib.core.object.PlayState.STOP;
+                    return PlayState.STOP;
                 }
-                return software.bernie.geckolib.core.object.PlayState.STOP;
+                return animationHandler.actionPredicate(state);
             });
+        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
-        AnimationController<Ignivorus> instantController =
-            new AnimationController<>(this, "instant", 1, animationHandler::instantActionPredicate);
-        animationHandler.setupInstantActionController(instantController);
-        instantController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
+        AnimationController<Ignivorus> fastActionController = new AnimationController<>(this, IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Ignivorus> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Ignivorus> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        AnimationController<Ignivorus> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
+            if (isTamingStunned()) {
+                return PlayState.STOP;
             }
+            return DragonStateAnimationHelper.idle(state);
         });
+        stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+
+        animationHandler.setupFastActionController(fastActionController);
+        animationHandler.setupInteractionController(interactionController);
         animationHandler.setupActionController(actionController);
-        actionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
+        animationHandler.setupStateController(stateController);
 
-        controllers.add(movementController, instantController, actionController);
+
+        controllers.add(movementController, fastActionController, vocalController, interactionController, actionController, stateController);
     }
 
     @Override

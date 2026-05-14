@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -57,7 +58,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
         }
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
-            dragon.triggerAnim("action", "roar");
+            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "roar");
             dragon.lockAbilities(STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS);
             dragon.triggerScreenShake(1.8F);
 

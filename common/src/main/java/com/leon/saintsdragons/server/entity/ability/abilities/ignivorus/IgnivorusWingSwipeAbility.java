@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -54,7 +55,7 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
             dragon.lockRiderControls(25);
             boolean useRight = dragon.shouldUseRightWingSwipe();
             String animationName = useRight ? "wing_swipe_right" : "wing_swipe_left";
-            dragon.triggerAnim("instant", animationName);
+            dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, animationName);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_WING_SWIPE.get(), 1.0f, 1.0f, 55);
             }
