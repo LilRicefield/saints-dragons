@@ -121,7 +121,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         CompoundTag dragonData = new CompoundTag();
         prepareDragonForCapture(dragon, player);
         dragon.setBoundInBinder(true);
-        dragon.addAdditionalSaveData(dragonData);
+        dragon.saveWithoutId(dragonData);
         tag.put(getDragonDataKey(), dragonData);
         copied.setTag(tag);
 
@@ -158,7 +158,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         if (tag.contains(getDragonDataKey())) {
             try {
                 CompoundTag dragonData = tag.getCompound(getDragonDataKey());
-                newDragon.readAdditionalSaveData(dragonData);
+                newDragon.load(dragonData);
                 newDragon.setBoundInBinder(false);
             } catch (Exception e) {
                 player.displayClientMessage(Component.translatable("saintsdragons.message.binder_data_corrupted"), true);
