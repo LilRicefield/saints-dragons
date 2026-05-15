@@ -3,8 +3,6 @@ package com.leon.saintsdragons.common.config;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.Services;
 
-import java.util.Collections;
-
 public final class SaintsDragonsConfig {
     public static final String CONFIG_FOLDER = "saintsdragons";
     public static final String CLIENT_CONFIG_FOLDER = CONFIG_FOLDER + "/client";
@@ -55,46 +53,32 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue RAEVYX_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue RAEVYX_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue RAEVYX_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue RAEVYX_EXCLUDED_BIOMES;
 
     public static ConfigHelper.IntValue STEGONAUT_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue STEGONAUT_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue STEGONAUT_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue STEGONAUT_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue STEGONAUT_EXCLUDED_BIOMES;
 
     public static ConfigHelper.IntValue CINDERVANE_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue CINDERVANE_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue CINDERVANE_EXCLUDED_BIOMES;
     public static ConfigHelper.BooleanValue CINDERVANE_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue VARASUCHUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue VARASUCHUS_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue VARASUCHUS_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue VARASUCHUS_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue VARASUCHUS_EXCLUDED_BIOMES;
     public static ConfigHelper.BooleanValue VARASUCHUS_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue IGNIVORUS_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue IGNIVORUS_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue IGNIVORUS_EXCLUDED_BIOMES;
 
     public static ConfigHelper.IntValue VOLITANS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue VOLITANS_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue VOLITANS_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue VOLITANS_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue VOLITANS_EXCLUDED_BIOMES;
 
     public static ConfigHelper.IntValue NULLJAW_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
-    public static ConfigHelper.ListValue NULLJAW_ADDITIONAL_BIOMES;
-    public static ConfigHelper.ListValue NULLJAW_EXCLUDED_BIOMES;
 
     public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
@@ -135,39 +119,23 @@ public final class SaintsDragonsConfig {
         RAEVYX_SPAWN_WEIGHT = builder.defineInt("raevyxSpawnWeight", RAEVYX_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         RAEVYX_MIN_GROUP_SIZE = builder.defineInt("raevyxMinGroupSize", RAEVYX_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         RAEVYX_MAX_GROUP_SIZE = builder.defineInt("raevyxMaxGroupSize", RAEVYX_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Raevyx can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
-        RAEVYX_ADDITIONAL_BIOMES = builder.defineList("raevyxAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Raevyx spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
-        RAEVYX_EXCLUDED_BIOMES = builder.defineList("raevyxExcludedBiomes", Collections.emptyList());
 
-        builder.comment("Stegonaut spawn settings (lush caves by default; broaden via additional biome IDs/tags as needed)");
+        builder.comment("Stegonaut spawn settings");
         STEGONAUT_SPAWN_WEIGHT = builder.defineInt("stegonautSpawnWeight", STEGONAUT_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         STEGONAUT_MIN_GROUP_SIZE = builder.defineInt("stegonautMinGroupSize", STEGONAUT_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = builder.defineInt("stegonautMaxGroupSize", STEGONAUT_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Stegonaut can spawn beyond lush caves (e.g., \"minecraft:dripstone_caves\", \"terralith:cave/thermal_caves\", \"#forge:is_cave\")");
-        STEGONAUT_ADDITIONAL_BIOMES = builder.defineList("stegonautAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Stegonaut spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
-        STEGONAUT_EXCLUDED_BIOMES = builder.defineList("stegonautExcludedBiomes", Collections.emptyList());
 
         builder.comment("Cindervane spawn settings");
         CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", CINDERVANE_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         CINDERVANE_MIN_GROUP_SIZE = builder.defineInt("cindervaneMinGroupSize", CINDERVANE_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", CINDERVANE_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Cindervane can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
-        CINDERVANE_ADDITIONAL_BIOMES = builder.defineList("cindervaneAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Cindervane spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
-        CINDERVANE_EXCLUDED_BIOMES = builder.defineList("cindervaneExcludedBiomes", Collections.emptyList());
         builder.comment("Whether Cindervane egg blocks generate in worldgen feature patches");
         CINDERVANE_EGG_BLOCK_WORLDGEN = builder.defineBoolean("cindervaneEggBlockWorldgen", CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
 
-        builder.comment("Varasuchus spawn settings (semi-aquatic; biome tags can massively expand coverage)");
+        builder.comment("Varasuchus spawn settings");
         VARASUCHUS_SPAWN_WEIGHT = builder.defineInt("varasuchusSpawnWeight", VARASUCHUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         VARASUCHUS_MIN_GROUP_SIZE = builder.defineInt("varasuchusMinGroupSize", VARASUCHUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         VARASUCHUS_MAX_GROUP_SIZE = builder.defineInt("varasuchusMaxGroupSize", VARASUCHUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Varasuchus can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
-        VARASUCHUS_ADDITIONAL_BIOMES = builder.defineList("varasuchusAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Varasuchus spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
-        VARASUCHUS_EXCLUDED_BIOMES = builder.defineList("varasuchusExcludedBiomes", Collections.emptyList());
         builder.comment("Whether Varasuchus egg blocks generate in worldgen feature patches");
         VARASUCHUS_EGG_BLOCK_WORLDGEN = builder.defineBoolean("varasuchusEggBlockWorldgen", VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT);
 
@@ -175,28 +143,16 @@ public final class SaintsDragonsConfig {
         IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         IGNIVORUS_MIN_GROUP_SIZE = builder.defineInt("ignivorusMinGroupSize", IGNIVORUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         IGNIVORUS_MAX_GROUP_SIZE = builder.defineInt("ignivorusMaxGroupSize", IGNIVORUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Ignivorus can spawn (e.g., \"minecraft:desert\", \"terralith:volcanic_crater\", \"#c:is_overworld\")");
-        IGNIVORUS_ADDITIONAL_BIOMES = builder.defineList("ignivorusAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Ignivorus spawns (e.g., \"minecraft:plains\", \"#minecraft:is_ocean\")");
-        IGNIVORUS_EXCLUDED_BIOMES = builder.defineList("ignivorusExcludedBiomes", Collections.emptyList());
 
         builder.comment("Volitans spawn settings (custom underwater spawner for ocean/wetland habitats)");
         VOLITANS_SPAWN_WEIGHT = builder.defineInt("volitansSpawnWeight", VOLITANS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         VOLITANS_MIN_GROUP_SIZE = builder.defineInt("volitansMinGroupSize", VOLITANS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         VOLITANS_MAX_GROUP_SIZE = builder.defineInt("volitansMaxGroupSize", VOLITANS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Volitans can spawn (e.g., \"minecraft:beach\", \"minecraft:lukewarm_ocean\", \"#minecraft:is_ocean\")");
-        VOLITANS_ADDITIONAL_BIOMES = builder.defineList("volitansAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Volitans spawns (e.g., \"minecraft:plains\", \"#minecraft:is_forest\")");
-        VOLITANS_EXCLUDED_BIOMES = builder.defineList("volitansExcludedBiomes", Collections.emptyList());
 
         builder.comment("Nulljaw spawn settings (End-floating dragon)");
         NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", NULLJAW_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Additional biome IDs or biome tags where Nulljaw can spawn (e.g., \"minecraft:end_highlands\", \"#minecraft:is_end\")");
-        NULLJAW_ADDITIONAL_BIOMES = builder.defineList("nulljawAdditionalBiomes", Collections.emptyList());
-        builder.comment("Biome IDs or biome tags to exclude from default Nulljaw spawns");
-        NULLJAW_EXCLUDED_BIOMES = builder.defineList("nulljawExcludedBiomes", Collections.emptyList());
 
         builder.pop();
         builder.build();

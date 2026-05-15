@@ -85,6 +85,14 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> MOOP_SPAWN_EGG =
+            REGISTER.register("moop_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.MOOP,
+                            0x8CC7C8, 0xF2E5B8,
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
@@ -146,6 +154,26 @@ public class ModItems {
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(256)
+                    ));
+
+    public static final Supplier<Item> RAW_MOOP =
+            REGISTER.register("raw_moop",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .food(new FoodProperties.Builder()
+                                            .nutrition(2)
+                                            .saturationMod(0.1F)
+                                            .build())
+                    ));
+
+    public static final Supplier<Item> COOKED_MOOP =
+            REGISTER.register("cooked_moop",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .food(new FoodProperties.Builder()
+                                            .nutrition(5)
+                                            .saturationMod(0.6F)
+                                            .build())
                     ));
 
     public static final Supplier<Item> RAEVYX_SCALE =

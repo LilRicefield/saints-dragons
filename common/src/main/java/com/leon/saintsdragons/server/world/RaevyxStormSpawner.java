@@ -224,11 +224,6 @@ public final class RaevyxStormSpawner {
     }
 
     private static boolean isRaevyxBiomeAllowed(Holder<Biome> biome) {
-        return DragonBiomeMatcher.isAllowed(
-                biome,
-                DEFAULT_RAEVYX_BIOME_TAG,
-                SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES,
-                SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES
-        );
+        return DragonBiomeMatcher.isAllowed(biome, DEFAULT_RAEVYX_BIOME_TAG);
     }
 }

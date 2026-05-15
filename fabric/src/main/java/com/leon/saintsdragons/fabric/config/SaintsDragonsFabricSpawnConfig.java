@@ -4,9 +4,6 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Config(name = "saintsdragons/server/spawning")
 public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
@@ -25,13 +22,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     public int raevyxMaxGroupSize = 2;
 
     @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> raevyxAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> raevyxExcludedBiomes = new ArrayList<>();
-
-    @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int stegonautSpawnWeight = 5;
@@ -47,13 +37,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     public int stegonautMaxGroupSize = 4;
 
     @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> stegonautAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> stegonautExcludedBiomes = new ArrayList<>();
-
-    @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int cindervaneSpawnWeight = 3;
@@ -67,13 +50,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int cindervaneMaxGroupSize = 3;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> cindervaneAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> cindervaneExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -95,13 +71,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     public int varasuchusMaxGroupSize = 2;
 
     @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> varasuchusAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> varasuchusExcludedBiomes = new ArrayList<>();
-
-    @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     public boolean varasuchusEggBlockWorldgen = true;
 
@@ -121,13 +90,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     public int ignivorusMaxGroupSize = 2;
 
     @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> ignivorusAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> ignivorusExcludedBiomes = new ArrayList<>();
-
-    @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int volitansSpawnWeight = 1;
@@ -141,13 +103,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int volitansMaxGroupSize = 1;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> volitansAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> volitansExcludedBiomes = new ArrayList<>();
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -164,10 +119,4 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int nulljawMaxGroupSize = 4;
 
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> nulljawAdditionalBiomes = new ArrayList<>();
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip(count = 0)
-    public List<String> nulljawExcludedBiomes = new ArrayList<>();
 }

@@ -6,7 +6,5 @@
   ],
   "step": "vegetal_decoration",
   "config_key": "varasuchusEggBlockWorldgen",
-  "default_biome_tag": "saintsdragons:has_varasuchus_eggs",
-  "additional_config_key": "varasuchusAdditionalBiomes",
-  "excluded_config_key": "varasuchusExcludedBiomes"
+  "default_biome_tag": "saintsdragons:has_varasuchus_eggs"
 }

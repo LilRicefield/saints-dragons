@@ -266,11 +266,6 @@ public final class VolitansUnderwaterSpawner {
     }
 
     private static boolean isVolitansBiomeAllowed(Holder<Biome> biome) {
-        return DragonBiomeMatcher.isAllowed(
-                biome,
-                DEFAULT_VOLITANS_BIOME_TAG,
-                SaintsDragonsConfig.VOLITANS_ADDITIONAL_BIOMES,
-                SaintsDragonsConfig.VOLITANS_EXCLUDED_BIOMES
-        );
+        return DragonBiomeMatcher.isAllowed(biome, DEFAULT_VOLITANS_BIOME_TAG);
     }
 }

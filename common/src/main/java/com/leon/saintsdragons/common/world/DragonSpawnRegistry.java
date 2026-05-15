@@ -4,7 +4,6 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
-import com.leon.saintsdragons.platform.ConfigHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
@@ -36,9 +35,7 @@ public final class DragonSpawnRegistry {
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.RAEVYX_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.RAEVYX_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get());
 
         add(entries,
                 SaintsDragonsCommon.rl("stegonaut"),
@@ -47,9 +44,7 @@ public final class DragonSpawnRegistry {
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get());
 
         add(entries,
                 SaintsDragonsCommon.rl("cindervane"),
@@ -58,9 +53,7 @@ public final class DragonSpawnRegistry {
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
 
         add(entries,
                 SaintsDragonsCommon.rl("varasuchus"),
@@ -69,9 +62,7 @@ public final class DragonSpawnRegistry {
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.VARASUCHUS_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.VARASUCHUS_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.get());
 
         add(entries,
                 SaintsDragonsCommon.rl("ignivorus"),
@@ -80,9 +71,7 @@ public final class DragonSpawnRegistry {
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.IGNIVORUS_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.IGNIVORUS_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get());
 
         add(entries,
                 SaintsDragonsCommon.rl("nulljaw"),
@@ -91,9 +80,7 @@ public final class DragonSpawnRegistry {
                 MobCategory.MONSTER,
                 () -> SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.NULLJAW_ADDITIONAL_BIOMES,
-                () -> SaintsDragonsConfig.NULLJAW_EXCLUDED_BIOMES);
+                () -> SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
 
         return List.copyOf(entries);
     }
@@ -105,9 +92,7 @@ public final class DragonSpawnRegistry {
                             MobCategory category,
                             IntSupplier weight,
                             IntSupplier minGroupSize,
-                            IntSupplier maxGroupSize,
-                            Supplier<ConfigHelper.ListValue> additionalBiomes,
-                            Supplier<ConfigHelper.ListValue> excludedBiomes) {
+                            IntSupplier maxGroupSize) {
         entries.add(new DragonSpawnEntry(
                 id,
                 entityType,
@@ -115,9 +100,7 @@ public final class DragonSpawnRegistry {
                 category,
                 weight,
                 minGroupSize,
-                maxGroupSize,
-                additionalBiomes,
-                excludedBiomes
+                maxGroupSize
         ));
     }
 
@@ -128,9 +111,7 @@ public final class DragonSpawnRegistry {
             MobCategory category,
             IntSupplier weight,
             IntSupplier minGroupSize,
-            IntSupplier maxGroupSize,
-            Supplier<ConfigHelper.ListValue> additionalBiomes,
-            Supplier<ConfigHelper.ListValue> excludedBiomes
+            IntSupplier maxGroupSize
     ) {
     }
 }

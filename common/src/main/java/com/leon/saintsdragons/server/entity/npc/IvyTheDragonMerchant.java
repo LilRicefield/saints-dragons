@@ -10,6 +10,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -272,18 +276,18 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     @Override
-    protected net.minecraft.sounds.SoundEvent getHurtSound(@NotNull net.minecraft.world.damagesource.DamageSource source) {
-        return net.minecraft.sounds.SoundEvents.PLAYER_HURT;
+    protected SoundEvent getHurtSound(@NotNull DamageSource source) {
+        return SoundEvents.PLAYER_HURT;
     }
 
     @Override
-    protected net.minecraft.sounds.SoundEvent getDeathSound() {
+    protected SoundEvent getDeathSound() {
         return net.minecraft.sounds.SoundEvents.PLAYER_DEATH;
     }
 
     @Nullable
     @Override
-    public AgeableMob getBreedOffspring(net.minecraft.server.level.@NotNull ServerLevel level, @NotNull AgeableMob partner) {
+    public AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob partner) {
         return null;
     }
 

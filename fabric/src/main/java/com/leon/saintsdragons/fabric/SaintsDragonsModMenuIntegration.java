@@ -37,7 +37,6 @@ import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
-import java.util.function.Supplier;
 
 /**
  * Custom ModMenu screen wiring spawn tuning and dragon attribute sliders through Cloth Config.
@@ -350,14 +349,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.raevyxSpawnWeight, value -> config.raevyxSpawnWeight = value,
                 () -> config.raevyxMinGroupSize, value -> config.raevyxMinGroupSize = value,
                 () -> config.raevyxMaxGroupSize, value -> config.raevyxMaxGroupSize = value,
-                () -> config.raevyxAdditionalBiomes, list -> {
-                    config.raevyxAdditionalBiomes.clear();
-                    config.raevyxAdditionalBiomes.addAll(list);
-                },
-                () -> config.raevyxExcludedBiomes, list -> {
-                    config.raevyxExcludedBiomes.clear();
-                    config.raevyxExcludedBiomes.addAll(list);
-                },
                 null, null, true,
                 1, 1, 2);
 
@@ -365,14 +356,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.stegonautSpawnWeight, value -> config.stegonautSpawnWeight = value,
                 () -> config.stegonautMinGroupSize, value -> config.stegonautMinGroupSize = value,
                 () -> config.stegonautMaxGroupSize, value -> config.stegonautMaxGroupSize = value,
-                () -> config.stegonautAdditionalBiomes, list -> {
-                    config.stegonautAdditionalBiomes.clear();
-                    config.stegonautAdditionalBiomes.addAll(list);
-                },
-                () -> config.stegonautExcludedBiomes, list -> {
-                    config.stegonautExcludedBiomes.clear();
-                    config.stegonautExcludedBiomes.addAll(list);
-                },
                 null, null, true,
                 5, 1, 4);
 
@@ -380,14 +363,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.cindervaneSpawnWeight, value -> config.cindervaneSpawnWeight = value,
                 () -> config.cindervaneMinGroupSize, value -> config.cindervaneMinGroupSize = value,
                 () -> config.cindervaneMaxGroupSize, value -> config.cindervaneMaxGroupSize = value,
-                () -> config.cindervaneAdditionalBiomes, list -> {
-                    config.cindervaneAdditionalBiomes.clear();
-                    config.cindervaneAdditionalBiomes.addAll(list);
-                },
-                () -> config.cindervaneExcludedBiomes, list -> {
-                    config.cindervaneExcludedBiomes.clear();
-                    config.cindervaneExcludedBiomes.addAll(list);
-                },
                 () -> config.cindervaneEggBlockWorldgen, value -> config.cindervaneEggBlockWorldgen = value, true,
                 3, 1, 3);
 
@@ -395,14 +370,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.varasuchusSpawnWeight, value -> config.varasuchusSpawnWeight = value,
                 () -> config.varasuchusMinGroupSize, value -> config.varasuchusMinGroupSize = value,
                 () -> config.varasuchusMaxGroupSize, value -> config.varasuchusMaxGroupSize = value,
-                () -> config.varasuchusAdditionalBiomes, list -> {
-                    config.varasuchusAdditionalBiomes.clear();
-                    config.varasuchusAdditionalBiomes.addAll(list);
-                },
-                () -> config.varasuchusExcludedBiomes, list -> {
-                    config.varasuchusExcludedBiomes.clear();
-                    config.varasuchusExcludedBiomes.addAll(list);
-                },
                 () -> config.varasuchusEggBlockWorldgen, value -> config.varasuchusEggBlockWorldgen = value, true,
                 2, 1, 2);
 
@@ -410,14 +377,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.ignivorusSpawnWeight, value -> config.ignivorusSpawnWeight = value,
                 () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,
                 () -> config.ignivorusMaxGroupSize, value -> config.ignivorusMaxGroupSize = value,
-                () -> config.ignivorusAdditionalBiomes, list -> {
-                    config.ignivorusAdditionalBiomes.clear();
-                    config.ignivorusAdditionalBiomes.addAll(list);
-                },
-                () -> config.ignivorusExcludedBiomes, list -> {
-                    config.ignivorusExcludedBiomes.clear();
-                    config.ignivorusExcludedBiomes.addAll(list);
-                },
                 null, null, true,
                 1, 1, 2);
 
@@ -425,14 +384,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.volitansSpawnWeight, value -> config.volitansSpawnWeight = value,
                 () -> config.volitansMinGroupSize, value -> config.volitansMinGroupSize = value,
                 () -> config.volitansMaxGroupSize, value -> config.volitansMaxGroupSize = value,
-                () -> config.volitansAdditionalBiomes, list -> {
-                    config.volitansAdditionalBiomes.clear();
-                    config.volitansAdditionalBiomes.addAll(list);
-                },
-                () -> config.volitansExcludedBiomes, list -> {
-                    config.volitansExcludedBiomes.clear();
-                    config.volitansExcludedBiomes.addAll(list);
-                },
                 null, null, false,
                 1, 1, 1);
 
@@ -440,16 +391,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.nulljawSpawnWeight, value -> config.nulljawSpawnWeight = value,
                 () -> config.nulljawMinGroupSize, value -> config.nulljawMinGroupSize = value,
                 () -> config.nulljawMaxGroupSize, value -> config.nulljawMaxGroupSize = value,
-                () -> config.nulljawAdditionalBiomes, list -> {
-                    config.nulljawAdditionalBiomes.clear();
-                    config.nulljawAdditionalBiomes.addAll(list);
-                },
-                () -> config.nulljawExcludedBiomes, list -> {
-                    config.nulljawExcludedBiomes.clear();
-                    config.nulljawExcludedBiomes.addAll(list);
-                },
                 null, null, false,
-                20, 1, 2);
+                4, 4, 4);
 
             ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
             addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
@@ -544,10 +487,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                  IntConsumer minSetter,
                                  IntSupplier maxGetter,
                                  IntConsumer maxSetter,
-                                 Supplier<List<String>> biomesGetter,
-                                 Consumer<List<String>> biomesSetter,
-                                 Supplier<List<String>> excludedBiomesGetter,
-                                 Consumer<List<String>> excludedBiomesSetter,
                                  BooleanSupplier eggBlockWorldgenGetter,
                                  Consumer<Boolean> eggBlockWorldgenSetter,
                                  boolean defaultEggBlockWorldgen,
@@ -575,18 +514,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(10)
                 .setTooltip(Component.translatable("config.saintsdragons.spawn.max_group.tooltip"))
                 .setSaveConsumer(maxSetter::accept)
-                .build());
-        List<String> listCopy = new ArrayList<>(biomesGetter.get());
-        entries.add(entryBuilder.startStrList(Component.translatable("config.saintsdragons.spawn.additional_biomes"), listCopy)
-                .setDefaultValue(List.of())
-                .setTooltip(Component.translatable("config.saintsdragons.spawn.additional_biomes.tooltip"))
-                .setSaveConsumer(values -> biomesSetter.accept(new ArrayList<>(values)))
-                .build());
-        List<String> excludedListCopy = new ArrayList<>(excludedBiomesGetter.get());
-        entries.add(entryBuilder.startStrList(Component.translatable("config.saintsdragons.spawn.excluded_biomes"), excludedListCopy)
-                .setDefaultValue(List.of())
-                .setTooltip(Component.translatable("config.saintsdragons.spawn.excluded_biomes.tooltip"))
-                .setSaveConsumer(values -> excludedBiomesSetter.accept(new ArrayList<>(values)))
                 .build());
         if (eggBlockWorldgenGetter != null && eggBlockWorldgenSetter != null) {
             entries.add(entryBuilder.startBooleanToggle(

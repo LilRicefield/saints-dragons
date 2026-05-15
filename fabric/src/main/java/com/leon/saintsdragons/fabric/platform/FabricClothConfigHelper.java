@@ -233,26 +233,8 @@ final class FabricClothConfigHelper implements ConfigHelper {
     }
 
     private static Supplier<List<String>> listSupplierForKey(String key, List<String> defaultValue) {
-        return switch (key) {
-            case "raevyxAdditionalBiomes" -> () -> spawnHolder().getConfig().raevyxAdditionalBiomes;
-            case "raevyxExcludedBiomes" -> () -> spawnHolder().getConfig().raevyxExcludedBiomes;
-            case "stegonautAdditionalBiomes" -> () -> spawnHolder().getConfig().stegonautAdditionalBiomes;
-            case "stegonautExcludedBiomes" -> () -> spawnHolder().getConfig().stegonautExcludedBiomes;
-            case "cindervaneAdditionalBiomes" -> () -> spawnHolder().getConfig().cindervaneAdditionalBiomes;
-            case "cindervaneExcludedBiomes" -> () -> spawnHolder().getConfig().cindervaneExcludedBiomes;
-            case "varasuchusAdditionalBiomes" -> () -> spawnHolder().getConfig().varasuchusAdditionalBiomes;
-            case "varasuchusExcludedBiomes" -> () -> spawnHolder().getConfig().varasuchusExcludedBiomes;
-            case "ignivorusAdditionalBiomes" -> () -> spawnHolder().getConfig().ignivorusAdditionalBiomes;
-            case "ignivorusExcludedBiomes" -> () -> spawnHolder().getConfig().ignivorusExcludedBiomes;
-            case "volitansAdditionalBiomes" -> () -> spawnHolder().getConfig().volitansAdditionalBiomes;
-            case "volitansExcludedBiomes" -> () -> spawnHolder().getConfig().volitansExcludedBiomes;
-            case "nulljawAdditionalBiomes" -> () -> spawnHolder().getConfig().nulljawAdditionalBiomes;
-            case "nulljawExcludedBiomes" -> () -> spawnHolder().getConfig().nulljawExcludedBiomes;
-            default -> {
-                SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
-                yield () -> defaultValue;
-            }
-        };
+        SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config list key '{}'; using default", key);
+        return () -> defaultValue;
     }
 
     private static final class ClothBooleanValue implements BooleanValue {

@@ -10,7 +10,7 @@ import com.leon.saintsdragons.fabric.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.fabric.resource.FabricDragonAttributeReloadListener;
 import com.leon.saintsdragons.fabric.resource.FabricDragonVariantReloadListener;
 import com.leon.saintsdragons.fabric.server.FabricServerEvents;
-import com.leon.saintsdragons.fabric.world.FabricDragonSpawns;
+import com.leon.saintsdragons.fabric.world.Spawns;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
@@ -54,7 +54,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
         FabricLootTableModifier.register();
         CommonModEvents.registerEntityAttributes(SaintsDragonsFabric::registerDefaultAttributes);
         CommonModEvents.registerSpawnPlacements(SpawnPlacements::register);
-        FabricDragonSpawns.register();
+        Spawns.register();
         CommonModEvents.registerCreativeTabEntries((tab, itemSupplier) -> ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> entries.accept(itemSupplier.get())));
         for (ResourceKey<CreativeModeTab> tab : POTION_HIDE_TABS) {
             ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> {

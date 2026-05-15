@@ -124,6 +124,27 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.LUKEWARM_OCEAN)
                 .add(Biomes.DEEP_LUKEWARM_OCEAN)
                 .add(Biomes.WARM_OCEAN);
+
+        tag(ModTags.Biomes.HAS_MOOP)
+                .addOptionalTag(rl("c", "river"))
+                .addOptionalTag(rl("c", "is_river"))
+                .addOptionalTag(rl("c", "ocean"))
+                .addOptionalTag(rl("c", "is_ocean"))
+                .addOptionalTag(rl("forge", "is_river"))
+                .addOptionalTag(rl("forge", "is_ocean"))
+                .add(Biomes.RIVER)
+                .add(Biomes.FROZEN_RIVER)
+                .add(Biomes.OCEAN)
+                .add(Biomes.DEEP_OCEAN)
+                .add(Biomes.COLD_OCEAN)
+                .add(Biomes.DEEP_COLD_OCEAN)
+                .add(Biomes.FROZEN_OCEAN)
+                .add(Biomes.DEEP_FROZEN_OCEAN)
+                .add(Biomes.LUKEWARM_OCEAN)
+                .add(Biomes.DEEP_LUKEWARM_OCEAN)
+                .add(Biomes.WARM_OCEAN)
+                .add(Biomes.SWAMP)
+                .add(Biomes.MANGROVE_SWAMP);
     }
 
     private void addVarasuchusBiomes(net.minecraft.tags.TagKey<Biome> tag) {

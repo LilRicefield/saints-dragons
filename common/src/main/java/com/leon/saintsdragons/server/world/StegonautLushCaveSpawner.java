@@ -233,12 +233,7 @@ public final class StegonautLushCaveSpawner {
     }
 
     private static boolean isStegonautBiomeAllowed(Holder<Biome> biome) {
-        return DragonBiomeMatcher.isAllowed(
-                biome,
-                DEFAULT_STEGONAUT_BIOME_TAG,
-                SaintsDragonsConfig.STEGONAUT_ADDITIONAL_BIOMES,
-                SaintsDragonsConfig.STEGONAUT_EXCLUDED_BIOMES
-        );
+        return DragonBiomeMatcher.isAllowed(biome, DEFAULT_STEGONAUT_BIOME_TAG);
     }
 
 }

@@ -1,8 +1,6 @@
 package com.leon.saintsdragons.forge.world;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
-import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
-import com.leon.saintsdragons.platform.ConfigHelper;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.Holder;
@@ -27,9 +25,7 @@ public final class AddConditionalFeaturesBiomeModifier implements BiomeModifier 
                     GenerationStep.Decoration.CODEC.fieldOf("step").forGetter(m -> m.step),
                     Codec.STRING.fieldOf("config_key").forGetter(m -> m.configKey),
                     ResourceLocation.CODEC.optionalFieldOf("default_biome_tag").forGetter(m ->
-                            Optional.ofNullable(m.defaultBiomeTag).map(TagKey::location)),
-                    Codec.STRING.optionalFieldOf("additional_config_key").forGetter(m -> Optional.ofNullable(m.additionalConfigKey)),
-                    Codec.STRING.optionalFieldOf("excluded_config_key").forGetter(m -> Optional.ofNullable(m.excludedConfigKey))
+                            Optional.ofNullable(m.defaultBiomeTag).map(TagKey::location))
             ).apply(instance, AddConditionalFeaturesBiomeModifier::new)
     );
 
@@ -38,16 +34,12 @@ public final class AddConditionalFeaturesBiomeModifier implements BiomeModifier 
     private final GenerationStep.Decoration step;
     private final String configKey;
     private final TagKey<Biome> defaultBiomeTag;
-    private final String additionalConfigKey;
-    private final String excludedConfigKey;
 
     public AddConditionalFeaturesBiomeModifier(HolderSet<Biome> biomes,
                                                HolderSet<PlacedFeature> features,
                                                GenerationStep.Decoration step,
                                                String configKey,
-                                               Optional<ResourceLocation> defaultBiomeTag,
-                                               Optional<String> additionalConfigKey,
-                                               Optional<String> excludedConfigKey) {
+                                               Optional<ResourceLocation> defaultBiomeTag) {
         this.biomes = biomes;
         this.features = features;
         this.step = step;
@@ -55,8 +47,6 @@ public final class AddConditionalFeaturesBiomeModifier implements BiomeModifier 
         this.defaultBiomeTag = defaultBiomeTag
                 .map(id -> TagKey.create(Registries.BIOME, id))
                 .orElse(null);
-        this.additionalConfigKey = additionalConfigKey.orElse("");
-        this.excludedConfigKey = excludedConfigKey.orElse("");
     }
 
     @Override
@@ -79,34 +69,7 @@ public final class AddConditionalFeaturesBiomeModifier implements BiomeModifier 
     }
 
     private boolean isBiomeAllowed(Holder<Biome> biome) {
-        ConfigHelper.ListValue excludedBiomes = listByKey(excludedConfigKey);
-        if (isInConfig(biome, excludedBiomes)) {
-            return false;
-        }
-
-        if (biomes.contains(biome) || (defaultBiomeTag != null && biome.is(defaultBiomeTag))) {
-            return true;
-        }
-
-        return isInConfig(biome, listByKey(additionalConfigKey));
-    }
-
-    private static boolean isInConfig(Holder<Biome> biome, ConfigHelper.ListValue configList) {
-        ResourceLocation biomeId = biome.unwrapKey()
-                .map(net.minecraft.resources.ResourceKey::location)
-                .orElse(null);
-        return DragonBiomeMatcher.isInConfigBiomes(biomeId, configList)
-                || DragonBiomeMatcher.isInConfigBiomeTags(biome::is, configList);
-    }
-
-    private static ConfigHelper.ListValue listByKey(String key) {
-        return switch (key) {
-            case "cindervaneAdditionalBiomes" -> SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES;
-            case "cindervaneExcludedBiomes" -> SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES;
-            case "varasuchusAdditionalBiomes" -> SaintsDragonsConfig.VARASUCHUS_ADDITIONAL_BIOMES;
-            case "varasuchusExcludedBiomes" -> SaintsDragonsConfig.VARASUCHUS_EXCLUDED_BIOMES;
-            default -> null;
-        };
+        return biomes.contains(biome) || (defaultBiomeTag != null && biome.is(defaultBiomeTag));
     }
 
     @Override

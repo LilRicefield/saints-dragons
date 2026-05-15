@@ -2,10 +2,10 @@ package com.leon.saintsdragons.forge.world;
 
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
-import com.leon.saintsdragons.platform.ConfigHelper;
+import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.mojang.serialization.Codec;
 import net.minecraft.core.Holder;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobCategory;
@@ -13,8 +13,6 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.common.world.BiomeModifier;
 import net.minecraftforge.common.world.ModifiableBiomeInfo;
-
-import java.util.function.Supplier;
 
 
 public final class AddDragonsBiomeModifier implements BiomeModifier {
@@ -34,14 +32,12 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                 int weight = entry.weight().getAsInt();
                 int minGroupSize = entry.minGroupSize().getAsInt();
                 int maxGroupSize = entry.maxGroupSize().getAsInt();
-                ConfigHelper.ListValue additionalBiomes = resolveConfigList(entry.additionalBiomes());
-                ConfigHelper.ListValue excludedBiomes = resolveConfigList(entry.excludedBiomes());
 
                 if (weight <= 0) {
                     continue;
                 }
 
-                if (shouldSpawnInBiome(biome, entry.biomeTag(), additionalBiomes, excludedBiomes)) {
+                if (DragonBiomeMatcher.isAllowed(biome, entry.biomeTag())) {
                     addSpawn(
                             builder,
                             entry.category(),
@@ -52,16 +48,19 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                     );
                 }
             }
+            if (DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOOP)) {
+                addSpawn(
+                        builder,
+                        MobCategory.WATER_AMBIENT,
+                        ModEntities.MOOP.get(),
+                        12,
+                        2,
+                        2
+                );
+            }
         } catch (IllegalStateException e) {
             // Config not loaded yet during datagen or early worldgen, skip spawn modification
         }
-    }
-
-    private static boolean shouldSpawnInBiome(Holder<Biome> biome,
-                                              TagKey<Biome> defaultTag,
-                                              ConfigHelper.ListValue additionalBiomes,
-                                              ConfigHelper.ListValue excludedBiomes) {
-        return DragonBiomeMatcher.isAllowed(biome, defaultTag, additionalBiomes, excludedBiomes);
     }
 
     private static void addSpawn(ModifiableBiomeInfo.BiomeInfo.Builder builder,
@@ -87,17 +86,6 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
 
         if (!alreadyPresent) {
             spawnSettings.addSpawn(category, spawnerData);
-        }
-    }
-
-    private static ConfigHelper.ListValue resolveConfigList(Supplier<ConfigHelper.ListValue> supplier) {
-        if (supplier == null) {
-            return null;
-        }
-        try {
-            return supplier.get();
-        } catch (Exception e) {
-            return null;
         }
     }
 

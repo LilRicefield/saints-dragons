@@ -2,29 +2,28 @@ package com.leon.saintsdragons.fabric.world;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
-import com.leon.saintsdragons.platform.ConfigHelper;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.GenerationStep;
 import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
-import java.util.function.Supplier;
 
-
-public final class FabricDragonSpawns {
+public final class Spawns {
     private static final ResourceKey<PlacedFeature> CINDERVANE_EGG_PATCH =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
     private static final ResourceKey<PlacedFeature> VARASUCHUS_EGG_PATCH =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("varasuchus_egg_patch"));
 
-    private FabricDragonSpawns() {
+    private Spawns() {
     }
 
     public static void register() {
@@ -33,8 +32,6 @@ public final class FabricDragonSpawns {
             int minGroupSize = entry.minGroupSize().getAsInt();
             int maxGroupSize = entry.maxGroupSize().getAsInt();
             EntityType<?> entityType = entry.entityType().get();
-            ConfigHelper.ListValue additionalBiomes = resolveConfigList(entry.additionalBiomes());
-            ConfigHelper.ListValue excludedBiomes = resolveConfigList(entry.excludedBiomes());
 
             if (weight <= 0) {
                 continue;
@@ -42,8 +39,6 @@ public final class FabricDragonSpawns {
 
             registerSpawn(
                     entry.biomeTag(),
-                    additionalBiomes,
-                    excludedBiomes,
                     entry.category(),
                     entityType,
                     weight,
@@ -54,6 +49,18 @@ public final class FabricDragonSpawns {
 
         registerCindervaneEggs();
         registerVarasuchusEggs();
+        registerMoopSpawn();
+    }
+
+    private static void registerMoopSpawn() {
+        registerSpawn(
+                ModTags.Biomes.HAS_MOOP,
+                MobCategory.WATER_AMBIENT,
+                ModEntities.MOOP.get(),
+                12,
+                2,
+                2
+        );
     }
 
     private static void registerCindervaneEggs() {
@@ -61,13 +68,7 @@ public final class FabricDragonSpawns {
             return;
         }
         BiomeModifications.addFeature(
-                context -> DragonBiomeMatcher.isAllowed(
-                        context.getBiomeKey().location(),
-                        context::hasTag,
-                        ModTags.Biomes.HAS_CINDERVANE,
-                        SaintsDragonsConfig.CINDERVANE_ADDITIONAL_BIOMES,
-                        SaintsDragonsConfig.CINDERVANE_EXCLUDED_BIOMES
-                ),
+                context -> DragonBiomeMatcher.isAllowed(context::hasTag, ModTags.Biomes.HAS_CINDERVANE),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
                 CINDERVANE_EGG_PATCH
         );
@@ -78,21 +79,13 @@ public final class FabricDragonSpawns {
             return;
         }
         BiomeModifications.addFeature(
-                context -> DragonBiomeMatcher.isAllowed(
-                        context.getBiomeKey().location(),
-                        context::hasTag,
-                        ModTags.Biomes.HAS_VARASUCHUS_EGGS,
-                        SaintsDragonsConfig.VARASUCHUS_ADDITIONAL_BIOMES,
-                        SaintsDragonsConfig.VARASUCHUS_EXCLUDED_BIOMES
-                ),
+                context -> DragonBiomeMatcher.isAllowed(context::hasTag, ModTags.Biomes.HAS_VARASUCHUS_EGGS),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
                 VARASUCHUS_EGG_PATCH
         );
     }
 
-    private static void registerSpawn(net.minecraft.tags.TagKey<Biome> biomeTag,
-                                      ConfigHelper.ListValue additionalBiomes,
-                                      ConfigHelper.ListValue excludedBiomes,
+    private static void registerSpawn(TagKey<Biome> biomeTag,
                                       MobCategory category,
                                       EntityType<?> entityType,
                                       int weight,
@@ -106,29 +99,12 @@ public final class FabricDragonSpawns {
         }
 
         BiomeModifications.addSpawn(
-                context -> DragonBiomeMatcher.isAllowed(
-                        context.getBiomeKey().location(),
-                        context::hasTag,
-                        biomeTag,
-                        additionalBiomes,
-                        excludedBiomes
-                ),
+                context -> DragonBiomeMatcher.isAllowed(context::hasTag, biomeTag),
                 category,
                 entityType,
                 weight,
                 minGroupSize,
                 maxGroupSize
         );
-    }
-
-    private static ConfigHelper.ListValue resolveConfigList(Supplier<ConfigHelper.ListValue> supplier) {
-        if (supplier == null) {
-            return null;
-        }
-        try {
-            return supplier.get();
-        } catch (Exception e) {
-            return null;
-        }
     }
 }

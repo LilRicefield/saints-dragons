@@ -22,6 +22,8 @@ public class FabricLootTableModifier {
             new ResourceLocation("minecraft", "chests/bastion_treasure");
     private static final ResourceLocation NETHER_BRIDGE_CHEST =
             new ResourceLocation("minecraft", "chests/nether_bridge");
+    private static final ResourceLocation FISHING_FISH =
+            new ResourceLocation("minecraft", "gameplay/fishing/fish");
 
     public static void register() {
         LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
@@ -40,6 +42,16 @@ public class FabricLootTableModifier {
             double ignivorusAncientChance = clampChance(ignivorusConfig.extraDouble("egg_loot_ancient_city", 0.10D));
 
             double volitansShipwreckChance = clampChance(volitansConfig.extraDouble("egg_loot_shipwreck_treasure", 0.12D));
+
+            if (FISHING_FISH.equals(id)) {
+                LootPool.Builder poolBuilder = LootPool.lootPool()
+                        .setRolls(ConstantValue.exactly(1))
+                        .when(LootItemRandomChanceCondition.randomChance(0.10F))
+                        .add(LootItem.lootTableItem(ModItems.RAW_MOOP.get())
+                                .apply(SetItemCountFunction.setCount(ConstantValue.exactly(1))));
+
+                tableBuilder.pool(poolBuilder.build());
+            }
 
             // Add Raevyx Egg to Pillager Outpost chests
             if (PILLAGER_OUTPOST_CHEST.equals(id)) {
