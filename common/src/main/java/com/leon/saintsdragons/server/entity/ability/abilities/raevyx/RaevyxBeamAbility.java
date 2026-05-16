@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -183,7 +184,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
 
         var beamAABB = new AABB(start, end).inflate(RADIUS);
-        var potentialTargets = server.getEntitiesOfClass(LivingEntity.class, beamAABB, e -> e != wyvern && wyvern.isTargetValid(e) && e.attackable() && !isAllied(wyvern, e));
+        var potentialTargets = server.getEntitiesOfClass(LivingEntity.class, beamAABB, e -> e != wyvern
+                && wyvern.isTargetValid(e)
+                && e.attackable()
+                && !isAllied(wyvern, e)
+                && !DragonElementalImmunity.isElectricityImmune(e));
         for (var target : potentialTargets) {
             var targetAABB = target.getBoundingBox().inflate(RADIUS);
             var hit = targetAABB.clip(start, end);
@@ -199,8 +204,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     }
 
     private void damageAiBeamTargetOnly(Raevyx wyvern, Vec3 start, Vec3 end, float damage, double radius) {
-       LivingEntity target = wyvern.getTarget();
-        if (!isValidTarget(target) || !wyvern.isTargetValid(target) || isAllied(wyvern, target)) {
+        LivingEntity target = wyvern.getTarget();
+        if (!isValidTarget(target)
+                || !wyvern.isTargetValid(target)
+                || isAllied(wyvern, target)
+                || DragonElementalImmunity.isElectricityImmune(target)) {
             return;
         }
 

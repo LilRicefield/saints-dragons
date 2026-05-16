@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.effect.raevyx;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -216,7 +217,10 @@ public class RaevyxLightningChainEntity extends Entity {
         AABB damageBox = this.getBoundingBox().inflate(getSize() * 2.0);
         
         for (LivingEntity entity : this.level().getEntitiesOfClass(LivingEntity.class, damageBox)) {
-            if (entity.isAlive() && !entity.isInvulnerable() && entity != getCaster()) {
+            if (entity.isAlive()
+                    && !entity.isInvulnerable()
+                    && entity != getCaster()
+                    && !DragonElementalImmunity.isElectricityImmune(entity)) {
                 LivingEntity caster = getCaster();
                 if (isProtectedFromCaster(caster, entity)) {
                     DamageSource damageSource = caster != null ? 
@@ -255,7 +259,10 @@ public class RaevyxLightningChainEntity extends Entity {
         double nearestDistance = Double.MAX_VALUE;
         
         for (LivingEntity entity : serverLevel.getEntitiesOfClass(LivingEntity.class, searchBox)) {
-            if (entity.isAlive() && !entity.isInvulnerable() && entity != getCaster()) {
+            if (entity.isAlive()
+                    && !entity.isInvulnerable()
+                    && entity != getCaster()
+                    && !DragonElementalImmunity.isElectricityImmune(entity)) {
                 LivingEntity caster = getCaster();
                 if (isProtectedFromCaster(caster, entity)) {
                     double distance = this.distanceTo(entity);

@@ -6,6 +6,10 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
+import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.*;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -17,10 +21,6 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.List;
 
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private static final int SLAMMING_ANIM_TICKS = 25;
@@ -81,7 +81,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         Volitans dragon = getUser();
         if (section.sectionType == STARTUP) {
             impactApplied = false;
-            wasAirborne = true; // Already airborne (enforced by tryAbility)
+            wasAirborne = true;
             dragon.startUltimateSlamMovement();
             dragon.lockRiderControls(SLAMMING_ANIM_TICKS + SLAM_MAX_TICKS + RECOVERY_TICKS);
             dragon.setGoingUp(false);
@@ -225,6 +225,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
                         && entity.isAlive()
                         && entity.attackable()
                         && !dragon.isAlly(entity)
+                        && !DragonElementalImmunity.isPoisonImmune(entity)
                         && entity.distanceToSqr(dragon) <= (IMPACT_RADIUS * IMPACT_RADIUS));
 
         for (LivingEntity target : targets) {

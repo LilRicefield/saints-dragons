@@ -27,6 +27,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.Cinderva
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import java.util.Map;
@@ -1281,7 +1282,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         immuneIds.add(this.getId());
 
         List<LivingEntity> targets = server.getEntitiesOfClass(LivingEntity.class, area,
-                living -> living.isAlive() && !immuneIds.contains(living.getId()) && !this.isAlly(living));
+                living -> living.isAlive()
+                        && !immuneIds.contains(living.getId())
+                        && !this.isAlly(living)
+                        && !DragonElementalImmunity.isFireImmune(living));
 
         if (targets.isEmpty()) {
             return;

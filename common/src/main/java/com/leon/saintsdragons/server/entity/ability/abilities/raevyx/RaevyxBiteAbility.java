@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -22,7 +23,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
 
-import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     private static final float BASE_DAMAGE = 15.0f;
@@ -151,7 +152,9 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             DamageSource chainSource = next instanceof com.leon.saintsdragons.server.entity.base.DragonEntity
                     ? wyvern.level().damageSources().mobAttack(wyvern)
                     : wyvern.level().damageSources().lightningBolt();
-            next.hurt(chainSource, damage * mult);
+            if (!DragonElementalImmunity.isElectricityImmune(next)) {
+                next.hurt(chainSource, damage * mult);
+            }
             wyvern.noteAggroFrom(next);
             spawnArc(current.position().add(0, current.getBbHeight() * 0.5, 0),
                     next.position().add(0, next.getBbHeight() * 0.5, 0));
@@ -189,7 +192,14 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         LivingEntity best = null;
         double bestDist = Double.MAX_VALUE;
         for (LivingEntity e : nearby) {
-            if (e == wyvern || exclude.contains(e) || !e.isAlive() || !e.attackable() || isAllied(wyvern, e)) continue;
+            if (e == wyvern
+                    || exclude.contains(e)
+                    || !e.isAlive()
+                    || !e.attackable()
+                    || isAllied(wyvern, e)
+                    || DragonElementalImmunity.isElectricityImmune(e)) {
+                continue;
+            }
             double d = e.distanceToSqr(origin);
             if (d < bestDist) {
                 if (!wyvern.getSensing().hasLineOfSight(e)) continue;

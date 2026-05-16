@@ -1,0 +1,41 @@
+{
+  "values": [
+    {
+      "id": "#c:river",
+      "required": false
+    },
+    {
+      "id": "#c:is_river",
+      "required": false
+    },
+    {
+      "id": "#c:ocean",
+      "required": false
+    },
+    {
+      "id": "#c:is_ocean",
+      "required": false
+    },
+    {
+      "id": "#forge:is_river",
+      "required": false
+    },
+    {
+      "id": "#forge:is_ocean",
+      "required": false
+    },
+    "minecraft:river",
+    "minecraft:frozen_river",
+    "minecraft:ocean",
+    "minecraft:deep_ocean",
+    "minecraft:cold_ocean",
+    "minecraft:deep_cold_ocean",
+    "minecraft:frozen_ocean",
+    "minecraft:deep_frozen_ocean",
+    "minecraft:lukewarm_ocean",
+    "minecraft:deep_lukewarm_ocean",
+    "minecraft:warm_ocean",
+    "minecraft:swamp",
+    "minecraft:mangrove_swamp"
+  ]
+}

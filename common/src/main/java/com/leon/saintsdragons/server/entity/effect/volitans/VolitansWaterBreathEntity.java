@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -102,6 +103,9 @@ public class VolitansWaterBreathEntity extends Entity {
                 continue;
             }
             if (isAlliedTarget(attacker, target)) {
+                continue;
+            }
+            if (isPoisonMode() && DragonElementalImmunity.isPoisonImmune(target)) {
                 continue;
             }
 

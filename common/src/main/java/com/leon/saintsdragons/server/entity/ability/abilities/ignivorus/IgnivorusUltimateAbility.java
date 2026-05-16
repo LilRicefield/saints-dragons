@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
@@ -358,7 +359,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 target -> {
                     if (target == getUser()) return false;
                     if (target instanceof Ignivorus baby && baby.isBaby()) return false;
-                    return target.isAlive() && target.attackable() && !getUser().isAlly(target);
+                    return target.isAlive()
+                            && target.attackable()
+                            && !getUser().isAlly(target)
+                            && !DragonElementalImmunity.isFireImmune(target);
                 })) {
 
             if (entity.position().distanceToSqr(center) > radiusSqr) {

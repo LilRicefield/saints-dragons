@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.cindervane;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -126,7 +127,10 @@ public class CindervaneMagmaBlockEntity extends Entity {
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
         List<net.minecraft.world.entity.LivingEntity> hits = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, area,
-                target -> target.isAlive() && target != owner && (owner == null || !owner.isAlly(target)));
+                target -> target.isAlive()
+                        && target != owner
+                        && (owner == null || !owner.isAlly(target))
+                        && !DragonElementalImmunity.isFireImmune(target));
 
         for (net.minecraft.world.entity.LivingEntity target : hits) {
             target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);

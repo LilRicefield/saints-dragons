@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -186,6 +187,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                         && entity.isAlive()
                         && entity.attackable()
                         && !dragon.isAlly(entity)
+                        && (poisonDuration <= 0 || !DragonElementalImmunity.isPoisonImmune(entity))
                         && entity.distanceToSqr(dragon) <= (hitRadius * hitRadius));
 
         for (LivingEntity target : targets) {

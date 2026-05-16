@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -160,6 +161,7 @@ public class IgnivorusFlameEntity extends Entity {
             if (owner != null && owner.getPassengers().contains(target)) continue;
             if (target instanceof Ignivorus baby && baby.isBaby()) continue;
             if (owner instanceof Ignivorus ignivorus && ignivorus.isAlly(target)) continue;
+            if (DragonElementalImmunity.isFireImmune(target)) continue;
             double distance = target.distanceToSqr(this);
             if (distance <= radius * radius && distance < closestDistance) {
                 closestTarget = target;

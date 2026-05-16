@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -235,7 +236,10 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
         List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area,
-                target -> target.isAlive() && target != owner && (owner == null || !owner.isAlly(target)));
+                target -> target.isAlive()
+                        && target != owner
+                        && (owner == null || !owner.isAlly(target))
+                        && !DragonElementalImmunity.isFireImmune(target));
 
         for (LivingEntity target : hits) {
             target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);

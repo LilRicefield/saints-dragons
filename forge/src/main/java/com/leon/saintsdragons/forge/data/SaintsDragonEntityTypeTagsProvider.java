@@ -75,5 +75,9 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
                 .add(EntityType.GLOW_SQUID)
                 .add(EntityType.TROPICAL_FISH)
                 .add(EntityType.PUFFERFISH);
+
+        tag(ModTags.EntityTypes.IMMUNE_TO_ELECTRICITY);
+        tag(ModTags.EntityTypes.IMMUNE_TO_FIRE);
+        tag(ModTags.EntityTypes.IMMUNE_TO_POISON);
     }
 }

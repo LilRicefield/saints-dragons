@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -192,6 +193,7 @@ public class VolitansPoisonBallEntity extends Entity {
                 target.isAlive()
                         && target != ownerEntity
                         && (ownerEntity == null || !isAlliedTarget(ownerEntity, target))
+                        && !DragonElementalImmunity.isPoisonImmune(target)
         );
 
         for (LivingEntity target : hits) {

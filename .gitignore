@@ -1,7 +1,6 @@
 .gradle/
 **/.gradle/
 .idea/
-.vscode/
 .claude/
 CLAUDE.md
 nul
@@ -14,12 +13,9 @@ run-data/
 **/run-data/
 gradle.properties/
 **/gradle.properties/
-
-# Module build artifacts
 common/build/
 fabric/build/
 forge/build/
-
-# IDE/tooling output
 bin/
 /cfr.jar
+common/src/generated/resources/.cache/

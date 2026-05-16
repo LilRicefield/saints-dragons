@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -28,9 +29,6 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-/**
- * Sustained fire aura ability for the Amphithere.
- */
 public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -122,7 +120,11 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
 
         Set<LivingEntity> hitThisTick = new HashSet<>();
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, area,
-                e -> e != dragon && e.isAlive() && e.attackable() && !dragon.isAlly(e))) {
+                e -> e != dragon
+                        && e.isAlive()
+                        && e.attackable()
+                        && !dragon.isAlly(e)
+                        && !DragonElementalImmunity.isFireImmune(e))) {
             if (!hitThisTick.add(target)) {
                 continue;
             }

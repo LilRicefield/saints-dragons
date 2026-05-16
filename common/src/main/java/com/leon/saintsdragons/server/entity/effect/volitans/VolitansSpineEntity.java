@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -62,6 +63,9 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
             if (impactDamage > 0.0F && result.getEntity() instanceof LivingEntity target) {
                 LivingEntity owner = this.getOwner() instanceof LivingEntity living ? living : null;
                 boolean validTarget = owner == null || (target != owner && !isAlliedTarget(owner, target));
+                if (poisonDurationTicks > 0 && DragonElementalImmunity.isPoisonImmune(target)) {
+                    validTarget = false;
+                }
                 if (validTarget) {
                     if (owner != null) {
                         target.hurt(this.damageSources().mobAttack(owner), impactDamage);

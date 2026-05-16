@@ -25,6 +25,9 @@ public final class ModTags {
         public static final TagKey<EntityType<?>> STEGONAUT_TARGETS = tag("targets/stegonaut");
         public static final TagKey<EntityType<?>> VARASUCHUS_TARGETS = tag("targets/varasuchus");
         public static final TagKey<EntityType<?>> VOLITANS_TARGETS = tag("targets/volitans");
+        public static final TagKey<EntityType<?>> IMMUNE_TO_ELECTRICITY = tag("immune_to/electricity");
+        public static final TagKey<EntityType<?>> IMMUNE_TO_FIRE = tag("immune_to/fire");
+        public static final TagKey<EntityType<?>> IMMUNE_TO_POISON = tag("immune_to/poison");
 
         private EntityTypes() {
         }
