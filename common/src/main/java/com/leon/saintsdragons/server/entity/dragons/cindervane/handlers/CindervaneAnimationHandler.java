@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
@@ -200,7 +201,6 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
         controller.triggerableAnim("slash_left",
                 RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
-        controller.triggerableAnim("landed", LANDED);
         amphithere.getVocalEntries().forEach((key, entry) -> {
             if (!ACTION_CONTROLLER.equals(entry.controllerId())) {
                 return;
@@ -225,7 +225,10 @@ public class CindervaneAnimationHandler {
     }
 
     public void setupFastActionController(AnimationController<Cindervane> controller) {
-        controller.triggerableAnim("takeoff", TAKEOFF);
+    }
+
+    public void setupFlightController(AnimationController<Cindervane> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
     }
 
     public void setupInteractionController(AnimationController<Cindervane> controller) {

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
@@ -274,15 +275,18 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
                 RawAnimation.begin().thenPlay("animation.ignivorus.eat"));
     }
+
+    public void setupFlightController(AnimationController<Ignivorus> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
+        DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_TAKEOFF, PHASE2_TAKEOFF);
+        DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
+    }
+
     public void setupFastActionController(AnimationController<Ignivorus> controller) {
-        controller.triggerableAnim("takeoff", TAKEOFF);
-        controller.triggerableAnim("phase2_takeoff", PHASE2_TAKEOFF);
         controller.triggerableAnim("wing_swipe_left",
                 RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
         controller.triggerableAnim("wing_swipe_right",
                 RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
-        controller.triggerableAnim("landed", LANDED);
-        controller.triggerableAnim("phase2_landed", PHASE2_LANDED);
         controller.triggerableAnim("bulldozer_enter",
                 RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
         controller.triggerableAnim("bulldozer_exit",

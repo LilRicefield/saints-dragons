@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
@@ -203,7 +204,6 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("burrow_idle", BURROW_IDLE);
         controller.triggerableAnim("burrow_move", BURROW_MOVE);
         controller.triggerableAnim("burrow_exit", BURROW_EXIT);
-        controller.triggerableAnim("landed", LANDED);
     }
 
     public void setupStateController(AnimationController<Volitans> controller) {
@@ -218,7 +218,6 @@ public final class VolitansAnimationHandler {
     }
 
     public void setupFastActionController(AnimationController<Volitans> controller) {
-        controller.triggerableAnim("takeoff", TAKEOFF);
         controller.triggerableAnim("bite", BITE);
         controller.triggerableAnim("dash_backwards", DASH_BACKWARDS);
         controller.triggerableAnim("dash_forward", DASH_FORWARD);
@@ -229,6 +228,10 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
         controller.triggerableAnim("slamming", SLAMMING);
         controller.triggerableAnim("slammed", SLAMMED);
+    }
+
+    public void setupFlightController(AnimationController<Volitans> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
     }
 
     public void setupInteractionController(AnimationController<Volitans> controller) {

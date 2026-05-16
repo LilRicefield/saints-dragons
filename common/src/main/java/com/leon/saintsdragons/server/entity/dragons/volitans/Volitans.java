@@ -34,6 +34,7 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSoundProfile;
@@ -157,7 +158,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final double RIDER_RUN_SPEED = 0.34D;
     private static final double RIDER_BURROW_SPEED = 0.40D;
     private static final double RIDER_SWIM_SPEED = 1.42D;
-    public static final int TAKEOFF_ANIMATION_TICKS = 35;
+    public static final int TAKEOFF_ANIMATION_TICKS = 36;
     public static final int TAKEOFF_LAUNCH_DELAY_TICKS = 15;
     private static final int SLEEP_EXIT_SUPPRESSION_TICKS = 20;
     private static final int SLEEP_WAKE_SUPPRESSION_TICKS = 20;
@@ -293,7 +294,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.setAccelerating(false);
         this.setDeltaMovement(Vec3.ZERO);
         if (!level().isClientSide) {
-            triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "takeoff");
+            triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.TAKEOFF);
             if (isVehicle() && !isFlying() && TAKEOFF_LAUNCH_DELAY_TICKS > 0) {
                 lockRiderControls(TAKEOFF_LAUNCH_DELAY_TICKS);
             }
@@ -646,6 +647,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
         return DATA_LANDING;
+    }
+
+    @Override
+    protected int getFlightAnimationTransitionTicks() {
+        return 2;
     }
 
     @Override
@@ -1272,6 +1278,17 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         });
         animationHandler.setupFastActionController(fastAction);
         controllers.add(fastAction);
+
+        AnimationController<Volitans> flight =
+                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks());
+        flight.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        animationHandler.setupFlightController(flight);
+        controllers.add(flight);
 
         AnimationController<Volitans> vocal =
                 new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
@@ -2041,7 +2058,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "landed");
+            triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
             if (!isBaby()) {
                 getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
             }
@@ -2689,7 +2706,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "landed");
+                triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
                 if (!isBaby()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
                 }

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -279,12 +280,14 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         return PlayState.STOP;
     }
 
+    public void setupFlightController(AnimationController<Raevyx> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
+    }
+
     public void setupFastActionController(AnimationController<Raevyx> controller) {
         registerVocalTriggers(controller, FAST_ACTION_CONTROLLER);
         controller.triggerableAnim("lightning_bite",
                 RawAnimation.begin().thenPlay("animation.raevyx.lightning_bite"));
-        controller.triggerableAnim("takeoff", TAKEOFF);
-        controller.triggerableAnim("rider_takeoff", RIDER_TAKEOFF);
         controller.triggerableAnim("horn_gore",
                 RawAnimation.begin().thenPlay("animation.raevyx.horn_gore"));
         controller.triggerableAnim("lightning_beam_start",
@@ -293,7 +296,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenLoop("animation.raevyx.lightning_beaming"));
         controller.triggerableAnim("lightning_beam_stop",
                 RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_stop"));
-        controller.triggerableAnim("landed", LANDED);
     }
 
     public void setupInteractionController(AnimationController<Raevyx> controller) {

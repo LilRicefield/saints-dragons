@@ -89,6 +89,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     protected abstract EntityDataAccessor<Boolean> getLandingDataAccessor();
 
+    protected int getFlightAnimationTransitionTicks() {
+        return 1;
+    }
+
     protected RideableFlyingDragon(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
         this.asyncAirController = new AsyncFlightController(this);
