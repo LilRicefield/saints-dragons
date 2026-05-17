@@ -31,6 +31,7 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
     private static final double CLAW_ANGLE_DEG = 100.0;
     private static final double CLAW_SWIPE_HORIZONTAL = 3.0;
     private static final double CLAW_SWIPE_VERTICAL = 4.0;
+    private static final double AI_DIRECT_EXTRA_REACH = RANGE;
     private static final double BLOCK_BREAK_RANGE = 6.0;
     private static final double BLOCK_BREAK_WIDTH = 3.0;
     private static final double BLOCK_BREAK_HEIGHT = 6.0;
@@ -223,7 +224,7 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();

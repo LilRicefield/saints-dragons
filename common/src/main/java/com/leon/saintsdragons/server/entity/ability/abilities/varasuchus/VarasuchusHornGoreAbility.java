@@ -27,6 +27,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
     private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
     private static final double GORE_RANGE = 5.0;
     private static final double GORE_ANGLE_DEG = 90.0;
+    private static final double AI_DIRECT_EXTRA_REACH = GORE_RANGE;
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 5),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 6),
@@ -77,7 +78,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 2.0D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();

@@ -28,6 +28,7 @@ public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
     private static final double TAIL_ANGLE_DEG = 170.0;
     private static final double TAIL_SWIPE_HORIZONTAL = 4.0;
     private static final double TAIL_SWIPE_VERTICAL = 7.0;
+    private static final double AI_DIRECT_EXTRA_REACH = 5.0;
     private static final double KNOCKBACK_STRENGTH = 1.4;
     private static final int CONTROL_LOCK_TICKS = (int) Math.round(1.4583 * 20);
     private static final int TAIL_ATTACK_SOUND_TICKS = 50;
@@ -116,7 +117,7 @@ public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();

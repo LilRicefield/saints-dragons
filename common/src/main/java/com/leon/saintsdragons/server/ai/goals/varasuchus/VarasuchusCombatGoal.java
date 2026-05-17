@@ -21,13 +21,10 @@ public class VarasuchusCombatGoal extends Goal {
     private static final double LAND_PREY_BITE_RANGE = 1.45D;
     private static final double HORN_RANGE = 5.0D;
     private static final double CLAW_RANGE = 3.5D;
-    private static final double DASH_MIN_GAP = 9.0D;
     private static final int MELEE_CADENCE_TICKS = 30;
-    private static final int AI_DASH_COOLDOWN_TICKS = 8 * 20;
     private static final float PHASE_TWO_HEALTH_THRESHOLD = 0.5F;
 
     private final Varasuchus drake;
-    private int aiDashCooldown;
     private int attackCooldown;
     private int pathRecalcCooldown = 0;
     private double lastTargetX;
@@ -100,9 +97,6 @@ public class VarasuchusCombatGoal extends Goal {
 
     @Override
     public void tick() {
-        if (aiDashCooldown > 0) {
-            aiDashCooldown--;
-        }
         if (attackCooldown > 0) {
             attackCooldown--;
         }
@@ -126,16 +120,6 @@ public class VarasuchusCombatGoal extends Goal {
         }
 
         double gap = getGapToTarget(target);
-        boolean hasLineOfSight = drake.getSensing().hasLineOfSight(target);
-
-        // Phase 2 AI dash: close distance only, with explicit 8 second AI cooldown.
-        if (shouldUseAIDash(gap, hasLineOfSight, target)) {
-            if (drake.tryAIGroundDash(target)) {
-                aiDashCooldown = AI_DASH_COOLDOWN_TICKS;
-                drake.getAiCombatPacing().setCadenceCooldownMin(12);
-                return;
-            }
-        }
 
         double meleeStopRange = getMeleeStopRange(target);
         if (gap <= HORN_RANGE) {
@@ -223,18 +207,6 @@ public class VarasuchusCombatGoal extends Goal {
             || drake.isAbilityActive(ModAbilities.VARASUCHUS_HORN_GORE)
             || drake.isAbilityActive(ModAbilities.VARASUCHUS_TAIL_ATTACK)
             || drake.isAbilityActive(ModAbilities.VARASUCHUS_TAILGUARD);
-    }
-
-    private boolean shouldUseAIDash(double gap, boolean hasLineOfSight, LivingEntity target) {
-        if (!drake.isPhaseTwoActive()) return false;
-        if (aiDashCooldown > 0) return false;
-        if (attackCooldown > 0) return false;
-        if (!hasLineOfSight) return false;
-        if (gap < DASH_MIN_GAP) return false;
-        if (drake.getAiCombatPacing().getCadenceCooldownTicks() > 0) return false;
-        if (isPerformingAttack()) return false;
-        if (drake.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) return false;
-        return isWithinAggroRange(target);
     }
 
     private boolean shouldEnterPhaseTwo() {

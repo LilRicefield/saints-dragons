@@ -30,6 +30,7 @@ public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
     private static final double HITBOX_HALF_HEIGHT = 1.55;
     private static final double CLOSE_HIT_RANGE = 2.75;
     private static final double ANGLE_DEGREES = 95.0;
+    private static final double AI_DIRECT_EXTRA_REACH = RANGE;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
@@ -107,7 +108,7 @@ public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
                 return List.of(target);
             }
             return List.of();

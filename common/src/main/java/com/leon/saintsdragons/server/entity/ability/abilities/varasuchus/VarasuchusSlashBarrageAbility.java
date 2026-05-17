@@ -29,6 +29,7 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
     private static final double CLAW_HORIZONTAL = 3.0;
     private static final double CLAW_VERTICAL = 4.0;
     private static final double CLAW_ANGLE_DEG = 100.0;
+    private static final double AI_DIRECT_EXTRA_REACH = CLAW_RANGE;
 
     private final boolean[] hitsApplied = new boolean[HIT_TICKS.length];
 
@@ -121,7 +122,7 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
                 return List.of(target);
             }
             return List.of();

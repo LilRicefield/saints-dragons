@@ -350,31 +350,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return level().isClientSide ? this.entityData.get(DATA_LEAPING) : groundDash.isActive();
     }
 
-    public boolean tryAIGroundDash(LivingEntity target) {
-        if (target == null || !isTargetValid(target)) {
-            return false;
-        }
-        if (this.isSwimming() || this.isInWaterOrBubble()) {
-            return false;
-        }
-        if (groundDash.isActive() || groundDash.getCooldownTicks() > 0) {
-            return false;
-        }
-
-        double dx = target.getX() - this.getX();
-        double dz = target.getZ() - this.getZ();
-        if (dx * dx + dz * dz < 1.0E-4D) {
-            return false;
-        }
-
-        float targetYaw = (float) (Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
-        this.setYRot(Mth.wrapDegrees(targetYaw));
-        this.yBodyRot = this.getYRot();
-        this.yHeadRot = this.getYRot();
-        this.getLookControl().setLookAt(target, 30.0F, 30.0F);
-        return startGroundDash();
-    }
-
     private boolean startGroundDash() {
         if (groundDash.getCooldownTicks() > 0) {
             return false;
