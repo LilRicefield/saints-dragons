@@ -135,6 +135,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final EntityDataAccessor<Integer> DATA_SLASH_GRAB_PASSENGER_ID =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
     private static final int LANDING_SETTLE_TICKS = 4;
+    private static final int LANDED_RECOVERY_TICKS = 34;
     public static final int TAKEOFF_ANIMATION_TICKS = 25;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
     private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
@@ -793,7 +794,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
-            int s = Mth.clamp(state, 0, 2);
+            int s = Mth.clamp(clampGroundMoveStateForLandedRecovery(state), 0, 2);
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
                 this.syncAnimState(s, getSyncedFlightMode());
@@ -1383,7 +1384,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         controllers.add(fastActionController);
 
         AnimationController<Cindervane> flightController =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks());
+                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         animationHandler.setupFlightController(flightController);
         flightController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
@@ -1737,6 +1738,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             suppressSleep(60);
         }
         markLandedNow();
+        startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
+    }
+
+    @Override
+    protected void completeGroundedAerialRecoveryLanding() {
+        handleAiLandingComplete();
     }
 
     @Override

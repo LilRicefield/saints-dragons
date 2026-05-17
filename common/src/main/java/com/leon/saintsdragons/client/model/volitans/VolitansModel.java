@@ -49,9 +49,6 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
         if (entity.isAlive()){
-            if (entity.isTamingStunned()) {
-                return;
-            }
             if (entity.isDeadOrDying()){
                 return;
             }

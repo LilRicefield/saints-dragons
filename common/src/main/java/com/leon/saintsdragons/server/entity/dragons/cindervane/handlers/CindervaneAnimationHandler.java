@@ -35,6 +35,10 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.cindervane.sleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
+    private static final DragonFlightAnimationHelper.Animations FLIGHT_ANIMATIONS =
+            new DragonFlightAnimationHelper.Animations(TAKEOFF, null, LANDED, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
+            new DragonFlightAnimationHelper.Transitions(1, 8, 6, 3, 6, 6, 3, 1);
 
     public CindervaneAnimationHandler(Cindervane dragon) {
         this.amphithere = dragon;
@@ -70,6 +74,10 @@ public class CindervaneAnimationHandler {
             state.setAndContinue(FALLING);
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
+        }
+
+        if (aerialState) {
+            return PlayState.STOP;
         }
 
         if (amphithere.isVehicle()) {
@@ -222,6 +230,25 @@ public class CindervaneAnimationHandler {
     public PlayState fastActionPredicate(AnimationState<Cindervane> state) {
         state.getController().transitionLength(1);
         return PlayState.STOP;
+    }
+
+    public PlayState flightPredicate(AnimationState<Cindervane> state) {
+        if (amphithere.isDying()) {
+            return PlayState.STOP;
+        }
+        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
+        if (!aerialState) {
+            return PlayState.STOP;
+        }
+        if (amphithere.isTakeoff()) {
+            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
+        return DragonFlightAnimationHelper.handleState(
+                state,
+                amphithere.getVisualFlightState(state.getPartialTick()),
+                FLIGHT_ANIMATIONS,
+                FLIGHT_TRANSITIONS
+        );
     }
 
     public void setupFastActionController(AnimationController<Cindervane> controller) {

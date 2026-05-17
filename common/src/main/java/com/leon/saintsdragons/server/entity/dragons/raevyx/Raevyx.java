@@ -114,7 +114,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final int MIN_AMBIENT_DELAY = 200;
     public static final int MAX_AMBIENT_DELAY = 600;
     public static final float MODEL_SCALE = 1.0f;
-    public static final int TAKEOFF_ANIMATION_TICKS = 35;
+    public static final int TAKEOFF_ANIMATION_TICKS = 33;
+    private static final int LANDED_RECOVERY_TICKS = 38;
     public static final int AGGRO_TTL_TICKS = 200;
     public static final double BREED_PARTNER_RANGE = 8.0D;
     public static final double BREED_DISTANCE_SQR = 16.0D;
@@ -419,6 +420,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             suppressSleep(60);
         }
         markLandedNow();
+        startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
+    }
+
+    @Override
+    protected void completeGroundedAerialRecoveryLanding() {
+        handleAiLandingComplete();
     }
 
     @Override
@@ -861,10 +868,19 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onTakeoffStateStarted() {
+        setLanded(false);
         triggerAnim(DragonFlightAnimationHelper.CONTROLLER,
                 getControllingPassenger() != null ? DragonFlightAnimationHelper.RIDER_TAKEOFF : DragonFlightAnimationHelper.TAKEOFF);
         float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
         getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
+    }
+
+    @Override
+    protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
+        if (flying) {
+            setLanded(false);
+        }
+        super.onFlyingStateChanged(wasFlying, flying);
     }
 
     @Override
@@ -927,6 +943,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public boolean isLanded() {
         return getBooleanData(DATA_LANDED);
     }
+
+    @Override
+    protected void onStandardLandedRecoveryFinished() {
+        setLanded(false);
+        landedTimer = 0;
+    }
     
     @Override
     public void setRunning(boolean running) {
@@ -941,7 +963,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
-            int s = Math.max(0, Math.min(2, state));
+            int s = Math.max(0, Math.min(2, clampGroundMoveStateForLandedRecovery(state)));
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
                 this.syncAnimState(s, getSyncedFlightMode());
@@ -2731,7 +2753,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
         AnimationController<Raevyx> flightController =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks());
+                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
         AnimationController<Raevyx> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
@@ -2755,7 +2777,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupStateController(stateController);
 
-        controllers.add(flightController, fastActionController, vocalController, interactionController, movementController, actionController, stateController);
+        controllers.add(movementController, actionController, fastActionController, flightController, vocalController, interactionController, stateController);
     }
 
     @Override

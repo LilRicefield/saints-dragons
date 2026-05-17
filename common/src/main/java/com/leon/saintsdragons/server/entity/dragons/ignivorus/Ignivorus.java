@@ -110,7 +110,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             DragonVariant.of(VARIANT_DEFAULT, "default", 95),
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
     );
-    public static final int TAKEOFF_ANIMATION_TICKS = 32;
+    public static final int TAKEOFF_ANIMATION_TICKS = 29;
+    private static final int LANDED_RECOVERY_TICKS = 18;
+    private static final int PHASE2_LANDED_RECOVERY_TICKS = 20;
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
@@ -1444,7 +1446,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
-            int s = Mth.clamp(state, 0, 2);
+            int s = Mth.clamp(clampGroundMoveStateForLandedRecovery(state), 0, 2);
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
             }
@@ -1950,6 +1952,12 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             }
         }
         markLandedNow();
+        startStandardLandedRecovery(isPhase2Active() ? PHASE2_LANDED_RECOVERY_TICKS : LANDED_RECOVERY_TICKS);
+    }
+
+    @Override
+    protected void completeGroundedAerialRecoveryLanding() {
+        handleAiLandingComplete();
     }
 
     @Override
@@ -2013,11 +2021,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected EntityDataAccessor<Boolean> getLandingDataAccessor() {
         return DATA_LANDING;
-    }
-
-    @Override
-    protected int getFlightAnimationTransitionTicks() {
-        return 2;
     }
 
     @Override
@@ -2808,7 +2811,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
         AnimationController<Ignivorus> flightController =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks());
+                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
 
         AnimationController<Ignivorus> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);

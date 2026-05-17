@@ -65,6 +65,10 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation BURROW_EXIT = RawAnimation.begin().thenPlay("animation.volitans.burrow_exit");
     private static final RawAnimation SLAMMING = RawAnimation.begin().thenPlay("animation.volitans.slamming");
     private static final RawAnimation SLAMMED = RawAnimation.begin().thenPlay("animation.volitans.slammed");
+    private static final DragonFlightAnimationHelper.Animations FLIGHT_ANIMATIONS =
+            new DragonFlightAnimationHelper.Animations(TAKEOFF, null, LANDED, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
+            new DragonFlightAnimationHelper.Transitions(2, 6, 6, 3, 6, 6, 6, 2);
 
     private final Volitans dragon;
 
@@ -105,11 +109,7 @@ public final class VolitansAnimationHandler {
         }
 
         if (dragon.isLanding()) {
-            RawAnimation landingAnimation = dragon.isNearLandingTerrain(Volitans.LANDING_BLEND_ALTITUDE)
-                    ? LANDING
-                    : GLIDE_DOWN;
-            state.setAndContinue(landingAnimation);
-            return PlayState.CONTINUE;
+            return PlayState.STOP;
         }
 
         if (dragon.isFallingForAnimation()) {
@@ -127,50 +127,37 @@ public final class VolitansAnimationHandler {
         }
 
         if (dragon.isFlying()) {
+            return PlayState.STOP;
+        }
+
+        return DragonMovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
+    }
+
+    public PlayState flightPredicate(AnimationState<Volitans> state) {
+        if (dragon.isDying() || dragon.isTamingStunned()) {
+            return PlayState.STOP;
+        }
+        if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isFlying()) {
+            return PlayState.STOP;
+        }
+        if (dragon.isTakeoff()) {
+            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
+
+        DragonFlightStateEvaluator.VisualState visualState;
+        if (dragon.isLanding()) {
+            visualState = DragonFlightStateEvaluator.VisualState.GLIDE_DOWN;
+        } else {
             int mode = dragon.getSyncedFlightMode();
             float animationPitchRad = -dragon.getFlightPitchRadians(state.getPartialTick());
-            DragonFlightStateEvaluator.VisualState visualState = DragonFlightStateEvaluator.evaluateVisualState(
+            visualState = DragonFlightStateEvaluator.evaluateVisualState(
                     mode,
                     dragon.isRiddenByOwner(),
                     animationPitchRad,
                     dragon.getDeltaMovement()
             );
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-                state.setAndContinue(GLIDE_DOWN);
-                return PlayState.CONTINUE;
-            }
-
-            if (mode == 5) {
-                state.setAndContinue(FLY_IDLE);
-                return PlayState.CONTINUE;
-            }
-
-            if (mode == 4) {
-                state.setAndContinue(SPRINT_FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            if (mode == 2 || mode == 1) {
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            if (mode == 0) {
-                state.setAndContinue(FLY_GLIDE);
-                return PlayState.CONTINUE;
-            }
-
-            state.setAndContinue(FLY_GLIDE);
-            return PlayState.CONTINUE;
         }
-
-        return DragonMovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
+        return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
 
     public PlayState actionPredicate(AnimationState<Volitans> state) {

@@ -579,7 +579,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     1.5,    // runSpeed
                     1.2,    // maxWalkSpeed
                     2.5,    // maxRunSpeed
-                    2.5     // flightSpeed
+                    4.0     // flightSpeed
             );
         }
 
@@ -614,7 +614,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     1.1,    // runSpeed
                     1.0,    // maxWalkSpeed
                     1.6,    // maxRunSpeed
-                    1.0     // flightSpeed (uses dragon.getFlightSpeed())
+                    4.0     // flightSpeed
             );
         }
 

@@ -158,11 +158,12 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final double RIDER_RUN_SPEED = 0.34D;
     private static final double RIDER_BURROW_SPEED = 0.40D;
     private static final double RIDER_SWIM_SPEED = 1.42D;
-    public static final int TAKEOFF_ANIMATION_TICKS = 36;
+    public static final int TAKEOFF_ANIMATION_TICKS = 35;
     public static final int TAKEOFF_LAUNCH_DELAY_TICKS = 15;
     private static final int SLEEP_EXIT_SUPPRESSION_TICKS = 20;
     private static final int SLEEP_WAKE_SUPPRESSION_TICKS = 20;
     private static final int LANDED_CONTROL_LOCK_TICKS = 20;
+    private static final int LANDED_RECOVERY_TICKS = 23;
     private static final int WALK_SOUND_DURATION_TICKS = 33;
     private static final int RUN_SOUND_DURATION_TICKS = 30;
     private static final int EAT_SOUND_DURATION_TICKS = 34;
@@ -650,11 +651,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected int getFlightAnimationTransitionTicks() {
-        return 2;
-    }
-
-    @Override
     protected boolean shouldUpdateRiderGroundMoveState() {
         return super.shouldUpdateRiderGroundMoveState() && !isInWaterOrBubble();
     }
@@ -699,7 +695,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             takeoffComponent.clear();
             this.entityData.set(DATA_TAKEOFF, false);
             this.entityData.set(DATA_HOVERING, false);
-            this.entityData.set(DATA_LANDING, false);
+            if (!isLanding()) {
+                this.entityData.set(DATA_LANDING, false);
+            }
         }
     }
 
@@ -1059,7 +1057,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             if (isFlying() && !isUltimateSlamActive()) {
                 boolean riddenByOwner = isRiddenByOwner();
                 if (this.onGround() && !isTakeoff() && !isGoingUp()) {
-                    markLandedNow();
+                    handleAiLandingComplete();
                 } else if (!riddenByOwner && this.getDeltaMovement().horizontalDistanceSqr() < 0.01D) {
                     setHovering(true);
                 } else {
@@ -1280,7 +1278,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         controllers.add(fastAction);
 
         AnimationController<Volitans> flight =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks());
+                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         flight.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
@@ -2045,8 +2043,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     public void beginAiLanding() {
         setTakeoff(false);
         setHovering(false);
-        setLanding(true);
         setFlying(false);
+        setLanding(true);
         setGoingUp(false);
         setGoingDown(false);
     }
@@ -2065,6 +2063,12 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             suppressSleep(60);
         }
         markLandedNow();
+        startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
+    }
+
+    @Override
+    protected void completeGroundedAerialRecoveryLanding() {
+        handleAiLandingComplete();
     }
 
     public boolean isAiSpecialCombatActive() {

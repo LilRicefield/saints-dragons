@@ -76,6 +76,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     protected final DragonRiderFlight riderFlightComponent;
     private int groundedAerialRecoveryTicks = 0;
     private int riderTakeoffTicks = 0;
+    private int landedRecoveryTicks = 0;
     private float accumulatedRoll = 0.0F;
     private int riderLandingBlendTicks = 0;
     private float prevSmoothedRoll = 0.0F;
@@ -541,6 +542,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     protected void tickStandardTakeoffAndGroundedAerialRecovery() {
         takeoffComponent.tick();
+        tickStandardLandedRecovery();
         groundedAerialRecoveryTicks = shouldSkipGroundedAerialRecovery()
                 ? 0
                 : DragonGroundedAerialRecovery.tick(
@@ -557,12 +559,70 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                         groundedAerialRecoveryTicks,
                         getGroundedAerialRecoveryGraceTicks(),
                         getGroundedAerialRecoveryUpwardVelocityTolerance(),
-                        this::markLandedNow
+                        this::completeGroundedAerialRecoveryLanding
                 );
+    }
+
+    protected void completeGroundedAerialRecoveryLanding() {
+        markLandedNow();
     }
 
     protected boolean shouldSkipGroundedAerialRecovery() {
         return false;
+    }
+
+    protected void startStandardLandedRecovery(int ticks) {
+        if (level().isClientSide) {
+            return;
+        }
+        landedRecoveryTicks = Math.max(0, ticks);
+        holdStandardLandedRecoveryMovement();
+    }
+
+    protected boolean isStandardLandedRecoveryActive() {
+        return landedRecoveryTicks > 0
+                && !isFlying()
+                && !isTakeoff()
+                && !isLanding()
+                && !isHovering();
+    }
+
+    protected int clampGroundMoveStateForLandedRecovery(int state) {
+        return isStandardLandedRecoveryActive() ? 0 : state;
+    }
+
+    protected void tickStandardLandedRecovery() {
+        if (level().isClientSide || landedRecoveryTicks <= 0) {
+            return;
+        }
+        if (!isStandardLandedRecoveryActive()) {
+            landedRecoveryTicks = 0;
+            onStandardLandedRecoveryFinished();
+            return;
+        }
+
+        holdStandardLandedRecoveryMovement();
+        landedRecoveryTicks--;
+        if (landedRecoveryTicks <= 0) {
+            onStandardLandedRecoveryFinished();
+        }
+    }
+
+    protected void onStandardLandedRecoveryFinished() {
+    }
+
+    private void holdStandardLandedRecoveryMovement() {
+        if (level().isClientSide) {
+            return;
+        }
+        getNavigation().stop();
+        setDeltaMovement(0.0D, getDeltaMovement().y, 0.0D);
+        super.setGroundMoveStateFromAI(0);
+    }
+
+    @Override
+    public void setGroundMoveStateFromAI(int state) {
+        super.setGroundMoveStateFromAI(clampGroundMoveStateForLandedRecovery(state));
     }
 
     protected boolean shouldIgnoreGroundedTakeoffRecovery() {

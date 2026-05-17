@@ -57,9 +57,6 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
         float partialTick = animationState.getPartialTick();
 
         if (entity.isAlive()) {
-            if (entity.isTamingStunned()) {
-                return;
-            }
             if (entity.isDeadOrDying()){
                 return;
             }

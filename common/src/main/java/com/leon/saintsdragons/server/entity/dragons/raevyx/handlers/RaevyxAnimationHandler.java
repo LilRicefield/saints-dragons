@@ -37,7 +37,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.raevyx.sleep");
 
-    private static RawAnimation currentFlightAnimation = FLY_GLIDE;
+    private static final DragonFlightAnimationHelper.Animations FLIGHT_ANIMATIONS =
+            new DragonFlightAnimationHelper.Animations(TAKEOFF, RIDER_TAKEOFF, LANDED, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
+            new DragonFlightAnimationHelper.Transitions(1, 12, 6, 3, 6, 4, 3, 1);
 
     public void triggerSitDownAnimation() {
         wyvern.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
@@ -156,86 +159,32 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        DragonFlightStateEvaluator.VisualState visualState =
-                wyvern.getVisualFlightState(state.getPartialTick());
-
-        if (wyvern.isLanding()) {
-            RawAnimation landingAnimation = visualState == DragonFlightStateEvaluator.VisualState.LANDING
-                    ? LANDING
-                    : GLIDE_DOWN;
-            state.getController().transitionLength(landingAnimation == LANDING ? 4 : 6);
-            currentFlightAnimation = landingAnimation;
-            state.setAndContinue(landingAnimation);
-            return PlayState.CONTINUE;
-        }
-
-        if (wyvern.isFlying()) {
-            if (isInvertedGlideWindow(state.getPartialTick())) {
-                state.getController().transitionLength(5);
-                currentFlightAnimation = FLY_GLIDE;
-                state.setAndContinue(FLY_GLIDE);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
-                state.getController().transitionLength(4);
-                currentFlightAnimation = LANDING;
-                state.setAndContinue(LANDING);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(TAKEOFF);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-                RawAnimation descend = GLIDE_DOWN;
-                if (currentFlightAnimation != descend) {
-                    state.getController().transitionLength(6);
-                    currentFlightAnimation = descend;
-                }
-                state.setAndContinue(descend);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
-                RawAnimation hover = FLY_IDLE;
-                if (currentFlightAnimation != hover) {
-                    state.getController().transitionLength(6);
-                    currentFlightAnimation = hover;
-                }
-                state.setAndContinue(hover);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
-                RawAnimation sprint = SPRINT_FLAP;
-                if (currentFlightAnimation != sprint) {
-                    state.getController().transitionLength(3);
-                    currentFlightAnimation = sprint;
-                }
-                state.setAndContinue(sprint);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
-                RawAnimation flap = FLAP;
-                if (currentFlightAnimation != flap) {
-                    state.getController().transitionLength(4);
-                    currentFlightAnimation = flap;
-                }
-                state.setAndContinue(flap);
-                return PlayState.CONTINUE;
-            }
-
-            state.getController().transitionLength(12);
-            state.setAndContinue(FLY_GLIDE);
-            return PlayState.CONTINUE;
+        if (wyvern.isLanding() || wyvern.isFlying()) {
+            return PlayState.STOP;
         }
 
         return DragonMovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
+    }
+
+    public PlayState flightPredicate(AnimationState<Raevyx> state) {
+        if (wyvern.isDying() || wyvern.isTamingStunned()) {
+            return PlayState.STOP;
+        }
+        if (!wyvern.isTakeoff() && !wyvern.isLanding() && !wyvern.isFlying()) {
+            return PlayState.STOP;
+        }
+        if (wyvern.isTakeoff()) {
+            return DragonFlightAnimationHelper.handleTakeoff(
+                    state,
+                    wyvern.getControllingPassenger() != null,
+                    FLIGHT_ANIMATIONS,
+                    FLIGHT_TRANSITIONS
+            );
+        }
+        DragonFlightStateEvaluator.VisualState visualState = isInvertedGlideWindow(state.getPartialTick())
+                ? DragonFlightStateEvaluator.VisualState.GLIDE
+                : wyvern.getVisualFlightState(state.getPartialTick());
+        return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
 
     private boolean isInvertedGlideWindow(float partialTick) {

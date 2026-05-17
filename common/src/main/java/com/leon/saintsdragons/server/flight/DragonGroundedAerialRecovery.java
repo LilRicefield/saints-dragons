@@ -29,7 +29,6 @@ public final class DragonGroundedAerialRecovery {
         }
 
         if (landing) {
-            markLandedNow.run();
             return 0;
         }
 

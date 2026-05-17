@@ -40,6 +40,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation PHASE2_LANDED = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_landed");
     private static final RawAnimation PHASE2_ULTIMATE = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_ultimate");
     private static final RawAnimation LEAP_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_leap");
+    private static final DragonFlightAnimationHelper.Animations FLIGHT_ANIMATIONS =
+            new DragonFlightAnimationHelper.Animations(TAKEOFF, null, LANDED, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
+            new DragonFlightAnimationHelper.Transitions(2, 12, 6, 3, 6, 4, 3, 2);
 
     public PlayState movementPredicate(AnimationState<Ignivorus> state) {
         state.getController().transitionLength(6);
@@ -136,6 +140,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             state.getController().transitionLength(4);
             state.setAndContinue(FALLING);
             return PlayState.CONTINUE;
+        }
+
+        if (aerialState) {
+            return PlayState.STOP;
         }
 
         if (aerialState) {
@@ -265,6 +273,24 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     public PlayState actionPredicate(AnimationState<Ignivorus> state) {
         state.getController().transitionLength(4);
         return PlayState.STOP;
+    }
+
+    public PlayState flightPredicate(AnimationState<Ignivorus> state) {
+        if (dragon.isDying() || dragon.isTamingStunned()) {
+            return PlayState.STOP;
+        }
+        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+        if (!aerialState) {
+            return PlayState.STOP;
+        }
+        if (dragon.isTakeoff()) {
+            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
+        DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
+        if (visualState == DragonFlightStateEvaluator.VisualState.FLAP && dragon.isAccelerating()) {
+            visualState = DragonFlightStateEvaluator.VisualState.SPRINT_FLAP;
+        }
+        return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
 
     public void setupInteractionController(AnimationController<Ignivorus> controller) {
