@@ -351,7 +351,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             .add(Attributes.MOVEMENT_SPEED, 0.3D)
             .add(Attributes.FLYING_SPEED, config.flyingSpeed())
             .add(Attributes.ATTACK_DAMAGE, attackDamage)
-            .add(Attributes.FOLLOW_RANGE, 128.0D)
+            .add(Attributes.FOLLOW_RANGE, 64.0D)
             .add(Attributes.ARMOR, config.armor())
             .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
     }

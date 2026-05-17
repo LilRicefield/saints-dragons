@@ -177,7 +177,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
                 .add(Attributes.MOVEMENT_SPEED, 0.50D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.ARMOR, 15.0D)
-                .add(Attributes.FOLLOW_RANGE, 64.0D);
+                .add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
     @Override

@@ -325,7 +325,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
-                .add(Attributes.FOLLOW_RANGE, 48.0D)
+                .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.ARMOR, config.armor());
     }
 

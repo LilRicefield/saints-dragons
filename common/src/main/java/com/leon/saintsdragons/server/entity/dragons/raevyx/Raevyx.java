@@ -507,7 +507,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, 0.55D)
-                .add(Attributes.FOLLOW_RANGE, 80.0D)
+                .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, config.armor());
