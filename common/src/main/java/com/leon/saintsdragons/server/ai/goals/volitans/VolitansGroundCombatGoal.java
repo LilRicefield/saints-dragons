@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.volitans;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonGroundMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
@@ -90,14 +91,14 @@ public class VolitansGroundCombatGoal extends Goal {
         LivingEntity target = dragon.getTarget();
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            dragon.getNavigation().moveTo(target, CHASE_SPEED);
+            DragonGroundMovementHelper.moveToLivingTarget(dragon, target, CHASE_SPEED, true);
             rememberTargetPosition(target);
         }
     }
 
     @Override
     public void stop() {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         dragon.setAggressive(false);
         attackCooldown = 0;
         pathRecalcCooldown = 0;
@@ -152,7 +153,7 @@ public class VolitansGroundCombatGoal extends Goal {
                 roarOpenerDelay--;
                 updateChasePath(target);
             } else {
-                dragon.getNavigation().stop();
+                DragonGroundMovementHelper.stopGroundMovement(dragon);
                 if (startAiAbility(ModAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48)) {
                     usedRoarOpener = true;
                 }
@@ -168,7 +169,7 @@ public class VolitansGroundCombatGoal extends Goal {
 
         if (gap <= GORE_RANGE) {
             if (gap <= BITE_RANGE) {
-                dragon.getNavigation().stop();
+                DragonGroundMovementHelper.stopGroundMovement(dragon);
                 pathRecalcCooldown = 0;
             } else {
                 updateChasePath(target);
@@ -223,14 +224,14 @@ public class VolitansGroundCombatGoal extends Goal {
 
     private boolean handleActiveAbility(LivingEntity target, double gap, boolean hasLineOfSight) {
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             if (--poisonBallHoldTicks <= 0 || !hasLineOfSight || gap < 5.0D || gap > 28.0D) {
                 dragon.requestPoisonBallRelease();
             }
             return true;
         }
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             if (--breathHoldTicks <= 0 || !hasLineOfSight || gap < 4.5D || gap > 18.0D) {
                 dragon.forceEndActiveAbility();
             }
@@ -244,9 +245,9 @@ public class VolitansGroundCombatGoal extends Goal {
             }
             if (dragon.isBurrowing()) {
                 dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                dragon.getNavigation().moveTo(target, BURROW_CHASE_SPEED);
+                DragonGroundMovementHelper.moveToLivingTarget(dragon, target, BURROW_CHASE_SPEED, true);
             } else {
-                dragon.getNavigation().stop();
+                DragonGroundMovementHelper.stopGroundMovement(dragon);
             }
             if (dragon.isBurrowing() && gap <= 4.75D) {
                 dragon.requestBurrowExit(true);
@@ -254,7 +255,7 @@ public class VolitansGroundCombatGoal extends Goal {
             return true;
         }
         if (dragon.shouldAiHoldPositionForAbility() || dragon.isGroundMobilityActive()) {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             return true;
         }
         return false;
@@ -267,7 +268,7 @@ public class VolitansGroundCombatGoal extends Goal {
         if (gap < 4.5D || gap > 10.0D) {
             return false;
         }
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         return startAiAbility(ModAbilities.VOLITANS_ROAR, true, 24, 200, 120, 48);
     }
 
@@ -278,7 +279,7 @@ public class VolitansGroundCombatGoal extends Goal {
         if (gap < POISON_BALL_MIN_RANGE || gap > POISON_BALL_MAX_RANGE) {
             return false;
         }
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         if (!startAiAbility(ModAbilities.VOLITANS_POISON_BALL, true, 16, 110, 90, 36)) {
             return false;
         }
@@ -296,7 +297,7 @@ public class VolitansGroundCombatGoal extends Goal {
         if (dragon.hurtTime <= 0 && hasLineOfSight && dragon.getRandom().nextFloat() >= 0.18F) {
             return false;
         }
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         if (!startAiAbility(ModAbilities.VOLITANS_BURROW, true, 14, 0, 80, 28)) {
             return false;
         }
@@ -314,7 +315,7 @@ public class VolitansGroundCombatGoal extends Goal {
         if (dragon.getRandom().nextFloat() >= 0.35F) {
             return false;
         }
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
         if (!startAiAbility(ModAbilities.VOLITANS_BREATH, true, 18, 150, 110, 42)) {
             return false;
@@ -403,7 +404,7 @@ public class VolitansGroundCombatGoal extends Goal {
             rememberTargetPosition(target);
             double distance = dragon.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.55D), 5, 20);
-            dragon.getNavigation().moveTo(target, CHASE_SPEED);
+            DragonGroundMovementHelper.moveToLivingTarget(dragon, target, CHASE_SPEED, true);
         }
     }
 

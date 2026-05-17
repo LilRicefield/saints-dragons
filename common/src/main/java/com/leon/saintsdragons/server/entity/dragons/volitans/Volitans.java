@@ -1081,9 +1081,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             switchToGroundNavigation();
         }
 
-        if (!level().isClientSide && shouldUseAirNavigation) {
-            this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
-        }
+        syncFlightAnimationState();
         tickAsyncFlightNavigation(isAiSpecialCombatActive() || isAiSpecialCombatReserved());
 
         if (!this.level().isClientSide) {

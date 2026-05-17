@@ -147,7 +147,8 @@ public final class VolitansAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, dragon, null, SIT, 0, 0);
+        RawAnimation sleepPose = dragon.isInWaterOrBubble() ? SLEEP_UNDERWATER : SLEEP;
+        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, dragon, sleepPose, SIT, 6, 0);
         if (restPose != null) {
             return restPose;
         }

@@ -446,9 +446,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             timeFlying = 0;
         }
 
-        if (!level().isClientSide && isAerial()) {
-            this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
-        }
+        syncFlightAnimationState();
 
         if (!level().isClientSide && isLanding() && onGround()) {
             handleAiLandingComplete();

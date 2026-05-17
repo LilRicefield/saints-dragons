@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.cindervane;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonGroundMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -81,7 +82,7 @@ public class CindervaneCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        amphithere.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(amphithere);
         deactivateFireBodyIfActive();
         LivingEntity target = amphithere.getTarget();
         if (target != null
@@ -98,7 +99,7 @@ public class CindervaneCombatGoal extends Goal {
         LivingEntity target = amphithere.getTarget();
         if (target != null) {
             amphithere.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            amphithere.getNavigation().moveTo(target, chaseSpeed);
+            DragonGroundMovementHelper.moveToLivingTarget(amphithere, target, chaseSpeed, true);
             rememberTargetPosition(target);
 
             double distanceSq = amphithere.distanceToSqr(target);
@@ -136,7 +137,7 @@ public class CindervaneCombatGoal extends Goal {
                     updateChasePath(target);
                 }
             } else {
-                amphithere.getNavigation().stop();
+                DragonGroundMovementHelper.stopGroundMovement(amphithere);
                 pathRecalcCooldown = 0;
                 tryPerformBite(target);
             }
@@ -235,12 +236,12 @@ public class CindervaneCombatGoal extends Goal {
             rememberTargetPosition(target);
             double distance = amphithere.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
-            amphithere.getNavigation().moveTo(target, chaseSpeed);
+            DragonGroundMovementHelper.moveToLivingTarget(amphithere, target, chaseSpeed, true);
         }
     }
 
     private void handleWaterCombat(LivingEntity target) {
-        amphithere.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(amphithere);
         deactivateFireBodyIfActive();
 
         double distanceSq = amphithere.distanceToSqr(target);

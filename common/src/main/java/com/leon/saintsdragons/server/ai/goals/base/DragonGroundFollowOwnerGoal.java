@@ -59,13 +59,12 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
     @Override
     public void start() {
         resetPathTracking();
-        setFastFollowing(false);
+        DragonGroundMovementHelper.setGroundWalk(dragon);
     }
 
     @Override
     public void stop() {
-        dragon.getNavigation().stop();
-        setFastFollowing(false);
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         resetPathTracking();
     }
 
@@ -84,14 +83,13 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
 
         dragon.getLookControl().setLookAt(owner, 10.0F, dragon.getMaxHeadXRot());
         if (distance <= config.stopFollowDist) {
-            dragon.getNavigation().stop();
-            setFastFollowing(false);
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 0;
             return;
         }
 
         boolean fast = distance > config.runDist;
-        setFastFollowing(fast);
+        DragonGroundMovementHelper.setGroundMoveState(dragon, fast);
         if (shouldUseWaterFollowing(owner)) {
             updateWaterFollow(owner, fast, distance);
             return;
@@ -101,7 +99,7 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
         updateGroundPath(owner, speed, distance, fast);
         if (dragon.getNavigation().isStuck()) {
             dragon.getJumpControl().jump();
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 0;
         }
     }
@@ -114,13 +112,12 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
         if (!DragonFollowOwnerGoal.attemptOwnerTeleport(dragon, owner)) {
             dragon.teleportTo(owner.getX(), owner.getY() + config.fallbackTeleportYOffset, owner.getZ());
         }
-        dragon.getNavigation().stop();
-        setFastFollowing(false);
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         resetPathTracking();
     }
 
     protected void setFastFollowing(boolean fast) {
-        dragon.setRunning(fast);
+        DragonGroundMovementHelper.setGroundMoveState(dragon, fast);
     }
 
     private boolean shouldUseWaterFollowing(LivingEntity owner) {
@@ -139,8 +136,8 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
         boolean navIdle = dragon.getNavigation().isDone() || !dragon.getNavigation().isInProgress();
         if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
             double effectiveSpeed = dragon.isInWater() ? speed * config.groundSpeedInWaterMultiplier : speed;
-            if (!dragon.getNavigation().moveTo(owner, effectiveSpeed)) {
-                dragon.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), effectiveSpeed);
+            if (!DragonGroundMovementHelper.moveToLivingTarget(dragon, owner, effectiveSpeed, running)) {
+                DragonGroundMovementHelper.moveToPosition(dragon, owner.position(), effectiveSpeed, running);
             }
             rememberOwnerPosition(owner);
             pathRecalcCooldown = computeRepathCooldown(distance, running);
@@ -148,7 +145,7 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
     }
 
     private void updateWaterFollow(LivingEntity owner, boolean running, double distance) {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         if (distance <= config.stopFollowDist) {
             dragon.setDeltaMovement(dragon.getDeltaMovement().scale(0.85D));
             return;

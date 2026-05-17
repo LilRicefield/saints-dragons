@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.stegonaut;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonGroundMovementHelper;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -55,14 +56,14 @@ public class StegonautCombatGoal extends Goal {
         LivingEntity target = dragon.getTarget();
         if (target != null) {
             dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            dragon.getNavigation().moveTo(target, chaseSpeed);
+            DragonGroundMovementHelper.moveToLivingTarget(dragon, target, chaseSpeed, true);
             rememberTargetPosition(target);
         }
     }
 
     @Override
     public void stop() {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         attackCooldown = 0;
         pathRecalcCooldown = 0;
         dragon.setTarget(null);
@@ -102,7 +103,7 @@ public class StegonautCombatGoal extends Goal {
             return;
         }
 
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         pathRecalcCooldown = 0;
         tryPerformMelee(target);
     }
@@ -147,12 +148,12 @@ public class StegonautCombatGoal extends Goal {
             rememberTargetPosition(target);
             double distance = dragon.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
-            dragon.getNavigation().moveTo(target, chaseSpeed);
+            DragonGroundMovementHelper.moveToLivingTarget(dragon, target, chaseSpeed, true);
         }
     }
 
     private void handleWaterCombatChase(LivingEntity target, boolean inAttackRange, boolean hasLineOfSight) {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
 
         Vec3 current = dragon.getDeltaMovement();
         Vec3 toTarget = target.position().subtract(dragon.position());

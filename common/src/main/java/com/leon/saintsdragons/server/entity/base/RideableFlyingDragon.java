@@ -1180,6 +1180,18 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     @Override
     protected abstract int getFlightMode();
 
+    protected void syncFlightAnimationState() {
+        if (level().isClientSide) {
+            return;
+        }
+        int groundState = this.entityData.get(getGroundMoveStateAccessor());
+        int flightMode = getFlightMode();
+        if (this.entityData.get(getFlightModeAccessor()) != flightMode) {
+            this.entityData.set(getFlightModeAccessor(), flightMode);
+            this.syncAnimState(groundState, flightMode);
+        }
+    }
+
     protected int evaluateStandardFlightMode(boolean forceSurfaceGlide) {
         double altitudeAboveTerrain = getHeightmapAltitudeAboveTerrain();
         DragonFlightStateEvaluator.FlightInput input = new DragonFlightStateEvaluator.FlightInput(

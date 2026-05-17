@@ -522,10 +522,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     @Override
     public int getEffectiveGroundState() {
-        Integer state = this.getAnimData(DragonAnimTickets.GROUND_MODE);
-        if (state != null) {
-            return state;
-        }
         return this.entityData.get(getGroundMoveStateAccessor());
     }
 

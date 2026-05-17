@@ -162,9 +162,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private static final double BABY_MAX_HEALTH = 60.0D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, null, ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, null, ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, null, ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("roar", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
@@ -244,7 +244,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 Raevyx.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
             }
         });
-        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 1.0, 60));
+        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 60));
         this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
         this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
@@ -966,7 +966,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             int s = Math.max(0, Math.min(2, clampGroundMoveStateForLandedRecovery(state)));
             if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
                 this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-                this.syncAnimState(s, getSyncedFlightMode());
+                this.syncAnimState(s, getFlightMode());
             }
         }
     }
@@ -1442,10 +1442,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 wakeUpImmediately();
                 suppressSleep(200);
             }
-            super.tickAnimationStates();
+            tickAnimationStates();
         }
         if (!(isSleeping() || isSleepingEntering() || isSleepingExiting())) {
-            super.tickAnimationStates();
+            tickAnimationStates();
         }
         if (this.isDodging()) {
             dodgeMotion.tickMovement();
@@ -1498,7 +1498,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                     landingTimer = 0;
                 }
             }
-            tickAnimationStates();
+            syncFlightAnimationState();
         }
 
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());

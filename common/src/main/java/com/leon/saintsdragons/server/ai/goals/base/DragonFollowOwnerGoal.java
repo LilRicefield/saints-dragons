@@ -117,9 +117,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     public void stop() {
-        dragon.setRunning(false);
-        dragon.getNavigation().stop();
-        dragon.setGroundMoveStateFromAI(0);
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         clearForceFollow();
         resetPathTracking();
     }
@@ -276,9 +274,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         // Stop if close enough
         if (distance <= config.stopFollowDist) {
             if (dragon.getGroundMoveState() > 0) {
-                dragon.getNavigation().stop();
-                dragon.setRunning(false);
-                dragon.setGroundMoveStateFromAI(0);
+                DragonGroundMovementHelper.stopGroundMovement(dragon);
             }
             pathRecalcCooldown = 0;
             return;
@@ -286,8 +282,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
         // Determine movement style
         boolean shouldRun = distance > config.runDist;
-        dragon.setRunning(shouldRun);
-        dragon.setGroundMoveStateFromAI(shouldRun ? 2 : 1);
+        DragonGroundMovementHelper.setGroundMoveState(dragon, shouldRun);
 
         // Calculate speed with distance scaling
         double baseSpeed = shouldRun ? config.runSpeed : config.walkSpeed;
@@ -300,7 +295,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         // Handle obstacles
         if (dragon.getNavigation().isStuck()) {
             dragon.getJumpControl().jump();
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 0;
         }
     }
@@ -315,8 +310,8 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         boolean navIdle = dragon.getNavigation().isDone() || !dragon.getNavigation().isInProgress();
 
         if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
-            if (!dragon.getNavigation().moveTo(owner, speed)) {
-                dragon.getNavigation().moveTo(owner.getX(), owner.getY(), owner.getZ(), speed);
+            if (!DragonGroundMovementHelper.moveToLivingTarget(dragon, owner, speed, running)) {
+                DragonGroundMovementHelper.moveToPosition(dragon, owner.position(), speed, running);
             }
             rememberOwnerPosition(owner);
             pathRecalcCooldown = computeRepathCooldown(distance, running);
@@ -380,18 +375,16 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     }
 
     private void handleWaterFollowing(LivingEntity owner, double distance) {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
 
         if (distance <= config.stopFollowDist) {
-            dragon.setRunning(false);
-            dragon.setGroundMoveStateFromAI(0);
+            DragonGroundMovementHelper.setGroundIdle(dragon);
             dragon.setDeltaMovement(dragon.getDeltaMovement().scale(0.85D));
             return;
         }
 
         boolean shouldRun = distance > config.runDist;
-        dragon.setRunning(shouldRun);
-        dragon.setGroundMoveStateFromAI(shouldRun ? 2 : 1);
+        DragonGroundMovementHelper.setGroundMoveState(dragon, shouldRun);
 
         double dx = owner.getX() - dragon.getX();
         double dy = (owner.getY() + owner.getEyeHeight() * 0.5D) - (dragon.getY() + dragon.getEyeHeight() * 0.5D);
@@ -588,15 +581,15 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
                     20.0,   // startFollowDist
                     5.0,    // stopFollowDist
                     64.0,  // teleportDist
-                    20.0,   // runDist
+                    12.0,   // runDist
                     30.0,   // flightTriggerDist
                     8.0,    // flightHeightDiff
                     10.0,   // landingDistance
                     2.5,    // hoverHeight
-                    0.8,    // walkSpeed
-                    1.5,    // runSpeed
-                    1.2,    // maxWalkSpeed
-                    2.5,    // maxRunSpeed
+                    0.45,   // walkSpeed
+                    0.95,   // runSpeed
+                    0.65,   // maxWalkSpeed
+                    1.2,    // maxRunSpeed
                     4.0     // flightSpeed
             );
         }

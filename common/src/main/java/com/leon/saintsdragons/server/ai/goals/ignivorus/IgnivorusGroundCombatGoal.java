@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.goals.ignivorus;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.server.ai.goals.base.DragonGroundMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -154,9 +155,8 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         dragon.setAggressive(false);
-        dragon.setGroundMoveStateFromAI(0);
         cancelFireBreathIfActive();
         pathRecalcCooldown = 8;
         pathFailureBackoff = 0;
@@ -166,7 +166,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
     @Override
     public void start() {
         dragon.setAggressive(true);
-        dragon.setGroundMoveStateFromAI(2);
+        DragonGroundMovementHelper.setGroundRun(dragon);
         hasUsedUltimateTrigger = false;
         LivingEntity target = dragon.getTarget();
         if (dragon.isFlying() || dragon.isHovering() || dragon.isTakeoff() || dragon.isLanding()) {
@@ -196,7 +196,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         if (dragon.areRiderControlsLocked() || dragon.isLeaping() || dragon.isLeapImpactRecovering()) {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 8;
             updateGroundMoveState();
             return;
@@ -210,7 +210,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         }
 
         if (dragon.isAiPhase2Locked()) {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 8;
             updateGroundMoveState();
             return;
@@ -291,7 +291,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
                 updateChasePath(target);
             }
         } else {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 8;
             tryAttack(target);
         }
@@ -390,7 +390,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
             return false;
         }
 
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         pathRecalcCooldown = 8;
         if (!canUseAiAbility(ModAbilities.IGNIVORUS_FIRE_BREATH, true)) {
             return false;
@@ -416,7 +416,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         if (fireballMode == FireballMode.STATIONARY) {
-            dragon.getNavigation().stop();
+            DragonGroundMovementHelper.stopGroundMovement(dragon);
             pathRecalcCooldown = 8;
         } else if (fireballMode == FireballMode.MOVING) {
             updateChasePath(target);
@@ -637,7 +637,7 @@ public class IgnivorusGroundCombatGoal extends Goal {
             int baseCooldown = phase2
                 ? Mth.clamp((int) (distance * 0.7D), 10, 30)
                 : Mth.clamp((int) (distance * 0.6D), 5, 20);
-            boolean started = dragon.getNavigation().moveTo(target, chaseSpeed);
+            boolean started = DragonGroundMovementHelper.moveToLivingTarget(dragon, target, chaseSpeed, true);
 
             if (started) {
                 pathRecalcCooldown = baseCooldown;
@@ -665,14 +665,14 @@ public class IgnivorusGroundCombatGoal extends Goal {
 
     private void updateGroundMoveState() {
         if (!dragon.isFlying() && dragon.onGround() && dragon.getNavigation().isInProgress()) {
-            dragon.setGroundMoveStateFromAI(2);
+            DragonGroundMovementHelper.setGroundRun(dragon);
         } else {
-            dragon.setGroundMoveStateFromAI(0);
+            DragonGroundMovementHelper.setGroundIdle(dragon);
         }
     }
 
     private void handleWaterCombatChase(LivingEntity target, double gap, boolean hasLineOfSight) {
-        dragon.getNavigation().stop();
+        DragonGroundMovementHelper.stopGroundMovement(dragon);
         pathRecalcCooldown = 8;
 
         Vec3 current = dragon.getDeltaMovement();

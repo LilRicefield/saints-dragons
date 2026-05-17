@@ -493,9 +493,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (targetCooldown > 0) {
             targetCooldown--;
         }
-        if (!level().isClientSide && isAerial()) {
-            this.entityData.set(DATA_FLIGHT_MODE, getFlightMode());
-        }
+        syncFlightAnimationState();
         tickAsyncFlightNavigation();
         if (isFlying()) {
             timeFlying++;
