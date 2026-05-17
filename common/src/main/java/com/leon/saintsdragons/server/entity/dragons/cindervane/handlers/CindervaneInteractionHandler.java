@@ -82,6 +82,21 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         boolean isOwner = dragon.isOwnedBy(player);
+        InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
+                player,
+                heldItem,
+                "entity.saintsdragons.cindervane",
+                dragon.canFeed(),
+                44,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown
+        );
+        if (growthStuntResult != InteractionResult.PASS) {
+            return growthStuntResult;
+        }
         if (isOwner) {
             if (player.isCrouching() && dragon.isFood(heldItem)) {
                 return handleBreeding(player, heldItem);

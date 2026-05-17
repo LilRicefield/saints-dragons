@@ -115,6 +115,21 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
         if (!dragon.isOwnedBy(player)) {
             return InteractionResult.PASS;
         }
+        InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
+                player,
+                heldItem,
+                "entity.saintsdragons.varasuchus",
+                dragon.canFeed(),
+                50,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    playEatSound();
+                },
+                dragon::setFeedingCooldown
+        );
+        if (growthStuntResult != InteractionResult.PASS) {
+            return growthStuntResult;
+        }
 
         if (player.isCrouching() && isVarasuchusFood(heldItem)) {
             return handleBreeding(player, heldItem);

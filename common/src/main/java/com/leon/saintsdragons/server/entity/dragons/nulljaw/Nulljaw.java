@@ -593,6 +593,24 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             return InteractionResult.PASS;
         }
 
+        var baby = this.getBabyComponent();
+        if (baby != null) {
+            InteractionResult growthStuntResult = baby.tryStuntGrowth(
+                    player,
+                    heldItem,
+                    "entity.saintsdragons.nulljaw",
+                    this.canFeed(),
+                    24,
+                    () -> {
+                        this.triggerAnim("interaction", "eat");
+                        this.playEatMovingSound();
+                    },
+                    this::setFeedingCooldown
+            );
+            if (growthStuntResult != InteractionResult.PASS) {
+                return growthStuntResult;
+            }
+        }
 
         if (heldItem.is(ModTags.Items.NULLJAW_FOODS)) {
             if (this.isTame()) {

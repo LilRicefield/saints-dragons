@@ -83,7 +83,13 @@ public final class DragonMeleeGeometry {
                 || !dragon.isTargetValid(target)) {
             return false;
         }
-        return dragon.distanceTo(target) <= dragon.getBbWidth() + target.getBbWidth() + extraReach;
+        AABB dragonBox = dragon.getBoundingBox();
+        AABB targetBox = target.getBoundingBox();
+        double horizontalGap = horizontalAabbGap(dragonBox, targetBox);
+        double verticalGap = verticalAabbGap(dragonBox, targetBox);
+        double horizontalReach = Math.max(0.0D, extraReach) + Math.max(1.0D, dragon.getBbWidth() * 0.5D);
+        double verticalReach = Math.max(2.0D, dragon.getBbHeight() * 0.75D + target.getBbHeight() * 0.5D);
+        return horizontalGap <= horizontalReach && verticalGap <= verticalReach;
     }
 
     public static boolean isForwardTarget(ForwardAttack attack,
@@ -123,6 +129,16 @@ public final class DragonMeleeGeometry {
                 clamp(point.y, box.minY, box.maxY),
                 clamp(point.z, box.minZ, box.maxZ)
         );
+    }
+
+    private static double horizontalAabbGap(AABB first, AABB second) {
+        double dx = Math.max(Math.max(first.minX - second.maxX, second.minX - first.maxX), 0.0D);
+        double dz = Math.max(Math.max(first.minZ - second.maxZ, second.minZ - first.maxZ), 0.0D);
+        return Math.sqrt(dx * dx + dz * dz);
+    }
+
+    private static double verticalAabbGap(AABB first, AABB second) {
+        return Math.max(Math.max(first.minY - second.maxY, second.minY - first.maxY), 0.0D);
     }
 
     private static double clamp(double value, double min, double max) {

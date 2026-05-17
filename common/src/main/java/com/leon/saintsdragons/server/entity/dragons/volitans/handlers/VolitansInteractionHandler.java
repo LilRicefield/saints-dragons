@@ -123,6 +123,18 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack itemstack) {
         boolean isOwner = player.equals(dragon.getOwner());
+        InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
+                player,
+                itemstack,
+                "entity.saintsdragons.volitans",
+                dragon.canFeed(),
+                24,
+                () -> playEatFeedback(itemstack),
+                dragon::setFeedingCooldown
+        );
+        if (growthStuntResult != InteractionResult.PASS) {
+            return growthStuntResult;
+        }
 
         if (isVolitansFood(itemstack)) {
             if (player.isCrouching() && isOwner) {

@@ -301,28 +301,14 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         AABB mouthBox = new AABB(attackOrigin, attackOrigin).inflate(1.35D);
         AABB combinedBox = dragonBox.minmax(mouthBox);
 
-        java.util.List<LivingEntity> targets;
-        if (wyvern.isVehicle()) {
-            targets = wyvern.level().getEntitiesOfClass(
-                    LivingEntity.class,
-                    combinedBox,
-                    entity -> entity != wyvern
-                            && entity != wyvern.getControllingPassenger()
-                            && entity.isAlive()
-                            && entity.attackable()
-                            && !wyvern.isAlly(entity));
-        } else {
-            LivingEntity currentTarget = wyvern.getTarget();
-            if (currentTarget == null
-                    || !currentTarget.isAlive()
-                    || currentTarget == wyvern
-                    || wyvern.isAlly(currentTarget)
-                    || !combinedBox.intersects(currentTarget.getBoundingBox())) {
-                targets = java.util.Collections.emptyList();
-            } else {
-                targets = java.util.List.of(currentTarget);
-            }
-        }
+        java.util.List<LivingEntity> targets = wyvern.level().getEntitiesOfClass(
+                LivingEntity.class,
+                combinedBox,
+                entity -> entity != wyvern
+                        && entity != wyvern.getControllingPassenger()
+                        && entity.isAlive()
+                        && entity.attackable()
+                        && !wyvern.isAlly(entity));
 
         for (LivingEntity target : targets) {
             int entityId = target.getId();

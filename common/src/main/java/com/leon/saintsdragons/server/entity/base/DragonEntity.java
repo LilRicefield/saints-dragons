@@ -165,6 +165,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     public int skipRespawnTicks = 0;
     private BodyControl dragonBodyControl;
     private boolean boundInBinder = false;
+    private boolean growthStunted = false;
     @Nullable
     private UUID assignedParentUuid;
     private boolean familySpawnPending = false;
@@ -2074,6 +2075,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             tag.putString("PendingAdultTextureVariantId", pendingAdultVariantId.toString());
         }
         tag.putBoolean("BoundInBinder", this.boundInBinder);
+        tag.putBoolean("GrowthStunted", this.growthStunted);
         if (assignedParentUuid != null) {
             tag.putUUID("AssignedParentUuid", assignedParentUuid);
         }
@@ -2124,6 +2126,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
         this.assignedParentUuid = tag.hasUUID("AssignedParentUuid") ? tag.getUUID("AssignedParentUuid") : null;
         this.boundInBinder = tag.getBoolean("BoundInBinder");
+        this.growthStunted = tag.getBoolean("GrowthStunted");
+        if (this.growthStunted && !this.isBaby()) {
+            this.setAge(-24000);
+            this.setBaby(true);
+        }
         if (tag.contains("FamilySpawnPending")) {
             this.familySpawnPending = tag.getBoolean("FamilySpawnPending");
             this.pendingFamilyBabyCount = Math.max(0, tag.getInt("FamilySpawnCount"));
@@ -2153,6 +2160,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public void setAge(int age) {
+        if (this.growthStunted) {
+            int currentAge = this.getAge();
+            if (!this.isBaby() || currentAge >= 0) {
+                age = Math.min(age, -24000);
+            } else if (age > currentAge) {
+                age = currentAge;
+            }
+        }
+
         boolean wasBaby = this.isBaby();
         super.setAge(age);
         boolean isNowBaby = this.isBaby();
@@ -2194,6 +2210,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public void setBaby(boolean baby) {
+        if (this.growthStunted && !baby) {
+            return;
+        }
         super.setBaby(baby);
 
         if (level().isClientSide || !shouldPersistAdultTextureVariantOnBabies()) {
@@ -2205,6 +2224,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             setTextureVariant(0);
         } else {
             applyPendingAdultTextureVariant();
+        }
+    }
+
+    public boolean isGrowthStunted() {
+        return growthStunted;
+    }
+
+    public void setGrowthStunted(boolean growthStunted) {
+        if (this.growthStunted == growthStunted) {
+            return;
+        }
+        this.growthStunted = growthStunted;
+        if (growthStunted) {
+            this.setAge(-24000);
+            this.setBaby(true);
         }
     }
 

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -92,6 +93,14 @@ public final class DragonBabyComponent {
     }
 
     public void applyBabyGrowth(Player player, boolean heartyMeal, String translationPrefix, int normalGrowthTicks, int heartyGrowthTicks) {
+        if (dragon.isGrowthStunted()) {
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(Component.translatable("entity.saintsdragons.dragon.growth_stunted", dragon.getName()), true);
+            }
+            dragon.applyFeedingHunger(heartyMeal);
+            return;
+        }
+
         int growthTicks = heartyMeal ? heartyGrowthTicks : normalGrowthTicks;
         int newAge = Math.min(0, dragon.getAge() + growthTicks);
         dragon.setAge(newAge);
@@ -105,6 +114,61 @@ public final class DragonBabyComponent {
         }
 
         dragon.applyFeedingHunger(heartyMeal);
+    }
+
+    public boolean isGrowthStuntingFood(ItemStack stack) {
+        return stack.is(ModItems.RAW_MOOP.get());
+    }
+
+    public boolean canStuntGrowth(Player player, ItemStack stack) {
+        return dragon.isBaby()
+                && dragon.isTame()
+                && dragon.isOwnedBy(player)
+                && !dragon.isGrowthStunted()
+                && isGrowthStuntingFood(stack);
+    }
+
+    public InteractionResult tryStuntGrowth(Player player,
+                                            ItemStack food,
+                                            String translationPrefix,
+                                            boolean canFeed,
+                                            int feedingCooldownTicks,
+                                            Runnable eatFeedback,
+                                            IntConsumer feedingCooldownSetter) {
+        if (!isGrowthStuntingFood(food) || !dragon.isBaby() || !dragon.isTame()) {
+            return InteractionResult.PASS;
+        }
+        if (!dragon.isOwnedBy(player)) {
+            return InteractionResult.PASS;
+        }
+
+        boolean client = dragon.level().isClientSide;
+        if (dragon.isGrowthStunted()) {
+            if (!client && player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(Component.translatable("entity.saintsdragons.dragon.growth_stunted", dragon.getName()), true);
+            }
+            return InteractionResult.sidedSuccess(client);
+        }
+
+        if (!ensureCanFeed(player, translationPrefix, canFeed)) {
+            return InteractionResult.CONSUME;
+        }
+
+        if (!client) {
+            if (!player.getAbilities().instabuild) {
+                food.shrink(1);
+            }
+            eatFeedback.run();
+            feedingCooldownSetter.accept(feedingCooldownTicks);
+            dragon.setGrowthStunted(true);
+            dragon.applyFeedingHunger(false);
+            dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+            if (player instanceof ServerPlayer serverPlayer) {
+                serverPlayer.displayClientMessage(Component.translatable("entity.saintsdragons.dragon.growth_stunted_now", dragon.getName()), true);
+            }
+        }
+
+        return InteractionResult.sidedSuccess(client);
     }
 
     public void applyBabyTamingResult(Player player, boolean success, Runnable onSuccess) {

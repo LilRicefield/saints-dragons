@@ -403,6 +403,8 @@
   "entity.saintsdragons.all.command_2": "%s is now wandering",
   "entity.saintsdragons.all.land_to_dismount": "Land your dragon to get off.",
   "entity.saintsdragons.dragon.feeding": "Feeding %s...",
+  "entity.saintsdragons.dragon.growth_stunted_now": "%s will stay small forever",
+  "entity.saintsdragons.dragon.growth_stunted": "%s is not growing anymore",
   
   "entity.saintsdragons.raevyx.fed": "%s is fully healed!",
   "entity.saintsdragons.raevyx.fed_partial": "%s is being healed...",

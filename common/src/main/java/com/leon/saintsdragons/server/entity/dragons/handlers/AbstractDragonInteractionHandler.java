@@ -11,6 +11,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.function.IntConsumer;
+
 public abstract class AbstractDragonInteractionHandler<T extends RideableDragonBase> {
     protected final T dragon;
 
@@ -104,6 +106,28 @@ public abstract class AbstractDragonInteractionHandler<T extends RideableDragonB
             }
         }
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+    }
+
+    protected InteractionResult tryHandleGrowthStuntingFood(Player player,
+                                                            ItemStack heldItem,
+                                                            String translationPrefix,
+                                                            boolean canFeed,
+                                                            int feedingCooldownTicks,
+                                                            Runnable eatFeedback,
+                                                            IntConsumer feedingCooldownSetter) {
+        var baby = dragon.getBabyComponent();
+        if (baby == null) {
+            return InteractionResult.PASS;
+        }
+        return baby.tryStuntGrowth(
+                player,
+                heldItem,
+                translationPrefix,
+                canFeed,
+                feedingCooldownTicks,
+                eatFeedback,
+                feedingCooldownSetter
+        );
     }
 
     protected abstract Item getBinderItem();

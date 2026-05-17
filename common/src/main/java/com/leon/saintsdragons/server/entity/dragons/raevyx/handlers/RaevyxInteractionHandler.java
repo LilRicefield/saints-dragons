@@ -162,6 +162,21 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack itemstack) {
         boolean isOwner = player.equals(dragon.getOwner());
+        InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
+                player,
+                itemstack,
+                "entity.saintsdragons.raevyx",
+                dragon.canFeed(),
+                22,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, 1.6f, 56);
+                },
+                dragon::setFeedingCooldown
+        );
+        if (growthStuntResult != InteractionResult.PASS) {
+            return growthStuntResult;
+        }
 
         // Handle feeding for healing
         if (dragon.isFood(itemstack)) {

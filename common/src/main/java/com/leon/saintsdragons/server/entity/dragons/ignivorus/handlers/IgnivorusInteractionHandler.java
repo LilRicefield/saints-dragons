@@ -124,6 +124,21 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack itemstack) {
         boolean isOwner = player.equals(dragon.getOwner());
+        InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
+                player,
+                itemstack,
+                "entity.saintsdragons.ignivorus",
+                dragon.canFeed(),
+                23,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    playEatSound();
+                },
+                dragon::setFeedingCooldown
+        );
+        if (growthStuntResult != InteractionResult.PASS) {
+            return growthStuntResult;
+        }
         if (isOwner) {
             if (player.isCrouching() && isIgnivorusFood(itemstack)) {
                 return handleBreeding(player, itemstack);
