@@ -100,7 +100,13 @@ public class CindervaneAirCombatGoal extends Goal {
         attackCooldown = 0;
         lostSightTicks = 0;
         deactivateFireBodyIfActive();
-        DragonAirCombatHelper.stopAirCombat(amphithere, amphithere.getTarget(), LANDING_SPEED, this::isTargetAirborne, true);
+        DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(
+                amphithere,
+                amphithere.getTarget(),
+                LANDING_SPEED,
+                this::isTargetAirborne,
+                getMaxAggroDistanceSqr()
+        );
     }
 
     @Override

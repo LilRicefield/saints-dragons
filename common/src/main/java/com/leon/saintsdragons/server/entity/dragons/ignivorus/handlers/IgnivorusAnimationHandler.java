@@ -45,6 +45,130 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
             new DragonFlightAnimationHelper.Transitions(2, 12, 6, 3, 6, 4, 3, 2);
 
+    public void triggerSitDownAnimation() {
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
+    }
+
+    public void triggerSitUpAnimation() {
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
+    }
+
+    public void triggerFallAsleepAnimation() {
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
+    }
+
+    public void triggerSleepAnimation() {
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
+    }
+
+    public void triggerWakeUpAnimation() {
+        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
+    }
+
+    public void triggerBulldozeEnterAnimation() {
+        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "bulldozer_enter");
+    }
+
+    public void triggerBulldozeExitAnimation() {
+        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "bulldozer_exit");
+    }
+
+    public void triggerPhase2EnterAnimation() {
+        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "phase2_enter");
+    }
+
+    public void triggerPhase2ExitAnimation() {
+        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "phase2_exit");
+    }
+
+    public void triggerLeapImpactAnimation() {
+        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "leap_impact");
+    }
+
+    public void setupActionController(AnimationController<Ignivorus> controller) {
+        controller.triggerableAnim("bite",
+            RawAnimation.begin().thenPlay("animation.ignivorus.bite"));
+        controller.triggerableAnim("body_slam",
+            RawAnimation.begin().thenPlay("animation.ignivorus.body_slam"));
+        controller.triggerableAnim("roar",
+            RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
+        controller.triggerableAnim("fire_breath_start",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_start"));
+        controller.triggerableAnim("fire_breathing",
+                RawAnimation.begin().thenLoop("animation.ignivorus.fire_breathing"));
+        controller.triggerableAnim("fire_breath_stop",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
+    }
+
+    public void setupStateController(AnimationController<Ignivorus> controller) {
+        DragonStateAnimationHelper.registerStandard(controller, "ignivorus");
+    }
+
+    public void setupInteractionController(AnimationController<Ignivorus> controller) {
+        controller.triggerableAnim("ignivorus_hurt",
+                RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
+        controller.triggerableAnim(DragonInteractionAnimationHelper.DIE,
+                RawAnimation.begin().thenPlay("animation.ignivorus.die"));
+        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+                RawAnimation.begin().thenPlay("animation.ignivorus.eat"));
+    }
+
+    public void setupFlightController(AnimationController<Ignivorus> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
+        DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_TAKEOFF, PHASE2_TAKEOFF);
+        DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
+    }
+
+    public void setupFastActionController(AnimationController<Ignivorus> controller) {
+        controller.triggerableAnim("wing_swipe_left",
+                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
+        controller.triggerableAnim("wing_swipe_right",
+                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
+        controller.triggerableAnim("bulldozer_enter",
+                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
+        controller.triggerableAnim("bulldozer_exit",
+                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_exit"));
+        controller.triggerableAnim("phase2_enter",
+                RawAnimation.begin().thenPlay("animation.ignivorus.phase2_enter"));
+        controller.triggerableAnim("phase2_exit",
+                RawAnimation.begin().thenPlay("animation.ignivorus.phase2_exit"));
+        controller.triggerableAnim("stomp_left",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_left"));
+        controller.triggerableAnim("stomp_right",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_right"));
+        controller.triggerableAnim("ignivorus_flex",
+                RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
+        controller.triggerableAnim("leap_impact",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
+        controller.triggerableAnim("fireball_level1_charge",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge"));
+        controller.triggerableAnim("fireball_level2_charge",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_charge"));
+        controller.triggerableAnim("fireball_level3_charge",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_charge"));
+        controller.triggerableAnim("fireball_level3_hold",
+                RawAnimation.begin().thenLoop("animation.ignivorus.fireball_level3_hold"));
+        controller.triggerableAnim("fireball_level1_shoot",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_shoots"));
+        controller.triggerableAnim("fireball_level2_shoot",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_shoots"));
+        controller.triggerableAnim("fireball_level3_shoot",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_shoots"));
+        controller.triggerableAnim("ultimate_start",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
+        controller.triggerableAnim("ultimate",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
+        controller.triggerableAnim("ultimate_end",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
+        controller.triggerableAnim("ultimate_start_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start_air"));
+        controller.triggerableAnim("ultimate_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_air"));
+        controller.triggerableAnim("ultimate_end_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end_air"));
+        controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
+    }
+
     public PlayState movementPredicate(AnimationState<Ignivorus> state) {
         state.getController().transitionLength(6);
         boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
@@ -136,7 +260,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
-        if (dragon.isFallingForAnimation()) {
+        if (!aerialState && dragon.isFallingForAnimation()) {
             state.getController().transitionLength(4);
             state.setAndContinue(FALLING);
             return PlayState.CONTINUE;
@@ -146,135 +270,14 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        if (aerialState) {
-            boolean sprinting = dragon.isAccelerating();
-            DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF
-                    || dragon.isTakeoff()
-                    || (dragon.isFlying() && dragon.timeFlying < Ignivorus.TAKEOFF_ANIMATION_TICKS)) {
-                state.getController().transitionLength(4);
-                if (dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
-                    state.setAndContinue(PHASE2_TAKEOFF);
-                } else {
-                    state.setAndContinue(TAKEOFF);
-                }
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(LANDING);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(GLIDE_DOWN);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(FLY_IDLE);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
-                state.getController().transitionLength(3);
-                state.setAndContinue(SPRINT_FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(sprinting ? SPRINT_FLAP : FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            state.getController().transitionLength(12);
-            state.setAndContinue(GLIDE);
-        } else {
-            int groundState = dragon.getEntityData().get(Ignivorus.DATA_GROUND_MOVE_STATE);
-
-            switch (groundState) {
-                case 2 -> state.setAndContinue(RUN);
-                case 1 -> state.setAndContinue(WALK);
-                default -> state.setAndContinue(IDLE);
-            }
+        int groundState = dragon.getEntityData().get(Ignivorus.DATA_GROUND_MOVE_STATE);
+        switch (groundState) {
+            case 2 -> state.setAndContinue(RUN);
+            case 1 -> state.setAndContinue(WALK);
+            default -> state.setAndContinue(IDLE);
         }
         return PlayState.CONTINUE;
     }
-
-    public void triggerSitDownAnimation() {
-        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
-    }
-
-    public void triggerSitUpAnimation() {
-        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
-    }
-
-    public void triggerFallAsleepAnimation() {
-        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
-    }
-
-    public void triggerSleepAnimation() {
-        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
-    }
-
-    public void triggerWakeUpAnimation() {
-        dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
-    }
-
-    public void triggerBulldozeEnterAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "bulldozer_enter");
-    }
-
-    public void triggerBulldozeExitAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "bulldozer_exit");
-    }
-
-    public void triggerPhase2EnterAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "phase2_enter");
-    }
-
-    public void triggerPhase2ExitAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "phase2_exit");
-    }
-
-    public void triggerLeapImpactAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "leap_impact");
-    }
-
-    public void setupActionController(AnimationController<Ignivorus> controller) {
-        controller.triggerableAnim("bite",
-            RawAnimation.begin().thenPlay("animation.ignivorus.bite"));
-        controller.triggerableAnim("body_slam",
-            RawAnimation.begin().thenPlay("animation.ignivorus.body_slam"));
-        controller.triggerableAnim("roar",
-            RawAnimation.begin().thenPlay("animation.ignivorus.roar"));
-        controller.triggerableAnim("fire_breath_start",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_start"));
-        controller.triggerableAnim("fire_breathing",
-                RawAnimation.begin().thenLoop("animation.ignivorus.fire_breathing"));
-        controller.triggerableAnim("fire_breath_stop",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fire_breath_end"));
-    }
-
-    public void setupStateController(AnimationController<Ignivorus> controller) {
-        DragonStateAnimationHelper.registerStandard(controller, "ignivorus");
-    }
-
-    public PlayState fastActionPredicate(AnimationState<Ignivorus> state) {
-        state.getController().transitionLength(1);
-        return PlayState.STOP;
-    }
-
-    public PlayState actionPredicate(AnimationState<Ignivorus> state) {
-        state.getController().transitionLength(4);
-        return PlayState.STOP;
-    }
-
     public PlayState flightPredicate(AnimationState<Ignivorus> state) {
         if (dragon.isDying() || dragon.isTamingStunned()) {
             return PlayState.STOP;
@@ -293,68 +296,13 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
 
-    public void setupInteractionController(AnimationController<Ignivorus> controller) {
-        controller.triggerableAnim("ignivorus_hurt",
-                RawAnimation.begin().thenPlay("animation.ignivorus.hurt"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.DIE,
-                RawAnimation.begin().thenPlay("animation.ignivorus.die"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
-                RawAnimation.begin().thenPlay("animation.ignivorus.eat"));
+    public PlayState actionPredicate(AnimationState<Ignivorus> state) {
+        state.getController().transitionLength(4);
+        return PlayState.STOP;
     }
 
-    public void setupFlightController(AnimationController<Ignivorus> controller) {
-        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
-        DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_TAKEOFF, PHASE2_TAKEOFF);
-        DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
-    }
-
-    public void setupFastActionController(AnimationController<Ignivorus> controller) {
-        controller.triggerableAnim("wing_swipe_left",
-                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
-        controller.triggerableAnim("wing_swipe_right",
-                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
-        controller.triggerableAnim("bulldozer_enter",
-                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
-        controller.triggerableAnim("bulldozer_exit",
-                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_exit"));
-        controller.triggerableAnim("phase2_enter",
-                RawAnimation.begin().thenPlay("animation.ignivorus.phase2_enter"));
-        controller.triggerableAnim("phase2_exit",
-                RawAnimation.begin().thenPlay("animation.ignivorus.phase2_exit"));
-        controller.triggerableAnim("stomp_left",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_left"));
-        controller.triggerableAnim("stomp_right",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_right"));
-        controller.triggerableAnim("ignivorus_flex",
-                RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
-        controller.triggerableAnim("leap_impact",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
-        controller.triggerableAnim("fireball_level1_charge",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge"));
-        controller.triggerableAnim("fireball_level2_charge",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_charge"));
-        controller.triggerableAnim("fireball_level3_charge",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_charge"));
-        controller.triggerableAnim("fireball_level3_hold",
-                RawAnimation.begin().thenLoop("animation.ignivorus.fireball_level3_hold"));
-        controller.triggerableAnim("fireball_level1_shoot",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_shoots"));
-        controller.triggerableAnim("fireball_level2_shoot",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_shoots"));
-        controller.triggerableAnim("fireball_level3_shoot",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_shoots"));
-        controller.triggerableAnim("ultimate_start",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
-        controller.triggerableAnim("ultimate",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
-        controller.triggerableAnim("ultimate_end",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
-        controller.triggerableAnim("ultimate_start_air",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start_air"));
-        controller.triggerableAnim("ultimate_air",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_air"));
-        controller.triggerableAnim("ultimate_end_air",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end_air"));
-        controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
+    public PlayState fastActionPredicate(AnimationState<Ignivorus> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
     }
 }

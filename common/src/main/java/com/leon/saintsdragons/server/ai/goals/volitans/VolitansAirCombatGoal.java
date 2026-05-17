@@ -117,7 +117,13 @@ public class VolitansAirCombatGoal extends Goal {
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             dragon.forceEndActiveAbility();
         }
-        DragonAirCombatHelper.stopAirCombat(dragon, target, 1.0D, this::isTargetAirborne, true);
+        DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(
+                dragon,
+                target,
+                1.0D,
+                this::isTargetAirborne,
+                getMaxAggroDistanceSqr()
+        );
     }
 
     @Override

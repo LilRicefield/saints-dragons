@@ -76,106 +76,16 @@ public final class VolitansAnimationHandler {
         this.dragon = dragon;
     }
 
-    public PlayState movementPredicate(AnimationState<Volitans> state) {
-        if (dragon.isDying() || dragon.areRiderControlsLocked()) {
-            return PlayState.STOP;
-        }
-
-        var controller = state.getController();
-        controller.transitionLength(6);
-
-        if (dragon.isTamingStunned()) {
-            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
-            return PlayState.CONTINUE;
-        }
-
-        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, dragon, null, SIT, 0, 0);
-        if (restPose != null) {
-            return restPose;
-        }
-
-        if (dragon.isBurrowing() && !dragon.isFlying()) {
-            int groundState = dragon.getEffectiveGroundState();
-            if (groundState > 0 || state.isMoving()) {
-                state.setAndContinue(BURROW_MOVE);
-            } else {
-                state.setAndContinue(BURROW_IDLE);
-            }
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isTakeoff()) {
-            return PlayState.STOP;
-        }
-
-        if (dragon.isLanding()) {
-            return PlayState.STOP;
-        }
-
-        if (dragon.isFallingForAnimation()) {
-            state.setAndContinue(FALLING);
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isInWaterOrBubble() && !dragon.isFlying()) {
-            if (dragon.isSwimmingMoving()) {
-                state.setAndContinue(SWIM);
-            } else {
-                state.setAndContinue(SWIM_IDLE);
-            }
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isFlying()) {
-            return PlayState.STOP;
-        }
-
-        return DragonMovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
-    }
-
-    public PlayState flightPredicate(AnimationState<Volitans> state) {
-        if (dragon.isDying() || dragon.isTamingStunned()) {
-            return PlayState.STOP;
-        }
-        if (!dragon.isTakeoff() && !dragon.isLanding() && !dragon.isFlying()) {
-            return PlayState.STOP;
-        }
-        if (dragon.isTakeoff()) {
-            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-
-        DragonFlightStateEvaluator.VisualState visualState;
-        if (dragon.isLanding()) {
-            visualState = DragonFlightStateEvaluator.VisualState.GLIDE_DOWN;
-        } else {
-            int mode = dragon.getSyncedFlightMode();
-            float animationPitchRad = -dragon.getFlightPitchRadians(state.getPartialTick());
-            visualState = DragonFlightStateEvaluator.evaluateVisualState(
-                    mode,
-                    dragon.isRiddenByOwner(),
-                    animationPitchRad,
-                    dragon.getDeltaMovement()
-            );
-        }
-        return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-    }
-
-    public PlayState actionPredicate(AnimationState<Volitans> state) {
-        state.getController().transitionLength(4);
-        return PlayState.STOP;
-    }
-
-    public PlayState fastActionPredicate(AnimationState<Volitans> state) {
-        state.getController().transitionLength(1);
-        return PlayState.STOP;
-    }
-
     public void triggerSitDownAnimation() {
         dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
         dragon.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
+    }
+
+    public void setupFlightController(AnimationController<Volitans> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
     }
 
     public void setupActionController(AnimationController<Volitans> controller) {
@@ -217,13 +127,95 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("slammed", SLAMMED);
     }
 
-    public void setupFlightController(AnimationController<Volitans> controller) {
-        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
-    }
-
     public void setupInteractionController(AnimationController<Volitans> controller) {
         controller.triggerableAnim(DragonInteractionAnimationHelper.EAT, EAT);
         controller.triggerableAnim("volitans_hurt", HURT);
         controller.triggerableAnim("volitans_die", DIE);
+    }
+
+    public PlayState movementPredicate(AnimationState<Volitans> state) {
+        if (dragon.isDying() || dragon.areRiderControlsLocked()) {
+            return PlayState.STOP;
+        }
+
+        var controller = state.getController();
+        controller.transitionLength(6);
+        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+
+        if (dragon.isTamingStunned()) {
+            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
+            return PlayState.CONTINUE;
+        }
+
+        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, dragon, null, SIT, 0, 0);
+        if (restPose != null) {
+            return restPose;
+        }
+
+        if (dragon.isBurrowing() && !aerialState) {
+            int groundState = dragon.getEffectiveGroundState();
+            if (groundState > 0 || state.isMoving()) {
+                state.setAndContinue(BURROW_MOVE);
+            } else {
+                state.setAndContinue(BURROW_IDLE);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        if (aerialState) {
+            return PlayState.STOP;
+        }
+
+        if (dragon.isFallingForAnimation()) {
+            state.setAndContinue(FALLING);
+            return PlayState.CONTINUE;
+        }
+
+        if (dragon.isInWaterOrBubble() && !aerialState) {
+            if (dragon.isSwimmingMoving()) {
+                state.setAndContinue(SWIM);
+            } else {
+                state.setAndContinue(SWIM_IDLE);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        return DragonMovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
+    }
+    public PlayState flightPredicate(AnimationState<Volitans> state) {
+        if (dragon.isDying() || dragon.isTamingStunned()) {
+            return PlayState.STOP;
+        }
+        boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+        if (!aerialState) {
+            return PlayState.STOP;
+        }
+        if (dragon.isTakeoff()) {
+            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
+
+        DragonFlightStateEvaluator.VisualState visualState;
+        if (dragon.isLanding()) {
+            visualState = DragonFlightStateEvaluator.VisualState.GLIDE_DOWN;
+        } else {
+            int mode = dragon.getSyncedFlightMode();
+            float animationPitchRad = -dragon.getFlightPitchRadians(state.getPartialTick());
+            visualState = DragonFlightStateEvaluator.evaluateVisualState(
+                    mode,
+                    dragon.isRiddenByOwner(),
+                    animationPitchRad,
+                    dragon.getDeltaMovement()
+            );
+        }
+        return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+    }
+    public PlayState actionPredicate(AnimationState<Volitans> state) {
+        state.getController().transitionLength(4);
+        return PlayState.STOP;
+    }
+
+    public PlayState fastActionPredicate(AnimationState<Volitans> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
     }
 }

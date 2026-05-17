@@ -113,6 +113,28 @@ public final class DragonAirCombatHelper {
         }
     }
 
+    public static void stopAirCombatAndLandWhenTargetLost(RideableDragonBase dragon,
+                                                          LivingEntity target,
+                                                          double landingSpeed,
+                                                          TargetAirborneCheck targetAirborneCheck,
+                                                          double maxAggroDistanceSqr) {
+        dragon.setAggressive(false);
+
+        boolean validTarget = target != null && dragon.isTargetValid(target);
+        boolean targetOutOfRange = validTarget && dragon.distanceToSqr(target) > maxAggroDistanceSqr;
+        if (!validTarget || targetOutOfRange) {
+            dragon.setTarget(null);
+            if (dragon.isAerial() && !dragon.isLanding()) {
+                DragonLandingHelper.tryBeginAggroLanding(dragon, null, landingSpeed);
+            }
+            return;
+        }
+
+        if (!targetAirborneCheck.isTargetAirborne(target) && dragon.isAerial() && !dragon.isLanding()) {
+            DragonLandingHelper.tryBeginAggroLanding(dragon, target, landingSpeed);
+        }
+    }
+
     public static boolean stopIfTargetInvalid(RideableDragonBase dragon, Runnable stopCombat) {
         if (dragon.isTargetValid(dragon.getTarget())) {
             return false;

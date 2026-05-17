@@ -83,6 +83,12 @@ public class CindervaneCombatGoal extends Goal {
     public void stop() {
         amphithere.getNavigation().stop();
         deactivateFireBodyIfActive();
+        LivingEntity target = amphithere.getTarget();
+        if (target != null
+                && amphithere.isTargetValid(target)
+                && amphithere.distanceToSqr(target) > getMaxAggroDistanceSqr()) {
+            amphithere.setTarget(null);
+        }
         attackCooldown = 0;
         pathRecalcCooldown = 0;
     }

@@ -97,22 +97,63 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         }
     }
 
+    public void setupStateController(AnimationController<Raevyx> controller) {
+        DragonStateAnimationHelper.registerStandard(controller, "raevyx");
+    }
+
+    public void setupFlightController(AnimationController<Raevyx> controller) {
+        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
+    }
+
+    public void setupActionController(AnimationController<Raevyx> controller) {
+        registerVocalTriggers(controller, ACTION_CONTROLLER);
+        controller.triggerableAnim("dodge_left",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
+        controller.triggerableAnim("dodge_right",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
+        controller.triggerableAnim("dodge_air_left",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
+        controller.triggerableAnim("dodge_air_right",
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"));
+        controller.triggerableAnim("ground_rend",
+                RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
+        controller.triggerableAnim("dash_backward",
+                RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
+        controller.triggerableAnim("summon_storm",
+                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
+        controller.triggerableAnim("summon_storm_air",
+                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
+    }
+
+    public void setupFastActionController(AnimationController<Raevyx> controller) {
+        registerVocalTriggers(controller, FAST_ACTION_CONTROLLER);
+        controller.triggerableAnim("lightning_bite",
+                RawAnimation.begin().thenPlay("animation.raevyx.lightning_bite"));
+        controller.triggerableAnim("horn_gore",
+                RawAnimation.begin().thenPlay("animation.raevyx.horn_gore"));
+        controller.triggerableAnim("lightning_beam_start",
+                RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_start"));
+        controller.triggerableAnim("lightning_beaming",
+                RawAnimation.begin().thenLoop("animation.raevyx.lightning_beaming"));
+        controller.triggerableAnim("lightning_beam_stop",
+                RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_stop"));
+    }
+
+    public void setupInteractionController(AnimationController<Raevyx> controller) {
+        controller.triggerableAnim("raevyx_hurt",
+                RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
+        controller.triggerableAnim("die",
+                RawAnimation.begin().thenPlay("animation.raevyx.die"));
+        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+                RawAnimation.begin().thenPlay("animation.raevyx.eat"));
+    }
+
     public PlayState movementPredicate(AnimationState<Raevyx> state) {
         state.getController().transitionLength(6);
+        boolean aerialState = wyvern.isFlying() || wyvern.isTakeoff() || wyvern.isLanding() || wyvern.isHovering();
 
         if (wyvern.areRiderControlsLocked()) {
             return PlayState.STOP;
-        }
-
-        if (wyvern.isTakeoff()) {
-            return PlayState.STOP;
-        }
-
-        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
-        if (inWater) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(SWIM);
-            return PlayState.CONTINUE;
         }
 
         if (wyvern.isDying()) {
@@ -122,6 +163,17 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         if (wyvern.isTamingStunned()) {
             state.getController().transitionLength(4);
             state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
+        }
+
+        if (aerialState) {
+            return PlayState.STOP;
+        }
+
+        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
+        if (inWater) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(SWIM);
             return PlayState.CONTINUE;
         }
 
@@ -159,10 +211,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        if (wyvern.isLanding() || wyvern.isFlying()) {
-            return PlayState.STOP;
-        }
-
         return DragonMovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
     }
 
@@ -170,7 +218,8 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         if (wyvern.isDying() || wyvern.isTamingStunned()) {
             return PlayState.STOP;
         }
-        if (!wyvern.isTakeoff() && !wyvern.isLanding() && !wyvern.isFlying()) {
+        boolean aerialState = wyvern.isFlying() || wyvern.isTakeoff() || wyvern.isLanding() || wyvern.isHovering();
+        if (!aerialState) {
             return PlayState.STOP;
         }
         if (wyvern.isTakeoff()) {
@@ -195,30 +244,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         return offsetDegrees <= INVERTED_GLIDE_ROLL_WINDOW_DEGREES;
     }
 
-    public void setupStateController(AnimationController<Raevyx> controller) {
-        DragonStateAnimationHelper.registerStandard(controller, "raevyx");
-    }
-
-    public void setupActionController(AnimationController<Raevyx> controller) {
-        registerVocalTriggers(controller, ACTION_CONTROLLER);
-        controller.triggerableAnim("dodge_left",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
-        controller.triggerableAnim("dodge_right",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
-        controller.triggerableAnim("dodge_air_left",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
-        controller.triggerableAnim("dodge_air_right",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"));
-        controller.triggerableAnim("ground_rend",
-                RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
-        controller.triggerableAnim("dash_backward",
-                RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
-        controller.triggerableAnim("summon_storm",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
-        controller.triggerableAnim("summon_storm_air",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
-    }
-
     public PlayState raevyxActionPredicate(AnimationState<Raevyx> state) {
         state.getController().transitionLength(3);
         return PlayState.STOP;
@@ -227,33 +252,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     public PlayState raevyxFastActionPredicate(AnimationState<Raevyx> state) {
         state.getController().transitionLength(1);
         return PlayState.STOP;
-    }
-
-    public void setupFlightController(AnimationController<Raevyx> controller) {
-        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
-    }
-
-    public void setupFastActionController(AnimationController<Raevyx> controller) {
-        registerVocalTriggers(controller, FAST_ACTION_CONTROLLER);
-        controller.triggerableAnim("lightning_bite",
-                RawAnimation.begin().thenPlay("animation.raevyx.lightning_bite"));
-        controller.triggerableAnim("horn_gore",
-                RawAnimation.begin().thenPlay("animation.raevyx.horn_gore"));
-        controller.triggerableAnim("lightning_beam_start",
-                RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_start"));
-        controller.triggerableAnim("lightning_beaming",
-                RawAnimation.begin().thenLoop("animation.raevyx.lightning_beaming"));
-        controller.triggerableAnim("lightning_beam_stop",
-                RawAnimation.begin().thenPlay("animation.raevyx.lightning_beam_stop"));
-    }
-
-    public void setupInteractionController(AnimationController<Raevyx> controller) {
-        controller.triggerableAnim("raevyx_hurt",
-                RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
-        controller.triggerableAnim("die",
-                RawAnimation.begin().thenPlay("animation.raevyx.die"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
-                RawAnimation.begin().thenPlay("animation.raevyx.eat"));
     }
 
     private void registerVocalTriggers(AnimationController<Raevyx> controller, String controllerName) {

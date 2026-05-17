@@ -4,7 +4,6 @@ import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimati
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
-import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -44,160 +43,6 @@ public class CindervaneAnimationHandler {
         this.amphithere = dragon;
     }
 
-    public PlayState handleMovementAnimation(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(12); // Longer transitions for smoother animation
-        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
-
-        if (amphithere.isDying()) {
-            return PlayState.STOP;
-        }
-
-        if (amphithere.isTakeoff()) {
-            return PlayState.STOP;
-        }
-        PlayState sleepPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, SLEEP, SIT, 6, 0, false);
-        if (sleepPose != null) {
-            return sleepPose;
-        }
-
-        boolean inWater = amphithere.isInWater() || amphithere.isInWaterOrBubble();
-
-        if (inWater) {
-            state.getController().transitionLength(6);
-            state.setAndContinue(SWIM);
-            state.getController().setAnimationSpeed(1.0f);
-            return PlayState.CONTINUE;
-        }
-
-        if (amphithere.isFallingForAnimation()) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(FALLING);
-            state.getController().setAnimationSpeed(1.0f);
-            return PlayState.CONTINUE;
-        }
-
-        if (aerialState) {
-            return PlayState.STOP;
-        }
-
-        if (amphithere.isVehicle()) {
-            state.getController().transitionLength(4);
-            if (aerialState) {
-                DragonFlightStateEvaluator.VisualState visualState = amphithere.getVisualFlightState(state.getPartialTick());
-
-                if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
-                    return PlayState.STOP;
-                }
-
-                if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
-                    state.getController().transitionLength(4);
-                    state.setAndContinue(LANDING);
-                    return PlayState.CONTINUE;
-                }
-
-                if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(GLIDE_DOWN);
-                    return PlayState.CONTINUE;
-                }
-
-                if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(FLY_IDLE);
-                    return PlayState.CONTINUE;
-                }
-
-                if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
-                    state.getController().transitionLength(3);
-                    state.setAndContinue(SPRINT_FLAP);
-                    return PlayState.CONTINUE;
-                }
-
-                if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
-                    state.getController().transitionLength(6);
-                    state.setAndContinue(FLAP);
-                    return PlayState.CONTINUE;
-                }
-
-                state.getController().transitionLength(12);
-                state.setAndContinue(GLIDE);
-            } else {
-                int groundState = amphithere.getEffectiveGroundState();
-                if (groundState == 2) {
-                    state.setAndContinue(RUN);
-                } else if (groundState == 1) {
-                    state.setAndContinue(WALK);
-                } else {
-                    state.setAndContinue(IDLE);
-                }
-            }
-            state.getController().setAnimationSpeed(1.0f);
-            return PlayState.CONTINUE;
-        }
-        PlayState sitPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, null, SIT, 0, 0);
-        if (sitPose != null) {
-            return sitPose;
-        }
-
-        state.getController().setAnimationSpeed(1.0f);
-
-        if (aerialState) {
-            DragonFlightStateEvaluator.VisualState visualState = amphithere.getVisualFlightState(state.getPartialTick());
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.TAKEOFF) {
-                return PlayState.STOP;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.LANDING) {
-                state.getController().transitionLength(4);
-                state.setAndContinue(LANDING);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(GLIDE_DOWN);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLY_IDLE) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(FLY_IDLE);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.SPRINT_FLAP) {
-                state.getController().transitionLength(3);
-                state.setAndContinue(SPRINT_FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.FLAP) {
-                state.getController().transitionLength(6);
-                state.setAndContinue(FLAP);
-                return PlayState.CONTINUE;
-            }
-
-            if (visualState == DragonFlightStateEvaluator.VisualState.GLIDE) {
-                state.getController().transitionLength(8);
-                state.setAndContinue(GLIDE);
-                return PlayState.CONTINUE;
-            }
-
-            state.getController().transitionLength(6);
-            state.setAndContinue(FLAP);
-            return PlayState.CONTINUE;
-        }
-
-        if (!amphithere.isTakeoff() && !amphithere.isLanding() && !amphithere.isHovering()) {
-            return DragonMovementAnimationHelper.handleGroundMovement(state, amphithere, IDLE, WALK, RUN);
-        } else {
-            state.setAndContinue(IDLE);
-        }
-
-        return PlayState.CONTINUE;
-    }
-
     public void setupActionController(AnimationController<Cindervane> controller) {
         controller.triggerableAnim("bite",
                 RawAnimation.begin().thenPlay("animation.cindervane.bite"));
@@ -225,30 +70,6 @@ public class CindervaneAnimationHandler {
         DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.FALL_ASLEEP, FALL_ASLEEP);
         DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SLEEP, SLEEP);
         DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.WAKE_UP, WAKE_UP);
-    }
-
-    public PlayState fastActionPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(1);
-        return PlayState.STOP;
-    }
-
-    public PlayState flightPredicate(AnimationState<Cindervane> state) {
-        if (amphithere.isDying()) {
-            return PlayState.STOP;
-        }
-        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
-        if (!aerialState) {
-            return PlayState.STOP;
-        }
-        if (amphithere.isTakeoff()) {
-            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
-        }
-        return DragonFlightAnimationHelper.handleState(
-                state,
-                amphithere.getVisualFlightState(state.getPartialTick()),
-                FLIGHT_ANIMATIONS,
-                FLIGHT_TRANSITIONS
-        );
     }
 
     public void setupFastActionController(AnimationController<Cindervane> controller) {
@@ -287,9 +108,86 @@ public class CindervaneAnimationHandler {
         amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
     }
 
-    public PlayState actionPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(5);
-        return PlayState.STOP;
+    public PlayState movementPredicate(AnimationState<Cindervane> state) {
+        state.getController().transitionLength(10);
+        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
+
+        if (amphithere.isDying()) {
+            return PlayState.STOP;
+        }
+
+        PlayState sleepPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, SLEEP, SIT, 6, 0, false);
+        if (sleepPose != null) {
+            return sleepPose;
+        }
+
+        boolean inWater = amphithere.isInWater() || amphithere.isInWaterOrBubble();
+
+        if (!aerialState && inWater) {
+            state.getController().transitionLength(6);
+            state.setAndContinue(SWIM);
+            state.getController().setAnimationSpeed(1.0f);
+            return PlayState.CONTINUE;
+        }
+
+        if (!aerialState && amphithere.isFallingForAnimation()) {
+            state.getController().transitionLength(4);
+            state.setAndContinue(FALLING);
+            state.getController().setAnimationSpeed(1.0f);
+            return PlayState.CONTINUE;
+        }
+
+        if (aerialState) {
+            return PlayState.STOP;
+        }
+
+        if (amphithere.isVehicle()) {
+            state.getController().transitionLength(4);
+            int groundState = amphithere.getEffectiveGroundState();
+            if (groundState == 2) {
+                state.setAndContinue(RUN);
+            } else if (groundState == 1) {
+                state.setAndContinue(WALK);
+            } else {
+                state.setAndContinue(IDLE);
+            }
+            state.getController().setAnimationSpeed(1.0f);
+            return PlayState.CONTINUE;
+        }
+        PlayState sitPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, null, SIT, 0, 0);
+        if (sitPose != null) {
+            return sitPose;
+        }
+
+        state.getController().setAnimationSpeed(1.0f);
+
+        return DragonMovementAnimationHelper.handleGroundMovement(state, amphithere, IDLE, WALK, RUN);
     }
 
+    public PlayState flightPredicate(AnimationState<Cindervane> state) {
+        if (amphithere.isDying()) {
+            return PlayState.STOP;
+        }
+        boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
+        if (!aerialState) {
+            return PlayState.STOP;
+        }
+        if (amphithere.isTakeoff()) {
+            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        }
+        return DragonFlightAnimationHelper.handleState(
+                state,
+                amphithere.getVisualFlightState(state.getPartialTick()),
+                FLIGHT_ANIMATIONS,
+                FLIGHT_TRANSITIONS
+        );
+    }
+    public PlayState actionPredicate(AnimationState<Cindervane> state) {
+        state.getController().transitionLength(4);
+        return PlayState.STOP;
+    }
+    public PlayState fastActionPredicate(AnimationState<Cindervane> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
+    }
 }

@@ -142,7 +142,13 @@ public class IgnivorusAirCombatGoal extends Goal {
     public void stop() {
         attackCooldown = 0;
         repositionCooldown = 0;
-        DragonAirCombatHelper.stopAirCombat(dragon, dragon.getTarget(), LANDING_SPEED, this::isTargetAirborne, false);
+        DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(
+                dragon,
+                dragon.getTarget(),
+                LANDING_SPEED,
+                this::isTargetAirborne,
+                getMaxAggroDistanceSqr()
+        );
     }
 
     @Override

@@ -124,7 +124,13 @@ public class RaevyxAirCombatGoal extends Goal {
     public void stop() {
         attackCooldown = 0;
         repositionCooldown = 0;
-        DragonAirCombatHelper.stopAirCombat(dragon, dragon.getTarget(), 1.6D, this::isTargetAirborne, false);
+        DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(
+                dragon,
+                dragon.getTarget(),
+                1.6D,
+                this::isTargetAirborne,
+                getMaxAggroDistanceSqr()
+        );
     }
 
     @Override
