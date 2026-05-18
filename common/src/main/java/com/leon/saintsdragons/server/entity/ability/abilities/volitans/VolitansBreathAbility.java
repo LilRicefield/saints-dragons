@@ -1,13 +1,13 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.util.Mth;
@@ -152,28 +152,13 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     }
 
     private Vec3 getBreathDirection(Volitans dragon, Vec3 origin) {
-        Entity rider = dragon.getControllingPassenger();
-        if (rider instanceof Player player) {
-            Vec3 view = player.getViewVector(1.0F);
-            if (view.lengthSqr() > 1.0E-6) {
-                return view.normalize();
-            }
-        }
-
         LivingEntity target = dragon.getTarget();
         if (dragon.isTargetValid(target)) {
-            Vec3 aimPoint = target.getEyePosition().add(target.getDeltaMovement().scale(0.35D));
-            Vec3 targetDir = aimPoint.subtract(origin);
-            if (targetDir.lengthSqr() > 1.0E-6) {
-                return targetDir.normalize();
-            }
+            return DragonAimHelper.riderTargetOrLookDirection(dragon, origin, target, 0.35D);
         }
 
-        Vec3 look = dragon.getLookAngle();
-        if (look.lengthSqr() > 1.0E-6) {
-            return look.normalize();
-        }
-        return Vec3.ZERO;
+        Vec3 riderDirection = DragonAimHelper.riderViewDirection(dragon);
+        return riderDirection != null ? riderDirection : DragonAimHelper.lookDirectionOrDefault(dragon);
     }
 
     private void updateAiBreathTracking(Volitans dragon) {
@@ -186,8 +171,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
 
         Vec3 origin = dragon.getBreathOrigin();
-        Vec3 aimPoint = target.getEyePosition().add(target.getDeltaMovement().scale(0.35D));
-        Vec3 toTarget = aimPoint.subtract(origin);
+        Vec3 toTarget = DragonAimHelper.targetAimPoint(target, 0.35D).subtract(origin);
         if (toTarget.lengthSqr() <= 1.0E-6) {
             return;
         }

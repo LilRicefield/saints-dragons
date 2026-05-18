@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -227,14 +228,14 @@ public final class DragonRideInputHandler {
                     && dragon.isInWaterOrBubble()
                     && !dragon.isUnderWater()
                     && !alreadyFlying;
-            boolean raevyxFallRecoveryBypass =
-                    dragon instanceof Raevyx
+            boolean fallRecoveryBypass =
+                    dragon instanceof RideableFlyingDragon
                     && !alreadyFlying
                     && !dragon.onGround()
                     && !dragon.isInWaterOrBubble()
                     && !dragon.isInLava()
                     && (dragon.fallDistance >= 1.0F || dragon.getDeltaMovement().y <= -0.02D);
-            if ((!alreadyFlying && canTakeoffNow) || breachWaterBypass || raevyxFallRecoveryBypass) {
+            if ((!alreadyFlying && canTakeoffNow) || breachWaterBypass || fallRecoveryBypass) {
                 sendInput(ascendDown, descendDown, DragonRiderAction.TAKEOFF_REQUEST, null, forward, strafe, yaw);
             }
         }

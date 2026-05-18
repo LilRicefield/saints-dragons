@@ -60,9 +60,18 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         if (dragon.isBaby()) {
             return null;
         }
+        float pitch = entry.basePitch();
+        if (entry.pitchVariance() != 0f) {
+            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+        if (dragon.isBaby()) {
+            pitch *= BABY_PITCH_MULTIPLIER;
+        }
+        if ("flex".equals(key)) {
+            return DragonSoundSpec.world(entry.soundSupplier().get(), SoundSource.NEUTRAL, entry.volume(), pitch);
+        }
         int duration = switch (key) {
             case "roar", "roar_ground", "roar_air" -> 112;
-            case "flex" -> 80;
             case "grumble1" -> 52;
             case "grumble2" -> 72;
             case "grumble3" -> 43;
@@ -71,13 +80,6 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
         };
         if (duration < 0) {
             return null;
-        }
-        float pitch = entry.basePitch();
-        if (entry.pitchVariance() != 0f) {
-            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
-        }
-        if (dragon.isBaby()) {
-            pitch *= BABY_PITCH_MULTIPLIER;
         }
         return DragonSoundSpec.moving(entry.soundSupplier().get(), SoundSource.NEUTRAL, entry.volume(), pitch, duration);
     }

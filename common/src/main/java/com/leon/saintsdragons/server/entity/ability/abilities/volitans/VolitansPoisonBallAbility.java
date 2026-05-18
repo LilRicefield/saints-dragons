@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -8,8 +9,6 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionInfinite;
@@ -176,27 +175,12 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
     }
 
     private Vec3 getAimDirection(Volitans dragon) {
-        Entity rider = dragon.getControllingPassenger();
-        if (rider instanceof Player player) {
-            Vec3 view = player.getViewVector(1.0F);
-            if (view.lengthSqr() > 1.0E-6) {
-                return view.normalize();
-            }
-        }
-
-        if (dragon.getTarget() != null) {
-            var target = dragon.getTarget();
-            Vec3 targetPos = target.getEyePosition();
-            Vec3 lead = target.getDeltaMovement().scale(TARGET_LEAD_FACTOR);
-            Vec3 aimPoint = targetPos.add(lead);
-            Vec3 dir = aimPoint.subtract(dragon.getBreathOrigin());
-            if (dir.lengthSqr() > 1.0E-6) {
-                return dir.normalize();
-            }
-        }
-
-        Vec3 look = dragon.getLookAngle();
-        return look.lengthSqr() > 1.0E-6 ? look.normalize() : new Vec3(0.0D, 0.0D, 1.0D);
+        return DragonAimHelper.riderTargetOrLookDirection(
+                dragon,
+                dragon.getBreathOrigin(),
+                dragon.getTarget(),
+                TARGET_LEAD_FACTOR
+        );
     }
 
     private void resetState() {

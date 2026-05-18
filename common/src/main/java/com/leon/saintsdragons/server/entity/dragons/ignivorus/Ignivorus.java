@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -499,7 +500,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 teethChipDropCooldownTicks--;
             }
         }
-        tickAnimationStates();
+        if (!level().isClientSide) {
+            tickAnimationStates();
+        }
         updateSittingProgress();
     }
 
@@ -1286,10 +1289,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    public void tickAnimationStates(){
-    };
-
-    @Override
     public void removePassenger(@NotNull Entity passenger) {
         super.removePassenger(passenger);
     }
@@ -2055,10 +2054,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    public void setRunning(boolean running) {
-    }
-
-    @Override
     public int getFlightMode() {
         return evaluateStandardFlightMode(false);
     }
@@ -2230,30 +2225,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return null;
         }
 
-        if (fireAimDir == null) {
-            fireAimDir = clamped;
-        } else if (smooth) {
-            double blend = 0.35D;
-            fireAimDir = fireAimDir.add(clamped.subtract(fireAimDir).scale(blend));
-            double len = fireAimDir.length();
-            if (len > 1.0E-6) {
-                fireAimDir = fireAimDir.scale(1.0 / len);
-            } else {
-                fireAimDir = clamped;
-            }
-        } else {
-            fireAimDir = clamped;
-        }
+        fireAimDir = DragonAimHelper.blendDirection(fireAimDir, clamped, smooth, 0.35D);
         return fireAimDir;
     }
 
     private Vec3 computeRawFireAimDirection(Vec3 start) {
-        Entity controller = this.getControllingPassenger();
-        if (controller instanceof LivingEntity rider) {
-            Vec3 look = rider.getLookAngle();
-            if (look.lengthSqr() > 1.0E-6) {
-                return look.normalize();
-            }
+        Vec3 riderLook = DragonAimHelper.riderViewDirection(this);
+        if (riderLook != null) {
+            return riderLook;
         }
 
         if (!level().isClientSide) {
@@ -2261,35 +2240,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
 
         if (fireServerTarget != null) {
-            Vec3 towardTarget = fireServerTarget.subtract(start);
-            if (towardTarget.lengthSqr() > 1.0E-6) {
-                return towardTarget.normalize();
+            Vec3 towardTarget = DragonAimHelper.directionTo(start, fireServerTarget);
+            if (towardTarget != null) {
+                return towardTarget;
             }
         }
 
-        Vec3 fallback = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot);
-        return fallback.lengthSqr() > 1.0E-6 ? fallback.normalize() : null;
+        return DragonAimHelper.fallbackHeadDirection(this);
     }
 
     private Vec3 clampFireDirection(Vec3 desiredDir) {
-        if (desiredDir == null || desiredDir.lengthSqr() < 1.0E-6) {
-            return null;
-        }
-        Vec3 dir = desiredDir.normalize();
-        float desiredYaw = (float) (Math.atan2(-dir.x, dir.z) * (180.0F / Math.PI));
-        float desiredPitch = (float) (-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0F / Math.PI));
-
-        float headYaw = this.yHeadRot;
-        float headPitch = this.getXRot();
-
-        float yawErr = Mth.degreesDifference(headYaw, desiredYaw);
-        float pitchErr = desiredPitch - headPitch;
-
-        float finalYaw = headYaw + Mth.clamp(yawErr, -MAX_FIRE_YAW_DEG, MAX_FIRE_YAW_DEG);
-        float finalPitch = headPitch + Mth.clamp(pitchErr, -MAX_FIRE_PITCH_DEG, MAX_FIRE_PITCH_DEG);
-
-        Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
-        return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
+        return DragonAimHelper.clampDirectionToHead(
+                desiredDir,
+                this.yHeadRot,
+                this.getXRot(),
+                MAX_FIRE_YAW_DEG,
+                MAX_FIRE_PITCH_DEG
+        );
     }
 
     private void resetFireAimDirection() {

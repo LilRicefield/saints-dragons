@@ -386,7 +386,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             tickHoverVisualState();
             this.tickAmbientVocals();
         }
-        this.tickAnimationStates();
+        if (!this.level().isClientSide) {
+            this.tickAnimationStates();
+        }
     }
 
     public void flyToward(Vec3 destination, double speedScale) {

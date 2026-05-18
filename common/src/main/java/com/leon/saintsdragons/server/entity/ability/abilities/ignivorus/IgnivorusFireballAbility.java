@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -9,8 +10,6 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionInfinite;
@@ -195,26 +194,12 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     }
 
     private Vec3 getAimDirection(Ignivorus dragon) {
-        Entity rider = dragon.getControllingPassenger();
-        if (rider instanceof Player player) {
-            Vec3 view = player.getViewVector(1.0f);
-            if (view.lengthSqr() > 1.0E-6) {
-                return view.normalize();
-            }
-        }
-        if (dragon.getTarget() != null) {
-            // Aim at target's eye position with light leading
-            var target = dragon.getTarget();
-            Vec3 targetPos = target.getEyePosition();
-            Vec3 lead = target.getDeltaMovement().scale(0.6);
-            Vec3 aimPoint = targetPos.add(lead);
-            Vec3 dir = aimPoint.subtract(getFireballOrigin(dragon));
-            if (dir.lengthSqr() > 1.0E-6) {
-                return dir.normalize();
-            }
-        }
-        Vec3 look = dragon.getLookAngle();
-        return look.lengthSqr() > 1.0E-6 ? look.normalize() : new Vec3(0.0D, 0.0D, 1.0D);
+        return DragonAimHelper.riderTargetOrLookDirection(
+                dragon,
+                getFireballOrigin(dragon),
+                dragon.getTarget(),
+                0.6D
+        );
     }
 
     private float resolveImpactDamage() {

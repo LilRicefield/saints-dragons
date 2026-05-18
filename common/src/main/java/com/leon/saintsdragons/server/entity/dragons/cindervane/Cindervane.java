@@ -785,10 +785,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return this.entityData.get(DATA_GOING_UP);
     }
 
-    @Override
-    public void setRunning(boolean running) {
-    }
-
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
             int s = Mth.clamp(clampGroundMoveStateForLandedRecovery(state), 0, 2);

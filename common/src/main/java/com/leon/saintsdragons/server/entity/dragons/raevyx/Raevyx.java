@@ -32,6 +32,7 @@ import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -180,7 +181,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public boolean landedFlag = false;
     public int landingTimer = 0;
     public int landedTimer = 0;
-    int runningTicks = 0;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private final DragonDashAndDodgeComponent dodgeMotion = new DragonDashAndDodgeComponent(this);
     int dodgeCooldownTicks = 0;
@@ -950,17 +950,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         landedTimer = 0;
     }
     
-    @Override
-    public void setRunning(boolean running) {
-        if (running) {
-            runningTicks = 0;
-        }
-    }
-    
-    @Override
-    public void tickAnimationStates() {
-    }
-
     public void setGroundMoveStateFromAI(int state) {
         if (!this.level().isClientSide) {
             int s = Math.max(0, Math.min(2, clampGroundMoveStateForLandedRecovery(state)));
@@ -1365,7 +1354,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tickBankingLogic();
         tickStandardPitchingLogic();
         tickBarrelRollLogic();
-        tickRunningTime();
         tickScreenShake();
         tickFlightLifecycle();
         if (level().isClientSide) {
@@ -1442,9 +1430,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 wakeUpImmediately();
                 suppressSleep(200);
             }
-            tickAnimationStates();
         }
-        if (!(isSleeping() || isSleepingEntering() || isSleepingExiting())) {
+        if (!this.level().isClientSide) {
             tickAnimationStates();
         }
         if (this.isDodging()) {
@@ -1552,14 +1539,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.setInSittingPose(false);
     }
     
-    private void tickRunningTime() {
-        if (this.isRunning()) {
-            runningTicks++;
-        } else {
-            runningTicks = Math.max(0, runningTicks - 2);
-        }
-    }
-
     private void tickBeamLook() {
         if (!isBeaming()) {
             resetBeamAim();
@@ -1608,20 +1587,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return null;
         }
 
-        if (beamAimDir == null) {
-            beamAimDir = clamped;
-        } else if (smooth) {
-            double blend = 0.35D;
-            beamAimDir = beamAimDir.add(clamped.subtract(beamAimDir).scale(blend));
-            double len = beamAimDir.length();
-            if (len > 1.0E-6) {
-                beamAimDir = beamAimDir.scale(1.0 / len);
-            } else {
-                beamAimDir = clamped;
-            }
-        } else {
-            beamAimDir = clamped;
-        }
+        beamAimDir = DragonAimHelper.blendDirection(beamAimDir, clamped, smooth, 0.35D);
 
         updateBeamOffsets(beamAimDir);
         beamAimRefreshTick = tickCount;
@@ -1629,46 +1595,37 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private Vec3 computeRawBeamAimDirection(Vec3 start) {
-        Entity cp = getControllingPassenger();
-        if (cp instanceof LivingEntity rider) {
-            Vec3 riderLook = rider.getLookAngle();
-            if (riderLook.lengthSqr() > 1.0E-6) {
-                return riderLook.normalize();
-            }
+        Vec3 riderLook = DragonAimHelper.riderViewDirection(this);
+        if (riderLook != null) {
+            return riderLook;
         }
         if (!level().isClientSide) {
             tickBeamTargeting(start);
         }
 
         if (beamServerTarget != null) {
-            Vec3 towardTarget = beamServerTarget.subtract(start);
-            if (towardTarget.lengthSqr() > 1.0E-6) {
-                return towardTarget.normalize();
+            Vec3 towardTarget = DragonAimHelper.directionTo(start, beamServerTarget);
+            if (towardTarget != null) {
+                return towardTarget;
             }
         }
-        Vec3 fallbackDir = Vec3.directionFromRotation(this.getXRot(), this.yHeadRot);
-        return fallbackDir.lengthSqr() > 1.0E-6 ? fallbackDir.normalize() : Vec3.ZERO;
+        Vec3 fallbackDir = DragonAimHelper.fallbackHeadDirection(this);
+        return fallbackDir != null ? fallbackDir : Vec3.ZERO;
     }
 
     private Vec3 clampBeamDirection(Vec3 desiredDir) {
-        if (desiredDir == null || desiredDir.lengthSqr() < 1.0E-6) {
+        Vec3 clamped = DragonAimHelper.clampDirectionToHead(
+                desiredDir,
+                this.yHeadRot,
+                this.getXRot(),
+                MAX_BEAM_YAW_DEG,
+                MAX_BEAM_PITCH_DEG
+        );
+        if (clamped == null) {
             updateBeamOffsets(null);
             return null;
         }
-        Vec3 dir = desiredDir.normalize();
-        float desiredYawDeg = (float)(Math.atan2(-dir.x, dir.z) * (180.0 / Math.PI));
-        float desiredPitchDeg = (float)(-Math.atan2(dir.y, Math.sqrt(dir.x * dir.x + dir.z * dir.z)) * (180.0 / Math.PI));
-        float headYaw = this.yHeadRot;
-        float headPitch = this.getXRot();
-        float yawErrDeg = Mth.degreesDifference(headYaw, desiredYawDeg);
-        float pitchErrDeg = desiredPitchDeg - headPitch;
-        float clampedYawErr = Mth.clamp(yawErrDeg, -MAX_BEAM_YAW_DEG, MAX_BEAM_YAW_DEG);
-        float clampedPitchErr = Mth.clamp(pitchErrDeg, -MAX_BEAM_PITCH_DEG, MAX_BEAM_PITCH_DEG);
-        float finalYaw = headYaw + clampedYawErr;
-        float finalPitch = headPitch + clampedPitchErr;
-
-        Vec3 finalDir = Vec3.directionFromRotation(finalPitch, finalYaw);
-        return finalDir.lengthSqr() > 1.0E-6 ? finalDir.normalize() : null;
+        return clamped;
     }
 
     private Vec3 createInitialBeamTarget() {

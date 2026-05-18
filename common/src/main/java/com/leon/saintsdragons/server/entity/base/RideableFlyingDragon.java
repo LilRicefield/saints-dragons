@@ -380,6 +380,13 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return false;
     }
 
+    protected void startRiderFallRecoveryTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        if (!canRecoverRiderTakeoffFromFall()) {
+            return;
+        }
+        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+    }
+
     protected void onTakeoffStarted() {
     }
 
@@ -698,7 +705,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         if (goingUp && canRecover) {
             setGoingUp(true);
             setGoingDown(false);
-            startTakeoffSequence(getRiderFallRecoveryTakeoffVelocity(), getRiderFallRecoveryTakeoffAnimationTicks());
+            startRiderFallRecoveryTakeoffSequence(getRiderFallRecoveryTakeoffVelocity(), getRiderFallRecoveryTakeoffAnimationTicks());
             return;
         }
 
@@ -716,7 +723,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         if (canRecoverRiderTakeoffFromFall()) {
             setGoingUp(true);
             setGoingDown(false);
-            startTakeoffSequence(getRiderFallRecoveryTakeoffVelocity(), getRiderFallRecoveryTakeoffAnimationTicks());
+            startRiderFallRecoveryTakeoffSequence(getRiderFallRecoveryTakeoffVelocity(), getRiderFallRecoveryTakeoffAnimationTicks());
             return;
         }
         if (!isFlying()) {

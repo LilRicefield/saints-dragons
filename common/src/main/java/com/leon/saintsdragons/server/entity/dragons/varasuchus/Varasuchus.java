@@ -844,10 +844,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
     
     @Override
-    public void setRunning(boolean running) {
-    }
-    
-    @Override
     protected boolean canGroundDragonJump() {
         return !isSwimming() && !isInWaterOrBubble() && !isGroundDashing();
     }

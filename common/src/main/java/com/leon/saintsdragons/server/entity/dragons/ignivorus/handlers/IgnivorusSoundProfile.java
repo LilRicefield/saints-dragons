@@ -61,8 +61,14 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         if (dragon.isBaby()) {
             return null;
         }
+        float pitch = entry.basePitch();
+        if (entry.pitchVariance() != 0f) {
+            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
+        }
+        if ("ignivorus_flex".equals(key) || "flex".equals(key)) {
+            return DragonSoundSpec.world(entry.soundSupplier().get(), SoundSource.NEUTRAL, entry.volume(), pitch);
+        }
         int duration = switch (key) {
-            case "ignivorus_flex", "flex" -> 200;
             case "ignivorus_grumble1", "grumble1" -> 56;
             case "ignivorus_grumble2", "grumble2" -> 61;
             case "ignivorus_grumble3", "grumble3" -> 55;
@@ -70,10 +76,6 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
         };
         if (duration < 0) {
             return null;
-        }
-        float pitch = entry.basePitch();
-        if (entry.pitchVariance() != 0f) {
-            pitch += dragon.getRandom().nextFloat() * entry.pitchVariance();
         }
         return DragonSoundSpec.moving(entry.soundSupplier().get(), SoundSource.NEUTRAL, entry.volume(), pitch, duration);
     }

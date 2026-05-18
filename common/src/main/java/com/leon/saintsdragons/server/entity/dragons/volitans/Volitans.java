@@ -572,9 +572,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
         triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "roar");
-        if (!level().isClientSide) {
-            getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f, spec.controlLockTicks());
-        }
+        getSoundHandler().playClientSound(this, position(), ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f);
     }
 
     @Override
@@ -673,10 +671,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
 
         return this.getDeltaMovement().horizontalDistanceSqr() > 0.0025D;
-    }
-
-    @Override
-    public void setRunning(boolean running) {
     }
 
     @Override

@@ -214,6 +214,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
+        if (!aerialState && dragon.isInWaterOrBubble()) {
+            state.setAndContinue(SWIM);
+            return PlayState.CONTINUE;
+        }
+
         if (!aerialState && dragon.getEntityData().get(Ignivorus.DATA_PHASE2)) {
             if (dragon.isVehicle()) {
                 float riderForward = dragon.getEntityData().get(Ignivorus.DATA_RIDER_FORWARD);
@@ -252,11 +257,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
         if (!dragon.isVehicle() && !aerialState && dragon.getCommand() == 1) {
             state.setAndContinue(SIT);
-            return PlayState.CONTINUE;
-        }
-
-        if (!aerialState && dragon.isInWaterOrBubble()) {
-            state.setAndContinue(SWIM);
             return PlayState.CONTINUE;
         }
 

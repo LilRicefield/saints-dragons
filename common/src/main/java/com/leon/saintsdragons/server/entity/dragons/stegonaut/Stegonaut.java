@@ -109,7 +109,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private boolean boundToBinder = false;
     @Nullable
     private UUID packLeaderUuid;
-    private int walkAnimationHoldTicks = 0;
     private int groundStepSoundCooldownTicks = 0;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
@@ -492,7 +491,9 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             }
         }
         tickRiderControlLock();
-        tickAnimationStates();
+        if (!level().isClientSide) {
+            tickAnimationStates();
+        }
     }
 
 
@@ -764,58 +765,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_EAT.get(), 1.0f, isBaby() ? 1.6f : 1.0f, 22);
         }
     }
-    @Override
-    public void setRunning(boolean running) {
-    }
-
-    @Override
-    public void tickAnimationStates() {
-        if (this.isVehicle() && this.isOrderedToSit() && getSitProgress() <= 0.01f) {
-            if (this.level().isClientSide) {
-                this.setOrderedToSit(false);
-                forceSitProgress(0f);
-            }
-        }
-        if (isSleeping() || isOrderedToSit()) {
-            if (!this.level().isClientSide) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, 0);
-                this.syncAnimState(0, getFlightMode());
-            }
-            walkAnimationHoldTicks = 0;
-            return;
-        }
-
-        if (getControllingPassenger() != null) {
-            super.tickAnimationStates();
-            setRunning(isAccelerating());
-            return;
-        }
-
-        int moveState = 0;
-
-        boolean hasActivePath = this.getNavigation().isInProgress();
-        double horizontalSpeed = this.getDeltaMovement().horizontalDistanceSqr();
-        boolean isActuallyMoving = horizontalSpeed > 0.001;
-
-        if (hasActivePath || isActuallyMoving) {
-            if (horizontalSpeed > 0.0064) {
-                moveState = 2;
-            } else {
-                moveState = 1;
-            }
-            walkAnimationHoldTicks = 8;
-        } else if (walkAnimationHoldTicks > 0) {
-            moveState = 1;
-            walkAnimationHoldTicks--;
-        }
-        if (this.entityData.get(DATA_GROUND_MOVE_STATE) != moveState) {
-            this.entityData.set(DATA_GROUND_MOVE_STATE, moveState);
-            this.syncAnimState(moveState, getFlightMode());
-        }
-        setRunning(moveState == 2 && !this.isInLove());
-
-    }
-
     public boolean hasStegonautChest() {
         return this.entityData.get(DATA_HAS_CHEST);
     }

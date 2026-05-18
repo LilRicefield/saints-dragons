@@ -821,7 +821,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return !isFlying() && getEffectiveGroundState() == 2;
     }
 
-    public abstract void setRunning(boolean running);
+    public void setRunning(boolean running) {
+    }
 
     @Override
     protected void onSleepFreezeTick() {
