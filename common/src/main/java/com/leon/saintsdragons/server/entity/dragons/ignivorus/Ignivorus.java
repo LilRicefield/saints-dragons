@@ -2801,7 +2801,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         animationHandler.setupStateController(stateController);
 
 
-        controllers.add(movementController, flightController, fastActionController, vocalController, interactionController, actionController, stateController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
     }
 
     @Override

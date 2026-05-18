@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
+import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,9 +22,11 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
     private static final float BASE_DAMAGE = 12.0f;
-    private static final double RANGE = 10.0;
+    private static final double RANGE = 4;
     private static final double AIR_RANGE_BONUS = 0.6;
-    private static final double ANGLE_DEGREES = 35.0;
+    private static final double HITBOX_FORWARD_OFFSET = 5.0;
+    private static final int DEBUG_COLOR = 0xFF5533;
+    private static final int DEBUG_TICKS = 20;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
@@ -67,7 +70,7 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
 
             List<LivingEntity> targets = selectTargets();
 
-            if (targets.isEmpty()) {
+            if (targets.isEmpty() && dragon.getControllingPassenger() == null) {
                 LivingEntity currentTarget = dragon.getTarget();
                 if (currentTarget != null && currentTarget.isAlive() && !dragon.isAlly(currentTarget)) {
                     targets = List.of(currentTarget);
@@ -103,18 +106,30 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
+            sendDebugBox(dragon, range);
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        return DragonMeleeGeometry.findForwardTargets(
+        sendDebugBox(dragon, range);
+        return DragonMeleeGeometry.findBodySweepTargets(
                 dragon,
                 range,
-                ANGLE_DEGREES,
+                range,
+                range,
+                HITBOX_FORWARD_OFFSET,
                 entity -> !dragon.isAlly(entity)
         );
+    }
+
+    private void sendDebugBox(Cindervane dragon, double range) {
+        if (dragon.level().isClientSide) {
+            return;
+        }
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(dragon).offset(HITBOX_FORWARD_OFFSET);
+        DragonAbilityDebug.sendBox(dragon, attack.sweep(range, range, range), DEBUG_COLOR, DEBUG_TICKS);
     }
 
 }

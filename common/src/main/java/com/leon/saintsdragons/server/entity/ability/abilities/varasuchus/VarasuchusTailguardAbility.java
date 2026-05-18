@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -76,6 +77,7 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
             phaseTicks = 0;
             dragon.lockRiderControls(3);
             dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard");
+            dragon.getSoundHandler().playClientSound(dragon, dragon.position(), ModSounds.VARASUCHUS_GUARDING.get(), 1.2f, 1.0f);
         }
     }
 
@@ -132,6 +134,7 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
         Varasuchus dragon = getUser();
         dragon.lockRiderControls(PARRY_TICKS);
         dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard_parry");
+        dragon.getSoundHandler().playClientSound(dragon, dragon.position(), ModSounds.VARASUCHUS_PARRY.get(), 1.4f, 1.0f);
         applyParryHit();
         return true;
     }
@@ -153,7 +156,8 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
         phaseTicks = 0;
         if (!holdLoopStarted) {
             holdLoopStarted = true;
-            getUser().triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard_hold");
+            Varasuchus dragon = getUser();
+            dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard_hold");
         }
         getUser().lockRiderControls(3);
     }

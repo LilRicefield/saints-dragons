@@ -1353,8 +1353,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(movement);
-
         AnimationController<Cindervane> actions = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
         actions.setSoundKeyframeHandler(event -> {
@@ -1363,7 +1361,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(actions);
 
         AnimationController<Cindervane> fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1,
                 animationHandler::fastActionPredicate);
@@ -1374,7 +1371,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(fastActionController);
 
         AnimationController<Cindervane> flightController =
                 DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
@@ -1385,7 +1381,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(flightController);
 
         AnimationController<Cindervane> vocalController = new AnimationController<>(this, com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper.CONTROLLER, 2,
                 com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper::idle);
@@ -1396,7 +1391,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(vocalController);
 
         AnimationController<Cindervane> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1,
                 DragonInteractionAnimationHelper::idle);
@@ -1407,7 +1401,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(interactionController);
 
         AnimationController<Cindervane> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1,
                 DragonStateAnimationHelper::idle);
@@ -1418,7 +1411,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(stateController);
+        controllers.add(movement, vocalController, actions, fastActionController, flightController, interactionController, stateController);
     }
 
     @Override

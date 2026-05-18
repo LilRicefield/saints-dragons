@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
+import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,8 +22,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class VolitansBiteAbility extends DragonAbility<Volitans> {
     private static final int SOUND_TICKS = 30;
     private static final float BASE_DAMAGE = 12.0f;
-    private static final double RANGE = 6.0;
-    private static final double ANGLE_DEGREES = 80.0;
+    private static final double RANGE = 4.5;
+    private static final double HITBOX_FORWARD_OFFSET = 2.0;
+    private static final int DEBUG_COLOR = 0x33D1FF;
+    private static final int DEBUG_TICKS = 20;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
@@ -74,18 +77,30 @@ public class VolitansBiteAbility extends DragonAbility<Volitans> {
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
+            sendDebugBox(dragon);
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        return DragonMeleeGeometry.findForwardTargets(
+        sendDebugBox(dragon);
+        return DragonMeleeGeometry.findBodySweepTargets(
                 dragon,
                 RANGE,
-                ANGLE_DEGREES,
+                RANGE,
+                RANGE,
+                HITBOX_FORWARD_OFFSET,
                 entity -> !dragon.isAlly(entity)
         );
+    }
+
+    private void sendDebugBox(Volitans dragon) {
+        if (dragon.level().isClientSide) {
+            return;
+        }
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(dragon).offset(HITBOX_FORWARD_OFFSET);
+        DragonAbilityDebug.sendBox(dragon, attack.sweep(RANGE, RANGE, RANGE), DEBUG_COLOR, DEBUG_TICKS);
     }
 
     private void applyHit(LivingEntity target) {

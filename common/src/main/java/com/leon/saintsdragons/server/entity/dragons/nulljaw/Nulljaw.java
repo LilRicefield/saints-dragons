@@ -315,20 +315,17 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "movement", 4, animationHandler::movementPredicate));
+        AnimationController<Nulljaw> movement = new AnimationController<>(this, "movement", 4, animationHandler::movementPredicate);
         AnimationController<Nulljaw> actions = new AnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
         animationHandler.setupActionController(actions);
-        controllers.add(actions);
-        controllers.add(new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate));
+        AnimationController<Nulljaw> mounted = new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate);
         AnimationController<Nulljaw> instant = new AnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
         animationHandler.setupInstantController(instant);
-        controllers.add(instant);
         AnimationController<Nulljaw> vocal = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
         DragonVocalAnimationHelper.registerGrumbles(vocal, this);
-        controllers.add(vocal);
         AnimationController<Nulljaw> interaction = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
         animationHandler.setupInteractionController(interaction);
-        controllers.add(interaction);
+        controllers.add(movement, vocal, actions, mounted, instant, interaction);
     }
 
     @Override

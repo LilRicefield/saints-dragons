@@ -4,8 +4,8 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
-import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
@@ -90,7 +90,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
 
             // Trigger slamming animation (1.67 seconds)
             if (!dragon.level().isClientSide) {
-                dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "slamming");
+                dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "slamming");
                 dragon.getSoundHandler().playMovingEntitySound(
                         ModSounds.VOLITANS_SLAMMING.get(),
                         1.6f,
@@ -170,7 +170,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
 
             // Trigger slammed animation (1 second)
             if (!dragon.level().isClientSide) {
-                dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "slammed");
+                dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "slammed");
                 dragon.playSound(ModSounds.VOLITANS_SLAMMED.get(), 1.9f, 1.0f);
             }
 

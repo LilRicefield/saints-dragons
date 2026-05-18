@@ -592,7 +592,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupStateController(stateController);
 
-        controllers.add(fastActionController, vocalController, interactionController, movementController, actionController, stateController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, interactionController, stateController);
 
     }
 

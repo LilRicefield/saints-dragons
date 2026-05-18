@@ -103,6 +103,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VARASUCHUS_EAT = registerSound("varasuchus_eat");
     public static final Supplier<SoundEvent> VARASUCHUS_FLEX = registerSound("varasuchus_flex");
     public static final Supplier<SoundEvent> VARASUCHUS_FLEX2 = registerSound("varasuchus_flex2");
+    public static final Supplier<SoundEvent> VARASUCHUS_GUARDING = registerSound("varasuchus_guarding");
+    public static final Supplier<SoundEvent> VARASUCHUS_PARRY = registerSound("varasuchus_parry");
 
     // Ignivorus
     public static final Supplier<SoundEvent> IGNIVORUS_ROAR = registerSound("ignivorus_roar");

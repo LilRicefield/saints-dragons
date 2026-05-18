@@ -117,6 +117,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
         DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_TAKEOFF, PHASE2_TAKEOFF);
         DragonFlightAnimationHelper.register(controller, DragonFlightAnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
+        DragonFlightAnimationHelper.register(controller, "ultimate_start_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start_air"));
+        DragonFlightAnimationHelper.register(controller, "ultimate_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_air"));
+        DragonFlightAnimationHelper.register(controller, "ultimate_end_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end_air"));
     }
 
     public void setupFastActionController(AnimationController<Ignivorus> controller) {
@@ -160,12 +166,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
         controller.triggerableAnim("ultimate_end",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
-        controller.triggerableAnim("ultimate_start_air",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start_air"));
-        controller.triggerableAnim("ultimate_air",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_air"));
-        controller.triggerableAnim("ultimate_end_air",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end_air"));
         controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
     }
 

@@ -14,6 +14,8 @@ import software.bernie.geckolib.core.object.PlayState;
 public record RaevyxAnimationHandler(Raevyx wyvern) {
     public static final String FAST_ACTION_CONTROLLER = "raevyxFastAction";
     public static final String ACTION_CONTROLLER = "raevyxAction";
+    private static final String DODGE_AIR_LEFT = "dodge_air_left";
+    private static final String DODGE_AIR_RIGHT = "dodge_air_right";
 
     private static final float INVERTED_GLIDE_ROLL_WINDOW_DEGREES = 45.0f;
     private static final RawAnimation GROUND_IDLE = RawAnimation.begin().thenLoop("animation.raevyx.idle");
@@ -84,14 +86,14 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public void triggerDodgeAirLeftAnimation() {
-        wyvern.triggerAnim(ACTION_CONTROLLER, "dodge_air_left");
+        wyvern.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DODGE_AIR_LEFT);
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
     }
 
     public void triggerDodgeAirRightAnimation() {
-        wyvern.triggerAnim(ACTION_CONTROLLER, "dodge_air_right");
+        wyvern.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DODGE_AIR_RIGHT);
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
@@ -103,6 +105,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
     public void setupFlightController(AnimationController<Raevyx> controller) {
         DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
+        DragonFlightAnimationHelper.register(controller, DODGE_AIR_LEFT,
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
+        DragonFlightAnimationHelper.register(controller, DODGE_AIR_RIGHT,
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"));
+        DragonFlightAnimationHelper.register(controller, "summon_storm_air",
+                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
     }
 
     public void setupActionController(AnimationController<Raevyx> controller) {
@@ -111,18 +119,12 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
         controller.triggerableAnim("dodge_right",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
-        controller.triggerableAnim("dodge_air_left",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
-        controller.triggerableAnim("dodge_air_right",
-                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"));
         controller.triggerableAnim("ground_rend",
                 RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
         controller.triggerableAnim("dash_backward",
                 RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
         controller.triggerableAnim("summon_storm",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
-        controller.triggerableAnim("summon_storm_air",
-                RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
     }
 
     public void setupFastActionController(AnimationController<Raevyx> controller) {

@@ -15,6 +15,10 @@ public final class DragonMeleeGeometry {
     }
 
     public record ForwardAttack(Vec3 origin, Vec3 forward) {
+        public ForwardAttack offset(double forwardOffset) {
+            return new ForwardAttack(origin.add(forward.scale(forwardOffset)), forward);
+        }
+
         public AABB sweep(double range, double horizontalInflate, double verticalInflate) {
             return new AABB(origin, origin.add(forward.scale(range)))
                     .inflate(horizontalInflate, verticalInflate, horizontalInflate);
@@ -24,6 +28,14 @@ public final class DragonMeleeGeometry {
     public static ForwardAttack forwardAttack(DragonEntity dragon) {
         Entity rider = dragon.getControllingPassenger();
         Vec3 forward = rider instanceof LivingEntity living ? living.getLookAngle() : dragon.getLookAngle();
+        return forwardAttack(dragon, forward);
+    }
+
+    public static ForwardAttack bodyForwardAttack(DragonEntity dragon) {
+        return forwardAttack(dragon, Vec3.directionFromRotation(0.0F, dragon.yBodyRot));
+    }
+
+    private static ForwardAttack forwardAttack(DragonEntity dragon, Vec3 forward) {
         if (forward.lengthSqr() < 1.0E-6D) {
             forward = dragon.getLookAngle();
         }
@@ -64,7 +76,92 @@ public final class DragonMeleeGeometry {
                                                         double angleDeg,
                                                         double closeHitRange,
                                                         Predicate<LivingEntity> filter) {
-        ForwardAttack attack = forwardAttack(dragon);
+        return findForwardTargets(
+                forwardAttack(dragon),
+                dragon,
+                range,
+                horizontalInflate,
+                verticalInflate,
+                angleDeg,
+                closeHitRange,
+                filter
+        );
+    }
+
+    public static List<LivingEntity> findForwardTargets(DragonEntity dragon,
+                                                        double range,
+                                                        double horizontalInflate,
+                                                        double verticalInflate,
+                                                        double angleDeg,
+                                                        double closeHitRange,
+                                                        double forwardOffset,
+                                                        Predicate<LivingEntity> filter) {
+        return findForwardTargets(
+                forwardAttack(dragon).offset(forwardOffset),
+                dragon,
+                range,
+                horizontalInflate,
+                verticalInflate,
+                angleDeg,
+                closeHitRange,
+                filter
+        );
+    }
+
+    public static List<LivingEntity> findSweepTargets(DragonEntity dragon,
+                                                      double range,
+                                                      double horizontalInflate,
+                                                      double verticalInflate,
+                                                      double forwardOffset,
+                                                      Predicate<LivingEntity> filter) {
+        return findSweepTargets(
+                forwardAttack(dragon).offset(forwardOffset),
+                dragon,
+                range,
+                horizontalInflate,
+                verticalInflate,
+                filter
+        );
+    }
+
+    public static List<LivingEntity> findBodySweepTargets(DragonEntity dragon,
+                                                          double range,
+                                                          double horizontalInflate,
+                                                          double verticalInflate,
+                                                          double forwardOffset,
+                                                          Predicate<LivingEntity> filter) {
+        return findSweepTargets(
+                bodyForwardAttack(dragon).offset(forwardOffset),
+                dragon,
+                range,
+                horizontalInflate,
+                verticalInflate,
+                filter
+        );
+    }
+
+    private static List<LivingEntity> findSweepTargets(ForwardAttack attack,
+                                                       DragonEntity dragon,
+                                                       double range,
+                                                       double horizontalInflate,
+                                                       double verticalInflate,
+                                                       Predicate<LivingEntity> filter) {
+        return dragon.level().getEntitiesOfClass(LivingEntity.class,
+                        attack.sweep(range, horizontalInflate, verticalInflate),
+                        entity -> entity != dragon && entity.isAlive() && entity.attackable() && filter.test(entity))
+                .stream()
+                .sorted(Comparator.comparingDouble(entity -> distancePointToAABB(attack.origin(), entity.getBoundingBox())))
+                .toList();
+    }
+
+    private static List<LivingEntity> findForwardTargets(ForwardAttack attack,
+                                                        DragonEntity dragon,
+                                                        double range,
+                                                        double horizontalInflate,
+                                                        double verticalInflate,
+                                                        double angleDeg,
+                                                        double closeHitRange,
+                                                        Predicate<LivingEntity> filter) {
         double cosLimit = Math.cos(Math.toRadians(angleDeg));
         return dragon.level().getEntitiesOfClass(LivingEntity.class,
                         attack.sweep(range, horizontalInflate, verticalInflate),

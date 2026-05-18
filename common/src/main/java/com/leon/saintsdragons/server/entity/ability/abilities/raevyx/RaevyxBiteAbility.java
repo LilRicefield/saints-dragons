@@ -30,8 +30,9 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     private static final double RANGE = 6.0;
     private static final double HITBOX_HALF_WIDTH = 3.75;
     private static final double HITBOX_HALF_HEIGHT = 3.4;
-    private static final double CLOSE_HIT_RANGE = 5.25;
-    private static final double ANGLE_DEGREES = 85.0;
+    private static final double HITBOX_FORWARD_OFFSET = 2.0;
+    private static final int DEBUG_COLOR = 0x33D1FF;
+    private static final int DEBUG_TICKS = 20;
     private static final float CHAIN_DAMAGE_BASE = 10.0f;
     private static final double CHAIN_RADIUS = 7.0;
     private static final int CHAIN_JUMPS = 5;
@@ -71,7 +72,8 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.ACTIVE && !didHitThisActive) {
             LivingEntity primary = findPrimaryTarget();
-            if (primary == null) {
+            boolean ridden = getUser().getControllingPassenger() != null;
+            if (primary == null && !ridden) {
                 LivingEntity t = getUser().getTarget();
                 if (t != null && t.isAlive()) {
                     double d = t.distanceTo(getUser());
@@ -80,8 +82,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
                     }
                 }
             }
-            if (primary == null) {
-                boolean ridden = getUser().getControllingPassenger() != null;
+            if (primary == null && !ridden) {
                 primary = raycastTargetAlongMouth(ridden ? 7.5 : 5.5, ridden ? 2.0 : 1.0);
             }
             if (primary != null) {
@@ -101,25 +102,30 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
             if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 1.5D)) {
+                sendDebugBox(wyvern);
                 return target;
             }
         }
 
-        List<LivingEntity> candidates = DragonMeleeGeometry.findForwardTargets(
+        List<LivingEntity> candidates = DragonMeleeGeometry.findBodySweepTargets(
                 wyvern,
                 RANGE,
                 HITBOX_HALF_WIDTH,
                 HITBOX_HALF_HEIGHT,
-                ANGLE_DEGREES,
-                CLOSE_HIT_RANGE,
+                HITBOX_FORWARD_OFFSET,
                 entity -> !isAllied(wyvern, entity)
         );
-        if (!wyvern.level().isClientSide) {
-            DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.forwardAttack(wyvern);
-            DragonAbilityDebug.sendBox(wyvern, attack.sweep(RANGE, HITBOX_HALF_WIDTH, HITBOX_HALF_HEIGHT), 0x33D1FF, 20);
-        }
+        sendDebugBox(wyvern);
 
         return candidates.isEmpty() ? null : candidates.get(0);
+    }
+
+    private void sendDebugBox(Raevyx wyvern) {
+        if (wyvern.level().isClientSide) {
+            return;
+        }
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(wyvern).offset(HITBOX_FORWARD_OFFSET);
+        DragonAbilityDebug.sendBox(wyvern, attack.sweep(RANGE, HITBOX_HALF_WIDTH, HITBOX_HALF_HEIGHT), DEBUG_COLOR, DEBUG_TICKS);
     }
 
     private void bitePrimary(LivingEntity primary) {

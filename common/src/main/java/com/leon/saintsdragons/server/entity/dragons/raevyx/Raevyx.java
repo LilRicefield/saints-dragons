@@ -115,7 +115,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final int MIN_AMBIENT_DELAY = 200;
     public static final int MAX_AMBIENT_DELAY = 600;
     public static final float MODEL_SCALE = 1.0f;
-    public static final int TAKEOFF_ANIMATION_TICKS = 33;
+    public static final int TAKEOFF_ANIMATION_TICKS = 31;
     private static final int LANDED_RECOVERY_TICKS = 38;
     public static final int AGGRO_TTL_TICKS = 200;
     public static final double BREED_PARTNER_RANGE = 8.0D;
@@ -2734,7 +2734,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupStateController(stateController);
 
-        controllers.add(movementController, actionController, fastActionController, flightController, vocalController, interactionController, stateController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
     }
 
     @Override

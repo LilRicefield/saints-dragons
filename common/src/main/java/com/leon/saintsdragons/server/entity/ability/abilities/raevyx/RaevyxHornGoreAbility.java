@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
+import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
@@ -24,7 +25,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     private static final float DEFAULT_GORE_DAMAGE = 15.0f;
     private static final double GORE_RANGE = 4.0;
-    private static final double GORE_ANGLE_DEG = 90.0;
+    private static final double HITBOX_FORWARD_OFFSET = 2.0;
+    private static final int DEBUG_COLOR = 0xFFCC33;
+    private static final int DEBUG_TICKS = 20;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 3),
@@ -34,6 +37,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
 
     private final Set<Integer> hitIdsThisUse = new HashSet<>();
     private boolean playedSoundThisUse = false;
+    private boolean sentDebugThisUse = false;
 
     public RaevyxHornGoreAbility(DragonAbilityType<Raevyx, RaevyxHornGoreAbility> type, Raevyx user) {
         super(type, user, TRACK, 3);
@@ -50,6 +54,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
             }
             hitIdsThisUse.clear();
             playedSoundThisUse = false;
+            sentDebugThisUse = false;
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             hitIdsThisUse.clear();
         }
@@ -81,21 +86,31 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
 
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
+            sendDebugBox(wyvern, range);
             if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 2.0D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        return DragonMeleeGeometry.findForwardTargets(
+        sendDebugBox(wyvern, range);
+        return DragonMeleeGeometry.findBodySweepTargets(
                 wyvern,
                 range,
                 range,
                 range,
-                GORE_ANGLE_DEG,
-                range * 0.6D,
+                HITBOX_FORWARD_OFFSET,
                 entity -> !isAllied(wyvern, entity)
         );
+    }
+
+    private void sendDebugBox(Raevyx wyvern, double range) {
+        if (sentDebugThisUse || wyvern.level().isClientSide) {
+            return;
+        }
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(wyvern).offset(HITBOX_FORWARD_OFFSET);
+        DragonAbilityDebug.sendBox(wyvern, attack.sweep(range, range, range), DEBUG_COLOR, DEBUG_TICKS);
+        sentDebugThisUse = true;
     }
 
     private void applyGore(LivingEntity target) {

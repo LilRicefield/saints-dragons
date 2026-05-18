@@ -362,27 +362,22 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<Stegonaut> movementController = new AnimationController<>(this, "movement", 1, animationController::handleMovementAnimation);
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        controllers.add(movementController);
         AnimationController<Stegonaut> actionController = new AnimationController<>(this, StegonautAnimationHandler.ACTION_CONTROLLER, 5, animationController::actionPredicate);
         animationController.setupActionController(actionController);
         actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        controllers.add(actionController);
         AnimationController<Stegonaut> fastActionController = new AnimationController<>(this, StegonautAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationController::fastActionPredicate);
         animationController.setupFastActionController(fastActionController);
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        controllers.add(fastActionController);
         AnimationController<Stegonaut> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
         DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        controllers.add(vocalController);
         AnimationController<Stegonaut> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
         animationController.setupInteractionController(interactionController);
         interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        controllers.add(interactionController);
         AnimationController<Stegonaut> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
         animationController.setupStateController(stateController);
         stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        controllers.add(stateController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, interactionController, stateController);
     }
 
     @Override

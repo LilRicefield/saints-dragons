@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
+import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
@@ -21,10 +22,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
     private static final int HORN_GORE_SOUND_TICKS = 30; // 1.5s
     private static final float BASE_DAMAGE = 15.0f;
-    private static final double RANGE = 7.8;
-    private static final double GORE_ANGLE_DEG = 90.0;
-    private static final double SWEEP_HORIZONTAL = 3.0;
-    private static final double SWEEP_VERTICAL = 2.5;
+    private static final double RANGE = 4.5;
+    private static final double HITBOX_FORWARD_OFFSET = 2.0;
+    private static final int DEBUG_COLOR = 0xFFCC33;
+    private static final int DEBUG_TICKS = 20;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 5),
@@ -33,6 +34,7 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
     };
 
     private final java.util.Set<Integer> hitIds = new java.util.HashSet<>();
+    private boolean sentDebugThisUse;
 
     public VolitansHornGoreAbility(DragonAbilityType<Volitans, VolitansHornGoreAbility> type, Volitans user) {
         super(type, user, TRACK, 12);
@@ -54,6 +56,7 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
                 );
             }
             hitIds.clear();
+            sentDebugThisUse = false;
         }
     }
 
@@ -77,21 +80,31 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
+            sendDebugBox(dragon, range);
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 2.0D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        return DragonMeleeGeometry.findForwardTargets(
+        sendDebugBox(dragon, range);
+        return DragonMeleeGeometry.findBodySweepTargets(
                 dragon,
                 range,
-                SWEEP_HORIZONTAL,
-                SWEEP_VERTICAL,
-                GORE_ANGLE_DEG,
-                range * 0.55D,
+                range,
+                range,
+                HITBOX_FORWARD_OFFSET,
                 entity -> !dragon.isAlly(entity)
         );
+    }
+
+    private void sendDebugBox(Volitans dragon, double range) {
+        if (sentDebugThisUse || dragon.level().isClientSide) {
+            return;
+        }
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(dragon).offset(HITBOX_FORWARD_OFFSET);
+        DragonAbilityDebug.sendBox(dragon, attack.sweep(range, range, range), DEBUG_COLOR, DEBUG_TICKS);
+        sentDebugThisUse = true;
     }
 
     private void applyGore(LivingEntity target) {

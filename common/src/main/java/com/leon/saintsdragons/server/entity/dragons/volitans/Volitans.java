@@ -1245,8 +1245,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(movement);
-
         AnimationController<Volitans> actions =
                 new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         actions.setSoundKeyframeHandler(event -> {
@@ -1256,7 +1254,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupActionController(actions);
-        controllers.add(actions);
 
         AnimationController<Volitans> fastAction =
                 new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
@@ -1267,7 +1264,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupFastActionController(fastAction);
-        controllers.add(fastAction);
 
         AnimationController<Volitans> flight =
                 DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
@@ -1278,7 +1274,16 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupFlightController(flight);
-        controllers.add(flight);
+
+        AnimationController<Volitans> airAction =
+                new AnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
+        airAction.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        animationHandler.setupAirActionController(airAction);
 
         AnimationController<Volitans> vocal =
                 new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
@@ -1289,7 +1294,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(vocal);
 
         AnimationController<Volitans> interaction =
                 new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
@@ -1300,7 +1304,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupInteractionController(interaction);
-        controllers.add(interaction);
 
         AnimationController<Volitans> state =
                 new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
@@ -1311,7 +1314,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupStateController(state);
-        controllers.add(state);
+        controllers.add(movement, vocal, actions, fastAction, flight, airAction, interaction, state);
     }
 
     @Override

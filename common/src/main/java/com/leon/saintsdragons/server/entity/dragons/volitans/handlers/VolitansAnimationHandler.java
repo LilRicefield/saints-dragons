@@ -14,6 +14,7 @@ import software.bernie.geckolib.core.object.PlayState;
 public final class VolitansAnimationHandler {
     public static final String FAST_ACTION_CONTROLLER = "volitansFastAction";
     public static final String ACTION_CONTROLLER = "volitansAction";
+    public static final String AIR_ACTION_CONTROLLER = "volitansAirAction";
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.volitans.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.volitans.walk");
@@ -86,6 +87,8 @@ public final class VolitansAnimationHandler {
 
     public void setupFlightController(AnimationController<Volitans> controller) {
         DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
+        controller.triggerableAnim("slamming", SLAMMING);
+        controller.triggerableAnim("slammed", SLAMMED);
     }
 
     public void setupActionController(AnimationController<Volitans> controller) {
@@ -123,8 +126,11 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("enter_burrow", ENTER_BURROW);
         controller.triggerableAnim("roar", ROAR);
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
-        controller.triggerableAnim("slamming", SLAMMING);
-        controller.triggerableAnim("slammed", SLAMMED);
+    }
+
+    public void setupAirActionController(AnimationController<Volitans> controller) {
+        controller.triggerableAnim("swipe_left", SWIPE_LEFT);
+        controller.triggerableAnim("swipe_right", SWIPE_RIGHT);
     }
 
     public void setupInteractionController(AnimationController<Volitans> controller) {
@@ -216,6 +222,11 @@ public final class VolitansAnimationHandler {
     }
 
     public PlayState fastActionPredicate(AnimationState<Volitans> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
+    }
+
+    public PlayState airActionPredicate(AnimationState<Volitans> state) {
         state.getController().transitionLength(1);
         return PlayState.STOP;
     }

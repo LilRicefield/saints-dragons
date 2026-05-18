@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
+import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.damagesource.DamageSource;
@@ -19,10 +20,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class VolitansClawAbility extends DragonAbility<Volitans> {
     private static final float BASE_DAMAGE = 11.0f;
-    private static final double RANGE = 6.5;
-    private static final double CLAW_ANGLE_DEG = 95.0;
-    private static final double SWEEP_HORIZONTAL = 3.0;
-    private static final double SWEEP_VERTICAL = 2.6;
+    private static final double RANGE = 3.5;
+    private static final double HITBOX_FORWARD_OFFSET = 2.0;
+    private static final int DEBUG_COLOR = 0x66FFAA;
+    private static final int DEBUG_TICKS = 20;
     private static final int CLAW_SOUND_TICKS = 26; // 1.3s
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -46,10 +47,14 @@ public class VolitansClawAbility extends DragonAbility<Volitans> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, useLeftClaw ? "swipe_left" : "swipe_right");
-            if (!getUser().level().isClientSide) {
-                float pitch = 0.96f + getUser().getRandom().nextFloat() * 0.08f;
-                getUser().getSoundHandler().playMovingEntitySound(
+            Volitans dragon = getUser();
+            String controller = isAerial(dragon)
+                    ? VolitansAnimationHandler.AIR_ACTION_CONTROLLER
+                    : VolitansAnimationHandler.ACTION_CONTROLLER;
+            dragon.triggerAnim(controller, useLeftClaw ? "swipe_left" : "swipe_right");
+            if (!dragon.level().isClientSide) {
+                float pitch = 0.96f + dragon.getRandom().nextFloat() * 0.08f;
+                dragon.getSoundHandler().playMovingEntitySound(
                         ModSounds.VOLITANS_CLAWS.get(),
                         1.9f,
                         pitch,
@@ -58,6 +63,10 @@ public class VolitansClawAbility extends DragonAbility<Volitans> {
             }
             appliedHit = false;
         }
+    }
+
+    private boolean isAerial(Volitans dragon) {
+        return dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
     }
 
     @Override
@@ -79,21 +88,30 @@ public class VolitansClawAbility extends DragonAbility<Volitans> {
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
+            sendDebugBox(dragon, range);
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
                 return List.of(target);
             }
             return List.of();
         }
 
-        return DragonMeleeGeometry.findForwardTargets(
+        sendDebugBox(dragon, range);
+        return DragonMeleeGeometry.findBodySweepTargets(
                 dragon,
                 range,
-                SWEEP_HORIZONTAL,
-                SWEEP_VERTICAL,
-                CLAW_ANGLE_DEG,
-                range * 0.6D,
+                range,
+                range,
+                HITBOX_FORWARD_OFFSET,
                 entity -> !dragon.isAlly(entity)
         );
+    }
+
+    private void sendDebugBox(Volitans dragon, double range) {
+        if (dragon.level().isClientSide) {
+            return;
+        }
+        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(dragon).offset(HITBOX_FORWARD_OFFSET);
+        DragonAbilityDebug.sendBox(dragon, attack.sweep(range, range, range), DEBUG_COLOR, DEBUG_TICKS);
     }
 
     private void applyHit(LivingEntity target) {
