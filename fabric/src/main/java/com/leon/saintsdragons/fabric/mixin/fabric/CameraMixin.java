@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
+import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.CameraLeanData;
@@ -150,36 +151,25 @@ public abstract class CameraMixin implements CameraAccessor {
         }
 
         Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon.getId(), saintsdragons$getSeatIndex(dragon, focusedEntity));
-        if (saddleOffset == null) {
+        if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
             return;
         }
-        if (Math.abs(saddleOffset.x) >= 20.0 || Math.abs(saddleOffset.y) >= 20.0 || Math.abs(saddleOffset.z) >= 20.0) {
-            return;
-        }
-
-        double interpX = Mth.lerp(partialTick, dragon.xo, dragon.getX());
-        double interpY = Mth.lerp(partialTick, dragon.yo, dragon.getY());
-        double interpZ = Mth.lerp(partialTick, dragon.zo, dragon.getZ());
-
-        float eyeHeight = focusedEntity.getEyeHeight();
-        Vec3 pivot = new Vec3(
-                interpX + saddleOffset.x + this.up.x() * eyeHeight,
-                interpY + saddleOffset.y + this.up.y() * eyeHeight,
-                interpZ + saddleOffset.z + this.up.z() * eyeHeight
-        );
 
         double leanX = CameraLeanData.getLeanX();
         double leanY = CameraLeanData.getLeanY();
         double leanZ = CameraLeanData.getLeanZ();
-        if (Math.abs(leanX) > 0.001 || Math.abs(leanY) > 0.001 || Math.abs(leanZ) > 0.001) {
-            pivot = pivot.add(
-                    this.forwards.x() * leanZ + this.up.x() * leanY + this.left.x() * leanX,
-                    this.forwards.y() * leanZ + this.up.y() * leanY + this.left.y() * leanX,
-                    this.forwards.z() * leanZ + this.up.z() * leanY + this.left.z() * leanX
-            );
-        }
-
-        this.setPosition(pivot);
+        this.setPosition(DragonSeatAnchoredCamera.computePivot(
+                dragon,
+                focusedEntity,
+                saddleOffset,
+                this.up,
+                this.forwards,
+                this.left,
+                partialTick,
+                leanX,
+                leanY,
+                leanZ
+        ));
     }
 
     private static int saintsdragons$getSeatIndex(RideableDragonBase dragon, Entity rider) {

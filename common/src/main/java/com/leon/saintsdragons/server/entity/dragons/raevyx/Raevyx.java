@@ -2176,7 +2176,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return false;
         }
 
-        return Math.abs(getRiderForwardInput()) > 0.05f;
+        return true;
     }
 
     @Override

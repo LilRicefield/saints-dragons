@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
+import com.leon.saintsdragons.client.renderer.RiderTuning;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -46,6 +47,7 @@ public class FabricClientEventHandler {
      */
     public static void init() {
         DragonRideCameraTuning.bootstrap();
+        RiderTuning.bootstrap();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             onClientTick(client);
         });

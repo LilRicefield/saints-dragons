@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
+import org.joml.Vector3f;
 import org.joml.Vector3d;
 import org.joml.Vector4f;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
@@ -181,7 +182,17 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         RiderBullcrap.store(animatable.getId(), seatIndex, viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
         Vec3 boneWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
-        RiderBullcrap.storeCameraOffset(animatable.getId(), seatIndex, boneWorldPos.subtract(animatable.position()));
+        Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(animatable, seatIndex);
+        Vec3 cameraWorldPos = transformLocator(
+                bone,
+                firstPersonOffset.x(),
+                firstPersonOffset.y(),
+                firstPersonOffset.z()
+        );
+        if (cameraWorldPos == null) {
+            cameraWorldPos = boneWorldPos;
+        }
+        RiderBullcrap.storeCameraOffset(animatable.getId(), seatIndex, cameraWorldPos.subtract(animatable.position()));
     }
 
     protected int seatIndexForRiderBone(T animatable, String boneName, RiderConfig.RiderSpec riderSpec) {

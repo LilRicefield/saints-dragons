@@ -32,7 +32,7 @@ public abstract class AirDismountInputMixin {
         }
         LocalPlayer player = (LocalPlayer) (Object) this;
         Entity vehicle = player.getVehicle();
-        if (vehicle instanceof RideableFlyingDragon dragon && saintsdragons$shouldBlockDismount(dragon)) {
+        if (vehicle instanceof RideableFlyingDragon dragon && saintsdragons$shouldBlockDismount(player, dragon)) {
             saintsdragons$sendBlockedMessage(player);
             return false;
         }
@@ -40,8 +40,8 @@ public abstract class AirDismountInputMixin {
     }
 
     @Unique
-    private static boolean saintsdragons$shouldBlockDismount(RideableFlyingDragon dragon) {
-        return !dragon.canRiderShiftDismount();
+    private static boolean saintsdragons$shouldBlockDismount(LocalPlayer player, RideableFlyingDragon dragon) {
+        return dragon.getControllingPassenger() == player && !dragon.canRiderShiftDismount();
     }
 
     @Unique

@@ -2586,7 +2586,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return false;
         }
 
-        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05f;
+        return true;
     }
 
     @Override

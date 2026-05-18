@@ -1478,7 +1478,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             return false;
         }
 
-        return Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) > 0.05F;
+        return true;
     }
 
     protected boolean isActivelyBarrelRolling() {
