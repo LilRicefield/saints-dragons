@@ -70,6 +70,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     private boolean wasVehicleLastTick = false;
     private boolean riderWasAirborneForLanding = false;
     private int riderAirborneTicksForLanding = 0;
+    private double riderFlightThrottle = 0.0D;
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -567,6 +568,18 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.entityData.set(getAcceleratingAccessor(), accelerating);
     }
 
+    public double getRiderFlightThrottle() {
+        return riderFlightThrottle;
+    }
+
+    public void setRiderFlightThrottle(double throttle) {
+        riderFlightThrottle = Math.max(0.0D, throttle);
+    }
+
+    public void resetRiderFlightThrottle() {
+        riderFlightThrottle = 0.0D;
+    }
+
     protected void copyRiderYaw(Player player) {
         if (player == null) {
             return;
@@ -954,6 +967,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.entityData.set(getRiderForwardAccessor(), 0f);
         this.entityData.set(getRiderStrafeAccessor(), 0f);
         this.entityData.set(getGroundMoveStateAccessor(), 0);
+        resetRiderFlightThrottle();
         syncAnimState(0, getFlightMode());
         clearLocalSitTransitionForMount();
     }
@@ -971,6 +985,7 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         clearRiderControlLock();
         setRunning(false);
         setAccelerating(false);
+        resetRiderFlightThrottle();
         setGoingUp(false);
         setGoingDown(false);
         setTarget(null);

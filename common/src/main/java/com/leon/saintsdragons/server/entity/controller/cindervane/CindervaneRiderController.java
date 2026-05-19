@@ -1,11 +1,12 @@
 package com.leon.saintsdragons.server.entity.controller.cindervane;
 
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -18,13 +19,16 @@ public record CindervaneRiderController(Cindervane dragon) {
     private static final double SEAT0_HEIGHT_ADJUST = 0.00D;
     private static final double SEAT1_HEIGHT_ADJUST = 0.00D;
     private static final double AUTO_GRAB_HEIGHT_ADJUST = 0.00D;
-    private static final double CRUISE_SPEED_MULT = 3.75;
-    private static final double SPRINT_SPEED_MULT = 4.55;
+    private static final double BASE_FLIGHT_SPEED_MULT = 3.0;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = 4.0;
     private static final double DRAG_NO_INPUT = 0.45;
     private static final double STRAFE_POWER = 0.4;
     private static final double ASCEND_THRUST = 0.45D;
     private static final double DESCEND_THRUST = 0.85D;
     private static final double TERMINAL_VELOCITY = 1.2D;
+    private static final double FLIGHT_ACCELERATION = 0.35D;
+    private static final double DIVE_SPEED_MULTIPLIER = 3.5D;
+    private static final double DIVE_ACCELERATION = 0.55D;
 
     @Nullable
     public Player getRidingPlayer() {
@@ -62,31 +66,35 @@ public record CindervaneRiderController(Cindervane dragon) {
         }
 
         if (dragon.isFlying()) {
-            Vec3 finalVelocity = DragonRiderControllerHelper.computeFlightVelocity(
+            DragonRiderFlightController.tick(
                     dragon,
                     player,
                     motion,
                     DragonRiderControllerHelper.resolveRiderPitchRadians(dragon, player, Cindervane.RIDER_KEY_PITCH_DEG),
                     dragon.isRiderPitchKeyMode(),
-                    dragon.getAttributeValue(Attributes.FLYING_SPEED),
-                    CRUISE_SPEED_MULT,
-                    SPRINT_SPEED_MULT,
-                    STRAFE_POWER,
-                    DRAG_NO_INPUT,
-                    ASCEND_THRUST,
-                    DESCEND_THRUST,
-                    TERMINAL_VELOCITY,
-                    ASCEND_THRUST * 0.85D,
+                    flightSettings(),
                     dragon.getRiderTakeoffTicks() > 0,
                     false,
                     0.45D
             );
-            dragon.move(MoverType.SELF, finalVelocity);
-            dragon.setDeltaMovement(finalVelocity);
-            dragon.calculateEntityAnimation(true);
-            player.fallDistance = 0.0F;
-            dragon.fallDistance = 0.0F;
         }
+    }
+
+    private DragonRiderFlightSettings flightSettings() {
+        double baseSpeed = dragon.getAttributeValue(Attributes.FLYING_SPEED);
+        return new DragonRiderFlightSettings(
+                baseSpeed * BASE_FLIGHT_SPEED_MULT,
+                baseSpeed * SPRINT_FLIGHT_SPEED_MULT,
+                FLIGHT_ACCELERATION,
+                DIVE_SPEED_MULTIPLIER,
+                DIVE_ACCELERATION,
+                STRAFE_POWER,
+                DRAG_NO_INPUT,
+                ASCEND_THRUST,
+                DESCEND_THRUST,
+                TERMINAL_VELOCITY,
+                ASCEND_THRUST * 0.85D
+        );
     }
 
     public double getPassengersRidingOffset() {

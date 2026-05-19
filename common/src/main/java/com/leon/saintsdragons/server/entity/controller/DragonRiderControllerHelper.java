@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.entity.controller;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.flight.DragonRiderFlightPhysics;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -103,104 +102,5 @@ public final class DragonRiderControllerHelper {
             return (float) Math.toRadians(keyPitchDegrees);
         }
         return 0.0F;
-    }
-
-    public static Vec3 computeFlightVelocity(RideableDragonBase dragon, Player player, Vec3 motion,
-                                             float pitchRad, boolean keyPitchMode,
-                                             double baseSpeed, double cruiseMult, double sprintMult,
-                                             double strafePower, double dragNoInput,
-                                             double ascendThrust, double descendThrust,
-                                             double terminalVelocity,
-                                             double takeoffBoost,
-                                             boolean takeoffBoostActive) {
-        return computeFlightVelocity(
-                dragon,
-                player,
-                motion,
-                pitchRad,
-                keyPitchMode,
-                baseSpeed,
-                cruiseMult,
-                sprintMult,
-                strafePower,
-                dragNoInput,
-                ascendThrust,
-                descendThrust,
-                terminalVelocity,
-                takeoffBoost,
-                takeoffBoostActive,
-                true,
-                0.20D
-        );
-    }
-
-    public static Vec3 computeFlightVelocity(RideableDragonBase dragon, Player player, Vec3 motion,
-                                             float pitchRad, boolean keyPitchMode,
-                                             double baseSpeed, double cruiseMult, double sprintMult,
-                                             double strafePower, double dragNoInput,
-                                             double ascendThrust, double descendThrust,
-                                             double terminalVelocity,
-                                             double takeoffBoost,
-                                             boolean takeoffBoostActive,
-                                             boolean takeoffBoostRequiresGoingUp,
-                                             double takeoffMinVertical) {
-        double targetSpeed = (dragon.isAccelerating() ? sprintMult : cruiseMult) * baseSpeed;
-        float pitchDegrees = (float) Math.toDegrees(pitchRad);
-        DragonRiderFlightPhysics.DiveResponse diveResponse =
-                DragonRiderFlightPhysics.computeDiveResponse(pitchDegrees, keyPitchMode);
-        targetSpeed *= diveResponse.speedMultiplier();
-
-        double forwardInput = motion.z;
-        double strafeInput = motion.x;
-        boolean hasInput = Math.abs(forwardInput) > 0.01D || Math.abs(strafeInput) > 0.01D;
-        float yawRad = (float) Math.toRadians(dragon.getYRot());
-        double forwardXZ = Math.cos(pitchRad);
-        double forwardX = -Math.sin(yawRad) * forwardXZ;
-        double forwardY = keyPitchMode ? 0.0D : -Math.sin(pitchRad);
-        double forwardZ = Math.cos(yawRad) * forwardXZ;
-        double rightX = Math.cos(yawRad);
-        double rightZ = Math.sin(yawRad);
-
-        double targetDirX = forwardX * forwardInput + rightX * strafeInput * strafePower;
-        double targetDirY = forwardY * forwardInput * 1.35D;
-        double targetDirZ = forwardZ * forwardInput + rightZ * strafeInput * strafePower;
-        double dirLength = Math.sqrt(targetDirX * targetDirX + targetDirY * targetDirY + targetDirZ * targetDirZ);
-
-        Vec3 current = dragon.getDeltaMovement();
-        Vec3 velocity;
-        if (hasInput && dirLength > 0.01D) {
-            targetDirX /= dirLength;
-            targetDirY /= dirLength;
-            targetDirZ /= dirLength;
-            Vec3 targetVelocity = new Vec3(targetDirX * targetSpeed, targetDirY * targetSpeed, targetDirZ * targetSpeed);
-            velocity = new Vec3(
-                    Mth.lerp(diveResponse.acceleration(), current.x, targetVelocity.x),
-                    Mth.lerp(diveResponse.acceleration(), current.y, targetVelocity.y),
-                    Mth.lerp(diveResponse.acceleration(), current.z, targetVelocity.z)
-            ).scale(1.0D - diveResponse.drag());
-        } else {
-            velocity = current.scale(1.0D - dragNoInput);
-            if (velocity.length() < 0.01D) {
-                velocity = Vec3.ZERO;
-            }
-        }
-
-        double vertical = velocity.y;
-        boolean diving = !keyPitchMode && pitchDegrees >= 45.0F && hasInput;
-        if (!diving) {
-            if (takeoffBoostActive && (!takeoffBoostRequiresGoingUp || dragon.isGoingUp())) {
-                vertical = Math.max(vertical + takeoffBoost, takeoffMinVertical);
-            } else if (dragon.isGoingUp()) {
-                vertical += ascendThrust;
-            } else if (dragon.isGoingDown()) {
-                vertical -= descendThrust;
-            }
-        }
-
-        vertical = Mth.clamp(vertical, -terminalVelocity, terminalVelocity);
-        if (velocity.length() > targetSpeed) {
-            velocity = velocity.normalize().scale(targetSpeed);
-        }
-        return new Vec3(velocity.x, vertical, velocity.z);
     }
 }

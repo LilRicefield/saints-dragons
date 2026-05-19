@@ -3,11 +3,12 @@ package com.leon.saintsdragons.server.entity.controller.ignivorus;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -19,13 +20,16 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     private static final double SEAT_BASE_FACTOR = 0.50D;
     private static final double LANDING_HEIGHT_TRIGGER = 4.0D;
     private static final int MAX_GROUND_CHECK_DISTANCE = 10;
-    private static final double CRUISE_SPEED_MULT = 3.95;
-    private static final double SPRINT_SPEED_MULT = 4.75;
+    private static final double BASE_FLIGHT_SPEED_MULT = 3.95;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = 4.75;
     private static final double DRAG_NO_INPUT = 0.5;
     private static final double STRAFE_POWER = 0.5;
     private static final double ASCEND_THRUST = 0.45D;
     private static final double DESCEND_THRUST = 1.0D;
     private static final double TERMINAL_VELOCITY = 1.5D;
+    private static final double FLIGHT_ACCELERATION = 0.35D;
+    private static final double DIVE_SPEED_MULTIPLIER = 3.5D;
+    private static final double DIVE_ACCELERATION = 0.55D;
 
     @Nullable
     public Player getRidingPlayer() {
@@ -138,32 +142,35 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         }
 
         if (dragon.isFlying()) {
-            Vec3 finalVelocity = DragonRiderControllerHelper.computeFlightVelocity(
+            DragonRiderFlightController.tick(
                     dragon,
                     player,
                     motion,
                     getEffectivePitchRadians(player),
                     dragon.isRiderPitchKeyMode(),
-                    dragon.getAttributeValue(Attributes.FLYING_SPEED),
-                    CRUISE_SPEED_MULT,
-                    SPRINT_SPEED_MULT,
-                    STRAFE_POWER,
-                    DRAG_NO_INPUT,
-                    ASCEND_THRUST,
-                    DESCEND_THRUST,
-                    TERMINAL_VELOCITY,
-                    ASCEND_THRUST * 0.65D,
+                    flightSettings(),
                     isTakeoffWindowActive(),
                     true,
                     0.20D
             );
-            dragon.move(MoverType.SELF, finalVelocity);
-            dragon.setDeltaMovement(finalVelocity);
-            dragon.calculateEntityAnimation(true);
-
-            player.fallDistance = 0.0F;
-            dragon.fallDistance = 0.0F;
         }
+    }
+
+    private DragonRiderFlightSettings flightSettings() {
+        double baseSpeed = dragon.getAttributeValue(Attributes.FLYING_SPEED);
+        return new DragonRiderFlightSettings(
+                baseSpeed * BASE_FLIGHT_SPEED_MULT,
+                baseSpeed * SPRINT_FLIGHT_SPEED_MULT,
+                FLIGHT_ACCELERATION,
+                DIVE_SPEED_MULTIPLIER,
+                DIVE_ACCELERATION,
+                STRAFE_POWER,
+                DRAG_NO_INPUT,
+                ASCEND_THRUST,
+                DESCEND_THRUST,
+                TERMINAL_VELOCITY,
+                ASCEND_THRUST * 0.65D
+        );
     }
 
     private float getEffectivePitchRadians(Player player) {

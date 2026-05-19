@@ -3,11 +3,12 @@ package com.leon.saintsdragons.server.entity.controller.raevyx;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -16,13 +17,16 @@ import org.jetbrains.annotations.Nullable;
 public record RaevyxRiderController(Raevyx wyvern) {
     private static final double SEAT_BASE_FACTOR = 0.50D;
     private static final double SEAT_HEIGHT_ADJUST = 0.00D;
-    private static final double CRUISE_SPEED_MULT = 4.95;
-    private static final double SPRINT_SPEED_MULT = 5.75;
+    private static final double BASE_FLIGHT_SPEED_MULT = 5.0;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = 6.0;
     private static final double DRAG_NO_INPUT = 0.5;
     private static final double STRAFE_POWER = 0.5;
     private static final double ASCEND_THRUST = 1.2D;
     private static final double DESCEND_THRUST = 1.0D;
     private static final double TERMINAL_VELOCITY = 1.5D;
+    private static final double FLIGHT_ACCELERATION = 0.35D;
+    private static final double DIVE_SPEED_MULTIPLIER = 3.5D;
+    private static final double DIVE_ACCELERATION = 0.55D;
 
     @Nullable
     public Player getRidingPlayer() {
@@ -59,31 +63,35 @@ public record RaevyxRiderController(Raevyx wyvern) {
             wyvern.getNavigation().stop();
         }
         if (wyvern.isFlying()) {
-            Vec3 finalVelocity = DragonRiderControllerHelper.computeFlightVelocity(
+            DragonRiderFlightController.tick(
                     wyvern,
                     player,
                     motion,
                     getEffectivePitchRadians(player),
                     wyvern.isRiderPitchKeyMode(),
-                    getMountedFlightBaseSpeed(),
-                    CRUISE_SPEED_MULT,
-                    SPRINT_SPEED_MULT,
-                    STRAFE_POWER,
-                    DRAG_NO_INPUT,
-                    ASCEND_THRUST,
-                    DESCEND_THRUST,
-                    TERMINAL_VELOCITY,
-                    ASCEND_THRUST,
+                    flightSettings(),
                     wyvern.getRiderTakeoffTicks() > 0,
                     false,
                     Double.NEGATIVE_INFINITY
             );
-            wyvern.move(MoverType.SELF, finalVelocity);
-            wyvern.setDeltaMovement(finalVelocity);
-            wyvern.calculateEntityAnimation(true);
-            player.fallDistance = 0.0F;
-            wyvern.fallDistance = 0.0F;
         }
+    }
+
+    private DragonRiderFlightSettings flightSettings() {
+        double baseSpeed = getMountedFlightBaseSpeed();
+        return new DragonRiderFlightSettings(
+                baseSpeed * BASE_FLIGHT_SPEED_MULT,
+                baseSpeed * SPRINT_FLIGHT_SPEED_MULT,
+                FLIGHT_ACCELERATION,
+                DIVE_SPEED_MULTIPLIER,
+                DIVE_ACCELERATION,
+                STRAFE_POWER,
+                DRAG_NO_INPUT,
+                ASCEND_THRUST,
+                DESCEND_THRUST,
+                TERMINAL_VELOCITY,
+                ASCEND_THRUST
+        );
     }
 
     private float getEffectivePitchRadians(Player player) {

@@ -329,7 +329,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             if (shouldForceFollow() || ownerAirborne) {
                 return true; // Keep flying
             }
-            return !(distance < config.landingDistance && owner.onGround());
+            return !(distance < config.landingDistance && isOwnerGroundedForLanding(owner));
         }
 
         // Check if can take off
@@ -351,7 +351,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
         // Take off if far away or owner is significantly higher
         boolean farAway = distance > config.flightTriggerDist;
-        boolean ownerAbove = (owner.getY() - dragon.getY()) > config.flightHeightDiff;
+        boolean ownerAbove = ownerAirborne && (getOwnerFlightReferenceY(owner) - dragon.getY()) > config.flightHeightDiff;
 
         return farAway || ownerAbove;
     }
@@ -430,11 +430,16 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return false;
         }
 
-        // Check if riding something airborne
         if (owner.isPassenger()) {
             Entity vehicle = owner.getVehicle();
-            if (vehicle != null && !vehicle.onGround()) {
-                return true;
+            if (vehicle != null) {
+                if (vehicle instanceof DragonFlightCapable flightCapable) {
+                    return flightCapable.isFlying()
+                            || flightCapable.isTakeoff()
+                            || flightCapable.isHovering()
+                            || (flightCapable.isLanding() && !vehicle.onGround());
+                }
+                return !vehicle.onGround();
             }
         }
 
@@ -447,6 +452,32 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         BlockPos pos = owner.blockPosition();
         int groundY = owner.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY();
         return owner.getY() - groundY > 4.0;
+    }
+
+    private boolean isOwnerGroundedForLanding(LivingEntity owner) {
+        if (owner == null || owner.level() != dragon.level()) {
+            return false;
+        }
+        Entity vehicle = owner.getVehicle();
+        if (vehicle != null) {
+            if (vehicle instanceof DragonFlightCapable flightCapable) {
+                return vehicle.onGround()
+                        && !flightCapable.isFlying()
+                        && !flightCapable.isTakeoff()
+                        && !flightCapable.isHovering()
+                        && !flightCapable.isLanding();
+            }
+            return vehicle.onGround();
+        }
+        return owner.onGround();
+    }
+
+    private double getOwnerFlightReferenceY(LivingEntity owner) {
+        Entity vehicle = owner.getVehicle();
+        if (vehicle != null) {
+            return vehicle.getY() + vehicle.getBbHeight();
+        }
+        return owner.getY();
     }
 
     private int computeRepathCooldown(double distance, boolean running) {
