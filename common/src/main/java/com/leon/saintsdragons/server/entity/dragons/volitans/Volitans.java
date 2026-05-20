@@ -226,6 +226,14 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
     private final VolitansRiderController riderController;
+    private final AnimationController<Volitans> movementController;
+    private final AnimationController<Volitans> actionController;
+    private final AnimationController<Volitans> fastActionController;
+    private final AnimationController<Volitans> flightController;
+    private final AnimationController<Volitans> airActionController;
+    private final AnimationController<Volitans> vocalController;
+    private final AnimationController<Volitans> interactionController;
+    private final AnimationController<Volitans> stateController;
     private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
     private int timeFlying;
     private int spineDropCooldownTicks;
@@ -267,6 +275,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.setMaxUpStep(1.0F);
         this.riderController = new VolitansRiderController(this);
+        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.actionController = new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
+        this.fastActionController = new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.airActionController = new AnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
+        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        setupAnimationControllers();
 
         if (!level.isClientSide) {
             applyConfiguredAttributes();
@@ -1237,84 +1254,65 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Volitans> movement =
-                new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
-        movement.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        AnimationController<Volitans> actions =
-                new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
-        actions.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        animationHandler.setupActionController(actions);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController, stateController);
+    }
 
-        AnimationController<Volitans> fastAction =
-                new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        fastAction.setSoundKeyframeHandler(event -> {
+    private void setupAnimationControllers() {
+        movementController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-        animationHandler.setupFastActionController(fastAction);
-
-        AnimationController<Volitans> flight =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        flight.setSoundKeyframeHandler(event -> {
+        actionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-        animationHandler.setupFlightController(flight);
-
-        AnimationController<Volitans> airAction =
-                new AnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
-        airAction.setSoundKeyframeHandler(event -> {
+        animationHandler.setupActionController(actionController);
+        fastActionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-        animationHandler.setupAirActionController(airAction);
-
-        AnimationController<Volitans> vocal =
-                new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
-        DragonVocalAnimationHelper.registerGrumbles(vocal, this);
-        vocal.setSoundKeyframeHandler(event -> {
+        animationHandler.setupFastActionController(fastActionController);
+        flightController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-
-        AnimationController<Volitans> interaction =
-                new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
-        interaction.setSoundKeyframeHandler(event -> {
+        animationHandler.setupFlightController(flightController);
+        airActionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-        animationHandler.setupInteractionController(interaction);
-
-        AnimationController<Volitans> state =
-                new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
-        state.setSoundKeyframeHandler(event -> {
+        animationHandler.setupAirActionController(airActionController);
+        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        vocalController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-        animationHandler.setupStateController(state);
-        controllers.add(movement, vocal, actions, fastAction, flight, airAction, interaction, state);
+        interactionController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        animationHandler.setupInteractionController(interactionController);
+        stateController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        animationHandler.setupStateController(stateController);
     }
 
     @Override

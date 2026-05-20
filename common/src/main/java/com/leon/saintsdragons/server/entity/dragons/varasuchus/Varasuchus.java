@@ -142,6 +142,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final VarasuchusAnimationHandler animationHandler = new VarasuchusAnimationHandler(this);
     private final VarasuchusInteractionHandler interactionHandler = new VarasuchusInteractionHandler(this);
     private final VarasuchusRiderController riderController;
+    private final AnimationController<Varasuchus> movementController;
+    private final AnimationController<Varasuchus> actionController;
+    private final AnimationController<Varasuchus> fastActionController;
+    private final AnimationController<Varasuchus> vocalController;
+    private final AnimationController<Varasuchus> interactionController;
+    private final AnimationController<Varasuchus> stateController;
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
@@ -211,6 +217,13 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
         this.riderController = new VarasuchusRiderController(this);
+        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.actionController = new AnimationController<>(this, VarasuchusAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
+        this.fastActionController = new AnimationController<>(this, VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        setupAnimationControllers();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
         if (!level.isClientSide) {
             applyConfiguredAttributes();
@@ -568,32 +581,22 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Varasuchus> movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        controllers.add(movementController, vocalController, actionController, fastActionController, interactionController, stateController);
+
+    }
+
+    private void setupAnimationControllers() {
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Varasuchus> actionController = new AnimationController<>(this, VarasuchusAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Varasuchus> fastActionController = new AnimationController<>(this, VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Varasuchus> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
         DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Varasuchus> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
         interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Varasuchus> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
         stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupStateController(stateController);
-
-        controllers.add(movementController, vocalController, actionController, fastActionController, interactionController, stateController);
-
     }
 
     @Override

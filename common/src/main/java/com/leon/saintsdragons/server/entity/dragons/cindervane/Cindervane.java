@@ -27,6 +27,7 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.Cinderva
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -167,6 +168,13 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
+    private final AnimationController<Cindervane> movementController;
+    private final AnimationController<Cindervane> actionController;
+    private final AnimationController<Cindervane> fastActionController;
+    private final AnimationController<Cindervane> flightController;
+    private final AnimationController<Cindervane> vocalController;
+    private final AnimationController<Cindervane> interactionController;
+    private final AnimationController<Cindervane> stateController;
     private int targetCooldown;
     private int airTicks;
     public int groundTicks;
@@ -262,6 +270,14 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.12F);
         this.setMaxUpStep(1.1F);
         this.riderController = new CindervaneRiderController(this);
+        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.actionController = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
+        this.fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        setupAnimationControllers();
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
@@ -1346,24 +1362,23 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Cindervane> movement = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
-        movement.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        AnimationController<Cindervane> actions = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
-        animationHandler.setupActionController(actions);
-        actions.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
+    }
 
-        AnimationController<Cindervane> fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1,
-                animationHandler::fastActionPredicate);
+    private void setupAnimationControllers() {
+        movementController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        animationHandler.setupActionController(actionController);
+        actionController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
         animationHandler.setupFastActionController(fastActionController);
         fastActionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
@@ -1371,9 +1386,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-
-        AnimationController<Cindervane> flightController =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         animationHandler.setupFlightController(flightController);
         flightController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
@@ -1381,19 +1393,13 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-
-        AnimationController<Cindervane> vocalController = new AnimationController<>(this, com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper.CONTROLLER, 2,
-                com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper::idle);
-        com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-
-        AnimationController<Cindervane> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1,
-                DragonInteractionAnimationHelper::idle);
         animationHandler.setupInteractionController(interactionController);
         interactionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
@@ -1401,9 +1407,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-
-        AnimationController<Cindervane> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1,
-                DragonStateAnimationHelper::idle);
         animationHandler.setupStateController(stateController);
         stateController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
@@ -1411,7 +1414,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        controllers.add(movement, vocalController, actions, fastActionController, flightController, interactionController, stateController);
     }
 
     @Override

@@ -31,7 +31,7 @@ public final class DragonMovementAnimationHelper {
                 return PlayState.STOP;
             }
             state.getController().transitionLength(sleepTransitionTicks);
-            state.setAndContinue(sleepAnimation);
+            setAndContinueWithReloadGuard(state, sleepAnimation);
             return PlayState.CONTINUE;
         }
         if (dragon.isSleepTransitioning()) {
@@ -47,7 +47,7 @@ public final class DragonMovementAnimationHelper {
                 return PlayState.STOP;
             }
             state.getController().transitionLength(sitTransitionTicks);
-            state.setAndContinue(sitAnimation);
+            setAndContinueWithReloadGuard(state, sitAnimation);
             return PlayState.CONTINUE;
         }
         if (sitProgress > 0f) {
@@ -73,11 +73,11 @@ public final class DragonMovementAnimationHelper {
                                                  boolean treatAnimationStateMovingAsWalk) {
         int groundState = dragon.getEffectiveGroundState();
         if (groundState == 2 || dragon.isRunning()) {
-            state.setAndContinue(runAnimation);
+            setAndContinueWithReloadGuard(state, runAnimation);
         } else if (groundState == 1 || dragon.isWalking() || (treatAnimationStateMovingAsWalk && state.isMoving())) {
-            state.setAndContinue(walkAnimation);
+            setAndContinueWithReloadGuard(state, walkAnimation);
         } else {
-            state.setAndContinue(idleAnimation);
+            setAndContinueWithReloadGuard(state, idleAnimation);
         }
         return PlayState.CONTINUE;
     }
@@ -92,14 +92,24 @@ public final class DragonMovementAnimationHelper {
         int groundState = dragon.getEffectiveGroundState();
         if (groundState == 2 || dragon.isRunning()) {
             state.getController().transitionLength(movingTransitionTicks);
-            state.setAndContinue(runAnimation);
+            setAndContinueWithReloadGuard(state, runAnimation);
         } else if (groundState == 1 || dragon.isWalking()) {
             state.getController().transitionLength(movingTransitionTicks);
-            state.setAndContinue(walkAnimation);
+            setAndContinueWithReloadGuard(state, walkAnimation);
         } else {
             state.getController().transitionLength(idleTransitionTicks);
-            state.setAndContinue(idleAnimation);
+            setAndContinueWithReloadGuard(state, idleAnimation);
         }
         return PlayState.CONTINUE;
+    }
+
+    private static void setAndContinueWithReloadGuard(AnimationState<?> state, RawAnimation animation) {
+        state.setAnimation(animation);
+        if (animation != null
+                && state.getController().getCurrentAnimation() == null
+                && state.isCurrentAnimation(animation)) {
+            state.resetCurrentAnimation();
+            state.setAnimation(animation);
+        }
     }
 }

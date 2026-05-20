@@ -240,6 +240,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final IgnivorusRiderController riderController;
+    private final AnimationController<Ignivorus> movementController;
+    private final AnimationController<Ignivorus> actionController;
+    private final AnimationController<Ignivorus> fastActionController;
+    private final AnimationController<Ignivorus> flightController;
+    private final AnimationController<Ignivorus> vocalController;
+    private final AnimationController<Ignivorus> interactionController;
+    private final AnimationController<Ignivorus> stateController;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
     public int timeFlying = 0;
@@ -287,6 +294,24 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
 
         this.riderController = new IgnivorusRiderController(this);
+        this.movementController = new AnimationController<>(this, "movement", 8, animationHandler::movementPredicate);
+        this.actionController = new AnimationController<>(this, IgnivorusAnimationHandler.ACTION_CONTROLLER, 4, state -> {
+            if (isTamingStunned()) {
+                return PlayState.STOP;
+            }
+            return animationHandler.actionPredicate(state);
+        });
+        this.fastActionController = new AnimationController<>(this, IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
+            if (isTamingStunned()) {
+                return PlayState.STOP;
+            }
+            return DragonStateAnimationHelper.idle(state);
+        });
+        setupAnimationControllers();
         resetAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY);
         if (!level.isClientSide) {
             applyConfiguredAttributes();
@@ -2761,47 +2786,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Ignivorus> movementController = new AnimationController<>(this, "movement", 8, animationHandler::movementPredicate);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
+    }
+
+    private void setupAnimationControllers() {
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Ignivorus> actionController = new AnimationController<>(this, IgnivorusAnimationHandler.ACTION_CONTROLLER, 4, state -> {
-                if (isTamingStunned()) {
-                    return PlayState.STOP;
-                }
-                return animationHandler.actionPredicate(state);
-            });
         actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Ignivorus> fastActionController = new AnimationController<>(this, IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Ignivorus> flightController =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Ignivorus> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
         DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Ignivorus> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
         interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Ignivorus> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
-            if (isTamingStunned()) {
-                return PlayState.STOP;
-            }
-            return DragonStateAnimationHelper.idle(state);
-        });
         stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupStateController(stateController);
-
-
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
     }
 
     @Override

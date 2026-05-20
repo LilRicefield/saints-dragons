@@ -132,6 +132,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final NulljawAnimationHandler animationHandler = new NulljawAnimationHandler(this);
+    private final AnimationController<Nulljaw> movementController;
+    private final AnimationController<Nulljaw> actionController;
+    private final AnimationController<Nulljaw> mountedController;
+    private final AnimationController<Nulljaw> instantController;
+    private final AnimationController<Nulljaw> vocalController;
+    private final AnimationController<Nulljaw> interactionController;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private final AsyncFlightController asyncAirController;
     private final AsyncFlightMoveControl asyncAirMoveControl;
@@ -152,6 +158,13 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         this.airNavigation.setCanFloat(false);
         this.navigation = this.airNavigation;
         this.moveControl = this.asyncAirMoveControl;
+        this.movementController = new AnimationController<>(this, "movement", 4, animationHandler::movementPredicate);
+        this.actionController = new AnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
+        this.mountedController = new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate);
+        this.instantController = new AnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
+        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        setupAnimationControllers();
         this.setFlying(true);
         this.setHovering(false);
         this.setTakeoff(false);
@@ -315,17 +328,14 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Nulljaw> movement = new AnimationController<>(this, "movement", 4, animationHandler::movementPredicate);
-        AnimationController<Nulljaw> actions = new AnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
-        animationHandler.setupActionController(actions);
-        AnimationController<Nulljaw> mounted = new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate);
-        AnimationController<Nulljaw> instant = new AnimationController<>(this, "instant", 1, animationHandler::instantPredicate);
-        animationHandler.setupInstantController(instant);
-        AnimationController<Nulljaw> vocal = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
-        DragonVocalAnimationHelper.registerGrumbles(vocal, this);
-        AnimationController<Nulljaw> interaction = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
-        animationHandler.setupInteractionController(interaction);
-        controllers.add(movement, vocal, actions, mounted, instant, interaction);
+        controllers.add(movementController, vocalController, actionController, mountedController, instantController, interactionController);
+    }
+
+    private void setupAnimationControllers() {
+        animationHandler.setupActionController(actionController);
+        animationHandler.setupInstantController(instantController);
+        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        animationHandler.setupInteractionController(interactionController);
     }
 
     @Override

@@ -210,6 +210,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
     private final RaevyxRiderController riderController;
+    private final AnimationController<Raevyx> movementController;
+    private final AnimationController<Raevyx> actionController;
+    private final AnimationController<Raevyx> fastActionController;
+    private final AnimationController<Raevyx> flightController;
+    private final AnimationController<Raevyx> vocalController;
+    private final AnimationController<Raevyx> interactionController;
+    private final AnimationController<Raevyx> stateController;
     private int tempInvulnTicks = 0;
     private long lastLandingGameTime = Long.MIN_VALUE;
     private Vec3 prevClientBeamEnd = null;
@@ -444,6 +451,24 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.lightningInteractionHandler = new RaevyxInteractionHandler(this);
         this.animationHandler = new RaevyxAnimationHandler(this);
         this.riderController = new RaevyxRiderController(this);
+        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
+            if (isTamingStunned()) {
+                return PlayState.STOP;
+            }
+            return animationHandler.raevyxActionPredicate(state);
+        });
+        this.fastActionController = new AnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
+        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
+        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
+        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
+            if (isTamingStunned()) {
+                return PlayState.STOP;
+            }
+            return DragonStateAnimationHelper.idle(state);
+        });
+        setupAnimationControllers();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
 
         if (!level.isClientSide) {
@@ -2695,46 +2720,23 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        AnimationController<Raevyx> movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
+    }
+
+    private void setupAnimationControllers() {
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Raevyx> actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
-                    if (isTamingStunned()) {
-                        return PlayState.STOP;
-                    }
-                    return animationHandler.raevyxActionPredicate(state);
-                });
         actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Raevyx> fastActionController = new AnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Raevyx> flightController =
-                DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Raevyx> vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
         DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Raevyx> interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
         interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
-        AnimationController<Raevyx> stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
-            if (isTamingStunned()) {
-                return PlayState.STOP;
-            }
-            return DragonStateAnimationHelper.idle(state);
-        });
         stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupStateController(stateController);
-
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
     }
 
     @Override

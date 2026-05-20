@@ -65,9 +65,6 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
     @Override
     public void render(@NotNull T entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-        if (ShaderPassCompatibility.isIrisShadowPass()) {
-            return;
-        }
 
         RenderPassContext.beginExtraction(entity.getId());
         RiderBullcrap.notifyRendered(entity.getId());
