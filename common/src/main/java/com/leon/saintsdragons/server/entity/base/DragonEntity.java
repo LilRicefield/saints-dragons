@@ -29,7 +29,6 @@ import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
-import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
@@ -816,11 +815,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
 
     public void syncAnimState(int groundState, int flightMode) {
-        if (level().isClientSide) {
-            return;
-        }
-        this.setAnimData(DragonAnimTickets.GROUND_MODE, groundState);
-        this.setAnimData(DragonAnimTickets.FLIGHT_MODE, flightMode);
     }
 
     @Override

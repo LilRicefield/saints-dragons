@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.base;
 
-import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -598,11 +597,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
 
     @Override
     public void syncAnimState(int groundState, int flightMode) {
-        if (level().isClientSide) {
-            return;
-        }
-        this.setAnimData(DragonAnimTickets.GROUND_MODE, groundState);
-        this.setAnimData(DragonAnimTickets.FLIGHT_MODE, flightMode);
     }
 
     @Override

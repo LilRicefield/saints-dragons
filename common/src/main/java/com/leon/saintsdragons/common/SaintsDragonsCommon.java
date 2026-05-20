@@ -2,7 +2,6 @@ package com.leon.saintsdragons.common;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.common.network.DragonAnimTickets;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.*;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
@@ -27,7 +26,6 @@ public final class SaintsDragonsCommon {
         SaintsDragonsConfig.bootstrap();
         DragonAttributeConfigLoader.bootstrap();
         SaintsDragonVariantRegistry.bootstrap();
-        DragonAnimTickets.bootstrap();
         ModAbilities.register();
         ModEntities.register();
         ModBlocks.register();
