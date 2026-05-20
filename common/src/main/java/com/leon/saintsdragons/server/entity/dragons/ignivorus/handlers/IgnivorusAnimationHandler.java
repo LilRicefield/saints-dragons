@@ -255,11 +255,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.CONTINUE;
         }
 
-        if (!dragon.isVehicle() && !aerialState && dragon.getCommand() == 1) {
-            state.setAndContinue(SIT);
-            return PlayState.CONTINUE;
-        }
-
         if (!aerialState && dragon.isFallingForAnimation()) {
             state.getController().transitionLength(4);
             state.setAndContinue(FALLING);

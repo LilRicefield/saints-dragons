@@ -6775,7 +6775,7 @@
 			}
 		},
 		"ivy_oleander.animation.trade_start": {
-			"animation_length": 1.4583,
+			"animation_length": 1.3333,
 			"bones": {
 				"waist": {
 					"rotation": {
@@ -8004,28 +8004,31 @@
 				"eyes": {
 					"scale": {
 						"0.0": {
-							"post": {
-								"vector": [1, 1, 1]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [1, 1, 1]
+						},
+						"0.0417": {
+							"vector": [1, 1.0333, 1]
+						},
+						"0.0833": {
+							"vector": [1, 1.0667, 1]
 						},
 						"0.125": {
-							"post": {
-								"vector": [1, 1, 1]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [1, 1, 1]
+						},
+						"0.1667": {
+							"vector": [1, 0.4937, 1]
 						},
 						"0.2083": {
-							"post": {
-								"vector": [1, 0.1, 1]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [1, 0.1, 1]
+						},
+						"0.25": {
+							"vector": [1, 0.4938, 1]
 						},
 						"0.2917": {
-							"post": {
-								"vector": [1, 1, 1]
-							},
-							"lerp_mode": "catmullrom"
+							"vector": [1, 1, 1]
+						},
+						"1.3333": {
+							"vector": [1, 1, 1]
 						}
 					}
 				},
@@ -10476,6 +10479,11 @@
 						}
 					}
 				},
+				"eyes": {
+					"scale": {
+						"vector": [1, 1, 1]
+					}
+				},
 				"backpack": {
 					"rotation": {
 						"0.0": {
@@ -12187,7 +12195,12 @@
 				},
 				"eyes": {
 					"scale": {
-						"vector": [1, 1, 1]
+						"0.0": {
+							"vector": [1, 1, 1]
+						},
+						"1.4583": {
+							"vector": [1, 1, 1]
+						}
 					}
 				},
 				"backpack": {

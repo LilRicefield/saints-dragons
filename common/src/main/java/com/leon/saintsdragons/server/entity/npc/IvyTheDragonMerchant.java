@@ -68,6 +68,10 @@ import javax.annotation.Nullable;
 public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity {
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_TRADE_ANIM_STATE =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_IDLE_VARIANT_ACTIVE =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final VillagerTrades.ItemListing[] TRADES = new VillagerTrades.ItemListing[]{
             (trader, random) -> createIgnivorusEggTrade(random),
             (trader, random) -> createRaevyxEggTrade(random),
@@ -93,6 +97,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final float EGG_REACTION_LOOK_YAW_SPEED = 30.0f;
     private static final float EGG_REACTION_LOOK_PITCH_SPEED = 20.0f;
     private static final float EGG_REACTION_FACE_THRESHOLD = 15.0f;
+    private static final RawAnimation TRADE_START = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_start");
+    private static final RawAnimation TRADING = RawAnimation.begin().thenLoop("ivy_oleander.animation.trading");
+    private static final RawAnimation TRADE_STOP = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop");
     private static final String GREETED_PLAYERS_TAG = "GreetedPlayers";
     private static final String UNLOCKED_TRADERS_TAG = "UnlockedTraders";
     private static final String UNLOCKED_TRADER_UUID_TAG = "UUID";
@@ -143,6 +150,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_RUNNING, false);
+        this.entityData.define(DATA_TRADE_ANIM_STATE, TradeAnimState.NONE.id);
+        this.entityData.define(DATA_IDLE_VARIANT_ACTIVE, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -175,6 +184,24 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     public boolean isRunning() {
         return this.entityData.get(DATA_RUNNING);
+    }
+
+    private TradeAnimState getTradeAnimState() {
+        return TradeAnimState.byId(this.entityData.get(DATA_TRADE_ANIM_STATE));
+    }
+
+    private void setTradeAnimState(TradeAnimState state) {
+        this.tradeAnimState = state;
+        this.entityData.set(DATA_TRADE_ANIM_STATE, state.id);
+    }
+
+    private boolean isIdleVariantActive() {
+        return this.entityData.get(DATA_IDLE_VARIANT_ACTIVE);
+    }
+
+    private void setIdleVariantActive(boolean active) {
+        this.playingIdleVariant = active;
+        this.entityData.set(DATA_IDLE_VARIANT_ACTIVE, active);
     }
 
     @Override
@@ -214,7 +241,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             }
             return InteractionResult.CONSUME;
         }
-        if (isTrading() || tradeAnimState != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0) {
+        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0) {
             return InteractionResult.CONSUME;
         }
         if (hasTradingAccess(player)) {
@@ -298,7 +325,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         movementController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         controllers.add(movementController);
         AnimationController<IvyTheDragonMerchant> actionController =
-                new AnimationController<>(this, "action", 3, state -> PlayState.CONTINUE);
+                new AnimationController<>(this, "action", 3, this::actionPredicate);
         actionController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         setupActionController(actionController);
         controllers.add(actionController);
@@ -309,7 +336,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private <T extends GeoEntity> PlayState animationPredicate(AnimationState<T> state) {
-        if (isTrading() || tradeAnimState != TradeAnimState.NONE || playingIdleVariant || greetingTicks > 0 || eggReactionState != EggReactionState.NONE) {
+        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE || isIdleVariantActive() || greetingTicks > 0 || eggReactionState != EggReactionState.NONE) {
             wasMovementStopped = true;
             return PlayState.STOP;
         }
@@ -329,6 +356,22 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             state.setAndContinue(RawAnimation.begin().thenLoop("ivy_oleander.animation.idle"));
         }
         return PlayState.CONTINUE;
+    }
+
+    private PlayState actionPredicate(AnimationState<IvyTheDragonMerchant> state) {
+        state.getController().transitionLength(3);
+        TradeAnimState tradeState = getTradeAnimState();
+        if (tradeState == TradeAnimState.LOOP) {
+            state.setAndContinue(TRADING);
+            return PlayState.CONTINUE;
+        }
+        if (tradeState == TradeAnimState.START || tradeState == TradeAnimState.STOP) {
+            return PlayState.CONTINUE;
+        }
+        if (isIdleVariantActive()) {
+            return PlayState.CONTINUE;
+        }
+        return PlayState.STOP;
     }
 
     @Override
@@ -469,14 +512,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void tickIdleVariant() {
-        if (isTrading() || tradeAnimState != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0 || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
+        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0 || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
             return;
         }
 
         if (playingIdleVariant) {
             idleVariantTicks++;
             if (idleVariantTicks >= IDLE_VARIANT_DURATION) {
-                playingIdleVariant = false;
+                setIdleVariantActive(false);
                 idleVariantTicks = 0;
                 idleVariantCooldown = IDLE_VARIANT_MIN_COOLDOWN + random.nextInt(IDLE_VARIANT_MAX_COOLDOWN - IDLE_VARIANT_MIN_COOLDOWN);
             }
@@ -488,7 +531,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void startIdleVariant() {
-        playingIdleVariant = true;
+        setIdleVariantActive(true);
         idleVariantTicks = 0;
         triggerAnim("action", "idle_variant1");
     }
@@ -507,7 +550,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             eggReactionCooldown--;
         }
 
-        if (isTrading() || tradeAnimState != TradeAnimState.NONE) {
+        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE) {
             if (eggReactionState != EggReactionState.NONE) {
                 resetEggReaction();
             }
@@ -556,7 +599,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void startEggReaction(Player player, boolean unlockTradeAfterReaction) {
-        playingIdleVariant = false;
+        setIdleVariantActive(false);
         idleVariantTicks = 0;
         greetingTicks = 0;
         eggReactionState = EggReactionState.PREPARE;
@@ -633,7 +676,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     private void startGreeting(Player player) {
         greetedPlayerUuids.add(player.getUUID());
-        playingIdleVariant = false;
+        setIdleVariantActive(false);
         idleVariantTicks = 0;
         greetingTicks = GREETING_DURATION_TICKS;
         getNavigation().stop();
@@ -666,24 +709,21 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void startTradingSequence() {
-        tradeAnimState = TradeAnimState.START;
+        setTradeAnimState(TradeAnimState.START);
         tradeAnimTicks = TRADE_START_TICKS;
         triggerAnim("action", "trade_start");
     }
 
     private void stopTradingSequence() {
-        tradeAnimState = TradeAnimState.STOP;
+        setTradeAnimState(TradeAnimState.STOP);
         tradeAnimTicks = TRADE_STOP_TICKS;
         triggerAnim("action", "trade_stop");
     }
 
     private void setupActionController(AnimationController<IvyTheDragonMerchant> controller) {
-        controller.triggerableAnim("trade_start",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_start"));
-        controller.triggerableAnim("trading",
-                RawAnimation.begin().thenLoop("ivy_oleander.animation.trading"));
-        controller.triggerableAnim("trade_stop",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop"));
+        controller.triggerableAnim("trade_start", TRADE_START);
+        controller.triggerableAnim("trading", TRADING);
+        controller.triggerableAnim("trade_stop", TRADE_STOP);
         controller.triggerableAnim("greetings",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.greetings"));
         controller.triggerableAnim("idle_variant1",
@@ -698,26 +738,24 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void tickTradingAnimation() {
-        if (tradeAnimState == TradeAnimState.START) {
-            if (tradeAnimTicks > 0) {
-                tradeAnimTicks--;
-
-                if (tradeAnimTicks == 3) {
-                    triggerAnim("action", "trading");
-                }
-                if (tradeAnimTicks > 0) {
-                    return;
-                }
-            }
-            tradeAnimState = TradeAnimState.LOOP;
-        } else if (tradeAnimState == TradeAnimState.STOP) {
+        TradeAnimState tradeState = getTradeAnimState();
+        if (tradeState == TradeAnimState.START) {
             if (tradeAnimTicks > 0) {
                 tradeAnimTicks--;
                 if (tradeAnimTicks > 0) {
                     return;
                 }
             }
-            tradeAnimState = TradeAnimState.NONE;
+            setTradeAnimState(TradeAnimState.LOOP);
+            triggerAnim("action", "trading");
+        } else if (tradeState == TradeAnimState.STOP) {
+            if (tradeAnimTicks > 0) {
+                tradeAnimTicks--;
+                if (tradeAnimTicks > 0) {
+                    return;
+                }
+            }
+            setTradeAnimState(TradeAnimState.NONE);
         }
     }
 
@@ -727,9 +765,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     public boolean shouldApplyHeadTracking() {
         return !isTrading()
-                && tradeAnimState == TradeAnimState.NONE
+                && getTradeAnimState() == TradeAnimState.NONE
                 && greetingTicks <= 0
-                && !playingIdleVariant
+                && !isIdleVariantActive()
                 && eggReactionState != EggReactionState.PLAY;
     }
 
@@ -740,10 +778,25 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private enum TradeAnimState {
-        NONE,
-        START,
-        LOOP,
-        STOP
+        NONE(0),
+        START(1),
+        LOOP(2),
+        STOP(3);
+
+        private final int id;
+
+        TradeAnimState(int id) {
+            this.id = id;
+        }
+
+        private static TradeAnimState byId(int id) {
+            for (TradeAnimState state : values()) {
+                if (state.id == id) {
+                    return state;
+                }
+            }
+            return NONE;
+        }
     }
 
     private class TradingStillGoal extends Goal {
@@ -753,7 +806,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
         @Override
         public boolean canUse() {
-            return isTrading() || playingIdleVariant || greetingTicks > 0 || eggReactionState != EggReactionState.NONE;
+            return isTrading() || isIdleVariantActive() || greetingTicks > 0 || eggReactionState != EggReactionState.NONE;
         }
 
         @Override
