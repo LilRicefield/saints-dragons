@@ -3,8 +3,6 @@ package com.leon.saintsdragons.client.model;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.resources.ResourceLocation;
-import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
-import software.bernie.geckolib.core.state.BoneSnapshot;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEntityGeoModel<T> {
@@ -59,25 +57,6 @@ public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEn
     @Override
     public ResourceLocation getAnimationResource(T entity) {
         return entity != null && entity.isBaby() ? babyAnimation : animation;
-    }
-
-    @Override
-    public void applyMolangQueries(T animatable, double animTime) {
-        getAnimationProcessor().getRegisteredBones().forEach(this::resetBoneToSnapshot);
-        super.applyMolangQueries(animatable, animTime);
-    }
-
-    private void resetBoneToSnapshot(CoreGeoBone bone) {
-        BoneSnapshot snapshot = bone.getInitialSnapshot();
-        bone.setRotX(snapshot.getRotX());
-        bone.setRotY(snapshot.getRotY());
-        bone.setRotZ(snapshot.getRotZ());
-        bone.setPosX(snapshot.getOffsetX());
-        bone.setPosY(snapshot.getOffsetY());
-        bone.setPosZ(snapshot.getOffsetZ());
-        bone.setScaleX(snapshot.getScaleX());
-        bone.setScaleY(snapshot.getScaleY());
-        bone.setScaleZ(snapshot.getScaleZ());
     }
 
     protected ResourceLocation getAdultTexture(T entity) {
