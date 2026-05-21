@@ -9,11 +9,11 @@ public final class DragonFlightVisuals {
     private static final float BANK_YAW_MEMORY = 0.70f;
     private static final float BANK_YAW_BLEND = 0.30f;
     private static final float BANK_SCALE = 5.5f;
-    private static final float BANK_MAX_ANGLE = 55.0f;
+    private static final float BANK_MAX_ANGLE = 90.0f;
     private static final float BANK_LERP = 0.32f;
-    private static final float RIDER_PITCH_MEMORY = 0.65f;
-    private static final float RIDER_PITCH_BLEND = 0.35f;
-    private static final float PITCH_LERP = 0.24f;
+    private static final float RIDER_PITCH_MEMORY = 0.50f;
+    private static final float RIDER_PITCH_BLEND = 0.50f;
+    private static final float PITCH_LERP = 0.34f;
     private static final double AI_PITCH_MIN_HORIZONTAL_SPEED = 0.22D;
     private static final double AI_PITCH_VERTICAL_DEADZONE = 0.06D;
     private static final float AI_PITCH_DEADZONE_RAD = (float) Math.toRadians(4.0D);

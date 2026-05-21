@@ -79,6 +79,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private int landedRecoveryTicks = 0;
     private float accumulatedRoll = 0.0F;
     private int riderLandingBlendTicks = 0;
+    private int riderDiveBoostHoldTicks = 0;
     private float prevSmoothedRoll = 0.0F;
     private float smoothedRoll = 0.0F;
 
@@ -128,6 +129,26 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         this.moveControl = this.groundMoveControl;
         this.takeoffComponent = createTakeoffComponent();
         this.riderFlightComponent = createRiderFlightComponent();
+    }
+
+    public int getRiderDiveBoostHoldTicks() {
+        return riderDiveBoostHoldTicks;
+    }
+
+    public void setRiderDiveBoostHoldTicks(int ticks) {
+        riderDiveBoostHoldTicks = Math.max(0, ticks);
+    }
+
+    public void tickRiderDiveBoostHold() {
+        if (riderDiveBoostHoldTicks > 0) {
+            riderDiveBoostHoldTicks--;
+        }
+    }
+
+    @Override
+    public void resetRiderFlightThrottle() {
+        super.resetRiderFlightThrottle();
+        riderDiveBoostHoldTicks = 0;
     }
 
     @Override

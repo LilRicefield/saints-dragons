@@ -65,7 +65,7 @@ public final class VolitansRiderController {
 
     private void syncRiderLook(Player rider) {
         syncRiderYaw(rider);
-        DragonRiderControllerHelper.syncPitchToRider(dragon, rider, 0.18F, 45.0F);
+        DragonRiderControllerHelper.syncPitchToRider(dragon, rider, 0.28F, 45.0F);
     }
 
     private void syncRiderYaw(Player rider) {

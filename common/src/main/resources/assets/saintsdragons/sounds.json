@@ -68,7 +68,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/dive_loop",
-        "volume": 1.0,
+        "volume": 3.0,
         "pitch": 1.0
       }
     ]
@@ -351,9 +351,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_flex",
-        "volume": 1.4,
+        "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 64
       }
     ]
   },
@@ -859,7 +859,7 @@
         "name": "saintsdragons:entity/varasuchus/varasuchus_flex",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 64
       }
     ]
   },
@@ -870,7 +870,7 @@
         "name": "saintsdragons:entity/varasuchus/varasuchus_flex2",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 64
       }
     ]
   },
@@ -881,7 +881,7 @@
         "name": "saintsdragons:entity/varasuchus/varasuchus_guarding",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 48
       }
     ]
   },
@@ -892,7 +892,7 @@
         "name": "saintsdragons:entity/varasuchus/varasuchus_parry",
         "volume": 2.0,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 48
       }
     ]
   },
@@ -1002,7 +1002,7 @@
         "name": "saintsdragons:entity/ignivorus/ignivorus_flex",
         "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 48
+        "attenuation_distance": 64
       }
     ]
   },

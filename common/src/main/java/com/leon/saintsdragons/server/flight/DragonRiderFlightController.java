@@ -1,23 +1,24 @@
 package com.leon.saintsdragons.server.flight;
 
-import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public final class DragonRiderFlightController {
-    private static final float DIVE_START_ANGLE_DEG = 20.0F;
+    private static final float DIVE_START_ANGLE_DEG = 30.0F;
     private static final float DIVE_MAX_ANGLE_DEG = 70.0F;
     private static final float DIVE_CURVE_POWER = 1.0F;
     private static final double DIVE_PITCH_GAIN_SCALE = 0.16D;
+    private static final int DIVE_EXIT_BOOST_HOLD_TICKS = 40;
     private static final double OVERDRIVE_BLEED_SCALE = 0.035D;
     private static final double GLIDE_BLEED_SCALE = 0.025D;
 
     private DragonRiderFlightController() {
     }
 
-    public static void tick(RideableDragonBase dragon, Player rider, Vec3 input, float pitchRadians,
+    public static void tick(RideableFlyingDragon dragon, Player rider, Vec3 input, float pitchRadians,
                             boolean keyPitchMode, DragonRiderFlightSettings settings,
                             boolean takeoffBoostActive) {
         tick(
@@ -33,7 +34,7 @@ public final class DragonRiderFlightController {
         );
     }
 
-    public static void tick(RideableDragonBase dragon, Player rider, Vec3 input, float pitchRadians,
+    public static void tick(RideableFlyingDragon dragon, Player rider, Vec3 input, float pitchRadians,
                             boolean keyPitchMode, DragonRiderFlightSettings settings,
                             boolean takeoffBoostActive,
                             boolean takeoffBoostRequiresGoingUp,
@@ -56,7 +57,7 @@ public final class DragonRiderFlightController {
         dragon.fallDistance = 0.0F;
     }
 
-    private static Vec3 computeVelocity(RideableDragonBase dragon, Vec3 input, float pitchRadians,
+    private static Vec3 computeVelocity(RideableFlyingDragon dragon, Vec3 input, float pitchRadians,
                                         boolean keyPitchMode, DragonRiderFlightSettings settings,
                                         boolean takeoffBoostActive,
                                         boolean takeoffBoostRequiresGoingUp,
@@ -64,7 +65,7 @@ public final class DragonRiderFlightController {
         double forwardInput = input.z;
         double strafeInput = input.x;
         boolean hasInput = Math.abs(forwardInput) > 0.01D || Math.abs(strafeInput) > 0.01D;
-        double diveIntensity = diveIntensity(pitchRadians, keyPitchMode);
+        double diveIntensity = diveIntensity(pitchRadians);
         boolean diving = forwardInput > 0.01D && diveIntensity > 0.0D;
 
         double currentFlightSpeed = tickThrottle(dragon, hasInput, forwardInput, diveIntensity, settings);
@@ -123,12 +124,13 @@ public final class DragonRiderFlightController {
         return new Vec3(velocity.x, vertical, velocity.z);
     }
 
-    private static double tickThrottle(RideableDragonBase dragon, boolean hasInput, double forwardInput,
+    private static double tickThrottle(RideableFlyingDragon dragon, boolean hasInput, double forwardInput,
                                        double diveIntensity, DragonRiderFlightSettings settings) {
         double baseTarget = dragon.isAccelerating() ? settings.sprintSpeed() : settings.baseSpeed();
         double maxOverdrive = Math.max(baseTarget, settings.sprintSpeed()) * settings.diveSpeedMultiplier();
         double throttle = Mth.clamp(dragon.getRiderFlightThrottle(), 0.0D, maxOverdrive);
         boolean forwardActive = forwardInput > 0.01D;
+        boolean diving = forwardActive && diveIntensity > 0.0D;
 
         if (hasInput) {
             if (throttle <= 0.0D) {
@@ -140,11 +142,18 @@ public final class DragonRiderFlightController {
             return Math.max(0.0D, throttle - settings.noInputDrag());
         }
 
-        if (forwardActive && diveIntensity > 0.0D) {
+        if (diving) {
+            dragon.setRiderDiveBoostHoldTicks(DIVE_EXIT_BOOST_HOLD_TICKS);
             double situationalCap = Mth.lerp(diveIntensity, baseTarget, maxOverdrive);
             double pitchGain = baseTarget * settings.diveAcceleration() * DIVE_PITCH_GAIN_SCALE * diveIntensity;
-            throttle = Math.min(situationalCap, throttle + pitchGain);
+            if (throttle < situationalCap) {
+                throttle = Math.min(situationalCap, throttle + pitchGain);
+            }
         } else if (throttle > baseTarget) {
+            if (forwardActive && dragon.getRiderDiveBoostHoldTicks() > 0) {
+                dragon.tickRiderDiveBoostHold();
+                return Mth.clamp(throttle, 0.0D, maxOverdrive);
+            }
             double bleed = baseTarget * OVERDRIVE_BLEED_SCALE;
             throttle = Math.max(baseTarget, throttle - bleed);
         } else if (!dragon.isAccelerating() && throttle > 0.0D) {
@@ -155,10 +164,7 @@ public final class DragonRiderFlightController {
         return Mth.clamp(throttle, 0.0D, maxOverdrive);
     }
 
-    private static double diveIntensity(float pitchRadians, boolean keyPitchMode) {
-        if (keyPitchMode) {
-            return 0.0D;
-        }
+    private static double diveIntensity(float pitchRadians) {
         double pitchDegrees = Math.toDegrees(pitchRadians);
         double normalizedPitch = (pitchDegrees - DIVE_START_ANGLE_DEG) / (DIVE_MAX_ANGLE_DEG - DIVE_START_ANGLE_DEG);
         return Math.pow(Mth.clamp(normalizedPitch, 0.0D, 1.0D), DIVE_CURVE_POWER);
