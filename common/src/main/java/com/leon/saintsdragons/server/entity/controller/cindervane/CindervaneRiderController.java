@@ -27,8 +27,8 @@ public record CindervaneRiderController(Cindervane dragon) {
     private static final double DESCEND_THRUST = 0.85D;
     private static final double TERMINAL_VELOCITY = 1.2D;
     private static final double FLIGHT_ACCELERATION = 0.35D;
-    private static final double DIVE_SPEED_MULTIPLIER = 3.5D;
-    private static final double DIVE_ACCELERATION = 0.55D;
+    private static final double DIVE_SPEED_MULTIPLIER = 2.5D;
+    private static final double DIVE_ACCELERATION = 0.30D;
 
     @Nullable
     public Player getRidingPlayer() {

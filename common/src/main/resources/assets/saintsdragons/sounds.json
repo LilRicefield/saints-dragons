@@ -63,6 +63,16 @@
       }
     ]
   },
+  "dragon_dive_loop": {
+    "subtitle": "subtitles.saintsdragons.dragon_dive_loop",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/dive_loop",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "raevyx_grumble_1": {
     "subtitle": "subtitles.saintsdragons.raevyx_grumble_1",
     "sounds": [

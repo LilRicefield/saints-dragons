@@ -3,6 +3,7 @@ package com.leon.saintsdragons.fabric.client.event;
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.renderer.RiderTuning;
+import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -55,6 +56,7 @@ public class FabricClientEventHandler {
 
     private static void onClientTick(Minecraft minecraft) {
         DragonSoundRuntime.tick(minecraft);
+        DragonDiveSoundController.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
         VolitansBreathSoundController.tick(minecraft);

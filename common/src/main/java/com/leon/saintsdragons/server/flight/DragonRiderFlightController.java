@@ -7,9 +7,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
 public final class DragonRiderFlightController {
-    private static final float DIVE_START_ANGLE_DEG = 25.0F;
-    private static final float DIVE_MAX_ANGLE_DEG = 90.0F;
-    private static final float DIVE_CURVE_POWER = 2.0F;
+    private static final float DIVE_START_ANGLE_DEG = 20.0F;
+    private static final float DIVE_MAX_ANGLE_DEG = 70.0F;
+    private static final float DIVE_CURVE_POWER = 1.0F;
     private static final double DIVE_PITCH_GAIN_SCALE = 0.16D;
     private static final double OVERDRIVE_BLEED_SCALE = 0.035D;
     private static final double GLIDE_BLEED_SCALE = 0.025D;

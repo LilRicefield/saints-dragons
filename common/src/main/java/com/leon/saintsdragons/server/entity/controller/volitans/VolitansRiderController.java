@@ -24,8 +24,8 @@ public final class VolitansRiderController {
     private static final double DESCEND_THRUST = 0.85D;
     private static final double TERMINAL_VELOCITY = 1.5D;
     private static final double FLIGHT_ACCELERATION = 0.35D;
-    private static final double DIVE_SPEED_MULTIPLIER = 3.5D;
-    private static final double DIVE_ACCELERATION = 0.55D;
+    private static final double DIVE_SPEED_MULTIPLIER = 2.75D;
+    private static final double DIVE_ACCELERATION = 0.30D;
     private static final double SWIM_ASCEND_THRUST = 0.18D;
     private static final double SWIM_DESCEND_THRUST = 0.20D;
     private static final double SWIM_VERTICAL_LIMIT = 0.55D;

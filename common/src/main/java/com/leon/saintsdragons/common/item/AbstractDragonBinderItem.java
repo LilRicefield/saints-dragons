@@ -9,6 +9,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -60,7 +61,12 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         }
 
         ItemStack reboundStack = captureDragon(stack, dragon, player);
+        if (reboundStack.isEmpty()) {
+            return InteractionResult.FAIL;
+        }
+
         player.setItemInHand(hand, reboundStack);
+        syncPlayerInventory(player);
         return InteractionResult.SUCCESS;
     }
 
@@ -87,7 +93,11 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             return InteractionResult.SUCCESS;
         }
 
-        return releaseDragon(stack, player, context.getClickedPos()) ? InteractionResult.SUCCESS : InteractionResult.FAIL;
+        boolean released = releaseDragon(stack, player, context.getClickedPos());
+        if (released) {
+            syncPlayerInventory(player);
+        }
+        return released ? InteractionResult.SUCCESS : InteractionResult.FAIL;
     }
 
     private ItemStack captureDragon(ItemStack stack, T dragon, Player player) {
@@ -130,6 +140,9 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         }
 
         dragon.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        if (!dragon.isRemoved()) {
+            return ItemStack.EMPTY;
+        }
         onDragonCaptured(dragon, player, copied);
         player.displayClientMessage(Component.translatable(getCapturedMessageKey(), dragon.getName().getString()), true);
         return copied;
@@ -197,6 +210,13 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         onDragonReleased(newDragon, player, stack);
         player.displayClientMessage(Component.translatable(getReleasedMessageKey(), dragonName), true);
         return true;
+    }
+
+    private void syncPlayerInventory(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.containerMenu.broadcastChanges();
+            serverPlayer.inventoryMenu.broadcastChanges();
+        }
     }
 
     protected void clearBinderData(CompoundTag tag) {

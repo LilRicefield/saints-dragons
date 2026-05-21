@@ -25,8 +25,8 @@ public record RaevyxRiderController(Raevyx wyvern) {
     private static final double DESCEND_THRUST = 1.0D;
     private static final double TERMINAL_VELOCITY = 1.5D;
     private static final double FLIGHT_ACCELERATION = 0.35D;
-    private static final double DIVE_SPEED_MULTIPLIER = 3.5D;
-    private static final double DIVE_ACCELERATION = 0.55D;
+    private static final double DIVE_SPEED_MULTIPLIER = 3.0D;
+    private static final double DIVE_ACCELERATION = 0.35D;
 
     @Nullable
     public Player getRidingPlayer() {
