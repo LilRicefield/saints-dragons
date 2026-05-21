@@ -46,7 +46,11 @@ public final class DragonDiveCameraWobble {
         return new Output(yaw, pitch, roll);
     }
 
-    private static float getDiveIntensity(RideableDragonBase dragon) {
+    public static float getDiveIntensity(Entity entity) {
+        if (!(entity instanceof RideableDragonBase dragon)) {
+            return 0.0F;
+        }
+
         if (!dragon.isFlying() || dragon.isInWaterOrBubble()) {
             return 0.0F;
         }

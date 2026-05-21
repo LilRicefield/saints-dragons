@@ -67,6 +67,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 ForgeClientConfig.DIVE_CAMERA_WOBBLE_ENABLED::set,
                 ForgeClientConfig.CLIENT_SPEC::save
         ));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.dive_speed_lines"),
+                () -> ForgeClientConfig.DIVE_SPEED_LINES_ENABLED.get(),
+                ForgeClientConfig.DIVE_SPEED_LINES_ENABLED::set,
+                ForgeClientConfig.CLIENT_SPEC::save
+        ));
 
         if (!remoteServer) {
             entries.add(new BooleanEntry(

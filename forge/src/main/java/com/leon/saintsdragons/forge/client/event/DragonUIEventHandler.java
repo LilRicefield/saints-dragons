@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.ui.DragonRideHealthBar;
+import com.leon.saintsdragons.client.ui.DragonDiveSpeedLineOverlay;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
 import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
@@ -12,6 +13,7 @@ import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.PlayerRideableJumping;
 import net.minecraftforge.api.distmarker.Dist;
@@ -29,6 +31,7 @@ public class DragonUIEventHandler {
     private static final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
     private static final VolitansBreathMeterIndicator volitansBreathMeterIndicator = new VolitansBreathMeterIndicator();
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
+    private static final DragonDiveSpeedLineOverlay diveSpeedLineOverlay = new DragonDiveSpeedLineOverlay();
 
     static {
         DragonUIRegistry.init(meleeModeNotification);
@@ -77,6 +80,11 @@ public class DragonUIEventHandler {
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+
+        if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()
+                && ForgeClientConfig.DIVE_SPEED_LINES_ENABLED.get()) {
+            diveSpeedLineOverlay.render(event.getGuiGraphics(), screenWidth, screenHeight, event.getPartialTick());
+        }
 
         if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()
                 && minecraft.player.getVehicle() instanceof RideableGroundDragon groundDragon) {

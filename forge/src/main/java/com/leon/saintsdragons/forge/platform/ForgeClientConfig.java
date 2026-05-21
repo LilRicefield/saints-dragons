@@ -7,6 +7,7 @@ public final class ForgeClientConfig {
 
     public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BANKING_CAMERA_ENABLED;
     public static ForgeConfigSpec.BooleanValue DIVE_CAMERA_WOBBLE_ENABLED;
+    public static ForgeConfigSpec.BooleanValue DIVE_SPEED_LINES_ENABLED;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -18,6 +19,9 @@ public final class ForgeClientConfig {
         DIVE_CAMERA_WOBBLE_ENABLED = builder
                 .comment("Enable camera wobble while diving quickly on flying dragons")
                 .define("dive_camera_wobble", true);
+        DIVE_SPEED_LINES_ENABLED = builder
+                .comment("Enable screen edge speed lines while diving quickly on flying dragons")
+                .define("dive_speed_lines", true);
         builder.pop();
 
         CLIENT_SPEC = builder.build();

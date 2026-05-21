@@ -13,4 +13,8 @@ public final class SaintsDragonsFabricClientConfig implements ConfigData {
     @ConfigEntry.Category("client")
     @ConfigEntry.Gui.Tooltip
     public boolean diveCameraWobbleEnabled = true;
+
+    @ConfigEntry.Category("client")
+    @ConfigEntry.Gui.Tooltip
+    public boolean diveSpeedLinesEnabled = true;
 }

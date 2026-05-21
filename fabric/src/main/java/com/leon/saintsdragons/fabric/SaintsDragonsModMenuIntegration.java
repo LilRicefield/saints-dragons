@@ -449,6 +449,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.dive_camera_wobble.tooltip"))
          .setSaveConsumer(value -> clientConfig.diveCameraWobbleEnabled = value)
           .build());
+        others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.dive_speed_lines"),
+                clientConfig.diveSpeedLinesEnabled
+        ).setDefaultValue(true)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.dive_speed_lines.tooltip"))
+         .setSaveConsumer(value -> clientConfig.diveSpeedLinesEnabled = value)
+          .build());
         if (!remoteServer) {
             others.addEntry(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.hunger_decay"),

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.client;
 
 import com.leon.saintsdragons.client.ui.DragonRideHealthBar;
+import com.leon.saintsdragons.client.ui.DragonDiveSpeedLineOverlay;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
 import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
@@ -11,6 +12,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -28,6 +30,7 @@ public final class FabricDragonUI {
     private static final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
     private static final VolitansBreathMeterIndicator volitansBreathMeterIndicator = new VolitansBreathMeterIndicator();
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
+    private static final DragonDiveSpeedLineOverlay diveSpeedLineOverlay = new DragonDiveSpeedLineOverlay();
 
     private static final KeyMapping TOGGLE_DRAGON_UI = new KeyMapping(
             "key.saintsdragons.toggle_dragon_ui",
@@ -78,6 +81,10 @@ public final class FabricDragonUI {
 
             int width = client.getWindow().getGuiScaledWidth();
             int height = client.getWindow().getGuiScaledHeight();
+
+            if (FabricClientConfigAccess.isDiveSpeedLinesEnabled()) {
+                diveSpeedLineOverlay.render(graphics, width, height, tickDelta);
+            }
 
             // Get current dragon if riding
             DragonEntity currentDragon = null;
