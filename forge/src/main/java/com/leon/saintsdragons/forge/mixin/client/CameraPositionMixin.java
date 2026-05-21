@@ -9,6 +9,8 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.Camera;
 import net.minecraft.util.Mth;
@@ -49,6 +51,11 @@ public abstract class CameraPositionMixin {
         Entity vehicle = entity.getVehicle();
         if (!(vehicle instanceof RideableDragonBase dragon) || !usesSeatAnchoredCameraPath(dragon)) {
             DragonCameraState.clearRoll();
+            return;
+        }
+        if (!usesAerialBankingCamera(dragon)) {
+            DragonCameraState.clearRoll();
+            CameraLeanData.reset();
             return;
         }
 
@@ -100,12 +107,21 @@ public abstract class CameraPositionMixin {
         return dragon instanceof Raevyx
                 || dragon instanceof Cindervane
                 || dragon instanceof Ignivorus
+                || dragon instanceof Varasuchus
+                || dragon instanceof Stegonaut
                 || dragon instanceof Volitans;
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {
         return ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED == null
                 || ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get();
+    }
+
+    private static boolean usesAerialBankingCamera(RideableDragonBase dragon) {
+        return dragon.isFlying()
+                || dragon.isTakeoff()
+                || dragon.isLanding()
+                || dragon.isHovering();
     }
 
     private static float getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {

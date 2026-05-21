@@ -2,6 +2,8 @@ package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -217,17 +219,30 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         RiderBullcrap.store(animatable.getId(), seatIndex, viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
         Vec3 boneWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
-        Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(animatable, seatIndex);
-        Vec3 cameraWorldPos = transformLocator(
-                bone,
-                firstPersonOffset.x(),
-                firstPersonOffset.y(),
-                firstPersonOffset.z()
-        );
-        if (cameraWorldPos == null) {
-            cameraWorldPos = boneWorldPos;
+        Vec3 cameraWorldPos = boneWorldPos;
+        if (!usesGroundedRawFirstPersonBoneAnchor(animatable)) {
+            Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(animatable, seatIndex);
+            Vec3 offsetWorldPos = transformLocator(
+                    bone,
+                    firstPersonOffset.x(),
+                    firstPersonOffset.y(),
+                    firstPersonOffset.z()
+            );
+            if (offsetWorldPos != null) {
+                cameraWorldPos = offsetWorldPos;
+            }
         }
         RiderBullcrap.storeCameraOffset(animatable.getId(), seatIndex, cameraWorldPos.subtract(animatable.position()));
+    }
+
+    private boolean usesGroundedRawFirstPersonBoneAnchor(T animatable) {
+        if (animatable instanceof RideableFlyingDragon) {
+            return !animatable.isFlying()
+                    && !animatable.isTakeoff()
+                    && !animatable.isLanding()
+                    && !animatable.isHovering();
+        }
+        return animatable instanceof RideableGroundDragon;
     }
 
     protected int seatIndexForRiderBone(T animatable, String boneName, RiderConfig.RiderSpec riderSpec) {

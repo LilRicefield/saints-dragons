@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -8,6 +10,7 @@ import org.joml.Vector3f;
 
 public final class DragonSeatAnchoredCamera {
     private static final double MAX_REASONABLE_OFFSET = 20.0D;
+    private static final double GROUNDED_RIDEABLE_CAMERA_LIFT = 1.2D;
 
     private DragonSeatAnchoredCamera() {
     }
@@ -33,12 +36,16 @@ public final class DragonSeatAnchoredCamera {
         double interpY = Mth.lerp(partialTick, dragon.yo, dragon.getY());
         double interpZ = Mth.lerp(partialTick, dragon.zo, dragon.getZ());
 
-        float eyeHeight = rider.getEyeHeight();
+        boolean useGroundedBoneCamera = usesGroundedRideableBoneCamera(dragon);
+        float eyeHeight = useGroundedBoneCamera ? 0.0F : rider.getEyeHeight();
         Vec3 pivot = new Vec3(
                 interpX + seatOffset.x + up.x() * eyeHeight,
                 interpY + seatOffset.y + up.y() * eyeHeight,
                 interpZ + seatOffset.z + up.z() * eyeHeight
         );
+        if (useGroundedBoneCamera) {
+            pivot = pivot.add(0.0D, GROUNDED_RIDEABLE_CAMERA_LIFT, 0.0D);
+        }
 
         if (Math.abs(leanX) > 0.001D || Math.abs(leanY) > 0.001D || Math.abs(leanZ) > 0.001D) {
             pivot = pivot.add(
@@ -48,5 +55,15 @@ public final class DragonSeatAnchoredCamera {
             );
         }
         return pivot;
+    }
+
+    private static boolean usesGroundedRideableBoneCamera(RideableDragonBase dragon) {
+        if (dragon instanceof RideableFlyingDragon) {
+            return !dragon.isFlying()
+                    && !dragon.isTakeoff()
+                    && !dragon.isLanding()
+                    && !dragon.isHovering();
+        }
+        return dragon instanceof RideableGroundDragon;
     }
 }

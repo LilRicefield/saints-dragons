@@ -3,7 +3,6 @@ package com.leon.saintsdragons.forge.client.event;
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
-import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.renderer.RiderTuning;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
@@ -11,7 +10,6 @@ import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundContro
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.forge.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
 import com.leon.saintsdragons.forge.client.camera.NulljawFirstPersonCamera;
@@ -62,14 +60,6 @@ public class ClientEventHandler {
             if (!applyDetachedDragonCamera(event, vehicle)) {
                 DragonRideCameraController.reset();
             }
-        } else if (vehicle instanceof Stegonaut stegonaut) {
-            DragonRiderCameraSync.applyFirstPersonBoneAnchor(
-                    stegonaut,
-                    0,
-                    (float) event.getPartialTick(),
-                    0.0f,
-                    ((CameraAccessor) event.getCamera())::saintsdragons$invokeSetPosition
-            );
         } else if (vehicle instanceof Nulljaw) {
             event.getCamera().move(0.0D, NulljawFirstPersonCamera.Y_OFFSET, 0.0D);
         } else if (!player.isPassenger() || !DragonRideCameraController.supports(vehicle)) {
@@ -217,6 +207,11 @@ public class ClientEventHandler {
             DragonCameraState.clearRoll();
             return true;
         }
+        if (!usesAerialBankingCamera(dragon)) {
+            CameraLeanData.reset();
+            DragonCameraState.clearRoll();
+            return true;
+        }
 
         DragonCameraState.clearRoll();
 
@@ -245,6 +240,8 @@ public class ClientEventHandler {
         return dragon instanceof Raevyx
                 || dragon instanceof Cindervane
                 || dragon instanceof Ignivorus
+                || dragon instanceof Varasuchus
+                || dragon instanceof Stegonaut
                 || dragon instanceof Volitans;
     }
 
@@ -267,6 +264,13 @@ public class ClientEventHandler {
     private static boolean isFirstPersonBankingCameraEnabled() {
         return ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED == null
                 || ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get();
+    }
+
+    private static boolean usesAerialBankingCamera(RideableDragonBase dragon) {
+        return dragon.isFlying()
+                || dragon.isTakeoff()
+                || dragon.isLanding()
+                || dragon.isHovering();
     }
 }
 
