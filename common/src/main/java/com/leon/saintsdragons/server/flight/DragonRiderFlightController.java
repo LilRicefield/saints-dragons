@@ -11,7 +11,7 @@ public final class DragonRiderFlightController {
     private static final float DIVE_MAX_ANGLE_DEG = 70.0F;
     private static final float DIVE_CURVE_POWER = 1.0F;
     private static final double DIVE_PITCH_GAIN_SCALE = 0.16D;
-    private static final int DIVE_EXIT_BOOST_HOLD_TICKS = 40;
+    public static final int DIVE_EXIT_BOOST_HOLD_TICKS = 60;
     private static final double OVERDRIVE_BLEED_SCALE = 0.035D;
     private static final double GLIDE_BLEED_SCALE = 0.025D;
 
@@ -151,7 +151,6 @@ public final class DragonRiderFlightController {
             }
         } else if (throttle > baseTarget) {
             if (forwardActive && dragon.getRiderDiveBoostHoldTicks() > 0) {
-                dragon.tickRiderDiveBoostHold();
                 return Mth.clamp(throttle, 0.0D, maxOverdrive);
             }
             double bleed = baseTarget * OVERDRIVE_BLEED_SCALE;

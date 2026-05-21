@@ -156,10 +156,14 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
     }
 
+    public void clearRiderDiveBoostHold() {
+        riderDiveBoostHoldTicks = 0;
+    }
+
     @Override
     public void resetRiderFlightThrottle() {
         super.resetRiderFlightThrottle();
-        riderDiveBoostHoldTicks = 0;
+        clearRiderDiveBoostHold();
     }
 
     @Override
@@ -526,6 +530,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         boolean requestedTakeoff = normalizeTakeoffStateRequest(takeoff);
         boolean wasTakeoff = isTakeoff();
         this.entityData.set(getTakeoffDataAccessor(), requestedTakeoff);
+        if (requestedTakeoff && !wasTakeoff) {
+            clearRiderDiveBoostHold();
+        }
         if (!requestedTakeoff && takeoffComponent.isActive()) {
             takeoffComponent.clear();
             return;
@@ -551,7 +558,19 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     public void tick() {
         wasAerialForDustAtTickStart = isAerial();
         super.tick();
+        tickRiderDiveBoostHoldState();
         tickNearGroundFlightDust();
+    }
+
+    private void tickRiderDiveBoostHoldState() {
+        if (riderDiveBoostHoldTicks <= 0) {
+            return;
+        }
+        if (!isFlying()) {
+            clearRiderDiveBoostHold();
+            return;
+        }
+        tickRiderDiveBoostHold();
     }
 
     protected void spawnGroundDustBurst(int count, double radiusScale) {
@@ -1309,6 +1328,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         clearTakeoffState();
         resetRiderTakeoffTicksAfterLanding();
         resetTimeFlyingAfterLanding();
+        resetRiderFlightThrottle();
 
         if (!level().isClientSide) {
             if (wasAirborne) {

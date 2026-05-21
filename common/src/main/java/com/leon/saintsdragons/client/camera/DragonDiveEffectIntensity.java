@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.camera;
 
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.Mth;
@@ -9,7 +10,6 @@ import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
 public final class DragonDiveEffectIntensity {
-    private static final int DIVE_EXIT_BOOST_HOLD_TICKS = 40;
     private static final double DIVE_START_SPEED = 0.75D;
     private static final double DIVE_FULL_SPEED = 4.00D;
     private static final double DIVE_START_DOWNWARD_SPEED = 0.10D;
@@ -42,7 +42,7 @@ public final class DragonDiveEffectIntensity {
         float holdIntensity = 0.0F;
         int holdTicks = dragon.getRiderDiveBoostHoldTicks();
         if (holdTicks > 0) {
-            float holdFactor = Mth.clamp(holdTicks / (float) DIVE_EXIT_BOOST_HOLD_TICKS, 0.0F, 1.0F);
+            float holdFactor = Mth.clamp(holdTicks / (float) DragonRiderFlightController.DIVE_EXIT_BOOST_HOLD_TICKS, 0.0F, 1.0F);
             holdIntensity = (float) speedFactor * holdFactor;
         }
 
