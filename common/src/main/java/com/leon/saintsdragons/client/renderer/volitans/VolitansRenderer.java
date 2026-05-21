@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.volitans;
 
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -37,7 +38,8 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
 
     @Override
     protected String[] trackedBoneNames() {
-        return new String[] {PASSENGER_BONE, BREATH_BONE};
+        return new String[] {PASSENGER_BONE, BREATH_BONE, DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE,
+                DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE, DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE};
     }
 
     @Override
@@ -50,8 +52,15 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     }
 
     @Override
-    protected void afterDragonRender(Volitans entity, float partialTick) {
+    protected void afterDragonRender(Volitans entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
+                                     net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
         sendBreathLocatorToServer(entity);
+        DragonDiveTrailRenderer.render(entity,
+                getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
+                getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),
+                getBoneWorldPosition(DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE),
+                bufferSource,
+                poseStack.last());
     }
 
     private void sendBreathLocatorToServer(Volitans entity) {

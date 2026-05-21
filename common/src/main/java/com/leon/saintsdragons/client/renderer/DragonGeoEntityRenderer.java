@@ -1,12 +1,15 @@
 package com.leon.saintsdragons.client.renderer;
 
+import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +24,8 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
 public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> extends GeoEntityRenderer<T> {
+    private static final double DIVE_TRAIL_RENDER_DISTANCE = 256.0D;
+    private static final double DIVE_TRAIL_CULL_PADDING = 48.0D;
     protected BakedGeoModel lastBakedModel;
 
     protected DragonGeoEntityRenderer(EntityRendererProvider.Context context, GeoModel<T> model) {
@@ -35,6 +40,27 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
     @Override
     protected float getDeathMaxRotation(T entity) {
         return 0.0F;
+    }
+
+    @Override
+    public boolean shouldRender(T entity, Frustum frustum, double camX, double camY, double camZ) {
+        if (super.shouldRender(entity, frustum, camX, camY, camZ)) {
+            return true;
+        }
+
+        double dx = entity.getX() - camX;
+        double dy = entity.getY() - camY;
+        double dz = entity.getZ() - camZ;
+        double maxDistance = DIVE_TRAIL_RENDER_DISTANCE * DIVE_TRAIL_RENDER_DISTANCE;
+        if (dx * dx + dy * dy + dz * dz > maxDistance) {
+            return false;
+        }
+        if (DragonDiveTrailRenderer.getTrailIntensity(entity) <= 0.0F) {
+            return false;
+        }
+
+        AABB trailBounds = entity.getBoundingBox().inflate(DIVE_TRAIL_CULL_PADDING);
+        return frustum.isVisible(trailBounds);
     }
 
     @Override
@@ -75,7 +101,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         }
 
         sampleLocators(entity);
-        afterDragonRender(entity, partialTick);
+        afterDragonRender(entity, poseStack, bufferSource, partialTick);
     }
 
     @Override
@@ -111,7 +137,19 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         return new LocatorSpec[0];
     }
 
-    protected void afterDragonRender(T entity, float partialTick) {
+    protected void afterDragonRender(T entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+    }
+
+    protected Vec3 getBoneWorldPosition(String boneName) {
+        if (this.lastBakedModel == null) {
+            return null;
+        }
+        return this.lastBakedModel.getBone(boneName)
+                .map(bone -> {
+                    Vector3d position = bone.getWorldPosition();
+                    return new Vec3(position.x(), position.y(), position.z());
+                })
+                .orElse(null);
     }
 
     protected void enableTrackingForBones(BakedGeoModel model) {

@@ -330,9 +330,21 @@
 					"parent": "leftouterphalanges",
 					"pivot": [96.30378, 43, -31.26941],
 					"cubes": [
-						{"origin": [94.80378, 40, -33.26941], "size": [51, 6, 5], "uv": [556, 381]},
+						{"origin": [94.80378, 40, -33.26941], "size": [51, 6, 5], "uv": [556, 381]}
+					]
+				},
+				{
+					"name": "leftmostouterphalangesBone",
+					"parent": "leftmostouterphalanges",
+					"pivot": [168.42087, 43, -29.11137],
+					"cubes": [
 						{"origin": [138.92087, 41, -29.11137], "size": [71, 4, 3], "pivot": [168.42087, 43, -29.11137], "rotation": [0, -7.5, 0], "uv": [136, 498]}
 					]
+				},
+				{
+					"name": "leftWingTrailBone",
+					"parent": "leftmostouterphalangesBone",
+					"pivot": [208.42087, 43, -22.61137]
 				},
 				{
 					"name": "leftwebbing5",
@@ -443,8 +455,7 @@
 					"parent": "rightouterphalanges",
 					"pivot": [-96.30378, 43, -31.26941],
 					"cubes": [
-						{"origin": [-145.80378, 40, -33.26941], "size": [51, 6, 5], "uv": [584, 392]},
-						{"origin": [-209.92087, 41, -29.11137], "size": [71, 4, 3], "pivot": [-168.42087, 43, -29.11137], "rotation": [0, 7.5, 0], "uv": [136, 505]}
+						{"origin": [-145.80378, 40, -33.26941], "size": [51, 6, 5], "uv": [584, 392]}
 					]
 				},
 				{
@@ -454,6 +465,19 @@
 					"cubes": [
 						{"origin": [-205.80378, 43, -33.26941], "size": [111, 0, 40], "uv": [356, 40]}
 					]
+				},
+				{
+					"name": "rightmostouterphalangesBone",
+					"parent": "rightmostouterphalanges",
+					"pivot": [-168.42087, 43, -29.11137],
+					"cubes": [
+						{"origin": [-209.92087, 41, -29.11137], "size": [71, 4, 3], "pivot": [-168.42087, 43, -29.11137], "rotation": [0, 7.5, 0], "uv": [136, 505]}
+					]
+				},
+				{
+					"name": "rightWingTrailBone",
+					"parent": "rightmostouterphalangesBone",
+					"pivot": [-208.42087, 43, -22.61137]
 				},
 				{
 					"name": "rightspikes",
@@ -692,6 +716,11 @@
 						{"origin": [-26, 39.25, 153], "size": [52, 0, 29], "uv": [266, 410]},
 						{"origin": [0, 10.25, 152], "size": [0, 57, 68], "uv": [0, 399]}
 					]
+				},
+				{
+					"name": "tipWingTrailBone",
+					"parent": "tail4",
+					"pivot": [0, 39.75, 182]
 				},
 				{
 					"name": "leftbackleg",

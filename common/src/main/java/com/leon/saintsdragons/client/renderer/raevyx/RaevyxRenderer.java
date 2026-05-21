@@ -2,7 +2,10 @@ package com.leon.saintsdragons.client.renderer.raevyx;
 
 import com.leon.saintsdragons.client.model.raevyx.RaevyxModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -58,7 +61,8 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     @Override
     protected String[] trackedBoneNames() {
-        return new String[] {PASSENGER_BONE, BEAM_BONE};
+        return new String[] {PASSENGER_BONE, BEAM_BONE, DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE,
+                DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE, DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE};
     }
 
     @Override
@@ -68,5 +72,15 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
                         "passengerLocator", "passengerSeat0"),
                 new LocatorSpec(BEAM_BONE, 0.0f, 0.0f, 0.0f, "beamBoneOrigin")
         };
+    }
+
+    @Override
+    protected void afterDragonRender(Raevyx entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+        DragonDiveTrailRenderer.render(entity,
+                getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
+                getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),
+                getBoneWorldPosition(DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE),
+                bufferSource,
+                poseStack.last());
     }
 }

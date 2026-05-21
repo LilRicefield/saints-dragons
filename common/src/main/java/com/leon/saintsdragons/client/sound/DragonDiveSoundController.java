@@ -49,7 +49,11 @@ public final class DragonDiveSoundController {
         }
     }
 
-    static float getDiveSoundIntensity(RideableDragonBase dragon) {
+    public static float getDiveSoundIntensity(Entity entity) {
+        if (!(entity instanceof RideableDragonBase dragon)) {
+            return 0.0F;
+        }
+
         if (dragon == null || !dragon.isFlying() || dragon.isInWaterOrBubble()) {
             return 0.0F;
         }

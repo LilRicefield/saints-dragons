@@ -103,6 +103,11 @@
 					]
 				},
 				{
+					"name": "tipWingTrailBone",
+					"parent": "tail4",
+					"pivot": [0, 35.57951, 308.76429]
+				},
+				{
 					"name": "leftlowertailwing",
 					"parent": "tail4",
 					"pivot": [0, 21.33826, 252.83929],
@@ -382,9 +387,21 @@
 					"pivot": [103.27502, 36.89826, -28.33814],
 					"cubes": [
 						{"origin": [101.6925, 35.30576, -30.48921], "size": [70.07, 3.185, 2.457], "uv": [638, 577]},
-						{"origin": [103.5125, 36.89826, -28.66921], "size": [179.27, 0, 41.587], "uv": [0, 382]},
+						{"origin": [103.5125, 36.89826, -28.66921], "size": [179.27, 0, 41.587], "uv": [0, 382]}
+					]
+				},
+				{
+					"name": "leftouterphalangesBone",
+					"parent": "leftfinger",
+					"pivot": [184.0475, 36.89826, -26.89471],
+					"cubes": [
 						{"origin": [169.9425, 35.39676, -26.89471], "size": [105.56, 3.003, 2.093], "pivot": [184.0475, 36.89826, -26.89471], "rotation": [0, -15, 0], "uv": [576, 432]}
 					]
+				},
+				{
+					"name": "leftWingTrailBone",
+					"parent": "leftouterphalangesBone",
+					"pivot": [271.0475, 36.89826, -2.39471]
 				},
 				{
 					"name": "leftclaw",
@@ -462,9 +479,21 @@
 					"pivot": [-103.27502, 36.89826, -28.33814],
 					"cubes": [
 						{"origin": [-171.7625, 35.30576, -30.48921], "size": [70.07, 3.185, 2.457], "uv": [638, 577], "mirror": true},
-						{"origin": [-282.7825, 36.89826, -28.66921], "size": [179.27, 0, 41.587], "uv": [0, 382], "mirror": true},
+						{"origin": [-282.7825, 36.89826, -28.66921], "size": [179.27, 0, 41.587], "uv": [0, 382], "mirror": true}
+					]
+				},
+				{
+					"name": "rightouterphalangesBone",
+					"parent": "rightfinger",
+					"pivot": [-184.0475, 36.89826, -26.89471],
+					"cubes": [
 						{"origin": [-275.5025, 35.39676, -26.89471], "size": [105.56, 3.003, 2.093], "pivot": [-184.0475, 36.89826, -26.89471], "rotation": [0, 15, 0], "uv": [576, 432], "mirror": true}
 					]
+				},
+				{
+					"name": "rightWingTrailBone",
+					"parent": "rightouterphalangesBone",
+					"pivot": [-271.0475, 36.89826, -2.39471]
 				},
 				{
 					"name": "automountBoneRight",

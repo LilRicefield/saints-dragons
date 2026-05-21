@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.cindervane;
 
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -38,7 +39,10 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
 
     @Override
     protected String[] trackedBoneNames() {
-        return new String[] {"passengerBone1", "passengerBone2", AUTO_MOUNT_BONE};
+        return new String[] {"passengerBone1", "passengerBone2", AUTO_MOUNT_BONE,
+                DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE,
+                DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE,
+                DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE};
     }
 
     @Override
@@ -65,8 +69,15 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     }
 
     @Override
-    protected void afterDragonRender(Cindervane entity, float partialTick) {
+    protected void afterDragonRender(Cindervane entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
+                                     net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
         sendBonePositionsToServer(entity);
+        DragonDiveTrailRenderer.render(entity,
+                getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
+                getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),
+                getBoneWorldPosition(DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE),
+                bufferSource,
+                poseStack.last());
     }
 
     private void sendBonePositionsToServer(Cindervane entity) {
