@@ -32,6 +32,15 @@ public final class DragonDiveSoundController {
             activeDragonId = -1;
         }
 
+        if (activeSound != null && !minecraft.getSoundManager().isActive(activeSound)) {
+            activeSound = null;
+            activeDragonId = -1;
+        }
+
+        if (activeSound != null && activeDragonId != dragon.getId()) {
+            stopCurrent(minecraft);
+        }
+
         if (getDiveSoundIntensity(dragon) <= 0.0F) {
             return;
         }

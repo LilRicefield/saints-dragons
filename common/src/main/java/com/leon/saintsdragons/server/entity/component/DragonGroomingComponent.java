@@ -11,6 +11,8 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -20,7 +22,7 @@ import net.minecraft.world.item.Items;
 public final class DragonGroomingComponent {
     private static final int BRUSHES_PER_HAPPINESS = 2;
     private static final int NORMAL_BRUSH_HAPPINESS = 1;
-    private static final int GOLDEN_BRUSH_HAPPINESS = 3;
+    private static final int GOLDEN_BRUSH_HAPPINESS = 5;
     private static final int BRUSH_COOLDOWN_TICKS = 10;
 
     private final DragonEntity dragon;
@@ -50,7 +52,12 @@ public final class DragonGroomingComponent {
             int happinessGain = brushStack.is(ModItems.GOLDEN_DRAGON_BRUSH.get())
                     ? GOLDEN_BRUSH_HAPPINESS
                     : NORMAL_BRUSH_HAPPINESS;
+            int previousHappiness = dragon.getHappiness();
             dragon.setHappiness(dragon.getHappiness() + happinessGain);
+            if (dragon.getHappiness() > previousHappiness) {
+                dragon.level().playSound(null, dragon.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS,
+                        0.45F, 1.25F + dragon.getRandom().nextFloat() * 0.15F);
+            }
         }
 
         GroomingProfile profile = getProfile(dragon);

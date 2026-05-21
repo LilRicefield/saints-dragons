@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
@@ -89,6 +90,9 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
         int previousStage = getHatchStageForProgress(previousProgress);
         double nextProgress = Math.min(1.0D, previousProgress + (1.0D / resolveNormalHatchTicks()));
         eggEntity.setHatchProgress(nextProgress);
+        if (previousProgress <= 0.0D && nextProgress > 0.0D) {
+            spawnHatchingStartedParticles(serverLevel, pos);
+        }
 
         int nextStage = getHatchStageForProgress(nextProgress);
         if (nextStage != previousStage && nextStage <= MAX_HATCH_LEVEL) {
@@ -103,6 +107,20 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
 
     protected boolean canProgressHatching(ServerLevel level, BlockPos pos, BlockState state, E eggEntity) {
         return true;
+    }
+
+    protected void spawnHatchingStartedParticles(ServerLevel level, BlockPos pos) {
+        level.sendParticles(
+                ParticleTypes.HAPPY_VILLAGER,
+                pos.getX() + 0.5D,
+                pos.getY() + 0.85D,
+                pos.getZ() + 0.5D,
+                8,
+                0.28D,
+                0.18D,
+                0.28D,
+                0.02D
+        );
     }
 
     protected int getEggCount(BlockState state) {
