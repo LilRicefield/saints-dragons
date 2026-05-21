@@ -796,6 +796,8 @@
   "saintsdragons.config_screen.others.dragon_breeding.tooltip": "Server setting. When turned off, players cannot ready dragons for breeding and dragons cannot produce eggs",
   "saintsdragons.config_screen.others.first_person_banking_camera": "Enable First-Person Banking Camera",
   "saintsdragons.config_screen.others.first_person_banking_camera.tooltip": "Disables first-person banking and barrel-roll camera effects while riding dragons when turned off",
+  "saintsdragons.config_screen.others.dive_camera_wobble": "Enable Dive Camera Wobble",
+  "saintsdragons.config_screen.others.dive_camera_wobble.tooltip": "Disables the local camera wobble effect while diving quickly on flying dragons when turned off",
   "saintsdragons.config_screen.others.stegonaut_buffs": "Enable Stegonaut Buffs",
   "saintsdragons.config_screen.others.stegonaut_buffs.tooltip": "Disables both the Stegonaut passive aura and the bound binder's portable buff when turned off",
   "saintsdragons.config_screen.others.hunger_decay": "Enable Hunger Decay",

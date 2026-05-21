@@ -15,4 +15,14 @@ public final class FabricClientConfigAccess {
             return true;
         }
     }
+
+    public static boolean isDiveCameraWobbleEnabled() {
+        try {
+            return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)
+                    .getConfig()
+                    .diveCameraWobbleEnabled;
+        } catch (RuntimeException ignored) {
+            return true;
+        }
+    }
 }

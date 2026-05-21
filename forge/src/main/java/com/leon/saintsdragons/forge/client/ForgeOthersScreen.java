@@ -61,6 +61,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED::set,
                 ForgeClientConfig.CLIENT_SPEC::save
         ));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.dive_camera_wobble"),
+                () -> ForgeClientConfig.DIVE_CAMERA_WOBBLE_ENABLED.get(),
+                ForgeClientConfig.DIVE_CAMERA_WOBBLE_ENABLED::set,
+                ForgeClientConfig.CLIENT_SPEC::save
+        ));
 
         if (!remoteServer) {
             entries.add(new BooleanEntry(

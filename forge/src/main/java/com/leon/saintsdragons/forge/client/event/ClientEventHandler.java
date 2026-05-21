@@ -2,6 +2,7 @@ package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
+import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.renderer.DragonRiderCameraSync;
 import com.leon.saintsdragons.client.renderer.RiderTuning;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
@@ -75,6 +76,8 @@ public class ClientEventHandler {
             DragonRideCameraController.reset();
         }
 
+        applyDiveCameraWobble(event, vehicle);
+
         double shakeDistanceScale = 64.0;
         double distance = Double.MAX_VALUE;
         // Screen shake system
@@ -105,6 +108,21 @@ public class ClientEventHandler {
             randomTremorOffsets[1] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[2] = (Math.random() - 0.5) * 2.0;
         }
+    }
+
+    private static void applyDiveCameraWobble(ViewportEvent.ComputeCameraAngles event, Entity vehicle) {
+        if (!ForgeClientConfig.DIVE_CAMERA_WOBBLE_ENABLED.get()) {
+            return;
+        }
+
+        DragonDiveCameraWobble.Output wobble = DragonDiveCameraWobble.get(vehicle, (float) event.getPartialTick());
+        if (!wobble.active()) {
+            return;
+        }
+
+        event.setYaw(event.getYaw() + wobble.yawDegrees());
+        event.setPitch(Mth.clamp(event.getPitch() + wobble.pitchDegrees(), -90.0F, 90.0F));
+        event.setRoll(event.getRoll() + wobble.rollDegrees());
     }
 
     private static void handleRaevyxBeamCamera(ViewportEvent.ComputeCameraAngles event, Entity vehicle) {

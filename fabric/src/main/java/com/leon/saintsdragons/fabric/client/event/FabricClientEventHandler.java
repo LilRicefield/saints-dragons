@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.client.event;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
+import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.renderer.RiderTuning;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
@@ -10,6 +11,7 @@ import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundControlle
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.NulljawFirstPersonCamera;
+import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -86,8 +88,26 @@ public class FabricClientEventHandler {
             DragonRideCameraController.reset();
         }
 
+        applyDiveCameraWobble(camera, vehicle, partialTicks);
+
         // Screen shake detection and application
         applyScreenShake(camera, player, partialTicks);
+    }
+
+    private static void applyDiveCameraWobble(Camera camera, Entity vehicle, float partialTicks) {
+        if (!FabricClientConfigAccess.isDiveCameraWobbleEnabled()) {
+            return;
+        }
+
+        DragonDiveCameraWobble.Output wobble = DragonDiveCameraWobble.get(vehicle, partialTicks);
+        if (!wobble.active()) {
+            return;
+        }
+
+        CameraAccessor cameraAccessor = (CameraAccessor) camera;
+        float yaw = cameraAccessor.saintsdragons$invokeGetYRot() + wobble.yawDegrees();
+        float pitch = Mth.clamp(cameraAccessor.saintsdragons$invokeGetXRot() + wobble.pitchDegrees(), -90.0F, 90.0F);
+        cameraAccessor.saintsdragons$invokeSetRotation(yaw, pitch);
     }
 
     private static void handleRaevyxBeamCamera(Camera camera, Entity vehicle) {
