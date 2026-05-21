@@ -62,7 +62,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     protected static final int DEFAULT_GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     protected static final double DEFAULT_GROUNDED_AERIAL_RECOVERY_UPWARD_TOLERANCE = 0.05D;
     protected static final float DEFAULT_BARREL_ROLL_INPUT_SPEED = 0.275F;
-    private static final double DUST_PARTICLE_VIEW_DISTANCE = 32.0D;
+    private static final double DUST_PARTICLE_VIEW_DISTANCE = 128.0D;
     private static final double NEAR_GROUND_DUST_SCAN_DISTANCE = 10.0D;
     private static final int NEAR_GROUND_DUST_INTERVAL = 2;
     protected static final DragonBarrelRollHelper.Config DEFAULT_BARREL_ROLL_CONFIG =
