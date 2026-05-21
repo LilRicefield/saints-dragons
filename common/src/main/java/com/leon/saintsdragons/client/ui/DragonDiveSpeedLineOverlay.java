@@ -16,10 +16,10 @@ import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public final class DragonDiveSpeedLineOverlay {
-    private static final int MAX_LINES = 72;
+    private static final int MAX_LINES = 52;
     private static final float BASE_SPAWN_CHANCE = 0.38F;
     private static final float SPAWN_CHANCE_SCALE = 0.92F;
-    private static final float EDGE_BAND = 0.30F;
+    private static final float EDGE_BAND = 0.18F;
     private static final int LINE_COLOR = 0xFFFFFFFF;
 
     private final List<Line> lines = new ArrayList<>();
@@ -78,7 +78,7 @@ public final class DragonDiveSpeedLineOverlay {
         graphics.pose().pushPose();
         graphics.pose().translate(line.x, line.y, 0.0F);
         graphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(line.angle));
-        graphics.fill(-line.length / 2, -line.thickness / 2, line.length / 2, line.thickness / 2, color);
+        graphics.fill(0, -line.thickness / 2, line.length, line.thickness / 2, color);
         graphics.pose().popPose();
     }
 
