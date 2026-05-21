@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.client.particle.DragonDustParticle;
 import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningParticle;
 import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningChainParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -16,5 +17,6 @@ public class ParticleClientRegistry {
         event.registerSpriteSet(ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
         event.registerSpriteSet(ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         event.registerSpriteSet(ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
+        event.registerSpriteSet(ModParticles.DRAGON_DUST.get(), DragonDustParticle.Factory::new);
     }
 }

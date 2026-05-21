@@ -1873,11 +1873,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
             @Override
             public void onRiderLanded() {
-                setFlying(false);
-                setTakeoff(false);
-                timeFlying = 0;
                 triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
+                markLandedNow();
                 lockRiderControls(30);
             }
         });

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -16,9 +17,13 @@ import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -38,6 +43,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
@@ -56,6 +62,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     protected static final int DEFAULT_GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     protected static final double DEFAULT_GROUNDED_AERIAL_RECOVERY_UPWARD_TOLERANCE = 0.05D;
     protected static final float DEFAULT_BARREL_ROLL_INPUT_SPEED = 0.275F;
+    private static final double DUST_PARTICLE_VIEW_DISTANCE = 32.0D;
+    private static final double NEAR_GROUND_DUST_SCAN_DISTANCE = 10.0D;
+    private static final int NEAR_GROUND_DUST_INTERVAL = 2;
     protected static final DragonBarrelRollHelper.Config DEFAULT_BARREL_ROLL_CONFIG =
             new DragonBarrelRollHelper.Config(
                     0.88F,
@@ -80,6 +89,8 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private float accumulatedRoll = 0.0F;
     private int riderLandingBlendTicks = 0;
     private int riderDiveBoostHoldTicks = 0;
+    private int nearGroundDustCooldown = 0;
+    private boolean wasAerialForDustAtTickStart = false;
     private float prevSmoothedRoll = 0.0F;
     private float smoothedRoll = 0.0F;
 
@@ -520,6 +531,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             return;
         }
         if (shouldRunTakeoffStateStarted(wasTakeoff, requestedTakeoff) && !level().isClientSide) {
+            spawnGroundDustBurst(48, 0.65D);
             onTakeoffStateStarted();
         }
     }
@@ -533,6 +545,130 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected void onTakeoffStateStarted() {
+    }
+
+    @Override
+    public void tick() {
+        wasAerialForDustAtTickStart = isAerial();
+        super.tick();
+        tickNearGroundFlightDust();
+    }
+
+    protected void spawnGroundDustBurst(int count, double radiusScale) {
+        if (!(level() instanceof ServerLevel serverLevel) || isInWaterOrBubble() || isInLava()) {
+            return;
+        }
+
+        RandomSource random = getRandom();
+        double radius = Math.max(getBbWidth() * radiusScale, 1.35D);
+        double y = getBoundingBox().minY + 0.08D;
+        for (int i = 0; i < count; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0D;
+            double distance = radius * (0.3D + random.nextDouble());
+            double x = getX() + Math.cos(angle) * distance;
+            double z = getZ() + Math.sin(angle) * distance;
+            double speed = 0.28D + random.nextDouble() * 0.34D;
+            double xSpeed = Math.cos(angle) * speed;
+            double zSpeed = Math.sin(angle) * speed;
+            double ySpeed = 0.08D + random.nextDouble() * 0.14D;
+            sendNearbyDragonDustParticle(serverLevel, x, y, z, xSpeed, ySpeed, zSpeed);
+        }
+    }
+
+    private void tickNearGroundFlightDust() {
+        if (level().isClientSide || !isAerial() || isTakeoff() || isLanding() || isInWaterOrBubble() || isInLava()) {
+            nearGroundDustCooldown = 0;
+            return;
+        }
+
+        if (nearGroundDustCooldown > 0) {
+            nearGroundDustCooldown--;
+            return;
+        }
+        nearGroundDustCooldown = NEAR_GROUND_DUST_INTERVAL;
+
+        Vec3 ground = findDustGroundPosition();
+        if (ground == null) {
+            return;
+        }
+
+        spawnNearGroundFlightDust(ground);
+    }
+
+    private Vec3 findDustGroundPosition() {
+        AABB box = getBoundingBox();
+        double[] sampleX = {getX(), box.minX + 0.35D, box.maxX - 0.35D};
+        double[] sampleZ = {getZ(), box.minZ + 0.35D, box.maxZ - 0.35D};
+        int startY = Mth.floor(box.minY);
+        int stopY = Math.max(level().getMinBuildHeight(), startY - Mth.ceil(NEAR_GROUND_DUST_SCAN_DISTANCE));
+
+        Vec3 best = null;
+        double bestDistance = Double.POSITIVE_INFINITY;
+        for (double x : sampleX) {
+            for (double z : sampleZ) {
+                BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos(Mth.floor(x), startY, Mth.floor(z));
+                for (int y = startY; y >= stopY; y--) {
+                    pos.setY(y);
+                    BlockState state = level().getBlockState(pos);
+                    if (!state.getFluidState().isEmpty()) {
+                        return null;
+                    }
+
+                    VoxelShape shape = state.getCollisionShape(level(), pos);
+                    if (shape.isEmpty()) {
+                        continue;
+                    }
+
+                    double groundY = y + shape.max(Direction.Axis.Y);
+                    double distance = box.minY - groundY;
+                    if (distance >= -0.25D && distance < bestDistance) {
+                        bestDistance = distance;
+                        best = new Vec3(x, groundY, z);
+                    }
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
+    private void spawnNearGroundFlightDust(Vec3 ground) {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        RandomSource random = getRandom();
+        Vec3 velocity = getDeltaMovement();
+        Vec3 horizontal = new Vec3(velocity.x, 0.0D, velocity.z);
+        double positionDeltaX = getX() - xo;
+        double positionDeltaZ = getZ() - zo;
+        if (horizontal.lengthSqr() <= 1.0E-5D && positionDeltaX * positionDeltaX + positionDeltaZ * positionDeltaZ > 1.0E-5D) {
+            horizontal = new Vec3(positionDeltaX, 0.0D, positionDeltaZ);
+        }
+        Vec3 drift = horizontal.lengthSqr() > 1.0E-5D ? horizontal.normalize().scale(-0.08D) : Vec3.ZERO;
+        double radius = Math.max(getBbWidth() * 0.42D, 0.9D);
+
+        for (int i = 0; i < 9; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0D;
+            double distance = radius * random.nextDouble();
+            double x = ground.x + Math.cos(angle) * distance;
+            double z = ground.z + Math.sin(angle) * distance;
+            double xSpeed = drift.x + Math.cos(angle) * (0.04D + random.nextDouble() * 0.07D);
+            double zSpeed = drift.z + Math.sin(angle) * (0.04D + random.nextDouble() * 0.07D);
+            double ySpeed = 0.03D + random.nextDouble() * 0.06D;
+            sendNearbyDragonDustParticle(serverLevel, x, ground.y + 0.08D, z, xSpeed, ySpeed, zSpeed);
+        }
+    }
+
+    private void sendNearbyDragonDustParticle(ServerLevel serverLevel, double x, double y, double z,
+                                              double xSpeed, double ySpeed, double zSpeed) {
+        double maxDistanceSqr = DUST_PARTICLE_VIEW_DISTANCE * DUST_PARTICLE_VIEW_DISTANCE;
+        for (ServerPlayer player : serverLevel.players()) {
+            if (player.distanceToSqr(x, y, z) <= maxDistanceSqr || player.distanceToSqr(this) <= maxDistanceSqr) {
+                serverLevel.sendParticles(player, ModParticles.DRAGON_DUST.get(), true,
+                        x, y, z, 0, xSpeed, ySpeed, zSpeed, 1.0D);
+            }
+        }
     }
 
     @Override
@@ -1164,6 +1300,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     @Override
     public void markLandedNow() {
+        boolean wasAirborne = isFlying() || isTakeoff() || isLanding() || isHovering() || wasAerialForDustAtTickStart;
         setFlying(false);
         setTakeoff(false);
         setLanding(false);
@@ -1174,6 +1311,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         resetTimeFlyingAfterLanding();
 
         if (!level().isClientSide) {
+            if (wasAirborne) {
+                spawnGroundDustBurst(56, 0.78D);
+            }
             onStandardServerLanding();
             switchToGroundNavigationAfterLanding();
             setNoGravity(false);

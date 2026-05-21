@@ -724,11 +724,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
             @Override
             public void onRiderLanded() {
-                setFlying(false);
-                setTakeoff(false);
-                timeFlying = 0;
                 triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
+                markLandedNow();
                 lockRiderControls(34);
             }
         });

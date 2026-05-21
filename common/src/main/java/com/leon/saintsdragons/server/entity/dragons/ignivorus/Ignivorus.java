@@ -2485,9 +2485,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
             @Override
             public void onRiderLanded() {
-                setFlying(false);
-                setTakeoff(false);
-                timeFlying = 0;
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
                 triggerAnim(DragonFlightAnimationHelper.CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
@@ -2495,6 +2492,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 } else {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LANDED.get(), 1.0f, 1.0f, 42);
                 }
+                markLandedNow();
                 lockRiderControls(13);
             }
         });
