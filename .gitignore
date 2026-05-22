@@ -1,9 +1,6 @@
 .gradle/
 **/.gradle/
 .idea/
-.claude/
-CLAUDE.md
-nul
 *.iml
 build/
 **/build/
@@ -17,5 +14,4 @@ common/build/
 fabric/build/
 forge/build/
 bin/
-/cfr.jar
 common/src/generated/resources/.cache/
