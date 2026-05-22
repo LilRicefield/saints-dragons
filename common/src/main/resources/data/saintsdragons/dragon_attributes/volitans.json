@@ -6,7 +6,6 @@
     "taming_chance_base": 20.0,
     "taming_chance_hearty": 30.0,
     "egg_hatch_time_ticks_normal": 18000.0,
-    "egg_loot_shipwreck_treasure": 0.12,
     "legacy_taming": false,
     "aggressive_wild": true
   }

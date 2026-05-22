@@ -49,8 +49,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.BooleanValue RAEVYX_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL;
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER;
-    public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_LOOT_PILLAGER_OUTPOST;
-    public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.BooleanValue RAEVYX_AGGRESSIVE_WILD;
 
     // Varasuchus
@@ -105,9 +103,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_STUN_HEALTH;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_HATCH_CHANCE_NORMAL;
-    public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_BASTION_TREASURE;
-    public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_NETHER_BRIDGE;
-    public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_ANCIENT_CITY;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_AGGRESSIVE_WILD;
 
     // Stegonaut
@@ -140,7 +135,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VOLITANS_TAMING_STUN_HEALTH;
     public static ForgeConfigSpec.BooleanValue VOLITANS_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue VOLITANS_EGG_HATCH_CHANCE_NORMAL;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_ACTIVE_TICKS_MAX;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_DRAIN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_REGEN_PER_TICK;
@@ -223,9 +217,6 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Egg hatch timing in ticks (20 ticks = 1 second)");
         RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 18000.0, 20.0, 72000.0);
         RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER = builder.defineInRange("egg_hatch_time_ticks_thunder", 9600.0, 20.0, 72000.0);
-        builder.comment("Egg loot chances (0-1)");
-        RAEVYX_EGG_LOOT_PILLAGER_OUTPOST = builder.defineInRange("egg_loot_pillager_outpost", 0.20, 0.0, 1.0);
-        RAEVYX_EGG_LOOT_ANCIENT_CITY = builder.defineInRange("egg_loot_ancient_city", 0.15, 0.0, 1.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         RAEVYX_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Aggressive wild behavior");
@@ -303,10 +294,6 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 100.0, 0.0, 1000.0);
         builder.comment("Egg hatch timing in ticks (20 ticks = 1 second)");
         IGNIVORUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 36000.0, 20.0, 72000.0);
-        builder.comment("Egg loot chances (0-1)");
-        IGNIVORUS_EGG_LOOT_BASTION_TREASURE = builder.defineInRange("egg_loot_bastion_treasure", 0.15, 0.0, 1.0);
-        IGNIVORUS_EGG_LOOT_NETHER_BRIDGE = builder.defineInRange("egg_loot_nether_bridge", 0.15, 0.0, 1.0);
-        IGNIVORUS_EGG_LOOT_ANCIENT_CITY = builder.defineInRange("egg_loot_ancient_city", 0.10, 0.0, 1.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         IGNIVORUS_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Aggressive wild behavior");
@@ -356,8 +343,6 @@ public final class ForgeDragonAttributesConfig {
         VOLITANS_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 60.0, 0.0, 100000.0);
         builder.comment("Egg hatch timing in ticks (20 ticks = 1 second)");
         VOLITANS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 18000.0, 20.0, 72000.0);
-        builder.comment("Egg loot chances (0-1)");
-        VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE = builder.defineInRange("egg_loot_shipwreck_treasure", 0.12, 0.0, 1.0);
         builder.comment("Breath Gauge Tuning");
         VOLITANS_BREATH_ACTIVE_TICKS_MAX = builder.defineInRange("breath_active_ticks_max", 240.0, 1.0, 24000.0);
         VOLITANS_BREATH_DRAIN_PER_TICK = builder.defineInRange("breath_drain_per_tick", 1.0 / (20.0 * 12.0), 0.0, 1.0);

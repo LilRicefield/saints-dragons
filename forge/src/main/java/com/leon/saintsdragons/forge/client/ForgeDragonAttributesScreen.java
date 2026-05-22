@@ -354,14 +354,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER::get,
                 ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_pillager_outpost"),
-                ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST::get,
-                ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_loot_ancient_city"),
-                ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY::get,
-                ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY::set,
-                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.legacy_taming"),
                 () -> ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.get(),
                 ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING::set,
@@ -566,18 +558,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_bastion_treasure"),
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_nether_bridge"),
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_loot_ancient_city"),
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY::set,
-                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.legacy_taming"),
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.get(),
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING::set,
@@ -726,10 +706,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_loot_shipwreck_treasure"),
-                ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE::get,
-                ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE::set,
-                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"),
                 ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::get,
                 ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::set,
@@ -791,8 +767,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.set(ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.getDefault());
             }
             case VARASUCHUS -> {
@@ -846,9 +820,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.getDefault());
             }
             case VOLITANS -> {
@@ -870,7 +841,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH.set(ForgeDragonAttributesConfig.VOLITANS_TAMING_STUN_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE.set(ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.getDefault());

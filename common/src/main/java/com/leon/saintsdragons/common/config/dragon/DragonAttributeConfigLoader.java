@@ -140,8 +140,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         boolean legacyTaming = false;
         double eggHatchTimeTicksNormal = 18000.0D;
         double eggHatchTimeTicksThunder = 9600.0D;
-        double eggLootPillagerOutpost = 0.20D;
-        double eggLootAncientCity = 0.15D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
@@ -167,8 +165,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 legacyTaming = (boolean) configClass.getField("RAEVYX_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_LEGACY_TAMING").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL").get(null));
                 eggHatchTimeTicksThunder = (double) configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER").get(null));
-                eggLootPillagerOutpost = (double) configClass.getField("RAEVYX_EGG_LOOT_PILLAGER_OUTPOST").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_LOOT_PILLAGER_OUTPOST").get(null));
-                eggLootAncientCity = (double) configClass.getField("RAEVYX_EGG_LOOT_ANCIENT_CITY").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_LOOT_ANCIENT_CITY").get(null));
                 tamingStunHealth = (double) configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("RAEVYX_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null));
@@ -187,8 +183,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("summon_storm_duration_ticks", summonStormDurationTicks);
         extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
         extras.put("egg_hatch_time_ticks_thunder", eggHatchTimeTicksThunder);
-        extras.put("egg_loot_pillager_outpost", eggLootPillagerOutpost);
-        extras.put("egg_loot_ancient_city", eggLootAncientCity);
         extras.put("taming_stun_health", tamingStunHealth);
         extras.put("wild_flying_speed_multiplier", wildFlyingSpeedMultiplier);
 
@@ -312,9 +306,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double phase2DecisionMinTicks = 60.0D;
         double phase2DecisionMaxTicks = 120.0D;
         double eggHatchTimeTicksNormal = 36000.0D;
-        double eggLootBastionTreasure = 0.15D;
-        double eggLootNetherBridge = 0.15D;
-        double eggLootAncientCity = 0.10D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
         boolean aggressiveWild = false;
@@ -352,9 +343,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 phase2DecisionMinTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null));
                 phase2DecisionMaxTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
-                eggLootBastionTreasure = (double) configClass.getField("IGNIVORUS_EGG_LOOT_BASTION_TREASURE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_BASTION_TREASURE").get(null));
-                eggLootNetherBridge = (double) configClass.getField("IGNIVORUS_EGG_LOOT_NETHER_BRIDGE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_NETHER_BRIDGE").get(null));
-                eggLootAncientCity = (double) configClass.getField("IGNIVORUS_EGG_LOOT_ANCIENT_CITY").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_LOOT_ANCIENT_CITY").get(null));
                 tamingStunHealth = (double) configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 aggressiveWild = (boolean) configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_AGGRESSIVE_WILD").get(null));
@@ -379,9 +367,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("taming_chance_beef", tamingChanceBeef);
         extras.put("taming_chance_hearty", tamingChanceHearty);
         extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
-        extras.put("egg_loot_bastion_treasure", eggLootBastionTreasure);
-        extras.put("egg_loot_nether_bridge", eggLootNetherBridge);
-        extras.put("egg_loot_ancient_city", eggLootAncientCity);
         extras.put("taming_stun_health", tamingStunHealth);
         extras.put("wild_flying_speed_multiplier", wildFlyingSpeedMultiplier);
 
@@ -509,7 +494,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChanceHearty = 30.0D;
         double tamingStunHealth = 60.0D;
         double eggHatchTimeTicksNormal = 18000.0D;
-        double eggLootShipwreckTreasure = 0.12D;
         double wildFlyingSpeedMultiplier = 1.0D;
         double breathActiveTicksMax = 240.0D;
         double breathDrainPerTick = 1.0D / (20.0D * 12.0D);
@@ -547,7 +531,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 tamingChanceHearty = (double) configClass.getField("VOLITANS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_CHANCE_HEARTY").get(null));
                 tamingStunHealth = (double) configClass.getField("VOLITANS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_TAMING_STUN_HEALTH").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_HATCH_CHANCE_NORMAL").get(null));
-                eggLootShipwreckTreasure = (double) configClass.getField("VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("VOLITANS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
                 breathActiveTicksMax = (double) configClass.getField("VOLITANS_BREATH_ACTIVE_TICKS_MAX").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_ACTIVE_TICKS_MAX").get(null));
                 breathDrainPerTick = (double) configClass.getField("VOLITANS_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_DRAIN_PER_TICK").get(null));
@@ -585,7 +568,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("taming_chance_hearty", tamingChanceHearty);
         extras.put("taming_stun_health", tamingStunHealth);
         extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
-        extras.put("egg_loot_shipwreck_treasure", eggLootShipwreckTreasure);
         extras.put("wild_flying_speed_multiplier", wildFlyingSpeedMultiplier);
         extras.put("breath_active_ticks_max", breathActiveTicksMax);
         extras.put("breath_drain_per_tick", breathDrainPerTick);
@@ -1208,11 +1190,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         hints.addProperty("egg_hatch_chance_thunder", "Legacy thunder random-tick hatch roll. Kept only for older egg configs");
         hints.addProperty("egg_hatch_time_ticks_normal", "How long the egg takes to hatch in normal weather (20 ticks = 1 second)");
         hints.addProperty("egg_hatch_time_ticks_thunder", "How long the egg takes to hatch during thunderstorms (20 ticks = 1 second)");
-        hints.addProperty("egg_loot_pillager_outpost", "Chance from 0 to 1 for an egg in pillager outpost chests");
-        hints.addProperty("egg_loot_shipwreck_treasure", "Chance from 0 to 1 for an egg in shipwreck treasure chests");
-        hints.addProperty("egg_loot_ancient_city", "Chance from 0 to 1 for an egg in ancient city chests");
-        hints.addProperty("egg_loot_bastion_treasure", "Chance from 0 to 1 for an egg in bastion treasure chests");
-        hints.addProperty("egg_loot_nether_bridge", "Chance from 0 to 1 for an egg in nether fortress chests");
         hints.addProperty("aggressive_wild", "true = wild dragons aggro on sight, false = only retaliate");
         hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");
         hints.addProperty("flying_speed", "Base rider flying speed. Wild flight uses this too before any wild-only multiplier is applied");
