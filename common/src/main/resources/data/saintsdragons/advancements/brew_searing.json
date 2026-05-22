@@ -1,0 +1,26 @@
+{
+  "parent": "saintsdragons:tame_ignivorus",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:potion_of_searing"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.brew_searing.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.brew_searing.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "brew_searing": {
+      "trigger": "minecraft:brewed_potion",
+      "conditions": {
+        "potion": "saintsdragons:searing"
+      }
+    }
+  }
+}

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
@@ -131,7 +132,8 @@ public class IgnivorusFlameEntity extends Entity {
                         double travelDistance = spawnPos.distanceTo(impactPoint);
                         double impactRadius = Mth.clamp(1.2 + travelDistance * 0.16, 1.2, 3.2);
                         if (igniteBlockChance > 0.0D && level().random.nextDouble() <= igniteBlockChance) {
-                            DragonDestructionManager.applyFlameImpact(serverLevel, impactPoint, impactRadius);
+                            DragonEntity dragonOwner = getOwner() instanceof DragonEntity dragon ? dragon : null;
+                            DragonDestructionManager.applyFlameImpact(serverLevel, dragonOwner, impactPoint, impactRadius);
                         }
                     }
                     hasHitBlock = true;

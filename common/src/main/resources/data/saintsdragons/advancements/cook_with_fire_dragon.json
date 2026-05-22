@@ -1,0 +1,23 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "minecraft:furnace"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.cook_with_fire_dragon.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.cook_with_fire_dragon.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "cook_with_fire_dragon": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

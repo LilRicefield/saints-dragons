@@ -145,6 +145,18 @@ public class ModItems {
             REGISTER.register("dragon_encounter_icon",
                     () -> new Item(new Item.Properties()));
 
+    public static final Supplier<Item> DRAGON_BINDER_ICON =
+            REGISTER.register("dragon_binder_icon",
+                    () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> DRAGON_SCALE_ICON =
+            REGISTER.register("dragon_scale_icon",
+                    () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> WATER_SPLASH_ICON =
+            REGISTER.register("water_splash_icon",
+                    () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_BRUSH =
             REGISTER.register("dragon_brush",
                     () -> new DragonBrushItem(

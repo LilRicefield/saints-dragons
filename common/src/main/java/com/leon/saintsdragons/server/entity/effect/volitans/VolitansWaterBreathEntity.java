@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -75,6 +76,17 @@ public class VolitansWaterBreathEntity extends Entity {
             if (age >= maxAge) {
                 discard();
                 return;
+            }
+            if (!isPoisonMode() && level() instanceof ServerLevel serverLevel) {
+                Vec3 start = position();
+                Vec3 end = start.add(getDeltaMovement());
+                if (DragonUtilities.extinguishFire(serverLevel, start, end, 1.0D)
+                        && getOwner() instanceof DragonEntity dragon) {
+                    var player = DragonUtilities.resolveResponsiblePlayer(dragon);
+                    if (player != null) {
+                        DragonUtilities.awardAdvancement(player, "fire_hydrant", "fire_hydrant");
+                    }
+                }
             }
             if (hitEntity()) {
                 discard();

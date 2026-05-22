@@ -103,7 +103,7 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
             activeTicks++;
             applyFireAura((ServerLevel) level, dragon);
             if (dragon.onGround() && dragon.getControllingPassenger() != null) {
-                DragonDestructionManager.applyFireBodyCookingAura((ServerLevel) level, dragon.position(), COOKING_RADIUS);
+                DragonDestructionManager.applyFireBodyCookingAura((ServerLevel) level, dragon, dragon.position(), COOKING_RADIUS);
             }
             if (activeTicks % 20 == 0) {
                 level.playSound(null, dragon.blockPosition(), SoundEvents.BLAZE_SHOOT, dragon.getSoundSource(), 0.6F, 0.9F + dragon.getRandom().nextFloat() * 0.2F);

@@ -7,6 +7,9 @@
   "item.saintsdragons.ignivorus_binder": "Ignivorus Binder",
   "item.saintsdragons.volitans_binder": "Volitans Binder",
   "item.saintsdragons.nulljaw_binder": "Nulljaw Binder",
+  "item.saintsdragons.dragon_binder_icon": "Dragon Binder Icons",
+  "item.saintsdragons.dragon_scale_icon": "Dragon Scale Icons",
+  "item.saintsdragons.water_splash_icon": "Water Splash Icon",
   "item.saintsdragons.dragon_brush": "Dragon Brush",
   "item.saintsdragons.golden_dragon_brush": "Golden Dragon Brush",
   "item.saintsdragons.raw_moop": "Raw Moop",
@@ -359,7 +362,7 @@
   "jade.saintsdragons.time.seconds": "%ss",
 
   "advancement.saintsdragons.root.title": "Saint's Dragons",
-  "advancement.saintsdragons.root.description": "Open the Draconic Codex.",
+  "advancement.saintsdragons.root.description": "Open the Draconic Codex",
 
   "advancement.saintsdragons.encounter_dragon.title": "Dragon Encounter",
   "advancement.saintsdragons.encounter_dragon.description": "Encounter your first dragon. That's one weird lizard",
@@ -401,6 +404,18 @@
 
   "advancement.saintsdragons.hatch_varasuchus.title": "Until Provoked",
   "advancement.saintsdragons.hatch_varasuchus.description": "Hatch a Varasuchus",
+
+  "advancement.saintsdragons.brew_tideguard.title": "Be Water, My Friend",
+  "advancement.saintsdragons.brew_tideguard.description": "Brew the Potion of Tideguard with Varasuchus Scale and Awkward Potion",
+  "advancement.saintsdragons.brew_searing.title": "This is gonna feel good",
+  "advancement.saintsdragons.brew_searing.description": "Brew the Potion of Searing with Ignivorus Tooth and Awkward Potion",
+  "advancement.saintsdragons.cook_with_fire_dragon.title": "Let's cook with fire, baby",
+  "advancement.saintsdragons.cook_with_fire_dragon.description": "Cook or smelt with a fire-based dragon",
+  "advancement.saintsdragons.fire_hydrant.title": "Fire Hydrant",
+  "advancement.saintsdragons.fire_hydrant.description": "Extinguish any source of fire with Volitans' Water Breath",
+
+  "advancement.saintsdragons.acquire_dragon_scale.title": "A Lingering Presence",
+  "advancement.saintsdragons.acquire_dragon_scale.description": "Acquire a dragon scale through brushing",
 
   "advancement.saintsdragons.folded_horizon.title": "Folded Horizon",
   "advancement.saintsdragons.folded_horizon.description": "Craft your first Binder",

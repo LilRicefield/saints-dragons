@@ -1,0 +1,30 @@
+{
+  "parent": "saintsdragons:root",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:dragon_scale_icon"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.acquire_dragon_scale.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.acquire_dragon_scale.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_dragon_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "tag": "saintsdragons:dragon_scales"
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "parent": "saintsdragons:tame_volitans",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:water_splash_icon"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.fire_hydrant.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.fire_hydrant.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "fire_hydrant": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}
