@@ -1,12 +1,6 @@
 {
   "replace": false,
   "entries": [
-    "saintsdragons:raevyx_egg_pillager_outpost",
-    "saintsdragons:raevyx_egg_ancient_city",
-    "saintsdragons:volitans_egg_shipwreck_treasure",
-    "saintsdragons:ignivorus_egg_bastion_treasure",
-    "saintsdragons:ignivorus_egg_nether_fortress",
-    "saintsdragons:ignivorus_egg_ancient_city",
-    "saintsdragons:raw_moop_fishing"
+    "saintsdragons:dragon_chest_loot"
   ]
 }

@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.forge.data;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModTags;
 import net.minecraft.core.HolderLookup;
@@ -26,12 +25,13 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
 
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
-        copy(ModTags.Blocks.CINDERVANE_EGGS, ModTags.Items.DRAGON_EGGS);
-        copy(ModTags.Blocks.IGNIVORUS_EGGS, ModTags.Items.DRAGON_EGGS);
-        copy(ModTags.Blocks.RAEVYX_EGGS, ModTags.Items.DRAGON_EGGS);
-        copy(ModTags.Blocks.STEGONAUT_EGGS, ModTags.Items.DRAGON_EGGS);
-        copy(ModTags.Blocks.VARASUCHUS_EGGS, ModTags.Items.DRAGON_EGGS);
-        copy(ModTags.Blocks.VOLITANS_EGGS, ModTags.Items.DRAGON_EGGS);
+        tag(ModTags.Items.DRAGON_EGGS)
+                .add(ModItems.STEGONAUT_EGG.get())
+                .add(ModItems.VARASUCHUS_EGG.get())
+                .add(ModItems.IGNIVORUS_EGG.get())
+                .add(ModItems.VOLITANS_EGG.get())
+                .add(ModItems.CINDERVANE_EGG.get())
+                .add(ModItems.RAEVYX_EGG.get());
 
         tag(ModTags.Items.DRAGON_BINDERS)
                 .add(ModItems.CINDERVANE_BINDER.get())

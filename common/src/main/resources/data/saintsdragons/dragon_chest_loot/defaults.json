@@ -1,0 +1,59 @@
+{
+  "replace": false,
+  "entries": [
+    {
+      "loot_table": "minecraft:chests/pillager_outpost",
+      "item": "saintsdragons:raevyx_egg",
+      "count": 1,
+      "chance": 0.2,
+      "dragon_id": "saintsdragons:raevyx",
+      "config_key": "egg_loot_pillager_outpost"
+    },
+    {
+      "loot_table": "minecraft:chests/ancient_city",
+      "item": "saintsdragons:raevyx_egg",
+      "count": 1,
+      "chance": 0.15,
+      "dragon_id": "saintsdragons:raevyx",
+      "config_key": "egg_loot_ancient_city"
+    },
+    {
+      "loot_table": "minecraft:chests/shipwreck_treasure",
+      "item": "saintsdragons:volitans_egg",
+      "count": 1,
+      "chance": 0.12,
+      "dragon_id": "saintsdragons:volitans",
+      "config_key": "egg_loot_shipwreck_treasure"
+    },
+    {
+      "loot_table": "minecraft:chests/bastion_treasure",
+      "item": "saintsdragons:ignivorus_egg",
+      "count": 1,
+      "chance": 0.15,
+      "dragon_id": "saintsdragons:ignivorus",
+      "config_key": "egg_loot_bastion_treasure"
+    },
+    {
+      "loot_table": "minecraft:chests/nether_bridge",
+      "item": "saintsdragons:ignivorus_egg",
+      "count": 1,
+      "chance": 0.15,
+      "dragon_id": "saintsdragons:ignivorus",
+      "config_key": "egg_loot_nether_bridge"
+    },
+    {
+      "loot_table": "minecraft:chests/ancient_city",
+      "item": "saintsdragons:ignivorus_egg",
+      "count": 1,
+      "chance": 0.1,
+      "dragon_id": "saintsdragons:ignivorus",
+      "config_key": "egg_loot_ancient_city"
+    },
+    {
+      "loot_table": "minecraft:gameplay/fishing/fish",
+      "item": "saintsdragons:raw_moop",
+      "count": 1,
+      "chance": 0.1
+    }
+  ]
+}

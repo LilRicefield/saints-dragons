@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
+import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -32,18 +33,14 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
-import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.stats.Stats;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.enchantment.Enchantments;
+import net.minecraft.world.item.Item;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -72,19 +69,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_IDLE_VARIANT_ACTIVE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
-    private static final VillagerTrades.ItemListing[] TRADES = new VillagerTrades.ItemListing[]{
-            (trader, random) -> createIgnivorusEggTrade(random),
-            (trader, random) -> createRaevyxEggTrade(random),
-            (trader, random) -> createVarasuchusEggTrade(random),
-            (trader, random) -> createCindervaneEggTrade(random),
-            (trader, random) -> createStegonautEggTrade(random)
-    };
     private static final int TRADE_START_TICKS = 29;
     private static final int TRADE_STOP_TICKS = 29;
-    private static final int HEARTY_MEAL_EGG_COUNT = 4;
-    private static final int HEARTY_MEAL_SALMON_COUNT = 4;
-    private static final int HEARTY_MEAL_OUTPUT_COUNT = 6;
-    private static final int HEARTY_MEAL_MAX_USES = 9999;
     private static final int IDLE_VARIANT_DURATION = 66;
     private static final int IDLE_VARIANT_MIN_COOLDOWN = 200;
     private static final int IDLE_VARIANT_MAX_COOLDOWN = 600;
@@ -219,8 +205,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         if (!offers.isEmpty()) {
             return;
         }
-        addOffersFromItemListings(offers, TRADES, TRADES.length);
-        addFixedOffers(offers);
+        IvyTradeRegistry.fillOffers(this, this.random, offers);
     }
 
     @Override
@@ -269,7 +254,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     @Override
-    public net.minecraft.sounds.SoundEvent getNotifyTradeSound() {
+    public SoundEvent getNotifyTradeSound() {
         return null;
     }
 
@@ -286,19 +271,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     public void overrideOffers(@NotNull MerchantOffers offers) {}
 
     @Override
-    public void playSound(@NotNull net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
-        if (sound == net.minecraft.sounds.SoundEvents.VILLAGER_YES ||
-            sound == net.minecraft.sounds.SoundEvents.VILLAGER_NO ||
-            sound == net.minecraft.sounds.SoundEvents.VILLAGER_AMBIENT ||
-            sound == net.minecraft.sounds.SoundEvents.VILLAGER_TRADE ||
-            sound == net.minecraft.sounds.SoundEvents.VILLAGER_CELEBRATE) {
+    public void playSound(@NotNull SoundEvent sound, float volume, float pitch) {
+        if (sound == SoundEvents.VILLAGER_YES ||
+            sound == SoundEvents.VILLAGER_NO ||
+            sound == SoundEvents.VILLAGER_AMBIENT ||
+            sound == SoundEvents.VILLAGER_TRADE ||
+            sound == SoundEvents.VILLAGER_CELEBRATE) {
             return;
         }
         super.playSound(sound, volume, pitch);
     }
 
     @Override
-    protected net.minecraft.sounds.SoundEvent getAmbientSound() {
+    protected SoundEvent getAmbientSound() {
         return null;
     }
 
@@ -309,7 +294,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     @Override
     protected SoundEvent getDeathSound() {
-        return net.minecraft.sounds.SoundEvents.PLAYER_DEATH;
+        return SoundEvents.PLAYER_DEATH;
     }
 
     @Nullable
@@ -467,46 +452,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         restockTimer--;
         if (restockTimer <= 0) {
             this.offers = new MerchantOffers();
-            addFixedOffers(this.offers);
-            for (VillagerTrades.ItemListing listing : TRADES) {
-                MerchantOffer offer = listing.getOffer(this, this.random);
-                if (offer != null) {
-                    this.offers.add(offer);
-                }
-            }
+            IvyTradeRegistry.fillOffers(this, this.random, this.offers);
             restockTimer = interval;
         }
     }
 
-    private static void addFixedOffers(MerchantOffers offers) {
-        if (!hasHeartyMealOffer(offers)) {
-            offers.add(createHeartyMealOffer());
-        }
-    }
-
-    private static boolean hasHeartyMealOffer(MerchantOffers offers) {
-        for (MerchantOffer offer : offers) {
-            ItemStack costA = offer.getBaseCostA();
-            ItemStack costB = offer.getCostB();
-            ItemStack result = offer.getResult();
-            if (costA.is(ModItems.STEGONAUT_EGG.get())
-                    && costA.getCount() == HEARTY_MEAL_EGG_COUNT
-                    && costB.is(Items.SALMON)
-                    && costB.getCount() == HEARTY_MEAL_SALMON_COUNT
-                    && result.is(ModItems.HEARTY_DRAGON_MEAL.get())
-                    && result.getCount() == HEARTY_MEAL_OUTPUT_COUNT) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static MerchantOffer createHeartyMealOffer() {
-        ItemStack eggs = new ItemStack(Items.EGG, HEARTY_MEAL_EGG_COUNT);
-        ItemStack salmon = new ItemStack(Items.SALMON, HEARTY_MEAL_SALMON_COUNT);
-        ItemStack result = new ItemStack(ModItems.HEARTY_DRAGON_MEAL.get(), HEARTY_MEAL_OUTPUT_COUNT);
-        return new MerchantOffer(eggs, salmon, result, HEARTY_MEAL_MAX_USES, 0, 0.0f);
-    }
     private static int resolveRestockInterval() {
         return SaintsDragonsConfig.getIvyRestockInterval();
     }
@@ -840,283 +790,4 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
     }
 
-    private static MerchantOffer createIgnivorusEggTrade(RandomSource random) {
-        ItemStack result = createIgnivorusReward(random);
-        return new MerchantOffer(new ItemStack(ModItems.IGNIVORUS_EGG.get()), result, 3, 5, 0.05f);
-    }
-
-    private static ItemStack createIgnivorusReward(RandomSource random) {
-        int roll = random.nextInt(8);
-        return switch (roll) {
-            case 0 -> enchantedNetheriteSword(random);
-            case 1 -> enchantedNetheriteAxe(random);
-            case 2 -> enchantedNetheritePickaxe(random);
-            case 3 -> enchantedNetheriteArmor(random, Items.NETHERITE_CHESTPLATE);
-            case 4 -> enchantedNetheriteArmor(random, Items.NETHERITE_LEGGINGS);
-            case 5 -> enchantedNetheriteArmor(random, Items.NETHERITE_HELMET);
-            case 6 -> enchantedNetheriteArmor(random, Items.NETHERITE_BOOTS);
-            default -> enchantedNetheriteHoe(random);
-        };
-    }
-
-    private static ItemStack enchantedNetheriteSword(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.NETHERITE_SWORD);
-        stack.enchant(Enchantments.SHARPNESS, 5);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.35f) {
-            stack.enchant(Enchantments.FIRE_ASPECT, 2);
-        }
-        if (random.nextFloat() < 0.2f) {
-            stack.enchant(Enchantments.MOB_LOOTING, 3);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedNetheriteAxe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.NETHERITE_AXE);
-        stack.enchant(Enchantments.SHARPNESS, 5);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.4f) {
-            stack.enchant(Enchantments.BLOCK_EFFICIENCY, 5);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedNetheritePickaxe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.NETHERITE_PICKAXE);
-        stack.enchant(Enchantments.BLOCK_EFFICIENCY, 5);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.35f) {
-            stack.enchant(Enchantments.SILK_TOUCH, 1);
-        } else {
-            stack.enchant(Enchantments.BLOCK_FORTUNE, 3);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedNetheriteArmor(RandomSource random, Item item) {
-        ItemStack stack = new ItemStack(item);
-        stack.enchant(Enchantments.ALL_DAMAGE_PROTECTION, 4);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.25f) {
-            stack.enchant(Enchantments.THORNS, 3);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedNetheriteHoe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.NETHERITE_HOE);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.45f) {
-            stack.enchant(Enchantments.BLOCK_EFFICIENCY, 5);
-        }
-        return stack;
-    }
-
-    private static MerchantOffer createRaevyxEggTrade( RandomSource random) {
-        ItemStack result = createRaevyxReward(random);
-        return new MerchantOffer(new ItemStack(ModItems.RAEVYX_EGG.get()), result, 5, 5, 0.05f);
-    }
-
-    private static ItemStack createRaevyxReward(RandomSource random) {
-        int roll = random.nextInt(8);
-        return switch (roll) {
-            case 0 -> enchantedDiamondSword(random);
-            case 1 -> enchantedDiamondAxe(random);
-            case 2 -> enchantedDiamondPickaxe(random);
-            case 3 -> enchantedDiamondArmor(random, Items.DIAMOND_CHESTPLATE);
-            case 4 -> enchantedDiamondArmor(random, Items.DIAMOND_LEGGINGS);
-            case 5 -> enchantedDiamondArmor(random, Items.DIAMOND_HELMET);
-            case 6 -> enchantedDiamondArmor(random, Items.DIAMOND_BOOTS);
-            default -> enchantedDiamondHoe(random);
-        };
-    }
-
-    private static ItemStack enchantedDiamondSword(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.DIAMOND_SWORD);
-        stack.enchant(Enchantments.SHARPNESS, 4);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.3f) {
-            stack.enchant(Enchantments.FIRE_ASPECT, 2);
-        }
-        if (random.nextFloat() < 0.2f) {
-            stack.enchant(Enchantments.MOB_LOOTING, 2);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedDiamondAxe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.DIAMOND_AXE);
-        stack.enchant(Enchantments.SHARPNESS, 4);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.35f) {
-            stack.enchant(Enchantments.BLOCK_EFFICIENCY, 4);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedDiamondPickaxe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.DIAMOND_PICKAXE);
-        stack.enchant(Enchantments.BLOCK_EFFICIENCY, 4);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.25f) {
-            stack.enchant(Enchantments.SILK_TOUCH, 1);
-        } else {
-            stack.enchant(Enchantments.BLOCK_FORTUNE, 2);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedDiamondArmor(RandomSource random, Item item) {
-        ItemStack stack = new ItemStack(item);
-        stack.enchant(Enchantments.ALL_DAMAGE_PROTECTION, 3);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.2f) {
-            stack.enchant(Enchantments.THORNS, 2);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedDiamondHoe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.DIAMOND_HOE);
-        stack.enchant(Enchantments.UNBREAKING, 3);
-        if (random.nextFloat() < 0.45f) {
-            stack.enchant(Enchantments.BLOCK_EFFICIENCY, 4);
-        }
-        return stack;
-    }
-
-    private static MerchantOffer createCindervaneEggTrade(RandomSource random) {
-        ItemStack result = createCindervaneReward(random);
-        return new MerchantOffer(new ItemStack(ModItems.CINDERVANE_EGG.get()), result, 8, 5, 0.05f);
-    }
-
-    private static ItemStack createCindervaneReward(RandomSource random) {
-        int roll = random.nextInt(12);
-        return switch (roll) {
-            case 0 -> enchantedIronSword(random);
-            case 1 -> enchantedIronAxe(random);
-            case 2 -> enchantedIronPickaxe(random);
-            case 3 -> enchantedIronArmor(random, Items.IRON_CHESTPLATE);
-            case 4 -> enchantedIronArmor(random, Items.IRON_LEGGINGS);
-            case 5 -> enchantedIronArmor(random, Items.IRON_HELMET);
-            case 6 -> enchantedIronArmor(random, Items.IRON_BOOTS);
-            case 7 -> new ItemStack(Items.BLAZE_ROD, 4 + random.nextInt(5));
-            case 8 -> new ItemStack(Items.MAGMA_CREAM, 8 + random.nextInt(9));
-            case 9 -> new ItemStack(Items.FIRE_CHARGE, 12 + random.nextInt(13));
-            case 10 -> new ItemStack(Items.ENDER_PEARL, 4 + random.nextInt(5));
-            default -> enchantedIronHoe(random);
-        };
-    }
-
-    private static ItemStack enchantedIronSword(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.IRON_SWORD);
-        stack.enchant(Enchantments.SHARPNESS, 3);
-        stack.enchant(Enchantments.UNBREAKING, 2);
-        if (random.nextFloat() < 0.3f) {
-            stack.enchant(Enchantments.FIRE_ASPECT, 1);
-        }
-        if (random.nextFloat() < 0.15f) {
-            stack.enchant(Enchantments.MOB_LOOTING, 2);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedIronAxe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.IRON_AXE);
-        stack.enchant(Enchantments.SHARPNESS, 3);
-        stack.enchant(Enchantments.UNBREAKING, 2);
-        if (random.nextFloat() < 0.35f) {
-            stack.enchant(Enchantments.BLOCK_EFFICIENCY, 3);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedIronPickaxe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.IRON_PICKAXE);
-        stack.enchant(Enchantments.BLOCK_EFFICIENCY, 3);
-        stack.enchant(Enchantments.UNBREAKING, 2);
-        if (random.nextFloat() < 0.3f) {
-            stack.enchant(Enchantments.SILK_TOUCH, 1);
-        } else if (random.nextFloat() < 0.4f) {
-            stack.enchant(Enchantments.BLOCK_FORTUNE, 2);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedIronArmor(RandomSource random, Item item) {
-        ItemStack stack = new ItemStack(item);
-        stack.enchant(Enchantments.ALL_DAMAGE_PROTECTION, 2);
-        stack.enchant(Enchantments.UNBREAKING, 2);
-        if (random.nextFloat() < 0.2f) {
-            stack.enchant(Enchantments.THORNS, 1);
-        }
-        return stack;
-    }
-
-    private static ItemStack enchantedIronHoe(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.IRON_HOE);
-        stack.enchant(Enchantments.UNBREAKING, 2);
-        if (random.nextFloat() < 0.4f) {
-            stack.enchant(Enchantments.BLOCK_EFFICIENCY, 3);
-        }
-        return stack;
-    }
-
-    private static MerchantOffer createVarasuchusEggTrade(RandomSource random) {
-        ItemStack result = createVarasuchusReward(random);
-        return new MerchantOffer(new ItemStack(ModItems.VARASUCHUS_EGG.get()), result, 6, 5, 0.05f);
-    }
-
-    private static ItemStack createVarasuchusReward(RandomSource random) {
-        int roll = random.nextInt(11);
-        return switch (roll) {
-            case 0 -> new ItemStack(Items.DIAMOND_SWORD);
-            case 1 -> new ItemStack(Items.DIAMOND_AXE);
-            case 2 -> new ItemStack(Items.DIAMOND_PICKAXE);
-            case 3 -> new ItemStack(Items.DIAMOND_SHOVEL);
-            case 4 -> new ItemStack(Items.DIAMOND_CHESTPLATE);
-            case 5 -> new ItemStack(Items.DIAMOND_LEGGINGS);
-            case 6 -> new ItemStack(Items.DIAMOND_HELMET);
-            case 7 -> new ItemStack(Items.DIAMOND_BOOTS);
-            case 8 -> new ItemStack(Items.DIAMOND, 3 + random.nextInt(4));
-            case 9 -> new ItemStack(Items.TRIDENT);
-            default -> enchantedTrident(random);
-        };
-    }
-
-    private static ItemStack enchantedTrident(RandomSource random) {
-        ItemStack stack = new ItemStack(Items.TRIDENT);
-        int enchantRoll = random.nextInt(4);
-        switch (enchantRoll) {
-            case 0 -> stack.enchant(Enchantments.IMPALING, 3);
-            case 1 -> stack.enchant(Enchantments.LOYALTY, 2);
-            case 2 -> stack.enchant(Enchantments.RIPTIDE, 2);
-            default -> stack.enchant(Enchantments.UNBREAKING, 2);
-        }
-        return stack;
-    }
-
-    private static MerchantOffer createStegonautEggTrade(RandomSource random) {
-        ItemStack result = createStegonautReward(random);
-        return new MerchantOffer(new ItemStack(ModItems.STEGONAUT_EGG.get()), result, 12, 5, 0.05f);
-    }
-
-    private static ItemStack createStegonautReward(RandomSource random) {
-        int roll = random.nextInt(12);
-        return switch (roll) {
-            case 0 -> new ItemStack(Items.IRON_INGOT, 16 + random.nextInt(17));
-            case 1 -> new ItemStack(Items.COAL, 16 + random.nextInt(33));
-            case 2 -> new ItemStack(Items.GOLD_INGOT, 8 + random.nextInt(9));
-            case 3 -> new ItemStack(Items.REDSTONE, 16 + random.nextInt(9));
-            case 4 -> new ItemStack(Items.LAPIS_LAZULI, 8 + random.nextInt(9));
-            case 5 -> new ItemStack(Items.COOKED_BEEF, 16 + random.nextInt(17));
-            case 6 -> new ItemStack(Items.GOLDEN_CARROT, 8 + random.nextInt(9));
-            case 7 -> new ItemStack(Items.BREAD, 24 + random.nextInt(25));
-            case 8 -> new ItemStack(Items.ARROW, 32 + random.nextInt(33));
-            case 9 -> new ItemStack(Items.TORCH, 1 + random.nextInt(64));
-            case 10 -> new ItemStack(Items.SCAFFOLDING, 32 + random.nextInt(33));
-            default -> new ItemStack(Items.EMERALD, 4 + random.nextInt(5));
-        };
-    }
 }

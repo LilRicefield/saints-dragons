@@ -15,6 +15,9 @@ public class ModLootModifiers {
     public static final RegistryObject<Codec<? extends IGlobalLootModifier>> ADD_ITEM =
             LOOT_MODIFIERS.register("add_item", () -> AddItemLootModifier.CODEC);
 
+    public static final RegistryObject<Codec<? extends IGlobalLootModifier>> DRAGON_CHEST_LOOT =
+            LOOT_MODIFIERS.register("dragon_chest_loot", () -> DragonChestLootModifier.CODEC);
+
     public static void register(IEventBus eventBus) {
         LOOT_MODIFIERS.register(eventBus);
     }
