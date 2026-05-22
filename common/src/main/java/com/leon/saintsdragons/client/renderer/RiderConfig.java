@@ -11,7 +11,6 @@ import org.joml.Vector3f;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class RiderConfig {
@@ -202,13 +201,11 @@ public final class RiderConfig {
 
 
     public static Vector3f getSeatOffset(Object dragon, int seatIndex) {
-        Vector3f fallback = new Vector3f(getOrDefaultSpec(dragon).getSeatSpec(seatIndex).offset);
-        return RiderTuning.getSeatOffset(dragon, seatIndex, fallback);
+        return new Vector3f(getOrDefaultSpec(dragon).getSeatSpec(seatIndex).offset);
     }
 
     public static float getYawOffset(Object dragon, int seatIndex) {
-        float fallback = getOrDefaultSpec(dragon).getSeatSpec(seatIndex).yawOffsetDeg;
-        return RiderTuning.getYawOffset(dragon, seatIndex, fallback);
+        return getOrDefaultSpec(dragon).getSeatSpec(seatIndex).yawOffsetDeg;
     }
 
     public static String getSeatBoneName(Object dragon, int seatIndex) {
@@ -216,46 +213,7 @@ public final class RiderConfig {
     }
 
     public static Vector3f getFirstPersonOffset(Object dragon, int seatIndex) {
-        Vector3f fallback = new Vector3f(getOrDefaultSpec(dragon).getSeatSpec(seatIndex).firstPersonOffset);
-        return RiderTuning.getFirstPersonOffset(dragon, seatIndex, fallback);
-    }
-
-    static String getTuningKey(Object dragon) {
-        if (dragon instanceof Raevyx) {
-            return "raevyx";
-        }
-        if (dragon instanceof Ignivorus) {
-            return "ignivorus";
-        }
-        if (dragon instanceof Cindervane) {
-            return "cindervane";
-        }
-        if (dragon instanceof Stegonaut) {
-            return "stegonaut";
-        }
-        if (dragon instanceof Volitans) {
-            return "volitans";
-        }
-        if (dragon instanceof Nulljaw) {
-            return "nulljaw";
-        }
-        if (dragon instanceof Varasuchus) {
-            return "varasuchus";
-        }
-        return null;
-    }
-
-    static Map<String, RiderSpec> getDefaultTuningSpecs() {
-        initializeConfigs();
-        Map<String, RiderSpec> specs = new LinkedHashMap<>();
-        specs.put("raevyx", riderConfigs.get(Raevyx.class));
-        specs.put("ignivorus", riderConfigs.get(Ignivorus.class));
-        specs.put("cindervane", riderConfigs.get(Cindervane.class));
-        specs.put("stegonaut", riderConfigs.get(Stegonaut.class));
-        specs.put("volitans", riderConfigs.get(Volitans.class));
-        specs.put("nulljaw", riderConfigs.get(Nulljaw.class));
-        specs.put("varasuchus", riderConfigs.get(Varasuchus.class));
-        return specs;
+        return new Vector3f(getOrDefaultSpec(dragon).getSeatSpec(seatIndex).firstPersonOffset);
     }
 
     public static final class RiderSpec {

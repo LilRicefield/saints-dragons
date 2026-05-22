@@ -3,7 +3,6 @@ package com.leon.saintsdragons.forge.client.event;
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
-import com.leon.saintsdragons.client.renderer.RiderTuning;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxDiveSoundController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
@@ -177,7 +176,6 @@ public class ClientEventHandler {
             return;
         }
         DragonRideCameraTuning.bootstrap();
-        RiderTuning.bootstrap();
         Minecraft minecraft = Minecraft.getInstance();
         DragonSoundRuntime.tick(minecraft);
         DragonDiveSoundController.tick(minecraft);
