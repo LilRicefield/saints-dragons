@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.sound;
 
 import com.leon.saintsdragons.client.camera.DragonDiveEffectIntensity;
+import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.fabricmc.api.EnvType;
@@ -27,7 +28,11 @@ public final class DragonDiveSoundController {
             stopCurrent(minecraft);
             return;
         }
-        if (dragon instanceof Raevyx) {
+        if (!Services.PLATFORM.isGenericDiveLoopEnabled()) {
+            stopCurrent(minecraft);
+            return;
+        }
+        if (dragon instanceof Raevyx raevyx && raevyx.isCustomDiveLoopEnabled()) {
             stopCurrent(minecraft);
             return;
         }

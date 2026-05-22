@@ -17,4 +17,8 @@ public final class SaintsDragonsFabricClientConfig implements ConfigData {
     @ConfigEntry.Category("client")
     @ConfigEntry.Gui.Tooltip
     public boolean diveSpeedLinesEnabled = true;
+
+    @ConfigEntry.Category("client")
+    @ConfigEntry.Gui.Tooltip
+    public boolean genericDiveLoopEnabled = true;
 }

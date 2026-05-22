@@ -73,6 +73,12 @@ public final class ForgePlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public boolean isGenericDiveLoopEnabled() {
+        return ForgeClientConfig.GENERIC_DIVE_LOOP_ENABLED == null
+                || ForgeClientConfig.GENERIC_DIVE_LOOP_ENABLED.get();
+    }
+
+    @Override
     public Item createSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType,
                                int primaryColor,
                                int secondaryColor,

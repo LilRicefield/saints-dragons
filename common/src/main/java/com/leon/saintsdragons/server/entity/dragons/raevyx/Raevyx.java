@@ -158,6 +158,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final EntityDataAccessor<Float> DATA_BEAM_ENERGY = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_BEAM_DEPLETED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> DATA_ACCUMULATED_ROLL = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Boolean> DATA_CUSTOM_DIVE_LOOP_ENABLED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
@@ -298,6 +299,17 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     private float getFloatData(EntityDataAccessor<Float> accessor) {
         return this.entityData.get(accessor);
+    }
+
+    public boolean isCustomDiveLoopEnabled() {
+        return this.entityData.get(DATA_CUSTOM_DIVE_LOOP_ENABLED);
+    }
+
+    private void syncCustomDiveLoopEnabled() {
+        boolean enabled = getConfiguredDragonAttributes().extraBoolean("dive_loop_enabled", true);
+        if (this.entityData.get(DATA_CUSTOM_DIVE_LOOP_ENABLED) != enabled) {
+            this.entityData.set(DATA_CUSTOM_DIVE_LOOP_ENABLED, enabled);
+        }
     }
 
     @Override
@@ -561,6 +573,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.entityData.define(DATA_BEAM_ENERGY, 1.0f); // Start with full energy
         this.entityData.define(DATA_BEAM_DEPLETED, false); // Start unlocked
         this.entityData.define(DATA_ACCUMULATED_ROLL, 0.0f); // Start upright
+        this.entityData.define(DATA_CUSTOM_DIVE_LOOP_ENABLED, true);
     }
 
     @Override
@@ -1382,6 +1395,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tickBarrelRollLogic();
         tickScreenShake();
         tickFlightLifecycle();
+        if (!level().isClientSide) {
+            syncCustomDiveLoopEnabled();
+        }
         if (level().isClientSide) {
             return;
         }

@@ -35,4 +35,14 @@ public final class FabricClientConfigAccess {
             return true;
         }
     }
+
+    public static boolean isGenericDiveLoopEnabled() {
+        try {
+            return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)
+                    .getConfig()
+                    .genericDiveLoopEnabled;
+        } catch (RuntimeException ignored) {
+            return true;
+        }
+    }
 }

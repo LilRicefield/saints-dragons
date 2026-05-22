@@ -4,6 +4,7 @@ import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
 import com.leon.saintsdragons.platform.PlatformHelper;
 import com.leon.saintsdragons.platform.RegistryHelper;
+import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.entity.EntityType;
@@ -72,6 +73,11 @@ public final class FabricPlatformHelper implements PlatformHelper {
     @Override
     public boolean isModLoaded(String modId) {
         return FabricLoader.getInstance().isModLoaded(modId);
+    }
+
+    @Override
+    public boolean isGenericDiveLoopEnabled() {
+        return FabricClientConfigAccess.isGenericDiveLoopEnabled();
     }
 
     @Override

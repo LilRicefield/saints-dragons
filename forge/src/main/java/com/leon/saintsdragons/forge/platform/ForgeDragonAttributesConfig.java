@@ -33,6 +33,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_ARMOR;
     public static ForgeConfigSpec.DoubleValue RAEVYX_FLYING_SPEED;
     public static ForgeConfigSpec.DoubleValue RAEVYX_WILD_FLYING_SPEED_MULTIPLIER;
+    public static ForgeConfigSpec.BooleanValue RAEVYX_DIVE_LOOP_ENABLED;
     public static ForgeConfigSpec.DoubleValue RAEVYX_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_LIGHTNING_BEAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue RAEVYX_HORN_GORE_DAMAGE;
@@ -194,6 +195,8 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_ARMOR = builder.defineInRange("armor", 8.0, 0.0, 100000.0);
         builder.comment("Base rider flying speed");
         RAEVYX_FLYING_SPEED = builder.defineInRange("flying_speed", 0.5, 0.0, 2.0);
+        builder.comment("Enable Raevyx's custom audible dive loop. If false, Raevyx falls back to the generic local dive loop.");
+        RAEVYX_DIVE_LOOP_ENABLED = builder.define("dive_loop_enabled", true);
         builder.comment("Multiplier for wild flying speed only");
         RAEVYX_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         builder.comment("Ability Damage");

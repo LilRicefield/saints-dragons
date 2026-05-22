@@ -119,6 +119,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.summonStormDurationTicks = raevyxCurrent.extraDouble("summon_storm_duration_ticks",
                 raevyxDefaults.extraDouble("summon_storm_duration_ticks", 1200.0D));
         raevyxBuffer.legacyTaming = raevyxCurrent.extraBoolean("legacy_taming", false);
+        raevyxBuffer.diveLoopEnabled = raevyxCurrent.extraBoolean("dive_loop_enabled",
+                raevyxDefaults.extraBoolean("dive_loop_enabled", true));
         raevyxBuffer.eggHatchTimeTicksNormal = raevyxCurrent.extraDouble("egg_hatch_time_ticks_normal", 18000.0D);
         raevyxBuffer.eggHatchTimeTicksThunder = raevyxCurrent.extraDouble("egg_hatch_time_ticks_thunder", 9600.0D);
         raevyxBuffer.aggressiveWild = raevyxCurrent.extraBoolean("aggressive_wild", false);
@@ -349,7 +351,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,
                 () -> config.ignivorusMaxGroupSize, value -> config.ignivorusMaxGroupSize = value,
                 null, null, true,
-                1, 1, 2);
+                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT,
+                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT,
+                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
 
         addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.volitans"),
                 () -> config.volitansSpawnWeight, value -> config.volitansSpawnWeight = value,
@@ -426,6 +430,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ).setDefaultValue(true)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.dive_speed_lines.tooltip"))
          .setSaveConsumer(value -> clientConfig.diveSpeedLinesEnabled = value)
+          .build());
+        others.addEntry(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.generic_dive_loop"),
+                clientConfig.genericDiveLoopEnabled
+        ).setDefaultValue(true)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.generic_dive_loop.tooltip"))
+         .setSaveConsumer(value -> clientConfig.genericDiveLoopEnabled = value)
           .build());
         if (!remoteServer) {
             others.addEntry(entryBuilder.startBooleanToggle(
@@ -740,6 +751,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.flyingSpeed = value)
+                .build());
+        entries.add(entryBuilder.startBooleanToggle(
+                        Component.translatable("config.saintsdragons.attributes.raevyx.dive_loop"),
+                        buffer.diveLoopEnabled)
+                .setDefaultValue(defaults.extraBoolean("dive_loop_enabled", true))
+                .setTooltip(Component.translatable("config.saintsdragons.attributes.raevyx.dive_loop.tooltip"))
+                .setSaveConsumer(value -> buffer.diveLoopEnabled = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.wild_flying_speed_multiplier"), buffer.wildFlyingSpeedMultiplier)
                 .setDefaultValue(defaults.extraDouble("wild_flying_speed_multiplier", 1.0D))
@@ -1464,6 +1482,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buildRaevyxExtras(raevyxBuffer),
                 Map.of(
                         "legacy_taming", raevyxBuffer.legacyTaming,
+                        "dive_loop_enabled", raevyxBuffer.diveLoopEnabled,
                         "aggressive_wild", raevyxBuffer.aggressiveWild
                 )
         );
@@ -1608,6 +1627,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double summonStormSuperchargeDamageMultiplier;
         double summonStormDurationTicks;
         boolean legacyTaming;
+        boolean diveLoopEnabled;
         double eggHatchTimeTicksNormal;
         double eggHatchTimeTicksThunder;
         boolean aggressiveWild;

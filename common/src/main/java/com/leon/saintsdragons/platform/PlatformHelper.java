@@ -17,6 +17,7 @@ public interface PlatformHelper {
     boolean isDevelopmentEnvironment();
     String getPlatformId();
     boolean isModLoaded(String modId);
+    boolean isGenericDiveLoopEnabled();
     Item createSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType,
                         int primaryColor,
                         int secondaryColor,

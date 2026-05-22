@@ -290,6 +290,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED::get,
                 ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED::set,
                 null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.dive_loop"),
+                () -> ForgeDragonAttributesConfig.RAEVYX_DIVE_LOOP_ENABLED.get(),
+                ForgeDragonAttributesConfig.RAEVYX_DIVE_LOOP_ENABLED::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.wild_flying_speed_multiplier"),
                 ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER::get,
                 ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER::set,
@@ -751,6 +755,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.set(ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_ARMOR.set(ForgeDragonAttributesConfig.RAEVYX_ARMOR.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED.set(ForgeDragonAttributesConfig.RAEVYX_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_DIVE_LOOP_ENABLED.set(ForgeDragonAttributesConfig.RAEVYX_DIVE_LOOP_ENABLED.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.RAEVYX_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.set(ForgeDragonAttributesConfig.RAEVYX_LIGHTNING_BEAM_DAMAGE.getDefault());

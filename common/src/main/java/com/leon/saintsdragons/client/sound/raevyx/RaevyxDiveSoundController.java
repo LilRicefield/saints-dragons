@@ -60,6 +60,11 @@ public final class RaevyxDiveSoundController {
         int id = raevyx.getId();
         seen.add(id);
 
+        if (!raevyx.isCustomDiveLoopEnabled()) {
+            stopLoop(minecraft, id);
+            return;
+        }
+
         float intensity = DragonDiveEffectIntensity.get(raevyx);
         if (intensity <= 0.0F) {
             return;

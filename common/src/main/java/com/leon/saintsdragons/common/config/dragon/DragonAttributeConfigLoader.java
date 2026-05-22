@@ -142,6 +142,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double eggHatchTimeTicksThunder = 9600.0D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
+        boolean diveLoopEnabled = true;
         boolean aggressiveWild = false;
 
         if (IS_FORGE) {
@@ -167,6 +168,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 eggHatchTimeTicksThunder = (double) configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER").get(null));
                 tamingStunHealth = (double) configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("RAEVYX_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_WILD_FLYING_SPEED_MULTIPLIER").get(null));
+                diveLoopEnabled = (boolean) configClass.getField("RAEVYX_DIVE_LOOP_ENABLED").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_DIVE_LOOP_ENABLED").get(null));
                 aggressiveWild = (boolean) configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_AGGRESSIVE_WILD").get(null));
             } catch (Exception ignored) {
             }
@@ -199,6 +201,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 extras,
                 Map.of(
                         "legacy_taming", legacyTaming,
+                        "dive_loop_enabled", diveLoopEnabled,
                         "aggressive_wild", aggressiveWild
                 )
         );
@@ -677,6 +680,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillIgnivorusFireBreathDamage(path, entry.getKey(), entry.getValue());
                 backfillLegacyTaming(path, entry.getKey());
                 backfillExtraBooleans(path, entry.getKey());
+                backfillRaevyxDiveLoopEnabled(path, entry.getKey(), entry.getValue());
                 backfillBeamEnergyTuning(path, entry.getKey(), entry.getValue());
                 backfillRaevyxSummonStormTuning(path, entry.getKey(), entry.getValue());
                 backfillNormalEggTimerTuning(path, entry.getKey(), entry.getValue());
@@ -850,6 +854,25 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             writeConfigFile(path, json);
         } catch (Exception e) {
             SaintsDragonsCommon.LOGGER.warn("Failed to backfill extra booleans at {}", path, e);
+        }
+    }
+
+    private void backfillRaevyxDiveLoopEnabled(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        if (!id.equals(RAEVYX_ID)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            JsonObject extraJson = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            if (extraJson.has("dive_loop_enabled")) {
+                return;
+            }
+            extraJson.addProperty("dive_loop_enabled", mergedConfig.extraBoolean("dive_loop_enabled", true));
+            json.add("extra", extraJson);
+            writeConfigFile(path, json);
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill Raevyx dive loop toggle at {}", path, e);
         }
     }
 

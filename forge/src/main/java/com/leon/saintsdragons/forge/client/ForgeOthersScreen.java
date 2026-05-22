@@ -73,6 +73,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 ForgeClientConfig.DIVE_SPEED_LINES_ENABLED::set,
                 ForgeClientConfig.CLIENT_SPEC::save
         ));
+        entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.generic_dive_loop"),
+                () -> ForgeClientConfig.GENERIC_DIVE_LOOP_ENABLED.get(),
+                ForgeClientConfig.GENERIC_DIVE_LOOP_ENABLED::set,
+                ForgeClientConfig.CLIENT_SPEC::save
+        ));
 
         if (!remoteServer) {
             entries.add(new BooleanEntry(
