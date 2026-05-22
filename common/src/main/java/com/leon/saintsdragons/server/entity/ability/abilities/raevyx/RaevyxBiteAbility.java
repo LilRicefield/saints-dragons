@@ -2,7 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
@@ -16,6 +16,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.world.phys.AABB;
@@ -87,7 +89,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             }
             if (primary != null) {
                 bitePrimary(primary);
-                if (!DragonTargetingHelper.isBiteOnlyPreyTarget(primary)) {
+                if (!isProtectedTamedPet(primary) && !DragonElementalImmunity.isElectricityImmune(primary)) {
                     chainFrom(primary);
                 }
             }
@@ -155,7 +157,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             if (next == null) break;
 
             float mult = wyvern.getDamageMultiplier();
-            DamageSource chainSource = next instanceof com.leon.saintsdragons.server.entity.base.DragonEntity
+            DamageSource chainSource = next instanceof DragonEntity
                     ? wyvern.level().damageSources().mobAttack(wyvern)
                     : wyvern.level().damageSources().lightningBolt();
             if (!DragonElementalImmunity.isElectricityImmune(next)) {
@@ -203,6 +205,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
                     || !e.isAlive()
                     || !e.attackable()
                     || isAllied(wyvern, e)
+                    || isProtectedTamedPet(e)
                     || DragonElementalImmunity.isElectricityImmune(e)) {
                 continue;
             }
@@ -214,6 +217,16 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             }
         }
         return best;
+    }
+
+    private boolean isProtectedTamedPet(LivingEntity entity) {
+        if (entity instanceof DragonEntity) {
+            return false;
+        }
+        if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
+            return true;
+        }
+        return entity instanceof OwnableEntity ownable && ownable.getOwnerUUID() != null;
     }
 
     private boolean isAllied(Raevyx wyvern, Entity other) {
