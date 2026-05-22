@@ -87,7 +87,7 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int ignivorusMaxGroupSize = 2;
+    public int ignivorusMaxGroupSize = 1;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip

@@ -29,7 +29,7 @@ public final class SaintsDragonsConfig {
 
     public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
-    public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 2;
+    public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 1;
 
     public static final int VOLITANS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int VOLITANS_MIN_GROUP_SIZE_DEFAULT = 1;

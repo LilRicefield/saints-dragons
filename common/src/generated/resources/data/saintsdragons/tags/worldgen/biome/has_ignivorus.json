@@ -25,38 +25,6 @@
       "required": false
     },
     {
-      "id": "#c:mountain",
-      "required": false
-    },
-    {
-      "id": "#c:mountain_peak",
-      "required": false
-    },
-    {
-      "id": "#c:mountain_slope",
-      "required": false
-    },
-    {
-      "id": "#c:is_mountain",
-      "required": false
-    },
-    {
-      "id": "#forge:is_mountain",
-      "required": false
-    },
-    {
-      "id": "#forge:is_peak",
-      "required": false
-    },
-    {
-      "id": "#forge:is_slope",
-      "required": false
-    },
-    {
-      "id": "#terralith:skylands",
-      "required": false
-    },
-    {
       "id": "#terralith:volcanic",
       "required": false
     },
@@ -68,13 +36,8 @@
       "id": "#biomeswevegone:plains",
       "required": false
     },
-    {
-      "id": "#biomeswevegone:mountain",
-      "required": false
-    },
     "minecraft:plains",
     "minecraft:meadow",
-    "minecraft:windswept_hills",
     "minecraft:sunflower_plains"
   ]
 }

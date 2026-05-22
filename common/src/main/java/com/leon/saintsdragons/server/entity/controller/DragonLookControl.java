@@ -4,15 +4,11 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.control.LookControl;
 
-/**
- * Custom LookControl for dragons that limits rotation speed for smoother head movement.
- * Vanilla LookControl can rotate very fast - we slow it down for natural behavior.
- */
 public class DragonLookControl<T extends DragonEntity> extends LookControl {
 
     protected final T dragon;
-    protected float maxYRotSpeed = 10.0f;  // Max degrees per tick for yaw (default: ~40)
-    protected float maxXRotSpeed = 10.0f;  // Max degrees per tick for pitch (default: ~40)
+    protected float maxYRotSpeed = 10.0f;
+    protected float maxXRotSpeed = 10.0f;
 
     public DragonLookControl(T dragon) {
         super(dragon);
@@ -28,41 +24,25 @@ public class DragonLookControl<T extends DragonEntity> extends LookControl {
 
     @Override
     public void tick() {
-        // Don't look around while sleeping - dragons should be still
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) {
             return;
         }
-        // Keep seated dragons visually still; no idle look-around while sitting.
         if (!dragon.isVehicle() && (dragon.isOrderedToSit() || dragon.getSitProgress() > 0.0f)) {
             return;
         }
-
-        // When being ridden, skip custom clamping but still call vanilla logic
-        // (vanilla tick() might update internal state needed for camera smoothness)
         if (dragon.isVehicle()) {
             super.tick();
             return;
         }
-
-        // Vanilla LookControl can rotate at ~40 deg/tick which looks snappy
-        // We clamp rotation speed for smoother, more natural head movement
         float oldYaw = dragon.yHeadRot;
         float oldPitch = dragon.getXRot();
-
-        super.tick(); // Let vanilla calculate target rotations
-
+        super.tick();
         float newYaw = dragon.yHeadRot;
         float newPitch = dragon.getXRot();
-
-        // Calculate how much vanilla rotated
         float yawChange = Mth.wrapDegrees(newYaw - oldYaw);
         float pitchChange = newPitch - oldPitch;
-
-        // Clamp to our speed limits
         yawChange = Mth.clamp(yawChange, -maxYRotSpeed, maxYRotSpeed);
         pitchChange = Mth.clamp(pitchChange, -maxXRotSpeed, maxXRotSpeed);
-
-        // Apply clamped rotation
         dragon.setYHeadRot(oldYaw + yawChange);
         dragon.setXRot(oldPitch + pitchChange);
     }
