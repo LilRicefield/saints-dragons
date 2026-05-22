@@ -2,13 +2,13 @@
   "parent": "saintsdragons:root",
   "display": {
     "icon": {
-      "item": "minecraft:egg"
+      "item": "saintsdragons:dragon_encounter_icon"
     },
     "title": {
-      "translate": "advancement.saintsdragons.why.title"
+      "translate": "advancement.saintsdragons.encounter_dragon.title"
     },
     "description": {
-      "translate": "advancement.saintsdragons.why.description"
+      "translate": "advancement.saintsdragons.encounter_dragon.description"
     },
     "frame": "task",
     "show_toast": true,
@@ -16,11 +16,8 @@
     "hidden": false
   },
   "criteria": {
-    "hit_baby": {
+    "encounter_dragon": {
       "trigger": "minecraft:impossible"
     }
-  },
-  "rewards": {
-    "experience": 1
   }
 }

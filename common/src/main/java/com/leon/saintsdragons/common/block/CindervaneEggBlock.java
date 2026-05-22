@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -27,9 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-/**
- * Cindervane egg block that supports clustering up to 3 eggs in one block.
- */
+
 public class CindervaneEggBlock extends AbstractTimedDragonEggBlock<CindervaneEggBlockEntity> {
     public static final int MAX_EGGS = 3;
     public static final IntegerProperty EGGS = IntegerProperty.create("eggs", 1, MAX_EGGS);
@@ -134,5 +133,10 @@ public class CindervaneEggBlock extends AbstractTimedDragonEggBlock<CindervaneEg
     @Override
     protected void applyBabyAttributes(DragonEntity baby) {
         ((Cindervane) baby).applyConfiguredAttributes();
+    }
+
+    @Override
+    protected ResourceLocation getHatchAdvancementId() {
+        return SaintsDragonsCommon.rl("hatch_cindervane");
     }
 }

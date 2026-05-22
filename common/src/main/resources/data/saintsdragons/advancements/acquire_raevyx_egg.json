@@ -1,0 +1,32 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:raevyx_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.acquire_raevyx_egg.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.acquire_raevyx_egg.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_raevyx_egg": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:raevyx_egg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "parent": "saintsdragons:hatch_raevyx",
+  "display": {
+    "icon": {
+      "item": "minecraft:lightning_rod"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.raevyx_lightning_hatch.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.raevyx_lightning_hatch.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "raevyx_lightning_hatch": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 100
+  }
+}

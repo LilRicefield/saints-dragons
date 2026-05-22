@@ -1,0 +1,32 @@
+{
+  "display": {
+    "icon": {
+      "item": "saintsdragons:draconic_codex"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.root.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.root.description"
+    },
+    "background": "minecraft:textures/block/deepslate_tiles.png",
+    "frame": "task",
+    "show_toast": false,
+    "announce_to_chat": false,
+    "hidden": false
+  },
+  "criteria": {
+    "has_codex": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:draconic_codex"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:ignivorus_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.acquire_ignivorus_egg.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.acquire_ignivorus_egg.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_ignivorus_egg": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ignivorus_egg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

@@ -2,19 +2,24 @@ package com.leon.saintsdragons.common.block;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -71,14 +76,21 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         this.hatchEgg(level, pos, state);
     }
 
+    private void instantHatchFromLightning(ServerLevel level, BlockPos pos, BlockState state) {
+        RaevyxEggBlockEntity eggEntity = getEggEntity(level.getBlockEntity(pos));
+        this.instantHatch(level, pos, state);
+        awardLightningHatchAdvancement(level, pos, eggEntity);
+    }
+
 
     private void hatchEgg(ServerLevel level, BlockPos pos, BlockState state) {
         BlockEntity blockEntity = level.getBlockEntity(pos);
+        RaevyxEggBlockEntity eggEntity = getEggEntity(blockEntity);
         level.playSound(null, pos, SoundEvents.TURTLE_EGG_HATCH, SoundSource.BLOCKS, 0.7F, 0.9F + level.random.nextFloat() * 0.2F);
         level.removeBlock(pos, false);
         Raevyx baby = ModEntities.RAEVYX.get().create(level);
         if (baby != null) {
-            if (blockEntity instanceof RaevyxEggBlockEntity eggEntity) {
+            if (eggEntity != null) {
                 if (eggEntity.getOwnerUUID() != null) {
                     baby.setOwnerUUID(eggEntity.getOwnerUUID());
                     baby.setTame(true);
@@ -104,6 +116,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
             }
             level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
         }
+        awardHatchAdvancement(level, pos, eggEntity);
     }
 
     @Override
@@ -122,7 +135,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
             new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
             .stream()
             .findFirst()
-            .ifPresent(bolt -> this.instantHatch(level, pos, state));
+            .ifPresent(bolt -> this.instantHatchFromLightning(level, pos, state));
     }
 
     @Nullable
@@ -146,7 +159,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
                 new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
                 .stream()
                 .findFirst()
-                .ifPresent(bolt -> this.instantHatch(serverLevel, pos, state));
+                .ifPresent(bolt -> this.instantHatchFromLightning(serverLevel, pos, state));
 
         if (serverLevel.getBlockState(pos).getBlock() != this) {
             return;
@@ -181,7 +194,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         // Lightning strike instantly hatches the egg
         if (!level.isClientSide && entity instanceof LightningBolt) {
             if (level instanceof ServerLevel serverLevel) {
-                this.instantHatch(serverLevel, pos, state);
+                this.instantHatchFromLightning(serverLevel, pos, state);
             }
         }
     }
@@ -212,6 +225,44 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         );
     }
 
+    @Nullable
+    private RaevyxEggBlockEntity getEggEntity(@Nullable BlockEntity blockEntity) {
+        return blockEntity instanceof RaevyxEggBlockEntity eggEntity ? eggEntity : null;
+    }
+
+    private void awardHatchAdvancement(ServerLevel level, BlockPos pos, @Nullable RaevyxEggBlockEntity eggEntity) {
+        awardAdvancement(level, pos, eggEntity, SaintsDragonsCommon.rl("hatch_raevyx"), "hatch_dragon");
+    }
+
+    private void awardLightningHatchAdvancement(ServerLevel level, BlockPos pos, @Nullable RaevyxEggBlockEntity eggEntity) {
+        awardAdvancement(level, pos, eggEntity, SaintsDragonsCommon.rl("raevyx_lightning_hatch"), "raevyx_lightning_hatch");
+    }
+
+    private void awardAdvancement(ServerLevel level,
+                                  BlockPos pos,
+                                  @Nullable RaevyxEggBlockEntity eggEntity,
+                                  ResourceLocation advancementId,
+                                  String criterion) {
+        var advancement = level.getServer().getAdvancements().getAdvancement(advancementId);
+        if (advancement == null) {
+            return;
+        }
+
+        if (eggEntity != null && eggEntity.getHatchAdvancementOwnerUUID() != null) {
+            ServerPlayer owner = level.getServer().getPlayerList().getPlayer(eggEntity.getHatchAdvancementOwnerUUID());
+            if (owner != null) {
+                owner.getAdvancements().award(advancement, criterion);
+                return;
+            }
+        }
+
+        for (ServerPlayer player : level.players()) {
+            if (player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 32.0D * 32.0D) {
+                player.getAdvancements().award(advancement, criterion);
+            }
+        }
+    }
+
     @Override
     public boolean hasAnalogOutputSignal(@NotNull BlockState state) {
         return true;
@@ -231,6 +282,18 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     @Override
     public @NotNull RenderShape getRenderShape(@NotNull BlockState state) {
         return RenderShape.MODEL;
+    }
+
+    @Override
+    public void setPlacedBy(@NotNull Level level,
+                            @NotNull BlockPos pos,
+                            @NotNull BlockState state,
+                            @Nullable LivingEntity placer,
+                            @NotNull ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && placer instanceof Player player && level.getBlockEntity(pos) instanceof RaevyxEggBlockEntity eggEntity) {
+            eggEntity.setHatchAdvancementOwnerUUID(player.getUUID());
+        }
     }
 
     private int resolveNormalHatchTicks() {

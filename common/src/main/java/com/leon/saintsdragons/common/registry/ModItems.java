@@ -141,6 +141,10 @@ public class ModItems {
                                     .durability(0)
                     ));
 
+    public static final Supplier<Item> DRAGON_ENCOUNTER_ICON =
+            REGISTER.register("dragon_encounter_icon",
+                    () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_BRUSH =
             REGISTER.register("dragon_brush",
                     () -> new DragonBrushItem(

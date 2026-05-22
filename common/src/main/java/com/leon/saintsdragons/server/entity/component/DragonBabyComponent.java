@@ -28,9 +28,6 @@ public final class DragonBabyComponent {
         if (dragon.isTame() && dragon.getOwnerUUID() != null) {
             return dragon.getOwnerUUID();
         }
-        if (partner != null && partner.isTame() && partner.getOwnerUUID() != null) {
-            return partner.getOwnerUUID();
-        }
         return null;
     }
 

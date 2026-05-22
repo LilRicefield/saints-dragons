@@ -1,0 +1,32 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:stegonaut_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.acquire_stegonaut_egg.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.acquire_stegonaut_egg.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_stegonaut_egg": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:stegonaut_egg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

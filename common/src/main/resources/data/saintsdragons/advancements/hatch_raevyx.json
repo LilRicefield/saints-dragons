@@ -1,0 +1,27 @@
+{
+  "parent": "saintsdragons:acquire_raevyx_egg",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:raevyx_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.hatch_raevyx.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.hatch_raevyx.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "hatch_dragon": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "requirements": [
+    [
+      "hatch_dragon"
+    ]
+  ]
+}

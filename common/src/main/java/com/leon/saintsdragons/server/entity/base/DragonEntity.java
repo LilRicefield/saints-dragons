@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -1016,6 +1017,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             }
 
             if (attacker != null) {
+                if (attacker instanceof Player player) {
+                    awardDragonEncounterAdvancement(player);
+                }
                 this.setLastHurtByMob(attacker);
                 this.lastDamager = attacker;
                 this.lastDamagerTimestamp = this.tickCount;
@@ -1206,7 +1210,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             return babyComponent.resolveEggOwnerUUID(partner);
         }
         if (this.isTame() && this.getOwnerUUID() != null) return this.getOwnerUUID();
-        if (partner != null && partner.isTame() && partner.getOwnerUUID() != null) return partner.getOwnerUUID();
         return null;
     }
 
@@ -1997,6 +2000,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        awardDragonEncounterAdvancement(player);
         if (this.isTame() && this.isOwnedBy(player)) {
             if (canOwnerCommand(player) && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {
                 int next = getNextCommand();
@@ -2005,6 +2009,17 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             }
         }
         return super.mobInteract(player, hand);
+    }
+
+    public void awardDragonEncounterAdvancement(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        var advancement = serverPlayer.server.getAdvancements()
+                .getAdvancement(SaintsDragonsCommon.rl("encounter_dragon"));
+        if (advancement != null) {
+            serverPlayer.getAdvancements().award(advancement, "encounter_dragon");
+        }
     }
 
     @Override

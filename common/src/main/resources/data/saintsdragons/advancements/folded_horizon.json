@@ -1,0 +1,73 @@
+{
+  "parent": "saintsdragons:root",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:raevyx_binder"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.folded_horizon.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.folded_horizon.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "craft_cindervane_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:cindervane_binder"
+      }
+    },
+    "craft_ignivorus_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:ignivorus_binder"
+      }
+    },
+    "craft_nulljaw_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:nulljaw_binder"
+      }
+    },
+    "craft_raevyx_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:raevyx_binder"
+      }
+    },
+    "craft_stegonaut_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:stegonaut_binder"
+      }
+    },
+    "craft_varasuchus_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:varasuchus_binder"
+      }
+    },
+    "craft_volitans_binder": {
+      "trigger": "minecraft:recipe_crafted",
+      "conditions": {
+        "recipe_id": "saintsdragons:volitans_binder"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "craft_cindervane_binder",
+      "craft_ignivorus_binder",
+      "craft_nulljaw_binder",
+      "craft_raevyx_binder",
+      "craft_stegonaut_binder",
+      "craft_varasuchus_binder",
+      "craft_volitans_binder"
+    ]
+  ]
+}

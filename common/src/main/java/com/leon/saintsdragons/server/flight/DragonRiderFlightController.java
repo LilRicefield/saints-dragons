@@ -49,7 +49,6 @@ public final class DragonRiderFlightController {
                 takeoffBoostRequiresGoingUp,
                 takeoffMinVertical
         );
-
         dragon.move(MoverType.SELF, velocity);
         dragon.setDeltaMovement(velocity);
         dragon.calculateEntityAnimation(true);
@@ -163,7 +162,7 @@ public final class DragonRiderFlightController {
         return Mth.clamp(throttle, 0.0D, maxOverdrive);
     }
 
-    private static double diveIntensity(float pitchRadians) {
+    public static double diveIntensity(float pitchRadians) {
         double pitchDegrees = Math.toDegrees(pitchRadians);
         double normalizedPitch = (pitchDegrees - DIVE_START_ANGLE_DEG) / (DIVE_MAX_ANGLE_DEG - DIVE_START_ANGLE_DEG);
         return Math.pow(Mth.clamp(normalizedPitch, 0.0D, 1.0D), DIVE_CURVE_POWER);

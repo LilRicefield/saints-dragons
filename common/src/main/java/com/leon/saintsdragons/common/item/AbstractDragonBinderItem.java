@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.item.util.BinderComponentUtil;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -144,8 +145,20 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             return ItemStack.EMPTY;
         }
         onDragonCaptured(dragon, player, copied);
+        awardPocketDragonAdvancement(player);
         player.displayClientMessage(Component.translatable(getCapturedMessageKey(), dragon.getName().getString()), true);
         return copied;
+    }
+
+    private void awardPocketDragonAdvancement(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        var advancement = serverPlayer.server.getAdvancements()
+                .getAdvancement(SaintsDragonsCommon.rl("pocket_dragon"));
+        if (advancement != null) {
+            serverPlayer.getAdvancements().award(advancement, "bind_dragon");
+        }
     }
 
     private boolean releaseDragon(ItemStack stack, Player player, BlockPos pos) {

@@ -1,0 +1,32 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:varasuchus_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.acquire_varasuchus_egg.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.acquire_varasuchus_egg.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_varasuchus_egg": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:varasuchus_egg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

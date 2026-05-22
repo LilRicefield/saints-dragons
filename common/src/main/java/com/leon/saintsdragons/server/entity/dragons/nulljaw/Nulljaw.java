@@ -610,6 +610,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        awardDragonEncounterAdvancement(player);
         ItemStack heldItem = player.getItemInHand(hand);
         if (player.getVehicle() == this) {
             return InteractionResult.PASS;

@@ -19,6 +19,8 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
     @Nullable
     private UUID ownerUUID;
     @Nullable
+    private UUID hatchAdvancementOwnerUUID;
+    @Nullable
     private DragonGender babyGender;
 
     protected AbstractDragonEggBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
@@ -45,6 +47,16 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
     }
 
     @Nullable
+    public UUID getHatchAdvancementOwnerUUID() {
+        return this.hatchAdvancementOwnerUUID != null ? this.hatchAdvancementOwnerUUID : this.ownerUUID;
+    }
+
+    public void setHatchAdvancementOwnerUUID(@Nullable UUID hatchAdvancementOwnerUUID) {
+        this.hatchAdvancementOwnerUUID = hatchAdvancementOwnerUUID;
+        this.setChanged();
+    }
+
+    @Nullable
     public DragonGender getBabyGender() {
         return this.babyGender;
     }
@@ -60,6 +72,9 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
         tag.putDouble("HatchProgress", this.hatchProgress);
         if (this.ownerUUID != null) {
             tag.putUUID("OwnerUUID", this.ownerUUID);
+        }
+        if (this.hatchAdvancementOwnerUUID != null) {
+            tag.putUUID("HatchAdvancementOwnerUUID", this.hatchAdvancementOwnerUUID);
         }
         if (this.babyGender != null) {
             tag.putByte("BabyGender", this.babyGender.getId());
@@ -77,6 +92,9 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
         }
         if (tag.hasUUID("OwnerUUID")) {
             this.ownerUUID = tag.getUUID("OwnerUUID");
+        }
+        if (tag.hasUUID("HatchAdvancementOwnerUUID")) {
+            this.hatchAdvancementOwnerUUID = tag.getUUID("HatchAdvancementOwnerUUID");
         }
         if (tag.contains("BabyGender")) {
             this.babyGender = DragonGender.fromId(tag.getByte("BabyGender"));

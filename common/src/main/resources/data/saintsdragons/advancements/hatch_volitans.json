@@ -1,0 +1,23 @@
+{
+  "parent": "saintsdragons:acquire_volitans_egg",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:volitans_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.hatch_volitans.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.hatch_volitans.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "hatch_dragon": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -60,5 +61,10 @@ public class IgnivorusEggBlock extends AbstractTimedDragonEggBlock<IgnivorusEggB
     @Override
     protected void applyBabyAttributes(DragonEntity baby) {
         ((Ignivorus) baby).applyConfiguredAttributes();
+    }
+
+    @Override
+    protected ResourceLocation getHatchAdvancementId() {
+        return SaintsDragonsCommon.rl("hatch_ignivorus");
     }
 }

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -499,6 +500,22 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 0.45D,
                 TAKEOFF_ANIMATION_TICKS
         );
+    }
+
+    @Override
+    protected void onRiderDiveExited(Player rider, double diveIntensity) {
+        awardDiveAdvancement(rider);
+    }
+
+    private void awardDiveAdvancement(Player rider) {
+        if (!(rider instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        var advancement = serverPlayer.server.getAdvancements()
+                .getAdvancement(SaintsDragonsCommon.rl("raevyx_dive_exit"));
+        if (advancement != null) {
+            serverPlayer.getAdvancements().award(advancement, "raevyx_dive_exit");
+        }
     }
 
     @Override

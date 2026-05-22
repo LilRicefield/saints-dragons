@@ -24,6 +24,8 @@ public abstract class AbstractDragonInteractionHandler<T extends RideableDragonB
             return InteractionResult.PASS;
         }
 
+        dragon.awardDragonEncounterAdvancement(player);
+
         ItemStack heldItem = player.getItemInHand(hand);
         if (ModItems.isDragonBrush(heldItem)) {
             // Always acknowledge brush use on client so server interaction still runs.

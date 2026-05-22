@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
+import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.flight.DragonBarrelRollHelper;
@@ -15,6 +16,7 @@ import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -89,6 +91,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private float accumulatedRoll = 0.0F;
     private int riderLandingBlendTicks = 0;
     private int riderDiveBoostHoldTicks = 0;
+    private boolean riderDiving = false;
     private int nearGroundDustCooldown = 0;
     private boolean wasAerialForDustAtTickStart = false;
     private float prevSmoothedRoll = 0.0F;
@@ -160,10 +163,34 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         riderDiveBoostHoldTicks = 0;
     }
 
+    public void updateRiderDivingState(Player rider, boolean diving, double diveIntensity) {
+        boolean wasDiving = riderDiving;
+        riderDiving = diving;
+        if (wasDiving && !diving) {
+            onRiderDiveExited(rider, diveIntensity);
+        }
+    }
+
+    protected void onRiderDiveExited(Player rider, double diveIntensity) {
+    }
+
+    private void updateServerRiderDiveInput(Player player, float forward, boolean locked) {
+        if (level().isClientSide || locked || !isFlying()) {
+            updateRiderDivingState(player, false, 0.0D);
+            return;
+        }
+        float pitchRadians = isRiderPitchKeyMode()
+                ? DragonRiderControllerHelper.resolveKeyPitchRadians(this, getRiderKeyPitchDegrees())
+                : player.getXRot() * Mth.DEG_TO_RAD;
+        double diveIntensity = DragonRiderFlightController.diveIntensity(pitchRadians);
+        updateRiderDivingState(player, forward > 0.01F && diveIntensity > 0.0D, diveIntensity);
+    }
+
     @Override
     public void resetRiderFlightThrottle() {
         super.resetRiderFlightThrottle();
         clearRiderDiveBoostHold();
+        riderDiving = false;
     }
 
     @Override
@@ -191,6 +218,12 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     protected MoveControl createGroundMoveControl() {
         return new MoveControl(this);
+    }
+
+    @Override
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+        super.applyRiderMovementInput(player, forward, strafe, yaw, locked);
+        updateServerRiderDiveInput(player, forward, locked);
     }
 
     protected FlyingPathNavigation createAirNavigation(Level level, AsyncFlightController controller) {
@@ -574,6 +607,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
         if (!isFlying()) {
             clearRiderDiveBoostHold();
+            riderDiving = false;
             return;
         }
         tickRiderDiveBoostHold();

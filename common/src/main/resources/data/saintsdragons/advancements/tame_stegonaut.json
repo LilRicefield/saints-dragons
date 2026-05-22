@@ -1,5 +1,5 @@
 {
-  "parent": "minecraft:husbandry/tame_an_animal",
+  "parent": "saintsdragons:encounter_dragon",
   "display": {
     "icon": {
       "item": "saintsdragons:stegonaut_binder"
