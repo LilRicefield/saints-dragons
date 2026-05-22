@@ -14,9 +14,11 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigati
 import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFloatGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawAnimationHandler;
@@ -95,6 +97,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     private static final double NATURAL_SPAWN_NULLJAW_RADIUS = 96.0D;
     private static final int MAX_NEARBY_WILD_NULLJAWS = 4;
+    private static final double BREED_PARTNER_RANGE = 24.0D;
+    private static final double BREED_DISTANCE_SQR = 9.0D;
     private static final double CARRIED_HITBOX_DOWNWARD_EXTENSION = 1.65D;
     private static final double CARRIED_COLLISION_ESCAPE_LIFT = 0.20D;
     private static final int MAX_CARRIED_RIDER_ESCAPE_LIFTS = 8;
@@ -321,10 +325,11 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             }
         });
         this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
-        this.goalSelector.addGoal(3, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
-        this.goalSelector.addGoal(4, new NulljawFloatGoal(this));
-        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 12.0F));
-        this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(3, new NulljawBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+        this.goalSelector.addGoal(4, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
+        this.goalSelector.addGoal(5, new NulljawFloatGoal(this));
+        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));
+        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -631,6 +636,10 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
         if (heldItem.is(ModTags.Items.NULLJAW_FOODS)) {
             if (this.isTame()) {
+                if (player.isCrouching() && this.isOwnedBy(player)) {
+                    return handleBreeding(player, heldItem);
+                }
+
                 if (!canFeed()) {
                     if (!this.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
                         serverPlayer.displayClientMessage(
@@ -649,17 +658,21 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                     this.playEatMovingSound();
                     this.setFeedingCooldown(24);
 
-                    boolean wasHungry = this.isHungry();
-                    float newHealth = Math.min(this.getHealth() + 6.0F, this.getMaxHealth());
-                    this.setHealth(newHealth);
-                    this.applyFeedingHunger(false);
-                    this.level().broadcastEntityEvent(this, (byte) 7);
+                    if (this.isBaby() && baby != null) {
+                        baby.applyBabyGrowth(player, false, "entity.saintsdragons.nulljaw", 2400, 4800);
+                    } else {
+                        boolean wasHungry = this.isHungry();
+                        float newHealth = Math.min(this.getHealth() + 6.0F, this.getMaxHealth());
+                        this.setHealth(newHealth);
+                        this.applyFeedingHunger(false);
+                        this.level().broadcastEntityEvent(this, (byte) 7);
 
-                    if (player instanceof ServerPlayer serverPlayer) {
-                        String messageKey = newHealth >= this.getMaxHealth()
-                                ? (wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.nulljaw.fed")
-                                : "entity.saintsdragons.nulljaw.fed_partial";
-                        serverPlayer.displayClientMessage(Component.translatable(messageKey, this.getName()), true);
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            String messageKey = newHealth >= this.getMaxHealth()
+                                    ? (wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.nulljaw.fed")
+                                    : "entity.saintsdragons.nulljaw.fed_partial";
+                            serverPlayer.displayClientMessage(Component.translatable(messageKey, this.getName()), true);
+                        }
                     }
                 }
                 return InteractionResult.sidedSuccess(this.level().isClientSide);
@@ -719,6 +732,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             }
 
             if (!player.isCrouching() && hand == InteractionHand.MAIN_HAND) {
+                if (this.isBaby() || !this.canOwnerMount(player)) {
+                    return InteractionResult.sidedSuccess(this.level().isClientSide);
+                }
                 if (!this.level().isClientSide) {
                     if (player.startRiding(this)) {
                         nudgeUpIfCarriedRiderInWall();
@@ -729,6 +745,27 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         }
 
         return super.mobInteract(player, hand);
+    }
+
+    private InteractionResult handleBreeding(Player player, ItemStack food) {
+        var baby = this.getBabyComponent();
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.nulljaw", this.canFeed())) {
+            return InteractionResult.CONSUME;
+        }
+
+        return DragonBreedingInteractionHelper.handleBreeding(
+                this,
+                player,
+                food,
+                this::canFeed,
+                "entity.saintsdragons.nulljaw.still_eating",
+                24,
+                () -> {
+                    this.triggerAnim("interaction", "eat");
+                    this.playEatMovingSound();
+                },
+                this::setFeedingCooldown
+        );
     }
 
     @Override
@@ -894,7 +931,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public @Nullable AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
-        return ModEntities.NULLJAW.get().create(level);
+        return createBreedOffspring(level, otherParent, ModEntities.NULLJAW.get(), Nulljaw::applyConfiguredAttributes);
     }
 
     @Override

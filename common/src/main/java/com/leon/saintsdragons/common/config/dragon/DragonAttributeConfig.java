@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Data-driven attribute bundle for a dragon species.
- */
 public record DragonAttributeConfig(double maxHealth, double armor, double flyingSpeed,
                                     Map<String, DragonAbilityOverride> abilities, Map<String, Double> extraDoubles,
                                     Map<String, Boolean> extraBooleans) {

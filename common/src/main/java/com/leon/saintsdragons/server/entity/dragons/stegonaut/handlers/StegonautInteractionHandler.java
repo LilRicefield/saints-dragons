@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -156,38 +157,19 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack heldItem) {
-        boolean client = dragon.level().isClientSide;
-        if (!client && !checkBreedingEnabled(player)) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (dragon.isBaby()) {
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_too_young");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.getAge() != 0) {
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_cooling_down");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.isInLove()) {
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_already_ready");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                heldItem.shrink(1);
-            }
-
-            dragon.triggerAnim("interaction", "eat");
-            dragon.playEatMovingSound();
-            dragon.setInLove(player);
-            sendStatusMessage(player, "entity.saintsdragons.stegonaut.breeding_ready");
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        return DragonBreedingInteractionHelper.handleBreeding(
+                dragon,
+                player,
+                heldItem,
+                dragon::canFeed,
+                "entity.saintsdragons.dragon.still_eating",
+                0,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown
+        );
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack heldItem) {

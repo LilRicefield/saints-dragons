@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -158,49 +159,19 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
-        boolean client = dragon.level().isClientSide;
-        if (!client && !checkBreedingEnabled(player)) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.ignivorus.still_eating", dragon.getName()),
-                    true
-                );
-            }
-            return InteractionResult.CONSUME;
-        }
-
-        if (dragon.isBaby()) {
-            sendStatusMessage(player, "entity.saintsdragons.ignivorus.breeding_too_young");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.getAge() != 0) { // still on cooldown from previous breeding
-            sendStatusMessage(player, "entity.saintsdragons.ignivorus.breeding_cooling_down");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.isInLove()) {
-            sendStatusMessage(player, "entity.saintsdragons.ignivorus.breeding_already_ready");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (!client) {
-            consumeHeldItem(player, itemstack);
-
-            dragon.triggerAnim("interaction", "eat");
-            playEatSound();
-
-            dragon.setFeedingCooldown(61);
-
-            dragon.setInLove(player);
-            sendStatusMessage(player, "entity.saintsdragons.ignivorus.breeding_ready");
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        return DragonBreedingInteractionHelper.handleBreeding(
+                dragon,
+                player,
+                itemstack,
+                dragon::canFeed,
+                "entity.saintsdragons.ignivorus.still_eating",
+                61,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    playEatSound();
+                },
+                dragon::setFeedingCooldown
+        );
     }
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {

@@ -21,7 +21,7 @@ public final class NulljawRenderer extends DragonGeoEntityRenderer<Nulljaw> {
 
     @Override
     protected float getBabyShadowRadius(Nulljaw entity) {
-        return 1.3F;
+        return 0.75F;
     }
 
     @Override

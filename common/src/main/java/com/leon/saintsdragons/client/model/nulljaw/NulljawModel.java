@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.model.nulljaw;
 import com.leon.saintsdragons.client.model.DragonGeoModel;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -21,14 +22,14 @@ public final class NulljawModel extends DragonGeoModel<Nulljaw> {
     );
 
     public NulljawModel() {
-        super("nulljaw", false);
+        super("nulljaw");
     }
 
     @Override
     public void setCustomAnimations(Nulljaw entity, long instanceId, AnimationState<Nulljaw> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
 
-        if (com.leon.saintsdragons.client.ui.DraconicCodexScreen.RENDERING_IN_GUI.get()) {
+        if (DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
 

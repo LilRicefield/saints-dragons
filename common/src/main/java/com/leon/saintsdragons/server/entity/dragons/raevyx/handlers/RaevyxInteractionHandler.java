@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -210,44 +211,24 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack itemstack) {
-        boolean client = dragon.level().isClientSide;
-        if (!client && !checkBreedingEnabled(player)) {
-            return InteractionResult.CONSUME;
-        }
         var baby = dragon.getBabyComponent();
         if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.raevyx", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
-        if (dragon.isBaby()) {
-            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_too_young");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.getAge() != 0) {
-            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_cooling_down");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.isInLove()) {
-            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_already_ready");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                consumeHeldItem(player, itemstack);
-            }
-
-            dragon.triggerAnim("interaction", "eat");
-            dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
-            dragon.setFeedingCooldown(61);
-
-            dragon.setInLove(player);
-            sendStatusMessage(player, "entity.saintsdragons.raevyx.breeding_ready");
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        return DragonBreedingInteractionHelper.handleBreeding(
+                dragon,
+                player,
+                itemstack,
+                dragon::canFeed,
+                "entity.saintsdragons.raevyx.still_eating",
+                61,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_EAT.get(), 1.0f, dragon.isBaby() ? 1.6f : 1.0f, 56);
+                },
+                dragon::setFeedingCooldown
+        );
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack itemstack) {

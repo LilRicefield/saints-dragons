@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -151,44 +152,25 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack food) {
-        boolean client = dragon.level().isClientSide;
-        if (!client && !checkBreedingEnabled(player)) {
-            return InteractionResult.CONSUME;
-        }
         var baby = dragon.getBabyComponent();
 
         if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.varasuchus", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
-        if (dragon.isBaby()) {
-            sendStatusMessage(player, "entity.saintsdragons.varasuchus.breeding_too_young");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.getAge() != 0) {
-            sendStatusMessage(player, "entity.saintsdragons.varasuchus.breeding_cooling_down");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.isInLove()) {
-            sendStatusMessage(player, "entity.saintsdragons.varasuchus.breeding_already_ready");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (!client) {
-            if (!player.getAbilities().instabuild) {
-                food.shrink(1);
-            }
-
-            dragon.triggerAnim("interaction", "eat");
-            playEatSound();
-            dragon.setFeedingCooldown(61);
-            dragon.setInLove(player);
-            sendStatusMessage(player, "entity.saintsdragons.varasuchus.breeding_ready");
-        }
-
-        return InteractionResult.sidedSuccess(client);
+        return DragonBreedingInteractionHelper.handleBreeding(
+                dragon,
+                player,
+                food,
+                dragon::canFeed,
+                "entity.saintsdragons.varasuchus.still_eating",
+                61,
+                () -> {
+                    dragon.triggerAnim("interaction", "eat");
+                    playEatSound();
+                },
+                dragon::setFeedingCooldown
+        );
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack food, boolean untamed) {

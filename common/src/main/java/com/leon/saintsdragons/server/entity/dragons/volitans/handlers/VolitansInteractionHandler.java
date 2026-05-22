@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -190,44 +191,16 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack food) {
-        boolean client = dragon.level().isClientSide;
-        if (!client && !checkBreedingEnabled(player)) {
-            return InteractionResult.CONSUME;
-        }
-
-        if (!dragon.canFeed()) {
-            if (!client && player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                        Component.translatable("entity.saintsdragons.volitans.still_eating", dragon.getName()),
-                        true
-                );
-            }
-            return InteractionResult.CONSUME;
-        }
-
-        if (dragon.isBaby()) {
-            sendStatusMessage(player, "entity.saintsdragons.volitans.breeding_too_young");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.getAge() != 0) {
-            sendStatusMessage(player, "entity.saintsdragons.volitans.breeding_cooling_down");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (dragon.isInLove()) {
-            sendStatusMessage(player, "entity.saintsdragons.volitans.breeding_already_ready");
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        if (!client) {
-            consumeItem(player, food);
-            dragon.setFeedingCooldown(61);
-            dragon.setInLove(player);
-            playEatFeedback(food);
-            sendStatusMessage(player, "entity.saintsdragons.volitans.breeding_ready");
-        }
-        return InteractionResult.sidedSuccess(client);
+        return DragonBreedingInteractionHelper.handleBreeding(
+                dragon,
+                player,
+                food,
+                dragon::canFeed,
+                "entity.saintsdragons.volitans.still_eating",
+                61,
+                () -> playEatFeedback(food),
+                dragon::setFeedingCooldown
+        );
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack food) {

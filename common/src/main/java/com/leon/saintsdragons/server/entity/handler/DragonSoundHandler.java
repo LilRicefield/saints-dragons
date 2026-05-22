@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.sound.api.DragonSoundSpec;
 import com.leon.saintsdragons.sound.server.DragonSoundOrchestrator;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -53,6 +54,9 @@ public class DragonSoundHandler {
         if (dragon.isRemoved() || dragon.isDeadOrDying()) {
             return;
         }
+        if (dragon.isBaby() && isGrumbleVocal(vocalKey)) {
+            return;
+        }
         if (isInCooldown(vocalKey)) {
             return;
         }
@@ -86,7 +90,11 @@ public class DragonSoundHandler {
         }
     }
 
-    public void playMovingEntitySound(net.minecraft.sounds.SoundEvent sound, float volume, float pitch, int durationTicks) {
+    private static boolean isGrumbleVocal(String key) {
+        return key != null && key.contains("grumble");
+    }
+
+    public void playMovingEntitySound(SoundEvent sound, float volume, float pitch, int durationTicks) {
         if (sound == null) {
             return;
         }
@@ -101,7 +109,7 @@ public class DragonSoundHandler {
     }
 
 
-    public void playClientSound(DragonEntity dragon, Vec3 position, net.minecraft.sounds.SoundEvent sound, float volume, float pitch) {
+    public void playClientSound(DragonEntity dragon, Vec3 position, SoundEvent sound, float volume, float pitch) {
         double x = position != null ? position.x : dragon.getX();
         double y = position != null ? position.y : dragon.getY();
         double z = position != null ? position.z : dragon.getZ();
@@ -158,7 +166,7 @@ public class DragonSoundHandler {
         this.lastStepTick = tick;
     }
 
-    private boolean shouldSuppressLocomotionSound(net.minecraft.sounds.SoundEvent sound) {
+    private boolean shouldSuppressLocomotionSound(SoundEvent sound) {
         if (!dragon.areRiderControlsLocked()) {
             return false;
         }
