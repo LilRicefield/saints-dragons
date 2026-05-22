@@ -19,6 +19,7 @@ import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderC
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
@@ -314,11 +315,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
-        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
-            this.spawnAtLocation(ModItems.STEGONAUT_EGG.get());
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.STEGONAUT_FEMALE_DEATH, source);
         }
     }
 

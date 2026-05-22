@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ECE",
+    "CFC",
+    "ECE"
+  ],
+  "key": {
+    "C": {
+      "item": "minecraft:chorus_fruit"
+    },
+    "E": {
+      "item": "minecraft:end_stone"
+    },
+    "F": {
+      "item": "minecraft:ender_eye"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:nulljaw_binder",
+    "count": 1
+  }
+}

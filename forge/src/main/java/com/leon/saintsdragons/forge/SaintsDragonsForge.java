@@ -11,6 +11,7 @@ import com.leon.saintsdragons.forge.data.SaintsDragonBiomeTagsProvider;
 import com.leon.saintsdragons.forge.data.SaintsDragonBlockTagsProvider;
 import com.leon.saintsdragons.forge.data.SaintsDragonEntityTypeTagsProvider;
 import com.leon.saintsdragons.forge.data.SaintsDragonItemTagsProvider;
+import com.leon.saintsdragons.forge.data.SaintsDragonLootTableProvider;
 import com.leon.saintsdragons.forge.init.ForgeBrewingRecipes;
 import com.leon.saintsdragons.forge.loot.ModLootModifiers;
 import com.leon.saintsdragons.forge.mixin.RangedAttributeAccessor;
@@ -197,6 +198,8 @@ public final class SaintsDragonsForge {
                 new SaintsDragonEntityTypeTagsProvider(output, lookupProvider, existingFileHelper));
         generator.addProvider(event.includeServer(),
                 new SaintsDragonBiomeTagsProvider(output, lookupProvider));
+        generator.addProvider(event.includeServer(),
+                SaintsDragonLootTableProvider.create(output));
     }
 
     private void onAddReloadListeners(AddReloadListenerEvent event) {

@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.component;
 
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -9,15 +8,14 @@ import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 
 public final class DragonGroomingComponent {
     private static final int BRUSHES_PER_HAPPINESS = 2;
@@ -60,11 +58,9 @@ public final class DragonGroomingComponent {
             }
         }
 
-        GroomingProfile profile = getProfile(dragon);
-        float dropChance = getConfiguredDropChance(profile);
-        if (canDropRewards && dragon.getRandom().nextFloat() <= dropChance) {
-            int amount = Mth.nextInt(dragon.getRandom(), profile.minDrops(), profile.maxDrops());
-            dragon.spawnAtLocation(new ItemStack(profile.dropItem(), amount));
+        ResourceLocation groomingLoot = getGroomingLoot(dragon);
+        if (canDropRewards && groomingLoot != null) {
+            DragonLootTables.dropGroomingLoot(dragon, player, groomingLoot);
         }
 
         brushStack.hurtAndBreak(1, player, ignored -> {});
@@ -79,38 +75,25 @@ public final class DragonGroomingComponent {
         brushProgress = Mth.clamp(tag.getInt("BrushProgress"), 0, BRUSHES_PER_HAPPINESS - 1);
     }
 
-    private static GroomingProfile getProfile(DragonEntity dragon) {
+    private static ResourceLocation getGroomingLoot(DragonEntity dragon) {
         if (dragon instanceof Ignivorus) {
-            return new GroomingProfile(DragonAttributeConfigLoader.IGNIVORUS_ID, 0.35F, ModItems.IGNIVORUS_SCALE.get(), 1, 2);
+            return DragonLootTables.IGNIVORUS_GROOMING;
         }
         if (dragon instanceof Raevyx) {
-            return new GroomingProfile(DragonAttributeConfigLoader.RAEVYX_ID, 0.35F, ModItems.RAEVYX_SCALE.get(), 1, 2);
+            return DragonLootTables.RAEVYX_GROOMING;
         }
         if (dragon instanceof Varasuchus) {
-            return new GroomingProfile(DragonAttributeConfigLoader.VARASUCHUS_ID, 0.30F, ModItems.VARASUCHUS_SCALE.get(), 1, 2);
+            return DragonLootTables.VARASUCHUS_GROOMING;
         }
         if (dragon instanceof Cindervane) {
-            return new GroomingProfile(DragonAttributeConfigLoader.CINDERVANE_ID, 0.30F, ModItems.CINDERVANE_SCALE.get(), 1, 1);
+            return DragonLootTables.CINDERVANE_GROOMING;
         }
         if (dragon instanceof Stegonaut) {
-            return new GroomingProfile(DragonAttributeConfigLoader.STEGONAUT_ID, 0.30F, ModItems.STEGONAUT_SCALE.get(), 1, 2);
+            return DragonLootTables.STEGONAUT_GROOMING;
         }
         if (dragon instanceof Volitans) {
-            return new GroomingProfile(DragonAttributeConfigLoader.VOLITANS_ID, 0.30F, ModItems.VOLITANS_SCALE.get(), 1, 2);
+            return DragonLootTables.VOLITANS_GROOMING;
         }
-        return new GroomingProfile(null, 0.25F, Items.SCUTE, 1, 1);
-    }
-
-    private static float getConfiguredDropChance(GroomingProfile profile) {
-        ResourceLocation configId = profile.configId();
-        if (configId == null) {
-            return profile.defaultDropChance();
-        }
-        return (float) DragonAttributeConfigLoader.getInstance()
-                .getConfig(configId)
-                .extraDouble("scale_drop_chance_brush", profile.defaultDropChance());
-    }
-
-    private record GroomingProfile(ResourceLocation configId, float defaultDropChance, Item dropItem, int minDrops, int maxDrops) {
+        return null;
     }
 }

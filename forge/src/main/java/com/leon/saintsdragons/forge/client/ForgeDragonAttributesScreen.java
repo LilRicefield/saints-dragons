@@ -216,14 +216,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"),
-                ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.scale_drop_chance_brush"),
-                ForgeDragonAttributesConfig.CINDERVANE_SCALE_DROP_CHANCE_BRUSH::get,
-                ForgeDragonAttributesConfig.CINDERVANE_SCALE_DROP_CHANCE_BRUSH::set,
-                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_explosion_damage"),
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE::set,
@@ -271,14 +263,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"),
-                ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.scale_drop_chance_brush"),
-                ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH::get,
-                ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
@@ -378,14 +362,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY::get,
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.egg_drop_chance"),
-                ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"),
-                ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH::get,
-                ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH::set,
-                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.raevyx.legacy_taming"),
                 () -> ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.get(),
                 ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING::set,
@@ -457,14 +433,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"),
-                ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"),
-                ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH::get,
-                ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"),
                 () -> ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.get(),
@@ -610,14 +578,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_drop_chance"),
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"),
-                ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH::set,
-                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.legacy_taming"),
                 () -> ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.get(),
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING::set,
@@ -762,18 +722,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL::get,
                 ForgeDragonAttributesConfig.VOLITANS_ROAR_AIR_WATER_POISON_LEVEL::set,
                 null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"),
-                ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH::get,
-                ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
-                ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
-                ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE::set,
-                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_time_ticks_normal"),
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL::set,
@@ -781,10 +729,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_loot_shipwreck_treasure"),
                 ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE::get,
                 ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
-                ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::get,
-                ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE::set,
                 null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"),
                 ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING::get,
@@ -812,8 +756,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.CINDERVANE_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.CINDERVANE_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.CINDERVANE_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.CINDERVANE_SCALE_DROP_CHANCE_BRUSH.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.CINDERVANE_AGGRESSIVE_WILD.getDefault());
@@ -827,8 +769,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.STEGONAUT_SCALE_DROP_CHANCE_BRUSH.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.STEGONAUT_AGGRESSIVE_WILD.getDefault());
             }
             case RAEVYX -> {
@@ -853,8 +793,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_PILLAGER_OUTPOST.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.RAEVYX_EGG_LOOT_ANCIENT_CITY.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.RAEVYX_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.RAEVYX_SCALE_DROP_CHANCE_BRUSH.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.RAEVYX_AGGRESSIVE_WILD.getDefault());
             }
             case VARASUCHUS -> {
@@ -874,8 +812,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
-                ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.VARASUCHUS_SCALE_DROP_CHANCE_BRUSH.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.VARASUCHUS_AGGRESSIVE_WILD.getDefault());
             }
             case IGNIVORUS -> {
@@ -913,8 +849,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_BASTION_TREASURE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_NETHER_BRIDGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_LOOT_ANCIENT_CITY.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.IGNIVORUS_SCALE_DROP_CHANCE_BRUSH.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.IGNIVORUS_AGGRESSIVE_WILD.getDefault());
             }
             case VOLITANS -> {
@@ -937,10 +871,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.VOLITANS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VOLITANS_EGG_HATCH_CHANCE_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE.set(ForgeDragonAttributesConfig.VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE.set(ForgeDragonAttributesConfig.VOLITANS_EGG_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH.set(ForgeDragonAttributesConfig.VOLITANS_SCALE_DROP_CHANCE_BRUSH.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE.set(ForgeDragonAttributesConfig.VOLITANS_SPINE_DROP_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE.set(ForgeDragonAttributesConfig.VOLITANS_FISH_DROP_CHANCE.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.getDefault());

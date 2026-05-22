@@ -73,6 +73,17 @@
       }
     ]
   },
+  "raevyx_dive_loop": {
+    "subtitle": "subtitles.saintsdragons.raevyx_dive_loop",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_dive",
+        "volume": 2.5,
+        "pitch": 1.0,
+        "attenuation_distance": 96
+      }
+    ]
+  },
   "raevyx_grumble_1": {
     "subtitle": "subtitles.saintsdragons.raevyx_grumble_1",
     "sounds": [

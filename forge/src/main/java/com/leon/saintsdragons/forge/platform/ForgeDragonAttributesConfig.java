@@ -24,8 +24,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_CHICKEN;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_EGG_HATCH_CHANCE_NORMAL;
-    public static ForgeConfigSpec.DoubleValue CINDERVANE_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue CINDERVANE_SCALE_DROP_CHANCE_BRUSH;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FIRE_BODY_SELF_DAMAGE_ON_CRASH;
     public static ForgeConfigSpec.BooleanValue CINDERVANE_AGGRESSIVE_WILD;
@@ -53,8 +51,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_HATCH_TIME_TICKS_THUNDER;
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_LOOT_PILLAGER_OUTPOST;
     public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_LOOT_ANCIENT_CITY;
-    public static ForgeConfigSpec.DoubleValue RAEVYX_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue RAEVYX_SCALE_DROP_CHANCE_BRUSH;
     public static ForgeConfigSpec.BooleanValue RAEVYX_AGGRESSIVE_WILD;
 
     // Varasuchus
@@ -74,8 +70,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAMING_CHANCE_TROPICAL;
     public static ForgeConfigSpec.BooleanValue VARASUCHUS_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_HATCH_CHANCE_NORMAL;
-    public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue VARASUCHUS_SCALE_DROP_CHANCE_BRUSH;
     public static ForgeConfigSpec.BooleanValue VARASUCHUS_AGGRESSIVE_WILD;
 
     // Ignivorus
@@ -114,8 +108,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_BASTION_TREASURE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_NETHER_BRIDGE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_LOOT_ANCIENT_CITY;
-    public static ForgeConfigSpec.DoubleValue IGNIVORUS_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue IGNIVORUS_SCALE_DROP_CHANCE_BRUSH;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_AGGRESSIVE_WILD;
 
     // Stegonaut
@@ -127,8 +119,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_HATCH_CHANCE_NORMAL;
-    public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue STEGONAUT_SCALE_DROP_CHANCE_BRUSH;
     public static ForgeConfigSpec.BooleanValue STEGONAUT_AGGRESSIVE_WILD;
 
     // Volitans
@@ -151,10 +141,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.BooleanValue VOLITANS_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue VOLITANS_EGG_HATCH_CHANCE_NORMAL;
     public static ForgeConfigSpec.DoubleValue VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_EGG_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_SCALE_DROP_CHANCE_BRUSH;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_SPINE_DROP_CHANCE;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_FISH_DROP_CHANCE;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_ACTIVE_TICKS_MAX;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_DRAIN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_REGEN_PER_TICK;
@@ -199,10 +185,6 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 50.0, 0.0, 100.0);
         builder.comment("Egg hatch timing in ticks (20 ticks = 1 second)");
         CINDERVANE_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 12000.0, 20.0, 72000.0);
-        builder.comment("Egg drop chance (0-1)");
-        CINDERVANE_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
-        builder.comment("Scale drop chance when brushed (0-1)");
-        CINDERVANE_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.30, 0.0, 1.0);
         builder.comment("Direct blast damage on Fire Body crash impact");
         CINDERVANE_FIRE_BODY_EXPLOSION_DAMAGE = builder.defineInRange("fire_body_explosion_damage", 200.0, 0.0, 100000.0);
         builder.comment("Self-damage applied to Cindervane after Fire Body crash impact");
@@ -244,10 +226,6 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Egg loot chances (0-1)");
         RAEVYX_EGG_LOOT_PILLAGER_OUTPOST = builder.defineInRange("egg_loot_pillager_outpost", 0.20, 0.0, 1.0);
         RAEVYX_EGG_LOOT_ANCIENT_CITY = builder.defineInRange("egg_loot_ancient_city", 0.15, 0.0, 1.0);
-        builder.comment("Egg drop chance (0-1)");
-        RAEVYX_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
-        builder.comment("Scale drop chance when brushed (0-1)");
-        RAEVYX_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.35, 0.0, 1.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         RAEVYX_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Aggressive wild behavior");
@@ -275,10 +253,6 @@ public final class ForgeDragonAttributesConfig {
         VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 25.0, 0.0, 100.0);
         builder.comment("Egg hatch timing in ticks (20 ticks = 1 second)");
         VARASUCHUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 24000.0, 20.0, 72000.0);
-        builder.comment("Egg drop chance (0-1)");
-        VARASUCHUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
-        builder.comment("Scale drop chance when brushed (0-1)");
-        VARASUCHUS_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.30, 0.0, 1.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         VARASUCHUS_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Aggressive wild behavior");
@@ -333,10 +307,6 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_EGG_LOOT_BASTION_TREASURE = builder.defineInRange("egg_loot_bastion_treasure", 0.15, 0.0, 1.0);
         IGNIVORUS_EGG_LOOT_NETHER_BRIDGE = builder.defineInRange("egg_loot_nether_bridge", 0.15, 0.0, 1.0);
         IGNIVORUS_EGG_LOOT_ANCIENT_CITY = builder.defineInRange("egg_loot_ancient_city", 0.10, 0.0, 1.0);
-        builder.comment("Egg drop chance (0-1)");
-        IGNIVORUS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
-        builder.comment("Scale drop chance when brushed (0-1)");
-        IGNIVORUS_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.35, 0.0, 1.0);
         builder.comment("Legacy taming (true = simple food taming, false = special mechanics)");
         IGNIVORUS_LEGACY_TAMING = builder.define("legacy_taming", false);
         builder.comment("Aggressive wild behavior");
@@ -357,10 +327,6 @@ public final class ForgeDragonAttributesConfig {
         STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 100.0, 0.0, 100.0);
         builder.comment("Egg hatch timing in ticks (20 ticks = 1 second)");
         STEGONAUT_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 30000.0, 20.0, 72000.0);
-        builder.comment("Egg drop chance (0-1)");
-        STEGONAUT_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
-        builder.comment("Scale drop chance when brushed (0-1)");
-        STEGONAUT_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.30, 0.0, 1.0);
         builder.comment("Aggressive wild behavior");
         STEGONAUT_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
         builder.pop();
@@ -392,12 +358,6 @@ public final class ForgeDragonAttributesConfig {
         VOLITANS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 18000.0, 20.0, 72000.0);
         builder.comment("Egg loot chances (0-1)");
         VOLITANS_EGG_LOOT_SHIPWRECK_TREASURE = builder.defineInRange("egg_loot_shipwreck_treasure", 0.12, 0.0, 1.0);
-        builder.comment("Egg drop chance (0-1)");
-        VOLITANS_EGG_DROP_CHANCE = builder.defineInRange("egg_drop_chance", 0.12, 0.0, 1.0);
-        builder.comment("Loot drop chances (0-1)");
-        VOLITANS_SCALE_DROP_CHANCE_BRUSH = builder.defineInRange("scale_drop_chance_brush", 0.30, 0.0, 1.0);
-        VOLITANS_SPINE_DROP_CHANCE = builder.defineInRange("spine_drop_chance", 0.3, 0.0, 1.0);
-        VOLITANS_FISH_DROP_CHANCE = builder.defineInRange("fish_drop_chance", 0.40, 0.0, 1.0);
         builder.comment("Breath Gauge Tuning");
         VOLITANS_BREATH_ACTIVE_TICKS_MAX = builder.defineInRange("breath_active_ticks_max", 240.0, 1.0, 24000.0);
         VOLITANS_BREATH_DRAIN_PER_TICK = builder.defineInRange("breath_drain_per_tick", 1.0 / (20.0 * 12.0), 0.0, 1.0);

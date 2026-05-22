@@ -46,6 +46,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -209,7 +210,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final float BREATH_DEPLETED_THRESHOLD = 0.01F;
     private static final float BREATH_REARM_THRESHOLD = 0.20F;
     private static final int SPINE_DROP_COOLDOWN_TICKS = 30;
-    private static final float FISH_DROP_CHANCE = 0.40F;
     public static final double LANDING_BLEND_ALTITUDE = RideableFlyingDragon.LANDING_BLEND_ALTITUDE;
     public static final double BREED_PARTNER_RANGE = 20.0D;
     public static final double BREED_DISTANCE_SQR = 16.0D;
@@ -1611,30 +1611,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        if (level().isClientSide) {
-            return;
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.VOLITANS_FEMALE_DEATH, source);
         }
-
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
-        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
-
-        if (getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
-            this.spawnAtLocation(ModItems.VOLITANS_EGG.get());
-        }
-
-        dropFishType(Items.SALMON);
-        dropFishType(Items.COD);
-        dropFishType(Items.TROPICAL_FISH);
-        dropFishType(Items.PUFFERFISH);
-    }
-
-    private void dropFishType(Item fishItem) {
-        if (this.random.nextFloat() >= getConfiguredExtra("fish_drop_chance", FISH_DROP_CHANCE)) {
-            return;
-        }
-        int amount = Mth.nextInt(this.random, 1, 3);
-        this.spawnAtLocation(new ItemStack(fishItem, amount));
     }
 
     @Override
@@ -1756,17 +1735,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
         boolean hurt = super.hurt(source, amount);
         if (hurt && shouldDropCombatSpine(source, amount)) {
-            this.spawnAtLocation(ModItems.VOLITANS_SPINE.get());
-            spineDropCooldownTicks = SPINE_DROP_COOLDOWN_TICKS;
+            if (DragonLootTables.dropEntityLoot(this, DragonLootTables.VOLITANS_HIT, source)) {
+                spineDropCooldownTicks = SPINE_DROP_COOLDOWN_TICKS;
+            }
         }
         return hurt;
     }
 
     private boolean shouldDropCombatSpine(@NotNull DamageSource source, float amount) {
         if (level().isClientSide || amount <= 0.0F || spineDropCooldownTicks > 0) {
-            return false;
-        }
-        if (this.random.nextDouble() >= getConfiguredExtra("spine_drop_chance", 1.0D)) {
             return false;
         }
         if (source.getEntity() instanceof LivingEntity) {

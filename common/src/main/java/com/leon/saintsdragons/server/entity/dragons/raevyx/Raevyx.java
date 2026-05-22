@@ -33,6 +33,7 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -2955,11 +2956,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
-            this.spawnAtLocation(ModItems.RAEVYX_EGG.get());
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.RAEVYX_FEMALE_DEATH, source);
         }
     }
 }

@@ -43,6 +43,7 @@ import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -601,10 +602,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 && !level().isClientSide
                 && amount > 0.0F
                 && damageSource.getEntity() != null
-                && teethChipDropCooldownTicks <= 0
-                && this.random.nextFloat() < 0.12F) {
-            this.spawnAtLocation(ModItems.IGNIVORUS_TOOTH.get());
-            teethChipDropCooldownTicks = 30;
+                && teethChipDropCooldownTicks <= 0) {
+            if (DragonLootTables.dropEntityLoot(this, DragonLootTables.IGNIVORUS_HIT, damageSource)) {
+                teethChipDropCooldownTicks = 30;
+            }
         }
         return hurt;
     }
@@ -3024,21 +3025,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
-            this.spawnAtLocation(ModItems.IGNIVORUS_EGG.get());
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.IGNIVORUS_FEMALE_DEATH, source);
         }
 
-        if (!level().isClientSide) {
-            if (this.random.nextFloat() < 0.35F) {
-                this.spawnAtLocation(ModItems.IGNIVORUS_TOOTH.get());
-            }
-            if (this.random.nextFloat() < 0.90F) {
-                this.spawnAtLocation(ModItems.IGNIVORUS_HEART.get());
-            }
-        }
     }
     @Override
     public int getMaxHeadXRot() {

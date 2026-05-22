@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonBrushItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.FixedPotionItem;
+import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.VolitansBinderItem;
@@ -285,6 +286,14 @@ public class ModItems {
     public static final Supplier<Item> VOLITANS_BINDER =
             REGISTER.register("volitans_binder",
                     () -> new VolitansBinderItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0)
+                    ));
+
+    public static final Supplier<Item> NULLJAW_BINDER =
+            REGISTER.register("nulljaw_binder",
+                    () -> new NulljawBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)

@@ -29,8 +29,6 @@
     "egg_hatch_time_ticks_thunder": 9600.0,
     "egg_loot_pillager_outpost": 0.2,
     "egg_loot_ancient_city": 0.15,
-    "egg_drop_chance": 0.12,
-    "scale_drop_chance_brush": 0.35,
     "taming_stun_health": 60.0,
     "wild_flying_speed_multiplier": 1.0,
     "aggressive_wild": false

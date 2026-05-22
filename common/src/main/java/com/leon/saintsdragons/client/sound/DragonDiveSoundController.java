@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.sound;
 
 import com.leon.saintsdragons.client.camera.DragonDiveEffectIntensity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -23,6 +24,10 @@ public final class DragonDiveSoundController {
         Entity player = minecraft.player;
         Entity vehicle = player == null ? null : player.getVehicle();
         if (!(vehicle instanceof RideableDragonBase dragon)) {
+            stopCurrent(minecraft);
+            return;
+        }
+        if (dragon instanceof Raevyx) {
             stopCurrent(minecraft);
             return;
         }

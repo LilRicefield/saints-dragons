@@ -39,7 +39,8 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.RAEVYX_BINDER.get())
                 .add(ModItems.STEGONAUT_BINDER.get())
                 .add(ModItems.VARASUCHUS_BINDER.get())
-                .add(ModItems.VOLITANS_BINDER.get());
+                .add(ModItems.VOLITANS_BINDER.get())
+                .add(ModItems.NULLJAW_BINDER.get());
 
         tag(ModTags.Items.DRAGON_BRUSHES)
                 .add(ModItems.DRAGON_BRUSH.get())

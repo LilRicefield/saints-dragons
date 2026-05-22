@@ -60,6 +60,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_DODGE = registerSound("raevyx_dodge");
     public static final Supplier<SoundEvent> RAEVYX_DASH = registerSound("raevyx_dash");
     public static final Supplier<SoundEvent> RAEVYX_GROUND_REND = registerSound("raevyx_ground_rend");
+    public static final Supplier<SoundEvent> RAEVYX_DIVE_LOOP = registerSound("raevyx_dive_loop");
 
     // Cindervane
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");

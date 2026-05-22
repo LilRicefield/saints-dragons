@@ -538,7 +538,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             return;
         }
         if (shouldRunTakeoffStateStarted(wasTakeoff, requestedTakeoff) && !level().isClientSide) {
-            spawnGroundDustBurst(48, 0.65D);
+            if (shouldSpawnFlightDustEffects()) {
+                spawnGroundDustBurst(48, 0.65D);
+            }
             onTakeoffStateStarted();
         }
     }
@@ -552,6 +554,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected void onTakeoffStateStarted() {
+    }
+
+    protected boolean shouldSpawnFlightDustEffects() {
+        return true;
     }
 
     @Override
@@ -595,7 +601,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     private void tickNearGroundFlightDust() {
-        if (level().isClientSide || !isAerial() || isTakeoff() || isLanding() || isInWaterOrBubble() || isInLava()) {
+        if (level().isClientSide || !shouldSpawnFlightDustEffects() || !isAerial() || isTakeoff() || isLanding() || isInWaterOrBubble() || isInLava()) {
             nearGroundDustCooldown = 0;
             return;
         }
@@ -1331,7 +1337,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         resetRiderFlightThrottle();
 
         if (!level().isClientSide) {
-            if (wasAirborne) {
+            if (wasAirborne && shouldSpawnFlightDustEffects()) {
                 spawnGroundDustBurst(56, 0.78D);
             }
             onStandardServerLanding();
@@ -1440,8 +1446,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
         Vec3 velocity = getDeltaMovement();
         float targetPitchRad;
+        boolean riddenPitch = false;
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
+            riddenPitch = true;
             boolean useKeyPitch = isRiderPitchKeyMode();
 
             if (useKeyPitch) {
@@ -1478,7 +1486,9 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             }
         }
 
-        state.flightPitchRad = DragonFlightVisuals.approachPitch(state.flightPitchRad, targetPitchRad);
+        state.flightPitchRad = riddenPitch
+                ? DragonFlightVisuals.approachRiderPitch(state.flightPitchRad, targetPitchRad)
+                : DragonFlightVisuals.approachAiPitch(state.flightPitchRad, targetPitchRad);
         this.entityData.set(pitchAccessor, state.flightPitchRad);
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {

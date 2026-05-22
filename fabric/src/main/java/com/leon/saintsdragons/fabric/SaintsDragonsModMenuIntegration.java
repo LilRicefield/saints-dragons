@@ -80,9 +80,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.tamingChanceChicken = cindervaneCurrent.extraDouble("taming_chance_chicken", 33.3333D);
         cindervaneBuffer.tamingChanceHearty = cindervaneCurrent.extraDouble("taming_chance_hearty", 50.0);
         cindervaneBuffer.eggHatchChanceNormal = cindervaneCurrent.extraDouble("egg_hatch_time_ticks_normal", 12000.0D);
-        cindervaneBuffer.eggDropChance = cindervaneCurrent.extraDouble("egg_drop_chance", 0.12D);
-        cindervaneBuffer.scaleDropChanceBrush = cindervaneCurrent.extraDouble("scale_drop_chance_brush",
-                cindervaneDefaults.extraDouble("scale_drop_chance_brush", 0.30D));
         cindervaneBuffer.fireBodyExplosionDamage = cindervaneCurrent.extraDouble("fire_body_explosion_damage", 200.0D);
         cindervaneBuffer.fireBodySelfDamageOnCrash = cindervaneCurrent.extraDouble("fire_body_self_damage_on_crash", 40.0D);
         cindervaneBuffer.wildFlyingSpeedMultiplier = cindervaneCurrent.extraDouble("wild_flying_speed_multiplier",
@@ -126,9 +123,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.eggHatchTimeTicksThunder = raevyxCurrent.extraDouble("egg_hatch_time_ticks_thunder", 9600.0D);
         raevyxBuffer.eggLootPillagerOutpost = raevyxCurrent.extraDouble("egg_loot_pillager_outpost", 0.20D);
         raevyxBuffer.eggLootAncientCity = raevyxCurrent.extraDouble("egg_loot_ancient_city", 0.15D);
-        raevyxBuffer.eggDropChance = raevyxCurrent.extraDouble("egg_drop_chance", 0.12D);
-        raevyxBuffer.scaleDropChanceBrush = raevyxCurrent.extraDouble("scale_drop_chance_brush",
-                raevyxDefaults.extraDouble("scale_drop_chance_brush", 0.35D));
         raevyxBuffer.aggressiveWild = raevyxCurrent.extraBoolean("aggressive_wild", false);
 
         DragonAttributeConfig varasuchusCurrent = loader.getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
@@ -150,9 +144,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusBuffer.tamingChanceTropical = varasuchusCurrent.extraDouble("taming_chance_tropical", 25.0D);
         varasuchusBuffer.legacyTaming = varasuchusCurrent.extraBoolean("legacy_taming", false);
         varasuchusBuffer.eggHatchChanceNormal = varasuchusCurrent.extraDouble("egg_hatch_time_ticks_normal", 24000.0D);
-        varasuchusBuffer.eggDropChance = varasuchusCurrent.extraDouble("egg_drop_chance", 0.12D);
-        varasuchusBuffer.scaleDropChanceBrush = varasuchusCurrent.extraDouble("scale_drop_chance_brush",
-                varasuchusDefaults.extraDouble("scale_drop_chance_brush", 0.30D));
         varasuchusBuffer.aggressiveWild = varasuchusCurrent.extraBoolean("aggressive_wild", true);
 
         DragonAttributeConfig stegonautCurrent = loader.getConfig(DragonAttributeConfigLoader.STEGONAUT_ID);
@@ -169,9 +160,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         stegonautBuffer.tamingChanceBase = stegonautCurrent.extraDouble("taming_chance_base", 100.0);
         stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 100.0);
         stegonautBuffer.eggHatchChanceNormal = stegonautCurrent.extraDouble("egg_hatch_time_ticks_normal", 30000.0D);
-        stegonautBuffer.eggDropChance = stegonautCurrent.extraDouble("egg_drop_chance", 0.12D);
-        stegonautBuffer.scaleDropChanceBrush = stegonautCurrent.extraDouble("scale_drop_chance_brush",
-                stegonautDefaults.extraDouble("scale_drop_chance_brush", 0.30D));
         stegonautBuffer.aggressiveWild = stegonautCurrent.extraBoolean("aggressive_wild", false);
 
         DragonAttributeConfig ignivorusCurrent = loader.getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
@@ -234,9 +222,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.eggLootBastionTreasure = ignivorusCurrent.extraDouble("egg_loot_bastion_treasure", 0.15D);
         ignivorusBuffer.eggLootNetherBridge = ignivorusCurrent.extraDouble("egg_loot_nether_bridge", 0.15D);
         ignivorusBuffer.eggLootAncientCity = ignivorusCurrent.extraDouble("egg_loot_ancient_city", 0.10D);
-        ignivorusBuffer.eggDropChance = ignivorusCurrent.extraDouble("egg_drop_chance", 0.12D);
-        ignivorusBuffer.scaleDropChanceBrush = ignivorusCurrent.extraDouble("scale_drop_chance_brush",
-                ignivorusDefaults.extraDouble("scale_drop_chance_brush", 0.35D));
         ignivorusBuffer.aggressiveWild = ignivorusCurrent.extraBoolean("aggressive_wild", false);
 
         DragonAttributeConfig volitansCurrent = loader.getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
@@ -275,13 +260,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         volitansBuffer.eggHatchChanceNormal = volitansCurrent.extraDouble("egg_hatch_time_ticks_normal", 18000.0D);
         volitansBuffer.eggLootShipwreckTreasure = volitansCurrent.extraDouble("egg_loot_shipwreck_treasure",
                 volitansDefaults.extraDouble("egg_loot_shipwreck_treasure", 0.12D));
-        volitansBuffer.eggDropChance = volitansCurrent.extraDouble("egg_drop_chance", 0.12D);
-        volitansBuffer.scaleDropChanceBrush = volitansCurrent.extraDouble("scale_drop_chance_brush",
-                volitansDefaults.extraDouble("scale_drop_chance_brush", 0.30D));
-        volitansBuffer.spineDropChance = volitansCurrent.extraDouble("spine_drop_chance",
-                volitansDefaults.extraDouble("spine_drop_chance", 0.3D));
-        volitansBuffer.fishDropChance = volitansCurrent.extraDouble("fish_drop_chance",
-                volitansDefaults.extraDouble("fish_drop_chance", 0.40D));
         volitansBuffer.breathActiveTicksMax = volitansCurrent.extraDouble("breath_active_ticks_max",
                 volitansDefaults.extraDouble("breath_active_ticks_max", 240.0D));
         volitansBuffer.breathDrainPerTick = volitansCurrent.extraDouble("breath_drain_per_tick",
@@ -651,16 +629,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(72000.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.cindervane.egg_drop_chance"),
-                buffer.eggDropChance,
-                defaults.extraDouble("egg_drop_chance", 0.12D),
-                value -> buffer.eggDropChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.cindervane.scale_drop_chance_brush"),
-                buffer.scaleDropChanceBrush,
-                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
-                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_explosion_damage"), buffer.fireBodyExplosionDamage)
                 .setDefaultValue(defaults.extraDouble("fire_body_explosion_damage", 200.0D))
                 .setMin(0.0D)
@@ -738,16 +706,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(72000.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.stegonaut.egg_drop_chance"),
-                buffer.eggDropChance,
-                defaults.extraDouble("egg_drop_chance", 0.12D),
-                value -> buffer.eggDropChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.stegonaut.scale_drop_chance_brush"),
-                buffer.scaleDropChanceBrush,
-                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
-                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.stegonaut.aggressive_wild"), buffer.aggressiveWild)
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
@@ -896,16 +854,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buffer.eggLootAncientCity,
                 defaults.extraDouble("egg_loot_ancient_city", 0.15D),
                 value -> buffer.eggLootAncientCity = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.raevyx.egg_drop_chance"),
-                buffer.eggDropChance,
-                defaults.extraDouble("egg_drop_chance", 0.12D),
-                value -> buffer.eggDropChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.raevyx.scale_drop_chance_brush"),
-                buffer.scaleDropChanceBrush,
-                defaults.extraDouble("scale_drop_chance_brush", 0.35D),
-                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.raevyx.legacy_taming"), buffer.legacyTaming)
                 .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
@@ -1017,16 +965,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(72000.0D)
                 .setSaveConsumer(value -> buffer.eggHatchChanceNormal = value)
                 .build());
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.varasuchus.egg_drop_chance"),
-                buffer.eggDropChance,
-                defaults.extraDouble("egg_drop_chance", 0.12D),
-                value -> buffer.eggDropChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.varasuchus.scale_drop_chance_brush"),
-                buffer.scaleDropChanceBrush,
-                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
-                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.varasuchus.legacy_taming"), buffer.legacyTaming)
                 .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
@@ -1241,16 +1179,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buffer.eggLootAncientCity,
                 defaults.extraDouble("egg_loot_ancient_city", 0.10D),
                 value -> buffer.eggLootAncientCity = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.ignivorus.egg_drop_chance"),
-                buffer.eggDropChance,
-                defaults.extraDouble("egg_drop_chance", 0.12D),
-                value -> buffer.eggDropChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.ignivorus.scale_drop_chance_brush"),
-                buffer.scaleDropChanceBrush,
-                defaults.extraDouble("scale_drop_chance_brush", 0.35D),
-                value -> buffer.scaleDropChanceBrush = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.ignivorus.legacy_taming"), buffer.legacyTaming)
                 .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
@@ -1452,21 +1380,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(4.0D)
                 .setSaveConsumer(value -> buffer.roarAirWaterPoisonLevel = value)
                 .build());
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.volitans.scale_drop_chance_brush"),
-                buffer.scaleDropChanceBrush,
-                defaults.extraDouble("scale_drop_chance_brush", 0.30D),
-                value -> buffer.scaleDropChanceBrush = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.volitans.spine_drop_chance"),
-                buffer.spineDropChance,
-                defaults.extraDouble("spine_drop_chance", 0.3D),
-                value -> buffer.spineDropChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.volitans.fish_drop_chance"),
-                buffer.fishDropChance,
-                defaults.extraDouble("fish_drop_chance", 0.40D),
-                value -> buffer.fishDropChance = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.egg_hatch_time_ticks_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_time_ticks_normal", 18000.0D))
                 .setMin(20.0D)
@@ -1478,11 +1391,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buffer.eggLootShipwreckTreasure,
                 defaults.extraDouble("egg_loot_shipwreck_treasure", 0.12D),
                 value -> buffer.eggLootShipwreckTreasure = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.volitans.egg_drop_chance"),
-                buffer.eggDropChance,
-                defaults.extraDouble("egg_drop_chance", 0.12D),
-                value -> buffer.eggDropChance = value));
         entries.add(entryBuilder.startBooleanToggle(Component.translatable("config.saintsdragons.attributes.volitans.legacy_taming"), buffer.legacyTaming)
                 .setDefaultValue(defaults.extraBoolean("legacy_taming", false))
                 .setTooltip(Component.translatable("config.saintsdragons.attributes.legacy_taming.tooltip"))
@@ -1548,8 +1456,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "taming_chance_chicken", cindervaneBuffer.tamingChanceChicken,
                         "taming_chance_hearty", cindervaneBuffer.tamingChanceHearty,
                         "egg_hatch_time_ticks_normal", cindervaneBuffer.eggHatchChanceNormal,
-                        "egg_drop_chance", cindervaneBuffer.eggDropChance,
-                        "scale_drop_chance_brush", cindervaneBuffer.scaleDropChanceBrush,
                         "fire_body_explosion_damage", cindervaneBuffer.fireBodyExplosionDamage,
                         "fire_body_self_damage_on_crash", cindervaneBuffer.fireBodySelfDamageOnCrash,
                         "wild_flying_speed_multiplier", cindervaneBuffer.wildFlyingSpeedMultiplier
@@ -1573,9 +1479,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 Map.of(
                         "taming_chance_base", stegonautBuffer.tamingChanceBase,
                         "taming_chance_hearty", stegonautBuffer.tamingChanceHearty,
-                        "egg_hatch_time_ticks_normal", stegonautBuffer.eggHatchChanceNormal,
-                        "egg_drop_chance", stegonautBuffer.eggDropChance,
-                        "scale_drop_chance_brush", stegonautBuffer.scaleDropChanceBrush
+                        "egg_hatch_time_ticks_normal", stegonautBuffer.eggHatchChanceNormal
                 ),
                 Map.of(
                         "aggressive_wild", stegonautBuffer.aggressiveWild
@@ -1621,9 +1525,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "swim_speed", varasuchusBuffer.swimSpeed,
                         "taming_chance", varasuchusBuffer.tamingChance,
                         "taming_chance_tropical", varasuchusBuffer.tamingChanceTropical,
-                        "egg_hatch_time_ticks_normal", varasuchusBuffer.eggHatchChanceNormal,
-                        "egg_drop_chance", varasuchusBuffer.eggDropChance,
-                        "scale_drop_chance_brush", varasuchusBuffer.scaleDropChanceBrush
+                        "egg_hatch_time_ticks_normal", varasuchusBuffer.eggHatchChanceNormal
                 ),
                 Map.of(
                         "legacy_taming", varasuchusBuffer.legacyTaming,
@@ -1706,8 +1608,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tamingChanceChicken;
         double tamingChanceHearty;
         double eggHatchChanceNormal;
-        double eggDropChance;
-        double scaleDropChanceBrush;
         double fireBodyExplosionDamage;
         double fireBodySelfDamageOnCrash;
         double wildFlyingSpeedMultiplier;
@@ -1723,8 +1623,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tamingChanceBase;
         double tamingChanceHearty;
         double eggHatchChanceNormal;
-        double eggDropChance;
-        double scaleDropChanceBrush;
         boolean aggressiveWild;
     }
 
@@ -1751,8 +1649,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double eggHatchTimeTicksThunder;
         double eggLootPillagerOutpost;
         double eggLootAncientCity;
-        double eggDropChance;
-        double scaleDropChanceBrush;
         boolean aggressiveWild;
     }
 
@@ -1773,8 +1669,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double tamingChanceTropical;
         boolean legacyTaming;
         double eggHatchChanceNormal;
-        double eggDropChance;
-        double scaleDropChanceBrush;
         boolean aggressiveWild;
     }
 
@@ -1813,8 +1707,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double eggLootBastionTreasure;
         double eggLootNetherBridge;
         double eggLootAncientCity;
-        double eggDropChance;
-        double scaleDropChanceBrush;
         boolean aggressiveWild;
     }
 
@@ -1838,10 +1730,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         boolean legacyTaming;
         double eggHatchChanceNormal;
         double eggLootShipwreckTreasure;
-        double eggDropChance;
-        double scaleDropChanceBrush;
-        double spineDropChance;
-        double fishDropChance;
         double breathActiveTicksMax;
         double breathDrainPerTick;
         double breathRegenPerTick;
@@ -1880,8 +1768,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("egg_hatch_time_ticks_thunder", buffer.eggHatchTimeTicksThunder);
         extras.put("egg_loot_pillager_outpost", buffer.eggLootPillagerOutpost);
         extras.put("egg_loot_ancient_city", buffer.eggLootAncientCity);
-        extras.put("egg_drop_chance", buffer.eggDropChance);
-        extras.put("scale_drop_chance_brush", buffer.scaleDropChanceBrush);
         return extras;
     }
 
@@ -1907,8 +1793,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("egg_loot_bastion_treasure", buffer.eggLootBastionTreasure);
         extras.put("egg_loot_nether_bridge", buffer.eggLootNetherBridge);
         extras.put("egg_loot_ancient_city", buffer.eggLootAncientCity);
-        extras.put("egg_drop_chance", buffer.eggDropChance);
-        extras.put("scale_drop_chance_brush", buffer.scaleDropChanceBrush);
         return extras;
     }
 
@@ -1920,10 +1804,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
         extras.put("egg_hatch_time_ticks_normal", buffer.eggHatchChanceNormal);
         extras.put("egg_loot_shipwreck_treasure", buffer.eggLootShipwreckTreasure);
-        extras.put("egg_drop_chance", buffer.eggDropChance);
-        extras.put("scale_drop_chance_brush", buffer.scaleDropChanceBrush);
-        extras.put("spine_drop_chance", buffer.spineDropChance);
-        extras.put("fish_drop_chance", buffer.fishDropChance);
         extras.put("breath_active_ticks_max", buffer.breathActiveTicksMax);
         extras.put("breath_drain_per_tick", buffer.breathDrainPerTick);
         extras.put("breath_regen_per_tick", buffer.breathRegenPerTick);

@@ -31,13 +31,14 @@ import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimatio
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
-import java.util.Map;
-import java.util.HashMap;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
+import java.util.Map;
+import java.util.HashMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -57,7 +58,6 @@ import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -155,9 +155,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new VocalEntryBuilder()
-                    .add("grumble1", com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble1", ModSounds.CINDERVANE_GRUMBLE_1, 1.1f, 0.98f, 0.06f, false, false, false)
-                    .add("grumble2", com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble2", ModSounds.CINDERVANE_GRUMBLE_2, 1.2f, 0.96f, 0.08f, false, false, false)
-                    .add("grumble3", com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble3", ModSounds.CINDERVANE_GRUMBLE_3, 1.0f, 1.0f, 0.05f, false, false, false)
+                    .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble1", ModSounds.CINDERVANE_GRUMBLE_1, 1.1f, 0.98f, 0.06f, false, false, false)
+                    .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble2", ModSounds.CINDERVANE_GRUMBLE_2, 1.2f, 0.96f, 0.08f, false, false, false)
+                    .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble3", ModSounds.CINDERVANE_GRUMBLE_3, 1.0f, 1.0f, 0.05f, false, false, false)
                     .add("roar", CindervaneAnimationHandler.ACTION_CONTROLLER, "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
                     .add("cindervane_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
                     .add("cindervane_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
@@ -1540,11 +1540,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
-        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
-            this.spawnAtLocation(ModItems.CINDERVANE_EGG.get());
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
         }
     }
 

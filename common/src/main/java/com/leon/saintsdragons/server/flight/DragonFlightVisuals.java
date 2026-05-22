@@ -11,9 +11,10 @@ public final class DragonFlightVisuals {
     private static final float BANK_SCALE = 5.5f;
     private static final float BANK_MAX_ANGLE = 90.0f;
     private static final float BANK_LERP = 0.32f;
-    private static final float RIDER_PITCH_MEMORY = 0.50f;
-    private static final float RIDER_PITCH_BLEND = 0.50f;
-    private static final float PITCH_LERP = 0.34f;
+    private static final float RIDER_PITCH_MEMORY = 0.20f;
+    private static final float RIDER_PITCH_BLEND = 0.80f;
+    private static final float RIDER_PITCH_LERP = 0.62f;
+    private static final float AI_PITCH_LERP = 0.34f;
     private static final double AI_PITCH_MIN_HORIZONTAL_SPEED = 0.22D;
     private static final double AI_PITCH_VERTICAL_DEADZONE = 0.06D;
     private static final float AI_PITCH_DEADZONE_RAD = (float) Math.toRadians(4.0D);
@@ -83,8 +84,16 @@ public final class DragonFlightVisuals {
         return Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
     }
 
-    public static float approachPitch(float currentPitchRad, float targetPitchRad) {
-        float next = Mth.lerp(PITCH_LERP, currentPitchRad, targetPitchRad);
+    public static float approachRiderPitch(float currentPitchRad, float targetPitchRad) {
+        return approachPitch(currentPitchRad, targetPitchRad, RIDER_PITCH_LERP);
+    }
+
+    public static float approachAiPitch(float currentPitchRad, float targetPitchRad) {
+        return approachPitch(currentPitchRad, targetPitchRad, AI_PITCH_LERP);
+    }
+
+    private static float approachPitch(float currentPitchRad, float targetPitchRad, float lerp) {
+        float next = Mth.lerp(lerp, currentPitchRad, targetPitchRad);
         return Math.abs(next) < 0.001f ? 0f : next;
     }
 

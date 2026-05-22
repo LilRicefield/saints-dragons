@@ -34,6 +34,7 @@ import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -1971,11 +1972,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
-        double eggDropChance = config.extraDouble("egg_drop_chance", 0.12D);
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE && this.random.nextDouble() < eggDropChance) {
-            this.spawnAtLocation(ModItems.VARASUCHUS_EGG.get());
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.VARASUCHUS_FEMALE_DEATH, source);
         }
     }
 
