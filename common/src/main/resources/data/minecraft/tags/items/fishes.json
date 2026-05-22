@@ -1,6 +1,7 @@
 {
   "replace": false,
   "values": [
-    "saintsdragons:raw_moop"
+    "saintsdragons:raw_moop",
+    "saintsdragons:cooked_moop"
   ]
 }
