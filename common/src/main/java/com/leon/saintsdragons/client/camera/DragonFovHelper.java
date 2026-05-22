@@ -9,9 +9,9 @@ import net.minecraft.world.phys.Vec3;
 public final class DragonFovHelper {
     public static final double GROUND_SPRINT_MULTIPLIER = 1.050;
     public static final double FLY_SWIM_SPRINT_MULTIPLIER = 1.075;
-    private static final double DIVE_START_SPEED = 0.75D;
+    private static final double DIVE_START_SPEED = 1.5D;
     private static final double DIVE_FULL_SPEED = 4.00D;
-    private static final double DIVE_START_DOWNWARD_SPEED = 0.10D;
+    private static final double DIVE_START_DOWNWARD_SPEED = 0.5D;
     private static final double DIVE_FULL_DOWNWARD_SPEED = 1.35D;
     private static final double DIVE_MAX_MULTIPLIER = 1.320D;
 

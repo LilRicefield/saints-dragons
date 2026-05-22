@@ -10,9 +10,9 @@ import net.minecraft.world.phys.Vec3;
 
 @Environment(EnvType.CLIENT)
 public final class DragonDiveEffectIntensity {
-    private static final double DIVE_START_SPEED = 0.75D;
+    private static final double DIVE_START_SPEED = 1.5D;
     private static final double DIVE_FULL_SPEED = 4.00D;
-    private static final double DIVE_START_DOWNWARD_SPEED = 0.10D;
+    private static final double DIVE_START_DOWNWARD_SPEED = 0.5D;
     private static final double DIVE_FULL_DOWNWARD_SPEED = 1.35D;
 
     private DragonDiveEffectIntensity() {
