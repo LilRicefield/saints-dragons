@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -1881,6 +1882,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public boolean isAlly(Entity entity) {
         if (entity == null) return false;
+
+        if (DragonTargetingHelper.isVillageDefender(entity)) {
+            return true;
+        }
 
         if (entity instanceof Player player) {
             return isPlayerAlly(player);

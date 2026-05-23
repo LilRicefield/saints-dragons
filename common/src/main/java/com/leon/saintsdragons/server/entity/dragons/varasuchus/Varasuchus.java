@@ -571,7 +571,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     clearBabyProtectionAggroTarget();
                 }
             });
-            this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+            this.targetSelector.addGoal(6, new DragonRaidDefenseTargetGoal(this));
+            this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
                     this,
                     80,
                     () -> true,

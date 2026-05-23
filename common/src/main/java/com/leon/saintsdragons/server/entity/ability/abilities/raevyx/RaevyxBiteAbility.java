@@ -18,9 +18,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.*;
@@ -74,19 +72,6 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.ACTIVE && !didHitThisActive) {
             LivingEntity primary = findPrimaryTarget();
-            boolean ridden = getUser().getControllingPassenger() != null;
-            if (primary == null && !ridden) {
-                LivingEntity t = getUser().getTarget();
-                if (t != null && t.isAlive()) {
-                    double d = t.distanceTo(getUser());
-                    if (d <= 5.2) {
-                        primary = t;
-                    }
-                }
-            }
-            if (primary == null && !ridden) {
-                primary = raycastTargetAlongMouth(ridden ? 7.5 : 5.5, ridden ? 2.0 : 1.0);
-            }
             if (primary != null) {
                 bitePrimary(primary);
                 if (!isProtectedTamedPet(primary) && !DragonElementalImmunity.isElectricityImmune(primary)) {
@@ -171,22 +156,6 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             current = next;
             damage *= CHAIN_FALLOFF;
         }
-    }
-
-    private LivingEntity raycastTargetAlongMouth(double maxDistance, double inflateRadius) {
-        Raevyx wyvern = getUser();
-        DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.forwardAttack(wyvern);
-        Vec3 start = attack.origin();
-        Vec3 end = start.add(attack.forward().scale(maxDistance));
-
-        AABB sweep = new AABB(start, end).inflate(inflateRadius);
-        var hit = ProjectileUtil.getEntityHitResult(wyvern.level(), wyvern, start, end, sweep,
-                e -> e instanceof LivingEntity le && e != wyvern && e.isAlive() && le.attackable() && !isAllied(wyvern, e),
-                (float)(maxDistance * maxDistance));
-        if (hit != null && hit.getEntity() instanceof LivingEntity le) {
-            return le;
-        }
-        return null;
     }
 
     private LivingEntity findNearestChainTarget(LivingEntity origin, Set<LivingEntity> exclude) {

@@ -415,7 +415,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
             this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
                     target -> shouldAggroOnSight()));
-            this.targetSelector.addGoal(6, new DragonRandomHuntTargetGoal(
+            this.targetSelector.addGoal(6, new DragonRaidDefenseTargetGoal(this));
+            this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
                     this,
                     80,
                     () -> true,

@@ -61,11 +61,6 @@ public class DragonDustParticle extends TextureSheetParticle {
         return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
-    @Override
-    protected int getLightColor(float partialTick) {
-        return 240;
-    }
-
     private void applyBlockColor(ClientLevel level, double x, double y, double z) {
         BlockPos.MutableBlockPos pos = BlockPos.containing(x, y - 0.1D, z).mutable();
         BlockState state = level.getBlockState(pos);

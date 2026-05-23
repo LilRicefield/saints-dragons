@@ -366,6 +366,8 @@
 
   "advancement.saintsdragons.encounter_dragon.title": "Dragon Encounter",
   "advancement.saintsdragons.encounter_dragon.description": "Encounter your first dragon. That's one weird lizard",
+  "advancement.saintsdragons.meet_ivy.title": "Grace Conceals",
+  "advancement.saintsdragons.meet_ivy.description": "Meet Ivy, how long did it take for you to find her?",
 
   "advancement.saintsdragons.acquire_raevyx_egg.title": "Before the Storm",
   "advancement.saintsdragons.acquire_raevyx_egg.description": "Acquire a Raevyx Egg",
@@ -413,6 +415,8 @@
   "advancement.saintsdragons.cook_with_fire_dragon.description": "Cook or smelt with a fire-based dragon",
   "advancement.saintsdragons.fire_hydrant.title": "Fire Hydrant",
   "advancement.saintsdragons.fire_hydrant.description": "Extinguish any source of fire with Volitans' Water Breath",
+  "advancement.saintsdragons.tactical_nuke.title": "TACTICAL NUKE! INCOMING!!",
+  "advancement.saintsdragons.tactical_nuke.description": "Cause a massive explosion on the Cindervane",
 
   "advancement.saintsdragons.acquire_dragon_scale.title": "A Lingering Presence",
   "advancement.saintsdragons.acquire_dragon_scale.description": "Acquire a dragon scale through brushing",

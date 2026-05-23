@@ -9,6 +9,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -20,6 +21,7 @@ import java.util.*;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
+    private static final float LIGHTNING_DAMAGE = 5.0F;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 6),
@@ -123,17 +125,26 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         var bolt = EntityType.LIGHTNING_BOLT.create(server);
         if (bolt != null) {
             bolt.moveTo(x, y, z);
-            if (!dragon.isTame()) {
-                bolt.setVisualOnly(true);
-            }
+            bolt.setVisualOnly(true);
             var owner = dragon.getOwner();
             if (owner instanceof ServerPlayer sp) {
                 bolt.setCause(sp);
             }
             server.addFreshEntity(bolt);
         }
+        damageTarget(target);
         spawnElectrocuteArcs(server, target);
         applyStun(target);
+    }
+
+    private void damageTarget(LivingEntity target) {
+        Raevyx dragon = getUser();
+        if (!dragon.canTarget(target)) {
+            return;
+        }
+
+        DamageSource source = dragon.damageSources().lightningBolt();
+        target.hurt(source, LIGHTNING_DAMAGE);
     }
 
 
@@ -190,7 +201,7 @@ private static void applyStun(LivingEntity target) {
         for (int i = 0; i < n; i++) {
             int idx = (targetCursor + i) % n;
             Entity e = server.getEntity(targetIds.get(idx));
-            if (e instanceof LivingEntity le && le.isAlive()) {
+            if (e instanceof LivingEntity le && le.isAlive() && getUser().canTarget(le)) {
                 targetCursor = (idx + 1) % n;
                 return le;
             }

@@ -15,15 +15,15 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.MoverType;
-import net.minecraft.world.entity.Pose;
-import net.minecraft.world.entity.EntityDimensions;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +39,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
     private float impactDamage;
     private int lifetimeTicks;
     private int livedTicks;
+    private boolean exploded;
 
     public CindervaneMagmaBlockEntity(EntityType<? extends CindervaneMagmaBlockEntity> type, Level level) {
         super(type, level);
@@ -85,6 +86,10 @@ public class CindervaneMagmaBlockEntity extends Entity {
         if (!this.isNoGravity()) {
             this.setDeltaMovement(this.getDeltaMovement().add(0.0D, -0.04D, 0.0D));
         }
+        if (!level().isClientSide && checkImpactCollision()) {
+            explode();
+            return;
+        }
         this.move(MoverType.SELF, this.getDeltaMovement());
         if (!level().isClientSide) {
             this.setDeltaMovement(this.getDeltaMovement().scale(0.98D));
@@ -111,17 +116,69 @@ public class CindervaneMagmaBlockEntity extends Entity {
         level().addParticle(ParticleTypes.FALLING_LAVA, getX(), getY(), getZ(), 0.0D, -0.035D, 0.0D);
     }
 
+    private boolean checkImpactCollision() {
+        Vec3 start = position();
+        Vec3 end = start.add(getDeltaMovement());
+        HitResult blockHit = level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (blockHit.getType() == HitResult.Type.BLOCK) {
+            setPos(blockHit.getLocation());
+            return true;
+        }
+
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(
+                level(),
+                this,
+                start,
+                end,
+                getBoundingBox().expandTowards(getDeltaMovement()).inflate(0.75D),
+                this::canImpactEntity);
+        if (entityHit != null) {
+            setPos(entityHit.getLocation());
+            return true;
+        }
+        return false;
+    }
+
+    private boolean canImpactEntity(Entity entity) {
+        if (entity == this) {
+            return false;
+        }
+        if (!(entity instanceof LivingEntity living)) {
+            return false;
+        }
+        if (!living.isAlive() || living.isRemoved()) {
+            return false;
+        }
+        if (living == owner) {
+            return false;
+        }
+        return owner == null || !owner.isAlly(living);
+    }
+
     private void explode() {
+        if (exploded) {
+            return;
+        }
+        exploded = true;
         if (!(level() instanceof ServerLevel server)) {
             discard();
             return;
         }
 
         Vec3 impact = position();
+        server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.4D, impact.z, 1,
+                0.0D, 0.0D, 0.0D, 0.0D);
+        server.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 0.4D, impact.z, 4,
+                0.6D, 0.35D, 0.6D, 0.08D);
         server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D, impact.z, 18,
                 0.5D, 0.3D, 0.5D, 0.04D);
-        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D, impact.z, 30,
-                0.6D, 0.4D, 0.6D, 0.08D);
+        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D, impact.z, 55,
+                0.9D, 0.55D, 0.9D, 0.12D);
+        server.sendParticles(ParticleTypes.SMALL_FLAME, impact.x, impact.y + 0.35D, impact.z, 40,
+                0.8D, 0.35D, 0.8D, 0.16D);
+        server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, impact.x, impact.y + 0.25D, impact.z, 16,
+                0.9D, 0.25D, 0.9D, 0.08D);
+        spawnFlameBurst(server, impact);
         server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), 0.7F, 1.1F);
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
@@ -139,6 +196,26 @@ public class CindervaneMagmaBlockEntity extends Entity {
 
         igniteArea(server, BlockPos.containing(impact));
         discard();
+    }
+
+    private void spawnFlameBurst(ServerLevel server, Vec3 impact) {
+        for (int i = 0; i < 18; i++) {
+            double angle = (Math.PI * 2.0D * i) / 18.0D;
+            double speed = 0.25D + random.nextDouble() * 0.35D;
+            double ySpeed = 0.08D + random.nextDouble() * 0.18D;
+            double vx = Math.cos(angle) * speed;
+            double vz = Math.sin(angle) * speed;
+            server.sendParticles(ParticleTypes.FLAME,
+                    impact.x, impact.y + 0.45D, impact.z,
+                    0,
+                    vx, ySpeed, vz,
+                    1.0D);
+            server.sendParticles(ParticleTypes.SMALL_FLAME,
+                    impact.x, impact.y + 0.35D, impact.z,
+                    0,
+                    vx * 1.25D, ySpeed * 0.75D, vz * 1.25D,
+                    1.0D);
+        }
     }
 
     private void igniteArea(ServerLevel server, BlockPos base) {

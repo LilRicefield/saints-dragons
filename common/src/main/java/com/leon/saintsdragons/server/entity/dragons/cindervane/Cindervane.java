@@ -30,6 +30,7 @@ import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimatio
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
@@ -424,7 +425,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Cindervane.class, 36.0D));
         this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, target -> shouldAggroOnSight()));
-        this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(this, 80, () -> true,
+        this.targetSelector.addGoal(7, new DragonRaidDefenseTargetGoal(this));
+        this.targetSelector.addGoal(8, new DragonRandomHuntTargetGoal(this, 80, () -> true,
                 target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.CINDERVANE_TARGETS)));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {@Override public boolean canUse() {return !Cindervane.this.isVehicle() && super.canUse();}});
         this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {@Override public boolean canUse() {
@@ -1212,6 +1214,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
         explosion.explode();
         explosion.finalizeExplosion(true);
+        ServerPlayer responsiblePlayer = DragonUtilities.resolveResponsiblePlayer(this);
+        if (responsiblePlayer != null) {
+            DragonUtilities.awardAdvancement(responsiblePlayer, "tactical_nuke", "tactical_nuke");
+        }
         for (LivingEntity entity : protectedEntities) {
             Boolean wasInvulnerable = previousInvulnerability.get(entity.getId());
             entity.setInvulnerable(wasInvulnerable != null && wasInvulnerable);

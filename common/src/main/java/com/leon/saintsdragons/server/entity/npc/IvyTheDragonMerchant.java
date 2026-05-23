@@ -4,6 +4,7 @@ package com.leon.saintsdragons.server.entity.npc;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
@@ -12,6 +13,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
@@ -228,6 +230,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
         if (isTrading() || getTradeAnimState() != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0) {
             return InteractionResult.CONSUME;
+        }
+        if (player instanceof ServerPlayer serverPlayer) {
+            DragonUtilities.awardAdvancement(serverPlayer, "meet_ivy", "meet_ivy");
         }
         if (hasTradingAccess(player)) {
             openTradingFor(player);

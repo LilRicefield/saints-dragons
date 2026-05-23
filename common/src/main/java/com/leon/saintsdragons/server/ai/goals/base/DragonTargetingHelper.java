@@ -2,11 +2,15 @@ package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.tags.TagKey;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.animal.IronGolem;
+import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.raid.Raider;
 import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class DragonTargetingHelper {
@@ -49,5 +53,13 @@ public final class DragonTargetingHelper {
 
     public static boolean isTaggedHuntTarget(LivingEntity target, TagKey<EntityType<?>> tag) {
         return target != null && target.getType().is(tag);
+    }
+
+    public static boolean isVillageDefender(Entity entity) {
+        return entity instanceof AbstractVillager || entity instanceof IronGolem;
+    }
+
+    public static boolean isActiveRaidTarget(LivingEntity target) {
+        return target instanceof Raider raider && raider.hasActiveRaid();
     }
 }
