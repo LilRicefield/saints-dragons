@@ -10,8 +10,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -246,30 +244,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (target instanceof DragonEntity) {
             return wyvern.level().damageSources().mobAttack(wyvern);
         }
-        if (isIafLightningDragon(target)) {
-            return wyvern.level().damageSources().mobAttack(wyvern);
-        }
         return wyvern.level().damageSources().lightningBolt();
-    }
-
-    private boolean isIafLightningDragon(LivingEntity entity) {
-        String className = entity.getClass().getName();
-        if ("com.github.alexthe666.iceandfire.entity.EntityLightningDragon".equals(className)
-                || "com.iafenvoy.iceandfire.entity.LightningDragonEntity".equals(className)) {
-            return true;
-        }
-        ResourceLocation id = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        if (id == null) {
-            return false;
-        }
-
-        String namespace = id.getNamespace();
-        String path = id.getPath();
-        boolean iafNamespace = "iceandfire".equals(namespace) || "ice_and_fire".equals(namespace);
-        boolean looksLikeLightningDragon = path != null
-                && path.contains("lightning")
-                && path.contains("dragon");
-        return iafNamespace && looksLikeLightningDragon;
     }
 
     private record BeamPath(Vec3 origin, Vec3 impact) {}

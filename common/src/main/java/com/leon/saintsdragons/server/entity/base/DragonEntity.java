@@ -31,11 +31,8 @@ import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
@@ -805,6 +802,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.boundInBinder = boundInBinder;
     }
 
+    @Override
+    public boolean removeWhenFarAway(double distanceToClosestPlayer) {
+        return !this.isTame() && super.removeWhenFarAway(distanceToClosestPlayer);
+    }
+
+    @Override
+    public boolean requiresCustomPersistence() {
+        return super.requiresCustomPersistence() || this.isTame() || this.hasCustomName();
+    }
+
     protected void ensureGenderInitialized() {
         if (genderComponent != null) {
             genderComponent.ensureInitialized();
@@ -1130,6 +1137,37 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             this.level().broadcastEntityEvent(this, (byte)60);
             this.remove(Entity.RemovalReason.KILLED);
         }
+    }
+
+    @Override
+    public void remove(@NotNull Entity.RemovalReason reason) {
+        if (shouldLogDragonRemoval(reason)) {
+            System.out.println("[SD-DRAGON-REMOVE] type=" + EntityType.getKey(this.getType())
+                    + " uuid=" + this.getUUID()
+                    + " reason=" + reason
+                    + " pos=" + this.position()
+                    + " dim=" + this.level().dimension().location()
+                    + " health=" + this.getHealth()
+                    + " alive=" + this.isAlive()
+                    + " dying=" + this.isDying()
+                    + " vehicle=" + this.isVehicle()
+                    + " passenger=" + this.isPassenger()
+                    + " owner=" + this.getOwnerUUID()
+                    + " command=" + this.getCommand());
+            new Exception("[SD-DRAGON-REMOVE stack]").printStackTrace(System.out);
+        }
+        super.remove(reason);
+    }
+
+    private boolean shouldLogDragonRemoval(Entity.RemovalReason reason) {
+        if (this.level().isClientSide || !this.isTame() || this.isBoundInBinder()) {
+            return false;
+        }
+        if (reason == Entity.RemovalReason.DISCARDED) {
+            return true;
+        }
+        return reason == Entity.RemovalReason.KILLED
+                && (this.getHealth() > 0.0F || this.isVehicle() || this.isPassenger() || !this.isDying());
     }
 
     @Override
@@ -1944,7 +1982,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (target == null) return false;
         if (!target.isAlive() || target.isRemoved()) return false;
         if (target instanceof Player player && (player.isCreative() || player.isSpectator())) return false;
-        return !isIafMobDead(target);
+        return true;
     }
 
     @Override
@@ -1954,53 +1992,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             return;
         }
         super.setTarget(target);
-    }
-
-    private static final ConcurrentHashMap<Class<?>, Optional<Method>> IAF_DEAD_METHODS =
-            new ConcurrentHashMap<>();
-
-    private static boolean isIafMobDead(LivingEntity target) {
-        String className = target.getClass().getName();
-        if (!className.startsWith("com.github.alexthe666.iceandfire.")
-                && !className.startsWith("com.iafenvoy.iceandfire.")) {
-            return false;
-        }
-
-        Optional<Method> method = IAF_DEAD_METHODS.computeIfAbsent(
-                target.getClass(),
-                DragonEntity::resolveIafDeadMethod
-        );
-
-        if (method.isEmpty()) {
-            return false;
-        }
-
-        try {
-            Object result = method.get().invoke(target);
-            return result instanceof Boolean && (Boolean) result;
-        } catch (ReflectiveOperationException e) {
-            return false;
-        }
-    }
-
-    private static Optional<Method> resolveIafDeadMethod(Class<?> type) {
-        Method method = findNoArgBoolean(type, "isMobDead");
-        if (method == null) {
-            method = findNoArgBoolean(type, "isModelDead");
-        }
-        return Optional.ofNullable(method);
-    }
-
-    private static Method findNoArgBoolean(Class<?> type, String name) {
-        try {
-            Method method = type.getMethod(name);
-            if (method.getReturnType() == boolean.class) {
-                return method;
-            }
-        } catch (NoSuchMethodException ignored) {
-            return null;
-        }
-        return null;
     }
 
     @Override
