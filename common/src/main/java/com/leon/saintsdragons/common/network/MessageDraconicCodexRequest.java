@@ -71,6 +71,8 @@ public class MessageDraconicCodexRequest {
                     } else if (message.pruneMissingBoundEntries) {
                         data.removeDragon(player.getUUID(), dragonId);
                     }
+                } else if (message.pruneMissingBoundEntries) {
+                    data.removeDragon(player.getUUID(), dragonId);
                 }
             }
             entries = data.getEntriesFor(player);

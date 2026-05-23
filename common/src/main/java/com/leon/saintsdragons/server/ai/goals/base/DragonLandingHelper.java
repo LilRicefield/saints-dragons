@@ -53,7 +53,7 @@ public final class DragonLandingHelper {
     }
 
     public static @Nullable Vec3 findLandingTarget(RideableDragonBase dragon, @Nullable LivingEntity target) {
-        BlockPos origin = dragon.blockPosition();
+        BlockPos origin = target != null && target.isAlive() ? target.blockPosition() : dragon.blockPosition();
         double currentAltitude = Math.max(0.0D, dragon.getY()
                 - dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, dragon.getBlockX(), dragon.getBlockZ()));
         double minHorizontalDistanceSqr = currentAltitude > 6.0D
@@ -73,11 +73,28 @@ public final class DragonLandingHelper {
                     continue;
                 }
 
-                int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
-                BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
-                if (isValidLandingSurface(dragon, ground)) {
+                BlockPos ground = findLandingGround(dragon, column, origin.getY());
+                if (ground != null && isValidLandingSurface(dragon, ground)) {
                     return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
                 }
+            }
+        }
+        return null;
+    }
+
+    private static @Nullable BlockPos findLandingGround(Mob dragon, BlockPos column, int originY) {
+        if (!dragon.level().dimensionType().hasCeiling()) {
+            int surfaceY = dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+            return new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+        }
+
+        int minY = dragon.level().getMinBuildHeight();
+        int maxY = dragon.level().getMaxBuildHeight() - 1;
+        int startY = Math.min(maxY, Math.max(minY, originY + 8));
+        for (int y = startY; y >= minY; y--) {
+            BlockPos ground = new BlockPos(column.getX(), y, column.getZ());
+            if (isValidLandingSurface(dragon, ground)) {
+                return ground;
             }
         }
         return null;

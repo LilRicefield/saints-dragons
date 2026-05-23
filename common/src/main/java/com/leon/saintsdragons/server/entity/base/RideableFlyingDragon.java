@@ -1167,7 +1167,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 continue;
             }
 
-            Vec3 landing = landingTargetAt(origin.offset(dx, 0, dz));
+            Vec3 landing = landingTargetAt(origin.offset(dx, 0, dz), origin.getY());
             if (landing != null) {
                 return landing;
             }
@@ -1175,17 +1175,35 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return null;
     }
 
-    private @Nullable Vec3 landingTargetAt(BlockPos column) {
+    private @Nullable Vec3 landingTargetAt(BlockPos column, int originY) {
         if (!level().hasChunkAt(column)) {
             return null;
         }
 
-        int surfaceY = level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
-        BlockPos ground = new BlockPos(column.getX(), surfaceY - 1, column.getZ());
-        if (!isValidStandardLandingSurface(ground)) {
+        BlockPos ground = findStandardLandingGround(column, originY);
+        boolean valid = ground != null && isValidStandardLandingSurface(ground);
+        if (!valid) {
             return null;
         }
         return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+    }
+
+    private @Nullable BlockPos findStandardLandingGround(BlockPos column, int originY) {
+        if (!level().dimensionType().hasCeiling()) {
+            int surfaceY = level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
+            return new BlockPos(column.getX(), surfaceY - 1, column.getZ());
+        }
+
+        int minY = level().getMinBuildHeight();
+        int maxY = level().getMaxBuildHeight() - 1;
+        int startY = Math.min(maxY, Math.max(minY, originY + 8));
+        for (int y = startY; y >= minY; y--) {
+            BlockPos ground = new BlockPos(column.getX(), y, column.getZ());
+            if (isValidStandardLandingSurface(ground)) {
+                return ground;
+            }
+        }
+        return null;
     }
 
     protected boolean isValidStandardLandingSurface(BlockPos ground) {

@@ -25,7 +25,8 @@ public class DragonCodexSavedData extends SavedData {
     private final Map<UUID, List<DragonCodexEntry>> entriesByOwner = new HashMap<>();
 
     public static DragonCodexSavedData get(ServerLevel level) {
-        return level.getDataStorage().computeIfAbsent(
+        ServerLevel storageLevel = level.getServer() != null ? level.getServer().overworld() : level;
+        return storageLevel.getDataStorage().computeIfAbsent(
                 DragonCodexSavedData::load,
                 DragonCodexSavedData::new,
                 DATA_NAME
