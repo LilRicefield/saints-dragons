@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import net.minecraft.world.entity.player.Player;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -101,9 +101,9 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
             }
 
             RawAnimation swimAnim = isSwimmingMoving ? SWIM_MOVE : SWIM_IDLE;
-            state.setAnimation(swimAnim);
+            MovementAnimationHelper.setAndContinue(state, swimAnim);
         } else {
-            PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(
+            PlayState restPose = MovementAnimationHelper.tryHandleRestPose(
                     state, drake, SLEEP_LOOP, SIT, 6, 4
             );
             if (restPose != null) {
@@ -125,13 +125,13 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
 
             if (groundState == 2 || isAggressive) {
                 controller.transitionLength(baseTransition);
-                state.setAnimation(phaseTwo ? RUN2 : RUN);
+                MovementAnimationHelper.setAndContinue(state, phaseTwo ? RUN2 : RUN);
             } else if (groundState == 1 || isMovingLand) {
                 controller.transitionLength(Math.max(3, baseTransition + 1));
-                state.setAnimation(phaseTwo ? WALK2 : WALK);
+                MovementAnimationHelper.setAndContinue(state, phaseTwo ? WALK2 : WALK);
             } else {
                 controller.transitionLength(Math.max(3, baseTransition + (abilityActive ? 2 : 0)));
-                state.setAnimation(phaseTwo ? IDLE2 : IDLE);
+                MovementAnimationHelper.setAndContinue(state, phaseTwo ? IDLE2 : IDLE);
             }
         }
         return PlayState.CONTINUE;

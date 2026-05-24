@@ -1,10 +1,10 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -154,7 +154,7 @@ public final class VolitansAnimationHandler {
         }
 
         RawAnimation sleepPose = dragon.isInWaterOrBubble() ? SLEEP_UNDERWATER : SLEEP;
-        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, dragon, sleepPose, SIT, 6, 0);
+        PlayState restPose = MovementAnimationHelper.tryHandleRestPose(state, dragon, sleepPose, SIT, 6, 0);
         if (restPose != null) {
             return restPose;
         }
@@ -187,7 +187,7 @@ public final class VolitansAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        return DragonMovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
+        return MovementAnimationHelper.handleGroundMovement(state, dragon, IDLE, WALK, RUN, true);
     }
     public PlayState flightPredicate(AnimationState<Volitans> state) {
         if (dragon.isDying() || dragon.isTamingStunned()) {

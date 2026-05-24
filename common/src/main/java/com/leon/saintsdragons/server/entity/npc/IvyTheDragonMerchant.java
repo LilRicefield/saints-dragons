@@ -5,6 +5,7 @@ package com.leon.saintsdragons.server.entity.npc;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
@@ -88,6 +89,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final RawAnimation TRADE_START = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_start");
     private static final RawAnimation TRADING = RawAnimation.begin().thenLoop("ivy_oleander.animation.trading");
     private static final RawAnimation TRADE_STOP = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop");
+    private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.idle");
+    private static final RawAnimation WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.walk");
+    private static final RawAnimation RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.run");
     private static final String GREETED_PLAYERS_TAG = "GreetedPlayers";
     private static final String UNLOCKED_TRADERS_TAG = "UnlockedTraders";
     private static final String UNLOCKED_TRADER_UUID_TAG = "UUID";
@@ -338,12 +342,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
         if (state.isMoving()) {
             if (isRunning()) {
-                state.setAndContinue(RawAnimation.begin().thenLoop("ivy_oleander.animation.run"));
+                MovementAnimationHelper.setAndContinue(state, RUN);
             } else {
-                state.setAndContinue(RawAnimation.begin().thenLoop("ivy_oleander.animation.walk"));
+                MovementAnimationHelper.setAndContinue(state, WALK);
             }
         } else {
-            state.setAndContinue(RawAnimation.begin().thenLoop("ivy_oleander.animation.idle"));
+            MovementAnimationHelper.setAndContinue(state, IDLE);
         }
         return PlayState.CONTINUE;
     }
@@ -352,7 +356,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         state.getController().transitionLength(3);
         TradeAnimState tradeState = getTradeAnimState();
         if (tradeState == TradeAnimState.LOOP) {
-            state.setAndContinue(TRADING);
+            MovementAnimationHelper.setAndContinue(state, TRADING);
             return PlayState.CONTINUE;
         }
         if (tradeState == TradeAnimState.START || tradeState == TradeAnimState.STOP) {

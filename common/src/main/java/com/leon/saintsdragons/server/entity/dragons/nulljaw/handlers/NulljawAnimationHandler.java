@@ -1,7 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -28,9 +29,9 @@ public final class NulljawAnimationHandler {
 
         state.getController().transitionLength(6);
         if (dragon.shouldUseHoverAnimation()) {
-            state.setAndContinue(HOVER);
+            MovementAnimationHelper.setAndContinue(state, HOVER);
         } else {
-            state.setAndContinue(IDLE);
+            MovementAnimationHelper.setAndContinue(state, IDLE);
         }
         return PlayState.CONTINUE;
     }
@@ -51,7 +52,7 @@ public final class NulljawAnimationHandler {
             return PlayState.STOP;
         }
 
-        state.setAndContinue(HAND_HOLDING);
+        MovementAnimationHelper.setAndContinue(state, HAND_HOLDING);
         return PlayState.CONTINUE;
     }
 

@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.dragons.handlers;
+package com.leon.saintsdragons.util.animation;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -6,12 +6,12 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
-public final class DragonMovementAnimationHelper {
-    private DragonMovementAnimationHelper() {
+public final class MovementAnimationHelper {
+    private MovementAnimationHelper() {
     }
 
 
-    private static void setAndContinue(AnimationState<?> state, RawAnimation animation) {
+    public static void setAndContinue(AnimationState<?> state, RawAnimation animation) {
         state.setAnimation(animation);
         if (animation != null
                 && state.getController().getCurrentAnimation() == null

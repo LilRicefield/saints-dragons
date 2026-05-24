@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.dragons.handlers;
+package com.leon.saintsdragons.util.animation;
 
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;

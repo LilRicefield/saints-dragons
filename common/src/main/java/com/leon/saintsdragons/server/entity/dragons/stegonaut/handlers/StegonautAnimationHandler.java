@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -64,12 +64,12 @@ public class StegonautAnimationHandler {
             return PlayState.CONTINUE;
         }
 
-        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, drake, SLEEP_ANIM, SIT_ANIM, 6, 4);
+        PlayState restPose = MovementAnimationHelper.tryHandleRestPose(state, drake, SLEEP_ANIM, SIT_ANIM, 6, 4);
         if (restPose != null) {
             return restPose;
         }
 
-        return DragonMovementAnimationHelper.handleGroundMovement(state, drake, IDLE_ANIM, WALK_ANIM, RUN_ANIM);
+        return MovementAnimationHelper.handleGroundMovement(state, drake, IDLE_ANIM, WALK_ANIM, RUN_ANIM);
     }
 
     public void setupActionController(AnimationController<Stegonaut> actionController) {

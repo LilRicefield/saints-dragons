@@ -1,11 +1,11 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -179,13 +179,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        PlayState restPose = DragonMovementAnimationHelper.tryHandleRestPose(state, wyvern, SLEEP, SIT, 6, 0);
+        PlayState restPose = MovementAnimationHelper.tryHandleRestPose(state, wyvern, SLEEP, SIT, 6, 0);
         if (restPose != null) {
             return restPose;
         }
 
         if (wyvern.isBaby()) {
-            return DragonMovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
+            return MovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
         }
 
         if (wyvern.isDodging()) {
@@ -213,7 +213,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.CONTINUE;
         }
 
-        return DragonMovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
+        return MovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
     }
 
     public PlayState flightPredicate(AnimationState<Raevyx> state) {

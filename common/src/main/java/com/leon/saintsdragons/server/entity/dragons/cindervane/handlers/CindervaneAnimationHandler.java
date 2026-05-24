@@ -1,9 +1,9 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonMovementAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -23,7 +23,6 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.cindervane.sprint_flap");
     private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.cindervane.fly_idle");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
-    private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.cindervane.landing");
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.cindervane.landed");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
@@ -116,7 +115,7 @@ public class CindervaneAnimationHandler {
             return PlayState.STOP;
         }
 
-        PlayState sleepPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, SLEEP, SIT, 6, 0, false);
+        PlayState sleepPose = MovementAnimationHelper.tryHandleRestPose(state, amphithere, SLEEP, SIT, 6, 0, false);
         if (sleepPose != null) {
             return sleepPose;
         }
@@ -154,14 +153,14 @@ public class CindervaneAnimationHandler {
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
-        PlayState sitPose = DragonMovementAnimationHelper.tryHandleRestPose(state, amphithere, null, SIT, 0, 0);
+        PlayState sitPose = MovementAnimationHelper.tryHandleRestPose(state, amphithere, null, SIT, 0, 0);
         if (sitPose != null) {
             return sitPose;
         }
 
         state.getController().setAnimationSpeed(1.0f);
 
-        return DragonMovementAnimationHelper.handleGroundMovement(state, amphithere, IDLE, WALK, RUN);
+        return MovementAnimationHelper.handleGroundMovement(state, amphithere, IDLE, WALK, RUN);
     }
 
     public PlayState flightPredicate(AnimationState<Cindervane> state) {

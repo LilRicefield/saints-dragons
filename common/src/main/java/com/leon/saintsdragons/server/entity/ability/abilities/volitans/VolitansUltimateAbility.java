@@ -4,11 +4,11 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonFlightAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
-import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
+
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.*;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import net.minecraft.world.damagesource.DamageSource;

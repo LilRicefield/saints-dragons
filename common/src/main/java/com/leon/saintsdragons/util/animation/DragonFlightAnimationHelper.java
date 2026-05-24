@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.dragons.handlers;
+package com.leon.saintsdragons.util.animation;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
@@ -79,7 +79,7 @@ public final class DragonFlightAnimationHelper {
 
         int transitionTicks = getTransitionTicks(visualState, transitions);
         state.getController().transitionLength(transitionTicks);
-        state.setAndContinue(animation);
+        MovementAnimationHelper.setAndContinue(state, animation);
         return PlayState.CONTINUE;
     }
 
@@ -94,7 +94,7 @@ public final class DragonFlightAnimationHelper {
             return PlayState.STOP;
         }
         state.getController().transitionLength(transitions.takeoff());
-        state.setAndContinue(animation);
+        MovementAnimationHelper.setAndContinue(state, animation);
         return PlayState.CONTINUE;
     }
 
@@ -105,7 +105,7 @@ public final class DragonFlightAnimationHelper {
             return PlayState.STOP;
         }
         state.getController().transitionLength(transitions.landed());
-        state.setAndContinue(animations.landed());
+        MovementAnimationHelper.setAndContinue(state, animations.landed());
         return PlayState.CONTINUE;
     }
 

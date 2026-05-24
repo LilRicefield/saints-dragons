@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
 import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
+import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -313,9 +314,9 @@ public class Mossback extends Animal implements GeoEntity {
                 return PlayState.STOP;
             }
             if (state.isMoving()) {
-                state.setAndContinue(WALK);
+                MovementAnimationHelper.setAndContinue(state, WALK);
             } else {
-                state.setAndContinue(IDLE);
+                MovementAnimationHelper.setAndContinue(state, IDLE);
             }
             return PlayState.CONTINUE;
         }));

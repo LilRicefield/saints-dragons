@@ -3,9 +3,8 @@ package com.leon.saintsdragons.server.entity.ability;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
-import com.leon.saintsdragons.server.entity.dragons.handlers.DragonInteractionAnimationHelper;
+import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 
 /**
  * Generic death ability for all dragons.
