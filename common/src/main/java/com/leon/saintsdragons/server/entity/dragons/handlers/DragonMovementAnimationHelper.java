@@ -83,9 +83,20 @@ public final class DragonMovementAnimationHelper {
                                                  RawAnimation runAnimation,
                                                  boolean treatAnimationStateMovingAsWalk) {
         int groundState = dragon.getEffectiveGroundState();
-        if (groundState == 2 || dragon.isRunning()) {
+        if (dragon.isVehicle()) {
+            if (groundState == 2 || dragon.isRunning()) {
+                setAndContinue(state, runAnimation);
+            } else if (groundState == 1 || dragon.isWalking() || (treatAnimationStateMovingAsWalk && state.isMoving())) {
+                setAndContinue(state, walkAnimation);
+            } else {
+                setAndContinue(state, idleAnimation);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        if (groundState == 2 || (state.isMoving() && dragon.shouldUseRunAnimation())) {
             setAndContinue(state, runAnimation);
-        } else if (groundState == 1 || dragon.isWalking() || (treatAnimationStateMovingAsWalk && state.isMoving())) {
+        } else if (groundState == 1 || state.isMoving()) {
             setAndContinue(state, walkAnimation);
         } else {
             setAndContinue(state, idleAnimation);
@@ -101,10 +112,24 @@ public final class DragonMovementAnimationHelper {
                                                  int movingTransitionTicks,
                                                  int idleTransitionTicks) {
         int groundState = dragon.getEffectiveGroundState();
-        if (groundState == 2 || dragon.isRunning()) {
+        if (dragon.isVehicle()) {
+            if (groundState == 2 || dragon.isRunning()) {
+                state.getController().transitionLength(movingTransitionTicks);
+                setAndContinue(state, runAnimation);
+            } else if (groundState == 1 || dragon.isWalking()) {
+                state.getController().transitionLength(movingTransitionTicks);
+                setAndContinue(state, walkAnimation);
+            } else {
+                state.getController().transitionLength(idleTransitionTicks);
+                setAndContinue(state, idleAnimation);
+            }
+            return PlayState.CONTINUE;
+        }
+
+        if (groundState == 2 || (state.isMoving() && dragon.shouldUseRunAnimation())) {
             state.getController().transitionLength(movingTransitionTicks);
             setAndContinue(state, runAnimation);
-        } else if (groundState == 1 || dragon.isWalking()) {
+        } else if (groundState == 1 || state.isMoving()) {
             state.getController().transitionLength(movingTransitionTicks);
             setAndContinue(state, walkAnimation);
         } else {

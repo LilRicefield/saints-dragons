@@ -4,19 +4,16 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.LookControl;
 
-/**
- * Minimal look control with clamped head rotation for humanoid NPCs.
- */
-public class HumanLookControl extends LookControl {
+public class GenericLookControl extends LookControl {
     private final Mob entity;
     private final float maxYRotSpeed;
     private final float maxXRotSpeed;
 
-    public HumanLookControl(Mob entity) {
+    public GenericLookControl(Mob entity) {
         this(entity, 10.0f, 9.0f);
     }
 
-    public HumanLookControl(Mob entity, float maxYRotSpeed, float maxXRotSpeed) {
+    public GenericLookControl(Mob entity, float maxYRotSpeed, float maxXRotSpeed) {
         super(entity);
         this.entity = entity;
         this.maxYRotSpeed = maxYRotSpeed;

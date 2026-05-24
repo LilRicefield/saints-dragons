@@ -60,6 +60,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.VOLITANS_SPAWN_EGG.get());
                                 output.accept(ModItems.NULLJAW_SPAWN_EGG.get());
                                 output.accept(ModItems.MOOP_SPAWN_EGG.get());
+                                output.accept(ModItems.MOSSBACK_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());
 
                                 })

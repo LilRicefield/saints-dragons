@@ -53,7 +53,6 @@ import java.util.function.Supplier;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
-import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
@@ -247,11 +246,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected int getRiderGroundJumpAnimationFallHoldTicks() {
         return 3;
-    }
-
-    @Override
-    public boolean hasSecondaryMelee() {
-        return true;
     }
 
     @Override
@@ -674,11 +668,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
-    public void setGroundMoveStateFromAI(int state) {
-        super.setGroundMoveStateFromAI(state);
-    }
-
-    @Override
     public void tick() {
         super.tick();
 
@@ -739,15 +728,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             groundStepSoundCooldownTicks = 0;
             return;
         }
-        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
-        if (moveState <= 0) {
-            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            if (speedSqr > 0.0064D) {
-                moveState = 2;
-            } else if (speedSqr > 0.001D) {
-                moveState = 1;
-            }
-        }
+        int moveState = getMovementState();
         if (moveState <= 0) {
             groundStepSoundCooldownTicks = 0;
             return;

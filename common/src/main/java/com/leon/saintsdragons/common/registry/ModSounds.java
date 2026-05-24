@@ -20,6 +20,10 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> BLEEDING_BOLT = registerSound("bleeding_bolt");
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");
+    public static final Supplier<SoundEvent> MOSSBACK_HURT = registerSound("mossback_hurt");
+    public static final Supplier<SoundEvent> MOSSBACK_DIE = registerSound("mossback_die");
+    public static final Supplier<SoundEvent> MOSSBACK_LANDED = registerSound("mossback_landed");
+    public static final Supplier<SoundEvent> MOSSBACK_TOXIN = registerSound("mossback_toxin");
 
     // Stegonaut
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
@@ -61,7 +65,6 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_DASH = registerSound("raevyx_dash");
     public static final Supplier<SoundEvent> RAEVYX_GROUND_REND = registerSound("raevyx_ground_rend");
     public static final Supplier<SoundEvent> RAEVYX_DIVE_LOOP = registerSound("raevyx_dive_loop");
-    public static final Supplier<SoundEvent> RAEVYX_DIVE_EXIT = registerSound("raevyx_dive_exit");
 
     // Cindervane
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");

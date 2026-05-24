@@ -6,7 +6,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
-import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
@@ -527,11 +526,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected float getBodyTurnSpeed() {
-        return 0.6f;
-    }
-
-    @Override
     protected void playStepSound(@Nonnull BlockPos pos, @Nonnull BlockState state) {
         if (isBaby()) {
             return;
@@ -543,8 +537,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
 
-        double horizontalSpeedSq = this.getDeltaMovement().horizontalDistanceSqr();
-        boolean running = isActuallyRunning() || horizontalSpeedSq > 0.02D;
+        boolean running = getMovementState() == 2;
         playGroundStepLoopSound(
                 ModSounds.RAEVYX_WALK.get(),
                 ModSounds.RAEVYX_RUN.get(),
@@ -1007,15 +1000,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         landedTimer = 0;
     }
     
-    public void setGroundMoveStateFromAI(int state) {
-        if (!this.level().isClientSide) {
-            int s = Math.max(0, Math.min(2, clampGroundMoveStateForLandedRecovery(state)));
-            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-                this.syncAnimState(s, getFlightMode());
-            }
-        }
-    }
     @Nullable
     public Player getRidingPlayer() {
         if (this.getControllingPassenger() instanceof Player player) {
@@ -2222,19 +2206,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected boolean isBarrelRollRiddenForHelper(boolean ridden, boolean canBarrelRoll) {
         return canBarrelRoll;
-    }
-
-    @Override
-    protected boolean shouldEaseAirAutoAlign() {
-        if (!isFlying() || areRiderControlsLocked()) {
-            return false;
-        }
-
-        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
-            return false;
-        }
-
-        return true;
     }
 
     @Override

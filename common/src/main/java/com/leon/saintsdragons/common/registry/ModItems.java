@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonBrushItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.FixedPotionItem;
+import com.leon.saintsdragons.common.item.MossbackItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
 import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
@@ -91,6 +92,14 @@ public class ModItems {
                     () -> Services.PLATFORM.createSpawnEgg(
                             ModEntities.MOOP,
                             0x8CC7C8, 0xF2E5B8,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> MOSSBACK_SPAWN_EGG =
+            REGISTER.register("mossback_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.MOSSBACK,
+                            0x4F6F3A, 0xB7C46A,
                             new Item.Properties()
                     ));
 
@@ -191,6 +200,13 @@ public class ModItems {
                                             .nutrition(5)
                                             .saturationMod(0.6F)
                                             .build())
+                    ));
+
+    public static final Supplier<Item> MOSSBACK =
+            REGISTER.register("mossback",
+                    () -> new MossbackItem(
+                            new Item.Properties()
+                                    .stacksTo(16)
                     ));
 
     public static final Supplier<Item> RAEVYX_SCALE =

@@ -117,7 +117,7 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
             return true;
         }
 
-        return dragon.isAggressive() && dragon.getDeltaMovement().horizontalDistanceSqr() > 0.008D;
+        return dragon.getMovementState() == 2;
     }
 
     private void applyHit(Varasuchus dragon, LivingEntity target) {

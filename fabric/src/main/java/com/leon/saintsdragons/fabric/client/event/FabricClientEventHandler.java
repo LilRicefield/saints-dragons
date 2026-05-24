@@ -1,18 +1,11 @@
 package com.leon.saintsdragons.fabric.client.event;
 
-import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
-import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
-import com.leon.saintsdragons.client.sound.raevyx.RaevyxDiveSoundController;
-import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
-import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
-import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
-import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
+import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.NulljawFirstPersonCamera;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
-import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -49,22 +42,10 @@ public class FabricClientEventHandler {
      * Call this from your client mod initializer.
      */
     public static void init() {
-        DragonRideCameraTuning.bootstrap();
+        CommonClientLifecycleEvents.bootstrap();
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            onClientTick(client);
+            CommonClientLifecycleEvents.onEndClientTick(client);
         });
-    }
-
-    private static void onClientTick(Minecraft minecraft) {
-        DragonSoundRuntime.tick(minecraft);
-        DragonDiveSoundController.tick(minecraft);
-        RaevyxDiveSoundController.tick(minecraft);
-        RaevyxLightningBeamSoundController.tick(minecraft);
-        IgnivorusFireBreathSoundController.tick(minecraft);
-        VolitansBreathSoundController.tick(minecraft);
-        VolitansBurrowSoundController.tick(minecraft);
-        // Camera adjustments happen during render, not tick
-        // We'll handle this in the render phase via mixin
     }
 
     /**

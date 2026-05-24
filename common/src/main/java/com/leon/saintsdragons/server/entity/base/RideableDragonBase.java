@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
-import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
@@ -32,7 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public abstract class RideableDragonBase extends DragonEntity implements RideableDragon {
+public abstract class RideableDragonBase extends DragonEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger(RideableDragonBase.class);
     private static final int MAX_PERSISTED_FLIGHT_MODE = 5;
     private final Set<String> warnedMissingActions = new HashSet<>();
@@ -94,7 +93,8 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         defineRideableDragonData();
     }
 
-    protected abstract void defineRideableDragonData();
+    protected void defineRideableDragonData() {
+    }
 
     public void setClientLocatorPosition(String name, Vec3 pos) {
         if (name == null || pos == null) {
@@ -484,12 +484,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return DATA_ACCELERATING;
     }
 
-    @Override
     public void setLastRiderForward(float forward) {
         this.entityData.set(getRiderForwardAccessor(), forward);
     }
 
-    @Override
     public void setLastRiderStrafe(float strafe) {
         this.entityData.set(getRiderStrafeAccessor(), strafe);
     }
@@ -502,7 +500,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         return this.entityData.get(getRiderStrafeAccessor());
     }
 
-    @Override
     public int getGroundMoveState() {
         return this.entityData.get(getGroundMoveStateAccessor());
     }
@@ -515,14 +512,31 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
     }
 
-    @Override
     public int getSyncedFlightMode() {
         return this.entityData.get(getFlightModeAccessor());
     }
 
-    @Override
     public int getEffectiveGroundState() {
         return this.entityData.get(getGroundMoveStateAccessor());
+    }
+
+    public boolean shouldUseRunAnimation() {
+        LivingEntity target = getTarget();
+        return target != null && target.isAlive();
+    }
+
+    public int getMovementState() {
+        int groundState = getGroundMoveState();
+        if (isAerial()) {
+            return 0;
+        }
+        if (isVehicle() || groundState > 0) {
+            return groundState;
+        }
+        if (getNavigation().isInProgress() && getNavigation().getPath() != null) {
+            return shouldUseRunAnimation() ? 2 : 1;
+        }
+        return 0;
     }
 
     public boolean isInSitTransition() {
@@ -557,12 +571,10 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         this.entityData.set(getGoingDownAccessor(), goingDown);
     }
 
-    @Override
     public boolean isAccelerating() {
         return this.entityData.get(getAcceleratingAccessor());
     }
 
-    @Override
     public void setAccelerating(boolean accelerating) {
         this.entityData.set(getAcceleratingAccessor(), accelerating);
     }
@@ -599,33 +611,25 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     public void syncAnimState(int groundState, int flightMode) {
     }
 
-    @Override
     public void initializeAnimationState() {
         if (!level().isClientSide) {
             int initialGroundState = 0;
             int initialFlightMode = -1;
-            if (!isAerial()) {
-                double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                if (velSqr > 0.02) initialGroundState = 2;
-                else if (velSqr > 0.0008) initialGroundState = 1;
-            } else if (isFlying()) {
+            if (isFlying()) {
                 initialFlightMode = getFlightMode();
             }
             this.entityData.set(getGroundMoveStateAccessor(), initialGroundState);
             this.entityData.set(getFlightModeAccessor(), initialFlightMode);
+            afterInitializeAnimationState();
         }
     }
 
-    @Override
+    protected void afterInitializeAnimationState() {
+    }
+
     public void resetAnimationState() {
         if (!level().isClientSide) {
             int currentGroundState = 0;
-            if (!isAerial()) {
-                double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                if (velSqr > 0.02) currentGroundState = 2;
-                else if (velSqr > 0.0008) currentGroundState = 1;
-            }
-
             int currentFlightMode = getFlightMode();
             this.entityData.set(getGroundMoveStateAccessor(), currentGroundState);
             this.entityData.set(getFlightModeAccessor(), currentFlightMode);
@@ -664,24 +668,15 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
     }
 
 
-    @Override
     public void tickAnimationStates() {
-        int moveState = 0;
-        if (!isAerial()) {
-            if (getControllingPassenger() != null) {
-                float fwd = this.entityData.get(getRiderForwardAccessor());
-                float str = this.entityData.get(getRiderStrafeAccessor());
-                if (Math.abs(fwd) + Math.abs(str) > 0.05f) {
-                    moveState = this.isAccelerating() ? 2 : 1;
-                } else {
-                    double speedSqr = getDeltaMovement().horizontalDistanceSqr();
-                    if (speedSqr > 0.08) moveState = 2;
-                    else if (speedSqr > 0.005) moveState = 1;
-                }
+        int moveState = this.entityData.get(getGroundMoveStateAccessor());
+        if (!isAerial() && getControllingPassenger() != null) {
+            float fwd = this.entityData.get(getRiderForwardAccessor());
+            float str = this.entityData.get(getRiderStrafeAccessor());
+            if (Math.abs(fwd) + Math.abs(str) > 0.05f) {
+                moveState = this.isAccelerating() ? 2 : 1;
             } else {
-                double velSqr = this.getDeltaMovement().horizontalDistanceSqr();
-                if (velSqr > 0.02) moveState = 2;
-                else if (velSqr > 0.0008) moveState = 1;
+                moveState = 0;
             }
         }
         int flightMode = getFlightMode();
@@ -697,9 +692,6 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
         if (groundStateChanged || flightModeChanged) {
             this.syncAnimState(moveState, flightMode);
-        }
-        if (this.isRunning() && this.getDeltaMovement().horizontalDistanceSqr() < 0.01) {
-            this.setRunning(false);
         }
     }
 
@@ -926,6 +918,24 @@ public abstract class RideableDragonBase extends DragonEntity implements Rideabl
         }
         tickMountedState();
         tickRiderFlexCooldown();
+    }
+
+    public void restoreMountedAnimationStateAfterLogin() {
+        if (level().isClientSide) {
+            return;
+        }
+        setPersistenceRequired();
+        initializeAnimationState();
+        resetAnimationState();
+        tickAnimationStates();
+        syncAnimState(getGroundMoveState(), getSyncedFlightMode());
+        setAccelerating(false);
+        setLastRiderForward(0f);
+        setLastRiderStrafe(0f);
+
+        if (isOrderedToSit()) {
+            forceSitProgress(maxSitTicks());
+        }
     }
 
     private void tickRiderFlexCooldown() {

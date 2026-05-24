@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.camera;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.interfaces.RideableDragon;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -18,13 +18,14 @@ public final class DragonFovHelper {
     private DragonFovHelper() {}
 
     public static boolean shouldApply(Entity vehicle) {
-        return vehicle instanceof DragonEntity && vehicle instanceof RideableDragon;
+        return vehicle instanceof RideableDragonBase;
     }
 
     public static double getTargetMultiplier(Entity vehicle) {
-        if (!(vehicle instanceof DragonEntity dragon) || !(vehicle instanceof RideableDragon rideable)) {
+        if (!(vehicle instanceof RideableDragonBase rideable)) {
             return 1.0;
         }
+        DragonEntity dragon = rideable;
         double diveMultiplier = getDiveMultiplier(dragon);
         if (!rideable.isAccelerating()) {
             return diveMultiplier;

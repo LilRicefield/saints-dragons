@@ -50,7 +50,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import net.minecraft.util.Mth;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
-import com.leon.saintsdragons.server.entity.controller.HumanLookControl;
+import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
 import com.leon.saintsdragons.util.math.SmoothValue;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -117,7 +117,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     public IvyTheDragonMerchant(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
         this.setPersistenceRequired();
-        this.lookControl = new HumanLookControl(this);
+        this.lookControl = new GenericLookControl(this);
         this.soundHandler = new HumanSoundHandler(this, new IvySoundProfile());
         this.restockInterval = Math.max(1, resolveRestockInterval());
         this.restockTimer = this.restockInterval;

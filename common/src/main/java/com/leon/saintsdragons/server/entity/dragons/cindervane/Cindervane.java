@@ -4,7 +4,6 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
@@ -518,10 +517,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         } else {
             timeFlying = 0;
         }
-        if (this.tickCount == 1) {
-            initializeAnimationState();
-        }
-
         tickFeedingCooldown();
         handleAmbientSounds();
         tickGroundStepAudio();
@@ -622,13 +617,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             groundStepSoundCooldownTicks = 0;
             return;
         }
-        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
-        if (moveState != 2) {
-            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            if (speedSqr > 0.02D) {
-                moveState = 2;
-            }
-        }
+        int moveState = getMovementState();
         if (moveState != 2) {
             groundStepSoundCooldownTicks = 0;
             return;
@@ -775,11 +764,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return true;
     }
 
-    @Override
-    protected boolean shouldResetStandardPitchForSit() {
-        return isOrderedToSit();
-    }
-
     private void tickScreenShake() {
         screenShakeComponent.tick();
     }
@@ -801,24 +785,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return this.entityData.get(DATA_GOING_UP);
     }
 
-    public void setGroundMoveStateFromAI(int state) {
-        if (!this.level().isClientSide) {
-            int s = Mth.clamp(clampGroundMoveStateForLandedRecovery(state), 0, 2);
-            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-                this.syncAnimState(s, getSyncedFlightMode());
-            }
-        }
-    }
-
     @Override
-    public void initializeAnimationState() {
-        super.initializeAnimationState();
-        if (!level().isClientSide) {
-            groundTicks = 0;
-            airTicks = 0;
-            landingTicks = 0;
-        }
+    protected void afterInitializeAnimationState() {
+        groundTicks = 0;
+        airTicks = 0;
+        landingTicks = 0;
     }
 
     @Override
@@ -1438,11 +1409,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    public boolean hasSecondaryMelee() {
-        return true;
-    }
-
-    @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
         return ModAbilities.CINDERVANE_ROAR;
     }
@@ -1698,11 +1664,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (this.isInWaterOrBubble() || this.isInLava()) {
             return false;
         }
-        if (!this.onGround()) {
-            return false;
-        }
-
-        return true;
+        return this.onGround();
     }
 
     @Override

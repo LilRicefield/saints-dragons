@@ -1,10 +1,9 @@
 package com.leon.saintsdragons.forge.client.event;
 
+import com.leon.saintsdragons.client.init.CommonParticleFactories;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.client.particle.DragonDustParticle;
-import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningParticle;
-import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningChainParticle;
-import com.leon.saintsdragons.common.registry.ModParticles;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -14,9 +13,12 @@ import net.minecraftforge.fml.common.Mod;
 public class ParticleClientRegistry {
     @SubscribeEvent
     public static void registerParticleFactories(RegisterParticleProvidersEvent event) {
-        event.registerSpriteSet(ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
-        event.registerSpriteSet(ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
-        event.registerSpriteSet(ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
-        event.registerSpriteSet(ModParticles.DRAGON_DUST.get(), DragonDustParticle.Factory::new);
+        CommonParticleFactories.register(new CommonParticleFactories.Registrar() {
+            @Override
+            public <T extends ParticleOptions> void register(ParticleType<T> type,
+                                                            CommonParticleFactories.SpriteFactory<T> factory) {
+                event.registerSpriteSet(type, factory::create);
+            }
+        });
     }
 }

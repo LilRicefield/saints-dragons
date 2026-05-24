@@ -194,6 +194,7 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
                 baby.setGender(level.random.nextBoolean() ? DragonGender.MALE : DragonGender.FEMALE);
             }
 
+            configureHatchedBabyVariant(level, pos, eggEntity, baby);
             baby.setAge(-24000);
             baby.setBaby(true);
             baby.skipRespawnTicks = 5;
@@ -236,6 +237,12 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
                 player.getAdvancements().award(advancement, "hatch_dragon");
             }
         }
+    }
+
+    protected void configureHatchedBabyVariant(ServerLevel level,
+                                               BlockPos pos,
+                                               @Nullable E eggEntity,
+                                               DragonEntity baby) {
     }
 
     @Nullable

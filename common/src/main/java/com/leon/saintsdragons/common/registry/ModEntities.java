@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
+import com.leon.saintsdragons.server.entity.otheranimals.Mossback;
 import com.leon.saintsdragons.server.entity.otheranimals.Moop;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -92,6 +93,13 @@ public final class ModEntities {
                     .clientTrackingRange(16)
                     .updateInterval(3)
                     .build("moop"));
+
+    public static final Supplier<EntityType<Mossback>> MOSSBACK =
+            REGISTER.register("mossback", () -> EntityType.Builder.of(Mossback::new, MobCategory.CREATURE)
+                    .sized(0.75F, 0.55F)
+                    .clientTrackingRange(24)
+                    .updateInterval(2)
+                    .build("mossback"));
 
     public static final Supplier<EntityType<IvyTheDragonMerchant>> IVY_THE_DRAGON_MERCHANT =
             REGISTER.register("ivy_oleander", () -> EntityType.Builder.of(IvyTheDragonMerchant::new, MobCategory.MISC)

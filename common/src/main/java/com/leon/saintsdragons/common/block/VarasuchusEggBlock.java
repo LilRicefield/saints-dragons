@@ -64,6 +64,16 @@ public class VarasuchusEggBlock extends AbstractTimedDragonEggBlock<VarasuchusEg
     }
 
     @Override
+    protected void configureHatchedBabyVariant(ServerLevel level,
+                                               BlockPos pos,
+                                               VarasuchusEggBlockEntity eggEntity,
+                                               DragonEntity baby) {
+        if (Varasuchus.shouldUseVoidKissedVariant(level)) {
+            baby.setPendingAdultTextureVariantId(Varasuchus.VOID_KISSED_VARIANT_ID);
+        }
+    }
+
+    @Override
     protected ResourceLocation getHatchAdvancementId() {
         return SaintsDragonsCommon.rl("hatch_varasuchus");
     }

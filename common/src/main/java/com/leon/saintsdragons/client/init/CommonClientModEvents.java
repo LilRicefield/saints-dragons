@@ -22,6 +22,7 @@ import com.leon.saintsdragons.client.renderer.volitans.VolitansSpineRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansWaterBreathRenderer;
 import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
 import com.leon.saintsdragons.client.renderer.npc.IvyTheDragonMerchantRenderer;
+import com.leon.saintsdragons.client.renderer.otheranimals.MossbackRenderer;
 import com.leon.saintsdragons.client.renderer.otheranimals.MoopRenderer;
 import com.leon.saintsdragons.client.ui.StegonautInventoryScreen;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -45,6 +46,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.VOLITANS.get(), VolitansRenderer::new);
         registrar.register(ModEntities.NULLJAW.get(), NulljawRenderer::new);
         registrar.register(ModEntities.MOOP.get(), MoopRenderer::new);
+        registrar.register(ModEntities.MOSSBACK.get(), MossbackRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);

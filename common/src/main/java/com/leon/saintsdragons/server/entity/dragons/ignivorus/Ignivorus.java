@@ -7,7 +7,6 @@ import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
@@ -25,7 +24,6 @@ import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonVocalAnimationHelper;
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -364,10 +362,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         this.entityData.define(DATA_ACCUMULATED_ROLL, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_FIREBALL_CHARGE, 0);
-    }
-
-    @Override
-    protected void defineRideableDragonData() {
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -1466,15 +1460,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         getNavigation().stop();
         setDeltaMovement(Vec3.ZERO);
         getSoundHandler().playVocal("ignivorus_flex");
-    }
-
-    public void setGroundMoveStateFromAI(int state) {
-        if (!this.level().isClientSide) {
-            int s = Mth.clamp(clampGroundMoveStateForLandedRecovery(state), 0, 2);
-            if (this.entityData.get(DATA_GROUND_MOVE_STATE) != s) {
-                this.entityData.set(DATA_GROUND_MOVE_STATE, s);
-            }
-        }
     }
 
     @Override
@@ -2832,15 +2817,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             groundStepSoundCooldownTicks = 0;
             return;
         }
-        int moveState = this.entityData.get(DATA_GROUND_MOVE_STATE);
-        if (moveState <= 0) {
-            double speedSqr = this.getDeltaMovement().horizontalDistanceSqr();
-            if (speedSqr > 0.02D) {
-                moveState = 2;
-            } else if (speedSqr > 0.0008D) {
-                moveState = 1;
-            }
-        }
+        int moveState = getMovementState();
         if (moveState <= 0) {
             groundStepSoundCooldownTicks = 0;
             return;

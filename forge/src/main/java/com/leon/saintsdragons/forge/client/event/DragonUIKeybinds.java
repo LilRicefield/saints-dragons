@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -13,7 +14,7 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Keybinds for Dragon UI system
  */
-@Mod.EventBusSubscriber(modid = "saintsdragons", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = SaintsDragonsCommon.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class DragonUIKeybinds {
     public static final KeyMapping TOGGLE_DRAGON_UI = new KeyMapping(
         "key.saintsdragons.toggle_dragon_ui",

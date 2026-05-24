@@ -1002,6 +1002,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     @Override
+    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @NotNull DamageSource source) {
+        this.fallDistance = 0.0F;
+        return false;
+    }
+
+    @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
         if (isDamageFromCurrentRider(source) && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return false;

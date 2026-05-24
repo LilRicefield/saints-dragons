@@ -73,6 +73,50 @@
       }
     ]
   },
+  "mossback_hurt": {
+    "subtitle": "subtitles.saintsdragons.mossback_hurt",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/mossback/mossback_hurt",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "mossback_die": {
+    "subtitle": "subtitles.saintsdragons.mossback_die",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/mossback/mossback_die",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "mossback_landed": {
+    "subtitle": "subtitles.saintsdragons.mossback_landed",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/mossback/mossback_landed",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "mossback_toxin": {
+    "subtitle": "subtitles.saintsdragons.mossback_toxin",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/mossback/mossback_toxin",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 18
+      }
+    ]
+  },
   "raevyx_dive_loop": {
     "subtitle": "subtitles.saintsdragons.raevyx_dive_loop",
     "sounds": [
@@ -169,16 +213,6 @@
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 32
-      }
-    ]
-  },
-  "raevyx_content": {
-    "subtitle": "subtitles.saintsdragons.raevyx_content",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_content",
-        "volume": 1.0,
-        "pitch": 1.0
       }
     ]
   },

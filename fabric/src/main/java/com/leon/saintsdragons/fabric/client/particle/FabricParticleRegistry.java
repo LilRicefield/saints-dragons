@@ -1,18 +1,19 @@
 package com.leon.saintsdragons.fabric.client.particle;
 
 
-import com.leon.saintsdragons.client.particle.DragonDustParticle;
-import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningChainParticle;
-import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningParticle;
-import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.client.init.CommonParticleFactories;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleFactoryRegistry;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleType;
 
 public class FabricParticleRegistry {
     public static void registerParticleFactories() {
-        ParticleFactoryRegistry.getInstance().register(ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
-        ParticleFactoryRegistry.getInstance().register(ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
-        ParticleFactoryRegistry.getInstance().register(ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
-        ParticleFactoryRegistry.getInstance().register(ModParticles.DRAGON_DUST.get(), DragonDustParticle.Factory::new);
-
+        CommonParticleFactories.register(new CommonParticleFactories.Registrar() {
+            @Override
+            public <T extends ParticleOptions> void register(ParticleType<T> type,
+                                                            CommonParticleFactories.SpriteFactory<T> factory) {
+                ParticleFactoryRegistry.getInstance().register(type, factory::create);
+            }
+        });
     }
 }

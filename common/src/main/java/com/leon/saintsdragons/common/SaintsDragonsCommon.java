@@ -13,6 +13,7 @@ import software.bernie.geckolib.GeckoLib;
 public final class SaintsDragonsCommon {
     public static final String MOD_ID = "saintsdragons";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    private static boolean initialized;
 
     private SaintsDragonsCommon() {
     }
@@ -21,7 +22,13 @@ public final class SaintsDragonsCommon {
         return new ResourceLocation(MOD_ID, path);
     }
 
-    public static void init() {
+    // call once
+    public static synchronized void init() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
+
         GeckoLib.initialize();
         SaintsDragonsConfig.bootstrap();
         DragonAttributeConfigLoader.bootstrap();

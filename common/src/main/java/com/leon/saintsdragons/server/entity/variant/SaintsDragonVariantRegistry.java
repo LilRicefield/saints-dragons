@@ -267,6 +267,7 @@ public final class SaintsDragonVariantRegistry {
         add(defaults, "volitans", 0, "default", 85);
         add(defaults, "volitans", 1, "bloodshot", 15);
         add(defaults, "varasuchus", 0, "default", 100);
+        addCustom(defaults, "varasuchus", "void_kissed", 0);
         add(defaults, "stegonaut", 0, "default", 100);
         add(defaults, "nulljaw", 0, "default", 100);
         Map<ResourceLocation, List<DragonVariantDefinition>> immutable = new LinkedHashMap<>();
@@ -289,6 +290,24 @@ public final class SaintsDragonVariantRegistry {
                 name,
                 weight,
                 legacyId,
+                null,
+                null,
+                DragonVariantDefinition.AltitudeRestriction.ANY
+        ));
+    }
+
+    private static void addCustom(Map<ResourceLocation, List<DragonVariantDefinition>> defaults,
+                                  String dragon,
+                                  String name,
+                                  int weight) {
+        ResourceLocation dragonId = SaintsDragonsCommon.rl(dragon);
+        ResourceLocation variantId = SaintsDragonsCommon.rl(name);
+        defaults.computeIfAbsent(dragonId, id -> new ArrayList<>()).add(new DragonVariantDefinition(
+                variantId,
+                dragonId,
+                name,
+                weight,
+                DragonVariantDefinition.NO_LEGACY_ID,
                 null,
                 null,
                 DragonVariantDefinition.AltitudeRestriction.ANY

@@ -8,6 +8,7 @@ import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
 import com.leon.saintsdragons.client.ui.MeleeModeNotification;
 import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
 import com.leon.saintsdragons.client.ui.VolitansBreathMeterIndicator;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -23,7 +24,7 @@ import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = "saintsdragons", bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = SaintsDragonsCommon.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE, value = Dist.CLIENT)
 public class DragonUIEventHandler {
     private static final MeleeModeNotification meleeModeNotification = new MeleeModeNotification();
     private static final FireballChargeIndicator fireballChargeIndicator = new FireballChargeIndicator();

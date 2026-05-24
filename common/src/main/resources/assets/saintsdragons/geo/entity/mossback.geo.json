@@ -1,0 +1,166 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.unknown",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 2.5,
+				"visible_bounds_offset": [0, 0.75, 0]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [0, 3.75, 1.25]
+				},
+				{
+					"name": "spinbone",
+					"parent": "root",
+					"pivot": [0, 4, 0]
+				},
+				{
+					"name": "body",
+					"parent": "spinbone",
+					"pivot": [0, 3.75, 1.25]
+				},
+				{
+					"name": "heightController",
+					"parent": "body",
+					"pivot": [0, 3.75, 1.25],
+					"cubes": [
+						{"origin": [-3, 1, -3], "size": [6, 6, 6], "uv": [0, 0]}
+					]
+				},
+				{
+					"name": "leftwing",
+					"parent": "heightController",
+					"pivot": [3, 7, 0],
+					"cubes": [
+						{"origin": [3, 7, -3], "size": [7, 0, 6], "uv": [0, 12]}
+					]
+				},
+				{
+					"name": "rightwing",
+					"parent": "heightController",
+					"pivot": [-3, 7, 0],
+					"cubes": [
+						{"origin": [-10, 7, -3], "size": [7, 0, 6], "uv": [0, 18]}
+					]
+				},
+				{
+					"name": "tail1",
+					"parent": "heightController",
+					"pivot": [0, 2.75, 2.5],
+					"cubes": [
+						{"origin": [-1, 1.5, -2], "size": [2, 2.5, 7], "uv": [0, 24]}
+					]
+				},
+				{
+					"name": "leftleg",
+					"parent": "heightController",
+					"pivot": [3, 2.5, -2],
+					"cubes": [
+						{"origin": [3, 0, -2.5], "size": [1, 3, 1], "uv": [26, 15]}
+					]
+				},
+				{
+					"name": "leftfeet",
+					"parent": "leftleg",
+					"pivot": [3.5, 0, -2],
+					"cubes": [
+						{"origin": [2.25, 0, -4.25], "size": [2.5, 0, 2.5], "uv": [24, 9]}
+					]
+				},
+				{
+					"name": "leftlegback",
+					"parent": "heightController",
+					"pivot": [3, 2.5, 2],
+					"cubes": [
+						{"origin": [2.75, 0, 1.25], "size": [1.5, 3, 1.5], "uv": [26, 19]}
+					]
+				},
+				{
+					"name": "leftfeetback",
+					"parent": "leftlegback",
+					"pivot": [3.5, 0, 2],
+					"cubes": [
+						{"origin": [2.25, 0, -0.25], "size": [2.5, 0, 2.5], "uv": [26, 11]}
+					]
+				},
+				{
+					"name": "rightlegback",
+					"parent": "heightController",
+					"pivot": [-3, 2.5, 2],
+					"cubes": [
+						{"origin": [-4.25, 0, 1.25], "size": [1.5, 3, 1.5], "uv": [22, 26]}
+					]
+				},
+				{
+					"name": "rightfeetback",
+					"parent": "rightlegback",
+					"pivot": [-3.5, 0, 2],
+					"cubes": [
+						{"origin": [-4.75, 0, -0.25], "size": [2.5, 0, 2.5], "uv": [26, 13]}
+					]
+				},
+				{
+					"name": "rightleg",
+					"parent": "heightController",
+					"pivot": [-3, 2.5, -2],
+					"cubes": [
+						{"origin": [-4, 0, -2.5], "size": [1, 3, 1], "uv": [18, 26]}
+					]
+				},
+				{
+					"name": "rightfeet",
+					"parent": "rightleg",
+					"pivot": [-3.5, 0, -2],
+					"cubes": [
+						{"origin": [-4.75, 0, -4.25], "size": [2.5, 0, 2.5], "uv": [18, 24]}
+					]
+				},
+				{
+					"name": "headController",
+					"parent": "heightController",
+					"pivot": [0, 4.25, -2.75],
+					"cubes": [
+						{"origin": [-1.5, 3, -5.6], "size": [3, 2.5, 3.6], "uv": [24, 0]}
+					]
+				},
+				{
+					"name": "eyes",
+					"parent": "headController",
+					"pivot": [0, 4.125, -5.15421]
+				},
+				{
+					"name": "righteye",
+					"parent": "eyes",
+					"pivot": [-1.54096, 4.125, -5.15421],
+					"cubes": [
+						{"origin": [-2, 3.5, -5.95], "size": [1, 1.25, 1.5], "pivot": [-1.75, 3.875, -4.7], "rotation": [0, -25, 0], "uv": [26, 25]},
+						{"origin": [-2.005, 3.6, -5.75], "size": [0, 1.05, 1.1], "pivot": [-1.75, 3.875, -4.7], "rotation": [0, -25, 0], "uv": [28, 27]}
+					]
+				},
+				{
+					"name": "lefteye",
+					"parent": "eyes",
+					"pivot": [1.54096, 4.125, -5.15421],
+					"cubes": [
+						{"origin": [1, 3.5, -5.95], "size": [1, 1.25, 1.5], "pivot": [1.75, 3.875, -4.7], "rotation": [0, 25, 0], "uv": [26, 23]},
+						{"origin": [2.005, 3.6, -5.75], "size": [0, 1.05, 1.1], "pivot": [1.75, 3.875, -4.7], "rotation": [0, 25, 0], "uv": [26, 27]}
+					]
+				},
+				{
+					"name": "lowerjaw",
+					"parent": "headController",
+					"pivot": [0, 2.5, -2.75],
+					"cubes": [
+						{"origin": [-1.25, 2.25, -5.35], "size": [2.5, 1, 3.35], "uv": [24, 5]}
+					]
+				}
+			]
+		}
+	]
+}

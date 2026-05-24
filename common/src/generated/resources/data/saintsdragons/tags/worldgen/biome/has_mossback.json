@@ -1,0 +1,19 @@
+{
+  "values": [
+    {
+      "id": "#c:jungle",
+      "required": false
+    },
+    {
+      "id": "#c:is_jungle",
+      "required": false
+    },
+    {
+      "id": "#forge:is_jungle",
+      "required": false
+    },
+    "minecraft:jungle",
+    "minecraft:sparse_jungle",
+    "minecraft:bamboo_jungle"
+  ]
+}

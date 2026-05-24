@@ -26,7 +26,7 @@ public interface DragonFlightCapable {
     void startTakeoffSequence(double minUpwardVelocity, int animationTicks);
     void markLandedNow();
     default void beginAiTakeoff(int animationTicks) {
-        if (this instanceof RideableDragon rideable) {
+        if (this instanceof RideableDragonBase rideable) {
             rideable.setGoingUp(true);
             rideable.setGoingDown(false);
         }
@@ -40,7 +40,7 @@ public interface DragonFlightCapable {
         }
         setLanding(false);
         setHovering(false);
-        if (this instanceof RideableDragon rideable) {
+        if (this instanceof RideableDragonBase rideable) {
             if (!takeoffActive) {
                 rideable.setGoingUp(false);
             }
@@ -52,7 +52,7 @@ public interface DragonFlightCapable {
         setHovering(false);
         setLanding(true);
         setFlying(false);
-        if (this instanceof RideableDragon rideable) {
+        if (this instanceof RideableDragonBase rideable) {
             rideable.setGoingUp(false);
             rideable.setGoingDown(false);
         }

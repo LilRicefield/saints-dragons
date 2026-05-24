@@ -93,6 +93,7 @@ public final class ModTags {
         public static final TagKey<Biome> HAS_VARASUCHUS_EGGS = tag("has_varasuchus_eggs");
         public static final TagKey<Biome> HAS_VOLITANS = tag("has_volitans");
         public static final TagKey<Biome> HAS_MOOP = tag("has_moop");
+        public static final TagKey<Biome> HAS_MOSSBACK = tag("has_mossback");
 
         private Biomes() {
         }

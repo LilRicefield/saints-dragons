@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
+import com.leon.saintsdragons.server.entity.otheranimals.Mossback;
 import com.leon.saintsdragons.server.entity.otheranimals.Moop;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.resources.ResourceKey;
@@ -48,6 +49,7 @@ public final class CommonModEvents {
         registrar.accept(ModEntities.VOLITANS.get(), Volitans.createAttributes());
         registrar.accept(ModEntities.NULLJAW.get(), Nulljaw.createAttributes());
         registrar.accept(ModEntities.MOOP.get(), Moop.createAttributes());
+        registrar.accept(ModEntities.MOSSBACK.get(), Mossback.createAttributes());
         registrar.accept(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchant.createAttributes());
     }
 
@@ -104,6 +106,12 @@ public final class CommonModEvents {
                 SpawnPlacements.Type.IN_WATER,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 Moop::canSpawnHere
+        );
+        registrar.register(
+                ModEntities.MOSSBACK.get(),
+                SpawnPlacements.Type.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Mossback::canSpawnHere
         );
     }
 

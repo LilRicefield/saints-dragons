@@ -58,6 +58,16 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         2
                 );
             }
+            if (DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOSSBACK)) {
+                addSpawn(
+                        builder,
+                        MobCategory.CREATURE,
+                        ModEntities.MOSSBACK.get(),
+                        10,
+                        1,
+                        2
+                );
+            }
         } catch (IllegalStateException e) {
             // Config not loaded yet during datagen or early worldgen, skip spawn modification
         }

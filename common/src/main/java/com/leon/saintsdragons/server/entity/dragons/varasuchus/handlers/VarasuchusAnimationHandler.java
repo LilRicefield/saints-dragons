@@ -80,9 +80,8 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         boolean isSwimming = drake.isSwimming();
         boolean isInWater = drake.isInWaterOrBubble();
         boolean isNavigating = drake.getNavigation().isInProgress() && drake.getNavigation().getPath() != null;
-        double horizontalSpeedSq = drake.getDeltaMovement().horizontalDistanceSqr();
         double totalSpeedSq = drake.getDeltaMovement().lengthSqr();
-        boolean isMovingLand = state.isMoving() || horizontalSpeedSq > 0.008D;
+        boolean isMovingLand = state.isMoving();
 
         if (isSwimming || isInWater) {
             controller.transitionLength(SWIM_TRANSITION_TICKS);
@@ -115,7 +114,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
             boolean phaseTwo = drake.isPhaseTwoActive();
             boolean abilityActive = drake.getActiveAbility() != null;
             boolean riderControlled = drake.isVehicle() && drake.getControllingPassenger() instanceof Player player && drake.isOwnedBy(player);
-            boolean isAggressive = drake.isAggressive() && isMovingLand;
+            boolean isAggressive = drake.shouldUseRunAnimation() && isMovingLand;
             int baseTransition = MOVEMENT_TRANSITION_TICKS;
             if (riderControlled) {
                 baseTransition = Math.max(3, baseTransition - 2);

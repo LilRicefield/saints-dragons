@@ -135,6 +135,14 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.WARM_OCEAN)
                 .add(Biomes.SWAMP)
                 .add(Biomes.MANGROVE_SWAMP);
+
+        tag(ModTags.Biomes.HAS_MOSSBACK)
+                .addOptionalTag(rl("c", "jungle"))
+                .addOptionalTag(rl("c", "is_jungle"))
+                .addOptionalTag(rl("forge", "is_jungle"))
+                .add(Biomes.JUNGLE)
+                .add(Biomes.SPARSE_JUNGLE)
+                .add(Biomes.BAMBOO_JUNGLE);
     }
 
     private void addVarasuchusBiomes(net.minecraft.tags.TagKey<Biome> tag) {

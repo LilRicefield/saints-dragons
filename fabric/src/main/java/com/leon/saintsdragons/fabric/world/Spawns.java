@@ -50,6 +50,7 @@ public final class Spawns {
         registerCindervaneEggs();
         registerVarasuchusEggs();
         registerMoopSpawn();
+        registerMossbackSpawn();
     }
 
     private static void registerMoopSpawn() {
@@ -59,6 +60,17 @@ public final class Spawns {
                 ModEntities.MOOP.get(),
                 12,
                 2,
+                2
+        );
+    }
+
+    private static void registerMossbackSpawn() {
+        registerSpawn(
+                ModTags.Biomes.HAS_MOSSBACK,
+                MobCategory.CREATURE,
+                ModEntities.MOSSBACK.get(),
+                10,
+                1,
                 2
         );
     }
