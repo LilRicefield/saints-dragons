@@ -2,8 +2,8 @@ package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.particle.DragonDustParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
-import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningChainParticle;
-import com.leon.saintsdragons.client.particle.raevyx.RaevyxLightningParticle;
+import com.leon.saintsdragons.client.particle.RaevyxLightningChainParticle;
+import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;

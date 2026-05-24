@@ -3,9 +3,6 @@ package com.leon.saintsdragons.common.config.dragon;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 
-/**
- * Shared helpers for taming config values that use percentage semantics.
- */
 public final class DragonTamingChance {
     private DragonTamingChance() {
     }

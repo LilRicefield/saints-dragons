@@ -209,7 +209,7 @@ public class StegonautBuffAbility {
             if (!stack.isEmpty()
                     && stack.getItem() instanceof StegonautBinderItem
                     && StegonautBinderItem.isBound(stack)
-                    && StegonautBinderItem.getBoundDrakeUUID(stack) != null) {
+                    && StegonautBinderItem.getBoundStegonautUUID(stack) != null) {
                 return true;
             }
         }

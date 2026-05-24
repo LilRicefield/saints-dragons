@@ -47,7 +47,7 @@ public class RaevyxBinderItem extends AbstractDragonBinderItem<Raevyx> {
     }
 
     @Nullable
-    public static UUID getBoundDragonUUID(ItemStack stack) {
+    public static UUID getBoundRaevyxUUID(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonUuid(stack);
     }
 

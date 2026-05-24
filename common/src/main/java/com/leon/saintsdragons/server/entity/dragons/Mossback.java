@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.otheranimals;
+package com.leon.saintsdragons.server.entity.dragons;
 
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -281,7 +281,7 @@ public class Mossback extends Animal implements GeoEntity {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         setThrown(tag.getBoolean("Thrown"));
         setThrownAirborne(tag.getBoolean("ThrownAirborne"));

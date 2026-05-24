@@ -1,8 +1,8 @@
-package com.leon.saintsdragons.client.renderer.otheranimals;
+package com.leon.saintsdragons.client.renderer.mossback;
 
-import com.leon.saintsdragons.client.model.otheranimals.MossbackModel;
+import com.leon.saintsdragons.client.model.mossback.MossbackModel;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.server.entity.otheranimals.Mossback;
+import com.leon.saintsdragons.server.entity.dragons.Mossback;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;

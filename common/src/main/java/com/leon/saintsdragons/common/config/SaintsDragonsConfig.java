@@ -93,7 +93,6 @@ public final class SaintsDragonsConfig {
     private static volatile boolean initialized = false;
 
     public static void bootstrap() {
-        // Double-checked locking to ensure safe initialization and prevent race conditions
         if (!initialized) {
             synchronized (SaintsDragonsConfig.class) {
                 if (!initialized) {

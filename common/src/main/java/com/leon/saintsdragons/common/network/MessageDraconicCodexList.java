@@ -9,44 +9,9 @@ import net.minecraft.network.FriendlyByteBuf;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Network message for syncing the tamed dragons list to the Draconic Codex screen.
- */
-public class MessageDraconicCodexList {
-    private final List<Entry> entries;
-
-    public MessageDraconicCodexList(List<Entry> entries) {
-        this.entries = new ArrayList<>(entries);
-    }
-
-    private MessageDraconicCodexList(FriendlyByteBuf buffer) {
-        int size = buffer.readInt();
-        this.entries = new ArrayList<>(size);
-        for (int i = 0; i < size; i++) {
-            java.util.UUID id = buffer.readUUID();
-            String name = buffer.readUtf(64);
-            double currentHealth = buffer.readDouble();
-            double maxHealth = buffer.readDouble();
-            double armor = buffer.readDouble();
-            double hunger = buffer.readDouble();
-            double happiness = buffer.readDouble();
-            int variantId = buffer.readInt();
-            String variantResourceId = buffer.readUtf(128);
-            byte genderId = buffer.readByte();
-            boolean genderKnown = buffer.readBoolean();
-            String dragonType = buffer.readUtf(32);
-            boolean isBaby = buffer.readBoolean();
-            double posX = buffer.readDouble();
-            double posY = buffer.readDouble();
-            double posZ = buffer.readDouble();
-            String biomeId = buffer.readUtf(128);
-            entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness,
-                    variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
-        }
-    }
-
-    public List<Entry> entries() {
-        return entries;
+public record MessageDraconicCodexList(List<Entry> entries) {
+    public MessageDraconicCodexList {
+        entries = List.copyOf(entries);
     }
 
     public static MessageDraconicCodexList fromDragons(List<DragonEntity> dragons) {
@@ -114,8 +79,8 @@ public class MessageDraconicCodexList {
     }
 
     public static void encode(MessageDraconicCodexList message, FriendlyByteBuf buffer) {
-        buffer.writeInt(message.entries.size());
-        for (Entry entry : message.entries) {
+        buffer.writeInt(message.entries().size());
+        for (Entry entry : message.entries()) {
             buffer.writeUUID(entry.entityId());
             buffer.writeUtf(entry.displayName(), 64);
             buffer.writeDouble(entry.currentHealth());
@@ -137,7 +102,30 @@ public class MessageDraconicCodexList {
     }
 
     public static MessageDraconicCodexList decode(FriendlyByteBuf buffer) {
-        return new MessageDraconicCodexList(buffer);
+        int size = buffer.readInt();
+        List<Entry> entries = new ArrayList<>(size);
+        for (int i = 0; i < size; i++) {
+            java.util.UUID id = buffer.readUUID();
+            String name = buffer.readUtf(64);
+            double currentHealth = buffer.readDouble();
+            double maxHealth = buffer.readDouble();
+            double armor = buffer.readDouble();
+            double hunger = buffer.readDouble();
+            double happiness = buffer.readDouble();
+            int variantId = buffer.readInt();
+            String variantResourceId = buffer.readUtf(128);
+            byte genderId = buffer.readByte();
+            boolean genderKnown = buffer.readBoolean();
+            String dragonType = buffer.readUtf(32);
+            boolean isBaby = buffer.readBoolean();
+            double posX = buffer.readDouble();
+            double posY = buffer.readDouble();
+            double posZ = buffer.readDouble();
+            String biomeId = buffer.readUtf(128);
+            entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness,
+                    variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
+        }
+        return new MessageDraconicCodexList(entries);
     }
 
     public static void handle(MessageDraconicCodexList message) {

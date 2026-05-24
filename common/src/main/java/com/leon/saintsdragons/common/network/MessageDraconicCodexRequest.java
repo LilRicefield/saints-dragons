@@ -7,10 +7,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MessageDraconicCodexRequest {
@@ -76,10 +73,10 @@ public class MessageDraconicCodexRequest {
             entries = data.getEntriesFor(player);
         }
 
-        List<DragonCodexSavedData.DragonCodexEntry> sortedEntries = new java.util.ArrayList<>(entries);
+        List<DragonCodexSavedData.DragonCodexEntry> sortedEntries = new ArrayList<>(entries);
         sortedEntries.sort(Comparator.comparing(entry -> entry.displayName().toLowerCase()));
-        java.util.Map<String, Integer> nameCounts = new java.util.HashMap<>();
-        java.util.List<MessageDraconicCodexList.Entry> payload = new java.util.ArrayList<>(sortedEntries.size());
+        Map<String, Integer> nameCounts = new HashMap<>();
+        List<MessageDraconicCodexList.Entry> payload = new ArrayList<>(sortedEntries.size());
         for (DragonCodexSavedData.DragonCodexEntry entry : sortedEntries) {
             String baseName = entry.displayName();
             String key = baseName.toLowerCase();
@@ -111,7 +108,7 @@ public class MessageDraconicCodexRequest {
     }
 
     private static Map<UUID, DragonEntity> collectLoadedOwnedDragons(ServerLevel originLevel, UUID ownerId) {
-        Map<UUID, DragonEntity> dragons = new java.util.HashMap<>();
+        Map<UUID, DragonEntity> dragons = new HashMap<>();
         if (originLevel.getServer() == null || ownerId == null) {
             return dragons;
         }

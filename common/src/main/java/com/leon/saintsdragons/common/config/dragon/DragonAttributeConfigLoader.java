@@ -23,9 +23,6 @@ import java.util.Map;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Datapack-driven loader that exposes dragon attribute overrides via JSON.
- */
 public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder()
             .setPrettyPrinting()

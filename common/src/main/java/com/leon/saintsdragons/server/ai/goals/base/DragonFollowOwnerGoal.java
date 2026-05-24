@@ -38,7 +38,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     protected boolean canUseAdditional() {
-        // Follow goal only runs in Follow command mode (0).
         if (dragon.isTame() && dragon.getCommand() != 0) {
             return false;
         }
@@ -47,7 +46,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return false;
         }
 
-        // Don't follow while fighting
         if (isInCombat()) {
             return false;
         }
@@ -57,24 +55,20 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return false;
         }
 
-        // Must be in same dimension
         if (owner.level() != dragon.level()) {
             return false;
         }
 
-        // Check for forced follow (dragon-specific mechanic)
         if (shouldForceFollow()) {
             return true;
         }
 
-        // Only follow if owner is far enough
         double distSq = dragon.distanceToSqr(owner);
         return distSq > config.startFollowDist * config.startFollowDist;
     }
 
     @Override
     protected boolean canContinueAdditional() {
-        // Follow goal only runs in Follow command mode (0).
         if (dragon.isTame() && dragon.getCommand() != 0) {
             return false;
         }
@@ -83,7 +77,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return false;
         }
 
-        // Stop following while fighting
         if (isInCombat()) {
             return false;
         }
@@ -105,7 +98,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return !dragon.onGround();
         }
 
-        // Keep following until close enough
         double distSq = dragon.distanceToSqr(owner);
         return distSq > config.stopFollowDist * config.stopFollowDist;
     }
@@ -129,26 +121,17 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         if (airMoveRefreshCooldown > 0) {
             airMoveRefreshCooldown--;
         }
-
         double distance = dragon.distanceTo(owner);
 
-        // Emergency teleport if too far while grounded.
         if (distance > config.teleportDist && canTeleportToOwner()) {
             handleTeleportToOwner(owner);
             return;
         }
-
-        // Always look at owner while following
         dragon.getLookControl().setLookAt(owner, 10.0f, 10.0f);
-
-        // Determine if dragon should be flying
         boolean ownerAirborne = isOwnerAirborne(owner);
         boolean shouldFly = shouldTriggerFlight(owner, distance, ownerAirborne);
-
-        // Handle flight state transitions
         updateFlightState(owner, shouldFly, ownerAirborne, distance);
 
-        // Execute movement
         if (shouldUseWaterFollowing(owner)) {
             handleWaterFollowing(owner, distance);
         } else if (dragon.isLanding()) {
@@ -162,9 +145,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         }
     }
 
-    /**
-     * Teleport dragon to owner when too far away
-     */
     protected void handleTeleportToOwner(LivingEntity owner) {
         if (!attemptOwnerTeleport(dragon, owner)) {
             dragon.teleportTo(owner.getX(), owner.getY() + 3, owner.getZ());
@@ -207,15 +187,11 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         return floor.isSolidRender(level, below) && body.isAir() && above.isAir();
     }
 
-    /**
-     * Update flight state based on conditions
-     */
     protected void updateFlightState(LivingEntity owner, boolean shouldFly, boolean ownerAirborne, double distance) {
         if (shouldFly && !dragon.isFlying() && !dragon.isTakeoff()) {
             startFollowTakeoff();
             resetPathTracking();
         } else if (dragon.isFlying() || dragon.isHovering()) {
-            // Check if should land
             double dx = owner.getX() - dragon.getX();
             double dz = owner.getZ() - dragon.getZ();
             double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
@@ -235,9 +211,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         dragon.beginAiTakeoff(20);
     }
 
-    /**
-     * Handle flight movement toward owner
-     */
     protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
         Vec3 targetPos = getFlightFollowTarget(owner, ownerAirborne);
         double followSpeed = getFlightFollowSpeed();
@@ -267,11 +240,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         return new Vec3(targetX, targetY + verticalOffset, targetZ);
     }
 
-    /**
-     * Handle ground movement toward owner
-     */
     private void handleGroundFollowing(LivingEntity owner, double distance) {
-        // Stop if close enough
         if (distance <= config.stopFollowDist) {
             if (dragon.getGroundMoveState() > 0) {
                 DragonGroundMovementHelper.stopGroundMovement(dragon);
@@ -279,20 +248,12 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             pathRecalcCooldown = 0;
             return;
         }
-
-        // Determine movement style
         boolean shouldRun = distance > config.runDist;
         DragonGroundMovementHelper.setGroundMoveState(dragon, shouldRun);
-
-        // Calculate speed with distance scaling
         double baseSpeed = shouldRun ? config.runSpeed : config.walkSpeed;
         double speed = baseSpeed * (1.0 + (distance / 50.0));
         speed = Math.min(speed, shouldRun ? config.maxRunSpeed : config.maxWalkSpeed);
-
-        // Update pathfinding
         updateGroundPath(owner, speed, distance, shouldRun);
-
-        // Handle obstacles
         if (dragon.getNavigation().isStuck()) {
             dragon.getJumpControl().jump();
             DragonGroundMovementHelper.stopGroundMovement(dragon);
@@ -324,32 +285,23 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return false;
         }
 
-        // If already flying, check if should land
         if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             if (shouldForceFollow() || ownerAirborne) {
-                return true; // Keep flying
+                return true;
             }
             return !(distance < config.landingDistance && isOwnerGroundedForLanding(owner));
         }
 
-        // Check if can take off
         if (!canTriggerFlight()) {
             return false;
         }
 
-        // If the owner is airborne, we need to recover into flight even at close range.
         if (ownerAirborne) {
             return true;
         }
-
-        // Don't take off if very close. Forced follow is for immediately
-        // reacquiring the goal after states like rider dismount, not for
-        // blindly spamming takeoff while the owner is still right beside the dragon.
         if (distance < config.stopFollowDist * 1.5) {
             return false;
         }
-
-        // Take off if far away or owner is significantly higher
         boolean farAway = distance > config.flightTriggerDist;
         boolean ownerAbove = ownerAirborne && (getOwnerFlightReferenceY(owner) - dragon.getY()) > config.flightHeightDiff;
 
@@ -552,7 +504,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
 
     protected void clearForceFollow() {
-        // Override if needed
     }
 
     public static class FollowConfig {

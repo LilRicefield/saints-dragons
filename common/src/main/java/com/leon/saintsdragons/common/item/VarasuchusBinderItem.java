@@ -47,12 +47,12 @@ public class VarasuchusBinderItem extends AbstractDragonBinderItem<Varasuchus> {
     }
 
     @Nullable
-    public static UUID getBoundRiftDrakeUUID(ItemStack stack) {
+    public static UUID getBoundVarasuchusUUID(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonUuid(stack);
     }
 
     @Nullable
-    public static String getBoundRiftDrakeName(ItemStack stack) {
+    public static String getBoundVarasuchusName(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonName(stack);
     }
 }

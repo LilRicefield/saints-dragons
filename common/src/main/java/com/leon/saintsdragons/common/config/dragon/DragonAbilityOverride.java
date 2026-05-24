@@ -4,10 +4,6 @@ import net.minecraft.util.GsonHelper;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Represents optional overrides for a single dragon ability.
- * Currently only exposes damage but can be extended with more fields later.
- */
 public record DragonAbilityOverride(@Nullable Double damage) {
 
     public static DragonAbilityOverride ofDamage(double damage) {

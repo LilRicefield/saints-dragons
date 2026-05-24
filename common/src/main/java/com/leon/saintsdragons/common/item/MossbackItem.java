@@ -2,7 +2,7 @@ package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.client.renderer.item.MossbackItemRenderer;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.server.entity.otheranimals.Mossback;
+import com.leon.saintsdragons.server.entity.dragons.Mossback;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.InteractionHand;

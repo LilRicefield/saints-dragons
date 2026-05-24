@@ -32,7 +32,7 @@ import java.util.function.Supplier;
 
 public class VolitansEggBlock extends AbstractTimedDragonEggBlock<VolitansEggBlockEntity> implements SimpleWaterloggedBlock {
     public static final BooleanProperty WATERLOGGED = BlockStateProperties.WATERLOGGED;
-    private static final int DEFAULT_HATCH_TICKS = 18000; // 15 minutes
+    private static final int DEFAULT_HATCH_TICKS = 18000;
     private static final VoxelShape SHAPE = box(4.0D, 0.0D, 4.0D, 12.0D, 10.0D, 12.0D);
 
     public VolitansEggBlock(Properties properties) {

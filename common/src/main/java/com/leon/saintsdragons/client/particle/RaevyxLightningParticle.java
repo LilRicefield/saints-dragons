@@ -1,11 +1,10 @@
-package com.leon.saintsdragons.client.particle.raevyx;
+package com.leon.saintsdragons.client.particle;
 
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
-import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import net.fabricmc.api.EnvType;

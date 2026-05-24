@@ -45,7 +45,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
     }
 
     @Override
-    public boolean shouldRender(T entity, Frustum frustum, double camX, double camY, double camZ) {
+    public boolean shouldRender(@NotNull T entity, @NotNull Frustum frustum, double camX, double camY, double camZ) {
         if (super.shouldRender(entity, frustum, camX, camY, camZ)) {
             return true;
         }

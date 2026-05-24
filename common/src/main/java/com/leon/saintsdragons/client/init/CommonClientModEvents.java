@@ -22,7 +22,7 @@ import com.leon.saintsdragons.client.renderer.volitans.VolitansSpineRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansWaterBreathRenderer;
 import com.leon.saintsdragons.client.renderer.VisualFallingBlockRenderer;
 import com.leon.saintsdragons.client.renderer.npc.IvyTheDragonMerchantRenderer;
-import com.leon.saintsdragons.client.renderer.otheranimals.MossbackRenderer;
+import com.leon.saintsdragons.client.renderer.mossback.MossbackRenderer;
 import com.leon.saintsdragons.client.renderer.otheranimals.MoopRenderer;
 import com.leon.saintsdragons.client.ui.StegonautInventoryScreen;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;

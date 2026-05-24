@@ -33,7 +33,6 @@ public final class SaintsDragonVariantRegistry {
     }
 
     public static void bootstrap() {
-        // Forces class loading so built-in variants are available before datapack reload.
     }
 
     public static ResourceLocation dragonId(DragonEntity dragon) {

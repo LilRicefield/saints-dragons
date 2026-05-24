@@ -24,7 +24,7 @@ import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
-import com.leon.saintsdragons.server.entity.otheranimals.Mossback;
+import com.leon.saintsdragons.server.entity.dragons.Mossback;
 import com.leon.saintsdragons.server.entity.otheranimals.Moop;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;

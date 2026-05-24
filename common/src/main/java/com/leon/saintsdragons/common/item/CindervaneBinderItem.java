@@ -47,12 +47,12 @@ public class CindervaneBinderItem extends AbstractDragonBinderItem<Cindervane> {
     }
 
     @Nullable
-    public static UUID getBoundAmphithereUUID(ItemStack stack) {
+    public static UUID getBoundCindervaneUUID(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonUuid(stack);
     }
 
     @Nullable
-    public static String getBoundAmphithereName(ItemStack stack) {
+    public static String getBoundCindervaneName(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonName(stack);
     }
 }

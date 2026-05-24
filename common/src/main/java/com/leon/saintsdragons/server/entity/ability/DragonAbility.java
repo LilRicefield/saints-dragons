@@ -96,7 +96,6 @@ public abstract class DragonAbility<T extends LivingEntity> {
     @SuppressWarnings("unused")
     public void playAnimation(RawAnimation animation) {
         activeAnimation = animation;
-        // Delegate to entity so it can trigger a synced GeckoLib animation (server → clients)
         if (user instanceof DragonAbilityEntity) {
             ((DragonAbilityEntity) user).playDragonAnimation(animation);
         }

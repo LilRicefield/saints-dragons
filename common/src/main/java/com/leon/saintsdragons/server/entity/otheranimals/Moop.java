@@ -1,4 +1,4 @@
-//peepee poopoo
+//pee pee poo poo meep meep moop moop :>
 package com.leon.saintsdragons.server.entity.otheranimals;
 
 import com.leon.saintsdragons.common.registry.ModItems;
@@ -20,6 +20,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -41,7 +42,7 @@ public class Moop extends AbstractFish implements GeoEntity {
         super(entityType, level);
     }
 
-    public static AttributeSupplier.Builder createAttributes() {
+    public static AttributeSupplier.@NotNull Builder createAttributes() {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 3.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.8D);
@@ -58,7 +59,7 @@ public class Moop extends AbstractFish implements GeoEntity {
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new DirectSwimWanderGoal(this, 15.0F, 0.10, 30));
-        this.goalSelector.addGoal(2, new PanicGoal(this, (double)1.25F));
+        this.goalSelector.addGoal(2, new PanicGoal(this, 1.25F));
     }
 
     @Override
@@ -67,17 +68,17 @@ public class Moop extends AbstractFish implements GeoEntity {
     }
 
     @Override
-    protected SoundEvent getFlopSound() {
+    protected @NotNull SoundEvent getFlopSound() {
         return SoundEvents.COD_FLOP;
     }
 
     @Override
-    public ItemStack getBucketItemStack() {
+    public @NotNull ItemStack getBucketItemStack() {
         return new ItemStack(Items.WATER_BUCKET);
     }
 
     @Override
-    protected void dropCustomDeathLoot(DamageSource damageSource, int looting, boolean recentlyHit) {
+    protected void dropCustomDeathLoot(@NotNull DamageSource damageSource, int looting, boolean recentlyHit) {
         super.dropCustomDeathLoot(damageSource, looting, recentlyHit);
         this.spawnAtLocation(this.isOnFire() || this.getRemainingFireTicks() > 0
                 ? ModItems.COOKED_MOOP.get()

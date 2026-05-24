@@ -6,10 +6,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
-/**
- * Generic death ability for all dragons.
- * Plays death animation and sound, then finalizes death after animation completes.
- */
 public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     public DieAbility(DragonAbilityType<T, ? extends DragonAbility<T>> type,
@@ -27,18 +23,10 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
     @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
-
-        // Allow dragons to update custom death state
         T dragon = getUser();
         dragon.onDeathAbilityStarted();
-
-        // Use ability ID to look up vocal entry (matches the pattern)
         String abilityId = this.getAbilityType().getName();
-
-        // Trigger death animation using specific metadata when available
         String controllerId = DragonInteractionAnimationHelper.CONTROLLER;
-
-        // Use baby die animation if this is a baby dragon
         String animationTrigger = "die";
         if (abilityId.startsWith("baby_")) {
             animationTrigger = "baby_die";
@@ -64,7 +52,6 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
                 return;
             }
 
-            // Look up the vocal entry to get the sound event
             VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
             if (deathEntry != null && deathEntry.soundSupplier() != null) {
                 net.minecraft.sounds.SoundEvent sound = deathEntry.soundSupplier().get();
@@ -74,7 +61,6 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
                 }
                 float pitch = deathEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * deathEntry.pitchVariance() * 2f;
 
-                // Play sound directly (bypasses vocal system's isDeadOrDying check)
                 dragon.playSound(sound, volume, pitch);
             }
         }
@@ -82,12 +68,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     @Override
     protected void endSection(DragonAbilitySection section) {
-        // Animation complete - tickDeath() will handle entity removal and loot drops
         complete();
     }
 
-    @Override
-    public boolean damageInterrupts() {
-        return false;
-    }
 }

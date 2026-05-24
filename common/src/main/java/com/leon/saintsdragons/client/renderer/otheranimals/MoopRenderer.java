@@ -15,7 +15,7 @@ public class MoopRenderer extends GeoEntityRenderer<Moop> {
     }
 
     @Override
-    public ResourceLocation getTextureLocation(@NotNull Moop entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull Moop entity) {
         return SaintsDragonsCommon.rl("textures/entity/moop.png");
     }
 }

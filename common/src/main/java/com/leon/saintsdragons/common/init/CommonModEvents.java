@@ -13,7 +13,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
-import com.leon.saintsdragons.server.entity.otheranimals.Mossback;
+import com.leon.saintsdragons.server.entity.dragons.Mossback;
 import com.leon.saintsdragons.server.entity.otheranimals.Moop;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.resources.ResourceKey;
@@ -31,9 +31,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
-/**
- * Loader-neutral wiring for gameplay events that need platform specific dispatchers.
- */
+
 public final class CommonModEvents {
     private CommonModEvents() {
     }
@@ -54,8 +52,6 @@ public final class CommonModEvents {
     }
 
     public static void registerCreativeTabEntries(CreativeTabRegistrar registrar) {
-        // All items are registered in SaintsCreativeTab only
-        // No vanilla tab registrations to keep everything in the Saint's Dragons tab
     }
 
     public static void registerSpawnPlacements(SpawnPlacementRegistrar registrar) {

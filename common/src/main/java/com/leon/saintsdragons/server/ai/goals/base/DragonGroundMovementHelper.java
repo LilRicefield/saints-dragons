@@ -41,8 +41,8 @@ public final class DragonGroundMovementHelper {
         return dragon.getNavigation().moveTo(target, speed);
     }
 
-    public static boolean moveToPosition(RideableDragonBase dragon, Vec3 target, double speed, boolean running) {
+    public static void moveToPosition(RideableDragonBase dragon, Vec3 target, double speed, boolean running) {
         setGroundMoveState(dragon, running);
-        return dragon.getNavigation().moveTo(target.x, target.y, target.z, speed);
+        dragon.getNavigation().moveTo(target.x, target.y, target.z, speed);
     }
 }

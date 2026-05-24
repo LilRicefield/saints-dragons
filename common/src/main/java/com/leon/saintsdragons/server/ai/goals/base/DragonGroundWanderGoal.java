@@ -6,10 +6,6 @@ import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 
-/**
- * Generic ground wandering goal for all rideable dragons.
- * Only active when not flying and respects command system.
- */
 public class DragonGroundWanderGoal<T extends RideableDragonBase> extends DragonBaseGoal<T> {
     private final double speed;
     private final int interval;
@@ -23,17 +19,14 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
 
     @Override
     protected boolean canUseAdditional() {
-        // Only wander on ground
         if (dragon.isAerial()) {
             return false;
         }
 
-        // Don't wander during combat
         if (isInCombat()) {
             return false;
         }
 
-        // Check command compatibility - only wander in Wander(2) mode or when untamed
         if (!checkCommandCompatible(2)) {
             return false;
         }
@@ -42,28 +35,23 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
             return true;
         }
 
-        // Random interval check
         return random.nextInt(interval) == 0;
     }
 
     @Override
     protected boolean canContinueAdditional() {
-        // Stop if flying
         if (dragon.isAerial()) {
             return false;
         }
 
-        // Stop if combat starts
         if (isInCombat()) {
             return false;
         }
 
-        // Stop if command changes
         if (!checkCommandCompatible(2)) {
             return false;
         }
 
-        // Continue while navigation is active
         return dragon.getNavigation().isInProgress();
     }
 
@@ -72,14 +60,14 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
         forceTrigger = false;
         Vec3 wanderPos = getWanderPosition();
         if (wanderPos != null) {
-            dragon.setGroundMoveStateFromAI(1); // Walking
+            dragon.setGroundMoveStateFromAI(1);
             dragon.getNavigation().moveTo(wanderPos.x, wanderPos.y, wanderPos.z, speed);
         }
     }
 
     @Override
     public void stop() {
-        dragon.setGroundMoveStateFromAI(0); // Idle
+        dragon.setGroundMoveStateFromAI(0);
         if (!dragon.isAerial()) {
             dragon.getNavigation().stop();
         }
@@ -87,7 +75,6 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
 
     @Override
     public void tick() {
-        // Maintain walk animation while moving
         if (dragon.getNavigation().isInProgress()) {
             dragon.setGroundMoveStateFromAI(1);
         }
@@ -97,12 +84,8 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
         this.forceTrigger = true;
     }
 
-    /**
-     * Find a suitable wander position.
-     */
     @Nullable
     protected Vec3 getWanderPosition() {
-        // Fully independent wandering (no owner tether in Wander mode).
         return DefaultRandomPos.getPos(dragon, 20, 8);
     }
 }

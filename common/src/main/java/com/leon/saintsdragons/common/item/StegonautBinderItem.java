@@ -59,12 +59,12 @@ public class StegonautBinderItem extends AbstractDragonBinderItem<Stegonaut> {
     }
 
     @Nullable
-    public static UUID getBoundDrakeUUID(ItemStack stack) {
+    public static UUID getBoundStegonautUUID(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonUuid(stack);
     }
 
     @Nullable
-    public static String getBoundDrakeName(ItemStack stack) {
+    public static String getBoundStegonautName(ItemStack stack) {
         return BinderComponentUtil.getBoundDragonName(stack);
     }
 
