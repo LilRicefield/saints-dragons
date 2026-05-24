@@ -85,6 +85,10 @@ public class StegonautAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating_shoot"));
         actionController.triggerableAnim("ground_eating_cancel",
                 RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating_cancel"));
+        actionController.triggerableAnim("ground_slam",
+                RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam"));
+        actionController.triggerableAnim("ground_slam2",
+                RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam2"));
 
     }
 

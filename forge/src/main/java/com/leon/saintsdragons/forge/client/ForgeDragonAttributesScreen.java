@@ -252,6 +252,30 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE::get,
                 ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_damage"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_DAMAGE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_knockback"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_KNOCKBACK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam2_damage"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_DAMAGE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam2_knockback"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_KNOCKBACK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_pillar_damage"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_pillar_knockback"),
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"),
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE::set,
@@ -746,6 +770,12 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.STEGONAUT_BITE_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_CHIN_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_CHIN_SLAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_EATING_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_KNOCKBACK.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_KNOCKBACK.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_KNOCKBACK.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM2_KNOCKBACK.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK.set(ForgeDragonAttributesConfig.STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.STEGONAUT_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.STEGONAUT_EGG_HATCH_CHANCE_NORMAL.getDefault());

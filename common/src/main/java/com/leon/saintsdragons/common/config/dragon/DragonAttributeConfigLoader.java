@@ -400,6 +400,12 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double biteDamage = 5.0D;
         double chinSlamDamage = 8.0D;
         double groundEatingDamage = 10.0D;
+        double groundSlamDamage = 20.0D;
+        double groundSlamKnockback = 1.35D;
+        double groundSlam2Damage = 25.0D;
+        double groundSlam2Knockback = 1.8D;
+        double groundSlamPillarDamage = 10.0D;
+        double groundSlamPillarKnockback = 0.9D;
         double tamingChanceBase = 100.0D;
         double tamingChanceHearty = 100.0D;
         double eggHatchTimeTicksNormal = 30000.0D;
@@ -418,6 +424,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         .invoke(configClass.getField("STEGONAUT_CHIN_SLAM_DAMAGE").get(null));
                 groundEatingDamage = (double) configClass.getField("STEGONAUT_GROUND_EATING_DAMAGE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_GROUND_EATING_DAMAGE").get(null));
+                groundSlamDamage = (double) configClass.getField("STEGONAUT_GROUND_SLAM_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_SLAM_DAMAGE").get(null));
+                groundSlamKnockback = (double) configClass.getField("STEGONAUT_GROUND_SLAM_KNOCKBACK").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_SLAM_KNOCKBACK").get(null));
+                groundSlam2Damage = (double) configClass.getField("STEGONAUT_GROUND_SLAM2_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_SLAM2_DAMAGE").get(null));
+                groundSlam2Knockback = (double) configClass.getField("STEGONAUT_GROUND_SLAM2_KNOCKBACK").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_SLAM2_KNOCKBACK").get(null));
+                groundSlamPillarDamage = (double) configClass.getField("STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE").get(null));
+                groundSlamPillarKnockback = (double) configClass.getField("STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK").get(null).getClass().getMethod("get")
+                        .invoke(configClass.getField("STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK").get(null));
                 tamingChanceBase = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get")
                         .invoke(configClass.getField("STEGONAUT_TAMING_CHANCE_BASE").get(null));
                 tamingChanceHearty = (double) configClass.getField("STEGONAUT_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get")
@@ -437,12 +455,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "bite", DragonAbilityOverride.ofDamage(biteDamage),
                         "chin_slam", DragonAbilityOverride.ofDamage(chinSlamDamage),
-                        "ground_eating", DragonAbilityOverride.ofDamage(groundEatingDamage)
+                        "ground_eating", DragonAbilityOverride.ofDamage(groundEatingDamage),
+                        "ground_slam", DragonAbilityOverride.ofDamage(groundSlamDamage),
+                        "ground_slam2", DragonAbilityOverride.ofDamage(groundSlam2Damage),
+                        "ground_slam_pillar", DragonAbilityOverride.ofDamage(groundSlamPillarDamage)
                 ),
                 Map.of(
                         "taming_chance_base", tamingChanceBase,
                         "taming_chance_hearty", tamingChanceHearty,
-                        "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal
+                        "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal,
+                        "ground_slam_knockback", groundSlamKnockback,
+                        "ground_slam2_knockback", groundSlam2Knockback,
+                        "ground_slam_pillar_knockback", groundSlamPillarKnockback
                 ),
                 Map.of("aggressive_wild", aggressiveWild)
         );

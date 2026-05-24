@@ -5,10 +5,12 @@ import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundSlamAbility;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.util.animation.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautInteractionHandler;
@@ -18,6 +20,7 @@ import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderController;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
+import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -74,7 +77,7 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut> {
+public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen {
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.STEGONAUT_ID;
@@ -84,6 +87,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
+            SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.FLOAT);
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
     private static final double BREED_PARTNER_RANGE = 20.0D;
@@ -115,6 +120,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final StegonautInteractionHandler interactionHandler = new StegonautInteractionHandler(this);
     private final StegonautRiderController riderController = new StegonautRiderController(this);
+    private final ScreenShakeComponent screenShakeComponent;
     private final AnimationController<Stegonaut> movementController;
     private final AnimationController<Stegonaut> actionController;
     private final AnimationController<Stegonaut> fastActionController;
@@ -132,6 +138,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
         this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
         this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.18F);
         setupAnimationControllers();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
         if (!level.isClientSide) {
@@ -148,6 +155,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     protected void defineRideableDragonData() {
         this.entityData.define(DATA_HAS_CHEST, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
     }
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
@@ -213,7 +221,30 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
                 return true;
             }
         }
+        if (ModAbilities.STEGONAUT_GROUND_SLAM.getName().equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == ModAbilities.STEGONAUT_GROUND_SLAM) {
+                ((StegonautGroundSlamAbility) active).requestRelease();
+                return true;
+            }
+        }
         return false;
+    }
+
+    @Override
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        if (action == DragonRiderAction.ABILITY_STOP
+                && ModAbilities.STEGONAUT_GROUND_SLAM.getName().equals(abilityName)
+                && tryReleaseHeldRidingAbility(abilityName)) {
+            return true;
+        }
+        if (action == DragonRiderAction.ABILITY_STOP
+                && ModAbilities.STEGONAUT_GROUND_EATING.getName().equals(abilityName)
+                && tryReleaseHeldRidingAbility(abilityName)) {
+            return true;
+        }
+        return super.handleCustomRiderAction(player, action, abilityName, locked);
     }
 
     @Override
@@ -292,10 +323,16 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(ModAbilities.STEGONAUT_GROUND_SLAM.getName(), RiderAbilityBinding.Activation.HOLD);
+    }
+
+    @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
         return abilityType == ModAbilities.STEGONAUT_BITE
                 || abilityType == ModAbilities.STEGONAUT_CHIN_SLAM
-                || abilityType == ModAbilities.STEGONAUT_GROUND_EATING;
+                || abilityType == ModAbilities.STEGONAUT_GROUND_EATING
+                || abilityType == ModAbilities.STEGONAUT_GROUND_SLAM;
     }
 
     @Override
@@ -676,6 +713,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             handleAmbientSounds();
             tickGroundStepAudio();
         }
+        screenShakeComponent.tick();
 
         if (this.isAlive()) {
             buffAbility.tick();
@@ -940,5 +978,15 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     public boolean canBeBound() {
         return !isSleeping() && !isDying();
+    }
+
+    @Override
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
+    }
+
+    @Override
+    public double getShakeDistance() {
+        return 24.0D;
     }
 }

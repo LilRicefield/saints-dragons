@@ -18,7 +18,9 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
+import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
+import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
@@ -184,6 +186,22 @@ public final class ModEntities {
                     .updateInterval(1)
                     .noSummon()
                     .build("stegonaut_ground_chunk"));
+
+    public static final Supplier<EntityType<StegonautAmethystPillarEntity>> STEGONAUT_AMETHYST_PILLAR =
+            REGISTER.register("stegonaut_amethyst_pillar", () -> EntityType.Builder.<StegonautAmethystPillarEntity>of(StegonautAmethystPillarEntity::new, MobCategory.MISC)
+                    .sized(2.0F, 4.0F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("stegonaut_amethyst_pillar"));
+
+    public static final Supplier<EntityType<StegonautImpactRingEntity>> STEGONAUT_IMPACT_RING =
+            REGISTER.register("stegonaut_impact_ring", () -> EntityType.Builder.<StegonautImpactRingEntity>of(StegonautImpactRingEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 0.1F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("stegonaut_impact_ring"));
 
     public static final Supplier<EntityType<VisualFallingBlockEntity>> VISUAL_FALLING_BLOCK =
             REGISTER.register("visual_falling_block", () -> EntityType.Builder.<VisualFallingBlockEntity>of(VisualFallingBlockEntity::new, MobCategory.MISC)

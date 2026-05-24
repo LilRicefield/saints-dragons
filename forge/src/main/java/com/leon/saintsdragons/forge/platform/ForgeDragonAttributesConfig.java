@@ -112,6 +112,12 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue STEGONAUT_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_CHIN_SLAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_EATING_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_SLAM_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_SLAM_KNOCKBACK;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_SLAM2_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_SLAM2_KNOCKBACK;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue STEGONAUT_EGG_HATCH_CHANCE_NORMAL;
@@ -312,6 +318,13 @@ public final class ForgeDragonAttributesConfig {
         STEGONAUT_BITE_DAMAGE = builder.defineInRange("bite_damage", 5.0, 0.0, 100000.0);
         STEGONAUT_CHIN_SLAM_DAMAGE = builder.defineInRange("chin_slam_damage", 8.0, 0.0, 100000.0);
         STEGONAUT_GROUND_EATING_DAMAGE = builder.defineInRange("ground_eating_damage", 10.0, 0.0, 100000.0);
+        STEGONAUT_GROUND_SLAM_DAMAGE = builder.defineInRange("ground_slam_damage", 20.0, 0.0, 100000.0);
+        STEGONAUT_GROUND_SLAM2_DAMAGE = builder.defineInRange("ground_slam2_damage", 25.0, 0.0, 100000.0);
+        STEGONAUT_GROUND_SLAM_PILLAR_DAMAGE = builder.defineInRange("ground_slam_pillar_damage", 10.0, 0.0, 100000.0);
+        builder.comment("Ability knockback strength");
+        STEGONAUT_GROUND_SLAM_KNOCKBACK = builder.defineInRange("ground_slam_knockback", 1.35, 0.0, 100000.0);
+        STEGONAUT_GROUND_SLAM2_KNOCKBACK = builder.defineInRange("ground_slam2_knockback", 1.8, 0.0, 100000.0);
+        STEGONAUT_GROUND_SLAM_PILLAR_KNOCKBACK = builder.defineInRange("ground_slam_pillar_knockback", 0.9, 0.0, 100000.0);
         builder.comment("Taming chance percent per feed (0-100)");
         STEGONAUT_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 100.0, 0.0, 100.0);
         STEGONAUT_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 100.0, 0.0, 100.0);

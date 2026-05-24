@@ -11,12 +11,24 @@
     },
     "ground_eating": {
       "damage": 10.0
+    },
+    "ground_slam": {
+      "damage": 20.0
+    },
+    "ground_slam2": {
+      "damage": 25.0
+    },
+    "ground_slam_pillar": {
+      "damage": 10.0
     }
   },
   "extra": {
     "taming_chance_base": 100.0,
     "taming_chance_hearty": 100.0,
     "egg_hatch_time_ticks_normal": 30000.0,
+    "ground_slam_knockback": 1.35,
+    "ground_slam2_knockback": 1.8,
+    "ground_slam_pillar_knockback": 0.9,
     "aggressive_wild": false
   }
 }

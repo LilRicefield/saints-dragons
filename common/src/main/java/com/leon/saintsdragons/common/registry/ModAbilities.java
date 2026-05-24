@@ -26,6 +26,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxSummo
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautChinSlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundSlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusBite2Ability;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusClawAbility;
@@ -105,6 +106,7 @@ public final class ModAbilities {
     public static final DragonAbilityType<Stegonaut, StegonautBiteAbility> STEGONAUT_BITE = register("stegonaut_bite", StegonautBiteAbility::new);
     public static final DragonAbilityType<Stegonaut, StegonautChinSlamAbility> STEGONAUT_CHIN_SLAM = register("stegonaut_chin_slam", StegonautChinSlamAbility::new);
     public static final DragonAbilityType<Stegonaut, StegonautGroundEatingAbility> STEGONAUT_GROUND_EATING = register("stegonaut_ground_eating", StegonautGroundEatingAbility::new);
+    public static final DragonAbilityType<Stegonaut, StegonautGroundSlamAbility> STEGONAUT_GROUND_SLAM = register("stegonaut_ground_slam", StegonautGroundSlamAbility::new);
     public static final DragonAbilityType<Stegonaut, HurtAbility<Stegonaut>> STEGONAUT_HURT = register("stegonaut_hurt", HurtAbility::new);
     public static final DragonAbilityType<Stegonaut, DieAbility<Stegonaut>> STEGONAUT_DIE = register("stegonaut_die", DieAbility::new);
 

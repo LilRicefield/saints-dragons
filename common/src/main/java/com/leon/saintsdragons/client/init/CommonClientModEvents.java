@@ -14,7 +14,9 @@ import com.leon.saintsdragons.client.renderer.varasuchus.VarasuchusRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxGroundRendTrailRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRenderer;
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
+import com.leon.saintsdragons.client.renderer.stegonaut.StegonautAmethystPillarRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRenderer;
+import com.leon.saintsdragons.client.renderer.stegonaut.StegonautImpactRingRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansPoisonBallRenderer;
@@ -54,6 +56,8 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.IGNIVORUS_NOVA.get(), IgnivorusNovaRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_NOVA_RING.get(), IgnivorusNovaRingRenderer::new);
         registrar.register(ModEntities.STEGONAUT_GROUND_CHUNK.get(), StegonautGroundChunkRenderer::new);
+        registrar.register(ModEntities.STEGONAUT_AMETHYST_PILLAR.get(), StegonautAmethystPillarRenderer::new);
+        registrar.register(ModEntities.STEGONAUT_IMPACT_RING.get(), StegonautImpactRingRenderer::new);
         registrar.register(ModEntities.VISUAL_FALLING_BLOCK.get(), VisualFallingBlockRenderer::new);
         registrar.register(ModEntities.VOLITANS_SPINE.get(), VolitansSpineRenderer::new);
         registrar.register(ModEntities.VOLITANS_WATER_BREATH.get(), VolitansWaterBreathRenderer::new);

@@ -157,6 +157,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 stegonautDefaults.abilityDamage("chin_slam", 8.0D));
         stegonautBuffer.groundEatingDamage = stegonautCurrent.abilityDamage("ground_eating",
                 stegonautDefaults.abilityDamage("ground_eating", 10.0D));
+        stegonautBuffer.groundSlamDamage = stegonautCurrent.abilityDamage("ground_slam",
+                stegonautDefaults.abilityDamage("ground_slam", 20.0D));
+        stegonautBuffer.groundSlamKnockback = stegonautCurrent.extraDouble("ground_slam_knockback",
+                stegonautDefaults.extraDouble("ground_slam_knockback", 1.35D));
+        stegonautBuffer.groundSlam2Damage = stegonautCurrent.abilityDamage("ground_slam2",
+                stegonautDefaults.abilityDamage("ground_slam2", 25.0D));
+        stegonautBuffer.groundSlam2Knockback = stegonautCurrent.extraDouble("ground_slam2_knockback",
+                stegonautDefaults.extraDouble("ground_slam2_knockback", 1.8D));
+        stegonautBuffer.groundSlamPillarDamage = stegonautCurrent.abilityDamage("ground_slam_pillar",
+                stegonautDefaults.abilityDamage("ground_slam_pillar", 10.0D));
+        stegonautBuffer.groundSlamPillarKnockback = stegonautCurrent.extraDouble("ground_slam_pillar_knockback",
+                stegonautDefaults.extraDouble("ground_slam_pillar_knockback", 0.9D));
         stegonautBuffer.tamingChanceBase = stegonautCurrent.extraDouble("taming_chance_base", 100.0);
         stegonautBuffer.tamingChanceHearty = stegonautCurrent.extraDouble("taming_chance_hearty", 100.0);
         stegonautBuffer.eggHatchChanceNormal = stegonautCurrent.extraDouble("egg_hatch_time_ticks_normal", 30000.0D);
@@ -691,6 +703,42 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.groundEatingDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_damage"), buffer.groundSlamDamage)
+                .setDefaultValue(defaults.abilityDamage("ground_slam", 20.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.groundSlamDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_knockback"), buffer.groundSlamKnockback)
+                .setDefaultValue(defaults.extraDouble("ground_slam_knockback", 1.35D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.groundSlamKnockback = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam2_damage"), buffer.groundSlam2Damage)
+                .setDefaultValue(defaults.abilityDamage("ground_slam2", 25.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.groundSlam2Damage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam2_knockback"), buffer.groundSlam2Knockback)
+                .setDefaultValue(defaults.extraDouble("ground_slam2_knockback", 1.8D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.groundSlam2Knockback = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_pillar_damage"), buffer.groundSlamPillarDamage)
+                .setDefaultValue(defaults.abilityDamage("ground_slam_pillar", 10.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.groundSlamPillarDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.ground_slam_pillar_knockback"), buffer.groundSlamPillarKnockback)
+                .setDefaultValue(defaults.extraDouble("ground_slam_pillar_knockback", 0.9D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.groundSlamPillarKnockback = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.stegonaut.taming_base"), buffer.tamingChanceBase)
                 .setDefaultValue(defaults.extraDouble("taming_chance_base", 100.0D))
@@ -1452,6 +1500,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         stegonautAbilities.put("bite", DragonAbilityOverride.ofDamage(stegonautBuffer.biteDamage));
         stegonautAbilities.put("chin_slam", DragonAbilityOverride.ofDamage(stegonautBuffer.chinSlamDamage));
         stegonautAbilities.put("ground_eating", DragonAbilityOverride.ofDamage(stegonautBuffer.groundEatingDamage));
+        stegonautAbilities.put("ground_slam", DragonAbilityOverride.ofDamage(stegonautBuffer.groundSlamDamage));
+        stegonautAbilities.put("ground_slam2", DragonAbilityOverride.ofDamage(stegonautBuffer.groundSlam2Damage));
+        stegonautAbilities.put("ground_slam_pillar", DragonAbilityOverride.ofDamage(stegonautBuffer.groundSlamPillarDamage));
         DragonAttributeConfig updatedStegonaut = new DragonAttributeConfig(
                 stegonautBuffer.maxHealth,
                 stegonautBuffer.armor,
@@ -1460,7 +1511,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 Map.of(
                         "taming_chance_base", stegonautBuffer.tamingChanceBase,
                         "taming_chance_hearty", stegonautBuffer.tamingChanceHearty,
-                        "egg_hatch_time_ticks_normal", stegonautBuffer.eggHatchChanceNormal
+                        "egg_hatch_time_ticks_normal", stegonautBuffer.eggHatchChanceNormal,
+                        "ground_slam_knockback", stegonautBuffer.groundSlamKnockback,
+                        "ground_slam2_knockback", stegonautBuffer.groundSlam2Knockback,
+                        "ground_slam_pillar_knockback", stegonautBuffer.groundSlamPillarKnockback
                 ),
                 Map.of(
                         "aggressive_wild", stegonautBuffer.aggressiveWild
@@ -1602,6 +1656,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double biteDamage;
         double chinSlamDamage;
         double groundEatingDamage;
+        double groundSlamDamage;
+        double groundSlamKnockback;
+        double groundSlam2Damage;
+        double groundSlam2Knockback;
+        double groundSlamPillarDamage;
+        double groundSlamPillarKnockback;
         double tamingChanceBase;
         double tamingChanceHearty;
         double eggHatchChanceNormal;

@@ -534,6 +534,28 @@
       }
     ]
   },
+  "stegonaut_slam": {
+    "subtitle": "subtitles.saintsdragons.stegonaut_slam",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_slam",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "stegonaut_slam2": {
+    "subtitle": "subtitles.saintsdragons.stegonaut_slam2",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_slam2",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
   "stegonaut_ground_eating": {
     "subtitle": "subtitles.saintsdragons.stegonaut_ground_eating",
     "sounds": [
