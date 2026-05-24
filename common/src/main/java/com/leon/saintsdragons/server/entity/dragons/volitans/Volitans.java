@@ -243,7 +243,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final ScreenShakeComponent screenShakeComponent;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int riderBackDashCooldownTicks = 0;
-    private int tamingAbortCalmTicks = 0;
     private boolean riderForwardDashing = false;
     private boolean riderForwardDashDamageApplied = false;
     private final DragonDashAndDodgeComponent riderForwardDashMotion =
@@ -985,8 +984,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         tickScreenShake();
 
         if (!this.level().isClientSide) {
-            if (tamingAbortCalmTicks > 0) {
-                tamingAbortCalmTicks--;
+            if (isTamingStunned()) {
+                if (getTarget() != null) {
+                    super.setTarget(null);
+                }
+                if (getActiveAbility() != null) {
+                    combatManager.forceEndActiveAbility();
+                }
+                setAggressive(false);
+                getNavigation().stop();
             }
             tamingController.tickServer();
             if (isTamingStunned()) {
@@ -1466,21 +1472,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean isAwaitingTamingFeed() {
         return tamingController.isAwaitingFeed();
-    }
-
-    public void abortTamingAttempt() {
-        clearTamingRecovery();
-        resetTamingFailures();
-        setTarget(null);
-        setAggressive(false);
-        setLastHurtByMob(null);
-        this.setLastHurtByPlayer(null);
-        this.combatManager.clearAllStates();
-        this.hurtMarked = false;
-        if (isAlive()) {
-            setHealth(getMaxHealth());
-        }
-        tamingAbortCalmTicks = Math.max(tamingAbortCalmTicks, 100);
     }
 
     public boolean isBelowTamingThreshold() {
@@ -2629,7 +2620,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+        if (isTamingStunned() && target != null) {
             return;
         }
         if (isBaby()) {

@@ -208,7 +208,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int postStandUnlockTicks = 0;
     private final RaevyxTamingHandler tamingController = new RaevyxTamingHandler(this);
-    private int tamingAbortCalmTicks = 0;
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
     private final RaevyxRiderController riderController;
@@ -365,25 +364,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     public boolean isAwaitingTamingFeed() {
         return tamingController.isAwaitingFeed();
-    }
-
-    public void abortTamingAttempt() {
-        abortTamingAttempt(true);
-    }
-
-    public void abortTamingAttempt(boolean restoreHealth) {
-        clearTamingRecovery();
-        resetTamingFailures();
-        setTarget(null);
-        setAggressive(false);
-        setLastHurtByMob(null);
-        this.setLastHurtByPlayer(null);
-        this.combatManager.clearAllStates();
-        this.hurtMarked = false;
-        if (restoreHealth && isAlive()) {
-            setHealth(getMaxHealth());
-        }
-        tamingAbortCalmTicks = Math.max(tamingAbortCalmTicks, 100);
     }
 
     public boolean isBelowTamingThreshold() {
@@ -1429,8 +1409,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             tickRiderControlLockMovement();
         }
         tickFeedingCooldown();
-        if (tamingAbortCalmTicks > 0) {
-            tamingAbortCalmTicks--;
+        if (!level().isClientSide && isTamingStunned()) {
+            if (getTarget() != null) {
+                super.setTarget(null);
+            }
+            if (getActiveAbility() != null) {
+                combatManager.forceEndActiveAbility();
+            }
+            setAggressive(false);
+            getNavigation().stop();
         }
         if (dodgeCooldownTicks > 0) {
             dodgeCooldownTicks--;
@@ -2694,7 +2681,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             setBeamDepleted(false);
         }
         tamingController.load(tag);
-
         if (savedUsingAirNav) {
             switchToAirNavigation();
         } else {
@@ -2891,7 +2877,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+        if (isTamingStunned() && target != null) {
             return;
         }
         if (isBaby()) {

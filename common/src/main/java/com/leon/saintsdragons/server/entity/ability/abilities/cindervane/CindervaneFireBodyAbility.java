@@ -12,6 +12,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -42,6 +43,7 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     private static final double COOKING_RADIUS = 3.5D;
     private static final int ALLY_FIRE_RESIST_TICKS = 60;
     private static final int ALLY_DAMAGE_RESIST_TICKS = 40;
+    private static final double PARTICLE_VIEW_DISTANCE = 64.0D;
 
     private int activeTicks;
 
@@ -158,10 +160,22 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
         int smokeCount = 3;
         ParticleOptions flame = dragon.isAlbinoVariant() ? ParticleTypes.SOUL_FIRE_FLAME : ParticleTypes.FLAME;
 
-        level.sendParticles(flame, sample.x, sample.y, sample.z, flameCount,
+        sendParticles(level, dragon, flame, sample, flameCount,
                 spread, spread * 0.6D, spread, 0.05D);
-        level.sendParticles(ParticleTypes.LARGE_SMOKE, sample.x, sample.y, sample.z, smokeCount,
+        sendParticles(level, dragon, ParticleTypes.LARGE_SMOKE, sample, smokeCount,
                 spread * 0.8D, spread * 0.4D, spread * 0.8D, 0.0D);
+    }
+
+    private void sendParticles(ServerLevel level, Cindervane dragon, ParticleOptions particle, Vec3 sample,
+                               int count, double xSpread, double ySpread, double zSpread, double speed) {
+        double maxDistanceSqr = PARTICLE_VIEW_DISTANCE * PARTICLE_VIEW_DISTANCE;
+        for (ServerPlayer player : level.players()) {
+            if (player.distanceToSqr(sample.x, sample.y, sample.z) <= maxDistanceSqr
+                    || player.distanceToSqr(dragon) <= maxDistanceSqr) {
+                level.sendParticles(player, particle, true,
+                        sample.x, sample.y, sample.z, count, xSpread, ySpread, zSpread, speed);
+            }
+        }
     }
 
     private void maybeIgnite(ServerLevel level, Vec3 sample, Cindervane dragon) {

@@ -502,9 +502,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 }
                 setAggressive(false);
             }
-            if (tamingAbortCalmTicks > 0) {
-                tamingAbortCalmTicks--;
-            }
             tamingController.tickServer();
             if (isTamingStunned()) {
                 tamingController.enforceGroundingTick();
@@ -694,8 +691,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
-    private int tamingAbortCalmTicks = 0;
-
     public boolean isTamingStunned() {
         return this.entityData.get(DATA_TAMING_STUNNED);
     }
@@ -723,11 +718,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     public boolean isAwaitingTamingFeed() {
         return tamingController.isAwaitingFeed();
-    }
-
-    public void abortTamingAttempt() {
-        clearTamingRecovery();
-        tamingAbortCalmTicks = Math.max(tamingAbortCalmTicks, 100);
     }
 
     public boolean isBelowTamingThreshold() {
@@ -2964,7 +2954,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             super.setTarget(null);
             return;
         }
-        if ((isTamingStunned() || tamingAbortCalmTicks > 0) && target != null) {
+        if (isTamingStunned() && target != null) {
             return;
         }
         super.setTarget(target);

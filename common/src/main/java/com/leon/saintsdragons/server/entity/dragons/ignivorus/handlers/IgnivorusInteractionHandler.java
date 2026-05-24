@@ -34,14 +34,6 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         if (dragon.isBaby()) {
             return handleBabyTaming(player, itemstack, config);
         }
-        if (!legacyTaming && dragon.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
-            if (!client) {
-                dragon.abortTamingAttempt();
-                sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_aborted");
-            }
-            return InteractionResult.sidedSuccess(client);
-        }
-
         if (!isIgnivorusFood(itemstack)) {
             return InteractionResult.PASS;
         }

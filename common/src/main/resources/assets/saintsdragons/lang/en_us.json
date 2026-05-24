@@ -502,12 +502,7 @@
   "entity.saintsdragons.ignivorus.taming_dazed": "%s is exhausted from battle...",
   "entity.saintsdragons.ignivorus.taming_need_weakened": "%s burns too hot! Weaken it to %s HP first.",
   "entity.saintsdragons.ignivorus.taming_failed": "%s's pride won't let it submit... yet.",
-  "entity.saintsdragons.ignivorus.taming_aborted": "You step back. %s extinguishes its fury.",
   "entity.saintsdragons.ignivorus.taming_timeout": "You hesitated too long. %s reignites and returns to battle!",
-  "entity.saintsdragons.ignivorus.variant_changed_to_two": "%s's scales shift to a new pattern!",
-  "entity.saintsdragons.ignivorus.variant_changed_to_default": "%s's scales return to their original pattern!",
-  "entity.saintsdragons.ignivorus.already_variant_two": "%s already has this scale pattern!",
-  "entity.saintsdragons.ignivorus.already_variant_default": "%s already has this scale pattern!",
   "entity.saintsdragons.ignivorus.sitting_down": "%s is settling down...",
   "entity.saintsdragons.ignivorus.standing_up": "%s is standing up...",
   "entity.saintsdragons.ignivorus.transitioning": "%s is adjusting posture...",
@@ -521,7 +516,6 @@
   "entity.saintsdragons.raevyx.taming_dazed": "%s is still dazed from the fight...",
   "entity.saintsdragons.raevyx.taming_need_weakened": "%s is too strong! Weaken it to %s HP first.",
   "entity.saintsdragons.raevyx.taming_failed": "%s rejected you, but seems willing to try again...",
-  "entity.saintsdragons.raevyx.taming_aborted": "You call off the taming attempt. %s calms down.",
   "entity.saintsdragons.raevyx.taming_timeout": "You took too long to decide. %s has recovered and resumed combat.",
   "entity.saintsdragons.stegonaut.tamed": "%s has been tamed!",
   "entity.saintsdragons.stegonaut.fed": "%s is fully healed!",
@@ -552,7 +546,6 @@
   "entity.saintsdragons.volitans.still_eating": "%s is still eating...",
   "entity.saintsdragons.volitans.baby_fed": "%s grows a bit stronger!",
   "entity.saintsdragons.volitans.baby_grown": "%s has fully grown!",
-  "entity.saintsdragons.volitans.taming_aborted": "You back away, and %s steadies itself again.",
   "entity.saintsdragons.volitans.taming_dazed": "%s is stunned but not ready to be fed yet.",
   "entity.saintsdragons.volitans.taming_need_weakened": "%s must be weakened to %s HP before it can be fed.",
   "entity.saintsdragons.volitans.taming_failed": "%s resists your attempt and regains its will to fight.",
@@ -565,7 +558,6 @@
   "entity.saintsdragons.nulljaw.still_eating": "%s is still eating...",
   "entity.saintsdragons.nulljaw.baby_fed": "%s is growing stronger!",
   "entity.saintsdragons.nulljaw.baby_grown": "%s has grown into an adult!",
-  
   "saintsdragons.message.ally.success": "Successfully updated player ally %s",
   "saintsdragons.message.ally.invalid_username": "Invalid username! Must be 3-16 characters and use only letters, numbers, or underscores",
   "saintsdragons.message.ally.player_not_found": "Who is %s? Are you sure you're playing with that person?",
@@ -868,5 +860,5 @@
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",
   "saintsdragons.config_screen.others.dragon_terrain": "Dragon Anti-Stuck",
   "entity.saintsdragons.ivy.first_encounter": "Ivy: Hey-ho, stranger! I have appropriate items for you, if you show me one dragon egg of any kind.",
-  "entity.saintsdragons.ivy.trade_unlocked": "Ivy now trusts you enough to trade."
+  "entity.saintsdragons.ivy.trade_unlocked": "Ivy now trusts you enough to trade"
 }

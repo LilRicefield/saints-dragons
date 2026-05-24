@@ -40,14 +40,6 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             return handleBabyTaming(player, itemstack, config);
         }
 
-        if (!legacyTaming && dragon.isTamingStunned() && player.isCrouching() && itemstack.isEmpty()) {
-            if (!client) {
-                dragon.abortTamingAttempt();
-                sendStatusMessage(player, "entity.saintsdragons.volitans.taming_aborted");
-            }
-            return InteractionResult.sidedSuccess(client);
-        }
-
         if (!dragon.isFood(itemstack)) {
             return InteractionResult.PASS;
         }
