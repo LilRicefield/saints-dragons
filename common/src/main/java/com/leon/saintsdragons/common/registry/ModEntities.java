@@ -19,6 +19,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEn
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
+import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
@@ -202,6 +203,14 @@ public final class ModEntities {
                     .updateInterval(1)
                     .noSummon()
                     .build("stegonaut_impact_ring"));
+
+    public static final Supplier<EntityType<StegonautGroundCrackEntity>> STEGONAUT_GROUND_CRACK =
+            REGISTER.register("stegonaut_ground_crack", () -> EntityType.Builder.<StegonautGroundCrackEntity>of(StegonautGroundCrackEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 0.1F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("stegonaut_ground_crack"));
 
     public static final Supplier<EntityType<VisualFallingBlockEntity>> VISUAL_FALLING_BLOCK =
             REGISTER.register("visual_falling_block", () -> EntityType.Builder.<VisualFallingBlockEntity>of(VisualFallingBlockEntity::new, MobCategory.MISC)

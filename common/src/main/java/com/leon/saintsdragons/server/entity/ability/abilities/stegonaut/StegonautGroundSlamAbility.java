@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
+import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautImpactRingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -137,6 +138,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
             applySecondSlam();
             spawnPillars();
             spawnImpactRing();
+            spawnGroundCrack();
             playImpactEffects(true);
             pillarsSpawned = true;
         }
@@ -240,6 +242,14 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         Stegonaut dragon = getUser();
         if (dragon.level() instanceof ServerLevel server) {
             server.addFreshEntity(new StegonautImpactRingEntity(server, dragon.position().add(0.0D, 0.08D, 0.0D)));
+        }
+    }
+
+    private void spawnGroundCrack() {
+        Stegonaut dragon = getUser();
+        if (dragon.level() instanceof ServerLevel server) {
+            double y = dragon.getBoundingBox().minY + 0.02D;
+            server.addFreshEntity(new StegonautGroundCrackEntity(server, new Vec3(dragon.getX(), y, dragon.getZ()), dragon.getYRot()));
         }
     }
 
