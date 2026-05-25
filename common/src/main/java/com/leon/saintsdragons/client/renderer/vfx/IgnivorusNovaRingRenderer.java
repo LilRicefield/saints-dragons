@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.client.renderer.ignivorus;
+package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;

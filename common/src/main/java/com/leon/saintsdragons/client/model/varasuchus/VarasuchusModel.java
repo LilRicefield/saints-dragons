@@ -4,7 +4,6 @@ import com.leon.saintsdragons.client.model.DragonGeoModel;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
-import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;

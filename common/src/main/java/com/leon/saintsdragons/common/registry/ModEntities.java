@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.DragonWaterSplashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
@@ -21,8 +22,10 @@ import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEn
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
-import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautImpactRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansBurrowMoundEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansWaterBreathEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
@@ -196,8 +199,8 @@ public final class ModEntities {
                     .noSummon()
                     .build("stegonaut_amethyst_pillar"));
 
-    public static final Supplier<EntityType<StegonautImpactRingEntity>> STEGONAUT_IMPACT_RING =
-            REGISTER.register("stegonaut_impact_ring", () -> EntityType.Builder.<StegonautImpactRingEntity>of(StegonautImpactRingEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<ImpactRingEntity>> STEGONAUT_IMPACT_RING =
+            REGISTER.register("stegonaut_impact_ring", () -> EntityType.Builder.<ImpactRingEntity>of(ImpactRingEntity::new, MobCategory.MISC)
                     .sized(1.0F, 0.1F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
@@ -211,6 +214,30 @@ public final class ModEntities {
                     .updateInterval(1)
                     .noSummon()
                     .build("stegonaut_ground_crack"));
+
+    public static final Supplier<EntityType<DragonWaterSplashEntity>> DRAGON_WATER_SPLASH =
+            REGISTER.register("dragon_water_wake", () -> EntityType.Builder.<DragonWaterSplashEntity>of(DragonWaterSplashEntity::new, MobCategory.MISC)
+                    .sized(1.0F, 0.1F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("dragon_water_wake"));
+
+    public static final Supplier<EntityType<VolitansGroundChunkEntity>> VOLITANS_GROUND_CHUNK =
+            REGISTER.register("volitans_ground_chunk", () -> EntityType.Builder.<VolitansGroundChunkEntity>of(VolitansGroundChunkEntity::new, MobCategory.MISC)
+                    .sized(9.0F, 2.0F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("volitans_ground_chunk"));
+
+    public static final Supplier<EntityType<VolitansBurrowMoundEntity>> VOLITANS_BURROW_MOUND =
+            REGISTER.register("volitans_burrow_mound", () -> EntityType.Builder.<VolitansBurrowMoundEntity>of(VolitansBurrowMoundEntity::new, MobCategory.MISC)
+                    .sized(9.0F, 4.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("volitans_burrow_mound"));
 
     public static final Supplier<EntityType<VisualFallingBlockEntity>> VISUAL_FALLING_BLOCK =
             REGISTER.register("visual_falling_block", () -> EntityType.Builder.<VisualFallingBlockEntity>of(VisualFallingBlockEntity::new, MobCategory.MISC)

@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.client.renderer;
+package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;

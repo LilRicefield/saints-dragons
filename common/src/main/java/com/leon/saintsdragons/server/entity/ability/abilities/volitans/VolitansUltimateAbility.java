@@ -4,13 +4,17 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.*;
+import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
+import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -63,7 +67,6 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         if (dragon == null || dragon.isBaby() || dragon.areRiderControlsLocked()) {
             return false;
         }
-        // Only works when flying/airborne
         if (!dragon.isFlying() || dragon.onGround()) {
             return false;
         }
@@ -87,8 +90,6 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
             dragon.setGoingUp(false);
             dragon.setGoingDown(false);
             forcedSlamSpeed = 0.0D;
-
-            // Trigger slamming animation (1.67 seconds)
             if (!dragon.level().isClientSide) {
                 dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "slamming");
                 dragon.getSoundHandler().playMovingEntitySound(
@@ -98,8 +99,6 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
                         SLAMMING_SOUND_TICKS
                 );
             }
-
-            // Hold in-air pose during slamming animation.
             Vec3 current = dragon.getDeltaMovement();
             dragon.setDeltaMovement(current.x * HORIZONTAL_DAMPING, 0.0D, current.z * HORIZONTAL_DAMPING);
             dragon.hasImpulse = true;
@@ -136,15 +135,11 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
 
         dragon.setGoingUp(false);
         dragon.setGoingDown(true);
-
-        // Track if we've been airborne (to avoid false ground detection)
         if (!dragon.onGround()) {
             wasAirborne = true;
         }
 
-        // Accelerate downward using velocity
         forcedSlamSpeed -= SLAM_EXTRA_PULL_PER_TICK;
-        // Preserve horizontal movement, only control vertical
         Vec3 current = dragon.getDeltaMovement();
         dragon.setDeltaMovement(current.x, forcedSlamSpeed, current.z);
         dragon.hasImpulse = true;
@@ -152,14 +147,13 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         if (dragon.level().isClientSide) {
             return;
         }
-
-        // Only trigger impact when we actually hit the ground after being airborne
         boolean impacted = dragon.onGround() && wasAirborne;
 
         if (impacted && !impactApplied) {
             impactApplied = true;
             dragon.setOnGround(true);
             applyImpact(dragon);
+            spawnImpactVisuals(dragon);
             spawnImpactSpines(dragon);
             dragon.triggerScreenShake(IMPACT_SCREEN_SHAKE, IMPACT_SHAKE_TICKS);
             dragon.markLandedNow();
@@ -167,8 +161,6 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
             dragon.setGoingUp(false);
             dragon.setGoingDown(false);
             dragon.setDeltaMovement(0.0D, 0.0D, 0.0D);
-
-            // Trigger slammed animation (1 second)
             if (!dragon.level().isClientSide) {
                 dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "slammed");
                 dragon.playSound(ModSounds.VOLITANS_SLAMMED.get(), 1.9f, 1.0f);
@@ -254,6 +246,16 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 20, 0, false, true));
     }
 
+    private void spawnImpactVisuals(Volitans dragon) {
+        if (!(dragon.level() instanceof ServerLevel server)) {
+            return;
+        }
+        Vec3 ringPos = dragon.position().add(0.0D, 0.08D, 0.0D);
+        double crackY = dragon.getBoundingBox().minY + 0.02D;
+        server.addFreshEntity(new ImpactRingEntity(server, ringPos));
+        server.addFreshEntity(new StegonautGroundCrackEntity(server, new Vec3(dragon.getX(), crackY, dragon.getZ()), dragon.getYRot()));
+    }
+
     private void spawnImpactSpines(Volitans dragon) {
         Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.55D, 0.0D);
         double spawnRadius = Math.max(1.25D, dragon.getBbWidth() * 0.65D);
@@ -288,7 +290,6 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         } else {
             horizontal = horizontal.normalize();
         }
-        // Keep origins on a flat ring so spikes do not spawn above/below the dragon.
         Vec3 spawnPos = center.add(horizontal.scale(radius));
         spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
         spine.shoot(direction.x, direction.y, direction.z, speed, 0.0F);

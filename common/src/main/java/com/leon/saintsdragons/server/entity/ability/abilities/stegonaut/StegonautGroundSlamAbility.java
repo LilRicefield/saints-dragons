@@ -10,7 +10,7 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
-import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautImpactRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -241,7 +241,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
     private void spawnImpactRing() {
         Stegonaut dragon = getUser();
         if (dragon.level() instanceof ServerLevel server) {
-            server.addFreshEntity(new StegonautImpactRingEntity(server, dragon.position().add(0.0D, 0.08D, 0.0D)));
+            server.addFreshEntity(new ImpactRingEntity(server, dragon.position().add(0.0D, 0.08D, 0.0D)));
         }
     }
 

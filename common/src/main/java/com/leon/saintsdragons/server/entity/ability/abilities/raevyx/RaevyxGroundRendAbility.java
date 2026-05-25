@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -7,19 +9,24 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
+import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
+import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
 import java.util.Map;
-
 
 public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int STARTUP_TICKS = 20;
@@ -30,6 +37,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int SLOWDOWN_START_TICKS = 25;
     private static final int STOP_TICKS = 55;
     private static final int GROUND_REND_TRAIL_END_TICKS = 40;
+    private static final int FALLING_BLOCK_TICKS = 23;
+    private static final int END_DUST_TICKS = 62;
+    private static final double DUST_VIEW_DISTANCE = 128.0D;
     private static final double AI_STEER_BACK_RANGE = 6.0D;
     private static final float RIDER_SURGE_SPEED = 1.8F;
     private static final float RIDER_RECOVERY_END_SPEED = 0.18F;
@@ -42,6 +52,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
 
     private final Map<Integer, Integer> hitCooldowns = new HashMap<>();
     private Vec3 aiGroundRendDir = Vec3.ZERO;
+    private boolean spawnedStartDust = false;
+    private boolean spawnedStartBlocks = false;
+    private boolean spawnedEndDust = false;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, STARTUP_TICKS),
@@ -83,6 +96,14 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             getUser().setGroundRending(true);
             getUser().setGroundRendTravelSpeed(0.0F);
             aiGroundRendDir = getForwardDir(getUser());
+            spawnedStartDust = true;
+            spawnedStartBlocks = false;
+            spawnedEndDust = false;
+            spawnGroundRendImpactRing(getUser());
+            spawnGroundRendDustBurst(getUser(), 32, 0.95D, 0.28D);
+        } else if (section.sectionType == AbilitySectionType.ACTIVE && !spawnedStartBlocks && getOverallTrackTick() >= FALLING_BLOCK_TICKS) {
+            spawnedStartBlocks = true;
+            spawnGroundRendFallingBlocks(getUser());
         }
     }
     @Override
@@ -102,6 +123,20 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         }
 
         Raevyx wyvern = getUser();
+        if (!spawnedStartDust) {
+            spawnedStartDust = true;
+            spawnGroundRendImpactRing(wyvern);
+            spawnGroundRendDustBurst(wyvern, 32, 0.95D, 0.28D);
+        }
+        if (!spawnedStartBlocks && getOverallTrackTick() >= FALLING_BLOCK_TICKS) {
+            spawnedStartBlocks = true;
+            spawnGroundRendFallingBlocks(wyvern);
+        }
+        if (!spawnedEndDust && getOverallTrackTick() >= END_DUST_TICKS) {
+            spawnedEndDust = true;
+            spawnGroundRendDustBurst(wyvern, 42, 1.15D, 0.34D);
+        }
+
         if (wyvern.isFlying() || wyvern.isInWaterOrBubble()) {
             interrupt();
             return;
@@ -213,6 +248,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         getUser().setGroundRending(false);
         getUser().setGroundRendTravelSpeed(0.0F);
         aiGroundRendDir = Vec3.ZERO;
+        spawnedStartDust = false;
+        spawnedStartBlocks = false;
+        spawnedEndDust = false;
         getUser().clearRiderControlLock();
         hitCooldowns.clear();
         super.end();
@@ -223,6 +261,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         getUser().setGroundRending(false);
         getUser().setGroundRendTravelSpeed(0.0F);
         aiGroundRendDir = Vec3.ZERO;
+        spawnedStartDust = false;
+        spawnedStartBlocks = false;
+        spawnedEndDust = false;
         getUser().clearRiderControlLock();
         hitCooldowns.clear();
         super.interrupt();
@@ -347,6 +388,107 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             bolt.setCause(sp);
         }
         server.addFreshEntity(bolt);
+    }
+
+    private void spawnGroundRendDustBurst(Raevyx wyvern, int count, double radiusScale, double speedScale) {
+        if (!(wyvern.level() instanceof ServerLevel server) || wyvern.isInWaterOrBubble() || wyvern.isInLava()) {
+            return;
+        }
+
+        RandomSource random = wyvern.getRandom();
+        Vec3 forward = getForwardDir(wyvern);
+        double radius = Math.max(wyvern.getBbWidth() * radiusScale, 1.4D);
+        double y = wyvern.getBoundingBox().minY + 0.08D;
+        for (int i = 0; i < count; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0D;
+            double distance = radius * (0.2D + random.nextDouble() * 0.9D);
+            double x = wyvern.getX() + Math.cos(angle) * distance;
+            double z = wyvern.getZ() + Math.sin(angle) * distance;
+            double xSpeed = forward.x * (0.12D + random.nextDouble() * speedScale)
+                    + Math.cos(angle) * (0.05D + random.nextDouble() * 0.08D);
+            double zSpeed = forward.z * (0.12D + random.nextDouble() * speedScale)
+                    + Math.sin(angle) * (0.05D + random.nextDouble() * 0.08D);
+            double ySpeed = 0.06D + random.nextDouble() * 0.12D;
+            sendNearbyDragonDustParticle(server, wyvern, x, y, z, xSpeed, ySpeed, zSpeed);
+        }
+    }
+
+    private void spawnGroundRendImpactRing(Raevyx wyvern) {
+        if (wyvern.level() instanceof ServerLevel server) {
+            server.addFreshEntity(new ImpactRingEntity(server, wyvern.position().add(0.0D, 0.08D, 0.0D), 0.35F));
+        }
+    }
+
+    private void spawnGroundRendFallingBlocks(Raevyx wyvern) {
+        if (!(wyvern.level() instanceof ServerLevel server)) {
+            return;
+        }
+
+        RandomSource random = wyvern.getRandom();
+        Vec3 forward = getForwardDir(wyvern);
+        Vec3 right = new Vec3(-forward.z, 0.0D, forward.x);
+        double radius = Math.max(wyvern.getBbWidth() * 0.55D, 1.15D);
+        for (int i = 0; i < 7; i++) {
+            double forwardOffset = (random.nextDouble() * 1.35D - 0.25D) * radius;
+            double lateralOffset = (random.nextDouble() - 0.5D) * radius * 1.4D;
+            Vec3 sample = wyvern.position().add(forward.scale(forwardOffset)).add(right.scale(lateralOffset));
+            BlockPos groundPos = findGroundBlock(server, wyvern, sample);
+            if (groundPos == null) {
+                continue;
+            }
+
+            BlockState state = server.getBlockState(groundPos);
+            if (state.isAir() || state.liquid() || state.is(Blocks.BEDROCK)) {
+                continue;
+            }
+
+            VisualFallingBlockEntity block = new VisualFallingBlockEntity(
+                    ModEntities.VISUAL_FALLING_BLOCK.get(),
+                    server,
+                    groundPos.getX() + 0.5D,
+                    groundPos.getY() + 0.55D,
+                    groundPos.getZ() + 0.5D,
+                    state,
+                    34
+            );
+            double outwardX = sample.x - wyvern.getX();
+            double outwardZ = sample.z - wyvern.getZ();
+            Vec3 outward = new Vec3(outwardX, 0.0D, outwardZ);
+            if (outward.lengthSqr() < 1.0E-4D) {
+                outward = forward;
+            }
+            outward = outward.normalize();
+            double sideSpeed = 0.08D + random.nextDouble() * 0.16D;
+            double upSpeed = 0.42D + random.nextDouble() * 0.28D;
+            block.setDeltaMovement(outward.x * sideSpeed, upSpeed, outward.z * sideSpeed);
+            server.addFreshEntity(block);
+        }
+    }
+
+    private BlockPos findGroundBlock(ServerLevel server, Raevyx wyvern, Vec3 sample) {
+        int x = Mth.floor(sample.x);
+        int z = Mth.floor(sample.z);
+        int startY = Mth.floor(wyvern.getBoundingBox().minY + 0.5D);
+        int stopY = Math.max(server.getMinBuildHeight(), startY - 5);
+        for (int y = startY; y >= stopY; y--) {
+            BlockPos pos = new BlockPos(x, y, z);
+            BlockState state = server.getBlockState(pos);
+            if (!state.isAir() && !state.liquid() && state.isSolidRender(server, pos)) {
+                return pos;
+            }
+        }
+        return null;
+    }
+
+    private void sendNearbyDragonDustParticle(ServerLevel server, Raevyx wyvern, double x, double y, double z,
+                                              double xSpeed, double ySpeed, double zSpeed) {
+        double maxDistanceSqr = DUST_VIEW_DISTANCE * DUST_VIEW_DISTANCE;
+        for (ServerPlayer player : server.players()) {
+            if (player.distanceToSqr(x, y, z) <= maxDistanceSqr || player.distanceToSqr(wyvern) <= maxDistanceSqr) {
+                server.sendParticles(player, ModParticles.DRAGON_DUST.get(), true,
+                        x, y, z, 0, xSpeed, ySpeed, zSpeed, 1.0D);
+            }
+        }
     }
 
     private static float damageAfterArmor(float damage, float armor, float toughness) {

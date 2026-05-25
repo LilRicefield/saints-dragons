@@ -18,6 +18,7 @@ import com.leon.saintsdragons.server.flight.DragonGroundedAerialRecovery;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonTakeoff;
+import com.leon.saintsdragons.server.entity.effect.DragonWaterSplashEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -39,6 +40,8 @@ import net.minecraft.world.entity.animal.FlyingAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
@@ -67,6 +70,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private static final double DUST_PARTICLE_VIEW_DISTANCE = 128.0D;
     private static final double NEAR_GROUND_DUST_SCAN_DISTANCE = 10.0D;
     private static final int NEAR_GROUND_DUST_INTERVAL = 2;
+    private static final int NEAR_WATER_SPLASH_INTERVAL = 2;
     protected static final DragonBarrelRollHelper.Config DEFAULT_BARREL_ROLL_CONFIG =
             new DragonBarrelRollHelper.Config(
                     0.88F,
@@ -93,6 +97,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private int riderDiveBoostHoldTicks = 0;
     private boolean riderDiving = false;
     private int nearGroundDustCooldown = 0;
+    private int nearWaterSplashCooldown = 0;
     private boolean wasAerialForDustAtTickStart = false;
     private float prevSmoothedRoll = 0.0F;
     private float smoothedRoll = 0.0F;
@@ -599,6 +604,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         super.tick();
         tickRiderDiveBoostHoldState();
         tickNearGroundFlightDust();
+        tickNearWaterFlightSplash();
     }
 
     private void tickRiderDiveBoostHoldState() {
@@ -654,6 +660,26 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         spawnNearGroundFlightDust(ground);
     }
 
+    private void tickNearWaterFlightSplash() {
+        if (level().isClientSide || !shouldSpawnFlightDustEffects() || !isAerial() || isTakeoff() || isLanding() || isInWaterOrBubble() || isInLava()) {
+            nearWaterSplashCooldown = 0;
+            return;
+        }
+
+        if (nearWaterSplashCooldown > 0) {
+            nearWaterSplashCooldown--;
+            return;
+        }
+        nearWaterSplashCooldown = NEAR_WATER_SPLASH_INTERVAL;
+
+        Vec3 water = findWaterSurfacePosition();
+        if (water == null) {
+            return;
+        }
+
+        spawnNearWaterFlightWake(water);
+    }
+
     private Vec3 findDustGroundPosition() {
         AABB box = getBoundingBox();
         double[] sampleX = {getX(), box.minX + 0.35D, box.maxX - 0.35D};
@@ -691,6 +717,43 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return best;
     }
 
+    private Vec3 findWaterSurfacePosition() {
+        AABB box = getBoundingBox();
+        double[] sampleX = {getX(), box.minX + 0.35D, box.maxX - 0.35D};
+        double[] sampleZ = {getZ(), box.minZ + 0.35D, box.maxZ - 0.35D};
+        int startY = Mth.floor(box.minY);
+        int stopY = Math.max(level().getMinBuildHeight(), startY - Mth.ceil(NEAR_GROUND_DUST_SCAN_DISTANCE));
+
+        Vec3 best = null;
+        double bestDistance = Double.POSITIVE_INFINITY;
+        BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
+        for (double x : sampleX) {
+            for (double z : sampleZ) {
+                for (int y = startY; y >= stopY; y--) {
+                    pos.set(Mth.floor(x), y, Mth.floor(z));
+                    FluidState state = level().getFluidState(pos);
+                    if (!state.is(FluidTags.WATER)) {
+                        continue;
+                    }
+
+                    FluidState above = level().getFluidState(pos.above());
+                    if (above.is(FluidTags.WATER)) {
+                        continue;
+                    }
+
+                    double surfaceY = y + state.getHeight(level(), pos);
+                    double distance = box.minY - surfaceY;
+                    if (distance >= -0.25D && distance < bestDistance) {
+                        bestDistance = distance;
+                        best = new Vec3(x, surfaceY, z);
+                    }
+                    break;
+                }
+            }
+        }
+        return best;
+    }
+
     private void spawnNearGroundFlightDust(Vec3 ground) {
         if (!(level() instanceof ServerLevel serverLevel)) {
             return;
@@ -716,6 +779,39 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             double zSpeed = drift.z + Math.sin(angle) * (0.04D + random.nextDouble() * 0.07D);
             double ySpeed = 0.03D + random.nextDouble() * 0.06D;
             sendNearbyDragonDustParticle(serverLevel, x, ground.y + 0.08D, z, xSpeed, ySpeed, zSpeed);
+        }
+    }
+
+    private void spawnNearWaterFlightWake(Vec3 water) {
+        if (!(level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+
+        RandomSource random = getRandom();
+        Vec3 velocity = getDeltaMovement();
+        Vec3 horizontal = new Vec3(velocity.x, 0.0D, velocity.z);
+        double positionDeltaX = getX() - xo;
+        double positionDeltaZ = getZ() - zo;
+        if (horizontal.lengthSqr() <= 1.0E-5D && positionDeltaX * positionDeltaX + positionDeltaZ * positionDeltaZ > 1.0E-5D) {
+            horizontal = new Vec3(positionDeltaX, 0.0D, positionDeltaZ);
+        }
+        Vec3 direction = horizontal.lengthSqr() > 1.0E-5D ? horizontal.normalize() : getLookAngle();
+        direction = new Vec3(direction.x, 0.0D, direction.z);
+        if (direction.lengthSqr() <= 1.0E-5D) {
+            direction = Vec3.directionFromRotation(0.0F, getYRot());
+        }
+        direction = direction.normalize();
+        Vec3 right = new Vec3(-direction.z, 0.0D, direction.x);
+        float yaw = (float) Math.toDegrees(Math.atan2(-direction.x, direction.z));
+        double radius = Math.max(getBbWidth() * 0.35D, 0.85D);
+        int count = Math.max(1, Math.min(3, Mth.ceil(getBbWidth() * 0.45D)));
+
+        for (int i = 0; i < count; i++) {
+            double lateral = (random.nextDouble() - 0.5D) * radius * 2.0D;
+            double trailing = -random.nextDouble() * Math.max(getBbWidth() * 0.65D, 1.2D);
+            Vec3 pos = water.add(right.scale(lateral)).add(direction.scale(trailing));
+            float scale = (float) Math.max(1.1D, getBbWidth() * (0.45D + random.nextDouble() * 0.18D));
+            serverLevel.addFreshEntity(new DragonWaterSplashEntity(serverLevel, pos.add(0.0D, 0.025D, 0.0D), yaw, scale));
         }
     }
 

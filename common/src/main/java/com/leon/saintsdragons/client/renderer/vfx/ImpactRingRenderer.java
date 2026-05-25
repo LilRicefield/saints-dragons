@@ -1,7 +1,7 @@
-package com.leon.saintsdragons.client.renderer.stegonaut;
+package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautImpactRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,23 +15,23 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-public class StegonautImpactRingRenderer extends EntityRenderer<StegonautImpactRingEntity> {
+public class ImpactRingRenderer extends EntityRenderer<ImpactRingEntity> {
     private static final int TOTAL_FRAMES = 4;
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[TOTAL_FRAMES];
 
     static {
         for (int i = 0; i < TOTAL_FRAMES; i++) {
-            TEXTURES[i] = SaintsDragonsCommon.rl("textures/entity/stegonaut/impact_ring" + i + ".png");
+            TEXTURES[i] = SaintsDragonsCommon.rl("textures/particle/impact_ring" + i + ".png");
         }
     }
 
-    public StegonautImpactRingRenderer(EntityRendererProvider.Context context) {
+    public ImpactRingRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.shadowRadius = 0.0F;
     }
 
     @Override
-    public void render(@NotNull StegonautImpactRingEntity entity, float entityYaw, float partialTicks,
+    public void render(@NotNull ImpactRingEntity entity, float entityYaw, float partialTicks,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         float opacity = entity.getOpacity(partialTicks);
         if (opacity <= 0.001F) {
@@ -88,7 +88,7 @@ public class StegonautImpactRingRenderer extends EntityRenderer<StegonautImpactR
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull StegonautImpactRingEntity entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull ImpactRingEntity entity) {
         return TEXTURES[0];
     }
 }
