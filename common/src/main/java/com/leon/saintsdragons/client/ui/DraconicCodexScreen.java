@@ -94,6 +94,7 @@ public class DraconicCodexScreen extends Screen {
     private int allyScrollOffset = 0;
     private int ecologyPage = 1;
     private int liveRefreshTicker = 0;
+    private boolean dragonListLoaded = false;
     @Nullable
     private Button refreshEntryButton;
     public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
@@ -168,7 +169,7 @@ public class DraconicCodexScreen extends Screen {
         int listBottom = CodexLayout.getListBottom(topPos);
 
         dragonListPanel.draw(guiGraphics, this.font, listLeft, listTop, listRight, listBottom,
-                mouseX, mouseY, dragonEntries, listScrollOffset, selectedDragonId);
+                mouseX, mouseY, dragonEntries, listScrollOffset, selectedDragonId, !dragonListLoaded);
         tabPanel.drawTabs(guiGraphics, leftPos, topPos, activeTab,
                 TAB_PHYSIOLOGY, TAB_PHYSIOLOGY_CLOSED,
                 TAB_ECOLOGY, TAB_ECOLOGY_CLOSED,
@@ -274,6 +275,7 @@ public class DraconicCodexScreen extends Screen {
     }
 
     public void updateDragonList(List<CodexDragonEntry> entries) {
+        dragonListLoaded = true;
         dragonEntries.clear();
         dragonEntries.addAll(entries);
         dragonEntries.sort(Comparator.comparing(entry -> entry.displayName().toLowerCase()));

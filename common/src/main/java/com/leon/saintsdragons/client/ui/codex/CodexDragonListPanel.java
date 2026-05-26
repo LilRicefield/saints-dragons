@@ -9,7 +9,7 @@ import java.util.List;
 public class CodexDragonListPanel {
     public void draw(GuiGraphics guiGraphics, Font font, int left, int top, int right, int bottom,
                      int mouseX, int mouseY, List<CodexDragonEntry> dragonEntries, int listScrollOffset,
-                     java.util.UUID selectedDragonId) {
+                     java.util.UUID selectedDragonId, boolean loading) {
         int visibleCount = Math.min(CodexLayout.MAX_VISIBLE_DRAGONS, dragonEntries.size() - listScrollOffset);
         if (visibleCount < 0) {
             visibleCount = 0;
@@ -28,7 +28,9 @@ public class CodexDragonListPanel {
         }
 
         if (dragonEntries.isEmpty()) {
-            String emptyText = Component.translatable("saintsdragons.gui.draconic_codex.empty").getString();
+            String emptyText = Component.translatable(loading
+                    ? "saintsdragons.gui.draconic_codex.loading"
+                    : "saintsdragons.gui.draconic_codex.empty").getString();
             String[] words = emptyText.split(" ");
             if (words.length >= 3) {
                 String line1 = words[0] + " " + words[1];

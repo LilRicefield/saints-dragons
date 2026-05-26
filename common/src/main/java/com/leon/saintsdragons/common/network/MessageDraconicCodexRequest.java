@@ -46,6 +46,10 @@ public class MessageDraconicCodexRequest {
         DragonCodexSavedData data = DragonCodexSavedData.get(serverLevel);
         Map<UUID, DragonEntity> loadedOwnedDragons = collectLoadedOwnedDragons(serverLevel, playerId);
         for (DragonEntity dragon : loadedOwnedDragons.values()) {
+            if (!isValidCodexDragon(dragon)) {
+                data.removeDragon(playerId, dragon.getUUID());
+                continue;
+            }
             data.addDragon(playerId, dragon);
         }
 
@@ -55,6 +59,10 @@ public class MessageDraconicCodexRequest {
             for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
                 UUID dragonId = entry.dragonId();
                 DragonEntity dragon = loadedOwnedDragons.get(dragonId);
+                if (dragon != null && !isValidCodexDragon(dragon)) {
+                    data.removeDragon(player.getUUID(), dragonId);
+                    continue;
+                }
                 if (dragon != null && dragon.isTame() && dragon.isOwnedBy(player)) {
                     data.updateDragonName(player.getUUID(), dragonId, dragon.getName().getString());
                     data.updateDragonStats(player.getUUID(), dragon);
@@ -121,5 +129,14 @@ public class MessageDraconicCodexRequest {
             }
         }
         return dragons;
+    }
+
+    private static boolean isValidCodexDragon(DragonEntity dragon) {
+        return dragon != null
+                && dragon.isAlive()
+                && !dragon.isDeadOrDying()
+                && !dragon.isDying()
+                && !dragon.isRemoved()
+                && dragon.getHealth() > 0.0F;
     }
 }

@@ -44,6 +44,10 @@ public class DragonCodexSavedData extends SavedData {
         if (ownerId == null || dragon == null) {
             return;
         }
+        if (!isValidCodexDragon(dragon)) {
+            removeDragon(ownerId, dragon.getUUID());
+            return;
+        }
         UUID dragonId = dragon.getUUID();
         List<DragonCodexEntry> entries = entriesByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>());
         for (DragonCodexEntry entry : entries) {
@@ -125,6 +129,10 @@ public class DragonCodexSavedData extends SavedData {
 
     public void updateDragonStats(UUID ownerId, DragonEntity dragon) {
         if (ownerId == null || dragon == null) {
+            return;
+        }
+        if (!isValidCodexDragon(dragon)) {
+            removeDragon(ownerId, dragon.getUUID());
             return;
         }
         List<DragonCodexEntry> entries = entriesByOwner.get(ownerId);
@@ -475,5 +483,13 @@ public class DragonCodexSavedData extends SavedData {
                 .unwrapKey()
                 .map(key -> key.location().toString())
                 .orElse("minecraft:unknown");
+    }
+
+    private static boolean isValidCodexDragon(DragonEntity dragon) {
+        return dragon.isAlive()
+                && !dragon.isDeadOrDying()
+                && !dragon.isDying()
+                && !dragon.isRemoved()
+                && dragon.getHealth() > 0.0F;
     }
 }

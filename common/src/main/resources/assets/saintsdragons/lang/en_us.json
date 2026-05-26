@@ -286,6 +286,7 @@
   "saintsdragons.gui.draconic_codex.ecology.section.favorite_food": "Favorite Food",
   "saintsdragons.gui.draconic_codex.ecology.section.drops": "Drops",
   "saintsdragons.gui.draconic_codex.select_prompt": "Select a dragon to begin.",
+  "saintsdragons.gui.draconic_codex.loading": "Loading...",
   "saintsdragons.gui.draconic_codex.empty": "No tamed dragons found",
   "saintsdragons.gui.draconic_codex.page.previous": "Previous page",
   "saintsdragons.gui.draconic_codex.page.next": "Next page",
