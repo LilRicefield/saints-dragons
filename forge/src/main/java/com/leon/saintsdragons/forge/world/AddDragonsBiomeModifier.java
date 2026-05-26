@@ -53,7 +53,7 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         builder,
                         MobCategory.WATER_AMBIENT,
                         ModEntities.MOOP.get(),
-                        12,
+                        8,
                         2,
                         2
                 );

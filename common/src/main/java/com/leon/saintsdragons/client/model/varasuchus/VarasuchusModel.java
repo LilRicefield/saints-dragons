@@ -4,7 +4,9 @@ import com.leon.saintsdragons.client.model.DragonGeoModel;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper.WeightedBoneChain;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
@@ -12,6 +14,10 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
+    private static final ResourceLocation VOID_KISSED_TEXTURE =
+            SaintsDragonsCommon.rl("textures/entity/varasuchus/varasuchus_void_kissed.png");
+    private static final ResourceLocation VOID_KISSED_FEMALE_TEXTURE =
+            SaintsDragonsCommon.rl("textures/entity/varasuchus/varasuchus_void_kissed_female.png");
     private static final WeightedBoneChain NECK_FOLLOW = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "headController"},
             0.35f, 0.40f, 0.45f, 0.46f
@@ -27,6 +33,14 @@ public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
 
     public VarasuchusModel() {
         super("varasuchus");
+    }
+
+    @Override
+    protected ResourceLocation getAdultTexture(Varasuchus entity) {
+        if (Varasuchus.VOID_KISSED_VARIANT_ID.equals(entity.getTextureVariantId())) {
+            return entity.isFemale() ? VOID_KISSED_FEMALE_TEXTURE : VOID_KISSED_TEXTURE;
+        }
+        return super.getAdultTexture(entity);
     }
 
     @Override

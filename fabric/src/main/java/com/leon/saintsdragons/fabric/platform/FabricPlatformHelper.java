@@ -10,7 +10,10 @@ import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.sounds.SoundEvent;
 
 import java.nio.file.Path;
 import java.util.function.Supplier;
@@ -86,6 +89,14 @@ public final class FabricPlatformHelper implements PlatformHelper {
                                int secondaryColor,
                                Item.Properties properties) {
         return new SpawnEggItem(entityType.get(), primaryColor, secondaryColor, properties);
+    }
+
+    @Override
+    public Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
+                                Fluid fluid,
+                                SoundEvent emptySound,
+                                Item.Properties properties) {
+        return new MobBucketItem(entityType.get(), fluid, emptySound, properties);
     }
 
     @Override

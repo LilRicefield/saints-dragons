@@ -83,6 +83,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -2974,6 +2975,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                                        MobSpawnType reason,
                                        BlockPos pos,
                                        RandomSource random) {
+        if (!Animal.checkAnimalSpawnRules(type, level, reason, pos, random)) {
+            return false;
+        }
         return DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
                 && DragonSpawnRules.passesNearbyDragonDensityCheck(level, reason, pos, Ignivorus.class);
     }

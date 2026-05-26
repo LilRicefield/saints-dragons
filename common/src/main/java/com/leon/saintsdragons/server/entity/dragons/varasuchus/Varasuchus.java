@@ -109,7 +109,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                                                           @NotNull MobSpawnType reason,
                                                           @Nullable SpawnGroupData spawnData,
                                                           @Nullable CompoundTag spawnTag) {
-        if (shouldUseVoidKissedVariant(levelAccessor.getLevel())) {
+        if (reason == MobSpawnType.SPAWN_EGG && shouldUseVoidKissedVariant(levelAccessor.getLevel())) {
             return VOID_KISSED_VARIANT_ID;
         }
         return super.chooseSpawnTextureVariantId(levelAccessor, difficulty, reason, spawnData, spawnTag);
@@ -1013,7 +1013,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public AgeableMob getBreedOffspring(@Nonnull ServerLevel level, @Nonnull AgeableMob other) {
-        return createBreedOffspring(level, other, ModEntities.VARASUCHUS.get(), Varasuchus::applyConfiguredAttributes);
+        return createBreedOffspring(level, other, ModEntities.VARASUCHUS.get(), baby -> {
+            baby.applyConfiguredAttributes();
+            if (shouldUseVoidKissedVariant(level)) {
+                baby.setPendingAdultTextureVariantId(VOID_KISSED_VARIANT_ID);
+            }
+        });
     }
 
     @Override

@@ -23,6 +23,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraft.sounds.SoundEvents;
 
 import java.util.function.Supplier;
 
@@ -200,6 +202,16 @@ public class ModItems {
                                             .nutrition(5)
                                             .saturationMod(0.6F)
                                             .build())
+                    ));
+
+    public static final Supplier<Item> BUCKET_OF_MOOP =
+            REGISTER.register("bucket_of_moop",
+                    () -> Services.PLATFORM.createMobBucket(
+                            ModEntities.MOOP,
+                            Fluids.WATER,
+                            SoundEvents.BUCKET_EMPTY_FISH,
+                            new Item.Properties()
+                                    .stacksTo(1)
                     ));
 
     public static final Supplier<Item> MOSSBACK =

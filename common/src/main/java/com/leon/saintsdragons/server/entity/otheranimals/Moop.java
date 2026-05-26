@@ -16,7 +16,6 @@ import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
@@ -74,7 +73,7 @@ public class Moop extends AbstractFish implements GeoEntity {
 
     @Override
     public @NotNull ItemStack getBucketItemStack() {
-        return new ItemStack(Items.WATER_BUCKET);
+        return new ItemStack(ModItems.BUCKET_OF_MOOP.get());
     }
 
     @Override

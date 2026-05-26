@@ -43,7 +43,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.Explosion;
@@ -357,9 +356,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        if (!Animal.checkAnimalSpawnRules(type, level, spawnType, pos, random)) {
-            return false;
-        }
         return DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
                 && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Cindervane.class);
     }

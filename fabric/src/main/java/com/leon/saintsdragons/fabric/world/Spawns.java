@@ -58,7 +58,7 @@ public final class Spawns {
                 ModTags.Biomes.HAS_MOOP,
                 MobCategory.WATER_AMBIENT,
                 ModEntities.MOOP.get(),
-                12,
+                8,
                 2,
                 2
         );

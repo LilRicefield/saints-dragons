@@ -7,6 +7,9 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
@@ -84,6 +87,14 @@ public final class ForgePlatformHelper implements PlatformHelper {
                                int secondaryColor,
                                Item.Properties properties) {
         return new ForgeSpawnEggItem(entityType, primaryColor, secondaryColor, properties);
+    }
+
+    @Override
+    public Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
+                                Fluid fluid,
+                                SoundEvent emptySound,
+                                Item.Properties properties) {
+        return new MobBucketItem(entityType, () -> fluid, () -> emptySound, properties);
     }
 
     @Override

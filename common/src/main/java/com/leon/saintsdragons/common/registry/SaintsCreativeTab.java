@@ -33,6 +33,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.GOLDEN_DRAGON_BRUSH.get());
                                 output.accept(ModItems.RAW_MOOP.get());
                                 output.accept(ModItems.COOKED_MOOP.get());
+                                output.accept(ModItems.BUCKET_OF_MOOP.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());

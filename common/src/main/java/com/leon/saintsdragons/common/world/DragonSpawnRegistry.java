@@ -29,24 +29,6 @@ public final class DragonSpawnRegistry {
         List<DragonSpawnEntry> entries = new ArrayList<>();
 
         add(entries,
-                SaintsDragonsCommon.rl("raevyx"),
-                ModEntities.RAEVYX,
-                ModTags.Biomes.HAS_RAEVYX,
-                MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
-                () -> SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get());
-
-        add(entries,
-                SaintsDragonsCommon.rl("stegonaut"),
-                ModEntities.STEGONAUT,
-                ModTags.Biomes.HAS_STEGONAUT,
-                MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
-                () -> SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get());
-
-        add(entries,
                 SaintsDragonsCommon.rl("cindervane"),
                 ModEntities.CINDERVANE,
                 ModTags.Biomes.HAS_CINDERVANE,
