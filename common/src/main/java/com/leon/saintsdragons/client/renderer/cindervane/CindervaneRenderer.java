@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.cindervane;
 
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.layer.cindervane.CindervaneNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
@@ -25,6 +26,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
 
     public CindervaneRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new CindervaneModel());
+        this.addRenderLayer(new CindervaneNightEmissiveLayer(this));
     }
 
     @Override

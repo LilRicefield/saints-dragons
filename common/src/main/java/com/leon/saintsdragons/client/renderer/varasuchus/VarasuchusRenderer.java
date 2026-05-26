@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.varasuchus;
 
 import com.leon.saintsdragons.client.model.varasuchus.VarasuchusModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.layer.varasuchus.VarasuchusNightEmissiveLayer;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -16,6 +17,7 @@ public class VarasuchusRenderer extends DragonGeoEntityRenderer<Varasuchus> {
 
     public VarasuchusRenderer(EntityRendererProvider.Context context) {
         super(context, new VarasuchusModel());
+        this.addRenderLayer(new VarasuchusNightEmissiveLayer(this));
     }
 
     @Override

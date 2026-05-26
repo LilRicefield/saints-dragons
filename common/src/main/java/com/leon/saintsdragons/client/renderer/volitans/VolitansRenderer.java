@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.volitans;
 
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.layer.volitans.VolitansNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -24,6 +25,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
 
     public VolitansRenderer(EntityRendererProvider.Context context) {
         super(context, new VolitansModel());
+        this.addRenderLayer(new VolitansNightEmissiveLayer(this));
     }
 
     @Override

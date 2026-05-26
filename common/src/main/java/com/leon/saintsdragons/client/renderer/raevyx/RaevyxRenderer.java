@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLayer;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxGlowLayer;
+import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxNightEmissiveLayer;
 
 @Environment(EnvType.CLIENT)
 public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
@@ -31,6 +32,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     public RaevyxRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new RaevyxModel());
+        this.addRenderLayer(new RaevyxNightEmissiveLayer(this));
         this.addRenderLayer(new RaevyxGlowLayer(this));
         this.addRenderLayer(new RaevyxLightningBeamLayer());
     }
