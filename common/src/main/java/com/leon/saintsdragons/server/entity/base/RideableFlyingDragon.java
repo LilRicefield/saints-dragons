@@ -150,6 +150,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         this.riderFlightComponent = createRiderFlightComponent();
     }
 
+    public final boolean m_29443_() {
+        return this.isFlying();
+    }
+
     public int getRiderDiveBoostHoldTicks() {
         return riderDiveBoostHoldTicks;
     }

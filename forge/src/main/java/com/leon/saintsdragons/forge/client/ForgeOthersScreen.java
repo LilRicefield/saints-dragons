@@ -93,6 +93,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                     SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::set,
                     SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED::save
             ));
+            entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.wiki_reminder"),
+                    SaintsDragonsConfig.WIKI_REMINDER_ENABLED::get,
+                    SaintsDragonsConfig.WIKI_REMINDER_ENABLED::set,
+                    SaintsDragonsConfig.WIKI_REMINDER_ENABLED::save
+            ));
 
             // Ivy the Dragon Merchant
             entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));

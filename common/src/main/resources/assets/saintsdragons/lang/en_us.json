@@ -859,6 +859,8 @@
   "saintsdragons.config_screen.others.hunger_decay.tooltip": "When turned off, tamed dragons no longer lose hunger over time or from being ridden",
   "saintsdragons.config_screen.others.happiness_decay": "Enable Happiness Decay",
   "saintsdragons.config_screen.others.happiness_decay.tooltip": "When turned off, tamed dragons no longer lose happiness over time from hunger pressure",
+  "saintsdragons.config_screen.others.wiki_reminder": "Enable Wiki Reminder",
+  "saintsdragons.config_screen.others.wiki_reminder.tooltip": "Shows the one-time Saint's Dragons wiki link when players join a world",
   "saintsdragons.config_screen.others.ivy": "Ivy the Dragon Merchant",
   "saintsdragons.config_screen.others.ivy.enabled": "Enable Ivy House Worldgen",
   "saintsdragons.config_screen.others.ivy.enabled.tooltip": "When turned off, Ivy's house no longer generates and Ivy no longer spawns from that structure in new or ungenerated chunks",

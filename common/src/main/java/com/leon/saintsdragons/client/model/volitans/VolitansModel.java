@@ -31,6 +31,9 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
 
     @Override
     protected ResourceLocation getAdultTexture(Volitans entity) {
+        if (entity.hasCustomTextureVariant()) {
+            return super.getAdultTexture(entity);
+        }
         boolean bloodshot = entity.getTextureVariant() == Volitans.VARIANT_BLOODSHOT;
         if (entity.isFemale()) {
             return bloodshot ? BLOODSHOT_FEMALE_TEXTURE : femaleTexture;

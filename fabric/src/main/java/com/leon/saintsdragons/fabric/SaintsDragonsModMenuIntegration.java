@@ -319,6 +319,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.save();
                 SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
                 SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
+                SaintsDragonsConfig.WIKI_REMINDER_ENABLED.save();
                 SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
                 SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.save();
                 persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer);
@@ -464,6 +465,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             ).setDefaultValue(SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.happiness_decay.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(value))
+              .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.wiki_reminder"),
+                    SaintsDragonsConfig.WIKI_REMINDER_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.WIKI_REMINDER_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.wiki_reminder.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.WIKI_REMINDER_ENABLED.set(value))
               .build());
             others.addEntry(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),

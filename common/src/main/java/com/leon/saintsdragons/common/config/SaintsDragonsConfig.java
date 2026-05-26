@@ -47,6 +47,7 @@ public final class SaintsDragonsConfig {
     public static final boolean DRAGON_BREEDING_ENABLED_DEFAULT = true;
     public static final boolean HUNGER_DECAY_ENABLED_DEFAULT = true;
     public static final boolean HAPPINESS_DECAY_ENABLED_DEFAULT = true;
+    public static final boolean WIKI_REMINDER_ENABLED_DEFAULT = true;
     public static final boolean IVY_HOUSE_ENABLED_DEFAULT = true;
     public static final int IVY_RESTOCK_INTERVAL_DEFAULT = 24000;
 
@@ -87,6 +88,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue DRAGON_BREEDING_ENABLED;
     public static ConfigHelper.BooleanValue HUNGER_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue HAPPINESS_DECAY_ENABLED;
+    public static ConfigHelper.BooleanValue WIKI_REMINDER_ENABLED;
     public static ConfigHelper.BooleanValue IVY_HOUSE_ENABLED;
     public static ConfigHelper.IntValue IVY_RESTOCK_INTERVAL;
 
@@ -175,6 +177,8 @@ public final class SaintsDragonsConfig {
         HUNGER_DECAY_ENABLED = serverBuilder.defineBoolean("hungerDecayEnabled", HUNGER_DECAY_ENABLED_DEFAULT);
         serverBuilder.comment("Global toggle for tame dragon happiness decay.");
         HAPPINESS_DECAY_ENABLED = serverBuilder.defineBoolean("happinessDecayEnabled", HAPPINESS_DECAY_ENABLED_DEFAULT);
+        serverBuilder.comment("Whether players receive the one-time Saint's Dragons wiki reminder when joining a world.");
+        WIKI_REMINDER_ENABLED = serverBuilder.defineBoolean("wikiReminderEnabled", WIKI_REMINDER_ENABLED_DEFAULT);
         serverBuilder.pop();
 
         serverBuilder.push("ivy");
@@ -197,6 +201,10 @@ public final class SaintsDragonsConfig {
 
     public static boolean isDragonBreedingEnabled() {
         return DRAGON_BREEDING_ENABLED == null || DRAGON_BREEDING_ENABLED.get();
+    }
+
+    public static boolean isWikiReminderEnabled() {
+        return WIKI_REMINDER_ENABLED == null || WIKI_REMINDER_ENABLED.get();
     }
 
     private SaintsDragonsConfig() {

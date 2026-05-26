@@ -58,6 +58,9 @@ public CindervaneModel() {
 
     @Override
     protected ResourceLocation getAdultTexture(Cindervane entity) {
+        if (entity.hasCustomTextureVariant()) {
+            return super.getAdultTexture(entity);
+        }
         if (entity.getTextureVariant() == 1) {
             return entity.isFemale() ? ALBINO_FEMALE_TEXTURE : ALBINO_MALE_TEXTURE;
         }

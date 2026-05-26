@@ -35,6 +35,10 @@ public final class SaintsDragonsFabricServerConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     public boolean happinessDecayEnabled = SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED_DEFAULT;
 
+    @ConfigEntry.Category("gameplay")
+    @ConfigEntry.Gui.Tooltip
+    public boolean wikiReminderEnabled = SaintsDragonsConfig.WIKI_REMINDER_ENABLED_DEFAULT;
+
     @ConfigEntry.Category("ivy")
     @ConfigEntry.Gui.Tooltip
     public boolean ivyHouseEnabled = SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT;

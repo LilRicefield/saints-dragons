@@ -36,6 +36,9 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
 
     @Override
     protected ResourceLocation getAdultTexture(Ignivorus entity) {
+        if (entity.hasCustomTextureVariant()) {
+            return super.getAdultTexture(entity);
+        }
         int variant = entity.getTextureVariant();
         boolean isFemale = entity.isFemale();
         if (variant == 1) {

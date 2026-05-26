@@ -36,6 +36,9 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
 
     @Override
     protected ResourceLocation getAdultTexture(Raevyx entity) {
+        if (entity.hasCustomTextureVariant()) {
+            return super.getAdultTexture(entity);
+        }
         boolean nightGold = entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         if (nightGold) {
             return entity.isFemale() ? NIGHT_GOLD_FEMALE_TEXTURE : NIGHT_GOLD_TEXTURE;

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.init;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.data.WikiReminderSavedData;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -58,6 +59,10 @@ public final class CommonServerLifecycleEvents {
     }
 
     private static void sendWikiReminder(ServerPlayer player) {
+        if (!SaintsDragonsConfig.isWikiReminderEnabled()) {
+            return;
+        }
+
         if (player == null || !WikiReminderSavedData.get(player.serverLevel()).markShownIfFirst(player.getUUID())) {
             return;
         }
