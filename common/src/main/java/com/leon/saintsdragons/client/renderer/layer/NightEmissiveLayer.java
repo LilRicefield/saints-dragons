@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.renderer.layer;
 
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -7,15 +8,13 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.renderer.GeoRenderer;
 import software.bernie.geckolib.renderer.layer.GeoRenderLayer;
 
-public abstract class NightEmissiveLayer<T extends LivingEntity & GeoEntity> extends GeoRenderLayer<T> {
+public abstract class NightEmissiveLayer<T extends DragonEntity> extends GeoRenderLayer<T> {
     private static final long DUSK_START = 12000L;
     private static final long NIGHT_FULL = 13000L;
     private static final long NIGHT_FADE = 22500L;
@@ -36,6 +35,9 @@ public abstract class NightEmissiveLayer<T extends LivingEntity & GeoEntity> ext
                        int packedLight,
                        int packedOverlay) {
         if (animatable.isBaby()) {
+            return;
+        }
+        if (animatable.hasCustomTextureVariant() && !allowCustomTextureVariantEmissive(animatable)) {
             return;
         }
 
@@ -72,7 +74,11 @@ public abstract class NightEmissiveLayer<T extends LivingEntity & GeoEntity> ext
     @Nullable
     protected abstract ResourceLocation getEmissiveTexture(T animatable);
 
-    private static float getNightAlpha(LivingEntity animatable) {
+    protected boolean allowCustomTextureVariantEmissive(T animatable) {
+        return false;
+    }
+
+    private static float getNightAlpha(DragonEntity animatable) {
         long dayTime = animatable.level().getDayTime() % 24000L;
         if (dayTime < DUSK_START || dayTime > DAWN_END) {
             return 0.0F;

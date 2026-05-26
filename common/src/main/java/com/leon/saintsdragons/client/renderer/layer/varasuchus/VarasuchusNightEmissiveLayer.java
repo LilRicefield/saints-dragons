@@ -23,4 +23,9 @@ public class VarasuchusNightEmissiveLayer extends NightEmissiveLayer<Varasuchus>
         }
         return EMISSIVE_TEXTURE;
     }
+
+    @Override
+    protected boolean allowCustomTextureVariantEmissive(Varasuchus animatable) {
+        return Varasuchus.VOID_KISSED_VARIANT_ID.equals(animatable.getTextureVariantId());
+    }
 }

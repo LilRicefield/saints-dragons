@@ -20,9 +20,6 @@ public class RaevyxNightEmissiveLayer extends NightEmissiveLayer<Raevyx> {
     @Override
     @Nullable
     protected ResourceLocation getEmissiveTexture(Raevyx animatable) {
-        if (animatable.hasCustomTextureVariant()) {
-            return null;
-        }
         if (animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD) {
             return NIGHT_GOLD_EMISSIVE_TEXTURE;
         }
