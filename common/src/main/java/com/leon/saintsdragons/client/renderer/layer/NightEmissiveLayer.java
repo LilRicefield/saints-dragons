@@ -35,6 +35,10 @@ public abstract class NightEmissiveLayer<T extends LivingEntity & GeoEntity> ext
                        float partialTick,
                        int packedLight,
                        int packedOverlay) {
+        if (animatable.isBaby()) {
+            return;
+        }
+
         float alpha = getNightAlpha(animatable);
         if (alpha <= 0.01F) {
             return;
