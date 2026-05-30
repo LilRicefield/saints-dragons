@@ -96,16 +96,16 @@ public class VolitansWaterCombatGoal extends Goal {
             return;
         }
 
-        if (!hasLineOfSight) {
-            return;
-        }
-
         if (attackCooldown > 0 || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundMobilityActive()) {
             return;
         }
 
         if (gap <= GORE_RANGE) {
             tryMelee(target, gap);
+            return;
+        }
+
+        if (!hasLineOfSight) {
             return;
         }
 

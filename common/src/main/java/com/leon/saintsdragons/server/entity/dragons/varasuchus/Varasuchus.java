@@ -699,9 +699,13 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 this.lookControl = landLookControl;
             }
 
-            if ((isSleeping() || isSleepingEntering() || isSleepingExiting())
+            if ((isSleeping() || isSleepingEntering() || isSleepTransitioning())
                     && (this.getTarget() != null || this.isAggressive() || this.isInWaterOrBubble())) {
-                wakeUpImmediately();
+                if (this.getTarget() != null || this.isAggressive()) {
+                    startSleepExit();
+                } else {
+                    wakeUpImmediately();
+                }
                 suppressSleep(200);
             }
 
@@ -1911,8 +1915,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (activeAbility instanceof VarasuchusTailguardAbility tailguard && tailguard.tryParry(damageSource)) {
             return false;
         }
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
-            wakeUpImmediately();
+        if (isSleeping() || isSleepingEntering() || isSleepTransitioning()) {
+            startSleepExit();
             suppressSleep(200);
         }
         if (damageSource.is(DamageTypeTags.IS_DROWNING)) {

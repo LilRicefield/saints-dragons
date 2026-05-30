@@ -1015,8 +1015,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
         boolean result = super.hurt(source, amount);
         if (result) {
-            if (isSleeping() || isSleepingEntering() || isSleepingExiting() || isSleepTransitioning()) {
-                wakeUpImmediately();
+            if (isSleeping() || isSleepingEntering() || isSleepTransitioning()) {
+                startSleepExit();
             }
             suppressSleep(DAMAGE_SLEEP_SUPPRESSION_TICKS);
 
@@ -1426,7 +1426,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     protected boolean shouldClearTargetOnSleepFreeze() {
-        return true;
+        return !isSleepingExiting();
     }
 
     protected Vec3 getSleepFreezeDeltaMovement() {
@@ -1996,6 +1996,12 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
             super.setTarget(null);
             return;
+        }
+        if (target != null
+                && !level().isClientSide
+                && (isSleeping() || isSleepingEntering() || isSleepTransitioning())) {
+            startSleepExit();
+            suppressSleep(DAMAGE_SLEEP_SUPPRESSION_TICKS);
         }
         super.setTarget(target);
     }

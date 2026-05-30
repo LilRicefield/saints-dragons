@@ -740,7 +740,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (this.isBaby() || !this.isAlive()) {
             return false;
         }
-        return this.onGround() || (this.isInWaterOrBubble() && !this.isUnderWater());
+        return this.onGround() || (this.isInWaterOrBubble() && !this.isUnderWater()) || this.isInLava();
     }
 
     @Override
@@ -1212,7 +1212,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 return;
             }
 
-            if (this.isInWaterOrBubble()) {
+            if (this.isInWaterOrBubble() || this.isInLava()) {
                 riderController.handleSwimTravel(rider, riddenInput);
                 if (!level().isClientSide) {
                     setGroundMoveStateFromRider(0);

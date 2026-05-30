@@ -31,8 +31,7 @@ public final class DragonRideKeybinds {
                 DragonRideInputHandler.DRAGON_TERTIARY_ABILITY,
                 DragonRideInputHandler.DRAGON_PRIMARY_ABILITY,
                 DragonRideInputHandler.DRAGON_SECONDARY_ABILITY,
-                DragonRideInputHandler.DRAGON_TOGGLE_MELEE,
-                DragonRideInputHandler.DRAGON_FLEX
+                DragonRideInputHandler.DRAGON_TOGGLE_MELEE
         };
     }
 }

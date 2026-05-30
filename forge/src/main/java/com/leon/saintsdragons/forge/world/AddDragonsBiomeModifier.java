@@ -53,9 +53,9 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         builder,
                         MobCategory.WATER_AMBIENT,
                         ModEntities.MOOP.get(),
-                        8,
-                        2,
-                        2
+                        4,
+                        1,
+                        1
                 );
             }
             if (DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOSSBACK)) {

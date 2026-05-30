@@ -1317,7 +1317,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
 
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble() || this.isInLava();
 
         if (inWater) {
             clearRiderFlightStateInWaterIfNeeded();
@@ -1999,8 +1999,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         return !isBaby()
                 && !isFlying()
                 && onGround()
-                && !isInWaterOrBubble()
-                && !isInLava();
+                && !isInWaterOrBubble();
     }
 
     @Override

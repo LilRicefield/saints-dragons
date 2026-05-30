@@ -2016,7 +2016,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             super.travel(motion);
             return;
         }
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble() || this.isInLava();
 
         if (inWater) {
             clearRiderFlightStateInWaterIfNeeded();
@@ -2920,7 +2920,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     
     @Override
     public boolean canTakeoff() {
-        return !isBaby() && !isGroundRending() && !isInWaterOrBubble() && !isInLava() && onGround();
+        return !isBaby() && !isGroundRending() && !isInWaterOrBubble() && onGround();
     }
 
     private boolean shouldStaySeatedCommand() {

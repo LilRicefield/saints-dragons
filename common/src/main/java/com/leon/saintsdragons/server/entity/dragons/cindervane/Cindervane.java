@@ -517,9 +517,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         handleAmbientSounds();
         tickGroundStepAudio();
 
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+        if (isSleeping() || isSleepingEntering() || isSleepTransitioning()) {
             if (this.getTarget() != null || this.isAggressive()) {
-                wakeUpImmediately();
+                startSleepExit();
                 suppressSleep(200);
             } else if (this.isInWaterOrBubble() || this.isInLava()) {
                 wakeUpImmediately();
@@ -981,7 +981,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return;
         }
 
-        boolean inWater = this.isInWater() || this.isInWaterOrBubble();
+        boolean inWater = this.isInWater() || this.isInWaterOrBubble() || this.isInLava();
 
         if (inWater && !level().isClientSide) {
             clearRiderFlightStateInWaterIfNeeded();
@@ -1439,8 +1439,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return false;
         }
 
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
-            wakeUpImmediately();
+        if (isSleeping() || isSleepingEntering() || isSleepTransitioning()) {
+            startSleepExit();
             suppressSleep(200);
         }
 
@@ -1657,7 +1657,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (this.isBaby() || !this.isAlive()) {
             return false;
         }
-        if (this.isInWaterOrBubble() || this.isInLava()) {
+        if (this.isInWaterOrBubble()) {
             return false;
         }
         return this.onGround();

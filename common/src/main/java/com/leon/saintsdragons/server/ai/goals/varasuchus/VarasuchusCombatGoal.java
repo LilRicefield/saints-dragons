@@ -148,7 +148,7 @@ public class VarasuchusCombatGoal extends Goal {
             return;
         }
 
-        if (!drake.getSensing().hasLineOfSight(target)) {
+        if (!drake.getSensing().hasLineOfSight(target) && !drake.isInWaterOrBubble()) {
             return;
         }
 
