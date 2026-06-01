@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFlightGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansSlamSequenceGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansWaterCombatGoal;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
@@ -24,6 +25,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
+import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
@@ -265,12 +267,16 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private int tempInvulnTicks = 0;
     private float sleepLockedYaw = 0.0F;
     private float sleepLockedPitch = 0.0F;
+    private final DragonSwimSteeringController swimSteering;
+    private final AsyncSwimController asyncSwimController;
 
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.setMaxUpStep(1.0F);
         this.riderController = new VolitansRiderController(this);
+        this.swimSteering = new DragonSwimSteeringController(this);
+        this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
         this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
         this.actionController = new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
@@ -285,6 +291,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             applyConfiguredAttributes();
         }
         resetAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY);
+    }
+
+    private AsyncSwimController getAsyncSwimController() {
+        return this.asyncSwimController;
     }
 
     @Override
@@ -423,16 +433,16 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             this.goalSelector.addGoal(4, new VolitansWaterCombatGoal(this));
             this.goalSelector.addGoal(5, new VolitansBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
-        this.goalSelector.addGoal(6, new VolitansFindSleepDepthGoal(this, 6.0F, 0.16D));
-        this.goalSelector.addGoal(6, new DirectSwimToTargetGoal(this, 8.0F, 0.28D, true) {
+        this.goalSelector.addGoal(6, new VolitansFindSleepDepthGoal(this, this::getAsyncSwimController, 6.0F, 0.16D));
+        this.goalSelector.addGoal(6, new DragonSwimToTargetGoal(this, this::getAsyncSwimController, 8.0F, 0.28D, true) {
             @Override
             public boolean canUse() {
-                return !Volitans.this.isSleepLocked() && super.canUse();
+                return !Volitans.this.isSleepLocked() && !Volitans.this.isAerial() && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !Volitans.this.isSleepLocked() && super.canContinueToUse();
+                return !Volitans.this.isSleepLocked() && !Volitans.this.isAerial() && super.canContinueToUse();
             }
         });
         this.goalSelector.addGoal(7, new DragonLeaveWaterGoal<>(this));
@@ -448,28 +458,32 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
             @Override
             public boolean canUse() {
-                return !Volitans.this.isVehicle() && super.canUse();
+                return !Volitans.this.isVehicle()
+                        && !Volitans.this.isInWaterOrBubble()
+                        && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !Volitans.this.isVehicle() && super.canContinueToUse();
+                return !Volitans.this.isVehicle()
+                        && !Volitans.this.isInWaterOrBubble()
+                        && super.canContinueToUse();
             }
         });
-        this.goalSelector.addGoal(10, new DirectSwimToTargetGoal(this, 8.0F, 0.24D, false) {
+        this.goalSelector.addGoal(10, new DragonSwimToTargetGoal(this, this::getAsyncSwimController, 8.0F, 0.24D, false, 20.0D, 8.0D) {
             @Override
             public boolean canUse() {
-                return !Volitans.this.isSleepLocked() && super.canUse();
+                return !Volitans.this.isSleepLocked() && !Volitans.this.isAerial() && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !Volitans.this.isSleepLocked() && super.canContinueToUse();
+                return !Volitans.this.isSleepLocked() && !Volitans.this.isAerial() && super.canContinueToUse();
             }
         });
         this.goalSelector.addGoal(11, new VolitansFlightGoal(this));
         this.goalSelector.addGoal(12, new DragonGroundWanderGoal<>(this, 0.9D, 70));
-        this.goalSelector.addGoal(14, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30) {
+        this.goalSelector.addGoal(14, new DragonSwimWanderGoal(this, this::getAsyncSwimController, 6.0F, 0.20D, 30) {
             @Override
             public boolean canUse() {
                 return !Volitans.this.isSleepLocked() && super.canUse();
@@ -630,10 +644,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             setHovering(hovering);
             setLanding(landing);
         } else {
-            setFlying(false);
-            setTakeoff(false);
-            setHovering(false);
-            setLanding(false);
+            clearAerialStateForInterrupt();
         }
     }
 
@@ -670,6 +681,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     public boolean isSwimmingMoving() {
         if (!isInWaterOrBubble() || isFlying()) {
             return false;
+        }
+
+        if (this.asyncSwimController.isMoving()) {
+            return true;
         }
 
         if (this.getNavigation().isInProgress() && this.getNavigation().getPath() != null) {
@@ -758,6 +773,34 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (onGround()) {
             setDeltaMovement(Vec3.ZERO);
             hasImpulse = false;
+        }
+    }
+
+    @Override
+    protected void onLocomotionModeTick(DragonLocomotionMode mode) {
+        if (mode == DragonLocomotionMode.WATER && this.isVehicle()) {
+            this.asyncSwimController.clear();
+        }
+    }
+
+    @Override
+    protected void onExitLocomotionMode(DragonLocomotionMode previousMode, DragonLocomotionMode nextMode) {
+        super.onExitLocomotionMode(previousMode, nextMode);
+        if (previousMode == DragonLocomotionMode.WATER && nextMode != DragonLocomotionMode.WATER) {
+            this.asyncSwimController.clear();
+        }
+    }
+
+    @Override
+    protected void onEnterLocomotionMode(DragonLocomotionMode mode, DragonLocomotionMode previousMode) {
+        super.onEnterLocomotionMode(mode, previousMode);
+        if (mode == DragonLocomotionMode.WATER) {
+            this.swimSteering.clear();
+        } else if (mode == DragonLocomotionMode.AIR) {
+            this.asyncSwimController.clear();
+        } else {
+            this.asyncSwimController.clear();
+            this.swimSteering.clear();
         }
     }
 
@@ -2915,10 +2958,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         setRunning(false);
         setGroundMoveStateFromAI(0);
         setDeltaMovement(Vec3.ZERO);
-        setFlying(false);
-        setLanding(false);
-        setTakeoff(false);
-        setHovering(false);
+        clearAerialStateForInterrupt();
     }
 
     @Override

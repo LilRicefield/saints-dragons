@@ -59,14 +59,13 @@ public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
             if (entity.isDeadOrDying()){
                 return;
             }
-            if (!entity.isVehicle()) {
+            if (!entity.isVehicle() && !entity.isInWaterOrBubble()) {
                 applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
             applySwimPitch(entity, partialTick);
-            applySwimRoll(entity, partialTick);
         }
     }
 
@@ -99,21 +98,5 @@ public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
         GeoBone body = bodyOpt.get();
         float swimPitchRad = entity.getSwimPitchRadians(partialTick);
         body.setRotX(body.getRotX() + swimPitchRad);
-    }
-
-    private void applySwimRoll(Varasuchus entity, float partialTick) {
-        if (!entity.isInWater() && !entity.isInWaterOrBubble()) {
-            return;
-        }
-
-        var bodyOpt = getBone("heightController");
-        if (bodyOpt.isEmpty()) {
-            return;
-        }
-        GeoBone body = bodyOpt.get();
-        float swimRollDegrees = entity.getSwimRollAngleDegrees(partialTick);
-        float swimRollRad = swimRollDegrees * Mth.DEG_TO_RAD;
-
-        body.setRotZ(body.getRotZ() + swimRollRad);
     }
 }

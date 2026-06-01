@@ -36,10 +36,7 @@ public class RaevyxTamingHandler extends DragonTamingStunComponent<Raevyx> {
 
     @Override
     protected void clearAerialStateForStun() {
-        dragon.setFlying(false);
-        dragon.setHovering(false);
-        dragon.setTakeoff(false);
-        dragon.setLanding(false);
+        dragon.clearAerialStateForInterrupt();
     }
 
     @Override

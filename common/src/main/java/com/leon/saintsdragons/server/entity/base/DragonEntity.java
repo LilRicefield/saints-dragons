@@ -6,7 +6,9 @@ import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.server.ai.goals.base.DragonSwimSteeringController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -168,6 +170,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private UUID assignedParentUuid;
     private boolean familySpawnPending = false;
     private int pendingFamilyBabyCount = 0;
+    private final DragonSwimSteeringController waterPathSteering;
+    private final AsyncSwimController waterPathController;
+    private DragonLocomotionMode locomotionMode = DragonLocomotionMode.GROUND;
 
     protected DragonEntity(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -183,6 +188,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.sitComponent = createSitComponent();
         this.babyComponent = createBabyComponent();
         this.lookControl = new DragonLookControl<>(this);
+        this.waterPathSteering = new DragonSwimSteeringController(this);
+        this.waterPathController = new AsyncSwimController(this, this.waterPathSteering);
     }
 
     @Override
@@ -193,6 +200,58 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public EnumSet<DragonMovementCapability> movementCapabilities() {
         return EnumSet.of(DragonMovementCapability.WALK);
+    }
+
+    public AsyncSwimController getWaterPathController() {
+        return this.waterPathController;
+    }
+
+    protected void clearWaterPathController() {
+        this.waterPathController.clear();
+        this.waterPathSteering.clear();
+    }
+
+    public DragonLocomotionMode getLocomotionMode() {
+        return this.locomotionMode;
+    }
+
+    protected void tickLocomotionMode() {
+        DragonLocomotionMode desiredMode = resolveLocomotionMode();
+        if (desiredMode == this.locomotionMode) {
+            onLocomotionModeTick(desiredMode);
+            return;
+        }
+
+        DragonLocomotionMode previousMode = this.locomotionMode;
+        onExitLocomotionMode(previousMode, desiredMode);
+        this.locomotionMode = desiredMode;
+        onEnterLocomotionMode(desiredMode, previousMode);
+        onLocomotionModeChanged(previousMode, desiredMode);
+    }
+
+    protected DragonLocomotionMode resolveLocomotionMode() {
+        if (isInWaterOrBubble()) {
+            return DragonLocomotionMode.WATER;
+        }
+        if (this instanceof RideableDragonBase rideableDragon && rideableDragon.isAerial()) {
+            return DragonLocomotionMode.AIR;
+        }
+        return DragonLocomotionMode.GROUND;
+    }
+
+    protected void onLocomotionModeTick(DragonLocomotionMode mode) {
+    }
+
+    protected void onExitLocomotionMode(DragonLocomotionMode previousMode, DragonLocomotionMode nextMode) {
+        if (previousMode == DragonLocomotionMode.WATER && nextMode != DragonLocomotionMode.WATER) {
+            clearWaterPathController();
+        }
+    }
+
+    protected void onEnterLocomotionMode(DragonLocomotionMode mode, DragonLocomotionMode previousMode) {
+    }
+
+    protected void onLocomotionModeChanged(DragonLocomotionMode previousMode, DragonLocomotionMode nextMode) {
     }
 
     protected void handleAnimationSound(String soundKey) {
@@ -1788,6 +1847,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
         tickAbilities();
         if (!level().isClientSide) {
+            tickLocomotionMode();
             aiCombatPacing.tick();
             if (sleepComponent != null) {
                 sleepComponent.tick();

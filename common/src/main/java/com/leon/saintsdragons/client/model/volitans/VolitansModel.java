@@ -55,7 +55,7 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             if (entity.isDeadOrDying()){
                 return;
             }
-            if (!entity.isVehicle()) {
+            if (!entity.isVehicle() && !entity.isInWaterOrBubble()) {
                 applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, animationState.getPartialTick());

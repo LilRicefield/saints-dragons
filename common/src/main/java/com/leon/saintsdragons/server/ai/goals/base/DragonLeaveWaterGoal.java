@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.util.LandRandomPos;
 import net.minecraft.world.phys.Vec3;
@@ -43,6 +44,9 @@ public class DragonLeaveWaterGoal<T extends DragonEntity & SemiAquaticDragon> ex
             return false;
         }
         if (!this.dragon.shouldLeaveWater()) {
+            return false;
+        }
+        if (isFollowingOwnerInWater()) {
             return false;
         }
         if (this.dragon.getTarget() == null && this.dragon.getRandom().nextInt(EXECUTION_CHANCE) != 0) {
@@ -96,6 +100,10 @@ public class DragonLeaveWaterGoal<T extends DragonEntity & SemiAquaticDragon> ex
             this.dragon.getNavigation().stop();
             return false;
         }
+        if (isFollowingOwnerInWater()) {
+            this.dragon.getNavigation().stop();
+            return false;
+        }
         if (this.stuckTicks > MAX_STUCK_TICKS || this.totalTicks > MAX_TOTAL_TICKS) {
             this.dragon.getNavigation().stop();
             return false;
@@ -133,5 +141,13 @@ public class DragonLeaveWaterGoal<T extends DragonEntity & SemiAquaticDragon> ex
             }
         }
         return false;
+    }
+
+    private boolean isFollowingOwnerInWater() {
+        if (!this.dragon.isTame() || this.dragon.getCommand() != 0) {
+            return false;
+        }
+        LivingEntity owner = this.dragon.getOwner();
+        return owner != null && owner.isAlive() && owner.level() == this.dragon.level() && owner.isInWaterOrBubble();
     }
 }

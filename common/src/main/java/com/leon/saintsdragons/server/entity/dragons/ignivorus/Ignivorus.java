@@ -400,7 +400,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
         }
         this.goalSelector.addGoal(8, new DragonGroundWanderGoal<>(this, 1.0, 120));
-        this.goalSelector.addGoal(9, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
+        this.goalSelector.addGoal(9, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
         this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
 
         if (!this.isBaby()) {
@@ -490,10 +490,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         if (!level().isClientSide) {
             if (isBaby()) {
                 if (isAerial()) {
-                    setFlying(false);
-                    setHovering(false);
-                    setTakeoff(false);
-                    setLanding(false);
+                    clearAerialStateForInterrupt();
                 }
                 if (getTarget() != null) {
                     setTarget(null);
@@ -552,10 +549,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         this.entityData.set(DATA_LEAPING, false);
         this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
 
-        setFlying(false);
-        setTakeoff(false);
-        setHovering(false);
-        setLanding(false);
+        clearAerialStateForInterrupt();
         setNoGravity(false);
         setDeltaMovement(Vec3.ZERO);
     }
@@ -2024,7 +2018,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected boolean canApplyFlyingState(boolean flying) {
-        return !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
+        return isAiWaterBreachTakeoffActive()
+                || !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
     }
 
     @Override
@@ -2437,12 +2432,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
             @Override
             public void onWaterFlightCleared() {
-                setFlying(false);
-                setTakeoff(false);
-                setLanding(false);
-                setHovering(false);
+                clearAerialStateAndUseGroundNavigation();
                 timeFlying = 0;
-                switchToGroundNavigation();
             }
 
             @Override
@@ -2941,10 +2932,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             setHovering(hovering);
             setLanding(landing);
         } else {
-            setFlying(false);
-            setTakeoff(false);
-            setHovering(false);
-            setLanding(false);
+            clearAerialStateForInterrupt();
         }
     }
 

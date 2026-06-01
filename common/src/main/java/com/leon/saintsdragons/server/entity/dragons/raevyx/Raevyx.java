@@ -254,7 +254,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             }
         });
         this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 60));
-        this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
+        this.goalSelector.addGoal(10, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
         this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
             @Override
@@ -879,7 +879,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected boolean canApplyFlyingState(boolean flying) {
-        return flying || !isVehicle() || isOrderedToSit() || onGround();
+        return isAiWaterBreachTakeoffActive() || flying || !isVehicle() || isOrderedToSit() || onGround();
     }
 
     @Override
@@ -1860,12 +1860,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
             @Override
             public void onWaterFlightCleared() {
-                setFlying(false);
-                setTakeoff(false);
-                setLanding(false);
-                setHovering(false);
+                clearAerialStateAndUseGroundNavigation();
                 timeFlying = 0;
-                switchToGroundNavigation();
             }
 
             @Override
@@ -2510,10 +2506,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.setRunning(false);
         this.setGroundMoveStateFromAI(0);
         this.setDeltaMovement(Vec3.ZERO);
-        this.setFlying(false);
-        this.setLanding(false);
-        this.setTakeoff(false);
-        this.setHovering(false);
+        this.clearAerialStateForInterrupt();
     }
 
     @Override
@@ -2596,13 +2589,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             this.getNavigation().stop();
         } else if (wasSitting) {
             if (!level().isClientSide) {
+                clearAerialStateForInterrupt();
                 switchToGroundNavigation();
-                if (isFlying()) {
-                    setFlying(false);
-                }
-                setTakeoff(false);
-                setLanding(false);
-                setHovering(false);
                 postStandUnlockTicks = Math.max(postStandUnlockTicks, 20);
             }
             if (this.getCommand() == 1) {

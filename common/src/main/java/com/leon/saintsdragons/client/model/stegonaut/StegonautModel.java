@@ -44,7 +44,7 @@ public class StegonautModel extends DragonGeoModel<Stegonaut> {
             if (entity.isDeadOrDying()){
                 return;
             }
-            if (!entity.isVehicle()) {
+            if (!entity.isVehicle() && !entity.isInWaterOrBubble()) {
                 applyNeckFollow(entity, modelData, animationState.getPartialTick());
             }
             applyBodyRotationDeviation(entity, partialTick);

@@ -41,7 +41,9 @@ public final class NulljawModel extends DragonGeoModel<Nulljaw> {
         float partialTick = animationState.getPartialTick();
         applyBodyRotationDeviation(entity, partialTick);
         applyFlightPitch(entity, partialTick);
-        applyNeckFollow(entity, modelData, partialTick);
+        if (!entity.isInWaterOrBubble()) {
+            applyNeckFollow(entity, modelData, partialTick);
+        }
         applyTailDrag(entity, partialTick);
     }
 

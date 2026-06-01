@@ -37,10 +37,7 @@ public class VolitansTamingHandler extends DragonTamingStunComponent<Volitans> {
 
     @Override
     protected void clearAerialStateForStun() {
-        dragon.setFlying(false);
-        dragon.setHovering(false);
-        dragon.setTakeoff(false);
-        dragon.setLanding(false);
+        dragon.clearAerialStateForInterrupt();
     }
 
     @Override

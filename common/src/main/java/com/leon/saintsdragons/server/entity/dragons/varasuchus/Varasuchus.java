@@ -16,10 +16,12 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
@@ -171,6 +173,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
+    private final DragonSwimSteeringController swimSteering;
+    private final AsyncSwimController asyncSwimController;
     private DragonGroundWanderGoal<Varasuchus> groundWanderGoal;
     private boolean swimming;
     private int swimTicks;
@@ -233,6 +237,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.groundNavigation = new DragonPathNavigateGround(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
         this.landLookControl = new RiftDrakeLookController(this);
+        this.swimSteering = new DragonSwimSteeringController(this);
+        this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
         this.navigation = this.groundNavigation;
         this.moveControl = this.landMoveControl;
         this.lookControl = this.landLookControl;
@@ -516,17 +522,27 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (!this.isBaby()) {
             this.goalSelector.addGoal(2, new VarasuchusCombatGoal(this));
         }
-        this.goalSelector.addGoal(3, new DirectSwimToTargetGoal(this, 8.0F, 0.30D, true));
+        this.goalSelector.addGoal(3, new DragonSwimToTargetGoal(this, this::getAsyncSwimController, 8.0F, 0.30D, true));
         this.goalSelector.addGoal(5, new DragonLeaveWaterGoal<>(this));
         this.goalSelector.addGoal(6, new DragonFindWaterGoal<>(this));
         this.goalSelector.addGoal(7, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forVarasuchus()) {
+            @Override
+            protected boolean canUseAdditional() {
+                return !Varasuchus.this.isInWaterOrBubble() && super.canUseAdditional();
+            }
+
+            @Override
+            protected boolean canContinueAdditional() {
+                return !Varasuchus.this.isInWaterOrBubble() && super.canContinueAdditional();
+            }
+
             @Override
             protected void setFastFollowing(boolean fast) {
                 Varasuchus.this.setAccelerating(fast);
             }
         });
-        this.goalSelector.addGoal(8, new DirectSwimToTargetGoal(this, 8.0F, 0.25D, false));
-        this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 6.0F, 0.20D, 30));
+        this.goalSelector.addGoal(8, new DragonSwimToTargetGoal(this, this::getAsyncSwimController, 8.0F, 0.25D, false, 20.0D, 16.0D));
+        this.goalSelector.addGoal(10, new DragonSwimWanderGoal(this, this::getAsyncSwimController, 6.0F, 0.20D, 30));
         this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100) {
             @Override
             protected boolean canUseAdditional() {
@@ -588,6 +604,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                     () -> true,
                     target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.VARASUCHUS_TARGETS)
             ));
+
         }
     }
 
@@ -690,11 +707,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 ticksInWater = 0;
             }
 
-            if (inWater && !swimming) {
-                enterSwimState();
-            } else if (!inWater && swimming) {
-                exitSwimState();
-            }
             if (this.getControllingPassenger() != null && this.lookControl != landLookControl) {
                 this.lookControl = landLookControl;
             }
@@ -757,6 +769,35 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public double getSwimSpeed() {
         return 1;
+    }
+
+    private AsyncSwimController getAsyncSwimController() {
+        return this.asyncSwimController;
+    }
+
+    @Override
+    protected void onLocomotionModeTick(DragonLocomotionMode mode) {
+        if (mode == DragonLocomotionMode.WATER && !swimming) {
+            enterSwimState();
+        } else if (mode != DragonLocomotionMode.WATER && swimming) {
+            exitSwimState();
+        }
+    }
+
+    @Override
+    protected void onEnterLocomotionMode(DragonLocomotionMode mode, DragonLocomotionMode previousMode) {
+        super.onEnterLocomotionMode(mode, previousMode);
+        if (mode == DragonLocomotionMode.WATER) {
+            enterSwimState();
+        }
+    }
+
+    @Override
+    protected void onExitLocomotionMode(DragonLocomotionMode previousMode, DragonLocomotionMode nextMode) {
+        super.onExitLocomotionMode(previousMode, nextMode);
+        if (previousMode == DragonLocomotionMode.WATER) {
+            exitSwimState();
+        }
     }
 
 
@@ -1064,11 +1105,18 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     private void enterSwimState() {
         swimming = true;
+        this.getNavigation().stop();
+        this.swimSteering.resetFromMob();
         this.entityData.set(DATA_SWIMMING, true);
     }
 
     private void exitSwimState() {
         swimming = false;
+        this.asyncSwimController.clear();
+        this.getNavigation().stop();
+        this.navigation = this.groundNavigation;
+        this.moveControl = this.landMoveControl;
+        this.lookControl = this.landLookControl;
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
         if (groundWanderGoal != null) {
@@ -1213,6 +1261,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         if (this.getNavigation().isInProgress() && this.getNavigation().getPath() != null) {
+            return true;
+        }
+
+        if (this.asyncSwimController.isMoving()) {
             return true;
         }
 

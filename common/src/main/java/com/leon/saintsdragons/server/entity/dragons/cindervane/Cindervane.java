@@ -413,7 +413,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
         this.goalSelector.addGoal(8, new DragonPackFollowLeaderGoal<>(this, Cindervane.class, 1.0D, 20.0D, 10.0D));
         this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 160));
-        this.goalSelector.addGoal(10, new DirectSwimWanderGoal(this, 8.0F, 0.12D, 1, true));
+        this.goalSelector.addGoal(10, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
         this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
         this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Cindervane.class));
@@ -686,12 +686,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         tickStandardRiderLandingBlend(new RiderLandingBlendHooks() {
             @Override
             public void onWaterFlightCleared() {
-                setFlying(false);
-                setTakeoff(false);
-                setLanding(false);
-                setHovering(false);
+                clearAerialStateAndUseGroundNavigation();
                 timeFlying = 0;
-                switchToGroundNavigation();
             }
 
             @Override
@@ -1603,7 +1599,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected boolean canApplyFlyingState(boolean flying) {
-        return !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
+        return isAiWaterBreachTakeoffActive()
+                || !(flying && !isVehicle() && (isInWater() || isInWaterOrBubble() || isInLava()));
     }
 
     @Override

@@ -99,6 +99,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private int nearGroundDustCooldown = 0;
     private int nearWaterSplashCooldown = 0;
     private boolean wasAerialForDustAtTickStart = false;
+    private boolean aiWaterBreachTakeoff = false;
     private float prevSmoothedRoll = 0.0F;
     private float smoothedRoll = 0.0F;
 
@@ -446,6 +447,31 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
     }
 
+    public void startAiWaterBreachTakeoffSequence(double minUpwardVelocity, int animationTicks) {
+        if (!canStartAiWaterBreachTakeoffSequence()) {
+            return;
+        }
+        this.aiWaterBreachTakeoff = true;
+        this.setGoingUp(true);
+        this.setGoingDown(false);
+        takeoffComponent.startTakeoff(animationTicks, minUpwardVelocity);
+    }
+
+    public boolean canStartAiWaterBreachTakeoffSequence() {
+        return !isBaby()
+                && isAlive()
+                && canFly()
+                && !isVehicle()
+                && !isFlying()
+                && !isPassenger()
+                && getActiveAbility() == null
+                && (isInWaterOrBubble() || isInLava());
+    }
+
+    protected boolean isAiWaterBreachTakeoffActive() {
+        return this.aiWaterBreachTakeoff;
+    }
+
     protected boolean canStartRiderWaterBreachTakeoffSequence() {
         return !isBaby()
                 && isAlive()
@@ -567,10 +593,56 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected void onFlyingStopped() {
+        this.aiWaterBreachTakeoff = false;
         takeoffComponent.clear();
         if (!isLanding()) {
             switchToGroundNavigation();
         }
+    }
+
+    @Override
+    protected DragonLocomotionMode resolveLocomotionMode() {
+        if (isInWaterOrBubble() || isInLava()) {
+            return DragonLocomotionMode.WATER;
+        }
+        if (isAerial()) {
+            return DragonLocomotionMode.AIR;
+        }
+        return DragonLocomotionMode.GROUND;
+    }
+
+    @Override
+    protected void onExitLocomotionMode(DragonLocomotionMode previousMode, DragonLocomotionMode nextMode) {
+        super.onExitLocomotionMode(previousMode, nextMode);
+        if (previousMode == DragonLocomotionMode.AIR && nextMode != DragonLocomotionMode.AIR) {
+            this.asyncAirController.clearAllWaypoints();
+        }
+    }
+
+    @Override
+    protected void onEnterLocomotionMode(DragonLocomotionMode mode, DragonLocomotionMode previousMode) {
+        super.onEnterLocomotionMode(mode, previousMode);
+        if (mode == DragonLocomotionMode.WATER) {
+            this.asyncAirController.clearAllWaypoints();
+            this.getNavigation().stop();
+        }
+    }
+
+    protected void clearAerialStateFlags() {
+        setFlying(false);
+        setTakeoff(false);
+        setLanding(false);
+        setHovering(false);
+    }
+
+    public void clearAerialStateForInterrupt() {
+        clearAerialStateFlags();
+        clearTakeoffState();
+    }
+
+    protected void clearAerialStateAndUseGroundNavigation() {
+        clearAerialStateForInterrupt();
+        switchToGroundNavigation();
     }
 
     @Override
@@ -1112,11 +1184,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         if (level().isClientSide || (!isInWaterOrBubble() && !isInLava()) || !shouldClearRiderFlightStateInWater()) {
             return false;
         }
-        setFlying(false);
-        setTakeoff(false);
-        setHovering(false);
-        setLanding(false);
-        switchToGroundNavigation();
+        clearAerialStateAndUseGroundNavigation();
         onRiderFlightStateClearedInWater();
         return true;
     }
@@ -1484,10 +1552,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     @Override
     public void markLandedNow() {
         boolean wasAirborne = isFlying() || isTakeoff() || isLanding() || isHovering() || wasAerialForDustAtTickStart;
-        setFlying(false);
-        setTakeoff(false);
-        setLanding(false);
-        setHovering(false);
+        clearAerialStateFlags();
         afterStandardLandingStateReset();
         clearTakeoffState();
         resetRiderTakeoffTicksAfterLanding();

@@ -1,45 +1,50 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
-import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
-import net.minecraft.util.Mth;
+import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.function.Supplier;
 
-public class DirectSwimToTargetGoal extends Goal {
-
-    private static final double FOLLOW_START_DISTANCE_SQR = 20.0D * 20.0D;
-    private static final double FOLLOW_STOP_DISTANCE_SQR = 16.0D * 16.0D;
+public class DragonSwimToTargetGoal extends Goal {
+    private static final double DEFAULT_FOLLOW_START_DISTANCE = 20.0D;
+    private static final double DEFAULT_FOLLOW_STOP_DISTANCE = 16.0D;
     private static final double BABY_FOLLOW_START_DISTANCE_SQR = 8.0D * 8.0D;
     private static final double BABY_FOLLOW_STOP_DISTANCE_SQR = 6.0D * 6.0D;
 
     private final Mob mob;
+    private final Supplier<AsyncSwimController> swimController;
     private final float turnSpeed;
     private final double swimSpeed;
-    private final boolean aggressive; // true = chase targets, false = follow owner
+    private final boolean aggressive;
+    private final double followStartDistanceSqr;
+    private final double followStopDistanceSqr;
 
-    private double currentYaw;
-    private double targetYaw;
-    private double currentPitch;
+    public DragonSwimToTargetGoal(Mob mob, Supplier<AsyncSwimController> swimController, float turnSpeedDegrees, double swimSpeed, boolean aggressive) {
+        this(mob, swimController, turnSpeedDegrees, swimSpeed, aggressive, DEFAULT_FOLLOW_START_DISTANCE, DEFAULT_FOLLOW_STOP_DISTANCE);
+    }
 
-    public DirectSwimToTargetGoal(Mob mob, float turnSpeedDegrees, double swimSpeed, boolean aggressive) {
+    public DragonSwimToTargetGoal(Mob mob, Supplier<AsyncSwimController> swimController, float turnSpeedDegrees, double swimSpeed,
+                                  boolean aggressive, double followStartDistance, double followStopDistance) {
         this.mob = mob;
+        this.swimController = swimController;
         this.turnSpeed = turnSpeedDegrees;
         this.swimSpeed = swimSpeed;
         this.aggressive = aggressive;
-        this.currentYaw = mob.getYRot();
+        this.followStartDistanceSqr = followStartDistance * followStartDistance;
+        this.followStopDistanceSqr = followStopDistance * followStopDistance;
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
-        // Only use when in water and has a target
         if (!canUseSwimMovement() || !mob.isInWaterOrBubble() || mob.isVehicle()) {
             return false;
         }
@@ -52,7 +57,7 @@ public class DirectSwimToTargetGoal extends Goal {
         if (!aggressive) {
             double startDistance = isBabyParentTarget(target)
                     ? BABY_FOLLOW_START_DISTANCE_SQR
-                    : FOLLOW_START_DISTANCE_SQR;
+                    : followStartDistanceSqr;
             return mob.distanceToSqr(target) > startDistance;
         }
 
@@ -73,7 +78,7 @@ public class DirectSwimToTargetGoal extends Goal {
         if (!aggressive) {
             double stopDistance = isBabyParentTarget(target)
                     ? BABY_FOLLOW_STOP_DISTANCE_SQR
-                    : FOLLOW_STOP_DISTANCE_SQR;
+                    : followStopDistanceSqr;
             return mob.distanceToSqr(target) > stopDistance;
         }
 
@@ -82,16 +87,15 @@ public class DirectSwimToTargetGoal extends Goal {
 
     @Override
     public void start() {
-        this.currentYaw = mob.getYRot();
-        this.currentPitch = 0.0;
-        this.mob.getNavigation().stop();
+        mob.getNavigation().stop();
     }
 
     @Override
     public void stop() {
-        // Gradually slow down
-        Vec3 vel = mob.getDeltaMovement();
-        mob.setDeltaMovement(vel.x * 0.8, vel.y * 0.8, vel.z * 0.8);
+        AsyncSwimController controller = swimController.get();
+        if (controller != null) {
+            controller.stop();
+        }
     }
 
     @Override
@@ -101,57 +105,25 @@ public class DirectSwimToTargetGoal extends Goal {
             return;
         }
 
-        this.mob.getNavigation().stop();
+        mob.getNavigation().stop();
 
-        // Calculate direction to target
-        double dx = target.getX() - mob.getX();
-        double dy = (target.getY() + target.getEyeHeight() * 0.5) - (mob.getY() + mob.getEyeHeight() * 0.5);
-        double dz = target.getZ() - mob.getZ();
-        double horizontalDist = Math.sqrt(dx * dx + dz * dz);
-
-        // Calculate target yaw (horizontal rotation)
-        targetYaw = (Math.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0;
-
-        // Calculate target pitch (vertical rotation)
-        double targetPitch = -(Math.atan2(dy, horizontalDist) * Mth.RAD_TO_DEG);
-        targetPitch = Mth.clamp(targetPitch, -85.0, 85.0);
-
-        // Smooth rotation toward target
-        double yawDelta = Mth.wrapDegrees(targetYaw - currentYaw);
-        yawDelta = Mth.clamp(yawDelta, -turnSpeed, turnSpeed);
-        currentYaw = Mth.wrapDegrees(currentYaw + yawDelta);
-
-        // Smooth pitch changes
-        double pitchDelta = targetPitch - currentPitch;
-        pitchDelta = Mth.clamp(pitchDelta, -turnSpeed * 0.5, turnSpeed * 0.5);
-        currentPitch += pitchDelta;
-
-        // Apply rotation
-        mob.setYRot((float) currentYaw);
-        mob.yBodyRot = (float) currentYaw;
-        mob.yHeadRot = (float) currentYaw;
-        mob.setXRot((float) currentPitch);
-
-        // Calculate velocity direction from current rotation
-        double yawRad = currentYaw * Mth.DEG_TO_RAD;
-        double pitchRad = currentPitch * Mth.DEG_TO_RAD;
-
-        double dirX = -Math.sin(yawRad) * Math.cos(pitchRad);
-        double dirY = -Math.sin(pitchRad);
-        double dirZ = Math.cos(yawRad) * Math.cos(pitchRad);
-
-        // Apply velocity directly
+        Vec3 targetPos = target.position().add(0.0D, target.getEyeHeight() * 0.5D, 0.0D);
         double speed = swimSpeed;
         if (mob instanceof SemiAquaticDragon dragon) {
             speed = dragon.getSwimSpeed() * swimSpeed;
         }
-
-        // Boost speed if far from target
-        if (horizontalDist > 15.0) {
-            speed *= 1.5;
+        if (mob.distanceToSqr(target) > 15.0D * 15.0D) {
+            speed *= 1.5D;
         }
 
-        mob.setDeltaMovement(dirX * speed, dirY * speed, dirZ * speed);
+        AsyncSwimController controller = swimController.get();
+        if (controller == null) {
+            return;
+        }
+        if (!controller.trackTarget(targetPos, speed, turnSpeed)) {
+            return;
+        }
+        controller.serverTick();
     }
 
     private LivingEntity resolveTarget() {
@@ -185,10 +157,7 @@ public class DirectSwimToTargetGoal extends Goal {
     }
 
     private boolean isBabyParentTarget(LivingEntity target) {
-        if (!mob.isBaby() || target == null) {
-            return false;
-        }
-        if (!(target instanceof Mob targetMob)) {
+        if (!mob.isBaby() || target == null || !(target instanceof Mob targetMob)) {
             return false;
         }
         return target.getClass() == mob.getClass() && !targetMob.isBaby();
