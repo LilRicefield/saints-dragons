@@ -172,10 +172,6 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         }
     }
 
-    protected void trackBoneToLocator(T entity, String boneName, String locatorName) {
-        trackBoneToLocators(entity, boneName, 0.0f, 0.0f, 0.0f, locatorName);
-    }
-
     protected void trackBoneToLocators(T entity, String boneName, float x, float y, float z, String... locatorNames) {
         if (this.lastBakedModel == null || entity == null) {
             return;
@@ -218,8 +214,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
 
         RiderBullcrap.store(animatable.getId(), seatIndex, viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
-        Vec3 boneWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
-        Vec3 cameraWorldPos = boneWorldPos;
+        Vec3 cameraWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
         if (!usesGroundedRawFirstPersonBoneAnchor(animatable)) {
             Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(animatable, seatIndex);
             Vec3 offsetWorldPos = transformLocator(
