@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.ui.codex;
 
 import com.leon.saintsdragons.common.registry.ModTags;
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.gui.Font;
@@ -9,9 +10,11 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -19,6 +22,11 @@ import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public class CodexEcologyPanel {
+    private static final int TEXT_BOX_WIDTH = 131;
+    private static final int TEXT_BOX_HEIGHT = 170;
+    private static final int TEXT_LINE_SPACING = 10;
+    private static final int PAGE_NAV_OFFSET_Y = 170;
+    private static final int LINES_PER_TEXT_PAGE = TEXT_BOX_HEIGHT / TEXT_LINE_SPACING;
     private static final int LINK_GAP = 2;
     private static final int VISIBLE_LINKS = 3;
     private static final int SCROLLBAR_WIDTH = 4;
@@ -72,7 +80,7 @@ public class CodexEcologyPanel {
         int contentX = leftPos + 229;
         int contentY = topPos - 3;
         int startY = contentY + 16;
-        int navY = startY + 170;
+        int navY = startY + PAGE_NAV_OFFSET_Y;
         int centerX = contentX + 63;
 
         ecologyPrevPageButton = Button.builder(
@@ -166,102 +174,105 @@ public class CodexEcologyPanel {
 
     public void draw(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected, int ecologyPage,
                      int contentX, int contentY, int mouseX, int mouseY) {
-        String baseKey = "saintsdragons.gui.draconic_codex.ecology." + selected.dragonType();
-        String pageKey = baseKey + ".page" + ecologyPage;
-
-        Component testComponent = Component.translatable(pageKey);
-        String ecologyText = testComponent.getString();
-
-        if (ecologyText.equals(pageKey)) {
-            ecologyText = Component.translatable(baseKey).getString();
-        }
-
-        int maxWidth = 130;
         int startY = contentY + 16;
-
+        String dragonType = selected.dragonType();
         int totalPages = getTotalEcologyPages(selected.dragonType());
 
-        List<String> lines = new ArrayList<>();
-        String[] words = ecologyText.split(" ");
-        StringBuilder currentLine = new StringBuilder();
-
-        for (String word : words) {
-            String testLine = currentLine.length() == 0 ? word : currentLine + " " + word;
-            if (font.width(testLine) <= maxWidth) {
-                if (currentLine.length() > 0) {
-                    currentLine.append(" ");
-                }
-                currentLine.append(word);
-            } else {
-                if (currentLine.length() > 0) {
-                    lines.add(currentLine.toString());
-                }
-                currentLine = new StringBuilder(word);
-            }
-        }
-        if (currentLine.length() > 0) {
-            lines.add(currentLine.toString());
-        }
-
-        for (int i = 0; i < lines.size(); i++) {
-            guiGraphics.drawString(font, lines.get(i), contentX, startY + (i * 10), CodexLayout.TEXT_COLOR, false);
-        }
-        switch (selected.dragonType()) {
-            case "ignivorus" -> {
-                if (ecologyPage == 4) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.IGNIVORUS_FOODS);
-                }
-                if (ecologyPage == 5) {
-                    drawDrops(guiGraphics, font, contentX, startY, IGNIVORUS_DROPS);
-                }
-            }
-            case "raevyx" -> {
-                if (ecologyPage == 2) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.RAEVYX_FOODS);
-                }
-                if (ecologyPage == 3) {
-                    drawDrops(guiGraphics, font, contentX, startY, RAEVYX_DROPS);
-                }
-            }
-            case "varasuchus" -> {
-                if (ecologyPage == 4) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.VARASUCHUS_FOODS);
-                }
-                if (ecologyPage == 5) {
-                    drawDrops(guiGraphics, font, contentX, startY, VARASUCHUS_DROPS);
-                }
-            }
-            case "cindervane" -> {
-                if (ecologyPage == 3) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.CINDERVANE_FOODS);
-                }
-                if (ecologyPage == 4) {
-                    drawDrops(guiGraphics, font, contentX, startY, CINDERVANE_DROPS);
-                }
-            }
-            case "stegonaut" -> {
-                if (ecologyPage == 3) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.STEGONAUT_FOODS);
-                }
-                if (ecologyPage == 4) {
-                    drawDrops(guiGraphics, font, contentX, startY, STEGONAUT_DROPS);
-                }
-            }
-            case "volitans" -> {
-                if (ecologyPage == 4) {
-                    drawFavoriteFoods(guiGraphics, font, contentX, startY, ModTags.Items.VOLITANS_FOODS);
-                }
-                if (ecologyPage == 5) {
-                    drawDrops(guiGraphics, font, contentX, startY, VOLITANS_DROPS);
-                }
-            }
-            default -> {
-            }
-        }
+        drawEcologyContent(guiGraphics, font, dragonType, ecologyPage, contentX, startY);
 
         if (totalPages > 1) {
             drawEcologyPageNavigation(guiGraphics, font, contentX, startY, totalPages,
-                    selected.dragonType(), ecologyPage, mouseX, mouseY);
+                    dragonType, ecologyPage, mouseX, mouseY);
+        }
+    }
+
+    private void drawEcologyContent(GuiGraphics guiGraphics, Font font, String dragonType,
+                                    int ecologyPage, int contentX, int startY) {
+        int overviewPages = getOverviewPageCount(font, dragonType);
+        if (ecologyPage <= overviewPages) {
+            drawWrappedTextPage(guiGraphics, font, getOverviewText(dragonType), ecologyPage, contentX, startY);
+            return;
+        }
+
+        TagKey<Item> favoriteFoods = getFavoriteFoods(dragonType);
+        List<ResourceLocation> drops = getDrops(dragonType);
+        int nextPage = overviewPages + 1;
+        if (favoriteFoods != null && ecologyPage == nextPage) {
+            drawPageHeader(guiGraphics, font, contentX, startY,
+                    Component.translatable("saintsdragons.gui.draconic_codex.ecology.section.favorite_food"));
+            drawFavoriteFoods(guiGraphics, font, contentX, startY, favoriteFoods);
+            return;
+        }
+        if (favoriteFoods != null) {
+            nextPage++;
+        }
+
+        if (!drops.isEmpty() && ecologyPage == nextPage) {
+            drawPageHeader(guiGraphics, font, contentX, startY,
+                    Component.translatable("saintsdragons.gui.draconic_codex.ecology.section.drops"));
+            drawDrops(guiGraphics, font, contentX, startY, drops);
+        }
+    }
+
+    private void drawPageHeader(GuiGraphics guiGraphics, Font font, int contentX, int startY, Component header) {
+        guiGraphics.drawString(font, header, contentX, startY, CodexLayout.TEXT_COLOR, false);
+    }
+
+    private void drawWrappedTextPage(GuiGraphics guiGraphics, Font font, String text, int page, int contentX, int startY) {
+        List<FormattedCharSequence> lines = wrapText(font, text);
+        int startLine = Math.max(0, page - 1) * LINES_PER_TEXT_PAGE;
+        int endLine = Math.min(lines.size(), startLine + LINES_PER_TEXT_PAGE);
+        for (int line = startLine; line < endLine; line++) {
+            guiGraphics.drawString(font, lines.get(line), contentX,
+                    startY + ((line - startLine) * TEXT_LINE_SPACING), CodexLayout.TEXT_COLOR, false);
+        }
+    }
+
+    private List<FormattedCharSequence> wrapText(Font font, String text) {
+        List<FormattedCharSequence> lines = new ArrayList<>();
+        String[] rawLines = text.split("\\R", -1);
+        for (String rawLine : rawLines) {
+            if (rawLine.isBlank()) {
+                lines.add(FormattedCharSequence.EMPTY);
+            } else {
+                lines.addAll(font.split(Component.literal(rawLine), TEXT_BOX_WIDTH));
+            }
+        }
+        return lines;
+    }
+
+    private int getOverviewPageCount(Font font, String dragonType) {
+        return Math.max(1, (int) Math.ceil(wrapText(font, getOverviewText(dragonType)).size() / (float) LINES_PER_TEXT_PAGE));
+    }
+
+    private String getOverviewText(String dragonType) {
+        String text = readCodexText("ecology/" + dragonType + ".txt");
+        if (!text.isBlank()) {
+            return text;
+        }
+        return Component.translatable("saintsdragons.gui.draconic_codex.ecology." + dragonType + ".page1").getString();
+    }
+
+    private String readCodexText(String path) {
+        String lang = Minecraft.getInstance().getLanguageManager().getSelected().toLowerCase();
+        String localized = readCodexText(path, lang);
+        return localized.isBlank() ? readCodexText(path, "en_us") : localized;
+    }
+
+    private String readCodexText(String path, String lang) {
+        ResourceLocation resource = new ResourceLocation("saintsdragons", "codex/" + lang + "/" + path);
+        try (BufferedReader reader = Minecraft.getInstance().getResourceManager().openAsReader(resource)) {
+            StringBuilder text = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (text.length() > 0) {
+                    text.append('\n');
+                }
+                text.append(line);
+            }
+            return text.toString();
+        } catch (Exception ignored) {
+            return "";
         }
     }
 
@@ -304,19 +315,13 @@ public class CodexEcologyPanel {
     }
 
     public int getTotalEcologyPages(String dragonType) {
-        String baseKey = "saintsdragons.gui.draconic_codex.ecology." + dragonType;
-        int pageCount = 1;
-
-        for (int i = 2; i <= 10; i++) {
-            String pageKey = baseKey + ".page" + i;
-            Component testComponent = Component.translatable(pageKey);
-            String result = testComponent.getString();
-            if (result.equals(pageKey)) {
-                break;
-            }
-            pageCount = i;
+        int pageCount = getOverviewPageCount(Minecraft.getInstance().font, dragonType);
+        if (getFavoriteFoods(dragonType) != null) {
+            pageCount++;
         }
-
+        if (!getDrops(dragonType).isEmpty()) {
+            pageCount++;
+        }
         return pageCount;
     }
 
@@ -324,7 +329,7 @@ public class CodexEcologyPanel {
     private void drawEcologyPageNavigation(GuiGraphics guiGraphics, Font font, int contentX, int startY,
                                            int totalPages, String dragonType, int ecologyPage,
                                            int mouseX, int mouseY) {
-        int navY = startY + 170;
+        int navY = startY + PAGE_NAV_OFFSET_Y;
 
         String pageText = ecologyPage + "/" + totalPages;
         int pageTextWidth = font.width(pageText);
@@ -333,64 +338,45 @@ public class CodexEcologyPanel {
 
         ecologyPageLinks.clear();
         linkAreaValid = false;
-        switch (dragonType) {
-            case "ignivorus" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 3),
-                        new SectionLink(sectionLabel(2, "favorite_food"), 4, ecologyPage == 4),
-                        new SectionLink(sectionLabel(3, "drops"), 5, ecologyPage == 5)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            case "raevyx" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage == 1),
-                        new SectionLink(sectionLabel(2, "favorite_food"), 2, ecologyPage == 2),
-                        new SectionLink(sectionLabel(3, "drops"), 3, ecologyPage == 3)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            case "varasuchus" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 3),
-                        new SectionLink(sectionLabel(2, "favorite_food"), 4, ecologyPage == 4),
-                        new SectionLink(sectionLabel(3, "drops"), 5, ecologyPage == 5)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            case "cindervane" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 2),
-                        new SectionLink(sectionLabel(2, "favorite_food"), 3, ecologyPage == 3),
-                        new SectionLink(sectionLabel(3, "drops"), 4, ecologyPage == 4)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            case "stegonaut" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 2),
-                        new SectionLink(sectionLabel(2, "favorite_food"), 3, ecologyPage == 3),
-                        new SectionLink(sectionLabel(3, "drops"), 4, ecologyPage == 4)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            case "volitans" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage >= 1 && ecologyPage <= 3),
-                        new SectionLink(sectionLabel(2, "favorite_food"), 4, ecologyPage == 4),
-                        new SectionLink(sectionLabel(3, "drops"), 5, ecologyPage == 5)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            case "nulljaw" -> {
-                List<SectionLink> sections = List.of(
-                        new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage == 1)
-                );
-                drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
-            }
-            default -> {
-            }
+        int overviewPages = getOverviewPageCount(font, dragonType);
+        List<SectionLink> sections = new ArrayList<>();
+        sections.add(new SectionLink(sectionLabel(1, "overview"), 1, ecologyPage <= overviewPages));
+
+        int index = 2;
+        int page = overviewPages + 1;
+        if (getFavoriteFoods(dragonType) != null) {
+            sections.add(new SectionLink(sectionLabel(index, "favorite_food"), page, ecologyPage == page));
+            index++;
+            page++;
         }
+        if (!getDrops(dragonType).isEmpty()) {
+            sections.add(new SectionLink(sectionLabel(index, "drops"), page, ecologyPage == page));
+        }
+        drawSectionList(guiGraphics, font, contentX, navY, mouseX, mouseY, sections);
+    }
+
+    private TagKey<Item> getFavoriteFoods(String dragonType) {
+        return switch (dragonType) {
+            case "ignivorus" -> ModTags.Items.IGNIVORUS_FOODS;
+            case "raevyx" -> ModTags.Items.RAEVYX_FOODS;
+            case "varasuchus" -> ModTags.Items.VARASUCHUS_FOODS;
+            case "cindervane" -> ModTags.Items.CINDERVANE_FOODS;
+            case "stegonaut" -> ModTags.Items.STEGONAUT_FOODS;
+            case "volitans" -> ModTags.Items.VOLITANS_FOODS;
+            default -> null;
+        };
+    }
+
+    private List<ResourceLocation> getDrops(String dragonType) {
+        return switch (dragonType) {
+            case "ignivorus" -> IGNIVORUS_DROPS;
+            case "raevyx" -> RAEVYX_DROPS;
+            case "varasuchus" -> VARASUCHUS_DROPS;
+            case "cindervane" -> CINDERVANE_DROPS;
+            case "stegonaut" -> STEGONAUT_DROPS;
+            case "volitans" -> VOLITANS_DROPS;
+            default -> List.of();
+        };
     }
 
     private record SectionLink(String label, int page, boolean active) {
