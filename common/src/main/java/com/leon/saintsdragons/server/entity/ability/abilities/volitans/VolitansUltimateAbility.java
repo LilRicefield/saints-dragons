@@ -211,18 +211,21 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
 
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
         float damage = BASE_DAMAGE;
+        boolean poisonActive = !dragon.isVenomNeutralized();
 
         List<LivingEntity> targets = dragon.level().getEntitiesOfClass(LivingEntity.class, hitBox,
                 entity -> entity != dragon
                         && entity.isAlive()
                         && entity.attackable()
                         && !dragon.isAlly(entity)
-                        && !DragonElementalImmunity.isPoisonImmune(entity)
+                        && (!poisonActive || !DragonElementalImmunity.isPoisonImmune(entity))
                         && entity.distanceToSqr(dragon) <= (IMPACT_RADIUS * IMPACT_RADIUS));
 
         for (LivingEntity target : targets) {
             target.hurt(source, damage);
-            target.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
+            if (poisonActive) {
+                target.addEffect(new MobEffectInstance(MobEffects.POISON, POISON_DURATION_TICKS, POISON_AMPLIFIER));
+            }
             applyStun(target);
             Vec3 push = target.position().subtract(origin);
             if (push.lengthSqr() < 1.0E-4) {

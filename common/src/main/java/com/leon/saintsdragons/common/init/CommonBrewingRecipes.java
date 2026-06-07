@@ -10,7 +10,7 @@ public final class CommonBrewingRecipes {
     }
 
     public static void register() {
-        PotionBrewing.addMix(Potions.AWKWARD, ModItems.VARASUCHUS_SCALE.get(), ModPotions.VARASUCHUS_TIDEGUARD.get());
+        PotionBrewing.addMix(Potions.AWKWARD, ModItems.VARASUCHUS_SCALE.get(), ModPotions.TIDEGUARD.get());
         PotionBrewing.addMix(Potions.AWKWARD, ModItems.IGNIVORUS_TOOTH.get(), ModPotions.SEARING.get());
     }
 }

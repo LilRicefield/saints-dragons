@@ -151,6 +151,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_VENOM_NEUTRALIZED_TICKS =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
 
@@ -633,6 +635,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.entityData.define(DATA_POISON_BREATH_DEPLETED, false);
         this.entityData.define(DATA_BURROWING, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_VENOM_NEUTRALIZED_TICKS, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
     }
 
@@ -1086,6 +1089,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             if (riderBackDashCooldownTicks > 0) {
                 riderBackDashCooldownTicks--;
             }
+            tickVenomNeutralized();
             if (aiGroundMobilityCooldownTicks > 0) {
                 aiGroundMobilityCooldownTicks--;
             }
@@ -1559,6 +1563,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
+        if (tag.contains("VenomNeutralizedTicks")) {
+            this.entityData.set(DATA_VENOM_NEUTRALIZED_TICKS, Math.max(0, tag.getInt("VenomNeutralizedTicks")));
+        }
         tempInvulnTicks = Math.max(0, tag.getInt("VolitansTempInvulnTicks"));
         if (tempInvulnTicks > 0) {
             setInvulnerable(true);
@@ -1586,6 +1593,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         tag.putBoolean("VolitansWaterBreathDepleted", isWaterBreathDepleted());
         tag.putBoolean("VolitansPoisonBreathDepleted", isPoisonBreathDepleted());
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+        tag.putInt("VenomNeutralizedTicks", Math.max(0, this.entityData.get(DATA_VENOM_NEUTRALIZED_TICKS)));
         tag.putInt("VolitansTempInvulnTicks", tempInvulnTicks);
         tamingController.save(tag);
     }
@@ -1623,6 +1631,22 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (cooldownTicks > 0) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, cooldownTicks - 1);
         }
+    }
+
+    private void tickVenomNeutralized() {
+        int ticks = this.entityData.get(DATA_VENOM_NEUTRALIZED_TICKS);
+        if (ticks > 0) {
+            this.entityData.set(DATA_VENOM_NEUTRALIZED_TICKS, ticks - 1);
+        }
+    }
+
+    public void neutralizeVenom(int ticks) {
+        this.entityData.set(DATA_VENOM_NEUTRALIZED_TICKS,
+                Math.max(this.entityData.get(DATA_VENOM_NEUTRALIZED_TICKS), Math.max(0, ticks)));
+    }
+
+    public boolean isVenomNeutralized() {
+        return this.entityData.get(DATA_VENOM_NEUTRALIZED_TICKS) > 0;
     }
 
     private void tickWaterPreferenceTimers() {

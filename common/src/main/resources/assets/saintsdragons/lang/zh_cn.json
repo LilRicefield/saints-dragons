@@ -16,6 +16,10 @@
   "item.saintsdragons.cooked_moop": "熟莫普鱼",
   "item.saintsdragons.bucket_of_moop": "莫普鱼桶",
   "item.saintsdragons.mossback": "苔壳龟",
+  "item.saintsdragons.raevyx_armor_helmet": "殷雷龙盔甲头盔",
+  "item.saintsdragons.raevyx_armor_chestplate": "殷雷龙盔甲胸甲",
+  "item.saintsdragons.raevyx_armor_leggings": "殷雷龙盔甲护腿",
+  "item.saintsdragons.raevyx_armor_boots": "殷雷龙盔甲靴子",
   "item.saintsdragons.raevyx_scale": "殷雷龙鳞片",
   "item.saintsdragons.cindervane_scale": "烬翎龙鳞片",
   "item.saintsdragons.ignivorus_scale": "噬焰龙鳞片",
@@ -24,6 +28,7 @@
   "item.saintsdragons.varasuchus_scale": "蜷鳄龙鳞片",
   "item.saintsdragons.volitans_scale": "蓑鲉龙鳞片",
   "item.saintsdragons.volitans_spine": "蓑鲉龙脊刺",
+  "item.saintsdragons.arrow_of_venom": "剧毒之箭",
   "item.saintsdragons.potion_of_tideguard": "潮汐守护药水",
   "item.saintsdragons.potion_of_searing": "灼热药水",
   "item.minecraft.potion.effect.varasuchus_tideguard": "潮汐守护",
@@ -610,6 +615,7 @@
   "saintsdragons.message.volitans_breath_poison": "蓑鲉龙吐息:毒",
 
   "saintsdragons.message.ignivorus_secondary_ground_only": "噬焰龙只能在地面上使用体术撞击。",
+  "saintsdragons.message.cindervane_slashing_ground_only": "烬翎龙只能在地面上使用劈砍。",
   "saintsdragons.message.ignivorus.ultimate_requires_full_health": "噬焰龙必须满生命值才能释放灭世超新星。",
   "saintsdragons.message.ignivorus.ultimate_penalty": "噬焰龙用生命煽起炼狱！",
 

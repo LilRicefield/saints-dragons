@@ -3,9 +3,10 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.item.CindervaneBinderItem;
 import com.leon.saintsdragons.common.item.DragonBrushItem;
 import com.leon.saintsdragons.common.item.DragonAllyBookItem;
-import com.leon.saintsdragons.common.item.FixedPotionItem;
+import com.leon.saintsdragons.common.item.ArrowOfVenomItem;
 import com.leon.saintsdragons.common.item.MossbackItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
+import com.leon.saintsdragons.common.item.RaevyxArmorItem;
 import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.VolitansBinderItem;
@@ -19,6 +20,8 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
@@ -32,6 +35,7 @@ public class ModItems {
     public static final RegistryHelper.RegistryWrapper<Item> REGISTER =
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.ITEM, () -> BuiltInRegistries.ITEM, SaintsDragonsCommon.MOD_ID);
+
 
     public static final Supplier<Item> RAEVYX_SPAWN_EGG =
             REGISTER.register("raevyx_spawn_egg",
@@ -269,24 +273,16 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> ARROW_OF_VENOM =
+            REGISTER.register("arrow_of_venom",
+                    () -> new ArrowOfVenomItem(
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> STEGONAUT_SCALE =
             REGISTER.register("stegonaut_scale",
                     () -> new Item(
                             new Item.Properties()
-                    ));
-
-    public static final Supplier<Item> POTION_OF_TIDEGUARD =
-            REGISTER.register("potion_of_tideguard",
-                    () -> new FixedPotionItem(
-                            new Item.Properties().stacksTo(1),
-                            ModPotions.VARASUCHUS_TIDEGUARD
-                    ));
-
-    public static final Supplier<Item> POTION_OF_SEARING =
-            REGISTER.register("potion_of_searing",
-                    () -> new FixedPotionItem(
-                            new Item.Properties().stacksTo(1),
-                            ModPotions.SEARING
                     ));
 
     public static final Supplier<Item> STEGONAUT_BINDER =
@@ -370,6 +366,8 @@ public class ModItems {
     }
 
     public static void register() {
+        ModArmor.init();
+        ModPotionItems.init();
         REGISTER.register();
     }
 }

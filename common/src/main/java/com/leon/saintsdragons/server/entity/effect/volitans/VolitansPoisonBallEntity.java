@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -184,6 +185,7 @@ public class VolitansPoisonBallEntity extends Entity {
         server.playSound(null, blockPosition(), SoundEvents.SLIME_BLOCK_BREAK, getSoundSource(), 1.0F + scale * 0.08F, 0.8F);
 
         LivingEntity ownerEntity = getOwner();
+        boolean poisonActive = !(ownerEntity instanceof Volitans volitans && volitans.isVenomNeutralized());
         AABB area = new AABB(
                 impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius
@@ -193,7 +195,7 @@ public class VolitansPoisonBallEntity extends Entity {
                 target.isAlive()
                         && target != ownerEntity
                         && (ownerEntity == null || !isAlliedTarget(ownerEntity, target))
-                        && !DragonElementalImmunity.isPoisonImmune(target)
+                        && (!poisonActive || !DragonElementalImmunity.isPoisonImmune(target))
         );
 
         for (LivingEntity target : hits) {
@@ -202,7 +204,7 @@ public class VolitansPoisonBallEntity extends Entity {
             } else {
                 target.hurt(server.damageSources().magic(), impactDamage);
             }
-            if (poisonDurationTicks > 0) {
+            if (poisonActive && poisonDurationTicks > 0) {
                 target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDurationTicks, poisonAmplifier));
             }
 

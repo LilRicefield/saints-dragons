@@ -161,7 +161,7 @@ public final class SaintsDragonsForge {
         }
 
         Potion potion = PotionUtils.getPotion(stack);
-        return potion == ModPotions.VARASUCHUS_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
+        return potion == ModPotions.TIDEGUARD.get() || potion == ModPotions.SEARING.get();
     }
 
     private void onRegisterSpawnPlacements(SpawnPlacementRegisterEvent event) {

@@ -21,6 +21,7 @@ import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRend
 import com.leon.saintsdragons.client.renderer.vfx.ImpactRingRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
+import com.leon.saintsdragons.client.renderer.volitans.ArrowOfVenomRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansBurrowMoundRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansGroundChunkRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansPoisonBallRenderer;
@@ -68,6 +69,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.VOLITANS_BURROW_MOUND.get(), VolitansBurrowMoundRenderer::new);
         registrar.register(ModEntities.VISUAL_FALLING_BLOCK.get(), VisualFallingBlockRenderer::new);
         registrar.register(ModEntities.VOLITANS_SPINE.get(), VolitansSpineRenderer::new);
+        registrar.register(ModEntities.ARROW_OF_VENOM.get(), ArrowOfVenomRenderer::new);
         registrar.register(ModEntities.VOLITANS_WATER_BREATH.get(), VolitansWaterBreathRenderer::new);
         registrar.register(ModEntities.VOLITANS_POISON_BALL.get(), VolitansPoisonBallRenderer::new);
         registrar.register(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchantRenderer::new);

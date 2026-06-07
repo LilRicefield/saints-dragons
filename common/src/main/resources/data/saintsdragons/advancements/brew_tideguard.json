@@ -19,7 +19,7 @@
     "brew_tideguard": {
       "trigger": "minecraft:brewed_potion",
       "conditions": {
-        "potion": "saintsdragons:varasuchus_tideguard"
+        "potion": "saintsdragons:tideguard"
       }
     }
   }

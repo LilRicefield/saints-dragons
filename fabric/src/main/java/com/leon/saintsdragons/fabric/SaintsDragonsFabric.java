@@ -3,6 +3,7 @@ package com.leon.saintsdragons.fabric;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModPotionItems;
 import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
 import com.leon.saintsdragons.fabric.loot.FabricLootTableModifier;
@@ -96,7 +97,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
             return false;
         }
 
-        if (stack.is(ModItems.POTION_OF_TIDEGUARD.get()) || stack.is(ModItems.POTION_OF_SEARING.get())) {
+        if (stack.is(ModPotionItems.POTION_OF_TIDEGUARD.get()) || stack.is(ModPotionItems.POTION_OF_SEARING.get())) {
             return true;
         }
 
@@ -105,6 +106,6 @@ public final class SaintsDragonsFabric implements ModInitializer {
         }
 
         Potion potion = PotionUtils.getPotion(stack);
-        return potion == ModPotions.VARASUCHUS_TIDEGUARD.get() || potion == ModPotions.SEARING.get();
+        return potion == ModPotions.TIDEGUARD.get() || potion == ModPotions.SEARING.get();
     }
 }

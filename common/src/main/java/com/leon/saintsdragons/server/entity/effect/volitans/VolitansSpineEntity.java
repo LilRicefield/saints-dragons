@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
@@ -62,8 +63,9 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
         if (!level().isClientSide) {
             if (impactDamage > 0.0F && result.getEntity() instanceof LivingEntity target) {
                 LivingEntity owner = this.getOwner() instanceof LivingEntity living ? living : null;
+                boolean poisonActive = poisonDurationTicks > 0 && !(owner instanceof Volitans volitans && volitans.isVenomNeutralized());
                 boolean validTarget = owner == null || (target != owner && !isAlliedTarget(owner, target));
-                if (poisonDurationTicks > 0 && DragonElementalImmunity.isPoisonImmune(target)) {
+                if (poisonActive && DragonElementalImmunity.isPoisonImmune(target)) {
                     validTarget = false;
                 }
                 if (validTarget) {
@@ -72,7 +74,7 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
                     } else {
                         target.hurt(this.damageSources().magic(), impactDamage);
                     }
-                    if (poisonDurationTicks > 0) {
+                    if (poisonActive) {
                         target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDurationTicks, poisonAmplifier));
                     }
                     discard();

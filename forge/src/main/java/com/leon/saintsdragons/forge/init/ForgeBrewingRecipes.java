@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.init;
 
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.registry.ModPotionItems;
 import com.leon.saintsdragons.common.registry.ModPotions;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -17,11 +18,11 @@ public final class ForgeBrewingRecipes {
     public static void register() {
         ItemStack awkwardPotion = PotionUtils.setPotion(new ItemStack(Items.POTION), Potions.AWKWARD);
         ItemStack tideguardPotion = PotionUtils.setPotion(
-                new ItemStack(ModItems.POTION_OF_TIDEGUARD.get()),
-                ModPotions.VARASUCHUS_TIDEGUARD.get()
+                new ItemStack(ModPotionItems.POTION_OF_TIDEGUARD.get()),
+                ModPotions.TIDEGUARD.get()
         );
         ItemStack searingPotion = PotionUtils.setPotion(
-                new ItemStack(ModItems.POTION_OF_SEARING.get()),
+                new ItemStack(ModPotionItems.POTION_OF_SEARING.get()),
                 ModPotions.SEARING.get()
         );
 

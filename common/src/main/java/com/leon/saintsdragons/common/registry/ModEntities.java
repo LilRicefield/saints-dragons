@@ -24,6 +24,7 @@ import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrac
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.ArrowOfVenomEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansBurrowMoundEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
@@ -254,6 +255,14 @@ public final class ModEntities {
                     .updateInterval(1)
                     .noSummon()
                     .build("volitans_spine"));
+
+    public static final Supplier<EntityType<ArrowOfVenomEntity>> ARROW_OF_VENOM =
+            REGISTER.register("arrow_of_venom", () -> EntityType.Builder.<ArrowOfVenomEntity>of(ArrowOfVenomEntity::new, MobCategory.MISC)
+                    .sized(0.5F, 0.5F)
+                    .clientTrackingRange(64)
+                    .updateInterval(1)
+                    .noSummon()
+                    .build("arrow_of_venom"));
 
     public static final Supplier<EntityType<VolitansWaterBreathEntity>> VOLITANS_WATER_BREATH =
             REGISTER.register("volitans_water_breath", () -> EntityType.Builder.<VolitansWaterBreathEntity>of(VolitansWaterBreathEntity::new, MobCategory.MISC)

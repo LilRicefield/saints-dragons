@@ -34,6 +34,10 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAW_MOOP.get());
                                 output.accept(ModItems.COOKED_MOOP.get());
                                 output.accept(ModItems.BUCKET_OF_MOOP.get());
+                                output.accept(ModArmor.RAEVYX_ARMOR_HELMET.get());
+                                output.accept(ModArmor.RAEVYX_ARMOR_CHESTPLATE.get());
+                                output.accept(ModArmor.RAEVYX_ARMOR_LEGGINGS.get());
+                                output.accept(ModArmor.RAEVYX_ARMOR_BOOTS.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
@@ -43,8 +47,9 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.IGNIVORUS_HEART.get());
                                 output.accept(ModItems.IGNIVORUS_TOOTH.get());
                                 output.accept(ModItems.VOLITANS_SPINE.get());
-                                output.accept(ModItems.POTION_OF_TIDEGUARD.get());
-                                output.accept(ModItems.POTION_OF_SEARING.get());
+                                output.accept(ModItems.ARROW_OF_VENOM.get());
+                                output.accept(ModPotionItems.POTION_OF_TIDEGUARD.get());
+                                output.accept(ModPotionItems.POTION_OF_SEARING.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
                                 output.accept(ModItems.HEARTY_DRAGON_MEAL.get());
                                 output.accept(ModItems.RAEVYX_EGG.get());

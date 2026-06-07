@@ -1,0 +1,118 @@
+package com.leon.saintsdragons.common.item;
+
+import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+import java.lang.reflect.Proxy;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
+import net.minecraft.world.item.ArmorItem;
+import net.minecraft.world.item.ArmorMaterial;
+
+public class RaevyxArmorItem extends ArmorItem implements GeoItem {
+    private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
+    private final Supplier<Object> renderProvider = this::createFabricRenderProvider;
+
+    public RaevyxArmorItem(ArmorMaterial armorMaterial, Type type, Properties properties) {
+        super(armorMaterial, type, properties);
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return cache;
+    }
+
+    @Override
+    public void createRenderer(Consumer<Object> consumer) {
+        Object provider = createFabricRenderProvider();
+        if (provider != null) {
+            consumer.accept(provider);
+        }
+    }
+
+    @Override
+    public Supplier<Object> getRenderProvider() {
+        return renderProvider;
+    }
+
+    private Object createFabricRenderProvider() {
+        try {
+            Class<?> renderProviderClass = Class.forName("software.bernie.geckolib.animatable.client.RenderProvider");
+            return Proxy.newProxyInstance(
+                    RaevyxArmorItem.class.getClassLoader(),
+                    new Class<?>[]{renderProviderClass},
+                    (proxyInstance, method, args) -> {
+                        if ("getHumanoidArmorModel".equals(method.getName()) || "getGenericArmorModel".equals(method.getName())) {
+                            return getHumanoidArmorModel(args);
+                        }
+                        return null;
+                    });
+        } catch (ClassNotFoundException ignored) {
+            return null;
+        }
+    }
+
+    public void initializeClient(Consumer<Object> consumer) {
+        try {
+            Class<?> extensions = Class.forName("net.minecraftforge.client.extensions.common.IClientItemExtensions");
+            Object proxy = Proxy.newProxyInstance(
+                    RaevyxArmorItem.class.getClassLoader(),
+                    new Class<?>[]{extensions},
+                    (proxyInstance, method, args) -> {
+                        if ("getHumanoidArmorModel".equals(method.getName()) || "getGenericArmorModel".equals(method.getName())) {
+                            return getHumanoidArmorModel(args);
+                        }
+                        return defaultForgeExtensionValue(method.getReturnType());
+                    });
+            consumer.accept(proxy);
+        } catch (ClassNotFoundException ignored) {
+        }
+    }
+
+    private Object getHumanoidArmorModel(Object[] args) {
+        if (args == null || args.length < 4) {
+            return null;
+        }
+        try {
+            Class<?> provider = Class.forName("com.leon.saintsdragons.client.renderer.armor.RaevyxArmorRenderProvider");
+            return provider.getMethod("getHumanoidArmorModel", Object.class, Object.class, Object.class, Object.class)
+                    .invoke(null, args[0], args[1], args[2], args[3]);
+        } catch (ReflectiveOperationException ignored) {
+            return args[3];
+        }
+    }
+
+    private static Object defaultForgeExtensionValue(Class<?> returnType) {
+        if (returnType == Boolean.TYPE) {
+            return false;
+        }
+        if (returnType == Byte.TYPE) {
+            return (byte) 0;
+        }
+        if (returnType == Short.TYPE) {
+            return (short) 0;
+        }
+        if (returnType == Integer.TYPE) {
+            return 0;
+        }
+        if (returnType == Long.TYPE) {
+            return 0L;
+        }
+        if (returnType == Float.TYPE) {
+            return 0.0F;
+        }
+        if (returnType == Double.TYPE) {
+            return 0.0D;
+        }
+        if (returnType == Character.TYPE) {
+            return '\0';
+        }
+        return null;
+    }
+}

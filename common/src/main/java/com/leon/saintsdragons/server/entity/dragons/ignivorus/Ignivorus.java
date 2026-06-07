@@ -2744,6 +2744,15 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     protected float getBarrelRollInputSpeed() {
         return BARREL_ROLL_INPUT_SPEED;
     }
+
+    @Override
+    protected boolean canUseBarrelRoll() {
+        return isFlying()
+                && !isInWaterOrBubble()
+                && !isLeaping()
+                && !areRiderControlsLocked();
+    }
+
     public boolean isRiderPitchKeyMode() {
         return this.entityData.get(DATA_PITCH_KEY_MODE);
     }

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import net.minecraft.nbt.CompoundTag;
@@ -106,6 +107,7 @@ public class VolitansWaterBreathEntity extends Entity {
         AABB box = new AABB(start, end).inflate(0.8D);
         List<LivingEntity> targets = level().getEntitiesOfClass(LivingEntity.class, box);
         LivingEntity attacker = getOwner();
+        boolean poisonActive = isPoisonMode() && !(attacker instanceof Volitans volitans && volitans.isVenomNeutralized());
 
         for (LivingEntity target : targets) {
             if (!target.isAlive() || target.isRemoved()) {
@@ -117,7 +119,7 @@ public class VolitansWaterBreathEntity extends Entity {
             if (isAlliedTarget(attacker, target)) {
                 continue;
             }
-            if (isPoisonMode() && DragonElementalImmunity.isPoisonImmune(target)) {
+            if (poisonActive && DragonElementalImmunity.isPoisonImmune(target)) {
                 continue;
             }
 
@@ -125,7 +127,7 @@ public class VolitansWaterBreathEntity extends Entity {
                     ? level().damageSources().mobAttack(attacker)
                     : level().damageSources().generic();
             target.hurt(source, damage);
-            if (isPoisonMode() && poisonDurationTicks > 0 && poisonAmplifier >= 0) {
+            if (poisonActive && poisonDurationTicks > 0 && poisonAmplifier >= 0) {
                 target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDurationTicks, poisonAmplifier));
             }
 

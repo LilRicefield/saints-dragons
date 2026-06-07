@@ -171,6 +171,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                 airOrWaterRoar ? "roar_air_water_poison_level" : "roar_ground_poison_level",
                 airOrWaterRoar ? AIR_WATER_POISON_LEVEL : GROUNDED_POISON_LEVEL
         );
+        boolean poisonActive = !dragon.isVenomNeutralized();
         int stunTicks = airOrWaterRoar ? AIR_WATER_STUN_TICKS : GROUNDED_STUN_TICKS;
         AABB hitBox = new AABB(
                 origin.x - hitRadius,
@@ -187,7 +188,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                         && entity.isAlive()
                         && entity.attackable()
                         && !dragon.isAlly(entity)
-                        && (poisonDuration <= 0 || !DragonElementalImmunity.isPoisonImmune(entity))
+                        && (!poisonActive || poisonDuration <= 0 || !DragonElementalImmunity.isPoisonImmune(entity))
                         && entity.distanceToSqr(dragon) <= (hitRadius * hitRadius));
 
         for (LivingEntity target : targets) {
@@ -195,7 +196,7 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
                 continue;
             }
             target.hurt(source, roarDamage);
-            if (poisonDuration > 0 && poisonAmplifier >= 0) {
+            if (poisonActive && poisonDuration > 0 && poisonAmplifier >= 0) {
                 target.addEffect(new MobEffectInstance(MobEffects.POISON, poisonDuration, poisonAmplifier));
             }
             applyStun(target, stunTicks);

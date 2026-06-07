@@ -36,6 +36,8 @@ import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import java.util.Map;
 import java.util.HashMap;
@@ -59,6 +61,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -806,6 +809,22 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
+    protected void onRiderToggleMelee(Player player) {
+        if (isAerial() && player instanceof ServerPlayer serverPlayer && !level().isClientSide) {
+            serverPlayer.displayClientMessage(
+                    Component.translatable("saintsdragons.message.cindervane_slashing_ground_only"),
+                    true
+            );
+            syncMeleeMode(serverPlayer);
+            return;
+        }
+        super.onRiderToggleMelee(player);
+        if (!level().isClientSide) {
+            syncMeleeMode(player);
+        }
+    }
+
+    @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
         return new RiderAbilityBinding(ModAbilities.CINDERVANE_FIRE_BODY.getName(), RiderAbilityBinding.Activation.HOLD);
     }
@@ -1400,6 +1419,26 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 : ModAbilities.CINDERVANE_SLASH_GRAB;
     }
 
+    private void enforcePrimaryMeleeForFlight(@Nullable Player rider) {
+        if (level().isClientSide || getMeleeMode() == 0) {
+            return;
+        }
+        setMeleeMode(0);
+        if (rider instanceof ServerPlayer serverPlayer) {
+            serverPlayer.displayClientMessage(
+                    Component.translatable("saintsdragons.message.cindervane_slashing_ground_only"),
+                    true
+            );
+        }
+        syncMeleeMode(rider);
+    }
+
+    private void syncMeleeMode(@Nullable Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            NetworkHandler.sendToPlayer(serverPlayer, new MessageDragonMeleeMode(getMeleeMode()));
+        }
+    }
+
     @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
         return ModAbilities.CINDERVANE_ROAR;
@@ -1611,6 +1650,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
         if (flying) {
+            enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player player ? player : null);
             switchToAirNavigation();
             setLanding(false);
             this.getNavigation().stop();
@@ -1625,6 +1665,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void onTakeoffStateStarted() {
+        enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player player ? player : null);
         triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
     }

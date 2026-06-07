@@ -1,0 +1,25 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.volitans_spines",
+				"texture_width": 40,
+				"texture_height": 8,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 2.5,
+				"visible_bounds_offset": [0, 0.75, 0]
+			},
+			"bones": [
+				{
+					"name": "bb_main",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [0, -4, -10], "size": [0, 8, 20], "uv": [0, -20]},
+						{"origin": [0, -4, -10], "size": [0, 8, 20], "pivot": [0, 0, 0], "rotation": [0, 0, -90], "uv": [0, -20]}
+					]
+				}
+			]
+		}
+	]
+}
