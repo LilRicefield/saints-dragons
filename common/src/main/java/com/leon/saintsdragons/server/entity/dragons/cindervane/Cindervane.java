@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
+import com.leon.saintsdragons.util.animation.AnimationHelper;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlocks;
@@ -23,10 +25,6 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneSoundProfile;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
@@ -157,12 +155,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new VocalEntryBuilder()
-                    .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble1", ModSounds.CINDERVANE_GRUMBLE_1, 1.1f, 0.98f, 0.06f, false, false, false)
-                    .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble2", ModSounds.CINDERVANE_GRUMBLE_2, 1.2f, 0.96f, 0.08f, false, false, false)
-                    .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.cindervane.grumble3", ModSounds.CINDERVANE_GRUMBLE_3, 1.0f, 1.0f, 0.05f, false, false, false)
+                    .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.cindervane.grumble1", ModSounds.CINDERVANE_GRUMBLE_1, 1.1f, 0.98f, 0.06f, false, false, false)
+                    .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.cindervane.grumble2", ModSounds.CINDERVANE_GRUMBLE_2, 1.2f, 0.96f, 0.08f, false, false, false)
+                    .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.cindervane.grumble3", ModSounds.CINDERVANE_GRUMBLE_3, 1.0f, 1.0f, 0.05f, false, false, false)
                     .add("roar", CindervaneAnimationHandler.ACTION_CONTROLLER, "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
-                    .add("cindervane_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
-                    .add("cindervane_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
+                    .add("cindervane_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
+                    .add("cindervane_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
                     .build();
 
     private int groundStepSoundCooldownTicks = 0;
@@ -171,12 +169,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
     private final AnimationController<Cindervane> movementController;
+    private final AnimationController<Cindervane> transitionController;
     private final AnimationController<Cindervane> actionController;
     private final AnimationController<Cindervane> fastActionController;
     private final AnimationController<Cindervane> flightController;
     private final AnimationController<Cindervane> vocalController;
     private final AnimationController<Cindervane> interactionController;
-    private final AnimationController<Cindervane> stateController;
     private int targetCooldown;
     private int airTicks;
     public int groundTicks;
@@ -272,13 +270,13 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.12F);
         this.setMaxUpStep(1.1F);
         this.riderController = new CindervaneRiderController(this);
-        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
-        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
-        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
         this.setPathfindingMalus(BlockPathTypes.LEAVES, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.DANGER_FIRE, 0.0F);
@@ -710,7 +708,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
+                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
                 markLandedNow();
                 lockRiderControls(34);
@@ -1348,7 +1346,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
+        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
@@ -1358,6 +1356,14 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
+        animationHandler.setupMovementController(movementController);
+        transitionController.setSoundKeyframeHandler(event -> {
+            String soundKey = event.getKeyframeData().getSound();
+            if (soundKey != null && !soundKey.isEmpty()) {
+                handleAnimationSound(soundKey);
+            }
+        });
+        animationHandler.setupTransitionController(transitionController);
         animationHandler.setupActionController(actionController);
         actionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
@@ -1379,7 +1385,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 handleAnimationSound(soundKey);
             }
         });
-        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        AnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
@@ -1388,13 +1394,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         });
         animationHandler.setupInteractionController(interactionController);
         interactionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        animationHandler.setupStateController(stateController);
-        stateController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
@@ -1666,7 +1665,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected void onTakeoffStateStarted() {
         enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player player ? player : null);
-        triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.TAKEOFF);
+        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
     }
 
@@ -1718,7 +1717,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
+            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
             getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
             suppressSleep(60);
         }

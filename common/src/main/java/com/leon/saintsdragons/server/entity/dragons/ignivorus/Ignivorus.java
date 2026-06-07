@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.util.animation.AnimationHelper;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -23,7 +25,6 @@ import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
-import com.leon.saintsdragons.util.animation.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -33,9 +34,6 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -220,19 +218,19 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                     .add("ignivorus_flex", IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "animation.ignivorus.flex",
                             ModSounds.IGNIVORUS_FLEX, 2.0f, 0.95f, 0.05f,
                             false, false, true)
-                    .add("ignivorus_grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.ignivorus.grumble1",
+                    .add("ignivorus_grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.ignivorus.grumble1",
                             ModSounds.IGNIVORUS_GRUMBLE_1, 1.1f, 0.95f, 0.08f,
                             true, false, true)
-                    .add("ignivorus_grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.ignivorus.grumble2",
+                    .add("ignivorus_grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.ignivorus.grumble2",
                             ModSounds.IGNIVORUS_GRUMBLE_2, 1.15f, 1.0f, 0.08f,
                             true, false, true)
-                    .add("ignivorus_grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.ignivorus.grumble3",
+                    .add("ignivorus_grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.ignivorus.grumble3",
                             ModSounds.IGNIVORUS_GRUMBLE_3, 1.2f, 0.9f, 0.08f,
                             true, false, true)
-                    .add("ignivorus_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.ignivorus.hurt",
+                    .add("ignivorus_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.ignivorus.hurt",
                             ModSounds.IGNIVORUS_HURT, 1.6f, 0.95f, 0.1f,
                             true, true, true)
-                    .add("ignivorus_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.ignivorus.die",
+                    .add("ignivorus_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.ignivorus.die",
                             ModSounds.IGNIVORUS_DIE, 1.8f, 0.9f, 0.05f,
                             false, true, true)
                     .build();
@@ -241,12 +239,12 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final IgnivorusRiderController riderController;
     private final AnimationController<Ignivorus> movementController;
+    private final AnimationController<Ignivorus> transitionController;
     private final AnimationController<Ignivorus> actionController;
     private final AnimationController<Ignivorus> fastActionController;
     private final AnimationController<Ignivorus> flightController;
     private final AnimationController<Ignivorus> vocalController;
     private final AnimationController<Ignivorus> interactionController;
-    private final AnimationController<Ignivorus> stateController;
     private final IgnivorusInteractionHandler interactionHandler = new IgnivorusInteractionHandler(this);
     private final IgnivorusTamingHandler tamingController = new IgnivorusTamingHandler(this);
     public int timeFlying = 0;
@@ -294,7 +292,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
 
         this.riderController = new IgnivorusRiderController(this);
-        this.movementController = new AnimationController<>(this, "movement", 8, animationHandler::movementPredicate);
+        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, IgnivorusAnimationHandler.ACTION_CONTROLLER, 4, state -> {
             if (isTamingStunned()) {
                 return PlayState.STOP;
@@ -302,15 +301,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             return animationHandler.actionPredicate(state);
         });
         this.fastActionController = new AnimationController<>(this, IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
-        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
-        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
-            if (isTamingStunned()) {
-                return PlayState.STOP;
-            }
-            return DragonStateAnimationHelper.idle(state);
-        });
+        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
         resetAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY);
         if (!level.isClientSide) {
@@ -1934,7 +1927,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             long now = level().getGameTime();
             if (now - lastAiLandedAnimTick >= 15L) {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(DragonFlightAnimationHelper.CONTROLLER, landedAnim);
+                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2041,8 +2034,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onTakeoffStateStarted() {
-        triggerAnim(DragonFlightAnimationHelper.CONTROLLER,
-                isPhase2Active() ? DragonFlightAnimationHelper.PHASE2_TAKEOFF : DragonFlightAnimationHelper.TAKEOFF);
+        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER,
+                isPhase2Active() ? AnimationHelper.PHASE2_TAKEOFF : AnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
     }
 
@@ -2454,7 +2447,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             @Override
             public void onRiderLanded() {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(DragonFlightAnimationHelper.CONTROLLER, landedAnim);
+                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2761,23 +2754,24 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
+        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        transitionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        AnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        animationHandler.setupMovementController(movementController);
+        animationHandler.setupTransitionController(transitionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupActionController(actionController);
-        animationHandler.setupStateController(stateController);
     }
 
     @Override

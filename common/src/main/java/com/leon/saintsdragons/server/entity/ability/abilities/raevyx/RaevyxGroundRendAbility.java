@@ -83,7 +83,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             return;
         }
         if (section.sectionType == AbilitySectionType.STARTUP) {
-            getUser().triggerAnim(RaevyxAnimationHandler.ACTION_CONTROLLER, "ground_rend");
+            getUser().triggerAnim(RaevyxAnimationHandler.MOVEMENT_CONTROLLER, "ground_rend");
             if (!getUser().level().isClientSide) {
                 getUser().getSoundHandler().playMovingEntitySound(
                         ModSounds.RAEVYX_GROUND_REND.get(),

@@ -1,11 +1,12 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.util.animation.AnimationHelper;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
@@ -140,7 +141,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 penaltyApplied = false;
                 novaSpawned = false;
                 if (isAirborne) {
-                    dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "ultimate_start_air");
+                    dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_start_air");
                     if (!dragon.level().isClientSide) {
                         dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_START_AIR.get(), 1.0f, 1.0f, 54);
                     }
@@ -188,7 +189,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         if (!loopAnimPlayed && ticks >= startEndTick) {
             if (isAirborneMode) {
-                dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "ultimate_air");
+                dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_air");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 112);
             } else {
                 dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "ultimate");
@@ -214,7 +215,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         if (!endAnimPlayed && ticks >= loopEndTick) {
             if (isAirborneMode) {
-                dragon.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, "ultimate_end_air");
+                dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_end_air");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END_AIR.get(), 1.0f, 1.0f, 38);
             } else {
                 dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "ultimate_end");

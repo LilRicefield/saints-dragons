@@ -40,9 +40,7 @@ public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
         if (Varasuchus.VOID_KISSED_VARIANT_ID.equals(entity.getTextureVariantId())) {
             return entity.isFemale() ? VOID_KISSED_FEMALE_TEXTURE : VOID_KISSED_TEXTURE;
         }
-        if (entity.hasCustomTextureVariant()) {
-            return super.getAdultTexture(entity);
-        }
+        entity.hasCustomTextureVariant();
         return super.getAdultTexture(entity);
     }
 

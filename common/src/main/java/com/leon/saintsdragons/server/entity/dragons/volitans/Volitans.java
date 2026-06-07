@@ -29,18 +29,15 @@ import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
-import com.leon.saintsdragons.util.animation.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansTamingHandler;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
@@ -217,9 +214,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final float BURROW_MOVE_SHAKE_INTENSITY = 0.12F;
     private static final int BURROW_EXIT_TAKEOFF_BLOCK_BUFFER_TICKS = 8;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.volitans.grumble1", ModSounds.VOLITANS_GRUMBLE_1, 1.0f, 0.98f, 0.08f, false, false, false)
-            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.volitans.grumble2", ModSounds.VOLITANS_GRUMBLE_2, 1.0f, 0.98f, 0.08f, false, false, false)
-            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.volitans.grumble3", ModSounds.VOLITANS_GRUMBLE_3, 1.0f, 1.0f, 0.06f, false, false, false)
+            .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.volitans.grumble1", ModSounds.VOLITANS_GRUMBLE_1, 1.0f, 0.98f, 0.08f, false, false, false)
+            .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.volitans.grumble2", ModSounds.VOLITANS_GRUMBLE_2, 1.0f, 0.98f, 0.08f, false, false, false)
+            .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.volitans.grumble3", ModSounds.VOLITANS_GRUMBLE_3, 1.0f, 1.0f, 0.06f, false, false, false)
             .build();
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
@@ -228,13 +225,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
     private final VolitansRiderController riderController;
     private final AnimationController<Volitans> movementController;
+    private final AnimationController<Volitans> transitionController;
     private final AnimationController<Volitans> actionController;
     private final AnimationController<Volitans> fastActionController;
     private final AnimationController<Volitans> flightController;
     private final AnimationController<Volitans> airActionController;
     private final AnimationController<Volitans> vocalController;
     private final AnimationController<Volitans> interactionController;
-    private final AnimationController<Volitans> stateController;
     private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
     private int timeFlying;
     private int spineDropCooldownTicks;
@@ -279,14 +276,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.riderController = new VolitansRiderController(this);
         this.swimSteering = new DragonSwimSteeringController(this);
         this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
-        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.movementController = new AnimationController<>(this, "movement",
+                VolitansAnimationHandler.MOVEMENT_TRIGGER_TRANSITION_TICKS, animationHandler::movementPredicate);
+        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
         this.airActionController = new AnimationController<>(this, VolitansAnimationHandler.AIR_ACTION_CONTROLLER, 1, animationHandler::airActionPredicate);
-        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
-        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
-        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, DragonStateAnimationHelper::idle);
+        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
 
         if (!level.isClientSide) {
@@ -320,7 +318,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.setAccelerating(false);
         this.setDeltaMovement(Vec3.ZERO);
         if (!level().isClientSide) {
-            triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.TAKEOFF);
+            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.TAKEOFF);
             if (isVehicle() && !isFlying() && TAKEOFF_LAUNCH_DELAY_TICKS > 0) {
                 lockRiderControls(TAKEOFF_LAUNCH_DELAY_TICKS);
             }
@@ -961,7 +959,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             lockRiderControls(RIDER_BACK_DASH_LOCK_TICKS);
         }
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
-        triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "dash_backwards");
+        triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "dash_backwards");
         playBackwardDashSound();
         scheduleBackwardDashSpikes();
     }
@@ -989,7 +987,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         Vec3 dashVec = new Vec3(forwardX * perTickSpeed, 0.0D, forwardZ * perTickSpeed);
         beginRiderForwardDash(dashVec);
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
-        triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "dash_forward");
+        triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "dash_forward");
         playForwardDashSound();
     }
 
@@ -1020,7 +1018,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
         beginRiderSideDodge(dodgeVector);
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
-        triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, isLeft ? "dodge_left" : "dodge_right");
+        triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, isLeft ? "dodge_left" : "dodge_right");
         playDodgeSound();
     }
 
@@ -1305,7 +1303,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController, stateController);
+        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController);
     }
 
     private void setupAnimationControllers() {
@@ -1343,7 +1341,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupAirActionController(airActionController);
-        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        AnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
@@ -1357,13 +1355,14 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         });
         animationHandler.setupInteractionController(interactionController);
-        stateController.setSoundKeyframeHandler(event -> {
+        animationHandler.setupMovementController(movementController);
+        transitionController.setSoundKeyframeHandler(event -> {
             String soundKey = event.getKeyframeData().getSound();
             if (soundKey != null && !soundKey.isEmpty()) {
                 handleAnimationSound(soundKey);
             }
         });
-        animationHandler.setupStateController(stateController);
+        animationHandler.setupTransitionController(transitionController);
     }
 
     @Override
@@ -2082,7 +2081,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
+            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
             if (!isBaby()) {
                 getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
             }
@@ -2206,7 +2205,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         beginRiderSideDodge(new Vec3(dodgeDirX * perTickSpeed, 0.0D, dodgeDirZ * perTickSpeed));
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
         aiGroundMobilityCooldownTicks = 20;
-        triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, isLeft ? "dodge_left" : "dodge_right");
+        triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, isLeft ? "dodge_left" : "dodge_right");
         playDodgeSound();
         return true;
     }
@@ -2236,7 +2235,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         beginRiderBackDash(launch);
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
         aiGroundMobilityCooldownTicks = 26;
-        triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "dash_backwards");
+        triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "dash_backwards");
         playBackwardDashSound();
         scheduleBackwardDashSpikes();
         return true;
@@ -2736,7 +2735,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
+                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
                 if (!isBaby()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
                 }
@@ -3022,18 +3021,18 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void onSleepFallAsleepAnimation() {
         if (isInWaterOrBubble()) {
-            triggerAnim(DragonStateAnimationHelper.CONTROLLER, "fall_asleep_underwater");
+            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, "fall_asleep_underwater");
         } else {
-            triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
+            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
         }
     }
 
     @Override
     protected void onSleepLoopAnimation() {
         if (isInWaterOrBubble()) {
-            triggerAnim(DragonStateAnimationHelper.CONTROLLER, "sleep_underwater");
+            triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "sleep_underwater");
         } else {
-            triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
+            triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
             setOrderedToSit(true);
         }
     }
@@ -3041,10 +3040,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void onSleepWakeUpAnimation() {
         if (isInWaterOrBubble()) {
-            triggerAnim(DragonStateAnimationHelper.CONTROLLER, "wake_up_underwater");
+            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, "wake_up_underwater");
             setOrderedToSit(false);
         } else {
-            triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
+            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
             setOrderedToSit(true);
         }
     }

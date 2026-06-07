@@ -17,16 +17,12 @@ import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
-import com.leon.saintsdragons.util.animation.DragonVocalAnimationHelper;
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxTamingHandler;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderController;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -42,6 +38,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import java.util.Map;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -166,15 +163,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private static final double BABY_MAX_HEALTH = 60.0D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("grumble2", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
-            .add("grumble3", DragonVocalAnimationHelper.CONTROLLER, "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
+            .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble3", ModSounds.RAEVYX_GRUMBLE_3, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("roar", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("flex", RaevyxAnimationHandler.ACTION_CONTROLLER, "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
-            .add("raevyx_hurt", DragonInteractionAnimationHelper.CONTROLLER, "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
-            .add("raevyx_die", DragonInteractionAnimationHelper.CONTROLLER, "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
+            .add("raevyx_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
+            .add("raevyx_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
 
     private final ScreenShakeComponent screenShakeComponent;
@@ -213,12 +210,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private final RaevyxAnimationHandler animationHandler;
     private final RaevyxRiderController riderController;
     private final AnimationController<Raevyx> movementController;
+    private final AnimationController<Raevyx> transitionController;
     private final AnimationController<Raevyx> actionController;
     private final AnimationController<Raevyx> fastActionController;
     private final AnimationController<Raevyx> flightController;
     private final AnimationController<Raevyx> vocalController;
     private final AnimationController<Raevyx> interactionController;
-    private final AnimationController<Raevyx> stateController;
     private int tempInvulnTicks = 0;
     private long lastLandingGameTime = Long.MIN_VALUE;
     private Vec3 prevClientBeamEnd = null;
@@ -417,7 +414,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
+            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
             getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
             suppressSleep(60);
         }
@@ -446,7 +443,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.lightningInteractionHandler = new RaevyxInteractionHandler(this);
         this.animationHandler = new RaevyxAnimationHandler(this);
         this.riderController = new RaevyxRiderController(this);
-        this.movementController = new AnimationController<>(this, "movement", 5, animationHandler::movementPredicate);
+        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
             if (isTamingStunned()) {
                 return PlayState.STOP;
@@ -454,15 +452,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return animationHandler.raevyxActionPredicate(state);
         });
         this.fastActionController = new AnimationController<>(this, RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::raevyxFastActionPredicate);
-        this.flightController = DragonFlightAnimationHelper.createController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
-        this.vocalController = new AnimationController<>(this, DragonVocalAnimationHelper.CONTROLLER, 2, DragonVocalAnimationHelper::idle);
-        this.interactionController = new AnimationController<>(this, DragonInteractionAnimationHelper.CONTROLLER, 1, DragonInteractionAnimationHelper::idle);
-        this.stateController = new AnimationController<>(this, DragonStateAnimationHelper.CONTROLLER, 1, state -> {
-            if (isTamingStunned()) {
-                return PlayState.STOP;
-            }
-            return DragonStateAnimationHelper.idle(state);
-        });
+        this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
+        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         setupAnimationControllers();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
 
@@ -900,8 +892,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected void onTakeoffStateStarted() {
         setLanded(false);
-        triggerAnim(DragonFlightAnimationHelper.CONTROLLER,
-                getControllingPassenger() != null ? DragonFlightAnimationHelper.RIDER_TAKEOFF : DragonFlightAnimationHelper.TAKEOFF);
+        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER,
+                getControllingPassenger() != null ? AnimationHelper.RIDER_TAKEOFF : AnimationHelper.TAKEOFF);
         float pitch = 0.94f + getRandom().nextFloat() * 0.12f;
         getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_TAKEOFF.get(), 1.2f, pitch, 56);
     }
@@ -1876,7 +1868,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DragonFlightAnimationHelper.LANDED);
+                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
                 markLandedNow();
                 lockRiderControls(30);
@@ -2699,23 +2691,24 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController, stateController);
+        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
         movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        transitionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        DragonVocalAnimationHelper.registerGrumbles(vocalController, this);
+        AnimationHelper.registerGrumbles(vocalController, this);
         vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        stateController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        animationHandler.setupMovementController(movementController);
+        animationHandler.setupTransitionController(transitionController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
         animationHandler.setupInteractionController(interactionController);
-        animationHandler.setupStateController(stateController);
     }
 
     @Override

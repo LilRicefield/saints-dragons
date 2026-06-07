@@ -31,7 +31,7 @@ public class DragonMovingOneShotSound extends AbstractTickableSoundInstance {
     @Override
     public boolean canPlaySound() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.level == null) {
+        if (minecraft.level == null) {
             return false;
         }
         Entity entity = minecraft.level.getEntity(entityId);
@@ -57,7 +57,7 @@ public class DragonMovingOneShotSound extends AbstractTickableSoundInstance {
 
     private boolean updatePosition() {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.level == null) {
+        if (minecraft.level == null) {
             return false;
         }
         Entity entity = minecraft.level.getEntity(entityId);

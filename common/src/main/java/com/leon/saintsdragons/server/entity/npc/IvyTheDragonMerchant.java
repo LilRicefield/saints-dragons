@@ -5,10 +5,10 @@ package com.leon.saintsdragons.server.entity.npc;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -342,12 +342,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
         if (state.isMoving()) {
             if (isRunning()) {
-                MovementAnimationHelper.setAndContinue(state, RUN);
+                AnimationHelper.setAndContinue(state, RUN);
             } else {
-                MovementAnimationHelper.setAndContinue(state, WALK);
+                AnimationHelper.setAndContinue(state, WALK);
             }
         } else {
-            MovementAnimationHelper.setAndContinue(state, IDLE);
+            AnimationHelper.setAndContinue(state, IDLE);
         }
         return PlayState.CONTINUE;
     }
@@ -356,7 +356,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         state.getController().transitionLength(3);
         TradeAnimState tradeState = getTradeAnimState();
         if (tradeState == TradeAnimState.LOOP) {
-            MovementAnimationHelper.setAndContinue(state, TRADING);
+            AnimationHelper.setAndContinue(state, TRADING);
             return PlayState.CONTINUE;
         }
         if (tradeState == TradeAnimState.START || tradeState == TradeAnimState.STOP) {

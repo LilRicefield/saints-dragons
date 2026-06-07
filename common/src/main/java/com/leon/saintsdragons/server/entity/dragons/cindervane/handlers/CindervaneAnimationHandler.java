@@ -1,9 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -11,6 +8,7 @@ import software.bernie.geckolib.core.object.PlayState;
 
 
 public class CindervaneAnimationHandler {
+    public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "cindervaneFastAction";
     public static final String ACTION_CONTROLLER = "cindervaneAction";
 
@@ -33,10 +31,16 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.cindervane.sleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
-    private static final DragonFlightAnimationHelper.Animations FLIGHT_ANIMATIONS =
-            new DragonFlightAnimationHelper.Animations(TAKEOFF, null, LANDED, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
-    private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
-            new DragonFlightAnimationHelper.Transitions(1, 8, 6, 3, 6, 6, 3, 1);
+    private static final AnimationHelper.Animations GROUND_ANIMATIONS =
+            new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, SWIM, null, FALLING);
+    private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
+            new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
+    private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
+            new AnimationHelper.FlightAnimations(TAKEOFF, null, LANDED, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
+            new AnimationHelper.FlightTransitions(1, 8, 6, 3, 6, 6, 3, 1);
+    private static final int ACTION_TRANSITION_TICKS = 4;
+    private static final int FAST_ACTION_TRANSITION_TICKS = 1;
 
     public CindervaneAnimationHandler(Cindervane dragon) {
         this.amphithere = dragon;
@@ -63,59 +67,60 @@ public class CindervaneAnimationHandler {
         });
     }
 
-    public void setupStateController(AnimationController<Cindervane> controller) {
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_DOWN, SIT_DOWN);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_UP, SIT_UP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.FALL_ASLEEP, FALL_ASLEEP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SLEEP, SLEEP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.WAKE_UP, WAKE_UP);
+    public void setupMovementController(AnimationController<Cindervane> controller) {
+        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+    }
+
+    public void setupTransitionController(AnimationController<Cindervane> controller) {
+        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
     }
 
     public void setupFastActionController(AnimationController<Cindervane> controller) {
     }
 
     public void setupFlightController(AnimationController<Cindervane> controller) {
-        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, null, LANDED);
+        AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, LANDED);
     }
 
     public void setupInteractionController(AnimationController<Cindervane> controller) {
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+        controller.triggerableAnim(AnimationHelper.EAT,
                 RawAnimation.begin().thenPlay("animation.cindervane.eat"));
         controller.triggerableAnim("cindervane_hurt",
                 RawAnimation.begin().thenPlay("animation.cindervane.hurt"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.DIE,
+        controller.triggerableAnim(AnimationHelper.DIE,
                 RawAnimation.begin().thenPlay("animation.cindervane.die"));
     }
 
     public void triggerSitDownAnimation() {
-        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
+        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
+        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
+        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerSleepAnimation() {
-        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
+        amphithere.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        amphithere.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
+        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }
 
     public PlayState movementPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(10);
         boolean aerialState = amphithere.isFlying() || amphithere.isTakeoff() || amphithere.isLanding() || amphithere.isHovering();
 
         if (amphithere.isDying()) {
             return PlayState.STOP;
         }
 
-        PlayState sleepPose = MovementAnimationHelper.tryHandleRestPose(state, amphithere, SLEEP, SIT, 6, 0, false);
+        PlayState sleepPose = AnimationHelper.tryHandleRestPose(
+                state, amphithere, SLEEP, SIT, GROUND_TRANSITIONS.sleep(), GROUND_TRANSITIONS.sit(), false
+        );
         if (sleepPose != null) {
             return sleepPose;
         }
@@ -123,14 +128,14 @@ public class CindervaneAnimationHandler {
         boolean inWater = amphithere.isInWater() || amphithere.isInWaterOrBubble();
 
         if (!aerialState && inWater) {
-            state.getController().transitionLength(6);
+            state.getController().transitionLength(GROUND_TRANSITIONS.water());
             state.setAndContinue(SWIM);
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
 
         if (!aerialState && amphithere.isFallingForAnimation()) {
-            state.getController().transitionLength(4);
+            state.getController().transitionLength(GROUND_TRANSITIONS.falling());
             state.setAndContinue(FALLING);
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
@@ -141,26 +146,33 @@ public class CindervaneAnimationHandler {
         }
 
         if (amphithere.isVehicle()) {
-            state.getController().transitionLength(4);
             int groundState = amphithere.getEffectiveGroundState();
             if (groundState == 2) {
+                state.getController().transitionLength(GROUND_TRANSITIONS.moving());
                 state.setAndContinue(RUN);
             } else if (groundState == 1) {
+                state.getController().transitionLength(GROUND_TRANSITIONS.moving());
                 state.setAndContinue(WALK);
             } else {
+                state.getController().transitionLength(GROUND_TRANSITIONS.idle());
                 state.setAndContinue(IDLE);
             }
             state.getController().setAnimationSpeed(1.0f);
             return PlayState.CONTINUE;
         }
-        PlayState sitPose = MovementAnimationHelper.tryHandleRestPose(state, amphithere, null, SIT, 0, 0);
+        PlayState sitPose = AnimationHelper.tryHandleRestPose(
+                state, amphithere, null, SIT, 0, GROUND_TRANSITIONS.sit()
+        );
         if (sitPose != null) {
             return sitPose;
         }
 
         state.getController().setAnimationSpeed(1.0f);
 
-        return MovementAnimationHelper.handleGroundMovement(state, amphithere, IDLE, WALK, RUN);
+        return AnimationHelper.handleGroundMovement(
+                state, amphithere, IDLE, WALK, RUN,
+                GROUND_TRANSITIONS.moving(), GROUND_TRANSITIONS.idle()
+        );
     }
 
     public PlayState flightPredicate(AnimationState<Cindervane> state) {
@@ -172,9 +184,9 @@ public class CindervaneAnimationHandler {
             return PlayState.STOP;
         }
         if (amphithere.isTakeoff()) {
-            return DragonFlightAnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+            return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
-        return DragonFlightAnimationHelper.handleState(
+        return AnimationHelper.handleFlightState(
                 state,
                 amphithere.getVisualFlightState(state.getPartialTick()),
                 FLIGHT_ANIMATIONS,
@@ -182,11 +194,11 @@ public class CindervaneAnimationHandler {
         );
     }
     public PlayState actionPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(4);
+        state.getController().transitionLength(ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
     public PlayState fastActionPredicate(AnimationState<Cindervane> state) {
-        state.getController().transitionLength(1);
+        state.getController().transitionLength(FAST_ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 }

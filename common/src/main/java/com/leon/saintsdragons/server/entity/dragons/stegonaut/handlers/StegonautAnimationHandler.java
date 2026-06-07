@@ -1,9 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -11,6 +9,7 @@ import software.bernie.geckolib.core.object.PlayState;
 
 
 public class StegonautAnimationHandler {
+    public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "stegonautFastAction";
     public static final String ACTION_CONTROLLER = "stegonautAction";
 
@@ -27,49 +26,59 @@ public class StegonautAnimationHandler {
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.stegonaut.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.stegonaut.fall_asleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.stegonaut.wake_up");
+    private static final AnimationHelper.Animations GROUND_ANIMATIONS =
+            new AnimationHelper.Animations(IDLE_ANIM, WALK_ANIM, RUN_ANIM, SIT_ANIM, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_ANIM, WAKE_UP, SWIM_ANIM, null, JUMP_ANIM);
+    private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
+            new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
+    private static final int FAST_ACTION_TRANSITION_TICKS = 1;
+    private static final int ACTION_TRANSITION_TICKS = 5;
     
     public StegonautAnimationHandler(Stegonaut drake) {
         this.drake = drake;
     }
 
     public void triggerSitDownAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerSleepAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
+        drake.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }
 
     public PlayState handleMovementAnimation(AnimationState<Stegonaut> state) {
-        state.getController().transitionLength(8);
         if (drake.isInWaterOrBubble()) {
-            state.getController().transitionLength(6);
+            state.getController().transitionLength(GROUND_TRANSITIONS.water());
             state.setAndContinue(SWIM_ANIM);
             return PlayState.CONTINUE;
         } else if (drake.isRiddenGroundJumpAirborne()) {
-            state.getController().transitionLength(1);
+            state.getController().transitionLength(GROUND_TRANSITIONS.bodyTransition());
             state.setAndContinue(JUMP_ANIM);
             return PlayState.CONTINUE;
         }
 
-        PlayState restPose = MovementAnimationHelper.tryHandleRestPose(state, drake, SLEEP_ANIM, SIT_ANIM, 6, 4);
+        PlayState restPose = AnimationHelper.tryHandleRestPose(
+                state, drake, SLEEP_ANIM, SIT_ANIM, GROUND_TRANSITIONS.sleep(), GROUND_TRANSITIONS.sit()
+        );
         if (restPose != null) {
             return restPose;
         }
 
-        return MovementAnimationHelper.handleGroundMovement(state, drake, IDLE_ANIM, WALK_ANIM, RUN_ANIM);
+        return AnimationHelper.handleGroundMovement(
+                state, drake, IDLE_ANIM, WALK_ANIM, RUN_ANIM,
+                GROUND_TRANSITIONS.moving(), GROUND_TRANSITIONS.idle()
+        );
     }
 
     public void setupActionController(AnimationController<Stegonaut> actionController) {
@@ -92,16 +101,16 @@ public class StegonautAnimationHandler {
 
     }
 
-    public void setupStateController(AnimationController<Stegonaut> controller) {
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_DOWN, SIT_DOWN);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_UP, SIT_UP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.FALL_ASLEEP, FALL_ASLEEP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SLEEP, SLEEP_ANIM);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.WAKE_UP, WAKE_UP);
+    public void setupMovementController(AnimationController<Stegonaut> controller) {
+        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+    }
+
+    public void setupTransitionController(AnimationController<Stegonaut> controller) {
+        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
     }
 
     public PlayState fastActionPredicate(AnimationState<Stegonaut> state) {
-        state.getController().transitionLength(1);
+        state.getController().transitionLength(FAST_ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 
@@ -113,14 +122,14 @@ public class StegonautAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
         controller.triggerableAnim("hurt",
                 RawAnimation.begin().thenPlay("animation.stegonaut.hurt"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.DIE,
+        controller.triggerableAnim(AnimationHelper.DIE,
                 RawAnimation.begin().thenPlay("animation.stegonaut.die"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+        controller.triggerableAnim(AnimationHelper.EAT,
                 RawAnimation.begin().thenPlay("animation.stegonaut.eat"));
     }
 
     public PlayState actionPredicate(AnimationState<Stegonaut> state) {
-        state.getController().transitionLength(5);
+        state.getController().transitionLength(ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 }

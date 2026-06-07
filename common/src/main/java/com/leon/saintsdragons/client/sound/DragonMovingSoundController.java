@@ -24,7 +24,7 @@ public final class DragonMovingSoundController {
 
     public static void play(int entityId, String soundId, float volume, float pitch, int durationTicks) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft == null || minecraft.getSoundManager() == null || minecraft.level == null) {
+        if (minecraft.level == null) {
             return;
         }
 

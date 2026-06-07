@@ -1,9 +1,10 @@
 package com.leon.saintsdragons.server.entity.ability;
 
+import com.leon.saintsdragons.util.animation.AnimationHelper;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
 public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
@@ -26,7 +27,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
         T dragon = getUser();
         dragon.onDeathAbilityStarted();
         String abilityId = this.getAbilityType().getName();
-        String controllerId = DragonInteractionAnimationHelper.CONTROLLER;
+        String controllerId = AnimationHelper.INTERACTION_CONTROLLER;
         String animationTrigger = "die";
         if (abilityId.startsWith("baby_")) {
             animationTrigger = "baby_die";

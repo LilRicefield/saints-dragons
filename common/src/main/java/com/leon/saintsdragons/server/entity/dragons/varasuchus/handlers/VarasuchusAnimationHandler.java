@@ -1,16 +1,14 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers;
 
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
-import net.minecraft.world.entity.player.Player;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 public record VarasuchusAnimationHandler(Varasuchus drake) {
+    public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "varasuchusFastAction";
     public static final String ACTION_CONTROLLER = "varasuchusAction";
 
@@ -36,22 +34,23 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation SIT_UP2 = RawAnimation.begin().thenPlay("animation.varasuchus.up2");
     private static final RawAnimation FLEX = RawAnimation.begin().thenPlay("animation.varasuchus.flex");
     private static final RawAnimation FLEX2 = RawAnimation.begin().thenPlay("animation.varasuchus.flex2");
-    private static final int MOVEMENT_TRANSITION_TICKS = 6;
-    private static final int SWIM_TRANSITION_TICKS = 7;
+    private static final RawAnimation BITE2 = RawAnimation.begin().thenPlay("animation.varasuchus.bite2");
+    private static final RawAnimation HORN_GORE = RawAnimation.begin().thenPlay("animation.varasuchus.horn_gore");
+    private static final RawAnimation TAIL_SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.varasuchus.tail_swipe_left");
+    private static final RawAnimation PHASE2_DASH_LEFT = RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_left");
+    private static final RawAnimation PHASE2_DASH_RIGHT = RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_right");
+    private static final AnimationHelper.Animations GROUND_ANIMATIONS =
+            new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_LOOP, WAKE_UP, SWIM_MOVE, null, JUMP);
+    private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
+            new AnimationHelper.Transitions(4, 3, 4, 4, 4, 4, 4, 4);
+    private static final int ACTION_TRANSITION_TICKS = 4;
+    private static final int FAST_ACTION_TRANSITION_TICKS = 1;
 
     public void setupActionController(AnimationController<Varasuchus> controller) {
         controller.triggerableAnim("bite",
                 RawAnimation.begin().thenPlay("animation.varasuchus.bite"));
-        controller.triggerableAnim("bite2",
-                RawAnimation.begin().thenPlay("animation.varasuchus.bite2"));
-        controller.triggerableAnim("horn_gore",
-                RawAnimation.begin().thenPlay("animation.varasuchus.horn_gore"));
-        controller.triggerableAnim("tail_swipe_left",
-                RawAnimation.begin().thenPlay("animation.varasuchus.tail_swipe_left"));
-        controller.triggerableAnim("phase2_dash_left",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_left"));
-        controller.triggerableAnim("phase2_dash_right",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_right"));
+        controller.triggerableAnim("bite2", BITE2);
+        controller.triggerableAnim("horn_gore", HORN_GORE);
         controller.triggerableAnim("flex", FLEX);
         controller.triggerableAnim("flex2", FLEX2);
     }
@@ -64,12 +63,12 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         controller.setAnimationSpeed(1.0F);
 
         if (drake.isWildRideAnimationActive()) {
-            controller.transitionLength(2);
+            controller.transitionLength(GROUND_TRANSITIONS.stunned());
             state.setAndContinue(drake.isInWaterOrBubble() ? THRASHING_UNDERWATER : BUCKING);
             return PlayState.CONTINUE;
         }
         if (drake.isRiddenGroundJumpAirborne()) {
-            controller.transitionLength(1);
+            controller.transitionLength(GROUND_TRANSITIONS.bodyTransition());
             state.setAndContinue(drake.isPhaseTwoActive() ? JUMP2 : JUMP);
             return PlayState.CONTINUE;
         }
@@ -84,7 +83,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         boolean isMovingLand = state.isMoving();
 
         if (isSwimming || isInWater) {
-            controller.transitionLength(SWIM_TRANSITION_TICKS);
+            controller.transitionLength(GROUND_TRANSITIONS.water());
 
             boolean isSwimmingMoving;
 
@@ -101,10 +100,10 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
             }
 
             RawAnimation swimAnim = isSwimmingMoving ? SWIM_MOVE : SWIM_IDLE;
-            MovementAnimationHelper.setAndContinue(state, swimAnim);
+            AnimationHelper.setAndContinue(state, swimAnim);
         } else {
-            PlayState restPose = MovementAnimationHelper.tryHandleRestPose(
-                    state, drake, SLEEP_LOOP, SIT, 6, 4
+            PlayState restPose = AnimationHelper.tryHandleRestPose(
+                    state, drake, SLEEP_LOOP, SIT, GROUND_TRANSITIONS.sleep(), GROUND_TRANSITIONS.sit()
             );
             if (restPose != null) {
                 return restPose;
@@ -112,64 +111,57 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
 
             int groundState = drake.getEffectiveGroundState();
             boolean phaseTwo = drake.isPhaseTwoActive();
-            boolean abilityActive = drake.getActiveAbility() != null;
-            boolean riderControlled = drake.isVehicle() && drake.getControllingPassenger() instanceof Player player && drake.isOwnedBy(player);
             boolean isAggressive = drake.shouldUseRunAnimation() && isMovingLand;
-            int baseTransition = MOVEMENT_TRANSITION_TICKS;
-            if (riderControlled) {
-                baseTransition = Math.max(3, baseTransition - 2);
-            }
-            if (abilityActive) {
-                baseTransition = Math.max(2, baseTransition - 1);
-            }
 
             if (groundState == 2 || isAggressive) {
-                controller.transitionLength(baseTransition);
-                MovementAnimationHelper.setAndContinue(state, phaseTwo ? RUN2 : RUN);
+                controller.transitionLength(GROUND_TRANSITIONS.moving());
+                AnimationHelper.setAndContinue(state, phaseTwo ? RUN2 : RUN);
             } else if (groundState == 1 || isMovingLand) {
-                controller.transitionLength(Math.max(3, baseTransition + 1));
-                MovementAnimationHelper.setAndContinue(state, phaseTwo ? WALK2 : WALK);
+                controller.transitionLength(GROUND_TRANSITIONS.moving());
+                AnimationHelper.setAndContinue(state, phaseTwo ? WALK2 : WALK);
             } else {
-                controller.transitionLength(Math.max(3, baseTransition + (abilityActive ? 2 : 0)));
-                MovementAnimationHelper.setAndContinue(state, phaseTwo ? IDLE2 : IDLE);
+                controller.transitionLength(GROUND_TRANSITIONS.idle());
+                AnimationHelper.setAndContinue(state, phaseTwo ? IDLE2 : IDLE);
             }
         }
         return PlayState.CONTINUE;
     }
 
     public PlayState actionPredicate(AnimationState<Varasuchus> state) {
-        state.getController().transitionLength(4);
+        state.getController().transitionLength(ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
     public PlayState fastActionPredicate(AnimationState<Varasuchus> state) {
-        state.getController().transitionLength(1);
+        state.getController().transitionLength(FAST_ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
-    public void setupStateController(AnimationController<Varasuchus> controller) {
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_DOWN, SIT_DOWN);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SIT_UP, SIT_UP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.FALL_ASLEEP, FALL_ASLEEP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.SLEEP, SLEEP_LOOP);
-        DragonStateAnimationHelper.register(controller, DragonStateAnimationHelper.WAKE_UP, WAKE_UP);
-        DragonStateAnimationHelper.register(controller, "sit_down2", SIT_DOWN2);
-        DragonStateAnimationHelper.register(controller, "sit_up2", SIT_UP2);
+    public void setupMovementController(AnimationController<Varasuchus> controller) {
+        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, "tail_swipe_left", TAIL_SWIPE_LEFT);
+        AnimationHelper.register(controller, "phase2_dash_left", PHASE2_DASH_LEFT);
+        AnimationHelper.register(controller, "phase2_dash_right", PHASE2_DASH_RIGHT);
+    }
+    public void setupTransitionController(AnimationController<Varasuchus> controller) {
+        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, "sit_down2", SIT_DOWN2);
+        AnimationHelper.register(controller, "sit_up2", SIT_UP2);
     }
     public void triggerSitDownAnimation() {
         boolean isPhaseTwo = drake.isPhaseTwoActive();
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, isPhaseTwo ? "sit_down2" : DragonStateAnimationHelper.SIT_DOWN);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, isPhaseTwo ? "sit_down2" : AnimationHelper.SIT_DOWN);
     }
     public void triggerSitUpAnimation() {
         boolean isPhaseTwo = drake.isPhaseTwoActive();
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, isPhaseTwo ? "sit_up2" : DragonStateAnimationHelper.SIT_UP);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, isPhaseTwo ? "sit_up2" : AnimationHelper.SIT_UP);
     }
     public void triggerFallAsleepAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
     public void triggerSleepAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
+        drake.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
     }
     public void triggerWakeUpAnimation() {
-        drake.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
+        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }
     public void triggerFlexAnimation() {
         drake.triggerAnim(ACTION_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");
@@ -207,7 +199,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_parry"));
     }
     public void setupInteractionController(AnimationController<Varasuchus> controller) {
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+        controller.triggerableAnim(AnimationHelper.EAT,
                 RawAnimation.begin().thenPlay("animation.varasuchus.eat"));
         controller.triggerableAnim("varasuchus_hurt",
                 RawAnimation.begin().thenPlay("animation.varasuchus.hurt"));

@@ -82,7 +82,7 @@ public class MeleeModeNotification {
         int bgAlpha = Math.round(0x90 * fadeProgress);
         int borderAlpha = Math.round(0xFF * fadeProgress);
         int textAlpha = Math.round(0xFF * fadeProgress);
-        int bgColor = (bgAlpha << 24) | 0x000000;
+        int bgColor = (bgAlpha << 24);
         int borderColor = (borderAlpha << 24) | 0x00555555;
         int textColor = (textAlpha << 24) | 0x00FFFFFF;
         RenderSystem.enableBlend();
@@ -111,10 +111,6 @@ public class MeleeModeNotification {
 
     private float easeInCubic(float t) {
         return t * t * t;
-    }
-
-    public boolean isVisible() {
-        return visible;
     }
 
     public int getMeleeMode() {

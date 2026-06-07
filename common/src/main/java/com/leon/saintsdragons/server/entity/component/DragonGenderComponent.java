@@ -40,7 +40,7 @@ public final class DragonGenderComponent {
     }
 
     public void ensureInitialized() {
-        if (dragon.level() != null && dragon.level().isClientSide) {
+        if (dragon.level().isClientSide) {
             return;
         }
         if (!genderInitialized) {
@@ -58,20 +58,16 @@ public final class DragonGenderComponent {
     public void loadFromNBT(CompoundTag tag) {
         if (tag.contains("Gender", Tag.TAG_BYTE)) {
             byte savedGenderId = tag.getByte("Gender");
-            boolean savedGenderInit = tag.contains("GenderInitialized") ? tag.getBoolean("GenderInitialized") : true;
+            boolean savedGenderInit = !tag.contains("GenderInitialized") || tag.getBoolean("GenderInitialized");
             setGender(DragonGender.fromId(savedGenderId));
             this.genderInitialized = savedGenderInit;
         } else if (tag.contains("IsFemale")) {
             setFemale(tag.getBoolean("IsFemale"));
-            this.genderInitialized = tag.contains("GenderInitialized") ? tag.getBoolean("GenderInitialized") : true;
+            this.genderInitialized = !tag.contains("GenderInitialized") || tag.getBoolean("GenderInitialized");
         } else {
             this.genderInitialized = false;
             ensureInitialized();
         }
-    }
-
-    public void setInitialized(boolean initialized) {
-        this.genderInitialized = initialized;
     }
 
     public boolean isInitialized() {

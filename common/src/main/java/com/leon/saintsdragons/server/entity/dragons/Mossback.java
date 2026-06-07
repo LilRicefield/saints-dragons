@@ -1,11 +1,11 @@
 package com.leon.saintsdragons.server.entity.dragons;
 
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.controller.BodyControl;
 import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -306,7 +306,7 @@ public class Mossback extends Animal implements GeoEntity {
             return PlayState.STOP;
         }));
 
-        controllers.add(new AnimationController<>(this, "movement", 4, state -> {
+        controllers.add(new AnimationController<>(this, "movement", 2, state -> {
             if (isThrown() || isThrownAirborne()) {
                 return PlayState.STOP;
             }
@@ -314,9 +314,9 @@ public class Mossback extends Animal implements GeoEntity {
                 return PlayState.STOP;
             }
             if (state.isMoving()) {
-                MovementAnimationHelper.setAndContinue(state, WALK);
+                AnimationHelper.setAndContinue(state, WALK);
             } else {
-                MovementAnimationHelper.setAndContinue(state, IDLE);
+                AnimationHelper.setAndContinue(state, IDLE);
             }
             return PlayState.CONTINUE;
         }));

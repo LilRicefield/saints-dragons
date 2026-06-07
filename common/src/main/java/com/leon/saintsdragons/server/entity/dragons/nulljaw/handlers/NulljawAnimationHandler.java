@@ -1,8 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers;
 
+import com.leon.saintsdragons.util.animation.AnimationHelper;
+
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -15,6 +15,10 @@ public final class NulljawAnimationHandler {
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.nulljaw.eat");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.nulljaw.hurt");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.nulljaw.die");
+    private static final int MOVEMENT_TRANSITION_TICKS = 2;
+    private static final int ACTION_TRANSITION_TICKS = 2;
+    private static final int INSTANT_TRANSITION_TICKS = 1;
+    private static final int MOUNTED_TRANSITION_TICKS = 2;
 
     private final Nulljaw dragon;
 
@@ -27,32 +31,32 @@ public final class NulljawAnimationHandler {
             return PlayState.STOP;
         }
 
-        state.getController().transitionLength(6);
+        state.getController().transitionLength(MOVEMENT_TRANSITION_TICKS);
         if (dragon.shouldUseHoverAnimation()) {
-            MovementAnimationHelper.setAndContinue(state, HOVER);
+            AnimationHelper.setAndContinue(state, HOVER);
         } else {
-            MovementAnimationHelper.setAndContinue(state, IDLE);
+            AnimationHelper.setAndContinue(state, IDLE);
         }
         return PlayState.CONTINUE;
     }
 
     public PlayState actionPredicate(AnimationState<Nulljaw> state) {
-        state.getController().transitionLength(2);
+        state.getController().transitionLength(ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 
     public PlayState instantPredicate(AnimationState<Nulljaw> state) {
-        state.getController().transitionLength(1);
+        state.getController().transitionLength(INSTANT_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 
     public PlayState mountedPredicate(AnimationState<Nulljaw> state) {
-        state.getController().transitionLength(2);
+        state.getController().transitionLength(MOUNTED_TRANSITION_TICKS);
         if (!dragon.isVehicle()) {
             return PlayState.STOP;
         }
 
-        MovementAnimationHelper.setAndContinue(state, HAND_HOLDING);
+        AnimationHelper.setAndContinue(state, HAND_HOLDING);
         return PlayState.CONTINUE;
     }
 
@@ -63,7 +67,7 @@ public final class NulljawAnimationHandler {
     }
 
     public void setupInteractionController(AnimationController<Nulljaw> controller) {
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT, EAT);
+        controller.triggerableAnim(AnimationHelper.EAT, EAT);
         controller.triggerableAnim("nulljaw_hurt", HURT);
         controller.triggerableAnim("nulljaw_die", DIE);
     }

@@ -1,17 +1,15 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.util.animation.DragonFlightAnimationHelper;
-import com.leon.saintsdragons.util.animation.DragonInteractionAnimationHelper;
-import com.leon.saintsdragons.util.animation.MovementAnimationHelper;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.util.animation.DragonStateAnimationHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.object.PlayState;
 
 public record RaevyxAnimationHandler(Raevyx wyvern) {
+    public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "raevyxFastAction";
     public static final String ACTION_CONTROLLER = "raevyxAction";
     private static final String DODGE_AIR_LEFT = "dodge_air_left";
@@ -35,94 +33,117 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.raevyx.dodge");
     private static final RawAnimation DASH_FORWARD_RIGHT = RawAnimation.begin().thenPlay("animation.raevyx.dash_forward_right");
     private static final RawAnimation DASH_FORWARD_LEFT = RawAnimation.begin().thenPlay("animation.raevyx.dash_forward_left");
+    private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.raevyx.down");
+    private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.raevyx.up");
+    private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.raevyx.fall_asleep");
+    private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.raevyx.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.raevyx.swim");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.raevyx.sleep");
+    private static final AnimationHelper.Animations GROUND_ANIMATIONS =
+            new AnimationHelper.Animations(
+                    GROUND_IDLE,
+                    GROUND_WALK,
+                    GROUND_RUN,
+                    SIT,
+                    SIT_DOWN,
+                    SIT_UP,
+                    FALL_ASLEEP,
+                    SLEEP,
+                    WAKE_UP,
+                    SWIM,
+                    STUNNED,
+                    FALLING
+            );
+    private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
+            new AnimationHelper.Transitions(4, 2, 4, 4, 4, 4, 4, 4);
 
-    private static final DragonFlightAnimationHelper.Animations FLIGHT_ANIMATIONS =
-            new DragonFlightAnimationHelper.Animations(TAKEOFF, RIDER_TAKEOFF, LANDED, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
-    private static final DragonFlightAnimationHelper.Transitions FLIGHT_TRANSITIONS =
-            new DragonFlightAnimationHelper.Transitions(1, 12, 6, 3, 6, 4, 3, 1);
+    private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
+            new AnimationHelper.FlightAnimations(TAKEOFF, RIDER_TAKEOFF, LANDED, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
+            new AnimationHelper.FlightTransitions(1, 12, 6, 3, 6, 4, 3, 1);
+    private static final int ACTION_TRANSITION_TICKS = 3;
+    private static final int FAST_ACTION_TRANSITION_TICKS = 1;
 
     public void triggerSitDownAnimation() {
-        wyvern.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_DOWN);
+        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        wyvern.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SIT_UP);
+        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        wyvern.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.FALL_ASLEEP);
+        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerSleepAnimation() {
-        wyvern.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.SLEEP);
+        wyvern.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        wyvern.triggerAnim(DragonStateAnimationHelper.CONTROLLER, DragonStateAnimationHelper.WAKE_UP);
+        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }
 
     public void triggerDodgeLeftAnimation() {
-        wyvern.triggerAnim(ACTION_CONTROLLER, "dodge_left");
+        wyvern.triggerAnim(MOVEMENT_CONTROLLER, "dodge_left");
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
     }
 
     public void triggerDodgeRightAnimation() {
-        wyvern.triggerAnim(ACTION_CONTROLLER, "dodge_right");
+        wyvern.triggerAnim(MOVEMENT_CONTROLLER, "dodge_right");
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
     }
 
     public void triggerDodgeBackwardAnimation() {
-        wyvern.triggerAnim(ACTION_CONTROLLER, "dash_backward");
+        wyvern.triggerAnim(MOVEMENT_CONTROLLER, "dash_backward");
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
     }
 
     public void triggerDodgeAirLeftAnimation() {
-        wyvern.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DODGE_AIR_LEFT);
+        wyvern.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, DODGE_AIR_LEFT);
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
     }
 
     public void triggerDodgeAirRightAnimation() {
-        wyvern.triggerAnim(DragonFlightAnimationHelper.CONTROLLER, DODGE_AIR_RIGHT);
+        wyvern.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, DODGE_AIR_RIGHT);
         if (!wyvern.level().isClientSide) {
             wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_DODGE.get(), 1.6f, 1.0f, 35);
         }
     }
 
-    public void setupStateController(AnimationController<Raevyx> controller) {
-        DragonStateAnimationHelper.registerStandard(controller, "raevyx");
-    }
-
     public void setupFlightController(AnimationController<Raevyx> controller) {
-        DragonFlightAnimationHelper.registerStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
-        DragonFlightAnimationHelper.register(controller, DODGE_AIR_LEFT,
+        AnimationHelper.registerFlightStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
+        AnimationHelper.registerFlight(controller, DODGE_AIR_LEFT,
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
-        DragonFlightAnimationHelper.register(controller, DODGE_AIR_RIGHT,
+        AnimationHelper.registerFlight(controller, DODGE_AIR_RIGHT,
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"));
-        DragonFlightAnimationHelper.register(controller, "summon_storm_air",
+        AnimationHelper.registerFlight(controller, "summon_storm_air",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm_air"));
     }
 
-    public void setupActionController(AnimationController<Raevyx> controller) {
-        registerVocalTriggers(controller, ACTION_CONTROLLER);
+    public void setupMovementController(AnimationController<Raevyx> controller) {
+        AnimationHelper.register(controller, GROUND_ANIMATIONS);
         controller.triggerableAnim("dodge_left",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
         controller.triggerableAnim("dodge_right",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_right"));
-        controller.triggerableAnim("ground_rend",
-                RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
         controller.triggerableAnim("dash_backward",
                 RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
+        controller.triggerableAnim("ground_rend",
+                RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
+    }
+
+    public void setupActionController(AnimationController<Raevyx> controller) {
+        registerVocalTriggers(controller, ACTION_CONTROLLER);
         controller.triggerableAnim("summon_storm",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
     }
@@ -146,74 +167,60 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.hurt"));
         controller.triggerableAnim("die",
                 RawAnimation.begin().thenPlay("animation.raevyx.die"));
-        controller.triggerableAnim(DragonInteractionAnimationHelper.EAT,
+        controller.triggerableAnim(AnimationHelper.EAT,
                 RawAnimation.begin().thenPlay("animation.raevyx.eat"));
     }
 
     public PlayState movementPredicate(AnimationState<Raevyx> state) {
-        state.getController().transitionLength(6);
-        boolean aerialState = wyvern.isFlying() || wyvern.isTakeoff() || wyvern.isLanding() || wyvern.isHovering();
+        return AnimationHelper.handleGrounded(state, wyvern, GROUND_ANIMATIONS, GROUND_TRANSITIONS, RaevyxGroundStates.INSTANCE);
+    }
 
-        if (wyvern.areRiderControlsLocked()) {
-            return PlayState.STOP;
+    private enum RaevyxGroundStates implements AnimationHelper.SpecialStates<Raevyx> {
+        INSTANCE;
+
+        @Override
+        public boolean tamingStunned(Raevyx dragon) {
+            return dragon.isTamingStunned();
         }
 
-        if (wyvern.isDying()) {
-            return PlayState.STOP;
+        @Override
+        public boolean sittingDown(Raevyx dragon) {
+            return dragon.isSittingDownAnimation();
         }
 
-        if (wyvern.isTamingStunned()) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(STUNNED);
-            return PlayState.CONTINUE;
+        @Override
+        public boolean standingUp(Raevyx dragon) {
+            return dragon.isStandingUpAnimation();
         }
 
-        if (aerialState) {
-            return PlayState.STOP;
+        @Override
+        public boolean falling(Raevyx dragon) {
+            return dragon.isFallingForAnimation();
         }
 
-        boolean inWater = wyvern.isInWater() || wyvern.isInWaterOrBubble();
-        if (inWater) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(SWIM);
-            return PlayState.CONTINUE;
-        }
-
-        PlayState restPose = MovementAnimationHelper.tryHandleRestPose(state, wyvern, SLEEP, SIT, 6, 0);
-        if (restPose != null) {
-            return restPose;
-        }
-
-        if (wyvern.isBaby()) {
-            return MovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
-        }
-
-        if (wyvern.isDodging()) {
-            state.getController().transitionLength(2);
-            state.setAndContinue(DODGE);
-            return PlayState.CONTINUE;
-        }
-
-        if (wyvern.isGroundRending()) {
-            return PlayState.STOP;
-        }
-        if (wyvern.isDashing()) {
-            state.getController().transitionLength(2);
-            if (wyvern.wasLastDashRight()) {
-                state.setAndContinue(DASH_FORWARD_LEFT);
-            } else {
-                state.setAndContinue(DASH_FORWARD_RIGHT);
+        @Override
+        public PlayState handle(AnimationState<Raevyx> state,
+                                Raevyx dragon,
+                                AnimationHelper.Animations animations,
+                                AnimationHelper.Transitions transitions) {
+            if (dragon.isBaby()) {
+                return null;
             }
-            return PlayState.CONTINUE;
+            if (dragon.isDodging()) {
+                state.getController().transitionLength(transitions.moving());
+                state.setAndContinue(DODGE);
+                return PlayState.CONTINUE;
+            }
+            if (dragon.isGroundRending()) {
+                return PlayState.STOP;
+            }
+            if (dragon.isDashing()) {
+                state.getController().transitionLength(transitions.moving());
+                state.setAndContinue(dragon.wasLastDashRight() ? DASH_FORWARD_LEFT : DASH_FORWARD_RIGHT);
+                return PlayState.CONTINUE;
+            }
+            return null;
         }
-
-        if (wyvern.isFallingForAnimation()) {
-            state.getController().transitionLength(4);
-            state.setAndContinue(FALLING);
-            return PlayState.CONTINUE;
-        }
-
-        return MovementAnimationHelper.handleGroundMovement(state, wyvern, GROUND_IDLE, GROUND_WALK, GROUND_RUN, 3, 4);
     }
 
     public PlayState flightPredicate(AnimationState<Raevyx> state) {
@@ -225,7 +232,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             return PlayState.STOP;
         }
         if (wyvern.isTakeoff()) {
-            return DragonFlightAnimationHelper.handleTakeoff(
+            return AnimationHelper.handleTakeoff(
                     state,
                     wyvern.getControllingPassenger() != null,
                     FLIGHT_ANIMATIONS,
@@ -235,7 +242,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         DragonFlightStateEvaluator.VisualState visualState = isInvertedGlideWindow(state.getPartialTick())
                 ? DragonFlightStateEvaluator.VisualState.GLIDE
                 : wyvern.getVisualFlightState(state.getPartialTick());
-        return DragonFlightAnimationHelper.handleState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
 
     private boolean isInvertedGlideWindow(float partialTick) {
@@ -247,12 +254,16 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public PlayState raevyxActionPredicate(AnimationState<Raevyx> state) {
-        state.getController().transitionLength(3);
+        state.getController().transitionLength(ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 
+    public void setupTransitionController(AnimationController<Raevyx> controller) {
+        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
+    }
+
     public PlayState raevyxFastActionPredicate(AnimationState<Raevyx> state) {
-        state.getController().transitionLength(1);
+        state.getController().transitionLength(FAST_ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
     }
 
