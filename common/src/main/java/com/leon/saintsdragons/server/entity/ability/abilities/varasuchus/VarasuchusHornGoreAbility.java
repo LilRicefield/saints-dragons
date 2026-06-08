@@ -16,8 +16,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.List;
-
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 
@@ -78,7 +76,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
                 return java.util.List.of(target);
             }
             return java.util.List.of();

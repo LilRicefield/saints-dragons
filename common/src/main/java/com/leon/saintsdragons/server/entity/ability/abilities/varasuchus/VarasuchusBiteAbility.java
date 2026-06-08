@@ -83,10 +83,10 @@ public class VarasuchusBiteAbility extends DragonAbility<Varasuchus> {
     private void applyHit(Varasuchus dragon, LivingEntity target) {
         float damage = resolveBaseDamage();
         AttributeInstance attackAttr = dragon.getAttribute(Attributes.ATTACK_DAMAGE);
-        if (attackAttr != null && DEFAULT_ATTACK_DAMAGE > 0.0f) {
+        if (attackAttr != null) {
             double value = attackAttr.getValue();
             if (value > 0) {
-                damage *= value / DEFAULT_ATTACK_DAMAGE;
+                damage *= (float) (value / DEFAULT_ATTACK_DAMAGE);
             }
         }
 
@@ -104,7 +104,7 @@ public class VarasuchusBiteAbility extends DragonAbility<Varasuchus> {
 
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, AI_DIRECT_EXTRA_REACH)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
                 return List.of(target);
             }
             return List.of();

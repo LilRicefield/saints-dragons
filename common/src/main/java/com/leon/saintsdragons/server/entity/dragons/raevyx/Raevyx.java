@@ -2,6 +2,7 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.particle.raevyx.*;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -2035,7 +2036,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                                        MobSpawnType reason,
                                        BlockPos pos,
                                        RandomSource random) {
-        if (DragonSpawnRules.isNaturalWildSpawn(reason)
+        if (SaintsDragonsConfig.isRaevyxCustomSpawningEnabled()
+                && DragonSpawnRules.isNaturalWildSpawn(reason)
                 && !DragonSpawnRules.isThundering(level)) {
             return false;
         }

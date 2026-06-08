@@ -1,11 +1,21 @@
 package com.leon.saintsdragons.fabric.config;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.autoconfig.annotation.ConfigEntry;
 
 @Config(name = "saintsdragons/server/spawning")
 public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
+    @ConfigEntry.Category("spawning")
+    public boolean raevyxCustomSpawningEnabled = SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    public boolean stegonautCustomSpawningEnabled = SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    public boolean volitansCustomSpawningEnabled = SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT;
+
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)

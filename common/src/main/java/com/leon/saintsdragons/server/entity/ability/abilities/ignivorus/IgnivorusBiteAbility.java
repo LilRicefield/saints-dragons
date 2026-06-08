@@ -115,7 +115,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
             sendDebugBox(dragon, range);
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
                 return List.of(target);
             }
             return List.of();

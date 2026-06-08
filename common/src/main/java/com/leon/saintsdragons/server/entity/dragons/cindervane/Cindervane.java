@@ -769,10 +769,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.entityData.set(DATA_PITCH_KEY_MODE, enabled);
     }
 
-    public int getTimeFlying() {
-        return timeFlying;
-    }
-
     @Override
     public boolean isGoingUp() {
         return this.entityData.get(DATA_GOING_UP);
@@ -792,18 +788,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public DragonFlightStateEvaluator.VisualState getVisualFlightState(float partialTick) {
         return evaluateVisualFlightState(partialTick, getFlightPitchRadians(partialTick));
-    }
-
-    @Override
-    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
-                                              String abilityName, boolean locked) {
-        if (locked) {
-            return false;
-        }
-
-        return switch (action) {
-            default -> false;
-        };
     }
 
     @Override

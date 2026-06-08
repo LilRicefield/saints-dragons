@@ -88,7 +88,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
 
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target)) {
                 sendDebugBox(wyvern);
                 return target;
             }

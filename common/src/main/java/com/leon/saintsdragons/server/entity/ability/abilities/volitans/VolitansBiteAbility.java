@@ -78,7 +78,7 @@ public class VolitansBiteAbility extends DragonAbility<Volitans> {
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
             sendDebugBox(dragon);
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
                 return List.of(target);
             }
             return List.of();

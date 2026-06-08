@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.nbt.CompoundTag;
@@ -463,7 +464,10 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        return DragonSpawnRules.hasCaveGroundSpawnSpace(level, pos) && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Stegonaut.class);
+        boolean hasSpawnSpace = SaintsDragonsConfig.isStegonautCustomSpawningEnabled()
+                ? DragonSpawnRules.hasCaveGroundSpawnSpace(level, pos)
+                : DragonSpawnRules.hasDryGroundSpawnSpace(level, pos);
+        return hasSpawnSpace && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Stegonaut.class);
     }
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {

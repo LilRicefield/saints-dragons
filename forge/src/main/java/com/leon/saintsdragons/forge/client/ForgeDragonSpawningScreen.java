@@ -121,6 +121,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.raevyx")));
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.raevyx")));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.custom_spawning"),
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::get,
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::set,
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::save));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT::set,
@@ -138,6 +142,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
     private void addStegonautEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.stegonaut")));
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.custom_spawning"),
+                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::get,
+                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::set,
+                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::save));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT::set,
@@ -231,6 +239,10 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
     private void addVolitansEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.volitans")));
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.custom_spawning"),
+                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::get,
+                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::set,
+                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::save));
         entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
                 SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT::get,
                 SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT::set,
@@ -248,17 +260,21 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
     private void resetSection() {
         switch (section) {
             case RAEVYX -> {
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED.set(SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT);
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.set(SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.set(SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.set(SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.save();
             }
             case STEGONAUT -> {
+                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED.set(SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT);
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.set(SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.set(SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.set(SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.save();
@@ -300,9 +316,11 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.save();
             }
             case VOLITANS -> {
+                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.set(SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT);
                 SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.set(SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.set(SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.set(SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.save();

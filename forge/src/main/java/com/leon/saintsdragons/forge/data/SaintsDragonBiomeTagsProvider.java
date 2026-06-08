@@ -98,6 +98,16 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
         tag(ModTags.Biomes.HAS_STEGONAUT)
                 .add(Biomes.LUSH_CAVES);
 
+        tag(ModTags.Biomes.HAS_STEGONAUT_FALLBACK)
+                .addOptionalTag(rl("c", "jungle"))
+                .addOptionalTag(rl("c", "plains"))
+                .addOptionalTag(rl("forge", "is_plains"))
+                .addOptionalTag(rl("c", "is_jungle"))
+                .addOptionalTag(rl("forge", "is_jungle"))
+                .add(Biomes.JUNGLE)
+                .add(Biomes.SPARSE_JUNGLE)
+                .add(Biomes.FLOWER_FOREST);
+
         addVarasuchusBiomes(ModTags.Biomes.HAS_VARASUCHUS);
         addVarasuchusBiomes(ModTags.Biomes.HAS_VARASUCHUS_EGGS);
 
@@ -114,6 +124,14 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.LUKEWARM_OCEAN)
                 .add(Biomes.DEEP_LUKEWARM_OCEAN)
                 .add(Biomes.WARM_OCEAN);
+
+        tag(ModTags.Biomes.HAS_VOLITANS_FALLBACK)
+                .addOptionalTag(rl("c", "beach"))
+                .addOptionalTag(rl("forge", "is_swamp"))
+                .addOptionalTag(rl("forge", "is_plains"))
+                .addOptionalTag(rl("c", "plains"))
+                .add(Biomes.BEACH)
+                .add(Biomes.STONY_SHORE);
 
         tag(ModTags.Biomes.HAS_MOOP)
                 .addOptionalTag(rl("c", "river"))

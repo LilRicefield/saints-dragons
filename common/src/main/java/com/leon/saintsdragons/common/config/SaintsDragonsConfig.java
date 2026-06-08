@@ -38,6 +38,9 @@ public final class SaintsDragonsConfig {
     public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 4;
     public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 4;
     public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 4;
+    public static final boolean RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
@@ -81,6 +84,9 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
 
+    public static ConfigHelper.BooleanValue RAEVYX_CUSTOM_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue STEGONAUT_CUSTOM_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue VOLITANS_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
     public static ConfigHelper.BooleanValue BARREL_ROLL_ENABLED;
@@ -117,11 +123,13 @@ public final class SaintsDragonsConfig {
         builder.comment("Raevyx additionally requires a thunderstorm for natural/chunk-generation spawning.");
 
         builder.comment("Raevyx spawn settings");
+        RAEVYX_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("raevyxCustomSpawningEnabled", RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT);
         RAEVYX_SPAWN_WEIGHT = builder.defineInt("raevyxSpawnWeight", RAEVYX_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         RAEVYX_MIN_GROUP_SIZE = builder.defineInt("raevyxMinGroupSize", RAEVYX_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         RAEVYX_MAX_GROUP_SIZE = builder.defineInt("raevyxMaxGroupSize", RAEVYX_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Stegonaut spawn settings");
+        STEGONAUT_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("stegonautCustomSpawningEnabled", STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT);
         STEGONAUT_SPAWN_WEIGHT = builder.defineInt("stegonautSpawnWeight", STEGONAUT_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         STEGONAUT_MIN_GROUP_SIZE = builder.defineInt("stegonautMinGroupSize", STEGONAUT_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = builder.defineInt("stegonautMaxGroupSize", STEGONAUT_MAX_GROUP_SIZE_DEFAULT, 1, 10);
@@ -146,6 +154,7 @@ public final class SaintsDragonsConfig {
         IGNIVORUS_MAX_GROUP_SIZE = builder.defineInt("ignivorusMaxGroupSize", IGNIVORUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Volitans spawn settings (custom underwater spawner for ocean/wetland habitats)");
+        VOLITANS_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("volitansCustomSpawningEnabled", VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT);
         VOLITANS_SPAWN_WEIGHT = builder.defineInt("volitansSpawnWeight", VOLITANS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         VOLITANS_MIN_GROUP_SIZE = builder.defineInt("volitansMinGroupSize", VOLITANS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         VOLITANS_MAX_GROUP_SIZE = builder.defineInt("volitansMaxGroupSize", VOLITANS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
@@ -205,6 +214,18 @@ public final class SaintsDragonsConfig {
 
     public static boolean isWikiReminderEnabled() {
         return WIKI_REMINDER_ENABLED == null || WIKI_REMINDER_ENABLED.get();
+    }
+
+    public static boolean isRaevyxCustomSpawningEnabled() {
+        return RAEVYX_CUSTOM_SPAWNING_ENABLED == null || RAEVYX_CUSTOM_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isStegonautCustomSpawningEnabled() {
+        return STEGONAUT_CUSTOM_SPAWNING_ENABLED == null || STEGONAUT_CUSTOM_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isVolitansCustomSpawningEnabled() {
+        return VOLITANS_CUSTOM_SPAWNING_ENABLED == null || VOLITANS_CUSTOM_SPAWNING_ENABLED.get();
     }
 
     private SaintsDragonsConfig() {

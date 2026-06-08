@@ -683,6 +683,9 @@
 "text.autoconfig.saintsdragonsspawning.option.reactiveTerrainClearingOnDamageTamed.@Tooltip": "允许已驯服的龙也应用此配置防被卡住（默认关闭以防止意外破坏基地）",
 
   "text.autoconfig.saintsdragonsspawning.category.taming": "驯龙概率",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxCustomSpawningEnabled": "殷雷龙自定义生成",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautCustomSpawningEnabled": "坚甲龙自定义生成",
+  "text.autoconfig.saintsdragonsspawning.option.volitansCustomSpawningEnabled": "蓑鲉龙自定义生成",
 
   "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance": "殷雷龙基础驯服概率",
   "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance.@Tooltip[0]": "使用普通食物时的驯服概率（百分比）",
@@ -714,6 +717,7 @@
   "config.saintsdragons.spawn.varasuchus": "蜷鳄龙",
   "config.saintsdragons.spawn.ignivorus": "噬焰龙",
   "config.saintsdragons.spawn.volitans": "蓑鲉龙",
+  "config.saintsdragons.spawn.custom_spawning": "启用自定义生成",
   "config.saintsdragons.spawn.weight": "生成权重",
   "config.saintsdragons.spawn.weight.tooltip": "群系的生物生成池中相对权重。最终稀有度仍然受每条龙的生成检查和当地密度规则的限制。",
   "config.saintsdragons.spawn.min_group": "最小群组规模",

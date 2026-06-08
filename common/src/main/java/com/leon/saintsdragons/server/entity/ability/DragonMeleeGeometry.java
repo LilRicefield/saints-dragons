@@ -88,42 +88,6 @@ public final class DragonMeleeGeometry {
         );
     }
 
-    public static List<LivingEntity> findForwardTargets(DragonEntity dragon,
-                                                        double range,
-                                                        double horizontalInflate,
-                                                        double verticalInflate,
-                                                        double angleDeg,
-                                                        double closeHitRange,
-                                                        double forwardOffset,
-                                                        Predicate<LivingEntity> filter) {
-        return findForwardTargets(
-                forwardAttack(dragon).offset(forwardOffset),
-                dragon,
-                range,
-                horizontalInflate,
-                verticalInflate,
-                angleDeg,
-                closeHitRange,
-                filter
-        );
-    }
-
-    public static List<LivingEntity> findSweepTargets(DragonEntity dragon,
-                                                      double range,
-                                                      double horizontalInflate,
-                                                      double verticalInflate,
-                                                      double forwardOffset,
-                                                      Predicate<LivingEntity> filter) {
-        return findSweepTargets(
-                forwardAttack(dragon).offset(forwardOffset),
-                dragon,
-                range,
-                horizontalInflate,
-                verticalInflate,
-                filter
-        );
-    }
-
     public static List<LivingEntity> findBodySweepTargets(DragonEntity dragon,
                                                           double range,
                                                           double horizontalInflate,
@@ -172,7 +136,7 @@ public final class DragonMeleeGeometry {
                 .toList();
     }
 
-    public static boolean isDirectAiTargetValid(DragonEntity dragon, LivingEntity target, double extraReach) {
+    public static boolean isDirectAiTargetValid(DragonEntity dragon, LivingEntity target) {
         if (target == null
                 || !target.isAlive()
                 || !target.attackable()

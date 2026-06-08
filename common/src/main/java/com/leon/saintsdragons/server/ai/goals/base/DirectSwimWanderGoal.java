@@ -181,13 +181,6 @@ public class DirectSwimWanderGoal extends Goal {
             double collisionHop = 0.32D;
             double upwardAssist = 0.18D;
             double upwardAssistThreshold = 0.5D;
-            boolean ignivorus = mob.getType().toString().contains("ignivorus");
-            if (ignivorus) {
-                collisionHop = 0.58D;
-                upwardAssist = 0.36D;
-                upwardAssistThreshold = 0.18D;
-            }
-
             double yDiff = targetPos != null ? (targetPos.y - mob.getY()) : 0.0D;
             if (mob.horizontalCollision) {
                 vy = Math.max(vy, collisionHop);

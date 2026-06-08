@@ -28,7 +28,7 @@ loom {
             data()
             setConfigName("Forge Data")
             ideConfigGenerated(true)
-            runDir("../run")
+            runDir("../run-data")
             programArgs(
                     "--mod", project.rootProject.mod_id.toString(),
                     "--all",

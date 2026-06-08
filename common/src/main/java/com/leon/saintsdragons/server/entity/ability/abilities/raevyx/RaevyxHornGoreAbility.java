@@ -36,7 +36,6 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
     };
 
     private final Set<Integer> hitIdsThisUse = new HashSet<>();
-    private boolean playedSoundThisUse = false;
     private boolean sentDebugThisUse = false;
 
     public RaevyxHornGoreAbility(DragonAbilityType<Raevyx, RaevyxHornGoreAbility> type, Raevyx user) {
@@ -53,7 +52,6 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
                 getUser().getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_HORNGORE.get(), 1.3f, pitch, 19);
             }
             hitIdsThisUse.clear();
-            playedSoundThisUse = false;
             sentDebugThisUse = false;
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             hitIdsThisUse.clear();
@@ -87,7 +85,7 @@ public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
         if (!ridden) {
             LivingEntity target = wyvern.getTarget();
             sendDebugBox(wyvern, range);
-            if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target, 2.0D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(wyvern, target)) {
                 return List.of(target);
             }
             return List.of();

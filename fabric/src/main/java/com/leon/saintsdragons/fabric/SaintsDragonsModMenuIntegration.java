@@ -312,6 +312,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             if (!remoteServer) {
                 holder.save();
                 serverHolder.save();
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED.save();
+                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED.save();
+                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
                 SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
                 SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
@@ -335,52 +338,62 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.raevyxSpawnWeight, value -> config.raevyxSpawnWeight = value,
                 () -> config.raevyxMinGroupSize, value -> config.raevyxMinGroupSize = value,
                 () -> config.raevyxMaxGroupSize, value -> config.raevyxMaxGroupSize = value,
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::set,
+                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT,
                 null, null, true,
                 1, 1, 2);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.stegonaut"),
-                () -> config.stegonautSpawnWeight, value -> config.stegonautSpawnWeight = value,
-                () -> config.stegonautMinGroupSize, value -> config.stegonautMinGroupSize = value,
-                () -> config.stegonautMaxGroupSize, value -> config.stegonautMaxGroupSize = value,
-                null, null, true,
-                5, 1, 4);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.stegonaut"),
+                    () -> config.stegonautSpawnWeight, value -> config.stegonautSpawnWeight = value,
+                    () -> config.stegonautMinGroupSize, value -> config.stegonautMinGroupSize = value,
+                    () -> config.stegonautMaxGroupSize, value -> config.stegonautMaxGroupSize = value,
+                    SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::set,
+                    SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT,
+                    null, null, true,
+                    5, 1, 4);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.cindervane"),
-                () -> config.cindervaneSpawnWeight, value -> config.cindervaneSpawnWeight = value,
-                () -> config.cindervaneMinGroupSize, value -> config.cindervaneMinGroupSize = value,
-                () -> config.cindervaneMaxGroupSize, value -> config.cindervaneMaxGroupSize = value,
-                () -> config.cindervaneEggBlockWorldgen, value -> config.cindervaneEggBlockWorldgen = value, true,
-                3, 1, 3);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.cindervane"),
+                    () -> config.cindervaneSpawnWeight, value -> config.cindervaneSpawnWeight = value,
+                    () -> config.cindervaneMinGroupSize, value -> config.cindervaneMinGroupSize = value,
+                    () -> config.cindervaneMaxGroupSize, value -> config.cindervaneMaxGroupSize = value,
+                    null, null, true,
+                    () -> config.cindervaneEggBlockWorldgen, value -> config.cindervaneEggBlockWorldgen = value, true,
+                    3, 1, 3);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.varasuchus"),
-                () -> config.varasuchusSpawnWeight, value -> config.varasuchusSpawnWeight = value,
-                () -> config.varasuchusMinGroupSize, value -> config.varasuchusMinGroupSize = value,
-                () -> config.varasuchusMaxGroupSize, value -> config.varasuchusMaxGroupSize = value,
-                () -> config.varasuchusEggBlockWorldgen, value -> config.varasuchusEggBlockWorldgen = value, true,
-                2, 1, 2);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.varasuchus"),
+                    () -> config.varasuchusSpawnWeight, value -> config.varasuchusSpawnWeight = value,
+                    () -> config.varasuchusMinGroupSize, value -> config.varasuchusMinGroupSize = value,
+                    () -> config.varasuchusMaxGroupSize, value -> config.varasuchusMaxGroupSize = value,
+                    null, null, true,
+                    () -> config.varasuchusEggBlockWorldgen, value -> config.varasuchusEggBlockWorldgen = value, true,
+                    2, 1, 2);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.ignivorus"),
-                () -> config.ignivorusSpawnWeight, value -> config.ignivorusSpawnWeight = value,
-                () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,
-                () -> config.ignivorusMaxGroupSize, value -> config.ignivorusMaxGroupSize = value,
-                null, null, true,
-                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT,
-                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT,
-                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.ignivorus"),
+                    () -> config.ignivorusSpawnWeight, value -> config.ignivorusSpawnWeight = value,
+                    () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,
+                    () -> config.ignivorusMaxGroupSize, value -> config.ignivorusMaxGroupSize = value,
+                    null, null, true,
+                    null, null, true,
+                    SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT,
+                    SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT,
+                    SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.volitans"),
-                () -> config.volitansSpawnWeight, value -> config.volitansSpawnWeight = value,
-                () -> config.volitansMinGroupSize, value -> config.volitansMinGroupSize = value,
-                () -> config.volitansMaxGroupSize, value -> config.volitansMaxGroupSize = value,
-                null, null, false,
-                1, 1, 1);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.volitans"),
+                    () -> config.volitansSpawnWeight, value -> config.volitansSpawnWeight = value,
+                    () -> config.volitansMinGroupSize, value -> config.volitansMinGroupSize = value,
+                    () -> config.volitansMaxGroupSize, value -> config.volitansMaxGroupSize = value,
+                    SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::set,
+                    SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT,
+                    null, null, false,
+                    1, 1, 1);
 
-        addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.nulljaw"),
-                () -> config.nulljawSpawnWeight, value -> config.nulljawSpawnWeight = value,
-                () -> config.nulljawMinGroupSize, value -> config.nulljawMinGroupSize = value,
-                () -> config.nulljawMaxGroupSize, value -> config.nulljawMaxGroupSize = value,
-                null, null, false,
-                4, 4, 4);
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.nulljaw"),
+                    () -> config.nulljawSpawnWeight, value -> config.nulljawSpawnWeight = value,
+                    () -> config.nulljawMinGroupSize, value -> config.nulljawMinGroupSize = value,
+                    () -> config.nulljawMaxGroupSize, value -> config.nulljawMaxGroupSize = value,
+                    null, null, true,
+                    null, null, false,
+                    4, 4, 4);
 
             ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
             addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
@@ -503,6 +516,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                  IntConsumer minSetter,
                                  IntSupplier maxGetter,
                                  IntConsumer maxSetter,
+                                 BooleanSupplier customSpawningGetter,
+                                 Consumer<Boolean> customSpawningSetter,
+                                 boolean defaultCustomSpawning,
                                  BooleanSupplier eggBlockWorldgenGetter,
                                  Consumer<Boolean> eggBlockWorldgenSetter,
                                  boolean defaultEggBlockWorldgen,
@@ -510,6 +526,14 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                  int defaultMin,
                                  int defaultMax) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        if (customSpawningGetter != null && customSpawningSetter != null) {
+            entries.add(entryBuilder.startBooleanToggle(
+                            Component.translatable("config.saintsdragons.spawn.custom_spawning"),
+                            customSpawningGetter.getAsBoolean())
+                    .setDefaultValue(defaultCustomSpawning)
+                    .setSaveConsumer(customSpawningSetter::accept)
+                    .build());
+        }
         entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.spawn.weight"), weightGetter.getAsInt())
                 .setDefaultValue(defaultWeight)
                 .setMin(0)

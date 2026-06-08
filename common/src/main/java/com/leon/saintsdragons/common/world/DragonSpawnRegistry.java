@@ -29,6 +29,24 @@ public final class DragonSpawnRegistry {
         List<DragonSpawnEntry> entries = new ArrayList<>();
 
         add(entries,
+                SaintsDragonsCommon.rl("raevyx"),
+                ModEntities.RAEVYX,
+                ModTags.Biomes.HAS_RAEVYX,
+                MobCategory.CREATURE,
+                () -> SaintsDragonsConfig.isRaevyxCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get());
+
+        add(entries,
+                SaintsDragonsCommon.rl("stegonaut"),
+                ModEntities.STEGONAUT,
+                ModTags.Biomes.HAS_STEGONAUT_FALLBACK,
+                MobCategory.CREATURE,
+                () -> SaintsDragonsConfig.isStegonautCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get());
+
+        add(entries,
                 SaintsDragonsCommon.rl("cindervane"),
                 ModEntities.CINDERVANE,
                 ModTags.Biomes.HAS_CINDERVANE,
@@ -54,6 +72,15 @@ public final class DragonSpawnRegistry {
                 () -> SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get());
+
+        add(entries,
+                SaintsDragonsCommon.rl("volitans"),
+                ModEntities.VOLITANS,
+                ModTags.Biomes.HAS_VOLITANS_FALLBACK,
+                MobCategory.CREATURE,
+                () -> SaintsDragonsConfig.isVolitansCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.get());
 
         add(entries,
                 SaintsDragonsCommon.rl("nulljaw"),

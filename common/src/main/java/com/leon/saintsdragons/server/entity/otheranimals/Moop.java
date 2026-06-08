@@ -1,8 +1,6 @@
-//pee pee poo poo meep meep moop moop :>
 package com.leon.saintsdragons.server.entity.otheranimals;
 
 import com.leon.saintsdragons.common.registry.ModItems;
-import com.leon.saintsdragons.server.ai.goals.base.DirectSwimWanderGoal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
@@ -13,6 +11,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
+import net.minecraft.world.entity.ai.goal.RandomSwimmingGoal;
 import net.minecraft.world.entity.animal.AbstractFish;
 import net.minecraft.world.entity.animal.WaterAnimal;
 import net.minecraft.world.damagesource.DamageSource;
@@ -20,16 +19,17 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Moop extends AbstractFish implements GeoEntity {
+    private static final String MOVEMENT_CONTROLLER = "movement";
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.moop.idle");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.moop.swim");
     private static final RawAnimation SWIM_FAST = RawAnimation.begin().thenLoop("animation.moop.swim_fast");
@@ -57,13 +57,8 @@ public class Moop extends AbstractFish implements GeoEntity {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DirectSwimWanderGoal(this, 15.0F, 0.10, 30));
+        this.goalSelector.addGoal(0, new RandomSwimmingGoal(this, 1.0D, 30));
         this.goalSelector.addGoal(2, new PanicGoal(this, 1.25F));
-    }
-
-    @Override
-    public void triggerAnim(@Nullable String controllerName, String animName) {
-        GeoEntity.super.triggerAnim(controllerName, animName);
     }
 
     @Override
@@ -86,27 +81,29 @@ public class Moop extends AbstractFish implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "movement", 4, state -> {
-            if (!isInWaterOrBubble()) {
-                state.setAndContinue(ON_LAND);
-                return PlayState.CONTINUE;
-            }
-
-            double speed = getDeltaMovement().horizontalDistanceSqr();
-            if (speed > 0.01D) {
-                state.setAndContinue(SWIM_FAST);
-            } else if (speed > 0.0004D) {
-                state.setAndContinue(SWIM);
-            } else {
-                state.setAndContinue(IDLE);
-            }
-
-            return PlayState.CONTINUE;
-        }));
+        controllers.add(new AnimationController<>(this, MOVEMENT_CONTROLLER, 4, this::movementPredicate));
     }
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return animationCache;
+    }
+
+    private PlayState movementPredicate(AnimationState<Moop> state) {
+        if (!isInWaterOrBubble()) {
+            state.setAndContinue(ON_LAND);
+            return PlayState.CONTINUE;
+        }
+
+        double speed = getDeltaMovement().horizontalDistanceSqr();
+        if (speed > 0.01D) {
+            state.setAndContinue(SWIM_FAST);
+        } else if (speed > 0.0004D) {
+            state.setAndContinue(SWIM);
+        } else {
+            state.setAndContinue(IDLE);
+        }
+
+        return PlayState.CONTINUE;
     }
 }

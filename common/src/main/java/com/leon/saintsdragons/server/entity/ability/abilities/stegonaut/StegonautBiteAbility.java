@@ -77,7 +77,7 @@ public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
 
         if (dragon.getControllingPassenger() == null) {
             LivingEntity target = dragon.getTarget();
-            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target, 1.5D)) {
+            if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
                 return List.of(target);
             }
             return List.of();

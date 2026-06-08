@@ -1,8 +1,11 @@
 package com.leon.saintsdragons.client.ui.codex;
 
+import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.ImageButton;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
@@ -23,7 +26,7 @@ public class CodexAllyPanel {
         this.removeIcon = removeIcon;
     }
 
-    public void initWidgets(Consumer<net.minecraft.client.gui.components.AbstractWidget> addWidget, Font font,
+    public void initWidgets(Consumer<AbstractWidget> addWidget, Font font,
                             int leftPos, int topPos, Consumer<String> addCallback, Consumer<String> removeCallback) {
         int inputX = leftPos + 233;
         int inputY = topPos + 17;
@@ -47,24 +50,24 @@ public class CodexAllyPanel {
         int iconButtonX = inputX + inputWidth + 8;
 
         addAllyButton = new ImageButton(
-                iconButtonX - 36, inputY + 18, 14, 14,
+                iconButtonX - 36, inputY + 18, 16, 16,
                 0, 0, 0,
                 addIcon,
-                14, 14,
+                16, 16,
                 button -> addAllyFromInput(addCallback)
         );
-        addAllyButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+        addAllyButton.setTooltip(Tooltip.create(
                 Component.translatable("saintsdragons.gui.draconic_codex.ally.add")));
         addWidget.accept(addAllyButton);
 
         removeAllyButton = new ImageButton(
-                iconButtonX - 19, inputY + 18, 14, 14,
+                iconButtonX - 19, inputY + 18, 16, 16,
                 0, 0, 0,
                 removeIcon,
-                14, 14,
+                16, 16,
                 button -> removeAllyFromInput(removeCallback)
         );
-        removeAllyButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+        removeAllyButton.setTooltip(Tooltip.create(
                 Component.translatable("saintsdragons.gui.draconic_codex.ally.remove")));
         addWidget.accept(removeAllyButton);
     }
@@ -101,7 +104,7 @@ public class CodexAllyPanel {
         String allyCountText = Component.translatable(
                 "saintsdragons.gui.draconic_codex.ally.count",
                 allyList.size(),
-                com.leon.saintsdragons.server.entity.handler.DragonAllyManager.getMaxAlliesStatic()
+                DragonAllyManager.getMaxAlliesStatic()
         ).getString();
         guiGraphics.drawString(font, allyCountText, contentX, contentY, CodexLayout.TEXT_COLOR, false);
 

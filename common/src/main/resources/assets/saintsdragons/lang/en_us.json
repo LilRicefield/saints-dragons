@@ -643,6 +643,9 @@
   "text.autoconfig.saintsdragonsspawning.option.reactiveTerrainClearingOnDamageTamed.@Tooltip": "Allow owned dragons to use reactive terrain clearing too (off by default to prevent accidental base damage)",
 
   "text.autoconfig.saintsdragonsspawning.category.taming": "Dragon Taming",
+  "text.autoconfig.saintsdragonsspawning.option.raevyxCustomSpawningEnabled": "Raevyx Custom Spawning",
+  "text.autoconfig.saintsdragonsspawning.option.stegonautCustomSpawningEnabled": "Stegonaut Custom Spawning",
+  "text.autoconfig.saintsdragonsspawning.option.volitansCustomSpawningEnabled": "Volitans Custom Spawning",
 
   "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance": "Raevyx Base Taming Chance %",
   "text.autoconfig.saintsdragonsspawning.option.raevyxBaseTamingChance.@Tooltip[0]": "Taming chance with regular food, as a percent",
@@ -675,6 +678,7 @@
   "config.saintsdragons.spawn.varasuchus": "Varasuchus",
   "config.saintsdragons.spawn.ignivorus": "Ignivorus",
   "config.saintsdragons.spawn.volitans": "Volitans",
+  "config.saintsdragons.spawn.custom_spawning": "Enable Custom Spawning",
   "config.saintsdragons.spawn.weight": "Spawn Weight",
   "config.saintsdragons.spawn.weight.tooltip": "Relative weight within the biome's CREATURE spawn pool. Final rarity is still limited by each dragon's spawn checks and local density rules.",
   "config.saintsdragons.spawn.min_group": "Min Group Size",
