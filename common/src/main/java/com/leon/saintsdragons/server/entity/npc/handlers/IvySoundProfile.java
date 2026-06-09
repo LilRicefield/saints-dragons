@@ -4,7 +4,6 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.HumanSoundProfile;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
@@ -17,6 +16,13 @@ public class IvySoundProfile implements HumanSoundProfile {
             case "ivy_trade_start" -> playTradeStart(handler, volume, pitch);
             case "ivy_trade_stop" -> playTradeStop(handler, volume, pitch);
             case "ivy_reaction_to_egg" -> playReactionToEgg(handler, volume, pitch);
+            case "ivy_dodge" -> playCustomSound(handler, "ivy_dodge", ModSounds.IVY_DODGE.get(), volume, pitch, 5);
+            case "ivy_left_jab" -> playCustomSound(handler, "ivy_left_jab", ModSounds.IVY_LEFT_JAB.get(), volume, pitch, 3);
+            case "ivy_right_hook" -> playCustomSound(handler, "ivy_right_hook", ModSounds.IVY_RIGHT_HOOK.get(), volume, pitch, 4);
+            case "ivy_jab_jab_hook" -> playCustomSound(handler, "ivy_jab_jab_hook", ModSounds.IVY_JAB_JAB_HOOK.get(), volume, pitch, 5);
+            case "ivy_left_jab_right_cross" -> playCustomSound(handler, "ivy_left_jab_right_cross", ModSounds.IVY_LEFT_JAB_RIGHT_CROSS.get(), volume, pitch, 5);
+            case "ivy_right_hook_uppercut" -> playCustomSound(handler, "ivy_right_hook_uppercut", ModSounds.IVY_RIGHT_HOOK_UPPERCUT.get(), volume, pitch, 5);
+            case "ivy_dodge_liver_shot" -> playCustomSound(handler, "ivy_dodge_liver_shot", ModSounds.IVY_DODGE_LIVER_SHOT.get(), volume, pitch, 5);
             default -> false;
         };
     }

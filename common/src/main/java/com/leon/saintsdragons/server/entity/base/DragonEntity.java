@@ -22,7 +22,7 @@ import com.leon.saintsdragons.server.entity.component.DragonRecoveryComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSitComponent;
 import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
-import com.leon.saintsdragons.server.entity.controller.BodyControl;
+import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
 import com.leon.saintsdragons.server.entity.controller.DragonLookControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
@@ -163,7 +163,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private Player killDataAttackingPlayer;
     private boolean isRespawning = false;
     public int skipRespawnTicks = 0;
-    private BodyControl dragonBodyControl;
+    private DragonBodyControl dragonBodyControl;
     private boolean boundInBinder = false;
     private boolean growthStunted = false;
     @Nullable
@@ -382,7 +382,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     protected @NotNull BodyRotationControl createBodyControl() {
-        this.dragonBodyControl = new BodyControl(this, getBodyTurnSpeed());
+        this.dragonBodyControl = new DragonBodyControl(this, getBodyTurnSpeed());
         return this.dragonBodyControl;
     }
 

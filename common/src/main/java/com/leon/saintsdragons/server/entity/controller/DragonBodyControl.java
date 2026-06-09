@@ -5,7 +5,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 
-public class BodyControl extends BodyRotationControl {
+public class DragonBodyControl extends BodyRotationControl {
     private static final double MOVING_EPSILON_SQ = 1.0E-4;
     private static final int HISTORY_SIZE = 10;
     private final Mob entity;
@@ -18,12 +18,12 @@ public class BodyControl extends BodyRotationControl {
     private final float bodyLagStillSpeed;
     private final float bodyMaxDelta;
 
-    public BodyControl(Mob entity, float turnSpeed) {
+    public DragonBodyControl(Mob entity, float turnSpeed) {
         this(entity, turnSpeed, 50.0f, 0.3f, 0.10f, 45.0f);
     }
 
-    public BodyControl(Mob entity, float turnSpeed, float maxHeadBodyDiff,
-                       float headLagSpeed, float bodyLagStillSpeed, float bodyMaxDelta) {
+    public DragonBodyControl(Mob entity, float turnSpeed, float maxHeadBodyDiff,
+                             float headLagSpeed, float bodyLagStillSpeed, float bodyMaxDelta) {
         super(entity);
         this.entity = entity;
         this.turnSpeed = turnSpeed;
@@ -136,7 +136,9 @@ public class BodyControl extends BodyRotationControl {
     private void freezeSeatedRotation() {
         float yaw = this.entity.getYRot();
         this.entity.yBodyRot = yaw;
+        this.entity.yBodyRotO = yaw;
         this.entity.yHeadRot = yaw;
+        this.entity.yHeadRotO = yaw;
         this.targetYawHead = yaw;
     }
 }

@@ -29,6 +29,76 @@
       }
     ]
   },
+  "ivy_dodge": {
+    "subtitle": "subtitles.saintsdragons.ivy_dodge",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_dodge",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_left_jab": {
+    "subtitle": "subtitles.saintsdragons.ivy_left_jab",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_left_jab",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_right_hook": {
+    "subtitle": "subtitles.saintsdragons.ivy_right_hook",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_right_hook",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_jab_jab_hook": {
+    "subtitle": "subtitles.saintsdragons.ivy_jab_jab_hook",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_jab_jab_hook",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_left_jab_right_cross": {
+    "subtitle": "subtitles.saintsdragons.ivy_left_jab_right_cross",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_left_jab_right_cross",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_right_hook_uppercut": {
+    "subtitle": "subtitles.saintsdragons.ivy_right_hook_uppercut",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_right_hook_uppercut",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_dodge_liver_shot": {
+    "subtitle": "subtitles.saintsdragons.ivy_dodge_liver_shot",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_dodge_liver_shot",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "bleeding_bolt": {
     "subtitle": "subtitles.saintsdragons.bleeding_bolt",
     "sounds": [

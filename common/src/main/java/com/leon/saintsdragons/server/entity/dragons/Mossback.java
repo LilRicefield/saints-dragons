@@ -4,7 +4,7 @@ import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.entity.controller.BodyControl;
+import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
 import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -115,7 +115,7 @@ public class Mossback extends Animal implements GeoEntity {
 
     @Override
     protected @NotNull BodyRotationControl createBodyControl() {
-        return new BodyControl(this, 0.7F);
+        return new DragonBodyControl(this, 0.7F);
     }
 
     @Override
