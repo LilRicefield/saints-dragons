@@ -2964,8 +2964,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected boolean shouldStaySeatedAfterWake() {
-        return !isInWaterOrBubble() && (getCommand() == 1 || isOrderedToSit());
+    protected boolean shouldStaySeatedAfterWake(int sleepCommandSnapshot) {
+        return !isInWaterOrBubble() && sleepCommandSnapshot == 1;
     }
 
     @Override
@@ -3029,10 +3029,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     protected void onSleepLoopAnimation() {
-        if (isInWaterOrBubble()) {
-            triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "sleep_underwater");
-        } else {
-            triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
+        if (!isInWaterOrBubble()) {
             setOrderedToSit(true);
         }
     }

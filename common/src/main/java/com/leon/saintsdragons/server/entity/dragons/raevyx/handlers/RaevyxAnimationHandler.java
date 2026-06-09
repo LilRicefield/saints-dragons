@@ -77,10 +77,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
 
-    public void triggerSleepAnimation() {
-        wyvern.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
-    }
-
     public void triggerWakeUpAnimation() {
         wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }

@@ -577,8 +577,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
-    protected boolean shouldStaySeatedAfterWake() {
-        return shouldStaySeatedCommand();
+    protected boolean shouldStaySeatedAfterWake(int sleepCommandSnapshot) {
+        return isTame() && sleepCommandSnapshot == 1;
     }
 
     @Override
@@ -608,7 +608,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected void onSleepLoopAnimation() {
-        animationController.triggerSleepAnimation();
     }
 
     @Override

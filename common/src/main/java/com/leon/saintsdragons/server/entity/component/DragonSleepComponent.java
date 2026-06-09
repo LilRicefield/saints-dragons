@@ -481,7 +481,7 @@ public final class DragonSleepComponent {
 
             if (dragon.sleepUseSitUpAfterWake()) {
                 if (!sleepSitUpTriggered) {
-                    if (dragon.sleepShouldStaySeatedAfterWake()) {
+                    if (dragon.sleepShouldStaySeatedAfterWake(sleepCommandSnapshot)) {
                         sleeping = false;
                         sleepSitUpTriggered = false;
                         sleepingExiting = false;

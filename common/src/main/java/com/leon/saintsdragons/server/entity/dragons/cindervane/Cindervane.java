@@ -1825,7 +1825,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void onSleepLoopAnimation() {
-        animationHandler.triggerSleepAnimation();
         setOrderedToSit(true);
     }
 

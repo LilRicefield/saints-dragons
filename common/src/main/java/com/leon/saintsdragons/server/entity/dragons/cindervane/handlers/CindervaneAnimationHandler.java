@@ -103,10 +103,6 @@ public class CindervaneAnimationHandler {
         amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
 
-    public void triggerSleepAnimation() {
-        amphithere.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
-    }
-
     public void triggerWakeUpAnimation() {
         amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }

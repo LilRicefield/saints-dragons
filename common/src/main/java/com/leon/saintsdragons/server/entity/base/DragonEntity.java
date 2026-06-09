@@ -1458,8 +1458,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return this.isOrderedToSit() || this.getSitProgress() >= this.maxSitTicks();
     }
 
-    protected boolean shouldStaySeatedAfterWake() {
-        return this.getCommand() == 1 || this.isOrderedToSit();
+    protected boolean shouldStaySeatedAfterWake(int sleepCommandSnapshot) {
+        return sleepCommandSnapshot == 1;
     }
 
     protected void onSleepLockCommand(int snapshot) {
@@ -1571,8 +1571,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return isAlreadySeatedForSleep();
     }
 
-    public final boolean sleepShouldStaySeatedAfterWake() {
-        return shouldStaySeatedAfterWake();
+    public final boolean sleepShouldStaySeatedAfterWake(int sleepCommandSnapshot) {
+        return shouldStaySeatedAfterWake(sleepCommandSnapshot);
     }
 
     public final void sleepOnLockCommand(int snapshot) {

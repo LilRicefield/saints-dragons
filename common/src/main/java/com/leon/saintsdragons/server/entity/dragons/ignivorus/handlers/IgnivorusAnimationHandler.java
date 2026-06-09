@@ -65,10 +65,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
 
-    public void triggerSleepAnimation() {
-        dragon.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
-    }
-
     public void triggerWakeUpAnimation() {
         dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }

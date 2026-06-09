@@ -1917,7 +1917,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     protected void onSleepLoopAnimation() {
-        animationHandler.triggerSleepAnimation();
     }
 
     @Override

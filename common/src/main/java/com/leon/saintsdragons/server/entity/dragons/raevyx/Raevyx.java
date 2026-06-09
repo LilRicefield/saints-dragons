@@ -2478,8 +2478,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     @Override
-    protected boolean shouldStaySeatedAfterWake() {
-        return shouldStaySeatedCommand();
+    protected boolean shouldStaySeatedAfterWake(int sleepCommandSnapshot) {
+        return isTame() && sleepCommandSnapshot == 1;
     }
 
     @Override
@@ -2529,7 +2529,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onSleepLoopAnimation() {
-        animationHandler.triggerSleepAnimation();
     }
 
     @Override

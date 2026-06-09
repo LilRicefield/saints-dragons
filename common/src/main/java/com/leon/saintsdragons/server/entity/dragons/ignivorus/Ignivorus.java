@@ -1518,7 +1518,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onSleepLoopAnimation() {
-        animationHandler.triggerSleepAnimation();
         setOrderedToSit(true);
         setGroundMoveStateFromAI(0);
     }

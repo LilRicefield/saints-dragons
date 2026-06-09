@@ -157,9 +157,6 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     public void triggerFallAsleepAnimation() {
         drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
     }
-    public void triggerSleepAnimation() {
-        drake.triggerAnim(MOVEMENT_CONTROLLER, AnimationHelper.SLEEP);
-    }
     public void triggerWakeUpAnimation() {
         drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }
