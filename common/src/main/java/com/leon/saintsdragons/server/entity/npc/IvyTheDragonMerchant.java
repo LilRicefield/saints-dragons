@@ -42,7 +42,9 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 import net.minecraft.world.level.Level;
@@ -66,12 +68,17 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.keyframe.event.ParticleKeyframeEvent;
 import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 
 public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity {
+    static final int RECOVERY_NONE = 0;
+    static final int RECOVERY_DRINK = 1;
+    static final int RECOVERY_EAT = 2;
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_TRADE_ANIM_STATE =
@@ -90,6 +97,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BOXING_EXITING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_BOXING_RECOVERY_ACTION =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final int TRADE_START_TICKS = 29;
     private static final int TRADE_STOP_TICKS = 29;
     private static final int IDLE_VARIANT_DURATION = 66;
@@ -135,6 +144,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private IvyBoxingCombatController boxingCombat;
     private final int restockInterval;
     private int restockTimer;
+    private boolean clientRecoveryItemVisible;
 
     public IvyTheDragonMerchant(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
@@ -168,6 +178,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         this.entityData.define(DATA_BOXING_ACTION_TICKS, 0);
         this.entityData.define(DATA_BOXING_TAUNTING, false);
         this.entityData.define(DATA_BOXING_EXITING, false);
+        this.entityData.define(DATA_BOXING_RECOVERY_ACTION, RECOVERY_NONE);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -273,6 +284,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             this.entityData.set(DATA_BOXING_ACTION_TICKS, 0);
             this.entityData.set(DATA_BOXING_TAUNTING, false);
             this.entityData.set(DATA_BOXING_EXITING, false);
+            this.entityData.set(DATA_BOXING_RECOVERY_ACTION, RECOVERY_NONE);
         }
     }
 
@@ -290,6 +302,38 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     void setBoxingExiting(boolean exiting) {
         this.entityData.set(DATA_BOXING_EXITING, exiting);
+    }
+
+    boolean isBoxingRecovering() {
+        return this.entityData.get(DATA_BOXING_RECOVERY_ACTION) != RECOVERY_NONE;
+    }
+
+    boolean isBoxingDrinking() {
+        return this.entityData.get(DATA_BOXING_RECOVERY_ACTION) == RECOVERY_DRINK;
+    }
+
+    boolean isBoxingEating() {
+        return this.entityData.get(DATA_BOXING_RECOVERY_ACTION) == RECOVERY_EAT;
+    }
+
+    void setBoxingRecoveryAction(int action) {
+        this.entityData.set(DATA_BOXING_RECOVERY_ACTION, action);
+        if (action == RECOVERY_NONE) {
+            this.clientRecoveryItemVisible = false;
+        }
+    }
+
+    public ItemStack getRecoveryItemForRender() {
+        if (!clientRecoveryItemVisible) {
+            return ItemStack.EMPTY;
+        }
+        if (isBoxingDrinking()) {
+            return new ItemStack(Items.MILK_BUCKET);
+        }
+        if (isBoxingEating()) {
+            return new ItemStack(Items.COOKED_BEEF);
+        }
+        return ItemStack.EMPTY;
     }
 
     void setBoxingMovement(boolean backingUp, boolean fast) {
@@ -434,6 +478,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         AnimationController<IvyTheDragonMerchant> movementController =
                 new AnimationController<>(this, "movement", 4, this::animationPredicate);
         movementController.setSoundKeyframeHandler(this::handleSoundKeyframe);
+        movementController.setParticleKeyframeHandler(this::handleParticleKeyframe);
         setupMovementController(movementController);
         getBoxingCombat().setupMovementController(movementController);
         controllers.add(movementController);
@@ -441,6 +486,18 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     private void handleSoundKeyframe(SoundKeyframeEvent<IvyTheDragonMerchant> event) {
         soundHandler.handleAnimationSound(event.getKeyframeData(), event.getController());
+    }
+
+    private void handleParticleKeyframe(ParticleKeyframeEvent<IvyTheDragonMerchant> event) {
+        String effect = event.getKeyframeData().getEffect();
+        if (!isBoxingRecovering()) {
+            return;
+        }
+        if ("spawn".equals(effect) || "spawn_milk_bucket".equals(effect)) {
+            this.clientRecoveryItemVisible = true;
+        } else if ("despawn".equals(effect) || "despawn_milk_bucket".equals(effect)) {
+            this.clientRecoveryItemVisible = false;
+        }
     }
 
     private <T extends GeoEntity> PlayState animationPredicate(AnimationState<T> state) {
@@ -508,12 +565,13 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private boolean isBlockedHostileDamage(DamageSource source) {
-        return source.getEntity() instanceof Zombie
+        return !isBoxingRecovering()
+                && (source.getEntity() instanceof Zombie
                 || source.getEntity() instanceof Pillager
                 || source.getEntity() instanceof Vindicator
                 || source.getEntity() instanceof Evoker
                 || source.getEntity() instanceof Vex
-                || source.getEntity() instanceof Witch;
+                || source.getEntity() instanceof Witch);
     }
 
     @Override
@@ -544,21 +602,47 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     public void tick() {
         super.tick();
         updateRotationDeviation();
-        if (!level().isClientSide) {
-            tickTradingAnimation();
-            tickGreeting();
-            tickEggReaction();
-            tickIdleVariant();
-            getBoxingCombat().tick();
-            tickRestocking();
-            if (bodyControl != null) {
-                if (getBoxingCombat().isActive()) {
-                    getBoxingCombat().tickRotationLock();
-                } else {
-                    bodyControl.serverTick();
-                }
+        if (level().isClientSide) {
+            if (!isBoxingRecovering()) {
+                this.clientRecoveryItemVisible = false;
+            }
+            return;
+        }
+        tickTradingAnimation();
+        tickGreeting();
+        tickEggReaction();
+        tickIdleVariant();
+        getBoxingCombat().tryStartRetreatRecovery();
+        getBoxingCombat().tick();
+        tickRestocking();
+        if (bodyControl != null) {
+            if (getBoxingCombat().isActive()) {
+                getBoxingCombat().tickRotationLock();
+            } else {
+                bodyControl.serverTick();
             }
         }
+    }
+
+    boolean hasHarmfulEffect() {
+        return getActiveEffects().stream()
+                .anyMatch(effect -> effect.getEffect().getCategory() == MobEffectCategory.HARMFUL);
+    }
+
+    boolean needsRecoveryFood() {
+        return getHealth() > 0.0F && getHealth() <= getMaxHealth() * 0.45F;
+    }
+
+    void drinkMilkForRecovery() {
+        for (var effect : new ArrayList<>(getActiveEffects())) {
+            if (effect.getEffect().getCategory() == MobEffectCategory.HARMFUL) {
+                removeEffect(effect.getEffect());
+            }
+        }
+    }
+
+    void eatFoodForRecovery() {
+        heal(8.0F);
     }
 
     void lockBoxingBodyToYaw(float yaw, float turnSpeed) {

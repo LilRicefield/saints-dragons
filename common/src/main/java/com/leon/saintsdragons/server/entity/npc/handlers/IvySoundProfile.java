@@ -25,6 +25,8 @@ public class IvySoundProfile implements HumanSoundProfile {
             case "ivy_dodge_liver_shot" -> playCustomSound(handler, "ivy_dodge_liver_shot", ModSounds.IVY_DODGE_LIVER_SHOT.get(), volume, pitch, 5);
             case "ivy_dash_forward_right_cross" -> playCustomSound(handler, "ivy_dash_forward_right_cross", ModSounds.IVY_DASH_FORWARD_RIGHT_CROSS.get(), volume, pitch, 5);
             case "ivy_orthodox_throw_projectiles" -> playCustomSound(handler, "ivy_orthodox_throw_projectiles", ModSounds.IVY_ORTHODOX_THROW_PROJECTILES.get(), volume, pitch, 5);
+            case "ivy_orthodox_retreat_to_drink" -> playCustomSound(handler, "ivy_orthodox_retreat_to_drink", ModSounds.IVY_ORTHODOX_RETREAT_TO_DRINK.get(), volume, pitch, 5);
+            case "ivy_orthodox_retreat_to_eat" -> playCustomSound(handler, "ivy_orthodox_retreat_to_eat", ModSounds.IVY_ORTHODOX_RETREAT_TO_EAT.get(), volume, pitch, 5);
             default -> false;
         };
     }

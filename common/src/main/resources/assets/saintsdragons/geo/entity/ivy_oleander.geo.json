@@ -128,6 +128,11 @@
 					]
 				},
 				{
+					"name": "leftArmItemLocator",
+					"parent": "leftarm",
+					"pivot": [6, 13, 1]
+				},
+				{
 					"name": "rightarm",
 					"parent": "waist",
 					"pivot": [-5, 23, 1],
@@ -135,6 +140,11 @@
 						{"origin": [-7.5, 12, -1], "size": [3.5, 12, 4], "uv": [46, 62]},
 						{"origin": [-7.75, 11.75, -1.25], "size": [3.75, 12.5, 4.5], "uv": [72, 0]}
 					]
+				},
+				{
+					"name": "rightArmItemLocator",
+					"parent": "rightarm",
+					"pivot": [-6, 13, 1]
 				}
 			]
 		}

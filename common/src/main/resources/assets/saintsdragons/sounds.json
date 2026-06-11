@@ -119,6 +119,26 @@
       }
     ]
   },
+  "ivy_orthodox_retreat_to_drink": {
+    "subtitle": "subtitles.saintsdragons.ivy_orthodox_retreat_to_drink",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_orthodox_retreat_to_drink",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_orthodox_retreat_to_eat": {
+    "subtitle": "subtitles.saintsdragons.ivy_orthodox_retreat_to_eat",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_orthodox_retreat_to_eat",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "bleeding_bolt": {
     "subtitle": "subtitles.saintsdragons.bleeding_bolt",
     "sounds": [

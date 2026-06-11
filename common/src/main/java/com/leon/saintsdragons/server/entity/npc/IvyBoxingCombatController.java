@@ -43,6 +43,10 @@ public class IvyBoxingCombatController {
     private static final int RIGHT_HOOK_UPPERCUT_ACTION_TICKS = 25;
     private static final int DASH_FORWARD_RIGHT_CROSS_ACTION_TICKS = 20;
     private static final int THROW_PROJECTILES_ACTION_TICKS = 26;
+    private static final int RETREAT_RECOVERY_ACTION_TICKS = 47;
+    private static final int RETREAT_RECOVERY_CONSUME_TICKS = 42;
+    private static final int RETREAT_RECOVERY_MAX_RETREAT_TICKS = 28;
+    private static final int RETREAT_RECOVERY_BACKSTEP_INTERVAL_TICKS = 10;
     private static final int JAB_IMPACT_TICKS = 4;
     private static final int HOOK_IMPACT_TICKS = 5;
     private static final int LIVER_COUNTER_IMPACT_TICKS = 9;
@@ -63,6 +67,7 @@ public class IvyBoxingCombatController {
     private static final int HOOK_COOLDOWN_TICKS = 15;
     private static final int COMBO_COOLDOWN_TICKS = 30;
     private static final int THROW_PROJECTILES_COOLDOWN_TICKS = 100;
+    private static final int RETREAT_RECOVERY_COOLDOWN_TICKS = 120;
     private static final int DODGE_COOLDOWN_TICKS = 20;
     private static final float REACTIVE_DODGE_CHANCE = 0.65F;
     private static final float REACTIVE_CRIT_DODGE_CHANCE = 0.92F;
@@ -84,6 +89,8 @@ public class IvyBoxingCombatController {
     private static final double DASH_CROSS_MAX_RANGE = 4.65D;
     private static final double THROW_PROJECTILES_MIN_RANGE = 5.0D;
     private static final double THROW_PROJECTILES_MAX_RANGE = 16.0D;
+    private static final double RETREAT_RECOVERY_SAFE_DISTANCE = 5.25D;
+    private static final double RETREAT_RECOVERY_FORCED_DISTANCE = 4.0D;
     private static final double THROW_PROJECTILES_DASH_STRENGTH = 0.82D;
     private static final float THROW_PROJECTILES_SPEED = 1.55F;
     private static final float THROW_PROJECTILES_INACCURACY = 2.0F;
@@ -102,6 +109,7 @@ public class IvyBoxingCombatController {
     private int attackCooldown;
     private int dashCrossCooldown;
     private int throwProjectilesCooldown;
+    private int retreatRecoveryCooldown;
     private int throwProjectilesRangePunishTicks;
     private int dodgeCooldown;
     private int hookCooldown;
@@ -116,6 +124,11 @@ public class IvyBoxingCombatController {
     private int projectileDashTicks;
     private int approachNudgeTicks;
     private int comboRetreatTicks;
+    private int recoveryConsumeTicks;
+    private int pendingRecoveryAction;
+    private int recoveryRetreatTicks;
+    private int recoveryBackstepCooldown;
+    private boolean recoveryWaitingForLanding;
     private int impactTargetId = -1;
     private AttackType pendingAttack = AttackType.LEFT_JAB;
     private CounterType pendingCounter = null;
@@ -164,6 +177,10 @@ public class IvyBoxingCombatController {
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_dash_forward_right_cross"));
         controller.triggerableAnim("orthodox_throw_projectiles",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_throw_projectiles"));
+        controller.triggerableAnim("orthodox_retreat_to_drink",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_retreat_to_drink"));
+        controller.triggerableAnim("orthodox_retreat_to_eat",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_retreat_to_eat"));
         controller.triggerableAnim("dodge_backwards",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_backwards"));
         controller.triggerableAnim("dodge_left",
@@ -224,6 +241,9 @@ public class IvyBoxingCombatController {
 
     public boolean tryDodgeOnHit(@NotNull DamageSource source, float amount) {
         if (amount <= 0.0F || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
+            return false;
+        }
+        if (ivy.isBoxingRecovering()) {
             return false;
         }
         if (!attacker.isAlive()) {
@@ -292,6 +312,9 @@ public class IvyBoxingCombatController {
     }
 
     public void tick() {
+        if (retreatRecoveryCooldown > 0) {
+            retreatRecoveryCooldown--;
+        }
         if (!isActive()) {
             return;
         }
@@ -305,6 +328,18 @@ public class IvyBoxingCombatController {
         int actionTicks = ivy.getBoxingActionTicks();
         if (actionTicks > 0) {
             ivy.setBoxingActionTicks(actionTicks - 1);
+            if (ivy.isBoxingRecovering()) {
+                if (recoveryConsumeTicks > 0 && --recoveryConsumeTicks <= 0) {
+                    applyRecoveryConsume();
+                }
+            }
+            if (actionTicks - 1 <= 0 && ivy.isBoxingRecovering()) {
+                ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
+                if (ivy.getTarget() == null) {
+                    startExitStance();
+                    return;
+                }
+            }
             if (actionTicks - 1 <= 0 && ivy.isBoxingTaunting()) {
                 ivy.setBoxingTaunting(false);
                 if (exitAfterTaunt) {
@@ -367,6 +402,128 @@ public class IvyBoxingCombatController {
         }
     }
 
+    private void tickRetreatRecovery(LivingEntity target) {
+        lockSight(target);
+        ivy.getNavigation().stop();
+        ivy.setBoxingMovement(true, true);
+
+        if (ivy.getBoxingActionTicks() > 0) {
+            return;
+        }
+
+        double distanceSqr = ivy.distanceToSqr(target);
+        boolean reachedRecoverySpace = recoveryWaitingForLanding
+                || distanceSqr >= RETREAT_RECOVERY_SAFE_DISTANCE * RETREAT_RECOVERY_SAFE_DISTANCE
+                || (recoveryRetreatTicks >= RETREAT_RECOVERY_MAX_RETREAT_TICKS
+                && distanceSqr >= RETREAT_RECOVERY_FORCED_DISTANCE * RETREAT_RECOVERY_FORCED_DISTANCE);
+        if (reachedRecoverySpace) {
+            recoveryWaitingForLanding = !ivy.onGround();
+            if (recoveryWaitingForLanding) {
+                ivy.setBoxingMovement(false, false);
+                return;
+            }
+            startRecoveryAnimation();
+            return;
+        }
+
+        recoveryRetreatTicks++;
+        if (recoveryBackstepCooldown > 0) {
+            recoveryBackstepCooldown--;
+            return;
+        }
+
+        recoveryBackstepCooldown = RETREAT_RECOVERY_BACKSTEP_INTERVAL_TICKS;
+        applyRecoveryBackstep(target);
+    }
+
+    private void applyRecoveryBackstep(LivingEntity target) {
+        Vec3 away;
+        if (target != null && target.isAlive()) {
+            away = ivy.position().subtract(target.position());
+        } else {
+            away = Vec3.directionFromRotation(0.0F, ivy.getYRot());
+        }
+        if (away.horizontalDistanceSqr() < 1.0E-4D) {
+            away = Vec3.directionFromRotation(0.0F, ivy.getYRot());
+        }
+
+        Vec3 step = away.normalize().scale(1.55D);
+        ivy.setDeltaMovement(step.x, ivy.getDeltaMovement().y + 0.08D, step.z);
+        ivy.hasImpulse = true;
+        ivy.setBoxingMovement(true, true);
+        ivy.setBoxingActionTicks(DODGE_ACTION_TICKS);
+        setState(CombatState.RETREATING_TO_RECOVER, DODGE_ACTION_TICKS);
+        ivy.triggerAnim("movement", "dodge_backwards");
+    }
+
+    private void startRecoveryAnimation() {
+        if (pendingRecoveryAction == IvyTheDragonMerchant.RECOVERY_NONE) {
+            return;
+        }
+
+        ivy.getNavigation().stop();
+        ivy.setBoxingMovement(false, false);
+        ivy.setDeltaMovement(0.0D, ivy.getDeltaMovement().y, 0.0D);
+        ivy.setBoxingActionTicks(RETREAT_RECOVERY_ACTION_TICKS);
+        ivy.setBoxingRecoveryAction(pendingRecoveryAction);
+        recoveryConsumeTicks = RETREAT_RECOVERY_CONSUME_TICKS;
+        setState(CombatState.RECOVERING, RETREAT_RECOVERY_ACTION_TICKS);
+        ivy.triggerAnim("movement", pendingRecoveryAction == IvyTheDragonMerchant.RECOVERY_DRINK
+                ? "orthodox_retreat_to_drink"
+                : "orthodox_retreat_to_eat");
+        pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_NONE;
+        recoveryRetreatTicks = 0;
+        recoveryBackstepCooldown = 0;
+        recoveryWaitingForLanding = false;
+    }
+
+    private void applyRecoveryConsume() {
+        if (ivy.isBoxingDrinking()) {
+            ivy.drinkMilkForRecovery();
+        } else if (ivy.isBoxingEating()) {
+            ivy.eatFoodForRecovery();
+        }
+    }
+
+    public boolean tryStartRetreatRecovery() {
+        if (ivy.level().isClientSide
+                || retreatRecoveryCooldown > 0
+                || ivy.isTrading()
+                || !ivy.isReadyForCombatAnimation()
+                || ivy.isBoxingRecovering()
+                || ivy.isBoxingExiting()
+                || ivy.isBoxingTaunting()
+                || pendingRecoveryAction != IvyTheDragonMerchant.RECOVERY_NONE
+                || ivy.getBoxingActionTicks() > 0) {
+            return false;
+        }
+
+        LivingEntity target = selectPriorityTarget(ivy.getTarget());
+        if (target == null) {
+            return false;
+        }
+        ivy.setTarget(target);
+
+        if (ivy.hasHarmfulEffect()) {
+            pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_DRINK;
+        } else if (ivy.needsRecoveryFood()) {
+            pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_EAT;
+        } else {
+            return false;
+        }
+
+        beginStance();
+        ivy.getNavigation().stop();
+        ivy.setBoxingMovement(true, true);
+        clearAttackTimers();
+        recoveryRetreatTicks = 0;
+        recoveryBackstepCooldown = 0;
+        recoveryWaitingForLanding = false;
+        setState(CombatState.RETREATING_TO_RECOVER, RETREAT_RECOVERY_MAX_RETREAT_TICKS);
+        retreatRecoveryCooldown = RETREAT_RECOVERY_COOLDOWN_TICKS;
+        return true;
+    }
+
     public void tickRotationLock() {
         if (!isActive()) {
             return;
@@ -411,6 +568,11 @@ public class IvyBoxingCombatController {
         projectileDashTicks = 0;
         approachNudgeTicks = 0;
         comboRetreatTicks = 0;
+        recoveryConsumeTicks = 0;
+        pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_NONE;
+        recoveryRetreatTicks = 0;
+        recoveryBackstepCooldown = 0;
+        recoveryWaitingForLanding = false;
         impactTargetId = -1;
         pendingCounter = null;
         lastCombatTarget = null;
@@ -427,6 +589,7 @@ public class IvyBoxingCombatController {
         ivy.setBoxingActionTicks(0);
         ivy.setBoxingTaunting(false);
         ivy.setBoxingExiting(false);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         ivy.setBoxingStance(false);
     }
 
@@ -438,6 +601,7 @@ public class IvyBoxingCombatController {
         ivy.getNavigation().stop();
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(0);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         clearAttackTimers();
         setState(CombatState.EXITING, EXIT_STANCE_TICKS);
         exitTicks = EXIT_STANCE_TICKS;
@@ -451,6 +615,7 @@ public class IvyBoxingCombatController {
         lockSight(target);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(TAUNT_ACTION_TICKS);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         this.exitAfterTaunt = true;
         clearAttackTimers();
         setState(CombatState.TAUNTING, TAUNT_ACTION_TICKS);
@@ -468,6 +633,10 @@ public class IvyBoxingCombatController {
         projectileDashTicks = 0;
         approachNudgeTicks = 0;
         comboRetreatTicks = 0;
+        recoveryConsumeTicks = 0;
+        recoveryRetreatTicks = 0;
+        recoveryBackstepCooldown = 0;
+        recoveryWaitingForLanding = false;
         impactTargetId = -1;
         pendingCounter = null;
     }
@@ -479,6 +648,7 @@ public class IvyBoxingCombatController {
         ivy.setBoxingExiting(false);
         ivy.setBoxingStance(true);
         ivy.setBoxingActionTicks(0);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         ivy.setBoxingMovement(false, false);
         clearAttackTimers();
         setState(CombatState.RECOVERING, 0);
@@ -490,6 +660,7 @@ public class IvyBoxingCombatController {
         setState(CombatState.ATTACKING, attack.actionTicks);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(attack.actionTicks);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         attackCooldown = attack.cooldownTicks;
         if (attack == AttackType.DASH_FORWARD_RIGHT_CROSS) {
             dashCrossCooldown = DASH_CROSS_COOLDOWN_TICKS;
@@ -521,6 +692,7 @@ public class IvyBoxingCombatController {
         int dodge = canCounterDodge(target) ? ivy.getRandom().nextInt(3) : ivy.getRandom().nextInt(2);
         setState(CombatState.DODGING, DODGE_ACTION_TICKS);
         ivy.setBoxingActionTicks(DODGE_ACTION_TICKS);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         dodgeCooldown = DODGE_COOLDOWN_TICKS;
         impactTicks = 0;
         secondImpactTicks = 0;
@@ -564,6 +736,7 @@ public class IvyBoxingCombatController {
         setState(CombatState.DODGING, LIVER_COUNTER_ACTION_TICKS);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(LIVER_COUNTER_ACTION_TICKS);
+        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         dodgeCooldown = DODGE_COOLDOWN_TICKS + 6;
         impactTicks = LIVER_COUNTER_IMPACT_TICKS;
         secondImpactTicks = 0;
@@ -975,6 +1148,11 @@ public class IvyBoxingCombatController {
 
             lockSight(target);
 
+            if (pendingRecoveryAction != IvyTheDragonMerchant.RECOVERY_NONE) {
+                tickRetreatRecovery(target);
+                return;
+            }
+
             if (ivy.getBoxingActionTicks() > 0) {
                 ivy.getNavigation().stop();
                 ivy.setBoxingMovement(false, false);
@@ -1245,6 +1423,7 @@ public class IvyBoxingCombatController {
         DODGING,
         TAUNTING,
         EXITING,
+        RETREATING_TO_RECOVER,
         RECOVERING
     }
 

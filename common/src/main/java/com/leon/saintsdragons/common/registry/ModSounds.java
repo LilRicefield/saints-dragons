@@ -26,6 +26,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IVY_DODGE_LIVER_SHOT = registerSound("ivy_dodge_liver_shot");
     public static final Supplier<SoundEvent> IVY_DASH_FORWARD_RIGHT_CROSS = registerSound("ivy_dash_forward_right_cross");
     public static final Supplier<SoundEvent> IVY_ORTHODOX_THROW_PROJECTILES = registerSound("ivy_orthodox_throw_projectiles");
+    public static final Supplier<SoundEvent> IVY_ORTHODOX_RETREAT_TO_DRINK = registerSound("ivy_orthodox_retreat_to_drink");
+    public static final Supplier<SoundEvent> IVY_ORTHODOX_RETREAT_TO_EAT = registerSound("ivy_orthodox_retreat_to_eat");
     public static final Supplier<SoundEvent> BLEEDING_BOLT = registerSound("bleeding_bolt");
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");
