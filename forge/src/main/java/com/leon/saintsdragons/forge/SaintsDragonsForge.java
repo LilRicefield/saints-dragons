@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.variant.DragonVariantReloadListener;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeReloadListener;
+import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueReloadListener;
 import com.leon.saintsdragons.server.loot.DragonChestLootReloadListener;
 import com.leon.saintsdragons.common.init.CommonModEvents;
 import com.leon.saintsdragons.common.registry.ModPotions;
@@ -208,6 +209,7 @@ public final class SaintsDragonsForge {
         event.addListener(DragonAttributeConfigLoader.getInstance());
         event.addListener(DragonVariantReloadListener.getInstance());
         event.addListener(IvyTradeReloadListener.getInstance());
+        event.addListener(DialogueReloadListener.getInstance());
         event.addListener(DragonChestLootReloadListener.getInstance());
     }
 

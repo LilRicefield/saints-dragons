@@ -11,6 +11,7 @@ import com.leon.saintsdragons.fabric.mixin.RangedAttributeAccessor;
 import com.leon.saintsdragons.fabric.resource.FabricDragonAttributeReloadListener;
 import com.leon.saintsdragons.fabric.resource.FabricDragonChestLootReloadListener;
 import com.leon.saintsdragons.fabric.resource.FabricDragonVariantReloadListener;
+import com.leon.saintsdragons.fabric.resource.FabricDialogueReloadListener;
 import com.leon.saintsdragons.fabric.resource.FabricIvyTradeReloadListener;
 import com.leon.saintsdragons.fabric.server.FabricServerEvents;
 import com.leon.saintsdragons.fabric.world.Spawns;
@@ -54,6 +55,7 @@ public final class SaintsDragonsFabric implements ModInitializer {
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonAttributeReloadListener());
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonVariantReloadListener());
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricIvyTradeReloadListener());
+        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDialogueReloadListener());
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDragonChestLootReloadListener());
         FabricServerEvents.init();
         FabricLootTableModifier.register();

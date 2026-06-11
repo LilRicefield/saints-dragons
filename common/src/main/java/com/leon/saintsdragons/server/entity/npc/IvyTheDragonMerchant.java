@@ -3,9 +3,13 @@
 package com.leon.saintsdragons.server.entity.npc;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
+import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueDefinition;
+import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueRegistry;
+import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -13,6 +17,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
@@ -79,6 +84,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     static final int RECOVERY_NONE = 0;
     static final int RECOVERY_DRINK = 1;
     static final int RECOVERY_EAT = 2;
+    private static final ResourceLocation FIRST_MEETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/first_meeting");
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_TRADE_ANIM_STATE =
@@ -191,13 +197,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     @Override
     protected void registerGoals() {
-        goalSelector.addGoal(0, new TradingStillGoal());
+        goalSelector.addGoal(0, new DialogueTalkGoal());
+        goalSelector.addGoal(1, new TradingStillGoal());
         goalSelector.addGoal(1, new FloatGoal(this));
         goalSelector.addGoal(2, getBoxingCombat().createGoal());
         goalSelector.addGoal(3, new RandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
+                        && !IvyTheDragonMerchant.this.isInDialogue()
                         && !IvyTheDragonMerchant.this.isBoxingCombatActive()
                         && super.canUse();
             }
@@ -205,6 +213,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             @Override
             public boolean canContinueToUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
+                        && !IvyTheDragonMerchant.this.isInDialogue()
                         && !IvyTheDragonMerchant.this.isBoxingCombatActive()
                         && super.canContinueToUse();
             }
@@ -212,23 +221,31 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 6.0f) {
             @Override
             public boolean canUse() {
-                return !IvyTheDragonMerchant.this.isBoxingCombatActive() && super.canUse();
+                return !IvyTheDragonMerchant.this.isInDialogue()
+                        && !IvyTheDragonMerchant.this.isBoxingCombatActive()
+                        && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !IvyTheDragonMerchant.this.isBoxingCombatActive() && super.canContinueToUse();
+                return !IvyTheDragonMerchant.this.isInDialogue()
+                        && !IvyTheDragonMerchant.this.isBoxingCombatActive()
+                        && super.canContinueToUse();
             }
         });
         goalSelector.addGoal(5, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
-                return !IvyTheDragonMerchant.this.isBoxingCombatActive() && super.canUse();
+                return !IvyTheDragonMerchant.this.isInDialogue()
+                        && !IvyTheDragonMerchant.this.isBoxingCombatActive()
+                        && super.canUse();
             }
 
             @Override
             public boolean canContinueToUse() {
-                return !IvyTheDragonMerchant.this.isBoxingCombatActive() && super.canContinueToUse();
+                return !IvyTheDragonMerchant.this.isInDialogue()
+                        && !IvyTheDragonMerchant.this.isBoxingCombatActive()
+                        && super.canContinueToUse();
             }
         });
         targetSelector.addGoal(0, new HurtByTargetGoal(this));
@@ -393,14 +410,17 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             }
             return InteractionResult.CONSUME;
         }
-        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0 || isBoxingStance()) {
+        if (isTrading()
+                || isInDialogue()
+                || getTradeAnimState() != TradeAnimState.NONE
+                || eggReactionState != EggReactionState.NONE
+                || greetingTicks > 0
+                || isBoxingStance()) {
             return InteractionResult.CONSUME;
         }
         if (player instanceof ServerPlayer serverPlayer) {
             DragonUtilities.awardAdvancement(serverPlayer, "meet_ivy", "meet_ivy");
-        }
-        if (hasTradingAccess(player)) {
-            openTradingFor(player);
+            openDialogue(serverPlayer);
             return InteractionResult.CONSUME;
         }
         if (isReactionEgg(stack)) {
@@ -412,6 +432,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
         player.displayClientMessage(Component.translatable("entity.saintsdragons.ivy.first_encounter"), false);
         return InteractionResult.CONSUME;
+    }
+
+    private void openDialogue(ServerPlayer player) {
+        DialogueDefinition definition = DialogueRegistry.get(FIRST_MEETING_DIALOGUE);
+        if (definition == null || definition.startNode() == null) {
+            player.displayClientMessage(Component.translatable("entity.saintsdragons.ivy.first_encounter"), false);
+            return;
+        }
+        DialogueSessionRegistry.start(player, this, definition);
     }
 
     @Override
@@ -612,6 +641,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         tickGreeting();
         tickEggReaction();
         tickIdleVariant();
+        if (getTarget() != null && isInDialogue()) {
+            DialogueSessionRegistry.endForEntity(this);
+        }
         getBoxingCombat().tryStartRetreatRecovery();
         getBoxingCombat().tick();
         tickRestocking();
@@ -718,7 +750,13 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     }
 
     private void tickIdleVariant() {
-        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE || eggReactionState != EggReactionState.NONE || greetingTicks > 0 || getBoxingCombat().isActive() || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
+        if (isTrading()
+                || isInDialogue()
+                || getTradeAnimState() != TradeAnimState.NONE
+                || eggReactionState != EggReactionState.NONE
+                || greetingTicks > 0
+                || getBoxingCombat().isActive()
+                || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
             if (playingIdleVariant && getBoxingCombat().isActive()) {
                 setIdleVariantActive(false);
                 idleVariantTicks = 0;
@@ -975,6 +1013,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     public boolean shouldApplyHeadTracking() {
         return !isTrading()
+                && !isInDialogue()
                 && getTradeAnimState() == TradeAnimState.NONE
                 && greetingTicks <= 0
                 && !isIdleVariantActive()
@@ -993,6 +1032,18 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return getTradeAnimState() == TradeAnimState.NONE
                 && eggReactionState == EggReactionState.NONE
                 && greetingTicks <= 0;
+    }
+
+    private boolean isInDialogue() {
+        return !level().isClientSide && DialogueSessionRegistry.hasSpeaker(this);
+    }
+
+    @Nullable
+    private ServerPlayer getDialogueSpeaker() {
+        if (level().isClientSide) {
+            return null;
+        }
+        return DialogueSessionRegistry.getSpeaker(this);
     }
 
     private IvyBoxingCombatController getBoxingCombat() {
@@ -1050,6 +1101,67 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         public void tick() {
             getNavigation().stop();
             setDeltaMovement(0.0, 0.0, 0.0);
+        }
+    }
+
+    private class DialogueTalkGoal extends Goal {
+        private static final float TALK_LOOK_YAW_SPEED = 45.0f;
+        private static final float TALK_LOOK_PITCH_SPEED = 30.0f;
+
+        DialogueTalkGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            return getTarget() == null
+                    && !getBoxingCombat().isActive()
+                    && getDialogueSpeaker() != null;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return getTarget() == null
+                    && !getBoxingCombat().isActive()
+                    && getDialogueSpeaker() != null;
+        }
+
+        @Override
+        public void start() {
+            stopPassiveDialogueConflicts();
+            stopMovement();
+        }
+
+        @Override
+        public void stop() {
+            stopMovement();
+            if (getTarget() != null || getBoxingCombat().isActive()) {
+                DialogueSessionRegistry.endForEntity(IvyTheDragonMerchant.this);
+            }
+        }
+
+        @Override
+        public void tick() {
+            ServerPlayer speaker = getDialogueSpeaker();
+            if (speaker == null) {
+                return;
+            }
+            stopPassiveDialogueConflicts();
+            stopMovement();
+            getLookControl().setLookAt(speaker, TALK_LOOK_YAW_SPEED, TALK_LOOK_PITCH_SPEED);
+            lookAt(speaker, TALK_LOOK_YAW_SPEED, TALK_LOOK_PITCH_SPEED);
+        }
+
+        private void stopPassiveDialogueConflicts() {
+            setIdleVariantActive(false);
+            idleVariantTicks = 0;
+            greetingTicks = 0;
+            resetEggReaction();
+        }
+
+        private void stopMovement() {
+            getNavigation().stop();
+            setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
         }
     }
 

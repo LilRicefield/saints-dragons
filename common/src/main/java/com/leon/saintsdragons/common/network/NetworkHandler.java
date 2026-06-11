@@ -65,6 +65,22 @@ public final class NetworkHandler {
                 MessageGlobalAllyManagement::handle
         );
 
+        NETWORK.registerServerbound(
+                MessageDialogueChoice.class,
+                id("dialogue_choice"),
+                MessageDialogueChoice::encode,
+                MessageDialogueChoice::decode,
+                MessageDialogueChoice::handle
+        );
+
+        NETWORK.registerServerbound(
+                MessageDialogueDismiss.class,
+                id("dialogue_dismiss"),
+                MessageDialogueDismiss::encode,
+                MessageDialogueDismiss::decode,
+                MessageDialogueDismiss::handle
+        );
+
         NETWORK.registerClientbound(
                 MessageDraconicCodexList.class,
                 id("draconic_codex_list"),
@@ -111,6 +127,22 @@ public final class NetworkHandler {
                 MessageDragonAbilityDebugBox::encode,
                 MessageDragonAbilityDebugBox::decode,
                 MessageDragonAbilityDebugBox::handle
+        );
+
+        NETWORK.registerClientbound(
+                MessageDialogueOpen.class,
+                id("dialogue_open"),
+                MessageDialogueOpen::encode,
+                MessageDialogueOpen::decode,
+                MessageDialogueOpen::handle
+        );
+
+        NETWORK.registerClientbound(
+                MessageDialogueClose.class,
+                id("dialogue_close"),
+                MessageDialogueClose::encode,
+                MessageDialogueClose::decode,
+                MessageDialogueClose::handle
         );
     }
 

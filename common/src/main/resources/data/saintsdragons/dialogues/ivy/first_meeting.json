@@ -1,0 +1,60 @@
+{
+  "start_at": "intro",
+  "states": {
+    "intro": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.intro"
+      },
+      "choices": [
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.choice.pretty_name"
+          },
+          "next": "pretty_name"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.choice.poisonous"
+          },
+          "next": "poisonous"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.choice.never_heard"
+          },
+          "next": "never_heard"
+        }
+      ]
+    },
+    "pretty_name": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.pretty_name"
+      }
+    },
+    "poisonous": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.poisonous"
+      }
+    },
+    "never_heard": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.never_heard"
+      }
+    }
+  }
+}

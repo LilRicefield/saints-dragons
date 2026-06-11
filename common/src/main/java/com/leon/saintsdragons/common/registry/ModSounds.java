@@ -17,6 +17,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IVY_TRADE_START = registerSound("ivy_trade_start");
     public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");
     public static final Supplier<SoundEvent> IVY_REACTION_TO_EGG = registerSound("ivy_reaction_to_egg");
+    public static final Supplier<SoundEvent> IVY_VOICE_BLIP = registerSound("ivy_voice_blip");
     public static final Supplier<SoundEvent> IVY_DODGE = registerSound("ivy_dodge");
     public static final Supplier<SoundEvent> IVY_LEFT_JAB = registerSound("ivy_left_jab");
     public static final Supplier<SoundEvent> IVY_RIGHT_HOOK = registerSound("ivy_right_hook");

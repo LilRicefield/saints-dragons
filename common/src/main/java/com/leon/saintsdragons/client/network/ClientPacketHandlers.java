@@ -3,8 +3,10 @@ package com.leon.saintsdragons.client.network;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
+import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueScreen;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexList;
+import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
@@ -88,5 +90,21 @@ public final class ClientPacketHandlers {
 
     public static void handleAbilityDebugBox(MessageDragonAbilityDebugBox message) {
         DragonAbilityDebugClient.addBox(message.box(), message.colorRgb(), message.lifetimeTicks());
+    }
+
+    public static void handleDialogueOpen(MessageDialogueOpen message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof IvyDialogueScreen dialogueScreen) {
+            dialogueScreen.update(message);
+        } else {
+            minecraft.setScreen(new IvyDialogueScreen(message));
+        }
+    }
+
+    public static void handleDialogueClose() {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen instanceof IvyDialogueScreen) {
+            minecraft.setScreen(null);
+        }
     }
 }

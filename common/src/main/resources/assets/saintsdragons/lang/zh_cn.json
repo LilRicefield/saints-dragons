@@ -75,6 +75,15 @@
   "entity.saintsdragons.ivy_oleander": "常春藤·夹竹桃",
   "merchant.saintsdragons.ivy_oleander": "常春藤·夹竹桃",
 
+  "saintsdragons.gui.dialogue.title": "对话",
+  "dialogue.saintsdragons.ivy.first_meeting.intro": "My name is Ivy. Ivy Oleander. The last name is kind of uncommon. Rare, even. But yeah, you?",
+  "dialogue.saintsdragons.ivy.first_meeting.choice.pretty_name": "That's a pretty name.",
+  "dialogue.saintsdragons.ivy.first_meeting.choice.poisonous": "Oleander? Isn't that poisonous?",
+  "dialogue.saintsdragons.ivy.first_meeting.choice.never_heard": "Never heard that name before.",
+  "dialogue.saintsdragons.ivy.first_meeting.pretty_name": "...Thank you. Most people just say it sounds like a plant. Which, well. It is. Two of them, actually.",
+  "dialogue.saintsdragons.ivy.first_meeting.poisonous": "Most people don't catch that. You're more observant than you look.",
+  "dialogue.saintsdragons.ivy.first_meeting.never_heard": "That's kind of the point, I think. My mother had a thing for unusual things. Anyway. What brings you out here?",
+
   "saintsdragons.gui.dragon_ally.title": "盟友管理",
   "saintsdragons.gui.dragon_ally.username_input": "请输入玩家名…",
   "saintsdragons.gui.dragon_ally.add": "添加盟友",

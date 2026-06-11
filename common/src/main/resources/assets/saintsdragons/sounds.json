@@ -29,6 +29,15 @@
       }
     ]
   },
+  "ivy_voice_blip": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_voice_blip",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ivy_dodge": {
     "subtitle": "subtitles.saintsdragons.ivy_dodge",
     "sounds": [
