@@ -1,12 +1,19 @@
 package com.leon.saintsdragons.server.entity.npc;
 
+import com.leon.saintsdragons.server.entity.effect.volitans.ArrowOfVenomEntity;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.monster.Evoker;
+import net.minecraft.world.entity.monster.Pillager;
+import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -26,32 +33,42 @@ public class IvyBoxingCombatController {
 
     private static final int STANCE_TRANSITION_TICKS = 10;
     private static final int EXIT_STANCE_TICKS = 10;
-    private static final int TAUNT_ACTION_TICKS = 35;
-    private static final int JAB_ACTION_TICKS = 13;
-    private static final int HOOK_ACTION_TICKS = 15;
-    private static final int DODGE_ACTION_TICKS = 10;
-    private static final int LIVER_COUNTER_ACTION_TICKS = 15;
-    private static final int COMBO_ACTION_TICKS = 20;
+    private static final int TAUNT_ACTION_TICKS = 36;
+    private static final int JAB_ACTION_TICKS = 10;
+    private static final int HOOK_ACTION_TICKS = 13;
+    private static final int DODGE_ACTION_TICKS = 9;
+    private static final int LIVER_COUNTER_ACTION_TICKS = 13;
+    private static final int LEFT_JAB_RIGHT_CROSS_ACTION_TICKS = 20;
     private static final int JAB_JAB_HOOK_ACTION_TICKS = 25;
-    private static final int RIGHT_HOOK_UPPERCUT_ACTION_TICKS = 24;
+    private static final int RIGHT_HOOK_UPPERCUT_ACTION_TICKS = 25;
+    private static final int DASH_FORWARD_RIGHT_CROSS_ACTION_TICKS = 20;
+    private static final int THROW_PROJECTILES_ACTION_TICKS = 26;
     private static final int JAB_IMPACT_TICKS = 4;
     private static final int HOOK_IMPACT_TICKS = 5;
     private static final int LIVER_COUNTER_IMPACT_TICKS = 9;
-    private static final int COMBO_FIRST_IMPACT_TICKS = 5;
-    private static final int COMBO_SECOND_IMPACT_TICKS = 13;
-    private static final int COMBO_RETREAT_TICKS = 15;
+    private static final int LEFT_JAB_RIGHT_CROSS_FIRST_IMPACT_TICKS = 5;
+    private static final int LEFT_JAB_RIGHT_CROSS_SECOND_IMPACT_TICKS = 13;
+    private static final int LEFT_JAB_RIGHT_CROSS_RETREAT_TICKS = 15;
     private static final int JAB_JAB_HOOK_FIRST_IMPACT_TICKS = 5;
     private static final int JAB_JAB_HOOK_SECOND_IMPACT_TICKS = 11;
     private static final int JAB_JAB_HOOK_THIRD_IMPACT_TICKS = 19;
     private static final int RIGHT_HOOK_UPPERCUT_FIRST_IMPACT_TICKS = 8;
     private static final int RIGHT_HOOK_UPPERCUT_SECOND_IMPACT_TICKS = 16;
-    private static final int JAB_COOLDOWN_TICKS = 4;
+    private static final int DASH_FORWARD_RIGHT_CROSS_NUDGE_TICKS = 3;
+    private static final int DASH_FORWARD_RIGHT_CROSS_IMPACT_TICKS = 8;
+    private static final int THROW_PROJECTILES_FIRST_THROW_TICKS = 6;
+    private static final int THROW_PROJECTILES_SECOND_THROW_TICKS = 14;
+    private static final int THROW_PROJECTILES_DASH_TICKS = 19;
+    private static final int JAB_COOLDOWN_TICKS = 5;
     private static final int HOOK_COOLDOWN_TICKS = 15;
-    private static final int COMBO_COOLDOWN_TICKS = 20;
+    private static final int COMBO_COOLDOWN_TICKS = 30;
+    private static final int THROW_PROJECTILES_COOLDOWN_TICKS = 100;
     private static final int DODGE_COOLDOWN_TICKS = 20;
     private static final float REACTIVE_DODGE_CHANCE = 0.65F;
     private static final float REACTIVE_CRIT_DODGE_CHANCE = 0.92F;
+    private static final float REACTIVE_NON_PLAYER_DODGE_CHANCE = 1.0F;
     private static final double ATTACK_RANGE = 2.45D;
+    private static final double COUNTER_DODGE_RANGE = 3.25D;
     private static final double HOOK_RANGE = 2.15D;
     private static final double COMBO_MIN_RANGE = 1.65D;
     private static final int HOOK_UPPERCUT_CLOSE_CHANCE = 40;
@@ -59,6 +76,23 @@ public class IvyBoxingCombatController {
     private static final double APPROACH_DISTANCE = 3.8D;
     private static final double TARGET_STILL_EPSILON_SQ = 0.0025D;
     private static final int TARGET_STILL_PRESSURE_TICKS = 14;
+    private static final int TARGET_MOVING_PRESSURE_TICKS = 10;
+    private static final int MOVING_PRESSURE_COMMIT_COOLDOWN_TICKS = 18;
+    private static final int DASH_CROSS_COOLDOWN_TICKS = 45;
+    private static final int DASH_CROSS_RETREAT_CHANCE = 65;
+    private static final double DASH_CROSS_MIN_RANGE = 2.35D;
+    private static final double DASH_CROSS_MAX_RANGE = 4.65D;
+    private static final double THROW_PROJECTILES_MIN_RANGE = 5.0D;
+    private static final double THROW_PROJECTILES_MAX_RANGE = 16.0D;
+    private static final double THROW_PROJECTILES_DASH_STRENGTH = 0.82D;
+    private static final float THROW_PROJECTILES_SPEED = 1.55F;
+    private static final float THROW_PROJECTILES_INACCURACY = 2.0F;
+    private static final double THROW_PROJECTILES_PREDICT_TICKS = 4.0D;
+    private static final int THROW_PROJECTILES_RANGE_PUNISH_TICKS = 35;
+    private static final double SKIRMISH_CLOSING_TOLERANCE = 0.2D;
+    private static final double RETREAT_DOT_THRESHOLD = 0.45D;
+    private static final double RETREAT_DISTANCE_INCREASE_SQ = 0.015D;
+    private static final double INTERCEPT_PREDICTION_TICKS = 5.0D;
     private static final float LOCK_LOOK_YAW_SPEED = 45.0F;
     private static final float LOCK_LOOK_PITCH_SPEED = 35.0F;
     private static final float LOCK_BODY_YAW_SPEED = 0.45F;
@@ -66,6 +100,9 @@ public class IvyBoxingCombatController {
 
     private final IvyTheDragonMerchant ivy;
     private int attackCooldown;
+    private int dashCrossCooldown;
+    private int throwProjectilesCooldown;
+    private int throwProjectilesRangePunishTicks;
     private int dodgeCooldown;
     private int hookCooldown;
     private int comboCooldown;
@@ -74,18 +111,29 @@ public class IvyBoxingCombatController {
     private int impactTicks;
     private int secondImpactTicks;
     private int thirdImpactTicks;
+    private int projectileTicks;
+    private int secondProjectileTicks;
+    private int projectileDashTicks;
+    private int approachNudgeTicks;
     private int comboRetreatTicks;
     private int impactTargetId = -1;
     private AttackType pendingAttack = AttackType.LEFT_JAB;
     private CounterType pendingCounter = null;
     @Nullable
     private LivingEntity lastCombatTarget;
+    @Nullable
+    private Pillager committedPillagerTarget;
     private CombatState state = CombatState.RECOVERING;
     private int stateTicks;
     private int lastTargetId = -1;
     private double lastTargetX;
     private double lastTargetZ;
+    private double targetMoveX;
+    private double targetMoveZ;
+    private double previousTargetDistanceSqr;
     private int targetStillTicks;
+    private int targetMovingTicks;
+    private int movingPressureCommitCooldown;
 
     public IvyBoxingCombatController(IvyTheDragonMerchant ivy) {
         this.ivy = ivy;
@@ -112,6 +160,10 @@ public class IvyBoxingCombatController {
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_jab_jab_hook"));
         controller.triggerableAnim("orthodox_right_hook_uppercut",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_right_hook_uppercut"));
+        controller.triggerableAnim("orthodox_dash_forward_right_cross",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_dash_forward_right_cross"));
+        controller.triggerableAnim("orthodox_throw_projectiles",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_throw_projectiles"));
         controller.triggerableAnim("dodge_backwards",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_backwards"));
         controller.triggerableAnim("dodge_left",
@@ -158,9 +210,13 @@ public class IvyBoxingCombatController {
         if (!wasHurt || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
             return;
         }
-        ivy.setTarget(attacker);
+        LivingEntity target = resolveReactiveTarget(attacker);
+        ivy.setTarget(target);
+        if (!(target instanceof Player)) {
+            throwProjectilesRangePunishTicks = THROW_PROJECTILES_RANGE_PUNISH_TICKS;
+        }
         if (ivy.isBoxingTaunting()) {
-            interruptTaunt(attacker);
+            interruptTaunt(target);
             return;
         }
         beginStance();
@@ -173,9 +229,10 @@ public class IvyBoxingCombatController {
         if (!attacker.isAlive()) {
             return false;
         }
+        LivingEntity target = resolveReactiveTarget(attacker);
         if (ivy.isBoxingTaunting()) {
-            ivy.setTarget(attacker);
-            interruptTaunt(attacker);
+            ivy.setTarget(target);
+            interruptTaunt(target);
             return false;
         }
 
@@ -184,26 +241,23 @@ public class IvyBoxingCombatController {
             if (!dodged) {
                 return false;
             }
-            ivy.setTarget(attacker);
+            ivy.setTarget(target);
             beginStance();
-            lockSight(attacker);
+            lockSight(target);
             if (state != CombatState.DODGING) {
-                startCounterDodge(attacker);
+                startReactiveDodge(target, true, 100);
             }
             return true;
         }
 
-        if (dodgeCooldown > 0 || ivy.getBoxingActionTicks() > 0 || ivy.getRandom().nextFloat() >= REACTIVE_DODGE_CHANCE) {
+        float dodgeChance = attacker instanceof Player ? REACTIVE_DODGE_CHANCE : REACTIVE_NON_PLAYER_DODGE_CHANCE;
+        if (dodgeCooldown > 0 || ivy.getBoxingActionTicks() > 0 || ivy.getRandom().nextFloat() >= dodgeChance) {
             return false;
         }
-        ivy.setTarget(attacker);
+        ivy.setTarget(target);
         beginStance();
-        lockSight(attacker);
-        if (ivy.getRandom().nextInt(100) < 45) {
-            startCounterDodge(attacker);
-        } else {
-            startDodge(attacker);
-        }
+        lockSight(target);
+        startReactiveDodge(target, true, 45);
         return true;
     }
 
@@ -224,19 +278,16 @@ public class IvyBoxingCombatController {
         if (ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy || !attacker.isAlive()) {
             return;
         }
-        ivy.setTarget(attacker);
+        LivingEntity target = resolveReactiveTarget(attacker);
+        ivy.setTarget(target);
         if (ivy.isBoxingTaunting()) {
-            interruptTaunt(attacker);
+            interruptTaunt(target);
             return;
         }
         beginStance();
-        lockSight(attacker);
+        lockSight(target);
         if (ivy.getBoxingActionTicks() <= 0 || state != CombatState.DODGING) {
-            if (ivy.getRandom().nextInt(100) < 55) {
-                startCounterDodge(attacker);
-            } else {
-                startDodge(attacker);
-            }
+            startReactiveDodge(target, true, 55);
         }
     }
 
@@ -265,6 +316,15 @@ public class IvyBoxingCombatController {
         if (attackCooldown > 0) {
             attackCooldown--;
         }
+        if (dashCrossCooldown > 0) {
+            dashCrossCooldown--;
+        }
+        if (throwProjectilesCooldown > 0) {
+            throwProjectilesCooldown--;
+        }
+        if (throwProjectilesRangePunishTicks > 0) {
+            throwProjectilesRangePunishTicks--;
+        }
         if (hookCooldown > 0) {
             hookCooldown--;
         }
@@ -273,6 +333,12 @@ public class IvyBoxingCombatController {
         }
         if (dodgeCooldown > 0) {
             dodgeCooldown--;
+        }
+        if (movingPressureCommitCooldown > 0) {
+            movingPressureCommitCooldown--;
+        }
+        if (approachNudgeTicks > 0 && --approachNudgeTicks <= 0) {
+            applyApproachNudge(pendingAttack.approachNudgeStrength);
         }
         if (impactTicks > 0 && --impactTicks <= 0) {
             applyImpact(pendingCounter != null ? pendingCounter.hit : pendingAttack.firstHit);
@@ -283,6 +349,15 @@ public class IvyBoxingCombatController {
         }
         if (thirdImpactTicks > 0 && --thirdImpactTicks <= 0) {
             applyImpact(pendingAttack.thirdHit);
+        }
+        if (projectileTicks > 0 && --projectileTicks <= 0) {
+            throwVenomArrowAtTarget();
+        }
+        if (secondProjectileTicks > 0 && --secondProjectileTicks <= 0) {
+            throwVenomArrowAtTarget();
+        }
+        if (projectileDashTicks > 0 && --projectileDashTicks <= 0) {
+            applyProjectileDash();
         }
         if (comboRetreatTicks > 0 && --comboRetreatTicks <= 0) {
             applyComboRetreat();
@@ -320,6 +395,9 @@ public class IvyBoxingCombatController {
 
     private void clear() {
         attackCooldown = 0;
+        dashCrossCooldown = 0;
+        throwProjectilesCooldown = 0;
+        throwProjectilesRangePunishTicks = 0;
         dodgeCooldown = 0;
         hookCooldown = 0;
         comboCooldown = 0;
@@ -328,12 +406,22 @@ public class IvyBoxingCombatController {
         impactTicks = 0;
         secondImpactTicks = 0;
         thirdImpactTicks = 0;
+        projectileTicks = 0;
+        secondProjectileTicks = 0;
+        projectileDashTicks = 0;
+        approachNudgeTicks = 0;
         comboRetreatTicks = 0;
         impactTargetId = -1;
         pendingCounter = null;
         lastCombatTarget = null;
+        committedPillagerTarget = null;
         lastTargetId = -1;
+        targetMoveX = 0.0D;
+        targetMoveZ = 0.0D;
+        previousTargetDistanceSqr = 0.0D;
         targetStillTicks = 0;
+        targetMovingTicks = 0;
+        movingPressureCommitCooldown = 0;
         setState(CombatState.RECOVERING, 0);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(0);
@@ -358,12 +446,12 @@ public class IvyBoxingCombatController {
         ivy.triggerAnim("movement", "exit_orthodox");
     }
 
-    private void startTaunt(LivingEntity target, boolean exitAfterTaunt) {
+    private void startTaunt(LivingEntity target) {
         ivy.getNavigation().stop();
         lockSight(target);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(TAUNT_ACTION_TICKS);
-        this.exitAfterTaunt = exitAfterTaunt;
+        this.exitAfterTaunt = true;
         clearAttackTimers();
         setState(CombatState.TAUNTING, TAUNT_ACTION_TICKS);
         ivy.setBoxingTaunting(true);
@@ -375,6 +463,10 @@ public class IvyBoxingCombatController {
         impactTicks = 0;
         secondImpactTicks = 0;
         thirdImpactTicks = 0;
+        projectileTicks = 0;
+        secondProjectileTicks = 0;
+        projectileDashTicks = 0;
+        approachNudgeTicks = 0;
         comboRetreatTicks = 0;
         impactTargetId = -1;
         pendingCounter = null;
@@ -399,6 +491,12 @@ public class IvyBoxingCombatController {
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(attack.actionTicks);
         attackCooldown = attack.cooldownTicks;
+        if (attack == AttackType.DASH_FORWARD_RIGHT_CROSS) {
+            dashCrossCooldown = DASH_CROSS_COOLDOWN_TICKS;
+        }
+        if (attack == AttackType.THROW_PROJECTILES) {
+            throwProjectilesCooldown = THROW_PROJECTILES_COOLDOWN_TICKS;
+        }
         if (attack == AttackType.RIGHT_HOOK || attack == AttackType.RIGHT_HOOK_UPPERCUT) {
             hookCooldown = HOOK_COOLDOWN_TICKS;
         }
@@ -408,6 +506,10 @@ public class IvyBoxingCombatController {
         impactTicks = attack.firstImpactTicks;
         secondImpactTicks = attack.secondImpactTicks;
         thirdImpactTicks = attack.thirdImpactTicks;
+        projectileTicks = attack.firstProjectileTicks;
+        secondProjectileTicks = attack.secondProjectileTicks;
+        projectileDashTicks = attack.dashTicks;
+        approachNudgeTicks = attack.approachNudgeTicks;
         comboRetreatTicks = attack.retreatTicks;
         impactTargetId = target.getId();
         pendingAttack = attack;
@@ -416,13 +518,17 @@ public class IvyBoxingCombatController {
     }
 
     private void startDodge(LivingEntity target) {
-        int dodge = ivy.getRandom().nextInt(3);
+        int dodge = canCounterDodge(target) ? ivy.getRandom().nextInt(3) : ivy.getRandom().nextInt(2);
         setState(CombatState.DODGING, DODGE_ACTION_TICKS);
         ivy.setBoxingActionTicks(DODGE_ACTION_TICKS);
         dodgeCooldown = DODGE_COOLDOWN_TICKS;
         impactTicks = 0;
         secondImpactTicks = 0;
         thirdImpactTicks = 0;
+        projectileTicks = 0;
+        secondProjectileTicks = 0;
+        projectileDashTicks = 0;
+        approachNudgeTicks = 0;
         comboRetreatTicks = 0;
         pendingCounter = null;
         ivy.triggerAnim("movement", switch (dodge) {
@@ -441,6 +547,18 @@ public class IvyBoxingCombatController {
         ivy.hasImpulse = true;
     }
 
+    private void startReactiveDodge(LivingEntity target, boolean allowCounter, int counterChance) {
+        if (allowCounter && canCounterDodge(target) && ivy.getRandom().nextInt(100) < counterChance) {
+            startCounterDodge(target);
+        } else {
+            startDodge(target);
+        }
+    }
+
+    private boolean canCounterDodge(LivingEntity target) {
+        return ivy.distanceToSqr(target) <= COUNTER_DODGE_RANGE * COUNTER_DODGE_RANGE;
+    }
+
     private void startCounterDodge(LivingEntity target) {
         CounterType counter = ivy.getRandom().nextBoolean() ? CounterType.LEFT_LIVER_SHOT : CounterType.RIGHT_LIVER_SHOT;
         setState(CombatState.DODGING, LIVER_COUNTER_ACTION_TICKS);
@@ -450,6 +568,10 @@ public class IvyBoxingCombatController {
         impactTicks = LIVER_COUNTER_IMPACT_TICKS;
         secondImpactTicks = 0;
         thirdImpactTicks = 0;
+        projectileTicks = 0;
+        secondProjectileTicks = 0;
+        projectileDashTicks = 0;
+        approachNudgeTicks = 0;
         comboRetreatTicks = 0;
         impactTargetId = target.getId();
         pendingCounter = counter;
@@ -511,6 +633,13 @@ public class IvyBoxingCombatController {
         setComboHorizontalImpulse(step, 0.02D);
     }
 
+    private void applyApproachNudge(double strength) {
+        if (strength <= 0.0D || impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+        applyForwardNudge(target, strength);
+    }
+
     private void applyComboRetreat() {
         if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
             return;
@@ -522,6 +651,50 @@ public class IvyBoxingCombatController {
         }
         Vec3 step = away.normalize().scale(1.25);
         setComboHorizontalImpulse(step, 0.04D);
+    }
+
+    private void throwVenomArrowAtTarget() {
+        if (ivy.level().isClientSide || impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+        if (!ivy.hasLineOfSight(target)) {
+            return;
+        }
+
+        Vec3 look = ivy.getLookAngle();
+        if (look.horizontalDistanceSqr() < 1.0E-4D) {
+            look = target.position().subtract(ivy.position()).normalize();
+        }
+
+        Vec3 origin = ivy.position()
+                .add(0.0D, ivy.getBbHeight() * 0.62D, 0.0D)
+                .add(look.normalize().scale(0.55D));
+        Vec3 targetVelocity = target.getDeltaMovement();
+        Vec3 aimPoint = target.position()
+                .add(targetVelocity.x * THROW_PROJECTILES_PREDICT_TICKS, target.getBbHeight() * 0.55D, targetVelocity.z * THROW_PROJECTILES_PREDICT_TICKS);
+        Vec3 direction = aimPoint.subtract(origin);
+        if (direction.lengthSqr() < 1.0E-4D) {
+            direction = look;
+        }
+
+        ArrowOfVenomEntity arrow = new ArrowOfVenomEntity(ivy.level(), ivy);
+        arrow.setPos(origin.x, origin.y, origin.z);
+        arrow.pickup = AbstractArrow.Pickup.DISALLOWED;
+        arrow.shoot(direction.x, direction.y, direction.z, THROW_PROJECTILES_SPEED, THROW_PROJECTILES_INACCURACY);
+        ivy.level().addFreshEntity(arrow);
+    }
+
+    private void applyProjectileDash() {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+
+        Vec3 toward = target.position().subtract(ivy.position());
+        if (toward.horizontalDistanceSqr() < 1.0E-4D) {
+            toward = Vec3.directionFromRotation(0.0F, ivy.getYRot());
+        }
+        Vec3 step = toward.normalize().scale(pendingAttack.dashStrength);
+        setComboHorizontalImpulse(step, 0.03D);
     }
 
     private void setComboHorizontalImpulse(Vec3 step, double lift) {
@@ -569,6 +742,61 @@ public class IvyBoxingCombatController {
         return ivy.getRandom().nextBoolean() ? AttackType.LEFT_JAB_RIGHT_CROSS : AttackType.JAB_JAB_HOOK;
     }
 
+    private boolean shouldCommitToMovingTarget(double distanceSqr, boolean targetStill) {
+        return !targetStill
+                && targetMovingTicks >= TARGET_MOVING_PRESSURE_TICKS
+                && movingPressureCommitCooldown <= 0
+                && distanceSqr > ATTACK_RANGE * ATTACK_RANGE;
+    }
+
+    private boolean canDashCross(double distanceSqr, DashCrossRead read, int roll) {
+        return attackCooldown <= 0
+                && comboCooldown <= 0
+                && dashCrossCooldown <= 0
+                && distanceSqr >= DASH_CROSS_MIN_RANGE * DASH_CROSS_MIN_RANGE
+                && distanceSqr <= DASH_CROSS_MAX_RANGE * DASH_CROSS_MAX_RANGE
+                && read.retreating()
+                && roll < DASH_CROSS_RETREAT_CHANCE;
+    }
+
+    private boolean canThrowProjectiles(LivingEntity target, double distanceSqr, DashCrossRead dashRead) {
+        if (attackCooldown > 0
+                || throwProjectilesCooldown > 0
+                || distanceSqr < THROW_PROJECTILES_MIN_RANGE * THROW_PROJECTILES_MIN_RANGE
+                || distanceSqr > THROW_PROJECTILES_MAX_RANGE * THROW_PROJECTILES_MAX_RANGE
+                || !ivy.hasLineOfSight(target)) {
+            return false;
+        }
+        return isProjectilePressureTarget(target)
+                || (target instanceof Player && dashRead.retreating())
+                || (!(target instanceof Player) && (throwProjectilesRangePunishTicks > 0 || isSkirmishingTarget(dashRead)));
+    }
+
+    private boolean isSkirmishingTarget(DashCrossRead read) {
+        if (read.retreating()) {
+            return true;
+        }
+        if (targetMovingTicks < TARGET_MOVING_PRESSURE_TICKS || read.previousDistanceSqr <= 0.0D) {
+            return false;
+        }
+        double previousDistance = Math.sqrt(read.previousDistanceSqr);
+        double currentDistance = Math.sqrt(read.currentDistanceSqr);
+        return currentDistance >= APPROACH_DISTANCE && currentDistance >= previousDistance - SKIRMISH_CLOSING_TOLERANCE;
+    }
+
+    private DashCrossRead readDashCross(LivingEntity target, double distanceSqr) {
+        Vec3 awayFromIvy = target.position().subtract(ivy.position());
+        double horizontalSpeedSqr = targetMoveX * targetMoveX + targetMoveZ * targetMoveZ;
+        if (awayFromIvy.horizontalDistanceSqr() < 1.0E-4D || horizontalSpeedSqr < 1.0E-4D) {
+            return new DashCrossRead(0.0D, horizontalSpeedSqr, previousTargetDistanceSqr, distanceSqr, false);
+        }
+
+        double retreatDot = awayFromIvy.normalize().dot(new Vec3(targetMoveX, 0.0D, targetMoveZ).normalize());
+        boolean increasing = distanceSqr > previousTargetDistanceSqr + RETREAT_DISTANCE_INCREASE_SQ;
+        boolean retreating = retreatDot >= RETREAT_DOT_THRESHOLD && increasing;
+        return new DashCrossRead(retreatDot, horizontalSpeedSqr, previousTargetDistanceSqr, distanceSqr, retreating);
+    }
+
     private void setState(CombatState state, int ticks) {
         this.state = state;
         this.stateTicks = Math.max(0, ticks);
@@ -599,21 +827,40 @@ public class IvyBoxingCombatController {
         ivy.getNavigation().moveTo(target, 1.0D);
     }
 
+    private void closeDistanceIntercept(LivingEntity target) {
+        setState(CombatState.CLOSING_DISTANCE, 10);
+        ivy.setBoxingMovement(false, true);
+
+        Vec3 velocity = target.getDeltaMovement();
+        Vec3 predicted = target.position().add(velocity.x * INTERCEPT_PREDICTION_TICKS, 0.0D, velocity.z * INTERCEPT_PREDICTION_TICKS);
+        ivy.getNavigation().moveTo(predicted.x, target.getY(), predicted.z, 1.08D);
+    }
+
     private boolean updateTargetStillness(LivingEntity target) {
         if (lastTargetId != target.getId()) {
             lastTargetId = target.getId();
             lastTargetX = target.getX();
             lastTargetZ = target.getZ();
+            targetMoveX = 0.0D;
+            targetMoveZ = 0.0D;
+            previousTargetDistanceSqr = ivy.distanceToSqr(target);
             targetStillTicks = 0;
+            targetMovingTicks = 0;
             return false;
         }
 
+        previousTargetDistanceSqr = (lastTargetX - ivy.getX()) * (lastTargetX - ivy.getX())
+                + (lastTargetZ - ivy.getZ()) * (lastTargetZ - ivy.getZ());
         double dx = target.getX() - lastTargetX;
         double dz = target.getZ() - lastTargetZ;
+        targetMoveX = dx;
+        targetMoveZ = dz;
         if (dx * dx + dz * dz <= TARGET_STILL_EPSILON_SQ) {
             targetStillTicks++;
+            targetMovingTicks = 0;
         } else {
             targetStillTicks = 0;
+            targetMovingTicks++;
             lastTargetX = target.getX();
             lastTargetZ = target.getZ();
         }
@@ -667,12 +914,26 @@ public class IvyBoxingCombatController {
 
         @Override
         public boolean canUse() {
-            return canBox(ivy.getTarget());
+            LivingEntity target = selectPriorityTarget(ivy.getTarget());
+            if (!canBox(target)) {
+                return false;
+            }
+            if (target != ivy.getTarget()) {
+                ivy.setTarget(target);
+            }
+            return true;
         }
 
         @Override
         public boolean canContinueToUse() {
-            return canBox(ivy.getTarget());
+            LivingEntity target = selectPriorityTarget(ivy.getTarget());
+            if (!canBox(target)) {
+                return false;
+            }
+            if (target != ivy.getTarget()) {
+                ivy.setTarget(target);
+            }
+            return true;
         }
 
         @Override
@@ -685,8 +946,14 @@ public class IvyBoxingCombatController {
             ivy.getNavigation().stop();
             if (ivy.isAlive() && ivy.isBoxingStance()) {
                 LivingEntity target = ivy.getTarget() != null ? ivy.getTarget() : lastCombatTarget;
+                LivingEntity nextTarget = selectPriorityTarget(null);
+                if (nextTarget != null) {
+                    ivy.setTarget(nextTarget);
+                    beginStance();
+                    return;
+                }
                 if (shouldTauntDefeatedEnemy(target)) {
-                    startTaunt(target, true);
+                    startTaunt(target);
                 } else {
                     startExitStance();
                 }
@@ -697,9 +964,12 @@ public class IvyBoxingCombatController {
 
         @Override
         public void tick() {
-            LivingEntity target = ivy.getTarget();
+            LivingEntity target = selectPriorityTarget(ivy.getTarget());
             if (target == null) {
                 return;
+            }
+            if (target != ivy.getTarget()) {
+                ivy.setTarget(target);
             }
             lastCombatTarget = target;
 
@@ -713,9 +983,30 @@ public class IvyBoxingCombatController {
 
             double distanceSqr = ivy.distanceToSqr(target);
             boolean targetStill = updateTargetStillness(target);
+            boolean commitReady = shouldCommitToMovingTarget(distanceSqr, targetStill);
+            DashCrossRead dashRead = readDashCross(target, distanceSqr);
+            if (canThrowProjectiles(target, distanceSqr, dashRead)) {
+                ivy.getNavigation().stop();
+                ivy.setBoxingMovement(false, false);
+                startAttack(target, AttackType.THROW_PROJECTILES);
+                return;
+            }
             if (dodgeCooldown <= 0 && ivy.getRandom().nextInt(80) == 0 && distanceSqr < 16.0D) {
                 ivy.getNavigation().stop();
                 startDodge(target);
+                return;
+            }
+
+            if (commitReady) {
+                movingPressureCommitCooldown = MOVING_PRESSURE_COMMIT_COOLDOWN_TICKS;
+                int dashRoll = ivy.getRandom().nextInt(100);
+                if (canDashCross(distanceSqr, dashRead, dashRoll)) {
+                    ivy.getNavigation().stop();
+                    ivy.setBoxingMovement(false, false);
+                    startAttack(target, AttackType.DASH_FORWARD_RIGHT_CROSS);
+                } else {
+                    closeDistanceIntercept(target);
+                }
                 return;
             }
 
@@ -727,6 +1018,11 @@ public class IvyBoxingCombatController {
                 } else if (distanceSqr < KEEP_DISTANCE * KEEP_DISTANCE) {
                     keepDistance(target);
                 }
+                return;
+            }
+
+            if (isPressureTarget(target)) {
+                closeDistance(target);
                 return;
             }
 
@@ -751,8 +1047,189 @@ public class IvyBoxingCombatController {
                 return false;
             }
             double distanceSqr = ivy.distanceToSqr(target);
-            return distanceSqr <= 256.0D && (distanceSqr <= 36.0D || ivy.hasLineOfSight(target));
+            return distanceSqr <= 256.0D && (distanceSqr <= 36.0D || ivy.hasLineOfSight(target) || isTargetingIvy(target));
         }
+    }
+
+    private boolean isPressureTarget(LivingEntity target) {
+        return target instanceof Pillager || target instanceof Evoker || target instanceof Vex || target instanceof Witch;
+    }
+
+    private boolean isProjectilePressureTarget(LivingEntity target) {
+        return target instanceof Pillager || target instanceof Evoker || target instanceof Witch || target instanceof Vex;
+    }
+
+    @Nullable
+    private LivingEntity selectPriorityTarget(@Nullable LivingEntity currentTarget) {
+        if (currentTarget instanceof Player || currentTarget instanceof Evoker) {
+            return currentTarget;
+        }
+        Evoker evoker = findNearestEvoker();
+        if (evoker != null) {
+            return evoker;
+        }
+        Pillager committedPillager = getValidCommittedPillager();
+        if (committedPillager != null) {
+            return committedPillager;
+        }
+        if (currentTarget instanceof Pillager pillager) {
+            commitPillager(pillager);
+            return pillager;
+        }
+        Pillager nearestPillager = findNearestPillager();
+        if (nearestPillager != null) {
+            return nearestPillager;
+        }
+        if (currentTarget instanceof Witch) {
+            return currentTarget;
+        }
+        Witch witch = findNearestWitch();
+        if (witch != null) {
+            return witch;
+        }
+        if (currentTarget instanceof Vex) {
+            return currentTarget;
+        }
+        Vex vex = findNearestVex();
+        if (vex != null) {
+            return vex;
+        }
+        LivingEntity aggressor = findNearestAggressorTargetingIvy();
+        return aggressor != null ? aggressor : currentTarget;
+    }
+
+    @Nullable
+    private Evoker findNearestEvoker() {
+        Evoker best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Evoker evoker : ivy.level().getEntitiesOfClass(Evoker.class, ivy.getBoundingBox().inflate(16.0D))) {
+            if (!evoker.isAlive()) {
+                continue;
+            }
+            double distance = ivy.distanceToSqr(evoker);
+            if (distance < bestDistance && (distance <= 36.0D || ivy.hasLineOfSight(evoker))) {
+                best = evoker;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    @Nullable
+    private LivingEntity resolveReactiveTarget(LivingEntity attacker) {
+        if (attacker instanceof Player || attacker instanceof Evoker) {
+            return attacker;
+        }
+        Evoker evoker = findNearestEvoker();
+        if (evoker != null) {
+            return evoker;
+        }
+        Pillager committedPillager = getValidCommittedPillager();
+        if (committedPillager != null) {
+            return committedPillager;
+        }
+        if (attacker instanceof Pillager pillager) {
+            commitPillager(pillager);
+            return pillager;
+        }
+        if (attacker instanceof Witch) {
+            return attacker;
+        }
+        return attacker;
+    }
+
+    private void commitPillager(Pillager pillager) {
+        if (isValidTarget(pillager)) {
+            committedPillagerTarget = pillager;
+        }
+    }
+
+    @Nullable
+    private Pillager getValidCommittedPillager() {
+        if (isValidTarget(committedPillagerTarget)) {
+            return committedPillagerTarget;
+        }
+        committedPillagerTarget = null;
+        return null;
+    }
+
+    @Nullable
+    private Pillager findNearestPillager() {
+        Pillager best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Pillager pillager : ivy.level().getEntitiesOfClass(Pillager.class, ivy.getBoundingBox().inflate(16.0D))) {
+            if (!isValidTarget(pillager)) {
+                continue;
+            }
+            double distance = ivy.distanceToSqr(pillager);
+            if (distance < bestDistance && (distance <= 36.0D || ivy.hasLineOfSight(pillager))) {
+                best = pillager;
+                bestDistance = distance;
+            }
+        }
+        if (best != null) {
+            commitPillager(best);
+        }
+        return best;
+    }
+
+    @Nullable
+    private Witch findNearestWitch() {
+        Witch best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Witch witch : ivy.level().getEntitiesOfClass(Witch.class, ivy.getBoundingBox().inflate(16.0D))) {
+            if (!isValidTarget(witch)) {
+                continue;
+            }
+            double distance = ivy.distanceToSqr(witch);
+            if (distance < bestDistance && (distance <= 36.0D || ivy.hasLineOfSight(witch))) {
+                best = witch;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    @Nullable
+    private Vex findNearestVex() {
+        Vex best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Vex vex : ivy.level().getEntitiesOfClass(Vex.class, ivy.getBoundingBox().inflate(16.0D))) {
+            if (!isValidTarget(vex)) {
+                continue;
+            }
+            double distance = ivy.distanceToSqr(vex);
+            if (distance < bestDistance && (distance <= 36.0D || ivy.hasLineOfSight(vex))) {
+                best = vex;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    private boolean isValidTarget(@Nullable LivingEntity target) {
+        return target != null && target.isAlive() && !target.isRemoved();
+    }
+
+    private boolean isTargetingIvy(LivingEntity target) {
+        return target instanceof Mob mob && mob.getTarget() == ivy;
+    }
+
+    @Nullable
+    private LivingEntity findNearestAggressorTargetingIvy() {
+        LivingEntity best = null;
+        double bestDistance = Double.MAX_VALUE;
+        for (Mob mob : ivy.level().getEntitiesOfClass(Mob.class, ivy.getBoundingBox().inflate(16.0D))) {
+            if (!isValidTarget(mob) || mob == ivy || mob.getTarget() != ivy) {
+                continue;
+            }
+            double distance = ivy.distanceToSqr(mob);
+            if (distance < bestDistance && (distance <= 64.0D || ivy.hasLineOfSight(mob))) {
+                best = mob;
+                bestDistance = distance;
+            }
+        }
+        return best;
     }
 
     private boolean shouldTauntDefeatedEnemy(@Nullable LivingEntity target) {
@@ -772,25 +1249,37 @@ public class IvyBoxingCombatController {
     }
 
     private enum AttackType {
-        LEFT_JAB("orthodox_left_jab", JAB_ACTION_TICKS, JAB_IMPACT_TICKS, 0, 0, 0, JAB_COOLDOWN_TICKS,
+        LEFT_JAB("orthodox_left_jab", JAB_ACTION_TICKS, JAB_IMPACT_TICKS, 0, 0, 0, 0, 0.0D, JAB_COOLDOWN_TICKS,
                 new AttackHit(2.5F, 0.015D, 0.0D, 2.35D, false, 0.0D), null, null),
-        RIGHT_HOOK("orthodox_right_hook", HOOK_ACTION_TICKS, HOOK_IMPACT_TICKS, 0, 0, 0, HOOK_COOLDOWN_TICKS,
+        RIGHT_HOOK("orthodox_right_hook", HOOK_ACTION_TICKS, HOOK_IMPACT_TICKS, 0, 0, 0, 0, 0.0D, HOOK_COOLDOWN_TICKS,
                 new AttackHit(6.0F, 0.28D, 0.08D, 2.45D, false, 0.0D), null, null),
-        LEFT_JAB_RIGHT_CROSS("orthodox_left_jab_right_cross", COMBO_ACTION_TICKS, COMBO_FIRST_IMPACT_TICKS,
-                COMBO_SECOND_IMPACT_TICKS, 0, COMBO_RETREAT_TICKS, JAB_COOLDOWN_TICKS,
+        LEFT_JAB_RIGHT_CROSS("orthodox_left_jab_right_cross", LEFT_JAB_RIGHT_CROSS_ACTION_TICKS, LEFT_JAB_RIGHT_CROSS_FIRST_IMPACT_TICKS,
+                LEFT_JAB_RIGHT_CROSS_SECOND_IMPACT_TICKS, 0, LEFT_JAB_RIGHT_CROSS_RETREAT_TICKS, 0, 0.0D, JAB_COOLDOWN_TICKS,
                 new AttackHit(2.0F, 0.02D, 0.0D, 2.55D, true, 0.0D),
                 new AttackHit(4.0F, 0.16D, 0.04D, 2.95D, true, 1), null),
         JAB_JAB_HOOK("orthodox_jab_jab_hook", JAB_JAB_HOOK_ACTION_TICKS,
                 JAB_JAB_HOOK_FIRST_IMPACT_TICKS, JAB_JAB_HOOK_SECOND_IMPACT_TICKS,
-                JAB_JAB_HOOK_THIRD_IMPACT_TICKS, 0, JAB_COOLDOWN_TICKS,
+                JAB_JAB_HOOK_THIRD_IMPACT_TICKS, 0, 0, 0.0D, JAB_COOLDOWN_TICKS,
                 new AttackHit(1.8F, 0.0D, 0.0D, 2.45D, true, 0.0D),
                 new AttackHit(1.8F, 0.0D, 0.0D, 2.45D, true, 0.0D),
                 new AttackHit(5.5F, 0.24D, 0.06D, 3.05D, true, 0.55D)),
         RIGHT_HOOK_UPPERCUT("orthodox_right_hook_uppercut", RIGHT_HOOK_UPPERCUT_ACTION_TICKS,
                 RIGHT_HOOK_UPPERCUT_FIRST_IMPACT_TICKS, RIGHT_HOOK_UPPERCUT_SECOND_IMPACT_TICKS,
-                0, 0, HOOK_COOLDOWN_TICKS,
+                0, 0, 0, 0.0D, HOOK_COOLDOWN_TICKS,
                 new AttackHit(4.0F, 0.015D, 0.0D, 2.55D, true, 0.0D),
-                new AttackHit(6.0F, 0.12D, 0.24D, 3.05D, true, 0.55D),
+                new AttackHit(6.0F, 0.12D, 0.50D, 3.05D, true, 0.55D),
+                null),
+        DASH_FORWARD_RIGHT_CROSS("orthodox_dash_forward_right_cross", DASH_FORWARD_RIGHT_CROSS_ACTION_TICKS,
+                DASH_FORWARD_RIGHT_CROSS_IMPACT_TICKS, 0, 0, 0,
+                DASH_FORWARD_RIGHT_CROSS_NUDGE_TICKS, 1.15D, COMBO_COOLDOWN_TICKS,
+                new AttackHit(5.0F, 0.28D, 0.04D, 3.2D, true, 0.2D),
+                null,
+                null),
+        THROW_PROJECTILES("orthodox_throw_projectiles", THROW_PROJECTILES_ACTION_TICKS,
+                0, 0, 0, 0, 0, 0.0D, COMBO_COOLDOWN_TICKS,
+                THROW_PROJECTILES_FIRST_THROW_TICKS, THROW_PROJECTILES_SECOND_THROW_TICKS, THROW_PROJECTILES_DASH_TICKS, THROW_PROJECTILES_DASH_STRENGTH,
+                null,
+                null,
                 null);
 
         private final String trigger;
@@ -799,21 +1288,42 @@ public class IvyBoxingCombatController {
         private final int secondImpactTicks;
         private final int thirdImpactTicks;
         private final int retreatTicks;
+        private final int approachNudgeTicks;
+        private final double approachNudgeStrength;
         private final int cooldownTicks;
+        private final int firstProjectileTicks;
+        private final int secondProjectileTicks;
+        private final int dashTicks;
+        private final double dashStrength;
         private final AttackHit firstHit;
         private final AttackHit secondHit;
         private final AttackHit thirdHit;
 
         AttackType(String trigger, int actionTicks, int firstImpactTicks, int secondImpactTicks, int thirdImpactTicks,
-                   int retreatTicks, int cooldownTicks, AttackHit firstHit, @Nullable AttackHit secondHit,
-                   @Nullable AttackHit thirdHit) {
+                   int retreatTicks, int approachNudgeTicks, double approachNudgeStrength, int cooldownTicks,
+                   AttackHit firstHit, @Nullable AttackHit secondHit, @Nullable AttackHit thirdHit) {
+            this(trigger, actionTicks, firstImpactTicks, secondImpactTicks, thirdImpactTicks, retreatTicks,
+                    approachNudgeTicks, approachNudgeStrength, cooldownTicks, 0, 0, 0, 0.0D,
+                    firstHit, secondHit, thirdHit);
+        }
+
+        AttackType(String trigger, int actionTicks, int firstImpactTicks, int secondImpactTicks, int thirdImpactTicks,
+                   int retreatTicks, int approachNudgeTicks, double approachNudgeStrength, int cooldownTicks,
+                   int firstProjectileTicks, int secondProjectileTicks, int dashTicks, double dashStrength,
+                   @Nullable AttackHit firstHit, @Nullable AttackHit secondHit, @Nullable AttackHit thirdHit) {
             this.trigger = trigger;
             this.actionTicks = actionTicks;
             this.firstImpactTicks = firstImpactTicks;
             this.secondImpactTicks = secondImpactTicks;
             this.thirdImpactTicks = thirdImpactTicks;
             this.retreatTicks = retreatTicks;
+            this.approachNudgeTicks = approachNudgeTicks;
+            this.approachNudgeStrength = approachNudgeStrength;
             this.cooldownTicks = cooldownTicks;
+            this.firstProjectileTicks = firstProjectileTicks;
+            this.secondProjectileTicks = secondProjectileTicks;
+            this.dashTicks = dashTicks;
+            this.dashStrength = dashStrength;
             this.firstHit = firstHit;
             this.secondHit = secondHit;
             this.thirdHit = thirdHit;
@@ -835,5 +1345,9 @@ public class IvyBoxingCombatController {
 
     private record AttackHit(float damage, double knockback, double lift, double range, boolean resetInvulnerability,
                              double forwardNudge) {
+    }
+
+    private record DashCrossRead(double retreatDot, double horizontalSpeedSqr, double previousDistanceSqr,
+                                 double currentDistanceSqr, boolean retreating) {
     }
 }

@@ -37,6 +37,7 @@ import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.monster.Pillager;
 import net.minecraft.world.entity.monster.Vindicator;
 import net.minecraft.world.entity.monster.Vex;
+import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.npc.AbstractVillager;
@@ -182,7 +183,21 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         goalSelector.addGoal(0, new TradingStillGoal());
         goalSelector.addGoal(1, new FloatGoal(this));
         goalSelector.addGoal(2, getBoxingCombat().createGoal());
-        goalSelector.addGoal(3, new RandomStrollGoal(this, 0.6));
+        goalSelector.addGoal(3, new RandomStrollGoal(this, 0.6) {
+            @Override
+            public boolean canUse() {
+                return IvyTheDragonMerchant.this.getTarget() == null
+                        && !IvyTheDragonMerchant.this.isBoxingCombatActive()
+                        && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return IvyTheDragonMerchant.this.getTarget() == null
+                        && !IvyTheDragonMerchant.this.isBoxingCombatActive()
+                        && super.canContinueToUse();
+            }
+        });
         goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 6.0f) {
             @Override
             public boolean canUse() {
@@ -206,11 +221,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             }
         });
         targetSelector.addGoal(0, new HurtByTargetGoal(this));
-        targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Zombie.class, true));
+        targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Evoker.class, true));
         targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Pillager.class, true));
-        targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Vindicator.class, true));
-        targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Evoker.class, true));
-        targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Vex.class, true));
+        targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Vex.class, true));
+        targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Vindicator.class, true));
+        targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Witch.class, true));
+        targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Zombie.class, true));
     }
 
     @Override
@@ -451,7 +467,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
 
         if (getBoxingCombat().isActive()) {
-            state.getController().transitionLength(2);
+            state.getController().transitionLength(1);
         }
 
         if (getBoxingCombat().applyMovementAnimation(state)) {
@@ -496,7 +512,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
                 || source.getEntity() instanceof Pillager
                 || source.getEntity() instanceof Vindicator
                 || source.getEntity() instanceof Evoker
-                || source.getEntity() instanceof Vex;
+                || source.getEntity() instanceof Vex
+                || source.getEntity() instanceof Witch;
     }
 
     @Override

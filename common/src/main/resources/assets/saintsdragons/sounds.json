@@ -99,6 +99,26 @@
       }
     ]
   },
+  "ivy_dash_forward_right_cross": {
+    "subtitle": "subtitles.saintsdragons.ivy_dash_forward_right_cross",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_dash_forward_right_cross",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_orthodox_throw_projectiles": {
+    "subtitle": "subtitles.saintsdragons.ivy_orthodox_throw_projectiles",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_orthodox_throw_projectiles",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "bleeding_bolt": {
     "subtitle": "subtitles.saintsdragons.bleeding_bolt",
     "sounds": [

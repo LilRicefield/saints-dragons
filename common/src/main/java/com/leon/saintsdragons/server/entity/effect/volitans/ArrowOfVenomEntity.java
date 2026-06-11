@@ -68,6 +68,7 @@ public class ArrowOfVenomEntity extends AbstractArrow implements GeoEntity {
     @Override
     protected void doPostHurtEffects(LivingEntity target) {
         super.doPostHurtEffects(target);
+        target.invulnerableTime = 0;
         if (target instanceof Volitans volitans) {
             volitans.neutralizeVenom(VOLITANS_VENOM_NEUTRALIZE_TICKS);
         }
