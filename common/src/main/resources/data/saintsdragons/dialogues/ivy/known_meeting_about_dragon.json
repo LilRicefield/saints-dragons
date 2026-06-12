@@ -1,0 +1,705 @@
+{
+  "start_at": "dragon_knowledge",
+  "states": {
+    "dragon_knowledge": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "You can say that, sure."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_knowledge_opener_2"
+        }
+      ]
+    },
+    "dragon_knowledge_opener_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But it's enough to know when someone is about to get killed. Which is, unfortunately, often."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_knowledge_opener_3"
+        }
+      ]
+    },
+    "dragon_knowledge_opener_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And it's enough to know people are usually wrong about them."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Wrong how?"
+          },
+          "next": "dragon_wrong_1"
+        },
+        {
+          "text": {
+            "text": "Sounds complicated."
+          },
+          "next": "dragon_complicated_1"
+        }
+      ]
+    },
+    "dragon_wrong_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Most people talk about dragons like they're all the same. Big wings, sharp teeth, bad temper. Blah, blah, blah."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_wrong_2"
+        }
+      ]
+    },
+    "dragon_wrong_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She shakes her head.* That's like saying every person with a sword is a knight."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_wrong_3"
+        }
+      ]
+    },
+    "dragon_wrong_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Or like, if a cat suddenly makes barking-like sounds, it's a dog. Does that make sense? No? *Ahem*, anyway."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_variety_1"
+        }
+      ]
+    },
+    "dragon_complicated_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Yep. I know. When it comes to dragons, it's not really a walk-in-the-park sort of situation."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_complicated_2"
+        }
+      ]
+    },
+    "dragon_complicated_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I did have help from a guy with the name that has something to do with your diaphragm involuntarily slamming downward super fast."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_complicated_3"
+        }
+      ]
+    },
+    "dragon_complicated_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And he had a really cute black dragon with him. Big green eyes. Almost like a cat. And it moved like one, too."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_complicated_4"
+        }
+      ]
+    },
+    "dragon_complicated_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I've spent a lot of time studying dragons. Especially the Raevyx. But, uh, let's not talk about that."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_complicated_5"
+        }
+      ]
+    },
+    "dragon_complicated_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Point is, dragons are more complicated than people want them to be."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_variety_1_b"
+        }
+      ]
+    },
+    "dragon_variety_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Some are territorial. Some are curious. Some are clever enough to pretend they aren't."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_variety_2"
+        }
+      ]
+    },
+    "dragon_variety_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And some... well. Some are best admired from a very safe distance and left alone."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "So dragons aren't just monsters?"
+          },
+          "next": "dragon_monsters_1"
+        }
+      ]
+    },
+    "dragon_monsters_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She looks at you for a moment.* No, for most of the time."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_2"
+        }
+      ]
+    },
+    "dragon_monsters_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But dangerous? Yes. Always."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_3"
+        }
+      ]
+    },
+    "dragon_monsters_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But monster is a word people use when they don't want to understand what they're afraid of."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_4"
+        }
+      ]
+    },
+    "dragon_monsters_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Except for... the damn *Volitans*. Eugh. Steer clear from those weird freaks."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_5"
+        }
+      ]
+    },
+    "dragon_monsters_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater... *She mutters the last sentence*."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_6"
+        }
+      ]
+    },
+    "dragon_monsters_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And I was lucky enough to gather a lot of spines for arrows when they shed."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_wrap_1"
+        }
+      ]
+    },
+    "dragon_wrap_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I could talk about dragons for hours, but that would be rude. Probably."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_wrap_2"
+        }
+      ]
+    },
+    "dragon_wrap_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She clears her throat.* Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed. *She smiles*."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    },
+    "dragon_variety_1_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Some are territorial. Some are curious. Some are clever enough to pretend they aren't."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_variety_2_b"
+        }
+      ]
+    },
+    "dragon_variety_2_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And some... well. Some are best admired from a very safe distance and left alone."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "So dragons aren't just monsters?"
+          },
+          "next": "dragon_monsters_1_b"
+        }
+      ]
+    },
+    "dragon_monsters_1_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She looks at you for a moment.* No, for most of the time."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_2_b"
+        }
+      ]
+    },
+    "dragon_monsters_2_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But dangerous? Yes. Always."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_3_b"
+        }
+      ]
+    },
+    "dragon_monsters_3_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But monster is a word people use when they don't want to understand what they're afraid of."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_4_b"
+        }
+      ]
+    },
+    "dragon_monsters_4_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Except for... the damn *Volitans*. Eugh. Steer clear from those weird freaks."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_5_b"
+        }
+      ]
+    },
+    "dragon_monsters_5_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater... *She mutters the last sentence*."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_monsters_6_b"
+        }
+      ]
+    },
+    "dragon_monsters_6_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And I was lucky enough to gather a lot of spines for arrows when they shed."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_wrap_1_b"
+        }
+      ]
+    },
+    "dragon_wrap_1_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I could talk about dragons for hours, but that would be rude. Probably."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_wrap_2_b"
+        }
+      ]
+    },
+    "dragon_wrap_2_b": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She clears her throat.* Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed. *She smiles*."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "That rider you mentioned... who was he?"
+          },
+          "next": "dragon_rider_1"
+        },
+        {
+          "text": {
+            "text": "That's all for now."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    },
+    "dragon_rider_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Ah, right. A strange young chief. Clever. Awkward in a way that somehow worked for him."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_2"
+        }
+      ]
+    },
+    "dragon_rider_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I couldn't help but notice the prosthetic first time I met him."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_3"
+        }
+      ]
+    },
+    "dragon_rider_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I didn't ask too many questions. Some are better remembered as stories."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_4"
+        }
+      ]
+    },
+    "dragon_rider_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "He had a black dragon with him. Big green eyes. Aerodynamic wings. Sleek body. Truly beautiful."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_5"
+        }
+      ]
+    },
+    "dragon_rider_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Moved like a cat. Looked at people like it knew exactly how stupid they were."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_6"
+        }
+      ]
+    },
+    "dragon_rider_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "That dragon wasn't young. Not old either. But it carried itself like something that had survived more than a few bad ideas. I wish I had known its name."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_7"
+        }
+      ]
+    },
+    "dragon_rider_7": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But then the rider claimed his dragon was the fastest thing in the sky."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_8"
+        }
+      ]
+    },
+    "dragon_rider_8": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Which was rude, because my Raevyx was right there. *She chuckles*."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_9"
+        }
+      ]
+    },
+    "dragon_rider_9": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "So we raced."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_10"
+        }
+      ]
+    },
+    "dragon_rider_10": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "It was close. Almost a tie, actually."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_11"
+        }
+      ]
+    },
+    "dragon_rider_11": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Almost... *Ivy lowers her gaze.* I think he won. I don't know."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_rider_12"
+        }
+      ]
+    },
+    "dragon_rider_12": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I would've liked to win, but... it was fun. Anyway, yeah, that's it. We exchanged goodbyes and that was that."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    }
+  }
+}

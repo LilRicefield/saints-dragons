@@ -13,6 +13,9 @@
           "text": "Ah, hello there, {name}."
         },
         {
+          "text": "{name}."
+        },
+        {
           "text": "Ah, {name}! I thought I heard something walking around."
         },
         {
@@ -73,13 +76,13 @@
           "text": {
             "text": "What do you do out here?"
           },
-          "next": "what_do_you_do"
+          "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do"
         },
         {
           "text": {
             "text": "You know a lot about dragons?"
           },
-          "next": "dragon_knowledge"
+          "next": "saintsdragons:ivy/known_meeting_about_dragon#dragon_knowledge"
         },
         {
           "text": {
@@ -112,24 +115,6 @@
         }
       ]
     },
-    "what_do_you_do": {
-      "type": "end_dialogue",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "A little trading, a little gardening, and a little making sure people don't do something ridiculous with dragons."
-      }
-    },
-    "dragon_knowledge": {
-      "type": "end_dialogue",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "Enough to know when someone is about to get bitten. Which is, unfortunately, often."
-      }
-    },
     "needs_help": {
       "type": "end_dialogue",
       "speaker": {
@@ -144,9 +129,23 @@
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
-      "text": {
-        "text": "Take care, {name}."
-      }
+      "text": [
+        {
+          "text": "Take care, {name}."
+        },
+        {
+          "text": "See you later, {name}."
+        },
+        {
+          "text": "Goodbye, {name}."
+        },
+        {
+          "text": "Alright, {name}."
+        },
+        {
+          "text": "See you around, {name}."
+        }
+        ]
     }
   }
 }

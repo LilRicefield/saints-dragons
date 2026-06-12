@@ -9,7 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -31,8 +34,8 @@ public final class DialogueSessionRegistry {
             return;
         }
         endForEntity(ivy);
-        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), dialogue.start(), chosenName));
-        sendNode(player, ivy.getId(), dialogue, dialogue.start(), startNode, chosenName);
+        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), dialogue.start(), chosenName, Set.of()));
+        sendNode(player, ivy.getId(), dialogue, dialogue.start(), startNode, chosenName, Set.of());
     }
 
     public static void choose(ServerPlayer player, int entityId, int choiceIndex) {
@@ -54,11 +57,17 @@ public final class DialogueSessionRegistry {
         if (currentNode != null && currentNode.requestsNameInput()) {
             return;
         }
-        if (currentNode == null || currentNode.isEnd() || choiceIndex < 0 || choiceIndex >= currentNode.choices().size()) {
+        if (currentNode == null || currentNode.isEnd()) {
             end(player);
             return;
         }
-        DialogueDefinition.Choice choice = currentNode.choices().get(choiceIndex);
+        List<DialogueDefinition.Choice> visibleChoices = visibleChoices(currentNode, session.flags());
+        if (choiceIndex < 0 || choiceIndex >= visibleChoices.size()) {
+            end(player);
+            return;
+        }
+        DialogueDefinition.Choice choice = visibleChoices.get(choiceIndex);
+        Set<String> nextFlags = withChoiceFlag(session.flags(), choice);
         if (!choice.impression().isBlank()) {
             ivy.rememberDialogueImpression(player, choice.impression());
         }
@@ -76,11 +85,11 @@ public final class DialogueSessionRegistry {
         if (target.node().usesPlayerName()) {
             String chosenName = player.getGameProfile().getName();
             ivy.rememberDialogueName(player, chosenName);
-            continueWithChosenName(player, entityId, target.dialogue(), target.node(), chosenName);
+            continueWithChosenName(player, entityId, target.dialogue(), target.node(), chosenName, nextFlags);
             return;
         }
-        SESSIONS.put(player.getUUID(), new DialogueSession(entityId, target.dialogue().id(), target.nodeId(), session.chosenName()));
-        sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), session.chosenName());
+        SESSIONS.put(player.getUUID(), new DialogueSession(entityId, target.dialogue().id(), target.nodeId(), session.chosenName(), nextFlags));
+        sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), session.chosenName(), nextFlags);
     }
 
     public static void submitName(ServerPlayer player, int entityId, String rawName) {
@@ -108,7 +117,7 @@ public final class DialogueSessionRegistry {
             name = player.getGameProfile().getName();
         }
         ivy.rememberDialogueName(player, name);
-        continueWithChosenName(player, entityId, dialogue, currentNode, name);
+        continueWithChosenName(player, entityId, dialogue, currentNode, name, session.flags());
     }
 
     public static void resume(ServerPlayer player, IvyTheDragonMerchant ivy, ResourceLocation dialogueId, String nodeId) {
@@ -122,8 +131,8 @@ public final class DialogueSessionRegistry {
         }
         endForEntity(ivy);
         String chosenName = ivy.getRememberedDialogueName(player);
-        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), nodeId, chosenName));
-        sendNode(player, ivy.getId(), dialogue, nodeId, node, chosenName);
+        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), nodeId, chosenName, Set.of()));
+        sendNode(player, ivy.getId(), dialogue, nodeId, node, chosenName, Set.of());
     }
 
     public static void end(ServerPlayer player) {
@@ -196,18 +205,22 @@ public final class DialogueSessionRegistry {
                                                int entityId,
                                                DialogueDefinition dialogue,
                                                DialogueDefinition.Node actionNode,
-                                               String chosenName) {
-        if (actionNode.choices().isEmpty()) {
+                                               String chosenName,
+                                               Set<String> flags) {
+        List<DialogueDefinition.Choice> choices = visibleChoices(actionNode, flags);
+        if (choices.isEmpty()) {
             end(player);
             return;
         }
-        ResolvedTarget target = resolveTarget(dialogue, actionNode.choices().get(0).next());
+        DialogueDefinition.Choice choice = choices.get(0);
+        Set<String> nextFlags = withChoiceFlag(flags, choice);
+        ResolvedTarget target = resolveTarget(dialogue, choice.next());
         if (target == null) {
             end(player);
             return;
         }
-        SESSIONS.put(player.getUUID(), new DialogueSession(entityId, target.dialogue().id(), target.nodeId(), chosenName));
-        sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), chosenName);
+        SESSIONS.put(player.getUUID(), new DialogueSession(entityId, target.dialogue().id(), target.nodeId(), chosenName, nextFlags));
+        sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), chosenName, nextFlags);
     }
 
     private static ResolvedTarget resolveTarget(DialogueDefinition currentDialogue, String next) {
@@ -228,15 +241,32 @@ public final class DialogueSessionRegistry {
                                  DialogueDefinition dialogue,
                                  String nodeId,
                                  DialogueDefinition.Node node,
-                                 String chosenName) {
+                                 String chosenName,
+                                 Set<String> flags) {
         Component selectedText = node.selectText();
         DialogueDefinition.Node resolvedNode = new DialogueDefinition.Node(
                 node.speaker(),
                 chosenName == null ? selectedText : resolveName(selectedText, chosenName),
-                node.choices(),
+                visibleChoices(node, flags),
                 node.type()
         );
         NetworkHandler.sendToPlayer(player, MessageDialogueOpen.fromNode(entityId, dialogue.id(), nodeId, resolvedNode));
+    }
+
+    private static List<DialogueDefinition.Choice> visibleChoices(DialogueDefinition.Node node, Set<String> flags) {
+        return node.choices().stream()
+                .filter(choice -> choice.requiresFlag().isBlank() || flags.contains(choice.requiresFlag()))
+                .filter(choice -> choice.hiddenIfFlag().isBlank() || !flags.contains(choice.hiddenIfFlag()))
+                .toList();
+    }
+
+    private static Set<String> withChoiceFlag(Set<String> flags, DialogueDefinition.Choice choice) {
+        if (choice.setFlag().isBlank() || flags.contains(choice.setFlag())) {
+            return flags;
+        }
+        Set<String> nextFlags = new HashSet<>(flags);
+        nextFlags.add(choice.setFlag());
+        return nextFlags;
     }
 
     private static Component resolveName(Component component, String chosenName) {

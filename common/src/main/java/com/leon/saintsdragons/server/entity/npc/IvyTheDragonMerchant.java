@@ -432,15 +432,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
         String impression = rememberedDialogueImpressions.get(player.getUUID());
         if (TRESPASSER_IMPRESSION.equals(impression)) {
-            return random.nextBoolean() ? TRESPASSER_KNOWN_GREETING_DIALOGUE : KNOWN_GREETING_DIALOGUE;
+            return pickRememberedGreeting(TRESPASSER_KNOWN_GREETING_DIALOGUE);
         }
         if (RUDE_IMPRESSION.equals(impression)) {
-            return RUDE_KNOWN_GREETING_DIALOGUE;
+            return pickRememberedGreeting(RUDE_KNOWN_GREETING_DIALOGUE);
         }
         if (WARES_IMPRESSION.equals(impression)) {
-            return random.nextBoolean() ? WARES_KNOWN_GREETING_DIALOGUE : KNOWN_GREETING_DIALOGUE;
+            return pickRememberedGreeting(WARES_KNOWN_GREETING_DIALOGUE);
         }
         return KNOWN_GREETING_DIALOGUE;
+    }
+
+    private ResourceLocation pickRememberedGreeting(ResourceLocation rememberedGreeting) {
+        return random.nextBoolean() ? rememberedGreeting : KNOWN_GREETING_DIALOGUE;
     }
 
     @Override

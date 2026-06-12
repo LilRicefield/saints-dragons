@@ -39,7 +39,7 @@ public class IvyDialogueScreen extends Screen {
     private static final int BOX_H = 96;
     private static final int TEXT_X = 8;
     private static final int TEXT_Y = 13;
-    private static final int TEXT_W = 245;
+    private static final int TEXT_W = 242;
     private static final int ARROW_U = 2;
     private static final int ARROW_V = 180;
     private static final int ARROW_W = 12;
@@ -64,6 +64,7 @@ public class IvyDialogueScreen extends Screen {
     private static final long NORMAL_ARROW_FADE_MS = 360L;
     private static final int NAME_INPUT_MAX_RAW_LENGTH = 128;
     private static final int NAME_INPUT_MAX_NON_WHITESPACE = 50;
+    private static final long VOICE_BLIP_INTERVAL_MS = 72L;
 
     private MessageDialogueOpen message;
     private final long boxStartTime;
@@ -73,6 +74,7 @@ public class IvyDialogueScreen extends Screen {
     private boolean choicesStarted;
     private int choiceScrollOffset;
     private int lastBlipCodePoints;
+    private long lastVoiceBlipTime;
     private boolean cameraTurnStarted;
     private boolean cameraTurnActive;
     private long cameraTurnStartTime;
@@ -113,6 +115,7 @@ public class IvyDialogueScreen extends Screen {
         this.choicesStarted = false;
         this.choiceScrollOffset = 0;
         this.lastBlipCodePoints = 0;
+        this.lastVoiceBlipTime = 0L;
     }
 
     @Override
@@ -139,7 +142,7 @@ public class IvyDialogueScreen extends Screen {
         }
         String visibleText = getVisibleText();
         playVoiceBlipForNewText(visibleText);
-        guiGraphics.drawWordWrap(font, getVisibleTextComponent(), boxX + TEXT_X, boxY + TEXT_Y + 12, TEXT_W, textColor);
+        guiGraphics.drawWordWrap(font, getVisibleTextComponent(visibleText), boxX + TEXT_X, boxY + TEXT_Y + 12, TEXT_W, textColor);
 
         if (isTextComplete()) {
             ensureChoicesStarted();
@@ -338,8 +341,8 @@ public class IvyDialogueScreen extends Screen {
         return fullText.substring(0, endIndex);
     }
 
-    private Component getVisibleTextComponent() {
-        int visibleCodePoints = getVisibleText().codePointCount(0, getVisibleText().length());
+    private Component getVisibleTextComponent(String visibleText) {
+        int visibleCodePoints = visibleText.codePointCount(0, visibleText.length());
         int[] remaining = {visibleCodePoints};
         MutableComponent visible = Component.literal("");
         message.text().visit((style, text) -> {
@@ -507,6 +510,10 @@ public class IvyDialogueScreen extends Screen {
         if (textSkipped || minecraft == null) {
             return;
         }
+        long now = System.currentTimeMillis();
+        if (now - lastVoiceBlipTime < VOICE_BLIP_INTERVAL_MS) {
+            return;
+        }
         int visibleCodePoints = visibleText.codePointCount(0, visibleText.length());
         if (visibleCodePoints <= lastBlipCodePoints) {
             return;
@@ -514,14 +521,21 @@ public class IvyDialogueScreen extends Screen {
         String fullText = message.text().getString();
         int totalCodePoints = fullText.codePointCount(0, fullText.length());
         int safeVisibleCodePoints = Math.min(visibleCodePoints, totalCodePoints);
+        int playableIndex = -1;
         for (int index = lastBlipCodePoints; index < safeVisibleCodePoints; index++) {
             int charIndex = fullText.offsetByCodePoints(0, index);
             int codePoint = fullText.codePointAt(charIndex);
             if (shouldPlayVoiceBlip(codePoint, index)) {
-                float pitch = (float) ThreadLocalRandom.current().nextDouble(0.94D, 1.07D);
-                minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.IVY_VOICE_BLIP.get(), pitch, 0.42F));
+                playableIndex = index;
                 break;
             }
+        }
+        if (playableIndex >= 0) {
+            float pitch = (float) ThreadLocalRandom.current().nextDouble(0.94D, 1.07D);
+            minecraft.getSoundManager().play(SimpleSoundInstance.forUI(ModSounds.IVY_VOICE_BLIP.get(), pitch, 0.42F));
+            lastVoiceBlipTime = now;
+            lastBlipCodePoints = playableIndex + 1;
+            return;
         }
         lastBlipCodePoints = safeVisibleCodePoints;
     }

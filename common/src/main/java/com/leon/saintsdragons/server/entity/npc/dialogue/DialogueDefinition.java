@@ -46,9 +46,13 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         }
     }
 
-    public record Choice(Component text, String next, String impression) {
+    public record Choice(Component text, String next, String impression, String setFlag, String requiresFlag, String hiddenIfFlag) {
         public Choice(Component text, String next) {
             this(text, next, "");
+        }
+
+        public Choice(Component text, String next, String impression) {
+            this(text, next, impression, "", "", "");
         }
     }
 

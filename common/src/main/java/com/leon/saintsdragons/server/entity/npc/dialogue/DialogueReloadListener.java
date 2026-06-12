@@ -81,7 +81,10 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
         return new DialogueDefinition.Choice(
                 parseComponent(choice.get("text")),
                 GsonHelper.getAsString(choice, "next", ""),
-                GsonHelper.getAsString(choice, "impression", "")
+                GsonHelper.getAsString(choice, "impression", ""),
+                GsonHelper.getAsString(choice, "set_flag", ""),
+                GsonHelper.getAsString(choice, "requires_flag", ""),
+                GsonHelper.getAsString(choice, "hidden_if_flag", "")
         );
     }
 

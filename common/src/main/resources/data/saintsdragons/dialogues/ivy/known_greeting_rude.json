@@ -10,10 +10,13 @@
           "text": "You again. Still not friendly, or was that just your opening act?"
         },
         {
-          "text": "You again. The 'not friendly' person."
+          "text": "Well, if it isn't the 'not friendly' person."
         },
         {
           "text": "Oh. It's you."
+        },
+        {
+          "text": "Hi, 'friend.' Or maybe you're not friend?"
         }
       ],
       "choices": [
@@ -21,119 +24,9 @@
           "text": {
             "text": "..."
           },
-          "next": "return_prompt"
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }
       ]
-    },
-    "return_prompt": {
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "texts": [
-        {
-          "text": "What?"
-        },
-        {
-          "text": "What do you want?"
-        },
-        {
-          "text": "What now?"
-        },
-        {
-          "text": "In need of attention, I take it?"
-        },
-        {
-          "text": "Out with it."
-        },
-        {
-          "text": "Hey."
-        }
-      ],
-      "choices": [
-        {
-          "text": {
-            "text": "I'd like to trade."
-          },
-          "next": "trade"
-        },
-        {
-          "text": {
-            "text": "What do you do out here?"
-          },
-          "next": "what_do_you_do"
-        },
-        {
-          "text": {
-            "text": "You know a lot about dragons?"
-          },
-          "next": "dragon_knowledge"
-        },
-        {
-          "text": {
-            "text": "Do you need help with anything?"
-          },
-          "next": "needs_help"
-        },
-        {
-          "text": {
-            "text": "Goodbye."
-          },
-          "next": "goodbye"
-        }
-      ]
-    },
-    "trade": {
-      "type": "open_trade",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "Fine. Take a look."
-      },
-      "choices": [
-        {
-          "text": {
-            "text": "..."
-          },
-          "next": "return_greeting"
-        }
-      ]
-    },
-    "what_do_you_do": {
-      "type": "end_dialogue",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "Nosy, are we? Trade, garden, and try to keep my patience intact."
-      }
-    },
-    "dragon_knowledge": {
-      "type": "end_dialogue",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "I know enough."
-      }
-    },
-    "needs_help": {
-      "type": "end_dialogue",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "Not from you. Not yet."
-      }
-    },
-    "goodbye": {
-      "type": "end_dialogue",
-      "speaker": {
-        "translate": "entity.saintsdragons.ivy_oleander"
-      },
-      "text": {
-        "text": "Mm."
-      }
     }
   }
 }

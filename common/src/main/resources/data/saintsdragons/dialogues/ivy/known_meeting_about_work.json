@@ -1,0 +1,629 @@
+{
+  "start_at": "what_do_you_do",
+  "states": {
+    "what_do_you_do": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "A little trading, a little gardening, and a little making sure people don't do something ridiculous with dragons."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "People do ridiculous things with dragons?"
+          },
+          "next": "ridiculous_dragons_1",
+          "set_flag": "work_dragons",
+          "hidden_if_flag": "work_dragons"
+        },
+        {
+          "text": {
+            "text": "Gardening?"
+          },
+          "next": "gardening_1",
+          "set_flag": "work_gardening",
+          "hidden_if_flag": "work_gardening"
+        },
+        {
+          "text": {
+            "text": "So you're a dragon expert?"
+          },
+          "next": "dragon_expert_1",
+          "set_flag": "work_expert",
+          "hidden_if_flag": "work_expert"
+        },
+        {
+          "text": {
+            "text": "That's all I need to know."
+          },
+          "next": "work_done"
+        }
+      ]
+    },
+    "what_do_menu": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Anything else?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "People do ridiculous things with dragons?"
+          },
+          "next": "ridiculous_dragons_1",
+          "set_flag": "work_dragons",
+          "hidden_if_flag": "work_dragons"
+        },
+        {
+          "text": {
+            "text": "Gardening?"
+          },
+          "next": "gardening_1",
+          "set_flag": "work_gardening",
+          "hidden_if_flag": "work_gardening"
+        },
+        {
+          "text": {
+            "text": "So you're a dragon expert?"
+          },
+          "next": "dragon_expert_1",
+          "set_flag": "work_expert",
+          "hidden_if_flag": "work_expert"
+        },
+        {
+          "text": {
+            "text": "That's all I need to know."
+          },
+          "next": "work_done"
+        }
+      ]
+    },
+    "ridiculous_dragons_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Oh, you have no idea. People, especially the villagers, have grown quite fond of some dragon species."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_2"
+        }
+      ]
+    },
+    "ridiculous_dragons_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "There was a villager I knew named Nimriel who was bucked off a juvenile Varasuchus while trying to ride it, and apparently, he broke his hip after hitting the ground."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_3"
+        }
+      ]
+    },
+    "ridiculous_dragons_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And then someone fell off from a Cindervane, but luckily, they fell into a forest with dense trees."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_4"
+        }
+      ]
+    },
+    "ridiculous_dragons_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Hah! Trees are still trees. Unlucky individual."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_5"
+        }
+      ]
+    },
+    "ridiculous_dragons_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And then ME, specifically. *She grits her teeth.* Have you even heard of a Mossback?? Actually, here's a better one: why does that thing exist?!"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_6"
+        }
+      ]
+    },
+    "ridiculous_dragons_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I accidentally dropped one because it was slippery, and I got hit with a foul and overwhelming stench that blinded and POISONED me!"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_7"
+        }
+      ]
+    },
+    "ridiculous_dragons_7": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "The audacity of those things. To have wings and cannot fly while being fat, and stinky?! Ugh..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_8"
+        }
+      ]
+    },
+    "ridiculous_dragons_8": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I had to wait it out. I was sweating the whole time like a sinner in a church pew while I was at it..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_9"
+        }
+      ]
+    },
+    "ridiculous_dragons_9": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "After the effects had worn off, it ran away, the little prick... funny thing is, they don't even react when you pick them up. And you can throw them."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_10"
+        }
+      ]
+    },
+    "ridiculous_dragons_10": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Don't even dare throw one at me, though. I'll hate you forever... *She glares at you.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_11"
+        }
+      ]
+    },
+    "ridiculous_dragons_11": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She then exhales.* So yes. People do ridiculous things with dragons."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "ridiculous_dragons_12"
+        }
+      ]
+    },
+    "ridiculous_dragons_12": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Sometimes the dragons do ridiculous things back."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "what_do_menu"
+        }
+      ]
+    },
+    "gardening_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Mhm. *She nods.* Gardening."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "gardening_2"
+        }
+      ]
+    },
+    "gardening_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Plants are easier to negotiate with. Usually."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "gardening_3"
+        }
+      ]
+    },
+    "gardening_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I grow herbs, roots, flowers, a few things that are useful for medicine..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "gardening_4"
+        }
+      ]
+    },
+    "gardening_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "...and a few things that are useful when medicine is no longer the plan. *She smiles.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "gardening_5"
+        }
+      ]
+    },
+    "gardening_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Relax. I label the dangerous ones. Most of the time."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "what_do_menu"
+        }
+      ]
+    },
+    "dragon_expert_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Well... not really. Expert is a dangerous word."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_2"
+        }
+      ]
+    },
+    "dragon_expert_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "People hear it and start assuming you know everything. I don't."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_3"
+        }
+      ]
+    },
+    "dragon_expert_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Villagers often ask me how to tame certain types of dragons. I teach them the proper methods, make sure they're prepared, and send them off with enough knowledge and equipment to not die immediately."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_4"
+        }
+      ]
+    },
+    "dragon_expert_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "A lot of the time, they still fail miserably."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_5"
+        }
+      ]
+    },
+    "dragon_expert_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Not because they're stupid. Well... not always."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_6"
+        }
+      ]
+    },
+    "dragon_expert_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Most just don't have the patience, caution, or nerve to deal with a wild dragon."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_7"
+        }
+      ]
+    },
+    "dragon_expert_7": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And then some ask me how to tame a Raevyx while looking like a tumbleweed with pockets."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_8"
+        }
+      ]
+    },
+    "dragon_expert_8": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Like, come on. You look like that and want to tame THE GRIM REAPER?! They can barely tame a Cindervane!"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_9"
+        }
+      ]
+    },
+    "dragon_expert_9": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Ahem. Sorry. I didn't mean to yell. *She smiles meekly.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_10"
+        }
+      ]
+    },
+    "dragon_expert_10": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Sometimes I think, 'Wouldn't it be easier to look for an egg and raise one from the start?'"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_11"
+        }
+      ]
+    },
+    "dragon_expert_11": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But even that takes patience. And fish. An unreasonable amount of fish."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_12"
+        }
+      ]
+    },
+    "dragon_expert_12": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Anyway."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_13"
+        }
+      ]
+    },
+    "dragon_expert_13": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I know enough to stay humble. That's more than most experts can say."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_14"
+        }
+      ]
+    },
+    "dragon_expert_14": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "The moment someone says they understand dragons completely, I start looking for the nearest exit."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_15"
+        }
+      ]
+    },
+    "dragon_expert_15": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Or a shovel."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "dragon_expert_16"
+        }
+      ]
+    },
+    "dragon_expert_16": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Depends how confident they sound."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "what_do_menu"
+        }
+      ]
+    },
+    "work_done": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Gotcha."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    }
+  }
+}
