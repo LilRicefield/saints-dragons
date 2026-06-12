@@ -81,6 +81,14 @@ public final class NetworkHandler {
                 MessageDialogueDismiss::handle
         );
 
+        NETWORK.registerServerbound(
+                MessageDialogueNameInput.class,
+                id("dialogue_name_input"),
+                MessageDialogueNameInput::encode,
+                MessageDialogueNameInput::decode,
+                MessageDialogueNameInput::handle
+        );
+
         NETWORK.registerClientbound(
                 MessageDraconicCodexList.class,
                 id("draconic_codex_list"),

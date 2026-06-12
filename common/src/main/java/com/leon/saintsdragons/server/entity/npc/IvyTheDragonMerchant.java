@@ -57,10 +57,9 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.stats.Stats;
-import net.minecraft.world.item.Item;
 import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import net.minecraft.util.Mth;
@@ -85,6 +84,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     static final int RECOVERY_DRINK = 1;
     static final int RECOVERY_EAT = 2;
     private static final ResourceLocation FIRST_MEETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/first_meeting");
+    private static final ResourceLocation KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting");
+    private static final ResourceLocation TRESPASSER_KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting_trespasser");
+    private static final ResourceLocation RUDE_KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting_rude");
+    private static final ResourceLocation WARES_KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting_wares");
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_TRADE_ANIM_STATE =
@@ -110,24 +113,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final int IDLE_VARIANT_DURATION = 66;
     private static final int IDLE_VARIANT_MIN_COOLDOWN = 200;
     private static final int IDLE_VARIANT_MAX_COOLDOWN = 600;
-    private static final int GREETING_DURATION_TICKS = 54;
-    private static final int EGG_REACTION_MIN_LOOK_TICKS = 20;
-    private static final int EGG_REACTION_MAX_LOOK_TICKS = 40;
-    private static final int EGG_REACTION_DURATION_TICKS = 66;
-    private static final int EGG_REACTION_COOLDOWN_TICKS = 20;
-    private static final double EGG_REACTION_RANGE = 6.0;
-    private static final float EGG_REACTION_LOOK_YAW_SPEED = 30.0f;
-    private static final float EGG_REACTION_LOOK_PITCH_SPEED = 20.0f;
-    private static final float EGG_REACTION_FACE_THRESHOLD = 15.0f;
     private static final RawAnimation TRADE_START = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_start");
     private static final RawAnimation TRADING = RawAnimation.begin().thenLoop("ivy_oleander.animation.trading");
     private static final RawAnimation TRADE_STOP = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop");
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.run");
-    private static final String GREETED_PLAYERS_TAG = "GreetedPlayers";
-    private static final String UNLOCKED_TRADERS_TAG = "UnlockedTraders";
-    private static final String UNLOCKED_TRADER_UUID_TAG = "UUID";
+    private static final String KNOWN_DIALOGUE_PLAYERS_TAG = "KnownDialoguePlayers";
+    private static final String KNOWN_DIALOGUE_UUID_TAG = "UUID";
+    private static final String REMEMBERED_NAME_TAG = "Name";
+    private static final String REMEMBERED_IMPRESSION_TAG = "Impression";
+    private static final String TRESPASSER_IMPRESSION = "trespasser";
+    private static final String RUDE_IMPRESSION = "rude";
+    private static final String WARES_IMPRESSION = "wares";
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private int tradeAnimTicks = 0;
     private boolean lastTradingState = false;
@@ -137,15 +135,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private boolean playingIdleVariant = false;
     private int idleVariantTicks = 0;
     private int idleVariantCooldown;
-    private int greetingTicks = 0;
-    private EggReactionState eggReactionState = EggReactionState.NONE;
-    private int eggReactionTicks = 0;
-    private int eggReactionCooldown = 0;
-    private int eggReactionTargetId = -1;
-    private UUID pendingUnlockPlayerUuid;
-    private boolean openTradeAfterReaction;
-    private final Set<UUID> greetedPlayerUuids = new HashSet<>();
-    private final Set<UUID> unlockedTraderUuids = new HashSet<>();
+    private final Map<UUID, String> rememberedDialogueNames = new HashMap<>();
+    private final Map<UUID, String> rememberedDialogueImpressions = new HashMap<>();
     private final HumanSoundHandler soundHandler;
     private IvyBoxingCombatController boxingCombat;
     private final int restockInterval;
@@ -409,16 +400,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             return super.mobInteract(player, hand);
         }
         if (level().isClientSide) {
-            if (hasTradingAccess(player) || isReactionEgg(stack)) {
-                return InteractionResult.sidedSuccess(true);
-            }
             return InteractionResult.CONSUME;
         }
         if (isTrading()
                 || isInDialogue()
                 || getTradeAnimState() != TradeAnimState.NONE
-                || eggReactionState != EggReactionState.NONE
-                || greetingTicks > 0
                 || isBoxingStance()) {
             return InteractionResult.CONSUME;
         }
@@ -427,24 +413,34 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             openDialogue(serverPlayer);
             return InteractionResult.CONSUME;
         }
-        if (isReactionEgg(stack)) {
-            startEggReaction(player);
-            return InteractionResult.CONSUME;
-        }
-        if (!hasSeenGreeting(player)) {
-            startGreeting(player);
-        }
-        player.displayClientMessage(Component.translatable("entity.saintsdragons.ivy.first_encounter"), false);
         return InteractionResult.CONSUME;
     }
 
     private void openDialogue(ServerPlayer player) {
-        DialogueDefinition definition = DialogueRegistry.get(FIRST_MEETING_DIALOGUE);
+        ResourceLocation dialogueId = getDialogueIdFor(player);
+        DialogueDefinition definition = DialogueRegistry.get(dialogueId);
         if (definition == null || definition.startNode() == null) {
-            player.displayClientMessage(Component.translatable("entity.saintsdragons.ivy.first_encounter"), false);
+            player.displayClientMessage(Component.literal("Ivy has nothing to say right now."), false);
             return;
         }
-        DialogueSessionRegistry.start(player, this, definition);
+        DialogueSessionRegistry.start(player, this, definition, getRememberedDialogueName(player));
+    }
+
+    private ResourceLocation getDialogueIdFor(ServerPlayer player) {
+        if (!hasRememberedDialogueName(player)) {
+            return FIRST_MEETING_DIALOGUE;
+        }
+        String impression = rememberedDialogueImpressions.get(player.getUUID());
+        if (TRESPASSER_IMPRESSION.equals(impression)) {
+            return random.nextBoolean() ? TRESPASSER_KNOWN_GREETING_DIALOGUE : KNOWN_GREETING_DIALOGUE;
+        }
+        if (RUDE_IMPRESSION.equals(impression)) {
+            return RUDE_KNOWN_GREETING_DIALOGUE;
+        }
+        if (WARES_IMPRESSION.equals(impression)) {
+            return random.nextBoolean() ? WARES_KNOWN_GREETING_DIALOGUE : KNOWN_GREETING_DIALOGUE;
+        }
+        return KNOWN_GREETING_DIALOGUE;
     }
 
     @Override
@@ -541,14 +537,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
         if (tradeState == TradeAnimState.START
                 || tradeState == TradeAnimState.STOP
-                || isIdleVariantActive()
-                || greetingTicks > 0
-                || eggReactionState == EggReactionState.PLAY) {
+                || isIdleVariantActive()) {
             return PlayState.CONTINUE;
-        }
-        if (eggReactionState == EggReactionState.PREPARE) {
-            wasMovementStopped = true;
-            return PlayState.STOP;
         }
 
         if (wasMovementStopped) {
@@ -613,7 +603,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         if (!level().isClientSide) {
             boolean trading = player != null;
             if (trading && !lastTradingState) {
-                resetEggReaction();
                 startTradingSequence();
             } else if (!trading && lastTradingState) {
                 stopTradingSequence();
@@ -646,8 +635,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         }
         tickTradingAnimation();
         tickDialogueTradeResume();
-        tickGreeting();
-        tickEggReaction();
         tickIdleVariant();
         if (getTarget() != null && isInDialogue()) {
             DialogueSessionRegistry.endForEntity(this);
@@ -698,44 +685,36 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
-        ListTag greetedList = new ListTag();
-        for (UUID uuid : greetedPlayerUuids) {
-            CompoundTag greetedTag = new CompoundTag();
-            greetedTag.putUUID(UNLOCKED_TRADER_UUID_TAG, uuid);
-            greetedList.add(greetedTag);
+        ListTag knownDialogueList = new ListTag();
+        for (Map.Entry<UUID, String> entry : rememberedDialogueNames.entrySet()) {
+            CompoundTag knownTag = new CompoundTag();
+            knownTag.putUUID(KNOWN_DIALOGUE_UUID_TAG, entry.getKey());
+            knownTag.putString(REMEMBERED_NAME_TAG, entry.getValue());
+            String impression = rememberedDialogueImpressions.get(entry.getKey());
+            if (impression != null && !impression.isBlank()) {
+                knownTag.putString(REMEMBERED_IMPRESSION_TAG, impression);
+            }
+            knownDialogueList.add(knownTag);
         }
-        tag.put(GREETED_PLAYERS_TAG, greetedList);
-        ListTag unlockedList = new ListTag();
-        for (UUID uuid : unlockedTraderUuids) {
-            CompoundTag traderTag = new CompoundTag();
-            traderTag.putUUID(UNLOCKED_TRADER_UUID_TAG, uuid);
-            unlockedList.add(traderTag);
-        }
-        tag.put(UNLOCKED_TRADERS_TAG, unlockedList);
+        tag.put(KNOWN_DIALOGUE_PLAYERS_TAG, knownDialogueList);
     }
 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        greetedPlayerUuids.clear();
-        if (tag.contains(GREETED_PLAYERS_TAG, Tag.TAG_LIST)) {
-            ListTag greetedList = tag.getList(GREETED_PLAYERS_TAG, Tag.TAG_COMPOUND);
-            for (int i = 0; i < greetedList.size(); i++) {
-                CompoundTag greetedTag = greetedList.getCompound(i);
-                if (greetedTag.hasUUID(UNLOCKED_TRADER_UUID_TAG)) {
-                    greetedPlayerUuids.add(greetedTag.getUUID(UNLOCKED_TRADER_UUID_TAG));
+        rememberedDialogueNames.clear();
+        rememberedDialogueImpressions.clear();
+        if (tag.contains(KNOWN_DIALOGUE_PLAYERS_TAG, Tag.TAG_LIST)) {
+            ListTag knownDialogueList = tag.getList(KNOWN_DIALOGUE_PLAYERS_TAG, Tag.TAG_COMPOUND);
+            for (int i = 0; i < knownDialogueList.size(); i++) {
+                CompoundTag knownTag = knownDialogueList.getCompound(i);
+                if (knownTag.hasUUID(KNOWN_DIALOGUE_UUID_TAG) && knownTag.contains(REMEMBERED_NAME_TAG, Tag.TAG_STRING)) {
+                    UUID uuid = knownTag.getUUID(KNOWN_DIALOGUE_UUID_TAG);
+                    rememberedDialogueNames.put(uuid, knownTag.getString(REMEMBERED_NAME_TAG));
+                    if (knownTag.contains(REMEMBERED_IMPRESSION_TAG, Tag.TAG_STRING)) {
+                        rememberedDialogueImpressions.put(uuid, knownTag.getString(REMEMBERED_IMPRESSION_TAG));
+                    }
                 }
-            }
-        }
-        unlockedTraderUuids.clear();
-        if (!tag.contains(UNLOCKED_TRADERS_TAG, Tag.TAG_LIST)) {
-            return;
-        }
-        ListTag unlockedList = tag.getList(UNLOCKED_TRADERS_TAG, Tag.TAG_COMPOUND);
-        for (int i = 0; i < unlockedList.size(); i++) {
-            CompoundTag traderTag = unlockedList.getCompound(i);
-            if (traderTag.hasUUID(UNLOCKED_TRADER_UUID_TAG)) {
-                unlockedTraderUuids.add(traderTag.getUUID(UNLOCKED_TRADER_UUID_TAG));
             }
         }
     }
@@ -761,8 +740,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         if (isTrading()
                 || isInDialogue()
                 || getTradeAnimState() != TradeAnimState.NONE
-                || eggReactionState != EggReactionState.NONE
-                || greetingTicks > 0
                 || getBoxingCombat().isActive()
                 || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
             if (playingIdleVariant && getBoxingCombat().isActive()) {
@@ -792,164 +769,29 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         triggerAnim("movement", "idle_variant1");
     }
 
-    private void tickGreeting() {
-        if (greetingTicks <= 0) {
-            return;
-        }
-        greetingTicks--;
-        getNavigation().stop();
-        setDeltaMovement(0.0, 0.0, 0.0);
-    }
-
-    private void tickEggReaction() {
-        if (eggReactionState == EggReactionState.NONE && eggReactionCooldown > 0) {
-            eggReactionCooldown--;
-        }
-
-        if (isTrading() || getTradeAnimState() != TradeAnimState.NONE) {
-            if (eggReactionState != EggReactionState.NONE) {
-                resetEggReaction();
-            }
-            return;
-        }
-
-        if (eggReactionState == EggReactionState.NONE) {
-            return;
-        }
-
-        Player target = getEggReactionTarget();
-        if (target == null) {
-            resetEggReaction();
-            return;
-        }
-
-        getNavigation().stop();
-        setDeltaMovement(0.0, 0.0, 0.0);
-        lookAtReactionTarget(target);
-
-        if (eggReactionState == EggReactionState.PREPARE) {
-            if (!isValidEggPresenter(target)) {
-                resetEggReaction();
-                return;
-            }
-
-            eggReactionTicks++;
-            if ((eggReactionTicks >= EGG_REACTION_MIN_LOOK_TICKS && isFacingReactionTarget(target))
-                    || eggReactionTicks >= EGG_REACTION_MAX_LOOK_TICKS) {
-                eggReactionState = EggReactionState.PLAY;
-                eggReactionTicks = EGG_REACTION_DURATION_TICKS;
-                triggerAnim("movement", "reaction_to_egg");
-            }
-            return;
-        }
-
-        if (eggReactionTicks > 0) {
-            eggReactionTicks--;
-        }
-
-        if (eggReactionTicks <= 0) {
-            eggReactionCooldown = EGG_REACTION_COOLDOWN_TICKS;
-            completeEggReaction(target);
-            resetEggReaction();
-        }
-    }
-
-    private void startEggReaction(Player player) {
-        setIdleVariantActive(false);
-        idleVariantTicks = 0;
-        greetingTicks = 0;
-        eggReactionState = EggReactionState.PREPARE;
-        eggReactionTicks = 0;
-        eggReactionTargetId = player.getId();
-        pendingUnlockPlayerUuid = player.getUUID();
-        openTradeAfterReaction = true;
-        getNavigation().stop();
-        setDeltaMovement(0.0, 0.0, 0.0);
-        lookAtReactionTarget(player);
-    }
-
-    private void resetEggReaction() {
-        eggReactionState = EggReactionState.NONE;
-        eggReactionTicks = 0;
-        eggReactionTargetId = -1;
-        pendingUnlockPlayerUuid = null;
-        openTradeAfterReaction = false;
+    public boolean hasRememberedDialogueName(Player player) {
+        return rememberedDialogueNames.containsKey(player.getUUID());
     }
 
     @Nullable
-    private Player getEggReactionTarget() {
-        if (eggReactionTargetId < 0) {
-            return null;
-        }
-        var entity = level().getEntity(eggReactionTargetId);
-        return entity instanceof Player player ? player : null;
+    public String getRememberedDialogueName(Player player) {
+        return rememberedDialogueNames.get(player.getUUID());
     }
 
-    private boolean isValidEggPresenter(Player player) {
-        return player.isAlive()
-                && !player.isSpectator()
-                && distanceToSqr(player) <= EGG_REACTION_RANGE * EGG_REACTION_RANGE
-                && (isReactionEgg(player.getMainHandItem()) || isReactionEgg(player.getOffhandItem()));
-    }
-
-    private boolean isReactionEgg(ItemStack stack) {
-        if (stack.isEmpty()) {
-            return false;
-        }
-        Item item = stack.getItem();
-        return item == ModItems.RAEVYX_EGG.get()
-                || item == ModItems.IGNIVORUS_EGG.get()
-                || item == ModItems.CINDERVANE_EGG.get()
-                || item == ModItems.VARASUCHUS_EGG.get()
-                || item == ModItems.STEGONAUT_EGG.get()
-                || item == ModItems.VOLITANS_EGG.get();
-    }
-
-    private void lookAtReactionTarget(Player player) {
-        getLookControl().setLookAt(player, EGG_REACTION_LOOK_YAW_SPEED, EGG_REACTION_LOOK_PITCH_SPEED);
-        lookAt(player, EGG_REACTION_LOOK_YAW_SPEED, EGG_REACTION_LOOK_PITCH_SPEED);
-    }
-
-    private boolean isFacingReactionTarget(Player player) {
-        double dx = player.getX() - getX();
-        double dz = player.getZ() - getZ();
-        if (dx * dx + dz * dz < 1.0E-4) {
-            return true;
-        }
-        float targetYaw = (float) (Mth.atan2(dz, dx) * (180.0 / Math.PI)) - 90.0f;
-        float headDelta = Math.abs(Mth.wrapDegrees(yHeadRot - targetYaw));
-        float bodyDelta = Math.abs(Mth.wrapDegrees(yBodyRot - targetYaw));
-        return headDelta <= EGG_REACTION_FACE_THRESHOLD || bodyDelta <= EGG_REACTION_FACE_THRESHOLD;
-    }
-
-    private boolean hasTradingAccess(Player player) {
-        return unlockedTraderUuids.contains(player.getUUID());
-    }
-
-    private boolean hasSeenGreeting(Player player) {
-        return greetedPlayerUuids.contains(player.getUUID());
-    }
-
-    private void startGreeting(Player player) {
-        greetedPlayerUuids.add(player.getUUID());
-        setIdleVariantActive(false);
-        idleVariantTicks = 0;
-        greetingTicks = GREETING_DURATION_TICKS;
-        getNavigation().stop();
-        setDeltaMovement(0.0, 0.0, 0.0);
-        lookAtReactionTarget(player);
-        triggerAnim("movement", "greetings");
-    }
-
-    private void completeEggReaction(Player player) {
-        if (pendingUnlockPlayerUuid == null || !pendingUnlockPlayerUuid.equals(player.getUUID())) {
+    public void rememberDialogueName(Player player, String name) {
+        if (name == null || name.isBlank()) {
+            rememberedDialogueNames.remove(player.getUUID());
             return;
         }
-        unlockedTraderUuids.add(player.getUUID());
-        player.displayClientMessage(Component.translatable("entity.saintsdragons.ivy.trade_unlocked"), true);
-        if (openTradeAfterReaction && player.isAlive() && !player.isSpectator() && distanceToSqr(player) <= EGG_REACTION_RANGE * EGG_REACTION_RANGE) {
-            openTradingFor(player);
+        rememberedDialogueNames.put(player.getUUID(), name);
+    }
+
+    public void rememberDialogueImpression(Player player, String impression) {
+        if (impression == null || impression.isBlank()) {
+            rememberedDialogueImpressions.remove(player.getUUID());
+            return;
         }
+        rememberedDialogueImpressions.put(player.getUUID(), impression);
     }
 
     private void openTradingFor(Player player) {
@@ -1087,23 +929,17 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return !isTrading()
                 && !isInDialogue()
                 && getTradeAnimState() == TradeAnimState.NONE
-                && greetingTicks <= 0
                 && !isIdleVariantActive()
-                && !getBoxingCombat().isActive()
-                && eggReactionState != EggReactionState.PLAY;
+                && !getBoxingCombat().isActive();
     }
 
     void cancelPassiveAnimationsForCombat() {
         setIdleVariantActive(false);
         idleVariantTicks = 0;
-        greetingTicks = 0;
-        resetEggReaction();
     }
 
     boolean isReadyForCombatAnimation() {
-        return getTradeAnimState() == TradeAnimState.NONE
-                && eggReactionState == EggReactionState.NONE
-                && greetingTicks <= 0;
+        return getTradeAnimState() == TradeAnimState.NONE;
     }
 
     private boolean isInDialogue() {
@@ -1123,12 +959,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             boxingCombat = new IvyBoxingCombatController(this);
         }
         return boxingCombat;
-    }
-
-    private enum EggReactionState {
-        NONE,
-        PREPARE,
-        PLAY
     }
 
     private enum TradeAnimState {
@@ -1160,7 +990,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
         @Override
         public boolean canUse() {
-            return isTrading() || isIdleVariantActive() || greetingTicks > 0 || eggReactionState != EggReactionState.NONE;
+            return isTrading() || isIdleVariantActive();
         }
 
         @Override
@@ -1227,8 +1057,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         private void stopPassiveDialogueConflicts() {
             setIdleVariantActive(false);
             idleVariantTicks = 0;
-            greetingTicks = 0;
-            resetEggReaction();
         }
 
         private void stopMovement() {

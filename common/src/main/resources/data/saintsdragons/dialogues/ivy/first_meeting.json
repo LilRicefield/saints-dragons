@@ -19,6 +19,7 @@
           "text": {
             "text": "I'm sorry. Am I trespassing?"
           },
+          "impression": "trespasser",
           "next": "b_trespassing"
         },
         {
@@ -53,6 +54,7 @@
           "text": {
             "text": "I'm not friendly."
           },
+          "impression": "rude",
           "next": "a_not_friendly"
         }
       ]
@@ -85,7 +87,7 @@
           "text": {
             "text": "..."
           },
-          "next": "anchor_intro"
+          "next": "anchor_intro_rude"
         }
       ]
     },
@@ -133,6 +135,7 @@
           "text": {
             "text": "Woah, what? Your 'wares' wares??"
           },
+          "impression": "wares",
           "next": "c_wares_misread"
         },
         {
@@ -379,7 +382,7 @@
           "text": {
             "text": "Tell her your name."
           },
-          "next": "anchor_name_answer"
+          "next": "anchor_name_select"
         },
         {
           "text": {
@@ -398,6 +401,23 @@
             "text": "Never heard that name before."
           },
           "next": "anchor_never_heard_1"
+        }
+      ]
+    },
+    "anchor_intro_rude": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Just call me Ivy. Gonna tell me your name?"
+      },
+
+      "choices": [
+        {
+          "text": {
+            "text": "Tell her your name."
+          },
+          "next": "anchor_name_select_rude"
         }
       ]
     },
@@ -477,7 +497,119 @@
           "text": {
             "text": "Tell her your name."
           },
+          "next": "anchor_name_select"
+        }
+      ]
+    },
+    "anchor_name_select": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "What would you like me to call you?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Use your Minecraft username."
+          },
+          "next": "anchor_name_use_username"
+        },
+        {
+          "text": {
+            "text": "Choose what Ivy calls you."
+          },
+          "next": "anchor_name_input"
+        }
+      ]
+    },
+    "anchor_name_use_username": {
+      "type": "use_player_name",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": ""
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
           "next": "anchor_name_answer"
+        }
+      ]
+    },
+    "anchor_name_input": {
+      "type": "name_input",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "What should I call you?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_name_answer"
+        }
+      ]
+    },
+    "anchor_name_select_rude": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "What am I calling you, then?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Use your Minecraft username."
+          },
+          "next": "anchor_name_use_username_rude"
+        },
+        {
+          "text": {
+            "text": "Choose what Ivy calls you."
+          },
+          "next": "anchor_name_input_rude"
+        }
+      ]
+    },
+    "anchor_name_use_username_rude": {
+      "type": "use_player_name",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": ""
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_name_answer_rude"
+        }
+      ]
+    },
+    "anchor_name_input_rude": {
+      "type": "name_input",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "What should I call you?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_name_answer_rude"
         }
       ]
     },
@@ -487,7 +619,16 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "It's a pleasure meeting you."
+        "text": "It's a pleasure meeting you, {name}. I'm sure we'll get along just fine."
+      }
+    },
+    "anchor_name_answer_rude": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Welp, not much of a pleasure, {name}. But better than nothing."
       }
     }
   }

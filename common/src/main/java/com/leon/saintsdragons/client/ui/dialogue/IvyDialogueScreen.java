@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.ui.dialogue;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDialogueChoice;
 import com.leon.saintsdragons.common.network.MessageDialogueDismiss;
+import com.leon.saintsdragons.common.network.MessageDialogueNameInput;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -10,6 +11,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -21,6 +24,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
@@ -58,6 +62,8 @@ public class IvyDialogueScreen extends Screen {
     private static final long CONTINUATION_ARROW_FADE_MS = 650L;
     private static final long NORMAL_ARROW_DELAY_MS = 180L;
     private static final long NORMAL_ARROW_FADE_MS = 360L;
+    private static final int NAME_INPUT_MAX_RAW_LENGTH = 128;
+    private static final int NAME_INPUT_MAX_NON_WHITESPACE = 50;
 
     private MessageDialogueOpen message;
     private final long boxStartTime;
@@ -74,6 +80,8 @@ public class IvyDialogueScreen extends Screen {
     private float cameraStartPitch;
     private float cameraTargetYaw;
     private float cameraTargetPitch;
+    private EditBox nameInput;
+    private Button nameConfirmButton;
 
     public IvyDialogueScreen(MessageDialogueOpen message) {
         super(Component.translatable("saintsdragons.gui.dialogue.title"));
@@ -86,11 +94,15 @@ public class IvyDialogueScreen extends Screen {
     public void update(MessageDialogueOpen message) {
         this.message = message;
         resetTextAnimation(System.currentTimeMillis());
+        if (minecraft != null) {
+            rebuildWidgets();
+        }
     }
 
     @Override
     protected void init() {
         super.init();
+        setupNameInputWidgets();
         beginCameraTurnToSpeaker();
     }
 
@@ -129,8 +141,10 @@ public class IvyDialogueScreen extends Screen {
         playVoiceBlipForNewText(visibleText);
         guiGraphics.drawWordWrap(font, getVisibleTextComponent(), boxX + TEXT_X, boxY + TEXT_Y + 12, TEXT_W, textColor);
 
-        if (isTextComplete() && (message.choices().isEmpty() || isContinuationOnly())) {
+        if (isTextComplete()) {
             ensureChoicesStarted();
+        }
+        if (isTextComplete() && !isNameInputNode() && (message.choices().isEmpty() || isContinuationOnly())) {
             float alpha = getArrowAlpha();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
             guiGraphics.blit(TEXTURE, boxX + ARROW_X, boxY + ARROW_Y, ARROW_U, ARROW_V, ARROW_W, ARROW_H, TEXTURE_SIZE, TEXTURE_SIZE);
@@ -142,6 +156,9 @@ public class IvyDialogueScreen extends Screen {
     private void renderChoices(GuiGraphics guiGraphics, int boxY, int mouseX, int mouseY) {
         int count = message.choices().size();
         if (count == 0 || !isTextComplete() || isContinuationOnly()) {
+            return;
+        }
+        if (isNameInputNode()) {
             return;
         }
         ensureChoicesStarted();
@@ -186,6 +203,9 @@ public class IvyDialogueScreen extends Screen {
             return true;
         }
         int boxY = getBoxY();
+        if (isNameInputNode()) {
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
         if (isContinuationOnly()) {
             ensureChoicesStarted();
             if (isContinuationReady()) {
@@ -207,7 +227,7 @@ public class IvyDialogueScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (message.choices().isEmpty() || !isTextComplete() || isContinuationOnly()) {
+        if (message.choices().isEmpty() || !isTextComplete() || isNameInputNode() || isContinuationOnly()) {
             return super.mouseScrolled(mouseX, mouseY, delta);
         }
         int boxY = getBoxY();
@@ -225,6 +245,13 @@ public class IvyDialogueScreen extends Screen {
         if (!isTextComplete()) {
             skipText();
             return true;
+        }
+        if (isNameInputNode()) {
+            if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) && isTextComplete()) {
+                submitCustomName();
+                return true;
+            }
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
         if (isContinuationOnly()) {
             ensureChoicesStarted();
@@ -364,6 +391,7 @@ public class IvyDialogueScreen extends Screen {
         }
         choicesStarted = true;
         choiceStartTime = System.currentTimeMillis();
+        updateNameInputVisibility();
     }
 
     private long getChoiceElapsed() {
@@ -381,7 +409,11 @@ public class IvyDialogueScreen extends Screen {
     }
 
     private boolean isContinuationOnly() {
-        return message.choices().size() == 1 && isContinuationChoice(0);
+        return !isNameInputNode() && message.choices().size() == 1 && isContinuationChoice(0);
+    }
+
+    private boolean isNameInputNode() {
+        return "NAME_INPUT".equalsIgnoreCase(message.nodeType());
     }
 
     private boolean isContinuationReady() {
@@ -406,6 +438,61 @@ public class IvyDialogueScreen extends Screen {
 
     private boolean isEllipsisLine() {
         return "...".equals(message.text().getString().trim());
+    }
+
+    private void setupNameInputWidgets() {
+        nameInput = null;
+        nameConfirmButton = null;
+        if (!isNameInputNode()) {
+            return;
+        }
+        int boxY = height - BOX_H - BOTTOM_MARGIN;
+        int inputWidth = Math.min(180, Math.max(120, width - 104));
+        int buttonWidth = 64;
+        int gap = 6;
+        int totalWidth = inputWidth + gap + buttonWidth;
+        int x = (width - totalWidth) / 2;
+        int y = Math.max(8, boxY - 30);
+        nameInput = new EditBox(font, x, y, inputWidth, 20, Component.literal("Name"));
+        nameInput.setMaxLength(NAME_INPUT_MAX_RAW_LENGTH);
+        nameInput.setFilter(value -> countNonWhitespace(value) <= NAME_INPUT_MAX_NON_WHITESPACE);
+        nameInput.setResponder(value -> updateNameInputVisibility());
+        addRenderableWidget(nameInput);
+        nameConfirmButton = Button.builder(Component.literal("Confirm"), button -> submitCustomName())
+                .bounds(x + inputWidth + gap, y, buttonWidth, 20)
+                .build();
+        addRenderableWidget(nameConfirmButton);
+        updateNameInputVisibility();
+    }
+
+    private void updateNameInputVisibility() {
+        if (nameInput == null || nameConfirmButton == null) {
+            return;
+        }
+        boolean visible = isNameInputNode() && isTextComplete();
+        nameInput.setVisible(visible);
+        nameConfirmButton.visible = visible;
+        nameConfirmButton.active = visible;
+        if (visible && !nameInput.isFocused()) {
+            nameInput.setFocused(true);
+        }
+    }
+
+    private void submitCustomName() {
+        String value = nameInput == null ? "" : nameInput.getValue();
+        NetworkHandler.sendToServer(new MessageDialogueNameInput(message.entityId(), value));
+    }
+
+    private static int countNonWhitespace(String value) {
+        int count = 0;
+        for (int offset = 0; offset < value.length(); ) {
+            int codePoint = value.codePointAt(offset);
+            offset += Character.charCount(codePoint);
+            if (!Character.isWhitespace(codePoint)) {
+                count++;
+            }
+        }
+        return count;
     }
 
     private int getBoxY() {

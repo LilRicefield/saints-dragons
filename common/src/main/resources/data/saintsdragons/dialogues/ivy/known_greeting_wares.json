@@ -1,0 +1,29 @@
+{
+  "start_at": "return_greeting",
+  "states": {
+    "return_greeting": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "If you're here to make another joke, I reserve the right to charge extra."
+        },
+        {
+          "text": "Really? My 'wares' wares? Reaaaaal funny."
+        },
+        {
+          "text": "What a great first impression you've just left behind..."
+        }
+      ],
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    }
+  }
+}

@@ -953,7 +953,5 @@
   "text.autoconfig.saintsdragonsspawning.option.ivyHouseEnabled.@Tooltip": "关闭后常春藤的居所不再生成，且禁止常春藤在新生成或未生成的区块中的结构里刷新",
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval": "常春藤补货冷却",
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "补货冷却游戏刻（20刻 = 1秒，24000 = 20分钟）",
-  "saintsdragons.config_screen.others.dragon_terrain": "防止龙被卡住（破坏方块）",
-  "entity.saintsdragons.ivy.first_encounter": "常春藤：嘿-吼，过路人！我有些适合你的商品，不过你要先让我看看龙蛋，以及友好的诚意。",
-  "entity.saintsdragons.ivy.trade_unlocked": "常春藤现在足够信任你，愿意开始交易"
+  "saintsdragons.config_screen.others.dragon_terrain": "防止龙被卡住（破坏方块）"
 }

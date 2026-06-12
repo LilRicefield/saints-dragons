@@ -54,12 +54,15 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
             for (Map.Entry<String, JsonElement> entry : nodesJson.entrySet()) {
                 JsonObject nodeJson = GsonHelper.convertToJsonObject(entry.getValue(), fileId + " node " + entry.getKey());
                 Component speaker = nodeJson.has("speaker") ? parseComponent(nodeJson.get("speaker")) : Component.empty();
-                Component text = nodeJson.has("text") ? parseComponent(nodeJson.get("text")) : Component.empty();
+                List<Component> texts = parseNodeTexts(nodeJson);
+                Component text = nodeJson.has("text") && !nodeJson.get("text").isJsonArray()
+                        ? parseComponent(nodeJson.get("text"))
+                        : texts.isEmpty() ? Component.empty() : texts.get(0);
                 List<DialogueDefinition.Choice> choices = nodeJson.has("choices")
                         ? parseChoices(fileId, GsonHelper.getAsJsonArray(nodeJson, "choices"))
                         : List.of();
                 DialogueDefinition.Type type = DialogueDefinition.Type.byName(GsonHelper.getAsString(nodeJson, "type", "default"));
-                nodes.put(entry.getKey(), new DialogueDefinition.Node(speaker, text, choices, type));
+                nodes.put(entry.getKey(), new DialogueDefinition.Node(speaker, text, texts, choices, type));
             }
             DialogueDefinition dialogue = new DialogueDefinition(fileId, start, nodes);
             DialogueValidationResult validation = DialogueValidator.validate(dialogue);
@@ -77,8 +80,19 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
         JsonObject choice = GsonHelper.convertToJsonObject(element, fileId + " choice");
         return new DialogueDefinition.Choice(
                 parseComponent(choice.get("text")),
-                GsonHelper.getAsString(choice, "next", "")
+                GsonHelper.getAsString(choice, "next", ""),
+                GsonHelper.getAsString(choice, "impression", "")
         );
+    }
+
+    private static List<Component> parseNodeTexts(JsonObject nodeJson) {
+        if (nodeJson.has("texts")) {
+            return parseComponents(GsonHelper.getAsJsonArray(nodeJson, "texts"));
+        }
+        if (nodeJson.has("text") && nodeJson.get("text").isJsonArray()) {
+            return parseComponents(GsonHelper.getAsJsonArray(nodeJson, "text"));
+        }
+        return List.of();
     }
 
     private static Component parseComponent(JsonElement element) {
@@ -128,5 +142,13 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
             choices.add(parseChoice(fileId, element));
         }
         return choices;
+    }
+
+    private static List<Component> parseComponents(JsonArray array) {
+        List<Component> components = new ArrayList<>();
+        for (JsonElement element : array) {
+            components.add(parseComponent(element));
+        }
+        return components;
     }
 }

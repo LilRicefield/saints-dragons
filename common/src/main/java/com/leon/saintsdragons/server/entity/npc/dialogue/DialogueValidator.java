@@ -21,7 +21,11 @@ public final class DialogueValidator {
                 return DialogueValidationResult.error("node '" + entry.getKey() + "' has no choices and is not end_dialogue");
             }
             for (DialogueDefinition.Choice choice : node.choices()) {
-                if (!dialogue.nodes().containsKey(choice.next())) {
+                DialogueTargetReference target = DialogueTargetReference.parse(dialogue.id(), choice.next());
+                if (target == null) {
+                    return DialogueValidationResult.error("node '" + entry.getKey() + "' has invalid next target '" + choice.next() + "'");
+                }
+                if (!target.external() && !dialogue.nodes().containsKey(target.nodeId())) {
                     return DialogueValidationResult.error("node '" + entry.getKey() + "' points to missing node '" + choice.next() + "'");
                 }
             }
@@ -52,7 +56,10 @@ public final class DialogueValidator {
                 continue;
             }
             for (DialogueDefinition.Choice choice : node.choices()) {
-                queue.add(choice.next());
+                DialogueTargetReference target = DialogueTargetReference.parse(dialogue.id(), choice.next());
+                if (target != null && !target.external()) {
+                    queue.add(target.nodeId());
+                }
             }
         }
         return visited;
@@ -70,7 +77,11 @@ public final class DialogueValidator {
             return false;
         }
         for (DialogueDefinition.Choice choice : node.choices()) {
-            if (canReachEnd(dialogue, choice.next(), new HashSet<>(visiting))) {
+            DialogueTargetReference target = DialogueTargetReference.parse(dialogue.id(), choice.next());
+            if (target != null && target.external()) {
+                return true;
+            }
+            if (target != null && canReachEnd(dialogue, target.nodeId(), new HashSet<>(visiting))) {
                 return true;
             }
         }

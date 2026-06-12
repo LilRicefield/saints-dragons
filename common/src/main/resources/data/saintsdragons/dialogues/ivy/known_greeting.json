@@ -1,0 +1,152 @@
+{
+  "start_at": "return_greeting",
+  "states": {
+    "return_greeting": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "Back again? I was starting to think the woods scared you off. *She chuckles a bit*."
+        },
+        {
+          "text": "Ah, hello there, {name}."
+        },
+        {
+          "text": "Ah, {name}! I thought I heard something walking around."
+        },
+        {
+          "text": "Careful, {name}. Keep showing up like this and I might think you enjoy my company."
+        },
+        {
+          "text": "Welcome back!"
+        },
+        {
+          "text": "Good to see you again! Try not to let that go to your head."
+        }
+
+      ],
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "return_prompt"
+        }
+      ]
+    },
+    "return_prompt": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "Need something?"
+        },
+        {
+          "text": "What is it?"
+        },
+        {
+          "text": "Something the matter?"
+        },
+        {
+          "text": "Go on, I'm listening."
+        },
+        {
+          "text": "How can I help?"
+        },
+        {
+          "text": "All's well I hope?"
+        },
+        {
+          "text": "What do you need?"
+        }
+      ],
+      "choices": [
+        {
+          "text": {
+            "text": "I'd like to trade."
+          },
+          "next": "trade"
+        },
+        {
+          "text": {
+            "text": "What do you do out here?"
+          },
+          "next": "what_do_you_do"
+        },
+        {
+          "text": {
+            "text": "You know a lot about dragons?"
+          },
+          "next": "dragon_knowledge"
+        },
+        {
+          "text": {
+            "text": "Do you need help with anything?"
+          },
+          "next": "needs_help"
+        },
+        {
+          "text": {
+            "text": "Goodbye."
+          },
+          "next": "goodbye"
+        }
+      ]
+    },
+    "trade": {
+      "type": "open_trade",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Of course. Take a look."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "return_greeting"
+        }
+      ]
+    },
+    "what_do_you_do": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "A little trading, a little gardening, and a little making sure people don't do something ridiculous with dragons."
+      }
+    },
+    "dragon_knowledge": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Enough to know when someone is about to get bitten. Which is, unfortunately, often."
+      }
+    },
+    "needs_help": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Not right now. But I'll remember that you asked."
+      }
+    },
+    "goodbye": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Take care, {name}."
+      }
+    }
+  }
+}

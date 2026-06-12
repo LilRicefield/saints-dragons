@@ -1,0 +1,29 @@
+{
+  "start_at": "return_greeting",
+  "states": {
+    "return_greeting": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "Hello again. Still not trespassing, before you ask. *She smiles*."
+        },
+        {
+          "text": "Hello there, *trespasser*. Heh. I'm kidding."
+        },
+        {
+          "text": "Oh it's the trespass-- *ahem*, I mean, it's {name}! Hi. *She chuckles.*"
+        }
+      ],
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    }
+  }
+}

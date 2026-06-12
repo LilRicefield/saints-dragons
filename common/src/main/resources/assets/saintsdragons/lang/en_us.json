@@ -900,7 +900,5 @@
   "text.autoconfig.saintsdragonsspawning.option.ivyHouseEnabled.@Tooltip": "When turned off, Ivy's house no longer generates and Ivy no longer spawns from that structure in new or ungenerated chunks",
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval": "Ivy Restock Interval",
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",
-  "saintsdragons.config_screen.others.dragon_terrain": "Dragon Anti-Stuck",
-  "entity.saintsdragons.ivy.first_encounter": "Ivy: Hey-ho, stranger! I have appropriate items for you, if you show me one dragon egg of any kind.",
-  "entity.saintsdragons.ivy.trade_unlocked": "Ivy now trusts you enough to trade"
+  "saintsdragons.config_screen.others.dragon_terrain": "Dragon Anti-Stuck"
 }

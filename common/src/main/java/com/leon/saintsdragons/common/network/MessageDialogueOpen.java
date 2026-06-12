@@ -9,7 +9,8 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.ArrayList;
 import java.util.List;
 
-public record MessageDialogueOpen(int entityId, ResourceLocation dialogueId, String nodeId, Component speaker, Component text,
+public record MessageDialogueOpen(int entityId, ResourceLocation dialogueId, String nodeId, String nodeType,
+                                  Component speaker, Component text,
                                   List<Choice> choices) {
     public MessageDialogueOpen {
         choices = List.copyOf(choices);
@@ -20,13 +21,14 @@ public record MessageDialogueOpen(int entityId, ResourceLocation dialogueId, Str
         for (DialogueDefinition.Choice choice : node.choices()) {
             choices.add(new Choice(choice.text(), choice.next()));
         }
-        return new MessageDialogueOpen(entityId, dialogueId, nodeId, node.speaker(), node.text(), choices);
+        return new MessageDialogueOpen(entityId, dialogueId, nodeId, node.type().name(), node.speaker(), node.text(), choices);
     }
 
     public static void encode(MessageDialogueOpen message, FriendlyByteBuf buffer) {
         buffer.writeInt(message.entityId);
         buffer.writeResourceLocation(message.dialogueId);
         buffer.writeUtf(message.nodeId, 128);
+        buffer.writeUtf(message.nodeType, 32);
         buffer.writeComponent(message.speaker);
         buffer.writeComponent(message.text);
         buffer.writeInt(message.choices.size());
@@ -40,6 +42,7 @@ public record MessageDialogueOpen(int entityId, ResourceLocation dialogueId, Str
         int entityId = buffer.readInt();
         ResourceLocation dialogueId = buffer.readResourceLocation();
         String nodeId = buffer.readUtf(128);
+        String nodeType = buffer.readUtf(32);
         Component speaker = buffer.readComponent();
         Component text = buffer.readComponent();
         int size = buffer.readInt();
@@ -47,7 +50,7 @@ public record MessageDialogueOpen(int entityId, ResourceLocation dialogueId, Str
         for (int i = 0; i < size; i++) {
             choices.add(new Choice(buffer.readComponent(), buffer.readUtf(128)));
         }
-        return new MessageDialogueOpen(entityId, dialogueId, nodeId, speaker, text, choices);
+        return new MessageDialogueOpen(entityId, dialogueId, nodeId, nodeType, speaker, text, choices);
     }
 
     public static void handle(MessageDialogueOpen message) {
