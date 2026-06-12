@@ -88,8 +88,38 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
         if (element.isJsonPrimitive()) {
             return Component.translatable(element.getAsString());
         }
+        JsonObject object = GsonHelper.convertToJsonObject(element, "dialogue component");
+        if (object.has("text") && object.get("text").isJsonPrimitive() && !object.has("translate")) {
+            return parseStyledLiteral(object.get("text").getAsString());
+        }
         Component component = Component.Serializer.fromJson(element);
         return component == null ? Component.empty() : component;
+    }
+
+    private static Component parseStyledLiteral(String text) {
+        var root = Component.literal("");
+        int index = 0;
+        while (index < text.length()) {
+            int markerStart = text.indexOf('*', index);
+            if (markerStart < 0) {
+                root.append(text.substring(index));
+                break;
+            }
+            int markerLength = markerStart + 1 < text.length() && text.charAt(markerStart + 1) == '*' ? 2 : 1;
+            String marker = "*".repeat(markerLength);
+            int markerEnd = text.indexOf(marker, markerStart + markerLength);
+            if (markerEnd < 0) {
+                root.append(text.substring(index));
+                break;
+            }
+            if (markerStart > index) {
+                root.append(text.substring(index, markerStart));
+            }
+            String italicText = text.substring(markerStart + markerLength, markerEnd);
+            root.append(Component.literal(italicText).withStyle(style -> style.withItalic(true)));
+            index = markerEnd + markerLength;
+        }
+        return root;
     }
 
     private static List<DialogueDefinition.Choice> parseChoices(ResourceLocation fileId, JsonArray array) {

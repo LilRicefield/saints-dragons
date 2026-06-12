@@ -13,6 +13,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -52,11 +54,17 @@ public class IvyDialogueScreen extends Screen {
     private static final int CHOICE_VIEW_TOP_MARGIN = 8;
     private static final int CHOICE_VIEW_BOTTOM_GAP = 10;
     private static final long CAMERA_TURN_DURATION_MS = 260L;
+    private static final long CONTINUATION_ARROW_DELAY_MS = 2200L;
+    private static final long CONTINUATION_ARROW_FADE_MS = 650L;
+    private static final long NORMAL_ARROW_DELAY_MS = 180L;
+    private static final long NORMAL_ARROW_FADE_MS = 360L;
 
     private MessageDialogueOpen message;
     private final long boxStartTime;
     private long textStartTime;
+    private long choiceStartTime;
     private boolean textSkipped;
+    private boolean choicesStarted;
     private int choiceScrollOffset;
     private int lastBlipCodePoints;
     private boolean cameraTurnStarted;
@@ -88,7 +96,9 @@ public class IvyDialogueScreen extends Screen {
 
     private void resetTextAnimation(long now) {
         this.textStartTime = now;
+        this.choiceStartTime = 0L;
         this.textSkipped = false;
+        this.choicesStarted = false;
         this.choiceScrollOffset = 0;
         this.lastBlipCodePoints = 0;
     }
@@ -117,10 +127,11 @@ public class IvyDialogueScreen extends Screen {
         }
         String visibleText = getVisibleText();
         playVoiceBlipForNewText(visibleText);
-        guiGraphics.drawWordWrap(font, Component.literal(visibleText), boxX + TEXT_X, boxY + TEXT_Y + 12, TEXT_W, textColor);
+        guiGraphics.drawWordWrap(font, getVisibleTextComponent(), boxX + TEXT_X, boxY + TEXT_Y + 12, TEXT_W, textColor);
 
-        if (message.choices().isEmpty() && isTextComplete()) {
-            float alpha = Math.min(1.0F, Math.max(0.0F, (getTextElapsed() - getTextDoneElapsed() - 180.0F) / 360.0F));
+        if (isTextComplete() && (message.choices().isEmpty() || isContinuationOnly())) {
+            ensureChoicesStarted();
+            float alpha = getArrowAlpha();
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, alpha);
             guiGraphics.blit(TEXTURE, boxX + ARROW_X, boxY + ARROW_Y, ARROW_U, ARROW_V, ARROW_W, ARROW_H, TEXTURE_SIZE, TEXTURE_SIZE);
             RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
@@ -130,9 +141,10 @@ public class IvyDialogueScreen extends Screen {
 
     private void renderChoices(GuiGraphics guiGraphics, int boxY, int mouseX, int mouseY) {
         int count = message.choices().size();
-        if (count == 0 || !isTextComplete()) {
+        if (count == 0 || !isTextComplete() || isContinuationOnly()) {
             return;
         }
+        ensureChoicesStarted();
         int choiceWidth = getChoiceWidth();
         int choiceX = (width - choiceWidth) / 2;
         int viewportTop = CHOICE_VIEW_TOP_MARGIN;
@@ -174,6 +186,13 @@ public class IvyDialogueScreen extends Screen {
             return true;
         }
         int boxY = getBoxY();
+        if (isContinuationOnly()) {
+            ensureChoicesStarted();
+            if (isContinuationReady()) {
+                NetworkHandler.sendToServer(new MessageDialogueChoice(message.entityId(), 0));
+            }
+            return true;
+        }
         int clickedChoice = getChoiceAt(mouseX, mouseY, boxY);
         if (clickedChoice >= 0) {
             NetworkHandler.sendToServer(new MessageDialogueChoice(message.entityId(), clickedChoice));
@@ -188,7 +207,7 @@ public class IvyDialogueScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
-        if (message.choices().isEmpty() || !isTextComplete()) {
+        if (message.choices().isEmpty() || !isTextComplete() || isContinuationOnly()) {
             return super.mouseScrolled(mouseX, mouseY, delta);
         }
         int boxY = getBoxY();
@@ -207,6 +226,13 @@ public class IvyDialogueScreen extends Screen {
             skipText();
             return true;
         }
+        if (isContinuationOnly()) {
+            ensureChoicesStarted();
+            if (isContinuationReady()) {
+                NetworkHandler.sendToServer(new MessageDialogueChoice(message.entityId(), 0));
+            }
+            return true;
+        }
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
@@ -219,6 +245,7 @@ public class IvyDialogueScreen extends Screen {
     }
 
     private int getChoiceAt(double mouseX, double mouseY, int boxY) {
+        ensureChoicesStarted();
         int count = message.choices().size();
         int choiceWidth = getChoiceWidth();
         int choiceX = (width - choiceWidth) / 2;
@@ -284,6 +311,26 @@ public class IvyDialogueScreen extends Screen {
         return fullText.substring(0, endIndex);
     }
 
+    private Component getVisibleTextComponent() {
+        int visibleCodePoints = getVisibleText().codePointCount(0, getVisibleText().length());
+        int[] remaining = {visibleCodePoints};
+        MutableComponent visible = Component.literal("");
+        message.text().visit((style, text) -> {
+            if (remaining[0] <= 0) {
+                return java.util.Optional.empty();
+            }
+            int textCodePoints = text.codePointCount(0, text.length());
+            int keptCodePoints = Math.min(remaining[0], textCodePoints);
+            if (keptCodePoints > 0) {
+                int endIndex = text.offsetByCodePoints(0, keptCodePoints);
+                visible.append(Component.literal(text.substring(0, endIndex)).withStyle(style));
+            }
+            remaining[0] -= keptCodePoints;
+            return java.util.Optional.empty();
+        }, Style.EMPTY);
+        return visible;
+    }
+
     private boolean isTextComplete() {
         if (textSkipped) {
             return true;
@@ -300,6 +347,7 @@ public class IvyDialogueScreen extends Screen {
         textSkipped = true;
         String fullText = message.text().getString();
         lastBlipCodePoints = fullText.codePointCount(0, fullText.length());
+        ensureChoicesStarted();
     }
 
     private long getTextElapsed() {
@@ -308,6 +356,56 @@ public class IvyDialogueScreen extends Screen {
 
     private long getBoxElapsed() {
         return Math.max(0L, System.currentTimeMillis() - boxStartTime);
+    }
+
+    private void ensureChoicesStarted() {
+        if (choicesStarted || !isTextComplete()) {
+            return;
+        }
+        choicesStarted = true;
+        choiceStartTime = System.currentTimeMillis();
+    }
+
+    private long getChoiceElapsed() {
+        if (!choicesStarted) {
+            return 0L;
+        }
+        return Math.max(0L, System.currentTimeMillis() - choiceStartTime);
+    }
+
+    private boolean isContinuationChoice(int index) {
+        if (index < 0 || index >= message.choices().size()) {
+            return false;
+        }
+        return "...".equals(message.choices().get(index).text().getString().trim());
+    }
+
+    private boolean isContinuationOnly() {
+        return message.choices().size() == 1 && isContinuationChoice(0);
+    }
+
+    private boolean isContinuationReady() {
+        return getChoiceElapsed() >= getCurrentArrowDelay();
+    }
+
+    private float getArrowAlpha() {
+        if (isContinuationOnly()) {
+            long elapsed = getChoiceElapsed() - getCurrentArrowDelay();
+            return Math.min(1.0F, Math.max(0.0F, (float) elapsed / getCurrentArrowFade()));
+        }
+        return Math.min(1.0F, Math.max(0.0F, (getTextElapsed() - getTextDoneElapsed() - 180.0F) / 360.0F));
+    }
+
+    private long getCurrentArrowDelay() {
+        return isEllipsisLine() ? CONTINUATION_ARROW_DELAY_MS : NORMAL_ARROW_DELAY_MS;
+    }
+
+    private long getCurrentArrowFade() {
+        return isEllipsisLine() ? CONTINUATION_ARROW_FADE_MS : NORMAL_ARROW_FADE_MS;
+    }
+
+    private boolean isEllipsisLine() {
+        return "...".equals(message.text().getString().trim());
     }
 
     private int getBoxY() {

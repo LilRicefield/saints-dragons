@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.network.MessageDialogueClose;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
@@ -35,7 +36,7 @@ public final class DialogueSessionRegistry {
             return;
         }
         Entity entity = player.level().getEntity(entityId);
-        if (!(entity instanceof IvyTheDragonMerchant) || player.distanceToSqr(entity) > MAX_INTERACTION_DISTANCE_SQR) {
+        if (!(entity instanceof IvyTheDragonMerchant ivy) || player.distanceToSqr(entity) > MAX_INTERACTION_DISTANCE_SQR) {
             end(player);
             return;
         }
@@ -55,8 +56,28 @@ public final class DialogueSessionRegistry {
             end(player);
             return;
         }
+        if (currentNode.opensTrade()) {
+            SESSIONS.remove(player.getUUID());
+            NetworkHandler.sendToPlayer(player, MessageDialogueClose.INSTANCE);
+            ivy.openDialogueTrade(player, dialogue.id(), nextNodeId);
+            return;
+        }
         SESSIONS.put(player.getUUID(), new DialogueSession(entityId, dialogue.id(), nextNodeId));
         sendNode(player, entityId, dialogue, nextNodeId, nextNode);
+    }
+
+    public static void resume(ServerPlayer player, IvyTheDragonMerchant ivy, ResourceLocation dialogueId, String nodeId) {
+        DialogueDefinition dialogue = DialogueRegistry.get(dialogueId);
+        if (dialogue == null) {
+            return;
+        }
+        DialogueDefinition.Node node = dialogue.nodes().get(nodeId);
+        if (node == null || !isValidSpeaker(player, ivy)) {
+            return;
+        }
+        endForEntity(ivy);
+        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), nodeId));
+        sendNode(player, ivy.getId(), dialogue, nodeId, node);
     }
 
     public static void end(ServerPlayer player) {

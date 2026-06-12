@@ -6,54 +6,488 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "translate": "dialogue.saintsdragons.ivy.first_meeting.intro"
+        "text": "Oh, hi there. I didn't expect to see anyone here. Most people don't find this place by accident. You must love exploring, hm?"
       },
       "choices": [
         {
           "text": {
-            "translate": "dialogue.saintsdragons.ivy.first_meeting.choice.pretty_name"
+            "text": "Maybe I'm not most people."
           },
-          "next": "pretty_name"
+          "next": "a_confidence"
         },
         {
           "text": {
-            "translate": "dialogue.saintsdragons.ivy.first_meeting.choice.poisonous"
+            "text": "I'm sorry. Am I trespassing?"
           },
-          "next": "poisonous"
+          "next": "b_trespassing"
         },
         {
           "text": {
-            "translate": "dialogue.saintsdragons.ivy.first_meeting.choice.never_heard"
+            "text": "I was told a trader lived out here."
           },
-          "next": "never_heard"
+          "next": "c_trader"
+        },
+        {
+          "text": {
+            "text": "Who are you exactly?"
+          },
+          "next": "d_who_are_you_1"
         }
       ]
     },
-    "pretty_name": {
-      "type": "end_dialogue",
+    "a_confidence": {
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "translate": "dialogue.saintsdragons.ivy.first_meeting.pretty_name"
-      }
+        "text": "Oh? That's either confidence or a warning. I haven't decided which. So... friendly or not?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "I'm friendly."
+          },
+          "next": "a_friendly"
+        },
+        {
+          "text": {
+            "text": "I'm not friendly."
+          },
+          "next": "a_not_friendly"
+        }
+      ]
     },
-    "poisonous": {
-      "type": "end_dialogue",
+    "a_friendly": {
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "translate": "dialogue.saintsdragons.ivy.first_meeting.poisonous"
-      }
+        "text": "I was hoping you'd say that... it's nice to make your acquaintance."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
     },
-    "never_heard": {
+    "a_not_friendly": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*Ivy raises a brow.* Okaaay... Well, I was hoping you'd not say that..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "b_trespassing": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "No, you are not. Why would you think that? Oh, wait, yeah. It'd make sense for you to think so... but no, *ahem*, you're not."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "b_home"
+        }
+      ]
+    },
+    "b_home": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Welcome to my home. Where I live alone and... peaceful. *She has a slight sadness to her eyes.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "c_trader": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Ah, hey-ho, stranger. Yes. You found her. Would you like to see my wares?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Woah, what? Your 'wares' wares??"
+          },
+          "next": "c_wares_misread"
+        },
+        {
+          "text": {
+            "text": "Yes, I'd like to trade with you."
+          },
+          "next": "c_trade_straight"
+        }
+      ]
+    },
+    "c_wares_misread": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "...E-Excuse me? *She grimaces.* What--what was that supposed to mean? Was it such a good idea to say that to someone who you did not know? *She huffs.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Well, your fault for not specifying!"
+          },
+          "next": "c_your_fault"
+        }
+      ]
+    },
+    "c_your_fault": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "WHAT?? Wha--you should've... you shouldn't even be thinking about that in the first place! Ugh... *She sighs in defeat.* Then? Would you like to trade with me?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "See? That's so much better!"
+          },
+          "next": "c_dont_get_smart"
+        },
+        {
+          "text": {
+            "text": "Yes, show me your wares."
+          },
+          "next": "c_silent_trade"
+        }
+      ]
+    },
+    "c_dont_get_smart": {
+      "type": "open_trade",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Don't get smart..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "c_silent_trade": {
+      "type": "open_trade",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "c_trade_straight": {
+      "type": "open_trade",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Excellent. I have some good stuff you'd like to take a look at."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "d_who_are_you_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "That's a fair question. *She folds her arms loosely.* A trader, mostly."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "d_who_are_you_2"
+        }
+      ]
+    },
+    "d_who_are_you_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Gardener when the weather cooperates."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "d_who_are_you_3"
+        }
+      ]
+    },
+    "d_who_are_you_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And occasionally the person people bother when they need dragon-related advice."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "d_who_are_you_4"
+        }
+      ]
+    },
+    "d_who_are_you_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She tilts her head.* Though I suppose that doesn't really answer your question, does it?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "It's a start."
+          },
+          "next": "d_progress"
+        }
+      ]
+    },
+    "d_who_are_you_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "With that being said, would you like to trade?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Yes, I'd like to trade with you."
+          },
+          "next": "d_trade"
+        },
+        {
+          "text": {
+            "text": "No, I'm good."
+          },
+          "next": "d_no_trade"
+        }
+      ]
+    },
+    "d_trade": {
+      "type": "open_trade",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I'll show you what I have."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "d_no_trade": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Ah, I see. No worries."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_intro"
+        }
+      ]
+    },
+    "d_progress": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She smiles faintly.* Then we'll call it progress."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "d_who_are_you_5"
+        }
+      ]
+    },
+    "anchor_intro": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Well, anyway. My name is Ivy. Ivy Oleander. The last name is kind of uncommon. Rare, even. But yeah, you?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Tell her your name."
+          },
+          "next": "anchor_name_answer"
+        },
+        {
+          "text": {
+            "text": "That's a pretty name."
+          },
+          "next": "anchor_pretty_name"
+        },
+        {
+          "text": {
+            "text": "Oleander? Isn't that poisonous?"
+          },
+          "next": "anchor_poisonous"
+        },
+        {
+          "text": {
+            "text": "Never heard that name before."
+          },
+          "next": "anchor_never_heard_1"
+        }
+      ]
+    },
+    "anchor_pretty_name": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "*She pauses.* ...Thank you. Most people just say it sounds like a plant. Which, well. It is. Two of them, actually. *She laughs quietly.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_name_question"
+        }
+      ]
+    },
+    "anchor_poisonous": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Most people don't catch that. You're more observant than you look."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_name_question"
+        }
+      ]
+    },
+    "anchor_never_heard_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "That's kind of the point, I think. My mother had a thing for unusual things. *She shrugs.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_never_heard_2"
+        }
+      ]
+    },
+    "anchor_never_heard_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Though if you've somehow met another Oleander, I'd be very interested to hear about it."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "anchor_name_question"
+        }
+      ]
+    },
+    "anchor_name_question": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Anyway. What's your name?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Tell her your name."
+          },
+          "next": "anchor_name_answer"
+        }
+      ]
+    },
+    "anchor_name_answer": {
       "type": "end_dialogue",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "translate": "dialogue.saintsdragons.ivy.first_meeting.never_heard"
+        "text": "It's a pleasure meeting you."
       }
     }
   }

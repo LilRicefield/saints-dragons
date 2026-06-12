@@ -7,6 +7,7 @@ import com.leon.saintsdragons.client.sound.raevyx.RaevyxDiveSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBurrowSoundController;
+import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueResumeQueue;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import net.minecraft.client.Minecraft;
 
@@ -26,5 +27,6 @@ public final class CommonClientLifecycleEvents {
         IgnivorusFireBreathSoundController.tick(minecraft);
         VolitansBreathSoundController.tick(minecraft);
         VolitansBurrowSoundController.tick(minecraft);
+        IvyDialogueResumeQueue.tick(minecraft);
     }
 }

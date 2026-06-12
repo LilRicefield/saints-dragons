@@ -4,6 +4,7 @@ import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueScreen;
+import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueResumeQueue;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexList;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
@@ -93,12 +94,7 @@ public final class ClientPacketHandlers {
     }
 
     public static void handleDialogueOpen(MessageDialogueOpen message) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen instanceof IvyDialogueScreen dialogueScreen) {
-            dialogueScreen.update(message);
-        } else {
-            minecraft.setScreen(new IvyDialogueScreen(message));
-        }
+        IvyDialogueResumeQueue.openOrQueue(message);
     }
 
     public static void handleDialogueClose() {

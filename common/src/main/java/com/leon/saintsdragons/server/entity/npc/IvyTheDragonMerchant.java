@@ -151,6 +151,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private final int restockInterval;
     private int restockTimer;
     private boolean clientRecoveryItemVisible;
+    private UUID pendingDialogueTradePlayerUuid;
+    private ResourceLocation pendingDialogueTradeId;
+    private String pendingDialogueTradeNodeId;
+    private int pendingDialogueTradeResumeTicks;
 
     public IvyTheDragonMerchant(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
@@ -613,6 +617,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
                 startTradingSequence();
             } else if (!trading && lastTradingState) {
                 stopTradingSequence();
+                scheduleDialogueResumeAfterTrade();
             }
             lastTradingState = trading;
         }
@@ -620,10 +625,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
 
     @Override
     protected void stopTrading() {
+        Player previousTradingPlayer = getTradingPlayer();
         super.stopTrading();
         if (!level().isClientSide) {
             stopTradingSequence();
             lastTradingState = false;
+            scheduleDialogueResumeAfterTrade(previousTradingPlayer);
         }
     }
 
@@ -638,6 +645,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             return;
         }
         tickTradingAnimation();
+        tickDialogueTradeResume();
         tickGreeting();
         tickEggReaction();
         tickIdleVariant();
@@ -948,6 +956,70 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         setTradingPlayer(player);
         openTradingScreen(player, getDisplayName(), 1);
         player.awardStat(Stats.TALKED_TO_VILLAGER);
+    }
+
+    public void openDialogueTrade(ServerPlayer player, ResourceLocation dialogueId, String resumeNodeId) {
+        pendingDialogueTradePlayerUuid = player.getUUID();
+        pendingDialogueTradeId = dialogueId;
+        pendingDialogueTradeNodeId = resumeNodeId;
+        pendingDialogueTradeResumeTicks = 0;
+        openTradingFor(player);
+    }
+
+    private void scheduleDialogueResumeAfterTrade(@Nullable Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)
+                || pendingDialogueTradePlayerUuid == null
+                || pendingDialogueTradeId == null
+                || pendingDialogueTradeNodeId == null
+                || !pendingDialogueTradePlayerUuid.equals(serverPlayer.getUUID())) {
+            scheduleDialogueResumeAfterTrade();
+            return;
+        }
+        pendingDialogueTradeResumeTicks = 3;
+    }
+
+    private void scheduleDialogueResumeAfterTrade() {
+        if (pendingDialogueTradePlayerUuid == null || pendingDialogueTradeId == null || pendingDialogueTradeNodeId == null) {
+            clearPendingDialogueTrade();
+            return;
+        }
+        pendingDialogueTradeResumeTicks = 3;
+    }
+
+    private void tickDialogueTradeResume() {
+        if (pendingDialogueTradeResumeTicks <= 0) {
+            return;
+        }
+        pendingDialogueTradeResumeTicks--;
+        if (pendingDialogueTradeResumeTicks > 0) {
+            return;
+        }
+        resumeDialogueAfterTrade();
+    }
+
+    private void resumeDialogueAfterTrade() {
+        if (pendingDialogueTradePlayerUuid == null || pendingDialogueTradeId == null || pendingDialogueTradeNodeId == null) {
+            clearPendingDialogueTrade();
+            return;
+        }
+        ServerPlayer serverPlayer = level().getServer() == null
+                ? null
+                : level().getServer().getPlayerList().getPlayer(pendingDialogueTradePlayerUuid);
+        if (serverPlayer == null) {
+            clearPendingDialogueTrade();
+            return;
+        }
+        ResourceLocation dialogueId = pendingDialogueTradeId;
+        String nodeId = pendingDialogueTradeNodeId;
+        clearPendingDialogueTrade();
+        DialogueSessionRegistry.resume(serverPlayer, this, dialogueId, nodeId);
+    }
+
+    private void clearPendingDialogueTrade() {
+        pendingDialogueTradePlayerUuid = null;
+        pendingDialogueTradeId = null;
+        pendingDialogueTradeNodeId = null;
+        pendingDialogueTradeResumeTicks = 0;
     }
 
     private void updateRotationDeviation() {

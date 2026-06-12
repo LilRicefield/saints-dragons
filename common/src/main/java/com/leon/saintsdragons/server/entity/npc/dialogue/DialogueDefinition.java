@@ -19,6 +19,10 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         public boolean isEnd() {
             return type == Type.END_DIALOGUE;
         }
+
+        public boolean opensTrade() {
+            return type == Type.OPEN_TRADE;
+        }
     }
 
     public record Choice(Component text, String next) {
@@ -26,11 +30,15 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
 
     public enum Type {
         DEFAULT,
-        END_DIALOGUE;
+        END_DIALOGUE,
+        OPEN_TRADE;
 
         public static Type byName(String name) {
             if ("end_dialogue".equalsIgnoreCase(name)) {
                 return END_DIALOGUE;
+            }
+            if ("open_trade".equalsIgnoreCase(name)) {
+                return OPEN_TRADE;
             }
             return DEFAULT;
         }

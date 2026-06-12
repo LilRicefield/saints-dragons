@@ -57,6 +57,10 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
 
     @Override
     public boolean canContinueToUse() {
+        if (dragon.isVehicle() || dragon.isPassenger()) {
+            return false;
+        }
+
         if (dragon.isLanding()) {
             return !dragon.onGround();
         }

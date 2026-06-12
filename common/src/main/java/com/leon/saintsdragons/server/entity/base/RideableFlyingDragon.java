@@ -937,6 +937,13 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
     }
 
+    @Override
+    protected void afterPrepareForMounting() {
+        super.afterPrepareForMounting();
+        setLanding(false);
+        getNavigation().stop();
+    }
+
     protected int getTakeoffLiftDelayTicks() {
         return 0;
     }
