@@ -44,20 +44,25 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         public boolean requestsNameInput() {
             return type == Type.NAME_INPUT;
         }
+
+        public boolean recruitsIvy() {
+            return type == Type.RECRUIT_IVY;
+        }
     }
 
     public record Choice(Component text, String next, String impression, String setFlag, String requiresFlag, String hiddenIfFlag,
-                         List<String> hiddenIfAllFlags) {
+                         List<String> hiddenIfAllFlags, List<String> requiresAllFlags) {
         public Choice(Component text, String next) {
             this(text, next, "");
         }
 
         public Choice(Component text, String next, String impression) {
-            this(text, next, impression, "", "", "", List.of());
+            this(text, next, impression, "", "", "", List.of(), List.of());
         }
 
         public Choice {
             hiddenIfAllFlags = List.copyOf(hiddenIfAllFlags);
+            requiresAllFlags = List.copyOf(requiresAllFlags);
         }
     }
 
@@ -66,7 +71,8 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         END_DIALOGUE,
         OPEN_TRADE,
         USE_PLAYER_NAME,
-        NAME_INPUT;
+        NAME_INPUT,
+        RECRUIT_IVY;
 
         public static Type byName(String name) {
             if ("end_dialogue".equalsIgnoreCase(name)) {
@@ -80,6 +86,9 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
             }
             if ("name_input".equalsIgnoreCase(name)) {
                 return NAME_INPUT;
+            }
+            if ("recruit_ivy".equalsIgnoreCase(name)) {
+                return RECRUIT_IVY;
             }
             return DEFAULT;
         }

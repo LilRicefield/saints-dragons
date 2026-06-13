@@ -25,8 +25,11 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -62,6 +65,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +86,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 
-public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity {
+public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity, OwnableEntity {
     static final int RECOVERY_NONE = 0;
     static final int RECOVERY_DRINK = 1;
     static final int RECOVERY_EAT = 2;
@@ -91,8 +95,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final ResourceLocation TRESPASSER_KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting_trespasser");
     private static final ResourceLocation RUDE_KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting_rude");
     private static final ResourceLocation WARES_KNOWN_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/known_greeting_wares");
+    private static final ResourceLocation RECRUITED_GREETING_DIALOGUE = SaintsDragonsCommon.rl("ivy/recruited_greeting");
     private static final EntityDataAccessor<Boolean> DATA_RUNNING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_TAME =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Optional<UUID>> DATA_OWNER_UUID =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.OPTIONAL_UUID);
+    private static final EntityDataAccessor<Integer> DATA_COMMAND =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_TRADE_ANIM_STATE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_IDLE_VARIANT_ACTIVE =
@@ -127,6 +138,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final String REMEMBERED_NAME_TAG = "Name";
     private static final String REMEMBERED_IMPRESSION_TAG = "Impression";
     private static final String REMEMBERED_DIALOGUE_FLAGS_TAG = "DialogueFlags";
+    private static final String TAME_TAG = "Tame";
+    private static final String OWNER_UUID_TAG = "OwnerUUID";
+    private static final String COMMAND_TAG = "Command";
     private static final String TRESPASSER_IMPRESSION = "trespasser";
     private static final String RUDE_IMPRESSION = "rude";
     private static final String WARES_IMPRESSION = "wares";
@@ -172,10 +186,85 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return true;
     }
 
+    public boolean isTame() {
+        return this.entityData.get(DATA_TAME);
+    }
+
+    public void setTame(boolean tame) {
+        this.entityData.set(DATA_TAME, tame);
+        if (!tame) {
+            setOwnerUUID(null);
+        }
+    }
+
+    public void recruitAsCompanion(Player player) {
+        setTame(true);
+        setOwnerUUID(player.getUUID());
+        setCommand(CompanionCommand.FOLLOW.id);
+        this.setPersistenceRequired();
+    }
+
+    public int getCommand() {
+        return this.entityData.get(DATA_COMMAND);
+    }
+
+    public void setCommand(int command) {
+        this.entityData.set(DATA_COMMAND, CompanionCommand.byId(command).id);
+        if (getCommand() == CompanionCommand.STAY.id) {
+            getNavigation().stop();
+            setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
+        }
+    }
+
+    public CompanionCommand getCompanionCommand() {
+        return CompanionCommand.byId(getCommand());
+    }
+
+    public void setCompanionCommand(CompanionCommand command) {
+        setCommand(command.id);
+    }
+
+    public int cycleCompanionCommand() {
+        int next = (getCommand() + 1) % CompanionCommand.values().length;
+        setCommand(next);
+        return getCommand();
+    }
+
+    public boolean isOwnedBy(LivingEntity entity) {
+        return entity != null && entity.getUUID().equals(getOwnerUUID());
+    }
+
+    @Nullable
+    @Override
+    public UUID getOwnerUUID() {
+        return this.entityData.get(DATA_OWNER_UUID).orElse(null);
+    }
+
+    public void setOwnerUUID(@Nullable UUID ownerUuid) {
+        this.entityData.set(DATA_OWNER_UUID, Optional.ofNullable(ownerUuid));
+    }
+
+    @Nullable
+    @Override
+    public LivingEntity getOwner() {
+        UUID ownerUuid = getOwnerUUID();
+        if (ownerUuid == null) {
+            return null;
+        }
+        if (level() instanceof ServerLevel serverLevel) {
+            Entity owner = serverLevel.getEntity(ownerUuid);
+            return owner instanceof LivingEntity living ? living : null;
+        }
+        return level().getPlayerByUUID(ownerUuid);
+    }
+
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_RUNNING, false);
+        this.entityData.define(DATA_TAME, false);
+        this.entityData.define(DATA_OWNER_UUID, Optional.empty());
+        this.entityData.define(DATA_COMMAND, CompanionCommand.WANDER.id);
         this.entityData.define(DATA_TRADE_ANIM_STATE, TradeAnimState.NONE.id);
         this.entityData.define(DATA_IDLE_VARIANT_ACTIVE, false);
         this.entityData.define(DATA_BOXING_STANCE, false);
@@ -201,10 +290,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         goalSelector.addGoal(1, new TradingStillGoal());
         goalSelector.addGoal(1, new FloatGoal(this));
         goalSelector.addGoal(2, getBoxingCombat().createGoal());
-        goalSelector.addGoal(3, new RandomStrollGoal(this, 0.6) {
+        goalSelector.addGoal(3, new CompanionStayGoal());
+        goalSelector.addGoal(4, new CompanionFollowOwnerGoal());
+        goalSelector.addGoal(5, new RandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
+                        && (!IvyTheDragonMerchant.this.isTame()
+                        || IvyTheDragonMerchant.this.getCompanionCommand() == CompanionCommand.WANDER)
                         && !IvyTheDragonMerchant.this.isInDialogue()
                         && !IvyTheDragonMerchant.this.isBoxingCombatActive()
                         && super.canUse();
@@ -213,12 +306,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             @Override
             public boolean canContinueToUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
+                        && (!IvyTheDragonMerchant.this.isTame()
+                        || IvyTheDragonMerchant.this.getCompanionCommand() == CompanionCommand.WANDER)
                         && !IvyTheDragonMerchant.this.isInDialogue()
                         && !IvyTheDragonMerchant.this.isBoxingCombatActive()
                         && super.canContinueToUse();
             }
         });
-        goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 6.0f) {
+        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0f) {
             @Override
             public boolean canUse() {
                 return !IvyTheDragonMerchant.this.isInDialogue()
@@ -233,7 +328,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
                         && super.canContinueToUse();
             }
         });
-        goalSelector.addGoal(5, new RandomLookAroundGoal(this) {
+        goalSelector.addGoal(7, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
                 return !IvyTheDragonMerchant.this.isInDialogue()
@@ -414,6 +509,13 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             return InteractionResult.CONSUME;
         }
         if (player instanceof ServerPlayer serverPlayer) {
+            if (player.isCrouching() && isTame() && isOwnedBy(player)) {
+                if (hand == InteractionHand.MAIN_HAND) {
+                    int command = cycleCompanionCommand();
+                    player.displayClientMessage(Component.translatable("entity.saintsdragons.all.command_" + command, getDisplayName()), true);
+                }
+                return InteractionResult.CONSUME;
+            }
             DragonUtilities.awardAdvancement(serverPlayer, "meet_ivy", "meet_ivy");
             openDialogue(serverPlayer);
             return InteractionResult.CONSUME;
@@ -434,6 +536,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private ResourceLocation getDialogueIdFor(ServerPlayer player) {
         if (!hasRememberedDialogueName(player)) {
             return FIRST_MEETING_DIALOGUE;
+        }
+        if (isTame() && isOwnedBy(player)) {
+            return RECRUITED_GREETING_DIALOGUE;
         }
         String impression = rememberedDialogueImpressions.get(player.getUUID());
         if (TRESPASSER_IMPRESSION.equals(impression)) {
@@ -596,6 +701,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return hurt;
     }
 
+    @Override
+    public void setTarget(@Nullable LivingEntity target) {
+        if (isTame() && isOwnedBy(target)) {
+            super.setTarget(null);
+            return;
+        }
+        super.setTarget(target);
+    }
+
     private boolean isBlockedHostileDamage(DamageSource source) {
         return !isBoxingRecovering()
                 && (source.getEntity() instanceof Zombie
@@ -694,6 +808,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putBoolean(TAME_TAG, isTame());
+        UUID ownerUuid = getOwnerUUID();
+        if (ownerUuid != null) {
+            tag.putUUID(OWNER_UUID_TAG, ownerUuid);
+        }
+        tag.putInt(COMMAND_TAG, getCommand());
         ListTag knownDialogueList = new ListTag();
         for (Map.Entry<UUID, String> entry : rememberedDialogueNames.entrySet()) {
             CompoundTag knownTag = new CompoundTag();
@@ -720,6 +840,16 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        setTame(tag.getBoolean(TAME_TAG));
+        if (tag.hasUUID(OWNER_UUID_TAG)) {
+            setOwnerUUID(tag.getUUID(OWNER_UUID_TAG));
+            if (getOwnerUUID() != null) {
+                this.entityData.set(DATA_TAME, true);
+            }
+        } else if (!isTame()) {
+            setOwnerUUID(null);
+        }
+        setCommand(tag.contains(COMMAND_TAG, Tag.TAG_INT) ? tag.getInt(COMMAND_TAG) : CompanionCommand.WANDER.id);
         rememberedDialogueNames.clear();
         rememberedDialogueImpressions.clear();
         rememberedDialogueFlags.clear();
@@ -1005,6 +1135,27 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         return boxingCombat;
     }
 
+    public enum CompanionCommand {
+        FOLLOW(0),
+        STAY(1),
+        WANDER(2);
+
+        private final int id;
+
+        CompanionCommand(int id) {
+            this.id = id;
+        }
+
+        private static CompanionCommand byId(int id) {
+            for (CompanionCommand command : values()) {
+                if (command.id == id) {
+                    return command;
+                }
+            }
+            return WANDER;
+        }
+    }
+
     private enum TradeAnimState {
         NONE(0),
         START(1),
@@ -1047,6 +1198,126 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         public void tick() {
             getNavigation().stop();
             setDeltaMovement(0.0, 0.0, 0.0);
+        }
+    }
+
+    private class CompanionStayGoal extends Goal {
+        CompanionStayGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE));
+        }
+
+        @Override
+        public boolean canUse() {
+            return isTame()
+                    && getCompanionCommand() == CompanionCommand.STAY
+                    && getTarget() == null
+                    && !isTrading()
+                    && !isInDialogue()
+                    && !getBoxingCombat().isActive();
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return canUse();
+        }
+
+        @Override
+        public void start() {
+            stopMovement();
+        }
+
+        @Override
+        public void tick() {
+            stopMovement();
+        }
+
+        private void stopMovement() {
+            getNavigation().stop();
+            setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
+        }
+    }
+
+    private class CompanionFollowOwnerGoal extends Goal {
+        private static final double START_DISTANCE_SQR = 36.0D;
+        private static final double STOP_DISTANCE_SQR = 9.0D;
+        private static final double TELEPORT_DISTANCE_SQR = 256.0D;
+        private static final double FOLLOW_SPEED = 1.05D;
+        private LivingEntity owner;
+
+        CompanionFollowOwnerGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            if (!canFollowOwner()) {
+                return false;
+            }
+            LivingEntity resolvedOwner = getOwner();
+            if (resolvedOwner == null || distanceToSqr(resolvedOwner) < START_DISTANCE_SQR) {
+                return false;
+            }
+            this.owner = resolvedOwner;
+            return true;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return owner != null
+                    && canFollowOwner()
+                    && owner.isAlive()
+                    && distanceToSqr(owner) > STOP_DISTANCE_SQR;
+        }
+
+        @Override
+        public void stop() {
+            owner = null;
+            getNavigation().stop();
+        }
+
+        @Override
+        public void tick() {
+            if (owner == null) {
+                return;
+            }
+            getLookControl().setLookAt(owner, 30.0F, 30.0F);
+            double distance = distanceToSqr(owner);
+            if (distance > TELEPORT_DISTANCE_SQR && tryTeleportNearOwner(owner)) {
+                getNavigation().stop();
+                return;
+            }
+            getNavigation().moveTo(owner, FOLLOW_SPEED);
+        }
+
+        private boolean canFollowOwner() {
+            return isTame()
+                    && getCompanionCommand() == CompanionCommand.FOLLOW
+                    && getTarget() == null
+                    && !isTrading()
+                    && !isInDialogue()
+                    && !getBoxingCombat().isActive();
+        }
+
+        private boolean tryTeleportNearOwner(LivingEntity owner) {
+            if (!(level() instanceof ServerLevel serverLevel)) {
+                return false;
+            }
+            for (int attempt = 0; attempt < 12; attempt++) {
+                int xOffset = random.nextIntBetweenInclusive(-3, 3);
+                int zOffset = random.nextIntBetweenInclusive(-3, 3);
+                if (Math.abs(xOffset) < 2 && Math.abs(zOffset) < 2) {
+                    continue;
+                }
+                int x = Mth.floor(owner.getX()) + xOffset;
+                int y = Mth.floor(owner.getY());
+                int z = Mth.floor(owner.getZ()) + zOffset;
+                if (!serverLevel.noCollision(IvyTheDragonMerchant.this, getBoundingBox().move(x - getX(), y - getY(), z - getZ()))) {
+                    continue;
+                }
+                moveTo(x + 0.5D, y, z + 0.5D, getYRot(), getXRot());
+                return true;
+            }
+            return false;
         }
     }
 

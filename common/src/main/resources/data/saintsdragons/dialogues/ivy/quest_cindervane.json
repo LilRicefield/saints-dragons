@@ -1,0 +1,251 @@
+{
+  "start_at": "cindervane_migration_1",
+  "states": {
+    "cindervane_migration_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Cindervanes are migrating this season, and that tends to make people reckless."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_migration_2"
+        }
+      ]
+    },
+    "cindervane_migration_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I want you to tame one. Properly, that is. Just to test your mettle. *She smiles.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "How do I tame a Cindervane?"
+          },
+          "next": "cindervane_taming_1"
+        },
+        {
+          "text": {
+            "text": "No way. I'm out."
+          },
+          "next": "cindervane_refuse_1"
+        }
+      ]
+    },
+    "cindervane_taming_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I suggest you look for food items like cod, salmon, or raw chicken. Or everything. They are not picky when hungry."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_2"
+        }
+      ]
+    },
+    "cindervane_taming_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "If you want better odds, trade with me for fish and eggs. I can make you Hearty Dragon Meals."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_3"
+        }
+      ]
+    },
+    "cindervane_taming_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Once you have the food, look for Cindervanes in mountainous biomes, like Stony Peaks, Jagged Peaks, Frozen Peaks, Snowy Slopes, Groves, and even Meadows."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_4"
+        }
+      ]
+    },
+    "cindervane_taming_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "...And potentially other high-altitude areas from other 'biome mods' or whatever that means."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_5"
+        }
+      ]
+    },
+    "cindervane_taming_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Once you've found one, just approach it, and tame it like how you would tame a dog or a cat."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_6"
+        }
+      ]
+    },
+    "cindervane_taming_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Do NOT hit it. Please. If you've somehow made it mad, then it's best to run away, or chug a Fire Resistance Potion, or worse... kill it."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_7"
+        }
+      ]
+    },
+    "cindervane_taming_7": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "When you've tamed one, come back to me, then we'll see where things go."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_confirm"
+        }
+      ]
+    },
+    "cindervane_taming_confirm": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Is everything clear?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Can you go over it one more time?"
+          },
+          "next": "cindervane_repeat"
+        },
+        {
+          "text": {
+            "text": "Crystal clear."
+          },
+          "next": "cindervane_quest_started",
+          "set_flag": "cindervane_quest_started"
+        }
+      ]
+    },
+    "cindervane_repeat": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Very well. I'll explain again. It's good to be thorough."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_taming_1"
+        }
+      ]
+    },
+    "cindervane_quest_started": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Good. Come back once you've tamed one."
+      }
+    },
+    "cindervane_refuse_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "...Very well. I understand why you are hesitant."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_refuse_2"
+        }
+      ]
+    },
+    "cindervane_refuse_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And honestly, that's one of the more reasonable answers I've heard."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "cindervane_refuse_3"
+        }
+      ]
+    },
+    "cindervane_refuse_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "We'll revisit the matter later, if you want to, of course. *She gives you a reassuring smile.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    }
+  }
+}

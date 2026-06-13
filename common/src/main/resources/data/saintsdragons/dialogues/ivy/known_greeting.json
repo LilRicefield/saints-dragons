@@ -77,6 +77,7 @@
             "text": "What do you do out here?"
           },
           "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do",
+          "hidden_if_flag": "known_work_done",
           "hidden_if_all_flags": [
             "work_dragons",
             "work_gardening",
@@ -92,17 +93,52 @@
         },
         {
           "text": {
-            "text": "Do you need help with anything?"
+            "text": "Anything I can help with?"
           },
           "next": "needs_help",
-          "set_flag": "known_help_done",
-          "hidden_if_flag": "known_help_done"
+          "requires_flag": "known_dragons_done",
+          "requires_all_flags": [
+            "work_dragons",
+            "work_gardening",
+            "work_expert"
+          ],
+          "hidden_if_flag": "cindervane_quest_started"
+        },
+        {
+          "text": {
+            "text": "About taming the Cindervane..."
+          },
+          "next": "saintsdragons:ivy/quest_cindervane_complete#quest_check_in",
+          "requires_flag": "cindervane_quest_started",
+          "hidden_if_flag": "cindervane_quest_completed"
         },
         {
           "text": {
             "text": "Goodbye."
           },
-          "next": "goodbye"
+          "next": "goodbye",
+          "hidden_if_flag": "ivy_recruited"
+        },
+        {
+          "text": {
+            "text": "Goodbye."
+          },
+          "next": "recruited_goodbye",
+          "requires_flag": "ivy_command_follow"
+        },
+        {
+          "text": {
+            "text": "Goodbye."
+          },
+          "next": "recruited_goodbye_stay",
+          "requires_flag": "ivy_command_stay"
+        },
+        {
+          "text": {
+            "text": "Goodbye."
+          },
+          "next": "recruited_goodbye_wander",
+          "requires_flag": "ivy_command_wander"
         }
       ]
     },
@@ -124,13 +160,20 @@
       ]
     },
     "needs_help": {
-      "type": "end_dialogue",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Not right now. But I'll remember that you asked."
-      }
+        "text": "Yes, actually."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/quest_cindervane#cindervane_migration_1"
+        }
+      ]
     },
     "goodbye": {
       "type": "end_dialogue",
@@ -154,6 +197,78 @@
           "text": "See you around, {name}."
         }
         ]
+    },
+    "recruited_goodbye": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": [
+        {
+          "text": "Alright, {name}."
+        },
+        {
+          "text": "Let's press on."
+        },
+        {
+          "text": "Onward, then."
+        },
+        {
+          "text": "Off we go, then."
+        },
+        {
+          "text": "Let's go."
+        },
+        {
+          "text": "Let's move."
+        },
+        {
+          "text": "Shall we?"
+        }
+      ]
+    },
+    "recruited_goodbye_stay": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": [
+        {
+          "text": "I'll stay here. Please don't die in your adventuring."
+        },
+        {
+          "text": "Please don't go for too long."
+        },
+        {
+          "text": "Remember to get me later."
+        },
+        {
+          "text": "Don't you dare forget about me."
+        },
+        {
+          "text": "I'll be here. Waiting."
+        },
+        {
+          "text": "I'll be here eating dirt, then."
+        }
+      ]
+    },
+  "recruited_goodbye_wander": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": [
+        {
+          "text": "I'll be wandering around until you come back."
+        },
+        {
+          "text": "I'll be around here."
+        },
+        {
+          "text": "I'll hanging about until you come back."
+        }
+      ]
     }
   }
 }

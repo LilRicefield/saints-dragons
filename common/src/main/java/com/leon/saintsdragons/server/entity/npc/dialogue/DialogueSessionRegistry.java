@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.npc.dialogue;
 import com.leon.saintsdragons.common.network.MessageDialogueClose;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -18,6 +19,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class DialogueSessionRegistry {
     private static final double MAX_INTERACTION_DISTANCE_SQR = 64.0D;
+    private static final Set<String> ADVANCED_DRAGONS = Set.of("raevyx", "ignivorus", "volitans", "varasuchus");
+    private static final Set<String> BASIC_EXTRA_DRAGONS = Set.of("stegonaut", "nulljaw");
     private static final Map<UUID, DialogueSession> SESSIONS = new ConcurrentHashMap<>();
 
     private DialogueSessionRegistry() {
@@ -34,7 +37,7 @@ public final class DialogueSessionRegistry {
             return;
         }
         endForEntity(ivy);
-        Set<String> flags = ivy.getRememberedDialogueFlags(player);
+        Set<String> flags = collectFlags(player, ivy, ivy.getRememberedDialogueFlags(player));
         SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), dialogue.start(), chosenName, flags));
         sendNode(player, ivy.getId(), dialogue, dialogue.start(), startNode, chosenName, flags);
     }
@@ -62,7 +65,7 @@ public final class DialogueSessionRegistry {
             end(player);
             return;
         }
-        Set<String> currentFlags = mergedFlags(session.flags(), ivy.getRememberedDialogueFlags(player));
+        Set<String> currentFlags = collectFlags(player, ivy, mergedFlags(session.flags(), ivy.getRememberedDialogueFlags(player)));
         List<DialogueDefinition.Choice> visibleChoices = visibleChoices(currentNode, currentFlags);
         if (choiceIndex < 0 || choiceIndex >= visibleChoices.size()) {
             end(player);
@@ -93,6 +96,7 @@ public final class DialogueSessionRegistry {
             continueWithChosenName(player, entityId, target.dialogue(), target.node(), chosenName, nextFlags);
             return;
         }
+        applyNodeAction(player, ivy, target.node());
         SESSIONS.put(player.getUUID(), new DialogueSession(entityId, target.dialogue().id(), target.nodeId(), session.chosenName(), nextFlags));
         sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), session.chosenName(), nextFlags);
     }
@@ -137,6 +141,8 @@ public final class DialogueSessionRegistry {
         endForEntity(ivy);
         String chosenName = ivy.getRememberedDialogueName(player);
         Set<String> flags = ivy.getRememberedDialogueFlags(player);
+        flags = collectFlags(player, ivy, flags);
+        applyNodeAction(player, ivy, node);
         SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), nodeId, chosenName, flags));
         sendNode(player, ivy.getId(), dialogue, nodeId, node, chosenName, flags);
     }
@@ -213,21 +219,26 @@ public final class DialogueSessionRegistry {
                                                DialogueDefinition.Node actionNode,
                                                String chosenName,
                                                Set<String> flags) {
-        List<DialogueDefinition.Choice> choices = visibleChoices(actionNode, flags);
+        Entity entity = player.level().getEntity(entityId);
+        IvyTheDragonMerchant ivy = entity instanceof IvyTheDragonMerchant ivyEntity ? ivyEntity : null;
+        Set<String> currentFlags = ivy == null ? flags : collectFlags(player, ivy, flags);
+        List<DialogueDefinition.Choice> choices = visibleChoices(actionNode, currentFlags);
         if (choices.isEmpty()) {
             end(player);
             return;
         }
         DialogueDefinition.Choice choice = choices.get(0);
-        Set<String> nextFlags = withChoiceFlag(flags, choice);
-        Entity entity = player.level().getEntity(entityId);
-        if (entity instanceof IvyTheDragonMerchant ivy && !choice.setFlag().isBlank()) {
+        Set<String> nextFlags = withChoiceFlag(currentFlags, choice);
+        if (ivy != null && !choice.setFlag().isBlank()) {
             ivy.rememberDialogueFlag(player, choice.setFlag());
         }
         ResolvedTarget target = resolveTarget(dialogue, choice.next());
         if (target == null) {
             end(player);
             return;
+        }
+        if (ivy != null) {
+            applyNodeAction(player, ivy, target.node());
         }
         SESSIONS.put(player.getUUID(), new DialogueSession(entityId, target.dialogue().id(), target.nodeId(), chosenName, nextFlags));
         sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), chosenName, nextFlags);
@@ -266,6 +277,7 @@ public final class DialogueSessionRegistry {
     private static List<DialogueDefinition.Choice> visibleChoices(DialogueDefinition.Node node, Set<String> flags) {
         return node.choices().stream()
                 .filter(choice -> choice.requiresFlag().isBlank() || flags.contains(choice.requiresFlag()))
+                .filter(choice -> choice.requiresAllFlags().isEmpty() || flags.containsAll(choice.requiresAllFlags()))
                 .filter(choice -> choice.hiddenIfFlag().isBlank() || !flags.contains(choice.hiddenIfFlag()))
                 .filter(choice -> choice.hiddenIfAllFlags().isEmpty() || !flags.containsAll(choice.hiddenIfAllFlags()))
                 .toList();
@@ -290,6 +302,55 @@ public final class DialogueSessionRegistry {
         Set<String> flags = new HashSet<>(sessionFlags);
         flags.addAll(rememberedFlags);
         return flags;
+    }
+
+    private static Set<String> collectFlags(ServerPlayer player, IvyTheDragonMerchant ivy, Set<String> baseFlags) {
+        Set<String> flags = new HashSet<>(baseFlags);
+        List<DragonCodexSavedData.DragonCodexEntry> entries = DragonCodexSavedData.get(player.serverLevel()).getEntriesFor(player);
+        boolean hasCindervane = false;
+        boolean hasAdvanced = false;
+        boolean hasBasicExtra = false;
+        for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
+            String dragonType = entry.dragonType();
+            if ("cindervane".equals(dragonType)) {
+                hasCindervane = true;
+            }
+            if (ADVANCED_DRAGONS.contains(dragonType)) {
+                hasAdvanced = true;
+            }
+            if (BASIC_EXTRA_DRAGONS.contains(dragonType)) {
+                hasBasicExtra = true;
+            }
+        }
+        if (hasCindervane) {
+            flags.add("has_tamed_cindervane");
+        }
+        if (hasAdvanced) {
+            flags.add("has_advanced_dragon");
+        }
+        if (hasBasicExtra) {
+            flags.add("has_basic_extra_dragon");
+        }
+        if (ivy.isTame() && ivy.isOwnedBy(player)) {
+            flags.add("ivy_recruited");
+            IvyTheDragonMerchant.CompanionCommand command = ivy.getCompanionCommand();
+            if (command == IvyTheDragonMerchant.CompanionCommand.STAY) {
+                flags.add("ivy_command_stay");
+            } else if (command == IvyTheDragonMerchant.CompanionCommand.WANDER) {
+                flags.add("ivy_command_wander");
+            } else if (command == IvyTheDragonMerchant.CompanionCommand.FOLLOW) {
+                flags.add("ivy_command_follow");
+            }
+        }
+        return flags;
+    }
+
+    private static void applyNodeAction(ServerPlayer player, IvyTheDragonMerchant ivy, DialogueDefinition.Node node) {
+        if (node.recruitsIvy()) {
+            ivy.recruitAsCompanion(player);
+            ivy.rememberDialogueFlag(player, "ivy_recruited");
+            ivy.rememberDialogueFlag(player, "cindervane_quest_completed");
+        }
     }
 
     private static Component resolveName(Component component, String chosenName) {

@@ -246,8 +246,11 @@ public class IvyDialogueScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (!isTextComplete()) {
-            skipText();
-            return true;
+            if (isAdvanceKey(keyCode)) {
+                skipText();
+                return true;
+            }
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
         if (isNameInputNode()) {
             if ((keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) && isTextComplete()) {
@@ -257,13 +260,22 @@ public class IvyDialogueScreen extends Screen {
             return super.keyPressed(keyCode, scanCode, modifiers);
         }
         if (isContinuationOnly()) {
-            ensureChoicesStarted();
-            if (isContinuationReady()) {
-                NetworkHandler.sendToServer(new MessageDialogueChoice(message.entityId(), 0));
+            if (isAdvanceKey(keyCode)) {
+                ensureChoicesStarted();
+                if (isContinuationReady()) {
+                    NetworkHandler.sendToServer(new MessageDialogueChoice(message.entityId(), 0));
+                }
+                return true;
             }
-            return true;
+            return super.keyPressed(keyCode, scanCode, modifiers);
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    private static boolean isAdvanceKey(int keyCode) {
+        return keyCode == GLFW.GLFW_KEY_SPACE
+                || keyCode == GLFW.GLFW_KEY_ENTER
+                || keyCode == GLFW.GLFW_KEY_KP_ENTER;
     }
 
     @Override

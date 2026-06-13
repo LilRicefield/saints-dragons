@@ -1,0 +1,56 @@
+{
+  "start_at": "recruited_greeting",
+  "states": {
+    "recruited_greeting": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "What can I do you for, {name}?"
+        },
+        {
+          "text": "Hey there, {name}."
+        },
+        {
+          "text": "Hey-ho, {name}."
+        },
+        {
+          "text": "What's on your mind?"
+        },
+        {
+          "text": "Hey you."
+        },
+        {
+          "text": "Hey, friend."
+        },
+        {
+          "text": "Ah, my travelling companion."
+        },
+        {
+          "text": "You wish to speak?"
+        },
+        {
+          "text": "Glad to have you with me."
+        },
+        {
+          "text": "Hi there."
+        },
+        {
+          "text": "Well met."
+        },
+        {
+          "text": "Yes, {name}?"
+        }
+      ],
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+        }
+      ]
+    }
+  }
+}

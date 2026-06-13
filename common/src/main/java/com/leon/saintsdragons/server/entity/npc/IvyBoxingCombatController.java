@@ -265,7 +265,7 @@ public class IvyBoxingCombatController {
             beginStance();
             lockSight(target);
             if (state != CombatState.DODGING) {
-                startReactiveDodge(target, true, 100);
+                startReactiveDodge(target, 100);
             }
             return true;
         }
@@ -277,7 +277,7 @@ public class IvyBoxingCombatController {
         ivy.setTarget(target);
         beginStance();
         lockSight(target);
-        startReactiveDodge(target, true, 45);
+        startReactiveDodge(target, 45);
         return true;
     }
 
@@ -307,7 +307,7 @@ public class IvyBoxingCombatController {
         beginStance();
         lockSight(target);
         if (ivy.getBoxingActionTicks() <= 0 || state != CombatState.DODGING) {
-            startReactiveDodge(target, true, 55);
+            startReactiveDodge(target, 55);
         }
     }
 
@@ -485,7 +485,7 @@ public class IvyBoxingCombatController {
         }
     }
 
-    public boolean tryStartRetreatRecovery() {
+    public void tryStartRetreatRecovery() {
         if (ivy.level().isClientSide
                 || retreatRecoveryCooldown > 0
                 || ivy.isTrading()
@@ -495,12 +495,12 @@ public class IvyBoxingCombatController {
                 || ivy.isBoxingTaunting()
                 || pendingRecoveryAction != IvyTheDragonMerchant.RECOVERY_NONE
                 || ivy.getBoxingActionTicks() > 0) {
-            return false;
+            return;
         }
 
         LivingEntity target = selectPriorityTarget(ivy.getTarget());
         if (target == null) {
-            return false;
+            return;
         }
         ivy.setTarget(target);
 
@@ -509,7 +509,7 @@ public class IvyBoxingCombatController {
         } else if (ivy.needsRecoveryFood()) {
             pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_EAT;
         } else {
-            return false;
+            return;
         }
 
         beginStance();
@@ -521,7 +521,6 @@ public class IvyBoxingCombatController {
         recoveryWaitingForLanding = false;
         setState(CombatState.RETREATING_TO_RECOVER, RETREAT_RECOVERY_MAX_RETREAT_TICKS);
         retreatRecoveryCooldown = RETREAT_RECOVERY_COOLDOWN_TICKS;
-        return true;
     }
 
     public void tickRotationLock() {
@@ -719,8 +718,8 @@ public class IvyBoxingCombatController {
         ivy.hasImpulse = true;
     }
 
-    private void startReactiveDodge(LivingEntity target, boolean allowCounter, int counterChance) {
-        if (allowCounter && canCounterDodge(target) && ivy.getRandom().nextInt(100) < counterChance) {
+    private void startReactiveDodge(LivingEntity target, int counterChance) {
+        if (canCounterDodge(target) && ivy.getRandom().nextInt(100) < counterChance) {
             startCounterDodge(target);
         } else {
             startDodge(target);
@@ -1088,7 +1087,7 @@ public class IvyBoxingCombatController {
         @Override
         public boolean canUse() {
             LivingEntity target = selectPriorityTarget(ivy.getTarget());
-            if (!canBox(target)) {
+            if (canBox(target)) {
                 return false;
             }
             if (target != ivy.getTarget()) {
@@ -1100,7 +1099,7 @@ public class IvyBoxingCombatController {
         @Override
         public boolean canContinueToUse() {
             LivingEntity target = selectPriorityTarget(ivy.getTarget());
-            if (!canBox(target)) {
+            if (canBox(target)) {
                 return false;
             }
             if (target != ivy.getTarget()) {
@@ -1222,10 +1221,10 @@ public class IvyBoxingCombatController {
 
         private boolean canBox(@Nullable LivingEntity target) {
             if (target == null || !target.isAlive() || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation()) {
-                return false;
+                return true;
             }
             double distanceSqr = ivy.distanceToSqr(target);
-            return distanceSqr <= 256.0D && (distanceSqr <= 36.0D || ivy.hasLineOfSight(target) || isTargetingIvy(target));
+            return !(distanceSqr <= 256.0D) || (!(distanceSqr <= 36.0D) && !ivy.hasLineOfSight(target) && !isTargetingIvy(target));
         }
     }
 
@@ -1309,9 +1308,6 @@ public class IvyBoxingCombatController {
         if (attacker instanceof Pillager pillager) {
             commitPillager(pillager);
             return pillager;
-        }
-        if (attacker instanceof Witch) {
-            return attacker;
         }
         return attacker;
     }

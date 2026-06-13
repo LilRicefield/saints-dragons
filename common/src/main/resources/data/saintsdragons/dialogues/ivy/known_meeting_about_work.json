@@ -34,6 +34,7 @@
           "text": {
             "text": "That's all I need to know."
           },
+          "set_flag": "known_work_done",
           "next": "work_done"
         }
       ]
@@ -71,6 +72,7 @@
           "text": {
             "text": "That's all I need to know."
           },
+          "set_flag": "known_work_done",
           "next": "work_done"
         }
       ]
