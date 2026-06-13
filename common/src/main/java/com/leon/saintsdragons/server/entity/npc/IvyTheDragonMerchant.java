@@ -104,6 +104,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.OPTIONAL_UUID);
     private static final EntityDataAccessor<Integer> DATA_COMMAND =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> DATA_IDLE_CHATTER =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.STRING);
     private static final EntityDataAccessor<Integer> DATA_TRADE_ANIM_STATE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_IDLE_VARIANT_ACTIVE =
@@ -127,6 +129,21 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final int IDLE_VARIANT_DURATION = 66;
     private static final int IDLE_VARIANT_MIN_COOLDOWN = 200;
     private static final int IDLE_VARIANT_MAX_COOLDOWN = 600;
+    private static final int IDLE_CHATTER_DURATION = 90;
+    private static final int IDLE_CHATTER_MIN_COOLDOWN = 600;
+    private static final int IDLE_CHATTER_MAX_COOLDOWN = 1400;
+    private static final double IDLE_CHATTER_OWNER_DISTANCE_SQR = 100.0D;
+    private static final String[] IDLE_CHATTER_LINES = {
+            "Ow... something bit me.",
+            "Quiet day. Suspiciously quiet.",
+            "Try not to wander into anything awful.",
+            "I could use a cup of coffee, preferably black.",
+            "What a world.",
+            "I thought I heard wings",
+            "Remind me why we left the house again?",
+            "I swear that rock moved.",
+            "If something screams, we are not investigating immediately."
+    };
     private static final RawAnimation TRADE_START = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_start");
     private static final RawAnimation TRADING = RawAnimation.begin().thenLoop("ivy_oleander.animation.trading");
     private static final RawAnimation TRADE_STOP = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop");
@@ -153,11 +170,13 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private boolean playingIdleVariant = false;
     private int idleVariantTicks = 0;
     private int idleVariantCooldown;
+    private int idleChatterTicks = 0;
+    private int idleChatterCooldown;
     private final Map<UUID, String> rememberedDialogueNames = new HashMap<>();
     private final Map<UUID, String> rememberedDialogueImpressions = new HashMap<>();
     private final Map<UUID, Set<String>> rememberedDialogueFlags = new HashMap<>();
     private final HumanSoundHandler soundHandler;
-    private IvyBoxingCombatController boxingCombat;
+    private IvyCombatBrain boxingCombat;
     private final int restockInterval;
     private int restockTimer;
     private boolean clientRecoveryItemVisible;
@@ -174,6 +193,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.restockInterval = Math.max(1, resolveRestockInterval());
         this.restockTimer = this.restockInterval;
         this.idleVariantCooldown = IDLE_VARIANT_MIN_COOLDOWN + random.nextInt(IDLE_VARIANT_MAX_COOLDOWN - IDLE_VARIANT_MIN_COOLDOWN);
+        this.idleChatterCooldown = nextIdleChatterCooldown();
     }
 
     @Override
@@ -230,6 +250,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         return getCommand();
     }
 
+    public String getIdleChatterText() {
+        return this.entityData.get(DATA_IDLE_CHATTER);
+    }
+
     public boolean isOwnedBy(LivingEntity entity) {
         return entity != null && entity.getUUID().equals(getOwnerUUID());
     }
@@ -265,6 +289,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.entityData.define(DATA_TAME, false);
         this.entityData.define(DATA_OWNER_UUID, Optional.empty());
         this.entityData.define(DATA_COMMAND, CompanionCommand.WANDER.id);
+        this.entityData.define(DATA_IDLE_CHATTER, "");
         this.entityData.define(DATA_TRADE_ANIM_STATE, TradeAnimState.NONE.id);
         this.entityData.define(DATA_IDLE_VARIANT_ACTIVE, false);
         this.entityData.define(DATA_BOXING_STANCE, false);
@@ -759,6 +784,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         tickTradingAnimation();
         tickDialogueTradeResume();
         tickIdleVariant();
+        tickIdleChatter();
         if (getTarget() != null && isInDialogue()) {
             DialogueSessionRegistry.endForEntity(this);
         }
@@ -929,6 +955,54 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         setIdleVariantActive(true);
         idleVariantTicks = 0;
         triggerAnim("movement", "idle_variant1");
+    }
+
+    private void tickIdleChatter() {
+        if (idleChatterTicks > 0) {
+            idleChatterTicks--;
+            if (idleChatterTicks == 0) {
+                this.entityData.set(DATA_IDLE_CHATTER, "");
+            }
+            return;
+        }
+        if (!getIdleChatterText().isEmpty()) {
+            this.entityData.set(DATA_IDLE_CHATTER, "");
+        }
+        if (!canIdleChatter()) {
+            idleChatterCooldown = Math.max(idleChatterCooldown, 80);
+            return;
+        }
+        if (idleChatterCooldown > 0) {
+            idleChatterCooldown--;
+            return;
+        }
+        speakIdleChatter();
+    }
+
+    private boolean canIdleChatter() {
+        LivingEntity owner = getOwner();
+        return isTame()
+                && owner != null
+                && isOwnedBy(owner)
+                && distanceToSqr(owner) <= IDLE_CHATTER_OWNER_DISTANCE_SQR
+                && getTarget() == null
+                && !isTrading()
+                && !isInDialogue()
+                && getTradeAnimState() == TradeAnimState.NONE
+                && !getBoxingCombat().isActive()
+                && !isBoxingRecovering()
+                && isAlive();
+    }
+
+    private void speakIdleChatter() {
+        String line = IDLE_CHATTER_LINES[random.nextInt(IDLE_CHATTER_LINES.length)];
+        this.entityData.set(DATA_IDLE_CHATTER, line);
+        idleChatterTicks = IDLE_CHATTER_DURATION;
+        idleChatterCooldown = nextIdleChatterCooldown();
+    }
+
+    private int nextIdleChatterCooldown() {
+        return IDLE_CHATTER_MIN_COOLDOWN + random.nextInt(IDLE_CHATTER_MAX_COOLDOWN - IDLE_CHATTER_MIN_COOLDOWN + 1);
     }
 
     public boolean hasRememberedDialogueName(Player player) {
@@ -1128,9 +1202,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         return DialogueSessionRegistry.getSpeaker(this);
     }
 
-    private IvyBoxingCombatController getBoxingCombat() {
+    private IvyCombatBrain getBoxingCombat() {
         if (boxingCombat == null) {
-            boxingCombat = new IvyBoxingCombatController(this);
+            boxingCombat = new IvyCombatBrain(this);
         }
         return boxingCombat;
     }

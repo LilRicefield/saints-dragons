@@ -7,9 +7,6 @@
       },
       "texts": [
         {
-          "text": "What can I do you for, {name}?"
-        },
-        {
           "text": "Hey there, {name}."
         },
         {

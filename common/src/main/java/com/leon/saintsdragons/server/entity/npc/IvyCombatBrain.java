@@ -24,7 +24,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 
-public class IvyBoxingCombatController {
+public class IvyCombatBrain {
     private static final RawAnimation ORTHODOX_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_idle");
     private static final RawAnimation ORTHODOX_WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_walk");
     private static final RawAnimation ORTHODOX_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_walk_backwards");
@@ -148,7 +148,7 @@ public class IvyBoxingCombatController {
     private int targetMovingTicks;
     private int movingPressureCommitCooldown;
 
-    public IvyBoxingCombatController(IvyTheDragonMerchant ivy) {
+    public IvyCombatBrain(IvyTheDragonMerchant ivy) {
         this.ivy = ivy;
     }
 
@@ -989,8 +989,8 @@ public class IvyBoxingCombatController {
 
     private static float approachYaw(float target, float current) {
         float delta = Mth.wrapDegrees(target - current);
-        delta = Mth.clamp(delta, -IvyBoxingCombatController.LOCK_BODY_YAW_MAX_DELTA, IvyBoxingCombatController.LOCK_BODY_YAW_MAX_DELTA);
-        return current + delta * IvyBoxingCombatController.LOCK_BODY_YAW_SPEED;
+        delta = Mth.clamp(delta, -IvyCombatBrain.LOCK_BODY_YAW_MAX_DELTA, IvyCombatBrain.LOCK_BODY_YAW_MAX_DELTA);
+        return current + delta * IvyCombatBrain.LOCK_BODY_YAW_SPEED;
     }
 
     private void closeDistance(LivingEntity target) {
