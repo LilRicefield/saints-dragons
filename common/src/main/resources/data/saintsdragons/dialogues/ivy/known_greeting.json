@@ -76,19 +76,27 @@
           "text": {
             "text": "What do you do out here?"
           },
-          "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do"
+          "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do",
+          "hidden_if_all_flags": [
+            "work_dragons",
+            "work_gardening",
+            "work_expert"
+          ]
         },
         {
           "text": {
             "text": "You know a lot about dragons?"
           },
-          "next": "saintsdragons:ivy/known_meeting_about_dragon#dragon_knowledge"
+          "next": "saintsdragons:ivy/known_meeting_about_dragon#dragon_knowledge",
+          "hidden_if_flag": "known_dragons_done"
         },
         {
           "text": {
             "text": "Do you need help with anything?"
           },
-          "next": "needs_help"
+          "next": "needs_help",
+          "set_flag": "known_help_done",
+          "hidden_if_flag": "known_help_done"
         },
         {
           "text": {

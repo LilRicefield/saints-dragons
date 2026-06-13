@@ -15,6 +15,7 @@ import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -58,8 +59,10 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.stats.Stats;
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.jetbrains.annotations.NotNull;
 import net.minecraft.util.Mth;
@@ -123,6 +126,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private static final String KNOWN_DIALOGUE_UUID_TAG = "UUID";
     private static final String REMEMBERED_NAME_TAG = "Name";
     private static final String REMEMBERED_IMPRESSION_TAG = "Impression";
+    private static final String REMEMBERED_DIALOGUE_FLAGS_TAG = "DialogueFlags";
     private static final String TRESPASSER_IMPRESSION = "trespasser";
     private static final String RUDE_IMPRESSION = "rude";
     private static final String WARES_IMPRESSION = "wares";
@@ -137,6 +141,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
     private int idleVariantCooldown;
     private final Map<UUID, String> rememberedDialogueNames = new HashMap<>();
     private final Map<UUID, String> rememberedDialogueImpressions = new HashMap<>();
+    private final Map<UUID, Set<String>> rememberedDialogueFlags = new HashMap<>();
     private final HumanSoundHandler soundHandler;
     private IvyBoxingCombatController boxingCombat;
     private final int restockInterval;
@@ -698,6 +703,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             if (impression != null && !impression.isBlank()) {
                 knownTag.putString(REMEMBERED_IMPRESSION_TAG, impression);
             }
+            Set<String> flags = rememberedDialogueFlags.get(entry.getKey());
+            if (flags != null && !flags.isEmpty()) {
+                ListTag flagsTag = new ListTag();
+                flags.stream()
+                        .filter(flag -> flag != null && !flag.isBlank())
+                        .sorted()
+                        .forEach(flag -> flagsTag.add(StringTag.valueOf(flag)));
+                knownTag.put(REMEMBERED_DIALOGUE_FLAGS_TAG, flagsTag);
+            }
             knownDialogueList.add(knownTag);
         }
         tag.put(KNOWN_DIALOGUE_PLAYERS_TAG, knownDialogueList);
@@ -708,6 +722,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
         super.readAdditionalSaveData(tag);
         rememberedDialogueNames.clear();
         rememberedDialogueImpressions.clear();
+        rememberedDialogueFlags.clear();
         if (tag.contains(KNOWN_DIALOGUE_PLAYERS_TAG, Tag.TAG_LIST)) {
             ListTag knownDialogueList = tag.getList(KNOWN_DIALOGUE_PLAYERS_TAG, Tag.TAG_COMPOUND);
             for (int i = 0; i < knownDialogueList.size(); i++) {
@@ -717,6 +732,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
                     rememberedDialogueNames.put(uuid, knownTag.getString(REMEMBERED_NAME_TAG));
                     if (knownTag.contains(REMEMBERED_IMPRESSION_TAG, Tag.TAG_STRING)) {
                         rememberedDialogueImpressions.put(uuid, knownTag.getString(REMEMBERED_IMPRESSION_TAG));
+                    }
+                    if (knownTag.contains(REMEMBERED_DIALOGUE_FLAGS_TAG, Tag.TAG_LIST)) {
+                        Set<String> flags = new HashSet<>();
+                        ListTag flagsTag = knownTag.getList(REMEMBERED_DIALOGUE_FLAGS_TAG, Tag.TAG_STRING);
+                        for (int flagIndex = 0; flagIndex < flagsTag.size(); flagIndex++) {
+                            String flag = flagsTag.getString(flagIndex);
+                            if (!flag.isBlank()) {
+                                flags.add(flag);
+                            }
+                        }
+                        if (!flags.isEmpty()) {
+                            rememberedDialogueFlags.put(uuid, flags);
+                        }
                     }
                 }
             }
@@ -796,6 +824,18 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity 
             return;
         }
         rememberedDialogueImpressions.put(player.getUUID(), impression);
+    }
+
+    public Set<String> getRememberedDialogueFlags(Player player) {
+        Set<String> flags = rememberedDialogueFlags.get(player.getUUID());
+        return flags == null ? Set.of() : Set.copyOf(flags);
+    }
+
+    public void rememberDialogueFlag(Player player, String flag) {
+        if (flag == null || flag.isBlank()) {
+            return;
+        }
+        rememberedDialogueFlags.computeIfAbsent(player.getUUID(), uuid -> new HashSet<>()).add(flag);
     }
 
     private void openTradingFor(Player player) {

@@ -46,13 +46,18 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         }
     }
 
-    public record Choice(Component text, String next, String impression, String setFlag, String requiresFlag, String hiddenIfFlag) {
+    public record Choice(Component text, String next, String impression, String setFlag, String requiresFlag, String hiddenIfFlag,
+                         List<String> hiddenIfAllFlags) {
         public Choice(Component text, String next) {
             this(text, next, "");
         }
 
         public Choice(Component text, String next, String impression) {
-            this(text, next, impression, "", "", "");
+            this(text, next, impression, "", "", "", List.of());
+        }
+
+        public Choice {
+            hiddenIfAllFlags = List.copyOf(hiddenIfAllFlags);
         }
     }
 

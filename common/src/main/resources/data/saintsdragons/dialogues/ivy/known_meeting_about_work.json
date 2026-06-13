@@ -14,7 +14,6 @@
             "text": "People do ridiculous things with dragons?"
           },
           "next": "ridiculous_dragons_1",
-          "set_flag": "work_dragons",
           "hidden_if_flag": "work_dragons"
         },
         {
@@ -22,7 +21,6 @@
             "text": "Gardening?"
           },
           "next": "gardening_1",
-          "set_flag": "work_gardening",
           "hidden_if_flag": "work_gardening"
         },
         {
@@ -30,7 +28,6 @@
             "text": "So you're a dragon expert?"
           },
           "next": "dragon_expert_1",
-          "set_flag": "work_expert",
           "hidden_if_flag": "work_expert"
         },
         {
@@ -54,7 +51,6 @@
             "text": "People do ridiculous things with dragons?"
           },
           "next": "ridiculous_dragons_1",
-          "set_flag": "work_dragons",
           "hidden_if_flag": "work_dragons"
         },
         {
@@ -62,7 +58,6 @@
             "text": "Gardening?"
           },
           "next": "gardening_1",
-          "set_flag": "work_gardening",
           "hidden_if_flag": "work_gardening"
         },
         {
@@ -70,7 +65,6 @@
             "text": "So you're a dragon expert?"
           },
           "next": "dragon_expert_1",
-          "set_flag": "work_expert",
           "hidden_if_flag": "work_expert"
         },
         {
@@ -269,7 +263,8 @@
           "text": {
             "text": "..."
           },
-          "next": "what_do_menu"
+          "next": "what_do_menu",
+          "set_flag": "work_dragons"
         }
       ]
     },
@@ -349,7 +344,8 @@
           "text": {
             "text": "..."
           },
-          "next": "what_do_menu"
+          "next": "what_do_menu",
+          "set_flag": "work_gardening"
         }
       ]
     },
@@ -605,7 +601,8 @@
           "text": {
             "text": "..."
           },
-          "next": "what_do_menu"
+          "next": "what_do_menu",
+          "set_flag": "work_expert"
         }
       ]
     },

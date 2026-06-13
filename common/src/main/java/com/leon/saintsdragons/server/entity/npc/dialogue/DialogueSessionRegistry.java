@@ -34,8 +34,9 @@ public final class DialogueSessionRegistry {
             return;
         }
         endForEntity(ivy);
-        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), dialogue.start(), chosenName, Set.of()));
-        sendNode(player, ivy.getId(), dialogue, dialogue.start(), startNode, chosenName, Set.of());
+        Set<String> flags = ivy.getRememberedDialogueFlags(player);
+        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), dialogue.start(), chosenName, flags));
+        sendNode(player, ivy.getId(), dialogue, dialogue.start(), startNode, chosenName, flags);
     }
 
     public static void choose(ServerPlayer player, int entityId, int choiceIndex) {
@@ -61,13 +62,17 @@ public final class DialogueSessionRegistry {
             end(player);
             return;
         }
-        List<DialogueDefinition.Choice> visibleChoices = visibleChoices(currentNode, session.flags());
+        Set<String> currentFlags = mergedFlags(session.flags(), ivy.getRememberedDialogueFlags(player));
+        List<DialogueDefinition.Choice> visibleChoices = visibleChoices(currentNode, currentFlags);
         if (choiceIndex < 0 || choiceIndex >= visibleChoices.size()) {
             end(player);
             return;
         }
         DialogueDefinition.Choice choice = visibleChoices.get(choiceIndex);
-        Set<String> nextFlags = withChoiceFlag(session.flags(), choice);
+        Set<String> nextFlags = withChoiceFlag(currentFlags, choice);
+        if (!choice.setFlag().isBlank()) {
+            ivy.rememberDialogueFlag(player, choice.setFlag());
+        }
         if (!choice.impression().isBlank()) {
             ivy.rememberDialogueImpression(player, choice.impression());
         }
@@ -131,8 +136,9 @@ public final class DialogueSessionRegistry {
         }
         endForEntity(ivy);
         String chosenName = ivy.getRememberedDialogueName(player);
-        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), nodeId, chosenName, Set.of()));
-        sendNode(player, ivy.getId(), dialogue, nodeId, node, chosenName, Set.of());
+        Set<String> flags = ivy.getRememberedDialogueFlags(player);
+        SESSIONS.put(player.getUUID(), new DialogueSession(ivy.getId(), dialogue.id(), nodeId, chosenName, flags));
+        sendNode(player, ivy.getId(), dialogue, nodeId, node, chosenName, flags);
     }
 
     public static void end(ServerPlayer player) {
@@ -214,6 +220,10 @@ public final class DialogueSessionRegistry {
         }
         DialogueDefinition.Choice choice = choices.get(0);
         Set<String> nextFlags = withChoiceFlag(flags, choice);
+        Entity entity = player.level().getEntity(entityId);
+        if (entity instanceof IvyTheDragonMerchant ivy && !choice.setFlag().isBlank()) {
+            ivy.rememberDialogueFlag(player, choice.setFlag());
+        }
         ResolvedTarget target = resolveTarget(dialogue, choice.next());
         if (target == null) {
             end(player);
@@ -257,6 +267,7 @@ public final class DialogueSessionRegistry {
         return node.choices().stream()
                 .filter(choice -> choice.requiresFlag().isBlank() || flags.contains(choice.requiresFlag()))
                 .filter(choice -> choice.hiddenIfFlag().isBlank() || !flags.contains(choice.hiddenIfFlag()))
+                .filter(choice -> choice.hiddenIfAllFlags().isEmpty() || !flags.containsAll(choice.hiddenIfAllFlags()))
                 .toList();
     }
 
@@ -267,6 +278,18 @@ public final class DialogueSessionRegistry {
         Set<String> nextFlags = new HashSet<>(flags);
         nextFlags.add(choice.setFlag());
         return nextFlags;
+    }
+
+    private static Set<String> mergedFlags(Set<String> sessionFlags, Set<String> rememberedFlags) {
+        if (rememberedFlags.isEmpty()) {
+            return sessionFlags;
+        }
+        if (sessionFlags.isEmpty()) {
+            return rememberedFlags;
+        }
+        Set<String> flags = new HashSet<>(sessionFlags);
+        flags.addAll(rememberedFlags);
+        return flags;
     }
 
     private static Component resolveName(Component component, String chosenName) {

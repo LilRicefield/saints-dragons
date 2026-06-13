@@ -84,8 +84,21 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
                 GsonHelper.getAsString(choice, "impression", ""),
                 GsonHelper.getAsString(choice, "set_flag", ""),
                 GsonHelper.getAsString(choice, "requires_flag", ""),
-                GsonHelper.getAsString(choice, "hidden_if_flag", "")
+                GsonHelper.getAsString(choice, "hidden_if_flag", ""),
+                parseStringList(choice, "hidden_if_all_flags")
         );
+    }
+
+    private static List<String> parseStringList(JsonObject object, String key) {
+        if (!object.has(key)) {
+            return List.of();
+        }
+        JsonArray array = GsonHelper.getAsJsonArray(object, key);
+        List<String> values = new ArrayList<>(array.size());
+        for (JsonElement element : array) {
+            values.add(GsonHelper.convertToString(element, key));
+        }
+        return values;
     }
 
     private static List<Component> parseNodeTexts(JsonObject nodeJson) {

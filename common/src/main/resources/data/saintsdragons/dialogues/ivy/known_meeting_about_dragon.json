@@ -339,7 +339,8 @@
           "text": {
             "text": "..."
           },
-          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+          "next": "saintsdragons:ivy/known_greeting#return_prompt",
+          "set_flag": "known_dragons_done"
         }
       ]
     },
@@ -505,7 +506,8 @@
           "text": {
             "text": "That's all for now."
           },
-          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+          "next": "saintsdragons:ivy/known_greeting#return_prompt",
+          "set_flag": "known_dragons_done"
         }
       ]
     },
@@ -697,7 +699,8 @@
           "text": {
             "text": "..."
           },
-          "next": "saintsdragons:ivy/known_greeting#return_prompt"
+          "next": "saintsdragons:ivy/known_greeting#return_prompt",
+          "set_flag": "known_dragons_done"
         }
       ]
     }
