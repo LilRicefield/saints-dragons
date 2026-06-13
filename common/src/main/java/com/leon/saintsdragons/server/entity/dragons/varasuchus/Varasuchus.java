@@ -17,7 +17,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -233,7 +233,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
         this.setMaxUpStep(1.4F);
-        this.groundNavigation = new DragonPathNavigateGround(this, level);
+        this.groundNavigation = new PathNavigateGround(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
         this.landLookControl = new RiftDrakeLookController(this);
         this.swimSteering = new DragonSwimSteeringController(this);

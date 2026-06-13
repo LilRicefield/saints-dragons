@@ -18,8 +18,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class DragonPathFinderGround extends PathFinder {
-    public DragonPathFinderGround(NodeEvaluator processor, int maxVisitedNodes) {
+public class PathFinderGround extends PathFinder {
+    public PathFinderGround(NodeEvaluator processor, int maxVisitedNodes) {
         super(processor, maxVisitedNodes);
     }
 

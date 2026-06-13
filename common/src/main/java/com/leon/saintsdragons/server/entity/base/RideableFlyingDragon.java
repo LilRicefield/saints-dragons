@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.entity.base;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
@@ -81,7 +81,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             );
 
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
-    protected final DragonPathNavigateGround groundNav;
+    protected final PathNavigateGround groundNav;
     protected final FlyingPathNavigation airNav;
     protected final AsyncFlightController asyncAirController;
     protected final AsyncFlightMoveControl asyncAirMoveControl;
@@ -223,11 +223,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     @Override
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new DragonPathNavigateGround(this, level);
+        return new PathNavigateGround(this, level);
     }
 
-    protected DragonPathNavigateGround createGroundNavigation(Level level) {
-        return new DragonPathNavigateGround(this, level);
+    protected PathNavigateGround createGroundNavigation(Level level) {
+        return new PathNavigateGround(this, level);
     }
 
     protected MoveControl createGroundMoveControl() {

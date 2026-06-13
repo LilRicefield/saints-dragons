@@ -4,7 +4,7 @@ import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
-import com.leon.saintsdragons.server.ai.navigation.DragonPathNavigateGround;
+import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundSlamAbility;
@@ -191,7 +191,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new DragonPathNavigateGround(this, level);
+        return new PathNavigateGround(this, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {

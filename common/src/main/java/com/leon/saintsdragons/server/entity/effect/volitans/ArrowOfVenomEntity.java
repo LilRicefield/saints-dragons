@@ -3,13 +3,16 @@ package com.leon.saintsdragons.server.entity.effect.volitans;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -55,6 +58,10 @@ public class ArrowOfVenomEntity extends AbstractArrow implements GeoEntity {
 
     @Override
     protected void onHitEntity(EntityHitResult result) {
+        if (shouldIgnorePlayerHit(result)) {
+            discard();
+            return;
+        }
         markImpacted();
         super.onHitEntity(result);
     }
@@ -101,6 +108,14 @@ public class ArrowOfVenomEntity extends AbstractArrow implements GeoEntity {
 
     private void markImpacted() {
         entityData.set(IMPACTED, true);
+    }
+
+    private boolean shouldIgnorePlayerHit(EntityHitResult result) {
+        if (!(result.getEntity() instanceof Player)) {
+            return false;
+        }
+        Entity owner = getOwner();
+        return owner instanceof IvyTheDragonMerchant ivy && ivy.isTame();
     }
 
     @Override

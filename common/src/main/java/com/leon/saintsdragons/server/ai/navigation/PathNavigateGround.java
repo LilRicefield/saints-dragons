@@ -14,11 +14,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 
-public class DragonPathNavigateGround extends GroundPathNavigation {
+public class PathNavigateGround extends GroundPathNavigation {
     private static final double MAX_SHORTCUT_DISTANCE = 10.0D;
     private static final int MAX_SWEEP_STEPS = 12;
 
-    public DragonPathNavigateGround(Mob mob, Level world) {
+    public PathNavigateGround(Mob mob, Level world) {
         super(mob, world);
     }
 
@@ -26,7 +26,7 @@ public class DragonPathNavigateGround extends GroundPathNavigation {
     protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
         this.nodeEvaluator = new WalkNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
-        return new DragonPathFinderGround(this.nodeEvaluator, maxVisitedNodes);
+        return new PathFinderGround(this.nodeEvaluator, maxVisitedNodes);
     }
 
     @Override

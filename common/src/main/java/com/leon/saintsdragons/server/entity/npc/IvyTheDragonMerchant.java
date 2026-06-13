@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueRegistry;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
+import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -37,11 +38,13 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.monster.Pillager;
 import net.minecraft.world.entity.monster.Vindicator;
@@ -118,17 +121,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_BOXING_ACTION_TICKS =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Boolean> DATA_BOXING_TAUNTING =
-            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BOXING_EXITING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_BOXING_RECOVERY_ACTION =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final int TRADE_START_TICKS = 29;
     private static final int TRADE_STOP_TICKS = 29;
-    private static final int IDLE_VARIANT_DURATION = 66;
-    private static final int IDLE_VARIANT_MIN_COOLDOWN = 200;
-    private static final int IDLE_VARIANT_MAX_COOLDOWN = 600;
     private static final int IDLE_CHATTER_DURATION = 90;
     private static final int IDLE_CHATTER_MIN_COOLDOWN = 600;
     private static final int IDLE_CHATTER_MAX_COOLDOWN = 1400;
@@ -166,10 +164,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private boolean lastTradingState = false;
     private boolean wasMovementStopped = false;
     private IvyBodyControl bodyControl;
+    private IvyCompanionController companionController;
     public final SmoothValue bodyRotDeviation = SmoothValue.rotation(0.0);
-    private boolean playingIdleVariant = false;
-    private int idleVariantTicks = 0;
-    private int idleVariantCooldown;
     private int idleChatterTicks = 0;
     private int idleChatterCooldown;
     private final Map<UUID, String> rememberedDialogueNames = new HashMap<>();
@@ -192,7 +188,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.soundHandler = new HumanSoundHandler(this, new IvySoundProfile());
         this.restockInterval = Math.max(1, resolveRestockInterval());
         this.restockTimer = this.restockInterval;
-        this.idleVariantCooldown = IDLE_VARIANT_MIN_COOLDOWN + random.nextInt(IDLE_VARIANT_MAX_COOLDOWN - IDLE_VARIANT_MIN_COOLDOWN);
         this.idleChatterCooldown = nextIdleChatterCooldown();
     }
 
@@ -296,7 +291,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.entityData.define(DATA_BOXING_BACKING_UP, false);
         this.entityData.define(DATA_BOXING_FAST, false);
         this.entityData.define(DATA_BOXING_ACTION_TICKS, 0);
-        this.entityData.define(DATA_BOXING_TAUNTING, false);
         this.entityData.define(DATA_BOXING_EXITING, false);
         this.entityData.define(DATA_BOXING_RECOVERY_ACTION, RECOVERY_NONE);
     }
@@ -314,9 +308,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         goalSelector.addGoal(0, new DialogueTalkGoal());
         goalSelector.addGoal(1, new TradingStillGoal());
         goalSelector.addGoal(1, new FloatGoal(this));
+        goalSelector.addGoal(2, new OpenDoorGoal(this, true));
         goalSelector.addGoal(2, getBoxingCombat().createGoal());
-        goalSelector.addGoal(3, new CompanionStayGoal());
-        goalSelector.addGoal(4, new CompanionFollowOwnerGoal());
+        goalSelector.addGoal(3, getCompanionController().createStayGoal());
+        goalSelector.addGoal(4, getCompanionController().createFollowOwnerGoal());
         goalSelector.addGoal(5, new RandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
@@ -369,18 +364,27 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             }
         });
         targetSelector.addGoal(0, new HurtByTargetGoal(this));
-        targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Evoker.class, true));
-        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Pillager.class, true));
-        targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Vex.class, true));
-        targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Vindicator.class, true));
-        targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Witch.class, true));
-        targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Zombie.class, true));
+        targetSelector.addGoal(1, getCompanionController().createOwnerDefenseGoal());
+        targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Evoker.class, true));
+        targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Pillager.class, true));
+        targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Vex.class, true));
+        targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Vindicator.class, true));
+        targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Witch.class, true));
+        targetSelector.addGoal(7, new NearestAttackableTargetGoal<>(this, Zombie.class, true));
     }
 
     @Override
     protected @NotNull BodyRotationControl createBodyControl() {
         this.bodyControl = new IvyBodyControl(this);
         return this.bodyControl;
+    }
+
+    @Override
+    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
+        PathNavigateGround navigation = new PathNavigateGround(this, level);
+        navigation.setCanOpenDoors(true);
+        navigation.setCanPassDoors(true);
+        return navigation;
     }
 
 
@@ -405,7 +409,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     }
 
     private void setIdleVariantActive(boolean active) {
-        this.playingIdleVariant = active;
         this.entityData.set(DATA_IDLE_VARIANT_ACTIVE, active);
     }
 
@@ -419,18 +422,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             this.entityData.set(DATA_BOXING_BACKING_UP, false);
             this.entityData.set(DATA_BOXING_FAST, false);
             this.entityData.set(DATA_BOXING_ACTION_TICKS, 0);
-            this.entityData.set(DATA_BOXING_TAUNTING, false);
             this.entityData.set(DATA_BOXING_EXITING, false);
             this.entityData.set(DATA_BOXING_RECOVERY_ACTION, RECOVERY_NONE);
         }
-    }
-
-    boolean isBoxingTaunting() {
-        return this.entityData.get(DATA_BOXING_TAUNTING);
-    }
-
-    void setBoxingTaunting(boolean taunting) {
-        this.entityData.set(DATA_BOXING_TAUNTING, taunting);
     }
 
     boolean isBoxingExiting() {
@@ -527,6 +521,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         if (level().isClientSide) {
             return InteractionResult.CONSUME;
         }
+        clearInvalidDialogueBlockingTarget();
         if (isTrading()
                 || isInDialogue()
                 || getTradeAnimState() != TradeAnimState.NONE
@@ -549,6 +544,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     }
 
     private void openDialogue(ServerPlayer player) {
+        clearInvalidDialogueBlockingTarget();
         ResourceLocation dialogueId = getDialogueIdFor(player);
         DialogueDefinition definition = DialogueRegistry.get(dialogueId);
         if (definition == null || definition.startNode() == null) {
@@ -556,6 +552,18 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             return;
         }
         DialogueSessionRegistry.start(player, this, definition, getRememberedDialogueName(player));
+    }
+
+    private void clearInvalidDialogueBlockingTarget() {
+        LivingEntity target = getTarget();
+        if (target != null && (!target.isAlive() || target.isRemoved())) {
+            setTarget(null);
+        }
+    }
+
+    private boolean hasLiveTarget() {
+        LivingEntity target = getTarget();
+        return target != null && target.isAlive() && !target.isRemoved();
     }
 
     private ResourceLocation getDialogueIdFor(ServerPlayer player) {
@@ -783,9 +791,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         }
         tickTradingAnimation();
         tickDialogueTradeResume();
-        tickIdleVariant();
         tickIdleChatter();
-        if (getTarget() != null && isInDialogue()) {
+        getCompanionController().tick();
+        clearInvalidDialogueBlockingTarget();
+        if (hasLiveTarget() && isInDialogue()) {
             DialogueSessionRegistry.endForEntity(this);
         }
         getBoxingCombat().tryStartRetreatRecovery();
@@ -829,6 +838,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     boolean isBoxingCombatActive() {
         return getBoxingCombat().isActive();
+    }
+
+    boolean isCompanionAiBlocked() {
+        return isTrading()
+                || isInDialogue()
+                || getTradeAnimState() != TradeAnimState.NONE
+                || isIdleVariantActive()
+                || getBoxingCombat().isActive()
+                || isBoxingRecovering();
     }
 
     @Override
@@ -922,39 +940,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     private static int resolveRestockInterval() {
         return SaintsDragonsConfig.getIvyRestockInterval();
-    }
-
-    private void tickIdleVariant() {
-        if (isTrading()
-                || isInDialogue()
-                || getTradeAnimState() != TradeAnimState.NONE
-                || getBoxingCombat().isActive()
-                || getDeltaMovement().horizontalDistanceSqr() > 0.001) {
-            if (playingIdleVariant && getBoxingCombat().isActive()) {
-                setIdleVariantActive(false);
-                idleVariantTicks = 0;
-            }
-            return;
-        }
-
-        if (playingIdleVariant) {
-            idleVariantTicks++;
-            if (idleVariantTicks >= IDLE_VARIANT_DURATION) {
-                setIdleVariantActive(false);
-                idleVariantTicks = 0;
-                idleVariantCooldown = IDLE_VARIANT_MIN_COOLDOWN + random.nextInt(IDLE_VARIANT_MAX_COOLDOWN - IDLE_VARIANT_MIN_COOLDOWN);
-            }
-        } else if (idleVariantCooldown > 0) {
-            idleVariantCooldown--;
-        } else if (random.nextInt(100) < 5) {
-            startIdleVariant();
-        }
-    }
-
-    private void startIdleVariant() {
-        setIdleVariantActive(true);
-        idleVariantTicks = 0;
-        triggerAnim("movement", "idle_variant1");
     }
 
     private void tickIdleChatter() {
@@ -1134,8 +1119,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         controller.triggerableAnim("trade_start", TRADE_START);
         controller.triggerableAnim("trading", TRADING);
         controller.triggerableAnim("trade_stop", TRADE_STOP);
-        controller.triggerableAnim("idle_variant1",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.idle_variant1"));
         controller.triggerableAnim("greetings",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.greetings"));
         controller.triggerableAnim("reaction_to_egg",
@@ -1183,7 +1166,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     void cancelPassiveAnimationsForCombat() {
         setIdleVariantActive(false);
-        idleVariantTicks = 0;
     }
 
     boolean isReadyForCombatAnimation() {
@@ -1207,6 +1189,13 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             boxingCombat = new IvyCombatBrain(this);
         }
         return boxingCombat;
+    }
+
+    private IvyCompanionController getCompanionController() {
+        if (companionController == null) {
+            companionController = new IvyCompanionController(this);
+        }
+        return companionController;
     }
 
     public enum CompanionCommand {
@@ -1275,125 +1264,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         }
     }
 
-    private class CompanionStayGoal extends Goal {
-        CompanionStayGoal() {
-            setFlags(EnumSet.of(Goal.Flag.MOVE));
-        }
-
-        @Override
-        public boolean canUse() {
-            return isTame()
-                    && getCompanionCommand() == CompanionCommand.STAY
-                    && getTarget() == null
-                    && !isTrading()
-                    && !isInDialogue()
-                    && !getBoxingCombat().isActive();
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return canUse();
-        }
-
-        @Override
-        public void start() {
-            stopMovement();
-        }
-
-        @Override
-        public void tick() {
-            stopMovement();
-        }
-
-        private void stopMovement() {
-            getNavigation().stop();
-            setDeltaMovement(0.0, getDeltaMovement().y, 0.0);
-        }
-    }
-
-    private class CompanionFollowOwnerGoal extends Goal {
-        private static final double START_DISTANCE_SQR = 36.0D;
-        private static final double STOP_DISTANCE_SQR = 9.0D;
-        private static final double TELEPORT_DISTANCE_SQR = 256.0D;
-        private static final double FOLLOW_SPEED = 1.05D;
-        private LivingEntity owner;
-
-        CompanionFollowOwnerGoal() {
-            setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-        }
-
-        @Override
-        public boolean canUse() {
-            if (!canFollowOwner()) {
-                return false;
-            }
-            LivingEntity resolvedOwner = getOwner();
-            if (resolvedOwner == null || distanceToSqr(resolvedOwner) < START_DISTANCE_SQR) {
-                return false;
-            }
-            this.owner = resolvedOwner;
-            return true;
-        }
-
-        @Override
-        public boolean canContinueToUse() {
-            return owner != null
-                    && canFollowOwner()
-                    && owner.isAlive()
-                    && distanceToSqr(owner) > STOP_DISTANCE_SQR;
-        }
-
-        @Override
-        public void stop() {
-            owner = null;
-            getNavigation().stop();
-        }
-
-        @Override
-        public void tick() {
-            if (owner == null) {
-                return;
-            }
-            getLookControl().setLookAt(owner, 30.0F, 30.0F);
-            double distance = distanceToSqr(owner);
-            if (distance > TELEPORT_DISTANCE_SQR && tryTeleportNearOwner(owner)) {
-                getNavigation().stop();
-                return;
-            }
-            getNavigation().moveTo(owner, FOLLOW_SPEED);
-        }
-
-        private boolean canFollowOwner() {
-            return isTame()
-                    && getCompanionCommand() == CompanionCommand.FOLLOW
-                    && getTarget() == null
-                    && !isTrading()
-                    && !isInDialogue()
-                    && !getBoxingCombat().isActive();
-        }
-
-        private boolean tryTeleportNearOwner(LivingEntity owner) {
-            if (!(level() instanceof ServerLevel serverLevel)) {
-                return false;
-            }
-            for (int attempt = 0; attempt < 12; attempt++) {
-                int xOffset = random.nextIntBetweenInclusive(-3, 3);
-                int zOffset = random.nextIntBetweenInclusive(-3, 3);
-                if (Math.abs(xOffset) < 2 && Math.abs(zOffset) < 2) {
-                    continue;
-                }
-                int x = Mth.floor(owner.getX()) + xOffset;
-                int y = Mth.floor(owner.getY());
-                int z = Mth.floor(owner.getZ()) + zOffset;
-                if (!serverLevel.noCollision(IvyTheDragonMerchant.this, getBoundingBox().move(x - getX(), y - getY(), z - getZ()))) {
-                    continue;
-                }
-                moveTo(x + 0.5D, y, z + 0.5D, getYRot(), getXRot());
-                return true;
-            }
-            return false;
-        }
-    }
 
     private class DialogueTalkGoal extends Goal {
         private static final float TALK_LOOK_YAW_SPEED = 45.0f;
@@ -1445,7 +1315,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
         private void stopPassiveDialogueConflicts() {
             setIdleVariantActive(false);
-            idleVariantTicks = 0;
         }
 
         private void stopMovement() {

@@ -33,7 +33,6 @@ public class IvyCombatBrain {
 
     private static final int STANCE_TRANSITION_TICKS = 10;
     private static final int EXIT_STANCE_TICKS = 10;
-    private static final int TAUNT_ACTION_TICKS = 36;
     private static final int JAB_ACTION_TICKS = 10;
     private static final int HOOK_ACTION_TICKS = 13;
     private static final int DODGE_ACTION_TICKS = 9;
@@ -115,7 +114,6 @@ public class IvyCombatBrain {
     private int hookCooldown;
     private int comboCooldown;
     private int exitTicks;
-    private boolean exitAfterTaunt;
     private int impactTicks;
     private int secondImpactTicks;
     private int thirdImpactTicks;
@@ -161,8 +159,6 @@ public class IvyCombatBrain {
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.to_orthodox"));
         controller.triggerableAnim("exit_orthodox",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.exit_orthodox"));
-        controller.triggerableAnim("orthodox_taunt",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_taunt"));
         controller.triggerableAnim("orthodox_left_jab",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_left_jab"));
         controller.triggerableAnim("orthodox_right_hook",
@@ -197,7 +193,7 @@ public class IvyCombatBrain {
         if (!isActive()) {
             return false;
         }
-        if (ivy.isBoxingExiting() || ivy.isBoxingTaunting()) {
+        if (ivy.isBoxingExiting()) {
             return true;
         }
         if (ivy.getBoxingActionTicks() > 0) {
@@ -214,7 +210,7 @@ public class IvyCombatBrain {
     }
 
     public boolean isActive() {
-        return ivy.isBoxingStance() || ivy.isBoxingExiting() || ivy.isBoxingTaunting();
+        return ivy.isBoxingStance() || ivy.isBoxingExiting();
     }
 
     public boolean shouldHoldGroundAgainstKnockback() {
@@ -232,10 +228,6 @@ public class IvyCombatBrain {
         if (!(target instanceof Player)) {
             throwProjectilesRangePunishTicks = THROW_PROJECTILES_RANGE_PUNISH_TICKS;
         }
-        if (ivy.isBoxingTaunting()) {
-            interruptTaunt(target);
-            return;
-        }
         beginStance();
     }
 
@@ -250,12 +242,6 @@ public class IvyCombatBrain {
             return false;
         }
         LivingEntity target = resolveReactiveTarget(attacker);
-        if (ivy.isBoxingTaunting()) {
-            ivy.setTarget(target);
-            interruptTaunt(target);
-            return false;
-        }
-
         if (isLikelyPlayerCritical(attacker)) {
             boolean dodged = ivy.getRandom().nextFloat() < REACTIVE_CRIT_DODGE_CHANCE;
             if (!dodged) {
@@ -300,10 +286,6 @@ public class IvyCombatBrain {
         }
         LivingEntity target = resolveReactiveTarget(attacker);
         ivy.setTarget(target);
-        if (ivy.isBoxingTaunting()) {
-            interruptTaunt(target);
-            return;
-        }
         beginStance();
         lockSight(target);
         if (ivy.getBoxingActionTicks() <= 0 || state != CombatState.DODGING) {
@@ -325,6 +307,13 @@ public class IvyCombatBrain {
             }
             return;
         }
+        if (!ivy.isBoxingRecovering() && selectPriorityTarget(ivy.getTarget()) == null) {
+            if (ivy.getTarget() != null && !isValidTarget(ivy.getTarget())) {
+                ivy.setTarget(null);
+            }
+            startExitStance();
+            return;
+        }
         int actionTicks = ivy.getBoxingActionTicks();
         if (actionTicks > 0) {
             ivy.setBoxingActionTicks(actionTicks - 1);
@@ -338,13 +327,6 @@ public class IvyCombatBrain {
                 if (ivy.getTarget() == null) {
                     startExitStance();
                     return;
-                }
-            }
-            if (actionTicks - 1 <= 0 && ivy.isBoxingTaunting()) {
-                ivy.setBoxingTaunting(false);
-                if (exitAfterTaunt) {
-                    exitAfterTaunt = false;
-                    startExitStance();
                 }
             }
         }
@@ -492,7 +474,6 @@ public class IvyCombatBrain {
                 || !ivy.isReadyForCombatAnimation()
                 || ivy.isBoxingRecovering()
                 || ivy.isBoxingExiting()
-                || ivy.isBoxingTaunting()
                 || pendingRecoveryAction != IvyTheDragonMerchant.RECOVERY_NONE
                 || ivy.getBoxingActionTicks() > 0) {
             return;
@@ -540,8 +521,6 @@ public class IvyCombatBrain {
         } else if (isActive()) {
             return;
         }
-        exitAfterTaunt = false;
-        ivy.setBoxingTaunting(false);
         ivy.cancelPassiveAnimationsForCombat();
         ivy.setBoxingStance(true);
         ivy.setBoxingActionTicks(STANCE_TRANSITION_TICKS);
@@ -558,7 +537,6 @@ public class IvyCombatBrain {
         hookCooldown = 0;
         comboCooldown = 0;
         exitTicks = 0;
-        exitAfterTaunt = false;
         impactTicks = 0;
         secondImpactTicks = 0;
         thirdImpactTicks = 0;
@@ -586,7 +564,6 @@ public class IvyCombatBrain {
         setState(CombatState.RECOVERING, 0);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(0);
-        ivy.setBoxingTaunting(false);
         ivy.setBoxingExiting(false);
         ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         ivy.setBoxingStance(false);
@@ -596,7 +573,6 @@ public class IvyCombatBrain {
         if (exitTicks > 0) {
             return;
         }
-        ivy.setBoxingTaunting(false);
         ivy.getNavigation().stop();
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(0);
@@ -607,20 +583,6 @@ public class IvyCombatBrain {
         ivy.setBoxingStance(false);
         ivy.setBoxingExiting(true);
         ivy.triggerAnim("movement", "exit_orthodox");
-    }
-
-    private void startTaunt(LivingEntity target) {
-        ivy.getNavigation().stop();
-        lockSight(target);
-        ivy.setBoxingMovement(false, false);
-        ivy.setBoxingActionTicks(TAUNT_ACTION_TICKS);
-        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
-        this.exitAfterTaunt = true;
-        clearAttackTimers();
-        setState(CombatState.TAUNTING, TAUNT_ACTION_TICKS);
-        ivy.setBoxingTaunting(true);
-        ivy.setBoxingExiting(false);
-        ivy.triggerAnim("movement", "orthodox_taunt");
     }
 
     private void clearAttackTimers() {
@@ -638,21 +600,6 @@ public class IvyCombatBrain {
         recoveryWaitingForLanding = false;
         impactTargetId = -1;
         pendingCounter = null;
-    }
-
-    private void interruptTaunt(LivingEntity attacker) {
-        exitAfterTaunt = false;
-        exitTicks = 0;
-        ivy.setBoxingTaunting(false);
-        ivy.setBoxingExiting(false);
-        ivy.setBoxingStance(true);
-        ivy.setBoxingActionTicks(0);
-        ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
-        ivy.setBoxingMovement(false, false);
-        clearAttackTimers();
-        setState(CombatState.RECOVERING, 0);
-        ivy.getNavigation().stop();
-        lockSight(attacker);
     }
 
     private void startAttack(LivingEntity target, AttackType attack) {
@@ -1124,11 +1071,7 @@ public class IvyCombatBrain {
                     beginStance();
                     return;
                 }
-                if (shouldTauntDefeatedEnemy(target)) {
-                    startTaunt(target);
-                } else {
-                    startExitStance();
-                }
+                startExitStance();
             } else {
                 clear();
             }
@@ -1192,7 +1135,7 @@ public class IvyCombatBrain {
                 ivy.setBoxingMovement(false, false);
                 if (attackCooldown <= 0) {
                     startAttack(target, chooseAttack(distanceSqr, targetStill));
-                } else if (distanceSqr < KEEP_DISTANCE * KEEP_DISTANCE) {
+                } else if (target instanceof Player && distanceSqr < KEEP_DISTANCE * KEEP_DISTANCE) {
                     keepDistance(target);
                 }
                 return;
@@ -1229,7 +1172,7 @@ public class IvyCombatBrain {
     }
 
     private boolean isPressureTarget(LivingEntity target) {
-        return target instanceof Pillager || target instanceof Evoker || target instanceof Vex || target instanceof Witch;
+        return !(target instanceof Player);
     }
 
     private boolean isProjectilePressureTarget(LivingEntity target) {
@@ -1238,7 +1181,10 @@ public class IvyCombatBrain {
 
     @Nullable
     private LivingEntity selectPriorityTarget(@Nullable LivingEntity currentTarget) {
-        if (currentTarget instanceof Player || currentTarget instanceof Evoker) {
+        if (currentTarget instanceof Player && isValidTarget(currentTarget)) {
+            return currentTarget;
+        }
+        if (currentTarget instanceof Evoker && isValidTarget(currentTarget)) {
             return currentTarget;
         }
         Evoker evoker = findNearestEvoker();
@@ -1257,14 +1203,14 @@ public class IvyCombatBrain {
         if (nearestPillager != null) {
             return nearestPillager;
         }
-        if (currentTarget instanceof Witch) {
+        if (currentTarget instanceof Witch && isValidTarget(currentTarget)) {
             return currentTarget;
         }
         Witch witch = findNearestWitch();
         if (witch != null) {
             return witch;
         }
-        if (currentTarget instanceof Vex) {
+        if (currentTarget instanceof Vex && isValidTarget(currentTarget)) {
             return currentTarget;
         }
         Vex vex = findNearestVex();
@@ -1272,7 +1218,10 @@ public class IvyCombatBrain {
             return vex;
         }
         LivingEntity aggressor = findNearestAggressorTargetingIvy();
-        return aggressor != null ? aggressor : currentTarget;
+        if (aggressor != null) {
+            return aggressor;
+        }
+        return isValidTarget(currentTarget) ? currentTarget : null;
     }
 
     @Nullable
@@ -1406,10 +1355,6 @@ public class IvyCombatBrain {
         return best;
     }
 
-    private boolean shouldTauntDefeatedEnemy(@Nullable LivingEntity target) {
-        return target != null && !target.isAlive() && !(target instanceof Player);
-    }
-
     private enum CombatState {
         CLOSING_DISTANCE,
         KEEPING_DISTANCE,
@@ -1417,7 +1362,6 @@ public class IvyCombatBrain {
         CIRCLING_RIGHT,
         ATTACKING,
         DODGING,
-        TAUNTING,
         EXITING,
         RETREATING_TO_RECOVER,
         RECOVERING
