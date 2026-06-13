@@ -98,9 +98,7 @@
           "next": "needs_help",
           "requires_flag": "known_dragons_done",
           "requires_all_flags": [
-            "work_dragons",
-            "work_gardening",
-            "work_expert"
+            "known_work_done"
           ],
           "hidden_if_flag": "cindervane_quest_started"
         },

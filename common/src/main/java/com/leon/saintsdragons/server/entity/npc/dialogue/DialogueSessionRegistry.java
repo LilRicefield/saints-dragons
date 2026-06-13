@@ -21,6 +21,7 @@ public final class DialogueSessionRegistry {
     private static final double MAX_INTERACTION_DISTANCE_SQR = 64.0D;
     private static final Set<String> ADVANCED_DRAGONS = Set.of("raevyx", "ignivorus", "volitans", "varasuchus");
     private static final Set<String> BASIC_EXTRA_DRAGONS = Set.of("stegonaut", "nulljaw");
+    private static final Set<String> IVY_WORK_TOPIC_FLAGS = Set.of("work_dragons", "work_gardening", "work_expert");
     private static final Map<UUID, DialogueSession> SESSIONS = new ConcurrentHashMap<>();
 
     private DialogueSessionRegistry() {
@@ -306,6 +307,9 @@ public final class DialogueSessionRegistry {
 
     private static Set<String> collectFlags(ServerPlayer player, IvyTheDragonMerchant ivy, Set<String> baseFlags) {
         Set<String> flags = new HashSet<>(baseFlags);
+        if (flags.containsAll(IVY_WORK_TOPIC_FLAGS)) {
+            flags.add("known_work_done");
+        }
         List<DragonCodexSavedData.DragonCodexEntry> entries = DragonCodexSavedData.get(player.serverLevel()).getEntriesFor(player);
         boolean hasCindervane = false;
         boolean hasAdvanced = false;
