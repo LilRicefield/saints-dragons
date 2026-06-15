@@ -37,6 +37,10 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
             return type == Type.OPEN_TRADE;
         }
 
+        public boolean opensInventory() {
+            return type == Type.OPEN_INVENTORY;
+        }
+
         public boolean usesPlayerName() {
             return type == Type.USE_PLAYER_NAME;
         }
@@ -70,6 +74,7 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         DEFAULT,
         END_DIALOGUE,
         OPEN_TRADE,
+        OPEN_INVENTORY,
         USE_PLAYER_NAME,
         NAME_INPUT,
         RECRUIT_IVY;
@@ -80,6 +85,9 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
             }
             if ("open_trade".equalsIgnoreCase(name)) {
                 return OPEN_TRADE;
+            }
+            if ("open_inventory".equalsIgnoreCase(name)) {
+                return OPEN_INVENTORY;
             }
             if ("use_player_name".equalsIgnoreCase(name)) {
                 return USE_PLAYER_NAME;

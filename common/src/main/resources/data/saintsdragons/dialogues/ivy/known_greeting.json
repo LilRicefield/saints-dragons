@@ -74,6 +74,13 @@
         },
         {
           "text": {
+            "text": "Can I check your gear?"
+          },
+          "next": "ivy_inventory",
+          "requires_flag": "ivy_recruited"
+        },
+        {
+          "text": {
             "text": "What do you do out here?"
           },
           "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do",
@@ -147,6 +154,23 @@
       },
       "text": {
         "text": "Of course. Take a look."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "return_greeting"
+        }
+      ]
+    },
+    "ivy_inventory": {
+      "type": "open_inventory",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Sure. Just be careful with the sharp bits."
       },
       "choices": [
         {

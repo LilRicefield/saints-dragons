@@ -25,11 +25,17 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 public class IvyCombatBrain {
+    private static final boolean FORCE_SWORD_TEST_STYLE = false;
     private static final RawAnimation ORTHODOX_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_idle");
     private static final RawAnimation ORTHODOX_WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_walk");
     private static final RawAnimation ORTHODOX_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_walk_backwards");
     private static final RawAnimation ORTHODOX_FAST_WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_fast_walk");
     private static final RawAnimation ORTHODOX_FAST_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_fast_walk_backwards");
+    private static final RawAnimation SWORD_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_idle");
+    private static final RawAnimation SWORD_WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_walk");
+    private static final RawAnimation SWORD_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_walk_backwards");
+    private static final RawAnimation SWORD_RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_run");
+    private static final RawAnimation SWORD_FAST_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_fast_walk_backwards");
 
     private static final int STANCE_TRANSITION_TICKS = 10;
     private static final int EXIT_STANCE_TICKS = 10;
@@ -42,6 +48,12 @@ public class IvyCombatBrain {
     private static final int RIGHT_HOOK_UPPERCUT_ACTION_TICKS = 25;
     private static final int DASH_FORWARD_RIGHT_CROSS_ACTION_TICKS = 20;
     private static final int THROW_PROJECTILES_ACTION_TICKS = 26;
+    private static final int SWORD_QUICK_STAB_ACTION_TICKS = 8;
+    private static final int SWORD_SWING_ACTION_TICKS = 12;
+    private static final int SWORD_SWING_SLASH_ACTION_TICKS = 19;
+    private static final int SWORD_SLASH_STAB_STAB_ACTION_TICKS = 27;
+    private static final int SWORD_DASH_FORWARD_SPIN_SLASH_ACTION_TICKS = 19;
+    private static final int SWORD_PARRY_ACTION_TICKS = 14;
     private static final int RETREAT_RECOVERY_ACTION_TICKS = 47;
     private static final int RETREAT_RECOVERY_CONSUME_TICKS = 42;
     private static final int RETREAT_RECOVERY_MAX_RETREAT_TICKS = 28;
@@ -62,6 +74,20 @@ public class IvyCombatBrain {
     private static final int THROW_PROJECTILES_FIRST_THROW_TICKS = 6;
     private static final int THROW_PROJECTILES_SECOND_THROW_TICKS = 14;
     private static final int THROW_PROJECTILES_DASH_TICKS = 19;
+    private static final int SWORD_QUICK_STAB_IMPACT_TICKS = 4;
+    private static final int SWORD_SWING_IMPACT_TICKS = 6;
+    private static final int SWORD_SWING_SLASH_FIRST_IMPACT_TICKS = 6;
+    private static final int SWORD_SWING_SLASH_SECOND_IMPACT_TICKS = 16;
+    private static final int SWORD_SWING_SLASH_NUDGE_TICKS = 16;
+    private static final double SWORD_SWING_SLASH_RANGE_BONUS = 0.55D;
+    private static final double SWORD_SWING_SLASH_FORWARD_NUDGE_BONUS = 0.25D;
+    private static final int SWORD_SLASH_STAB_STAB_FIRST_IMPACT_TICKS = 6;
+    private static final int SWORD_SLASH_STAB_STAB_SECOND_IMPACT_TICKS = 14;
+    private static final int SWORD_SLASH_STAB_STAB_THIRD_IMPACT_TICKS = 21;
+    private static final int SWORD_DASH_FORWARD_SPIN_SLASH_NUDGE_TICKS = 4;
+    private static final int SWORD_DASH_FORWARD_SPIN_SLASH_IMPACT_TICKS = 13;
+    private static final int SWORD_LEFT_PARRY_IMPACT_TICKS = 11;
+    private static final int SWORD_RIGHT_PARRY_IMPACT_TICKS = 8;
     private static final int JAB_COOLDOWN_TICKS = 5;
     private static final int HOOK_COOLDOWN_TICKS = 15;
     private static final int COMBO_COOLDOWN_TICKS = 30;
@@ -91,6 +117,7 @@ public class IvyCombatBrain {
     private static final double RETREAT_RECOVERY_SAFE_DISTANCE = 5.25D;
     private static final double RETREAT_RECOVERY_FORCED_DISTANCE = 4.0D;
     private static final double THROW_PROJECTILES_DASH_STRENGTH = 0.82D;
+    private static final double SWORD_DASH_STRENGTH = 0.85D;
     private static final float THROW_PROJECTILES_SPEED = 1.55F;
     private static final float THROW_PROJECTILES_INACCURACY = 2.0F;
     private static final double THROW_PROJECTILES_PREDICT_TICKS = 4.0D;
@@ -128,7 +155,7 @@ public class IvyCombatBrain {
     private int recoveryBackstepCooldown;
     private boolean recoveryWaitingForLanding;
     private int impactTargetId = -1;
-    private AttackType pendingAttack = AttackType.LEFT_JAB;
+    private AttackMove pendingMove = AttackType.LEFT_JAB.move(false);
     private CounterType pendingCounter = null;
     @Nullable
     private LivingEntity lastCombatTarget;
@@ -159,6 +186,20 @@ public class IvyCombatBrain {
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.to_orthodox"));
         controller.triggerableAnim("exit_orthodox",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.exit_orthodox"));
+        controller.triggerableAnim("sword_unsheathe",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_unsheathe"));
+        controller.triggerableAnim("sword_to_orthodox",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_to_orthodox"));
+        controller.triggerableAnim("sword_quick_stab",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_quick_stab"));
+        controller.triggerableAnim("sword_swing",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_swing"));
+        controller.triggerableAnim("sword_slash_stab_stab",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_slash_stab_stab"));
+        controller.triggerableAnim("sword_swing_slash",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_swing_slash"));
+        controller.triggerableAnim("sword_dash_forward_spin_slash",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dash_forward_spin_slash"));
         controller.triggerableAnim("orthodox_left_jab",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_left_jab"));
         controller.triggerableAnim("orthodox_right_hook",
@@ -177,12 +218,26 @@ public class IvyCombatBrain {
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_retreat_to_drink"));
         controller.triggerableAnim("orthodox_retreat_to_eat",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_retreat_to_eat"));
+        controller.triggerableAnim("sword_retreat_to_drink",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_retreat_to_drink"));
+        controller.triggerableAnim("sword_retreat_to_eat",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_retreat_to_eat"));
         controller.triggerableAnim("dodge_backwards",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_backwards"));
         controller.triggerableAnim("dodge_left",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_left"));
         controller.triggerableAnim("dodge_right",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_right"));
+        controller.triggerableAnim("sword_dodge_backwards",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_backwards"));
+        controller.triggerableAnim("sword_dodge_left",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_left"));
+        controller.triggerableAnim("sword_dodge_right",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_right"));
+        controller.triggerableAnim("sword_dodge_left_parry",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_left_parry"));
+        controller.triggerableAnim("sword_dodge_right_parry",
+                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_right_parry"));
         controller.triggerableAnim("dodge_left_liver_shot",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_left_liver_shot"));
         controller.triggerableAnim("dodge_right_liver_shot",
@@ -200,17 +255,81 @@ public class IvyCombatBrain {
             return true;
         }
         if (ivy.isBoxingBackingUp()) {
-            AnimationHelper.setAndContinue(state, ivy.isBoxingFast() ? ORTHODOX_FAST_WALK_BACKWARDS : ORTHODOX_WALK_BACKWARDS);
+            AnimationHelper.setAndContinue(state, ivy.isBoxingFast() ? fastWalkBackwardsAnimation() : walkBackwardsAnimation());
         } else if (state.isMoving()) {
-            AnimationHelper.setAndContinue(state, ivy.isBoxingFast() ? ORTHODOX_FAST_WALK : ORTHODOX_WALK);
+            AnimationHelper.setAndContinue(state, ivy.isBoxingFast() ? fastWalkAnimation() : walkAnimation());
         } else {
-            AnimationHelper.setAndContinue(state, ORTHODOX_IDLE);
+            AnimationHelper.setAndContinue(state, idleAnimation());
         }
         return true;
     }
 
     public boolean isActive() {
         return ivy.isBoxingStance() || ivy.isBoxingExiting();
+    }
+
+    private boolean isEnteringStance() {
+        return state == CombatState.ENTERING_STANCE && ivy.getBoxingActionTicks() > 0;
+    }
+
+    public boolean isUsingSwordStyleForTesting() {
+        return FORCE_SWORD_TEST_STYLE || ivy.isBoxingSwordStyle();
+    }
+
+    private boolean useSwordStyleAgainst(@Nullable LivingEntity target) {
+        return FORCE_SWORD_TEST_STYLE || IvyTheDragonMerchant.isSwordStyleTestTarget(target);
+    }
+
+    private RawAnimation idleAnimation() {
+        return isUsingSwordStyleForTesting() ? SWORD_IDLE : ORTHODOX_IDLE;
+    }
+
+    private RawAnimation walkAnimation() {
+        return isUsingSwordStyleForTesting() ? SWORD_WALK : ORTHODOX_WALK;
+    }
+
+    private RawAnimation walkBackwardsAnimation() {
+        return isUsingSwordStyleForTesting() ? SWORD_WALK_BACKWARDS : ORTHODOX_WALK_BACKWARDS;
+    }
+
+    private RawAnimation fastWalkAnimation() {
+        return isUsingSwordStyleForTesting() ? SWORD_RUN : ORTHODOX_FAST_WALK;
+    }
+
+    private RawAnimation fastWalkBackwardsAnimation() {
+        return isUsingSwordStyleForTesting() ? SWORD_FAST_WALK_BACKWARDS : ORTHODOX_FAST_WALK_BACKWARDS;
+    }
+
+    private String enterStanceTrigger() {
+        return isUsingSwordStyleForTesting() ? "sword_unsheathe" : "to_orthodox";
+    }
+
+    private String exitStanceTrigger() {
+        return exitStanceTrigger(isUsingSwordStyleForTesting());
+    }
+
+    private String exitStanceTrigger(boolean swordStyle) {
+        return swordStyle ? "sword_unsheathe" : "exit_orthodox";
+    }
+
+    private String retreatDrinkTrigger() {
+        return isUsingSwordStyleForTesting() ? "sword_retreat_to_drink" : "orthodox_retreat_to_drink";
+    }
+
+    private String retreatEatTrigger() {
+        return isUsingSwordStyleForTesting() ? "sword_retreat_to_eat" : "orthodox_retreat_to_eat";
+    }
+
+    private String dodgeBackwardsTrigger() {
+        return isUsingSwordStyleForTesting() ? "sword_dodge_backwards" : "dodge_backwards";
+    }
+
+    private String dodgeLeftTrigger() {
+        return isUsingSwordStyleForTesting() ? "sword_dodge_left" : "dodge_left";
+    }
+
+    private String dodgeRightTrigger() {
+        return isUsingSwordStyleForTesting() ? "sword_dodge_right" : "dodge_right";
     }
 
     public boolean shouldHoldGroundAgainstKnockback() {
@@ -250,6 +369,9 @@ public class IvyCombatBrain {
             ivy.setTarget(target);
             beginStance();
             lockSight(target);
+            if (isEnteringStance()) {
+                return false;
+            }
             if (state != CombatState.DODGING) {
                 startReactiveDodge(target, 100);
             }
@@ -263,6 +385,9 @@ public class IvyCombatBrain {
         ivy.setTarget(target);
         beginStance();
         lockSight(target);
+        if (isEnteringStance()) {
+            return false;
+        }
         startReactiveDodge(target, 45);
         return true;
     }
@@ -288,7 +413,7 @@ public class IvyCombatBrain {
         ivy.setTarget(target);
         beginStance();
         lockSight(target);
-        if (ivy.getBoxingActionTicks() <= 0 || state != CombatState.DODGING) {
+        if (!isEnteringStance() && (ivy.getBoxingActionTicks() <= 0 || state != CombatState.DODGING)) {
             startReactiveDodge(target, 55);
         }
     }
@@ -355,17 +480,21 @@ public class IvyCombatBrain {
             movingPressureCommitCooldown--;
         }
         if (approachNudgeTicks > 0 && --approachNudgeTicks <= 0) {
-            applyApproachNudge(pendingAttack.approachNudgeStrength);
+            if (isUsingSwordStyleForTesting()) {
+                applySwordDash();
+            } else {
+                applyApproachNudge(pendingMove.approachNudgeStrength);
+            }
         }
         if (impactTicks > 0 && --impactTicks <= 0) {
-            applyImpact(pendingCounter != null ? pendingCounter.hit : pendingAttack.firstHit);
+            applyImpact(pendingCounter != null ? pendingCounter.hit : pendingMove.firstHit);
             pendingCounter = null;
         }
         if (secondImpactTicks > 0 && --secondImpactTicks <= 0) {
-            applyImpact(pendingAttack.secondHit);
+            applyImpact(pendingMove.secondHit);
         }
         if (thirdImpactTicks > 0 && --thirdImpactTicks <= 0) {
-            applyImpact(pendingAttack.thirdHit);
+            applyImpact(pendingMove.thirdHit);
         }
         if (projectileTicks > 0 && --projectileTicks <= 0) {
             throwVenomArrowAtTarget();
@@ -435,7 +564,7 @@ public class IvyCombatBrain {
         ivy.setBoxingMovement(true, true);
         ivy.setBoxingActionTicks(DODGE_ACTION_TICKS);
         setState(CombatState.RETREATING_TO_RECOVER, DODGE_ACTION_TICKS);
-        ivy.triggerAnim("movement", "dodge_backwards");
+        ivy.triggerAnim("movement", dodgeBackwardsTrigger());
     }
 
     private void startRecoveryAnimation() {
@@ -451,8 +580,8 @@ public class IvyCombatBrain {
         recoveryConsumeTicks = RETREAT_RECOVERY_CONSUME_TICKS;
         setState(CombatState.RECOVERING, RETREAT_RECOVERY_ACTION_TICKS);
         ivy.triggerAnim("movement", pendingRecoveryAction == IvyTheDragonMerchant.RECOVERY_DRINK
-                ? "orthodox_retreat_to_drink"
-                : "orthodox_retreat_to_eat");
+                ? retreatDrinkTrigger()
+                : retreatEatTrigger());
         pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_NONE;
         recoveryRetreatTicks = 0;
         recoveryBackstepCooldown = 0;
@@ -522,10 +651,11 @@ public class IvyCombatBrain {
             return;
         }
         ivy.cancelPassiveAnimationsForCombat();
+        ivy.setBoxingSwordStyle(useSwordStyleAgainst(ivy.getTarget()));
         ivy.setBoxingStance(true);
         ivy.setBoxingActionTicks(STANCE_TRANSITION_TICKS);
-        setState(CombatState.RECOVERING, STANCE_TRANSITION_TICKS);
-        ivy.triggerAnim("movement", "to_orthodox");
+        setState(CombatState.ENTERING_STANCE, STANCE_TRANSITION_TICKS);
+        ivy.triggerAnim("movement", enterStanceTrigger());
     }
 
     private void clear() {
@@ -573,6 +703,7 @@ public class IvyCombatBrain {
         if (exitTicks > 0) {
             return;
         }
+        boolean swordStyle = isUsingSwordStyleForTesting();
         ivy.getNavigation().stop();
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(0);
@@ -581,8 +712,9 @@ public class IvyCombatBrain {
         setState(CombatState.EXITING, EXIT_STANCE_TICKS);
         exitTicks = EXIT_STANCE_TICKS;
         ivy.setBoxingStance(false);
+        ivy.setBoxingSwordStyle(swordStyle);
         ivy.setBoxingExiting(true);
-        ivy.triggerAnim("movement", "exit_orthodox");
+        ivy.triggerAnim("movement", exitStanceTrigger(swordStyle));
     }
 
     private void clearAttackTimers() {
@@ -603,11 +735,14 @@ public class IvyCombatBrain {
     }
 
     private void startAttack(LivingEntity target, AttackType attack) {
-        setState(CombatState.ATTACKING, attack.actionTicks);
+        ivy.setBoxingSwordStyle(useSwordStyleAgainst(target));
+        boolean swordStyle = isUsingSwordStyleForTesting();
+        AttackMove move = attack.move(swordStyle);
+        setState(CombatState.ATTACKING, move.actionTicks);
         ivy.setBoxingMovement(false, false);
-        ivy.setBoxingActionTicks(attack.actionTicks);
+        ivy.setBoxingActionTicks(move.actionTicks);
         ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
-        attackCooldown = attack.cooldownTicks;
+        attackCooldown = move.cooldownTicks;
         if (attack == AttackType.DASH_FORWARD_RIGHT_CROSS) {
             dashCrossCooldown = DASH_CROSS_COOLDOWN_TICKS;
         }
@@ -620,18 +755,18 @@ public class IvyCombatBrain {
         if (attack != AttackType.LEFT_JAB && attack != AttackType.RIGHT_HOOK) {
             comboCooldown = COMBO_COOLDOWN_TICKS;
         }
-        impactTicks = attack.firstImpactTicks;
-        secondImpactTicks = attack.secondImpactTicks;
-        thirdImpactTicks = attack.thirdImpactTicks;
-        projectileTicks = attack.firstProjectileTicks;
-        secondProjectileTicks = attack.secondProjectileTicks;
-        projectileDashTicks = attack.dashTicks;
-        approachNudgeTicks = attack.approachNudgeTicks;
-        comboRetreatTicks = attack.retreatTicks;
+        impactTicks = move.firstImpactTicks;
+        secondImpactTicks = move.secondImpactTicks;
+        thirdImpactTicks = move.thirdImpactTicks;
+        projectileTicks = move.firstProjectileTicks;
+        secondProjectileTicks = move.secondProjectileTicks;
+        projectileDashTicks = move.projectileDashTicks;
+        approachNudgeTicks = move.approachNudgeTicks;
+        comboRetreatTicks = move.retreatTicks;
         impactTargetId = target.getId();
-        pendingAttack = attack;
+        pendingMove = move;
         pendingCounter = null;
-        ivy.triggerAnim("movement", attack.trigger);
+        ivy.triggerAnim("movement", move.trigger);
     }
 
     private void startDodge(LivingEntity target) {
@@ -650,9 +785,9 @@ public class IvyCombatBrain {
         comboRetreatTicks = 0;
         pendingCounter = null;
         ivy.triggerAnim("movement", switch (dodge) {
-            case 0 -> "dodge_left";
-            case 1 -> "dodge_right";
-            default -> "dodge_backwards";
+            case 0 -> dodgeLeftTrigger();
+            case 1 -> dodgeRightTrigger();
+            default -> dodgeBackwardsTrigger();
         });
 
         Vec3 away = ivy.position().subtract(target.position());
@@ -678,13 +813,16 @@ public class IvyCombatBrain {
     }
 
     private void startCounterDodge(LivingEntity target) {
+        ivy.setBoxingSwordStyle(useSwordStyleAgainst(target));
         CounterType counter = ivy.getRandom().nextBoolean() ? CounterType.LEFT_LIVER_SHOT : CounterType.RIGHT_LIVER_SHOT;
-        setState(CombatState.DODGING, LIVER_COUNTER_ACTION_TICKS);
+        boolean swordStyle = isUsingSwordStyleForTesting();
+        int actionTicks = counter.actionTicks(swordStyle);
+        setState(CombatState.DODGING, actionTicks);
         ivy.setBoxingMovement(false, false);
-        ivy.setBoxingActionTicks(LIVER_COUNTER_ACTION_TICKS);
+        ivy.setBoxingActionTicks(actionTicks);
         ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         dodgeCooldown = DODGE_COOLDOWN_TICKS + 6;
-        impactTicks = LIVER_COUNTER_IMPACT_TICKS;
+        impactTicks = swordStyle ? counter.swordImpactTicks() : LIVER_COUNTER_IMPACT_TICKS;
         secondImpactTicks = 0;
         thirdImpactTicks = 0;
         projectileTicks = 0;
@@ -694,7 +832,7 @@ public class IvyCombatBrain {
         comboRetreatTicks = 0;
         impactTargetId = target.getId();
         pendingCounter = counter;
-        ivy.triggerAnim("movement", counter.trigger);
+        ivy.triggerAnim("movement", counter.trigger(swordStyle));
         applyDiagonalCounterStep(target, counter);
     }
 
@@ -812,7 +950,21 @@ public class IvyCombatBrain {
         if (toward.horizontalDistanceSqr() < 1.0E-4D) {
             toward = Vec3.directionFromRotation(0.0F, ivy.getYRot());
         }
-        Vec3 step = toward.normalize().scale(pendingAttack.dashStrength);
+        Vec3 step = toward.normalize().scale(pendingMove.dashStrength);
+        setComboHorizontalImpulse(step, 0.03D);
+    }
+
+    private void applySwordDash() {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+
+        Vec3 toward = target.position().subtract(ivy.position());
+        if (toward.horizontalDistanceSqr() < 1.0E-4D) {
+            toward = Vec3.directionFromRotation(0.0F, ivy.getYRot());
+        }
+        double strength = pendingMove.dashStrength > 0.0D ? pendingMove.dashStrength : SWORD_DASH_STRENGTH;
+        Vec3 step = toward.normalize().scale(strength);
         setComboHorizontalImpulse(step, 0.03D);
     }
 
@@ -879,7 +1031,8 @@ public class IvyCombatBrain {
     }
 
     private boolean canThrowProjectiles(LivingEntity target, double distanceSqr, DashCrossRead dashRead) {
-        if (attackCooldown > 0
+        if (isUsingSwordStyleForTesting()
+                || attackCooldown > 0
                 || throwProjectilesCooldown > 0
                 || distanceSqr < THROW_PROJECTILES_MIN_RANGE * THROW_PROJECTILES_MIN_RANGE
                 || distanceSqr > THROW_PROJECTILES_MAX_RANGE * THROW_PROJECTILES_MAX_RANGE
@@ -1356,6 +1509,7 @@ public class IvyCombatBrain {
     }
 
     private enum CombatState {
+        ENTERING_STANCE,
         CLOSING_DISTANCE,
         KEEPING_DISTANCE,
         CIRCLING_LEFT,
@@ -1447,6 +1601,60 @@ public class IvyCombatBrain {
             this.secondHit = secondHit;
             this.thirdHit = thirdHit;
         }
+
+        private AttackMove move(boolean swordStyle) {
+            if (!swordStyle || this == THROW_PROJECTILES) {
+                return new AttackMove(trigger, actionTicks, firstImpactTicks, secondImpactTicks, thirdImpactTicks,
+                        retreatTicks, approachNudgeTicks, approachNudgeStrength, cooldownTicks,
+                        firstProjectileTicks, secondProjectileTicks, dashTicks, dashStrength,
+                        firstHit, secondHit, thirdHit);
+            }
+
+            return switch (this) {
+                case LEFT_JAB -> new AttackMove("sword_quick_stab",
+                        SWORD_QUICK_STAB_ACTION_TICKS, SWORD_QUICK_STAB_IMPACT_TICKS, 0, 0,
+                        0, 0, 0.0D, cooldownTicks,
+                        0, 0, 0, 0.0D,
+                        firstHit, null, null);
+                case RIGHT_HOOK -> new AttackMove("sword_swing",
+                        SWORD_SWING_ACTION_TICKS, SWORD_SWING_IMPACT_TICKS, 0, 0,
+                        0, 0, 0.0D, cooldownTicks,
+                        0, 0, 0, 0.0D,
+                        firstHit, null, null);
+                case LEFT_JAB_RIGHT_CROSS -> new AttackMove("sword_swing_slash",
+                        SWORD_SWING_SLASH_ACTION_TICKS, SWORD_SWING_SLASH_FIRST_IMPACT_TICKS,
+                        SWORD_SWING_SLASH_SECOND_IMPACT_TICKS, 0,
+                        0, SWORD_SWING_SLASH_NUDGE_TICKS, 0.0D, cooldownTicks,
+                        0, 0, 0, 1.35D,
+                        firstHit, swordSlashHit(secondHit), null);
+                case JAB_JAB_HOOK -> new AttackMove("sword_slash_stab_stab",
+                        SWORD_SLASH_STAB_STAB_ACTION_TICKS, SWORD_SLASH_STAB_STAB_FIRST_IMPACT_TICKS,
+                        SWORD_SLASH_STAB_STAB_SECOND_IMPACT_TICKS, SWORD_SLASH_STAB_STAB_THIRD_IMPACT_TICKS,
+                        0, 0, 0.0D, cooldownTicks,
+                        0, 0, 0, 0.0D,
+                        firstHit, secondHit, thirdHit);
+                case RIGHT_HOOK_UPPERCUT -> new AttackMove("sword_swing_slash",
+                        SWORD_SWING_SLASH_ACTION_TICKS, SWORD_SWING_SLASH_FIRST_IMPACT_TICKS,
+                        SWORD_SWING_SLASH_SECOND_IMPACT_TICKS, 0,
+                        0, SWORD_SWING_SLASH_NUDGE_TICKS, 0.0D, cooldownTicks,
+                        0, 0, 0, 1.35D,
+                        firstHit, swordSlashHit(secondHit), null);
+                case DASH_FORWARD_RIGHT_CROSS -> new AttackMove("sword_dash_forward_spin_slash",
+                        SWORD_DASH_FORWARD_SPIN_SLASH_ACTION_TICKS,
+                        SWORD_DASH_FORWARD_SPIN_SLASH_IMPACT_TICKS, 0, 0,
+                        0, SWORD_DASH_FORWARD_SPIN_SLASH_NUDGE_TICKS, 0.0D, cooldownTicks,
+                        0, 0, 0, dashStrength > 0.0D ? dashStrength : SWORD_DASH_STRENGTH,
+                        firstHit, null, null);
+                case THROW_PROJECTILES -> throw new IllegalStateException("Projectile move handled by orthodox move path");
+            };
+        }
+
+        private static AttackHit swordSlashHit(AttackHit hit) {
+            return new AttackHit(hit.damage, hit.knockback, hit.lift,
+                    hit.range + SWORD_SWING_SLASH_RANGE_BONUS,
+                    hit.resetInvulnerability,
+                    hit.forwardNudge + SWORD_SWING_SLASH_FORWARD_NUDGE_BONUS);
+        }
     }
 
     private enum CounterType {
@@ -1460,6 +1668,28 @@ public class IvyCombatBrain {
             this.trigger = trigger;
             this.hit = hit;
         }
+
+        private String trigger(boolean swordStyle) {
+            if (!swordStyle) {
+                return trigger;
+            }
+            return this == LEFT_LIVER_SHOT ? "sword_dodge_left_parry" : "sword_dodge_right_parry";
+        }
+
+        private int actionTicks(boolean swordStyle) {
+            return swordStyle ? SWORD_PARRY_ACTION_TICKS : LIVER_COUNTER_ACTION_TICKS;
+        }
+
+        private int swordImpactTicks() {
+            return this == LEFT_LIVER_SHOT ? SWORD_LEFT_PARRY_IMPACT_TICKS : SWORD_RIGHT_PARRY_IMPACT_TICKS;
+        }
+    }
+
+    private record AttackMove(String trigger, int actionTicks, int firstImpactTicks, int secondImpactTicks,
+                              int thirdImpactTicks, int retreatTicks, int approachNudgeTicks,
+                              double approachNudgeStrength, int cooldownTicks, int firstProjectileTicks,
+                              int secondProjectileTicks, int projectileDashTicks, double dashStrength,
+                              AttackHit firstHit, @Nullable AttackHit secondHit, @Nullable AttackHit thirdHit) {
     }
 
     private record AttackHit(float damage, double knockback, double lift, double range, boolean resetInvulnerability,

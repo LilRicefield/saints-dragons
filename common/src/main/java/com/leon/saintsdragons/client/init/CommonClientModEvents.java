@@ -31,6 +31,7 @@ import com.leon.saintsdragons.client.renderer.vfx.VisualFallingBlockRenderer;
 import com.leon.saintsdragons.client.renderer.npc.IvyTheDragonMerchantRenderer;
 import com.leon.saintsdragons.client.renderer.mossback.MossbackRenderer;
 import com.leon.saintsdragons.client.renderer.otheranimals.MoopRenderer;
+import com.leon.saintsdragons.client.ui.IvyInventoryScreen;
 import com.leon.saintsdragons.client.ui.StegonautInventoryScreen;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -77,6 +78,7 @@ public final class CommonClientModEvents {
 
     public static void registerMenuScreens() {
         MenuScreens.register(ModMenus.STEGONAUT_INVENTORY.get(), StegonautInventoryScreen::new);
+        MenuScreens.register(ModMenus.IVY_INVENTORY.get(), IvyInventoryScreen::new);
     }
 
     @FunctionalInterface

@@ -27,6 +27,17 @@ public class IvySoundProfile implements HumanSoundProfile {
             case "ivy_orthodox_throw_projectiles" -> playCustomSound(handler, "ivy_orthodox_throw_projectiles", ModSounds.IVY_ORTHODOX_THROW_PROJECTILES.get(), volume, pitch, 5);
             case "ivy_orthodox_retreat_to_drink" -> playCustomSound(handler, "ivy_orthodox_retreat_to_drink", ModSounds.IVY_ORTHODOX_RETREAT_TO_DRINK.get(), volume, pitch, 5);
             case "ivy_orthodox_retreat_to_eat" -> playCustomSound(handler, "ivy_orthodox_retreat_to_eat", ModSounds.IVY_ORTHODOX_RETREAT_TO_EAT.get(), volume, pitch, 5);
+            case "ivy_sword_brandishes" -> playCustomSound(handler, "ivy_sword_brandishes", ModSounds.IVY_SWORD_BRANDISHES.get(), volume, pitch, 5);
+            case "ivy_sword_unsheathe" -> playCustomSound(handler, "ivy_sword_unsheathe", ModSounds.IVY_SWORD_UNSHEATHE.get(), volume, pitch, 5);
+            case "ivy_sword_to_orthodox" -> playCustomSound(handler, "ivy_sword_to_orthodox", ModSounds.IVY_SWORD_TO_ORTHODOX.get(), volume, pitch, 5);
+            case "ivy_sword_slash_stab_stab" -> playCustomSound(handler, "ivy_sword_slash_stab_stab", ModSounds.IVY_SWORD_SLASH_STAB_STAB.get(), volume, pitch, 5);
+            case "ivy_sword_quick_stab" -> playCustomSound(handler, "ivy_sword_quick_stab", ModSounds.IVY_SWORD_QUICK_STAB.get(), volume, pitch, 3);
+            case "ivy_sword_swing" -> playCustomSound(handler, "ivy_sword_swing", ModSounds.IVY_SWORD_SWING.get(), volume, pitch, 4);
+            case "ivy_sword_swing_slash" -> playCustomSound(handler, "ivy_sword_swing_slash", ModSounds.IVY_SWORD_SWING_SLASH.get(), volume, pitch, 5);
+            case "ivy_sword_retreat_to_eat" -> playCustomSound(handler, "ivy_sword_retreat_to_eat", ModSounds.IVY_SWORD_RETREAT_TO_EAT.get(), volume, pitch, 5);
+            case "ivy_sword_retreat_to_drink" -> playCustomSound(handler, "ivy_sword_retreat_to_drink", ModSounds.IVY_SWORD_RETREAT_TO_DRINK.get(), volume, pitch, 5);
+            case "ivy_sword_dodge_parry" -> playCustomSound(handler, "ivy_sword_dodge_parry", ModSounds.IVY_SWORD_DODGE_PARRY.get(), volume, pitch, 5);
+            case "ivy_dash_forward_spin_slash" -> playCustomSound(handler, "ivy_dash_forward_spin_slash", ModSounds.IVY_DASH_FORWARD_SPIN_SLASH.get(), volume, pitch, 5);
             default -> false;
         };
     }

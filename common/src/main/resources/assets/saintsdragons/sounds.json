@@ -148,6 +148,116 @@
       }
     ]
   },
+  "ivy_sword_brandishes": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_brandishes",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_brandishes",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_unsheathe": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_unsheathe",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_unsheathe",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_to_orthodox": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_to_orthodox",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_to_orthodox",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_slash_stab_stab": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_slash_stab_stab",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_slash_stab_stab",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_quick_stab": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_quick_stab",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_quick_stab",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_swing": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_swing",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_swing",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_swing_slash": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_swing_slash",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_swing_slash",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_retreat_to_eat": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_retreat_to_eat",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_retreat_to_eat",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_retreat_to_drink": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_retreat_to_drink",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_retreat_to_drink",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sword_dodge_parry": {
+    "subtitle": "subtitles.saintsdragons.ivy_sword_dodge_parry",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sword_dodge_parry",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_dash_forward_spin_slash": {
+    "subtitle": "subtitles.saintsdragons.ivy_dash_forward_spin_slash",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_dash_forward_spin_slash",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "bleeding_bolt": {
     "subtitle": "subtitles.saintsdragons.bleeding_bolt",
     "sounds": [

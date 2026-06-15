@@ -91,6 +91,12 @@ public final class DialogueSessionRegistry {
             ivy.openDialogueTrade(player, target.dialogue().id(), target.nodeId());
             return;
         }
+        if (currentNode.opensInventory()) {
+            SESSIONS.remove(player.getUUID());
+            NetworkHandler.sendToPlayer(player, MessageDialogueClose.INSTANCE);
+            ivy.openDialogueInventory(player);
+            return;
+        }
         if (target.node().usesPlayerName()) {
             String chosenName = player.getGameProfile().getName();
             ivy.rememberDialogueName(player, chosenName);

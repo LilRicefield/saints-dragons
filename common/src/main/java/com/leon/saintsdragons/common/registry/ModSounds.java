@@ -29,6 +29,17 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IVY_ORTHODOX_THROW_PROJECTILES = registerSound("ivy_orthodox_throw_projectiles");
     public static final Supplier<SoundEvent> IVY_ORTHODOX_RETREAT_TO_DRINK = registerSound("ivy_orthodox_retreat_to_drink");
     public static final Supplier<SoundEvent> IVY_ORTHODOX_RETREAT_TO_EAT = registerSound("ivy_orthodox_retreat_to_eat");
+    public static final Supplier<SoundEvent> IVY_SWORD_BRANDISHES = registerSound("ivy_sword_brandishes");
+    public static final Supplier<SoundEvent> IVY_SWORD_UNSHEATHE = registerSound("ivy_sword_unsheathe");
+    public static final Supplier<SoundEvent> IVY_SWORD_TO_ORTHODOX = registerSound("ivy_sword_to_orthodox");
+    public static final Supplier<SoundEvent> IVY_SWORD_SLASH_STAB_STAB = registerSound("ivy_sword_slash_stab_stab");
+    public static final Supplier<SoundEvent> IVY_SWORD_QUICK_STAB = registerSound("ivy_sword_quick_stab");
+    public static final Supplier<SoundEvent> IVY_SWORD_SWING = registerSound("ivy_sword_swing");
+    public static final Supplier<SoundEvent> IVY_SWORD_SWING_SLASH = registerSound("ivy_sword_swing_slash");
+    public static final Supplier<SoundEvent> IVY_SWORD_RETREAT_TO_EAT = registerSound("ivy_sword_retreat_to_eat");
+    public static final Supplier<SoundEvent> IVY_SWORD_RETREAT_TO_DRINK = registerSound("ivy_sword_retreat_to_drink");
+    public static final Supplier<SoundEvent> IVY_SWORD_DODGE_PARRY = registerSound("ivy_sword_dodge_parry");
+    public static final Supplier<SoundEvent> IVY_DASH_FORWARD_SPIN_SLASH = registerSound("ivy_dash_forward_spin_slash");
     public static final Supplier<SoundEvent> BLEEDING_BOLT = registerSound("bleeding_bolt");
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");

@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
+import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -55,6 +56,9 @@ import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.MerchantOffer;
@@ -125,6 +129,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_BOXING_RECOVERY_ACTION =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_BOXING_SWORD_STYLE =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final int TRADE_START_TICKS = 29;
     private static final int TRADE_STOP_TICKS = 29;
     private static final int IDLE_CHATTER_DURATION = 90;
@@ -148,6 +154,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.run");
+    private static final String PASSIVE_USE_CONTROLLER = "passive_use";
+    private static final RawAnimation MAIN_HAND_EAT = RawAnimation.begin().thenPlay("ivy_oleander.animation.main_hand_eat");
     private static final String KNOWN_DIALOGUE_PLAYERS_TAG = "KnownDialoguePlayers";
     private static final String KNOWN_DIALOGUE_UUID_TAG = "UUID";
     private static final String REMEMBERED_NAME_TAG = "Name";
@@ -156,6 +164,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final String TAME_TAG = "Tame";
     private static final String OWNER_UUID_TAG = "OwnerUUID";
     private static final String COMMAND_TAG = "Command";
+    private static final String IVY_INVENTORY_TAG = "IvyInventory";
     private static final String TRESPASSER_IMPRESSION = "trespasser";
     private static final String RUDE_IMPRESSION = "rude";
     private static final String WARES_IMPRESSION = "wares";
@@ -172,6 +181,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private final Map<UUID, String> rememberedDialogueImpressions = new HashMap<>();
     private final Map<UUID, Set<String>> rememberedDialogueFlags = new HashMap<>();
     private final HumanSoundHandler soundHandler;
+    private final SimpleContainer ivyInventory = new SimpleContainer(IvyInventoryMenu.IVY_SLOT_COUNT);
     private IvyCombatBrain boxingCombat;
     private final int restockInterval;
     private int restockTimer;
@@ -293,6 +303,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.entityData.define(DATA_BOXING_ACTION_TICKS, 0);
         this.entityData.define(DATA_BOXING_EXITING, false);
         this.entityData.define(DATA_BOXING_RECOVERY_ACTION, RECOVERY_NONE);
+        this.entityData.define(DATA_BOXING_SWORD_STYLE, false);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -424,6 +435,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             this.entityData.set(DATA_BOXING_ACTION_TICKS, 0);
             this.entityData.set(DATA_BOXING_EXITING, false);
             this.entityData.set(DATA_BOXING_RECOVERY_ACTION, RECOVERY_NONE);
+            this.entityData.set(DATA_BOXING_SWORD_STYLE, false);
         }
     }
 
@@ -465,6 +477,26 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             return new ItemStack(Items.COOKED_BEEF);
         }
         return ItemStack.EMPTY;
+    }
+
+    public boolean shouldRenderCombatSwordForTesting() {
+        return isBoxingSwordStyle()
+                && getBoxingCombat().isActive();
+    }
+
+    boolean isBoxingSwordStyle() {
+        return this.entityData.get(DATA_BOXING_SWORD_STYLE);
+    }
+
+    void setBoxingSwordStyle(boolean swordStyle) {
+        this.entityData.set(DATA_BOXING_SWORD_STYLE, swordStyle);
+    }
+
+    static boolean isSwordStyleTestTarget(@Nullable LivingEntity target) {
+        return target != null
+                && (target.getType() == EntityType.PIGLIN
+                || target.getType() == EntityType.PIGLIN_BRUTE
+                || target.getType() == EntityType.ZOMBIFIED_PIGLIN);
     }
 
     void setBoxingMovement(boolean backingUp, boolean fast) {
@@ -657,7 +689,13 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         movementController.setParticleKeyframeHandler(this::handleParticleKeyframe);
         setupMovementController(movementController);
         getBoxingCombat().setupMovementController(movementController);
-        controllers.add(movementController);
+
+        AnimationController<IvyTheDragonMerchant> passiveUseController =
+                new AnimationController<>(this, PASSIVE_USE_CONTROLLER, 1, state -> PlayState.STOP);
+        passiveUseController.setSoundKeyframeHandler(this::handleSoundKeyframe);
+        setupPassiveUseController(passiveUseController);
+
+        controllers.add(movementController, passiveUseController);
     }
 
     private void handleSoundKeyframe(SoundKeyframeEvent<IvyTheDragonMerchant> event) {
@@ -853,6 +891,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
         tag.putBoolean(TAME_TAG, isTame());
+        tag.put(IVY_INVENTORY_TAG, ivyInventory.createTag());
         UUID ownerUuid = getOwnerUUID();
         if (ownerUuid != null) {
             tag.putUUID(OWNER_UUID_TAG, ownerUuid);
@@ -884,6 +923,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (tag.contains(IVY_INVENTORY_TAG, Tag.TAG_LIST)) {
+            ivyInventory.fromTag(tag.getList(IVY_INVENTORY_TAG, Tag.TAG_COMPOUND));
+        }
         setTame(tag.getBoolean(TAME_TAG));
         if (tag.hasUUID(OWNER_UUID_TAG)) {
             setOwnerUUID(tag.getUUID(OWNER_UUID_TAG));
@@ -1041,6 +1083,23 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         openTradingFor(player);
     }
 
+    public void openDialogueInventory(ServerPlayer player) {
+        if (!isAlive()
+                || !isTame()
+                || !isOwnedBy(player)
+                || player.distanceToSqr(this) > 64.0D) {
+            return;
+        }
+        player.openMenu(new SimpleMenuProvider(
+                (containerId, playerInventory, ignored) -> new IvyInventoryMenu(containerId, playerInventory, this),
+                getDisplayName()
+        ));
+    }
+
+    public Container getIvyInventory() {
+        return ivyInventory;
+    }
+
     private void scheduleDialogueResumeAfterTrade(@Nullable Player player) {
         if (!(player instanceof ServerPlayer serverPlayer)
                 || pendingDialogueTradePlayerUuid == null
@@ -1123,6 +1182,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.greetings"));
         controller.triggerableAnim("reaction_to_egg",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.reaction_to_egg"));
+    }
+
+    private void setupPassiveUseController(AnimationController<IvyTheDragonMerchant> controller) {
+        controller.triggerableAnim("main_hand_eat", MAIN_HAND_EAT);
     }
 
     @Override

@@ -6,6 +6,7 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.renderer.GeoRenderer;
@@ -25,7 +26,10 @@ public class IvyHeldItemLayer extends BlockAndItemGeoLayer<IvyTheDragonMerchant>
             return null;
         }
         ItemStack stack = animatable.getRecoveryItemForRender();
-        return stack.isEmpty() ? null : stack;
+        if (!stack.isEmpty()) {
+            return stack;
+        }
+        return animatable.shouldRenderCombatSwordForTesting() ? new ItemStack(Items.IRON_SWORD) : null;
     }
 
     @Override

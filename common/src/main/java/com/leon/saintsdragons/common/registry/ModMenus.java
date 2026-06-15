@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
+import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -19,6 +20,10 @@ public final class ModMenus {
     public static final Supplier<MenuType<StegonautInventoryMenu>> STEGONAUT_INVENTORY =
             REGISTER.register("stegonaut_inventory",
                     () -> new MenuType<>(StegonautInventoryMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final Supplier<MenuType<IvyInventoryMenu>> IVY_INVENTORY =
+            REGISTER.register("ivy_inventory",
+                    () -> new MenuType<>(IvyInventoryMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     private ModMenus() {
     }
