@@ -5,17 +5,22 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 final class IvyCompanionController {
-    private static final double FOLLOW_START_DISTANCE_SQR = 16.0D;
-    private static final double FOLLOW_STOP_DISTANCE_SQR = 9.0D;
-    private static final double FOLLOW_RUN_DISTANCE_SQR = 32.0D;
-    private static final double FOLLOW_TELEPORT_DISTANCE_SQR = 256.0D;
+    private static final double FOLLOW_START_DISTANCE_SQR = 6.25D;
+    private static final double FOLLOW_STOP_DISTANCE_SQR = 2.25D;
+    private static final double FOLLOW_RUN_DISTANCE_SQR = 20.25D;
+    private static final double FOLLOW_TELEPORT_DISTANCE_SQR = 4096.0D;
     private static final double FOLLOW_WALK_SPEED = 1.0D;
     private static final double FOLLOW_RUN_SPEED = 1.3D;
+    private static final double DIRECT_FOLLOW_WALK_SPEED = 0.18D;
+    private static final double DIRECT_FOLLOW_RUN_SPEED = 0.28D;
+    private static final double DIRECT_FOLLOW_DROP_Y = 1.5D;
+    private static final double DIRECT_FOLLOW_FAILED_PATH_DISTANCE_SQR = 9.0D;
     private static final double OWNER_DEFENSE_RANGE_SQR = 32.0D * 32.0D;
 
     private final IvyTheDragonMerchant ivy;
@@ -192,7 +197,36 @@ final class IvyCompanionController {
             }
             boolean shouldRun = distance > FOLLOW_RUN_DISTANCE_SQR;
             ivy.setRunning(shouldRun);
-            ivy.getNavigation().moveTo(owner, shouldRun ? FOLLOW_RUN_SPEED : FOLLOW_WALK_SPEED);
+            boolean pathing = ivy.getNavigation().moveTo(owner, shouldRun ? FOLLOW_RUN_SPEED : FOLLOW_WALK_SPEED);
+            if (shouldDirectFollow(owner, distance, pathing)) {
+                directFollowOwner(owner, shouldRun);
+            }
+        }
+
+        private boolean shouldDirectFollow(LivingEntity owner, double distanceSqr, boolean pathing) {
+            return owner.getY() < ivy.getY() - DIRECT_FOLLOW_DROP_Y
+                    || owner.getDeltaMovement().y < -0.35D
+                    || (!pathing && distanceSqr > DIRECT_FOLLOW_FAILED_PATH_DISTANCE_SQR)
+                    || ivy.getNavigation().isDone() && distanceSqr > DIRECT_FOLLOW_FAILED_PATH_DISTANCE_SQR;
+        }
+
+        private void directFollowOwner(LivingEntity owner, boolean shouldRun) {
+            Vec3 toOwner = owner.position().subtract(ivy.position());
+            Vec3 horizontal = new Vec3(toOwner.x, 0.0D, toOwner.z);
+            if (horizontal.lengthSqr() < 1.0E-4D) {
+                return;
+            }
+            ivy.getNavigation().stop();
+            Vec3 direction = horizontal.normalize();
+            double speed = shouldRun ? DIRECT_FOLLOW_RUN_SPEED : DIRECT_FOLLOW_WALK_SPEED;
+            Vec3 current = ivy.getDeltaMovement();
+            ivy.setDeltaMovement(
+                    current.x * 0.35D + direction.x * speed,
+                    current.y,
+                    current.z * 0.35D + direction.z * speed
+            );
+            ivy.setYRot((float) (Math.atan2(direction.z, direction.x) * (180.0F / Math.PI)) - 90.0F);
+            ivy.setRunning(true);
         }
 
         private boolean tryTeleportNearOwner(LivingEntity owner) {
