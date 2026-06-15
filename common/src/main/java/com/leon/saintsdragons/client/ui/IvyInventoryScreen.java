@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -8,8 +9,13 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffectUtil;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ArmorItem;
@@ -17,6 +23,10 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 
 public class IvyInventoryScreen extends AbstractContainerScreen<IvyInventoryMenu> {
     private static final ResourceLocation TEXTURE =
@@ -34,7 +44,7 @@ public class IvyInventoryScreen extends AbstractContainerScreen<IvyInventoryMenu
     private static final int VITALS_DEST_BAR_X = 96;
     private static final int VITALS_DEST_HEALTH_Y = 11;
     private static final int VITALS_DEST_ARMOR_Y = 23;
-    private static final int VITALS_VALUE_X = 160;
+    private static final int VITALS_VALUE_X = 162;
     private static final int VITALS_SOURCE_HEART_ICON_X = 177;
     private static final int VITALS_SOURCE_HEART_ICON_Y = 0;
     private static final int VITALS_SOURCE_ARMOR_ICON_X = 177;
@@ -50,6 +60,10 @@ public class IvyInventoryScreen extends AbstractContainerScreen<IvyInventoryMenu
     private static final int BAR_H = 8;
     private static final int FILL_W = 44;
     private static final int FILL_H = 2;
+    private static final int EFFECT_ICON_SIZE = 18;
+    private static final int EFFECT_ICON_GAP = 4;
+    private static final int EFFECTS_LEFT_GAP = 24;
+    private static final int EFFECTS_TOP_Y = 7;
 
     public IvyInventoryScreen(IvyInventoryMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
@@ -135,7 +149,7 @@ public class IvyInventoryScreen extends AbstractContainerScreen<IvyInventoryMenu
     }
 
     private void renderVitalValue(GuiGraphics guiGraphics, String value, int x, int y) {
-        guiGraphics.drawString(this.font, value, x - this.font.width(value), y + 1, 0xFFEDE7D2, false);
+        guiGraphics.drawString(this.font, value, x - this.font.width(value), y, 0x000000, false);
     }
 
     private int getArmorFillWidth() {
@@ -160,6 +174,83 @@ public class IvyInventoryScreen extends AbstractContainerScreen<IvyInventoryMenu
         return stack.getItem() instanceof ArmorItem armor ? armor.getDefense() : 0;
     }
 
+    private void renderIvyEffects(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        IvyTheDragonMerchant ivy = getIvy();
+        List<MobEffectInstance> effects = new ArrayList<>();
+        if (ivy != null) {
+            effects.addAll(ivy.getActiveEffects());
+        }
+        if (hasBoundStegonautBinder()) {
+            addMissingEffect(effects, MobEffects.DAMAGE_RESISTANCE);
+            addMissingEffect(effects, MobEffects.ABSORPTION);
+        }
+        if (effects.isEmpty()) {
+            return;
+        }
+
+        effects.sort(Comparator.comparing(effect -> effect.getEffect().getDescriptionId()));
+
+        int x = this.leftPos - EFFECT_ICON_SIZE - EFFECTS_LEFT_GAP;
+        int y = this.topPos + EFFECTS_TOP_Y;
+        MobEffectInstance hoveredEffect = null;
+
+        Minecraft minecraft = Minecraft.getInstance();
+        for (int i = 0; i < effects.size(); i++) {
+            MobEffectInstance effect = effects.get(i);
+            int iconY = y + i * (EFFECT_ICON_SIZE + EFFECT_ICON_GAP);
+            TextureAtlasSprite sprite = minecraft.getMobEffectTextures().get(effect.getEffect());
+            guiGraphics.blit(x, iconY, 0, EFFECT_ICON_SIZE, EFFECT_ICON_SIZE, sprite);
+
+            if (mouseX >= x && mouseX < x + EFFECT_ICON_SIZE
+                    && mouseY >= iconY && mouseY < iconY + EFFECT_ICON_SIZE) {
+                hoveredEffect = effect;
+            }
+        }
+
+        if (hoveredEffect != null) {
+            guiGraphics.renderTooltip(this.font, getEffectTooltip(hoveredEffect), Optional.empty(), mouseX, mouseY);
+        }
+    }
+
+    private List<Component> getEffectTooltip(MobEffectInstance effect) {
+        List<Component> lines = new ArrayList<>();
+        Component name = effect.getEffect().getDisplayName();
+        if (effect.getAmplifier() > 0) {
+            name = Component.translatable(
+                    "potion.withAmplifier",
+                    name,
+                    Component.translatable("potion.potency." + effect.getAmplifier())
+            );
+        }
+        lines.add(name);
+        if (effect.getDuration() > 0) {
+            lines.add(MobEffectUtil.formatDuration(effect, 1.0F));
+        }
+        return lines;
+    }
+
+    private void addMissingEffect(List<MobEffectInstance> effects, MobEffect mobEffect) {
+        for (MobEffectInstance effect : effects) {
+            if (effect.getEffect() == mobEffect) {
+                return;
+            }
+        }
+        effects.add(new MobEffectInstance(mobEffect, 0, 0, false, false, false));
+    }
+
+    private boolean hasBoundStegonautBinder() {
+        for (int slot = 0; slot < IvyInventoryMenu.IVY_SLOT_COUNT; slot++) {
+            ItemStack stack = this.menu.getSlot(slot).getItem();
+            if (!stack.isEmpty()
+                    && stack.getItem() instanceof StegonautBinderItem
+                    && StegonautBinderItem.isBound(stack)
+                    && StegonautBinderItem.getBoundStegonautUUID(stack) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Nullable
     private IvyTheDragonMerchant getIvy() {
         Minecraft minecraft = Minecraft.getInstance();
@@ -174,6 +265,7 @@ public class IvyInventoryScreen extends AbstractContainerScreen<IvyInventoryMenu
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
+        renderIvyEffects(guiGraphics, mouseX, mouseY);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
     }
 }

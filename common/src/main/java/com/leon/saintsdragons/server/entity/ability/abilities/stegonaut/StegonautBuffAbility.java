@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
@@ -88,6 +90,16 @@ public class StegonautBuffAbility {
             if (player.isAlive() && hasBoundStegonautBinder(player)) {
                 applyPortableAura(level, player, currentTargets);
             }
+            for (IvyTheDragonMerchant ivy : level.getEntitiesOfClass(
+                    IvyTheDragonMerchant.class,
+                    player.getBoundingBox().inflate(BUFF_RANGE * 2.0D),
+                    ivy -> ivy.isAlive()
+                            && ivy.isTame()
+                            && ivy.isOwnedBy(player)
+                            && hasBoundStegonautBinder(ivy.getIvyInventory())
+            )) {
+                applyPortableAura(level, ivy, currentTargets);
+            }
         }
 
         clearMissingTargets(level, PORTABLE_BUFF_TARGETS.getOrDefault(level.dimension(), Collections.emptySet()), currentTargets);
@@ -119,6 +131,27 @@ public class StegonautBuffAbility {
                 LivingEntity.class,
                 player.getBoundingBox().inflate(BUFF_RANGE),
                 entity -> entity != player && isEligibleForPortableAura(entity, player)
+        );
+
+        for (LivingEntity entity : nearbyEntities) {
+            applyBuffs(entity, false);
+            currentTargets.add(entity.getUUID());
+        }
+    }
+
+    private static void applyPortableAura(ServerLevel level, IvyTheDragonMerchant ivy, Set<UUID> currentTargets) {
+        applyBuffs(ivy, false);
+        currentTargets.add(ivy.getUUID());
+
+        LivingEntity owner = ivy.getOwner();
+        if (!(owner instanceof Player ownerPlayer)) {
+            return;
+        }
+
+        List<LivingEntity> nearbyEntities = level.getEntitiesOfClass(
+                LivingEntity.class,
+                ivy.getBoundingBox().inflate(BUFF_RANGE),
+                entity -> entity != ivy && isEligibleForPortableAura(entity, ownerPlayer)
         );
 
         for (LivingEntity entity : nearbyEntities) {
@@ -206,6 +239,19 @@ public class StegonautBuffAbility {
 
     private static boolean hasBoundStegonautBinder(NonNullList<ItemStack> stacks) {
         for (ItemStack stack : stacks) {
+            if (!stack.isEmpty()
+                    && stack.getItem() instanceof StegonautBinderItem
+                    && StegonautBinderItem.isBound(stack)
+                    && StegonautBinderItem.getBoundStegonautUUID(stack) != null) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasBoundStegonautBinder(Container container) {
+        for (int slot = 0; slot < container.getContainerSize(); slot++) {
+            ItemStack stack = container.getItem(slot);
             if (!stack.isEmpty()
                     && stack.getItem() instanceof StegonautBinderItem
                     && StegonautBinderItem.isBound(stack)

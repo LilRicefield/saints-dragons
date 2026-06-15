@@ -18,11 +18,15 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");
     public static final Supplier<SoundEvent> IVY_REACTION_TO_EGG = registerSound("ivy_reaction_to_egg");
     public static final Supplier<SoundEvent> IVY_VOICE_BLIP = registerSound("ivy_voice_blip");
+    public static final Supplier<SoundEvent> IVY_EAT = registerSound("ivy_eat");
+    public static final Supplier<SoundEvent> IVY_DRINK = registerSound("ivy_drink");
     public static final Supplier<SoundEvent> IVY_DODGE = registerSound("ivy_dodge");
     public static final Supplier<SoundEvent> IVY_LEFT_JAB = registerSound("ivy_left_jab");
     public static final Supplier<SoundEvent> IVY_RIGHT_HOOK = registerSound("ivy_right_hook");
     public static final Supplier<SoundEvent> IVY_JAB_JAB_HOOK = registerSound("ivy_jab_jab_hook");
     public static final Supplier<SoundEvent> IVY_LEFT_JAB_RIGHT_CROSS = registerSound("ivy_left_jab_right_cross");
+    public static final Supplier<SoundEvent> IVY_JAB_JAB_SWING = registerSound("ivy_jab_jab_swing");
+    public static final Supplier<SoundEvent> IVY_LEFT_JAB_RIGHT_SWING = registerSound("ivy_left_jab_right_swing");
     public static final Supplier<SoundEvent> IVY_RIGHT_HOOK_UPPERCUT = registerSound("ivy_right_hook_uppercut");
     public static final Supplier<SoundEvent> IVY_DODGE_LIVER_SHOT = registerSound("ivy_dodge_liver_shot");
     public static final Supplier<SoundEvent> IVY_DASH_FORWARD_RIGHT_CROSS = registerSound("ivy_dash_forward_right_cross");

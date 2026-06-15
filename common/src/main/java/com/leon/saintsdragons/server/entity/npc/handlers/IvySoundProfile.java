@@ -16,11 +16,15 @@ public class IvySoundProfile implements HumanSoundProfile {
             case "ivy_trade_start" -> playTradeStart(handler, volume, pitch);
             case "ivy_trade_stop" -> playTradeStop(handler, volume, pitch);
             case "ivy_reaction_to_egg" -> playReactionToEgg(handler, volume, pitch);
+            case "ivy_eat" -> playCustomSound(handler, "ivy_eat", ModSounds.IVY_EAT.get(), volume, pitch, 8);
+            case "ivy_drink" -> playCustomSound(handler, "ivy_drink", ModSounds.IVY_DRINK.get(), volume, pitch, 8);
             case "ivy_dodge" -> playCustomSound(handler, "ivy_dodge", ModSounds.IVY_DODGE.get(), volume, pitch, 5);
             case "ivy_left_jab" -> playCustomSound(handler, "ivy_left_jab", ModSounds.IVY_LEFT_JAB.get(), volume, pitch, 3);
             case "ivy_right_hook" -> playCustomSound(handler, "ivy_right_hook", ModSounds.IVY_RIGHT_HOOK.get(), volume, pitch, 4);
             case "ivy_jab_jab_hook" -> playCustomSound(handler, "ivy_jab_jab_hook", ModSounds.IVY_JAB_JAB_HOOK.get(), volume, pitch, 5);
             case "ivy_left_jab_right_cross" -> playCustomSound(handler, "ivy_left_jab_right_cross", ModSounds.IVY_LEFT_JAB_RIGHT_CROSS.get(), volume, pitch, 5);
+            case "ivy_jab_jab_swing" -> playCustomSound(handler, "ivy_jab_jab_swing", ModSounds.IVY_JAB_JAB_SWING.get(), volume, pitch, 5);
+            case "ivy_left_jab_right_swing" -> playCustomSound(handler, "ivy_left_jab_right_swing", ModSounds.IVY_LEFT_JAB_RIGHT_SWING.get(), volume, pitch, 5);
             case "ivy_right_hook_uppercut" -> playCustomSound(handler, "ivy_right_hook_uppercut", ModSounds.IVY_RIGHT_HOOK_UPPERCUT.get(), volume, pitch, 5);
             case "ivy_dodge_liver_shot" -> playCustomSound(handler, "ivy_dodge_liver_shot", ModSounds.IVY_DODGE_LIVER_SHOT.get(), volume, pitch, 5);
             case "ivy_dash_forward_right_cross" -> playCustomSound(handler, "ivy_dash_forward_right_cross", ModSounds.IVY_DASH_FORWARD_RIGHT_CROSS.get(), volume, pitch, 5);

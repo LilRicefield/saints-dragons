@@ -17,9 +17,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant> {
+public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragonMerchant> {
     private static final double CHATTER_RENDER_DISTANCE_SQR = 256.0D;
-    private static final float CHATTER_Y_OFFSET = 0.42F;
+    private static final float CHATTER_Y_OFFSET = 0.15F;
     private static final long CHATTER_TYPE_INTERVAL_MS = 42L;
     private static final long VOICE_BLIP_INTERVAL_MS = 34L;
     private final Map<Integer, ChatterRenderState> chatterStates = new HashMap<>();

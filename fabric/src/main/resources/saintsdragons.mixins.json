@@ -16,6 +16,7 @@
     "GuiMixin"
   ],
   "mixins": [
+    "NameTagItemMixin",
     "PathfinderMobMixin"
   ],
   "injectors": {

@@ -38,6 +38,26 @@
       }
     ]
   },
+  "ivy_eat": {
+    "subtitle": "subtitles.saintsdragons.ivy_eat",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_eat",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_drink": {
+    "subtitle": "subtitles.saintsdragons.ivy_drink",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_drink",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "ivy_dodge": {
     "subtitle": "subtitles.saintsdragons.ivy_dodge",
     "sounds": [
@@ -83,6 +103,26 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ivy/ivy_left_jab_right_cross",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_jab_jab_swing": {
+    "subtitle": "subtitles.saintsdragons.ivy_jab_jab_swing",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_jab_jab_swing",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_left_jab_right_swing": {
+    "subtitle": "subtitles.saintsdragons.ivy_left_jab_right_swing",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_left_jab_right_swing",
         "volume": 1.0,
         "pitch": 1.0
       }
