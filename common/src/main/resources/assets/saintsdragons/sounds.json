@@ -298,6 +298,46 @@
       }
     ]
   },
+  "ivy_embarrassed": {
+    "subtitle": "subtitles.saintsdragons.ivy_embarrassed",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_embarrassed",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_sigh": {
+    "subtitle": "subtitles.saintsdragons.ivy_sigh",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_sigh",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_hmm_trader": {
+    "subtitle": "subtitles.saintsdragons.ivy_hmm_trader",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_hmm_trader",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
+  "ivy_hmm_gardener": {
+    "subtitle": "subtitles.saintsdragons.ivy_hmm_gardener",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ivy/ivy_hmm_gardener",
+        "volume": 1.0,
+        "pitch": 1.0
+      }
+    ]
+  },
   "bleeding_bolt": {
     "subtitle": "subtitles.saintsdragons.bleeding_bolt",
     "sounds": [

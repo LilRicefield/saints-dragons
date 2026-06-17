@@ -86,13 +86,13 @@ public final class DialogueSessionRegistry {
             return;
         }
         if (currentNode.opensTrade()) {
-            SESSIONS.remove(player.getUUID());
+            removeSession(player, true);
             NetworkHandler.sendToPlayer(player, MessageDialogueClose.INSTANCE);
             ivy.openDialogueTrade(player, target.dialogue().id(), target.nodeId());
             return;
         }
         if (currentNode.opensInventory()) {
-            SESSIONS.remove(player.getUUID());
+            removeSession(player, true);
             NetworkHandler.sendToPlayer(player, MessageDialogueClose.INSTANCE);
             ivy.openDialogueInventory(player);
             return;
@@ -155,7 +155,7 @@ public final class DialogueSessionRegistry {
     }
 
     public static void end(ServerPlayer player) {
-        SESSIONS.remove(player.getUUID());
+        removeSession(player, true);
         NetworkHandler.sendToPlayer(player, MessageDialogueClose.INSTANCE);
     }
 
@@ -176,7 +176,7 @@ public final class DialogueSessionRegistry {
             if (player != null) {
                 end(player);
             } else {
-                SESSIONS.remove(entry.getKey());
+                removeSession(ivy, entry.getKey(), true);
             }
         }
     }
@@ -192,7 +192,7 @@ public final class DialogueSessionRegistry {
                 if (player != null) {
                     end(player);
                 } else {
-                    SESSIONS.remove(entry.getKey());
+                    removeSession(ivy, entry.getKey(), true);
                 }
                 continue;
             }
@@ -210,6 +210,20 @@ public final class DialogueSessionRegistry {
             return null;
         }
         return ivy.level().getServer().getPlayerList().getPlayer(uuid);
+    }
+
+    private static void removeSession(ServerPlayer player, boolean exitExpression) {
+        DialogueSession session = SESSIONS.remove(player.getUUID());
+        if (exitExpression && session != null && player.level().getEntity(session.entityId()) instanceof IvyTheDragonMerchant ivy) {
+            ivy.exitDialogueExpressionAnimation();
+        }
+    }
+
+    private static void removeSession(IvyTheDragonMerchant ivy, UUID playerUuid, boolean exitExpression) {
+        DialogueSession session = SESSIONS.remove(playerUuid);
+        if (exitExpression && session != null && session.entityId() == ivy.getId()) {
+            ivy.exitDialogueExpressionAnimation();
+        }
     }
 
     private static boolean isValidSpeaker(ServerPlayer player, IvyTheDragonMerchant ivy) {
@@ -360,6 +374,10 @@ public final class DialogueSessionRegistry {
             ivy.recruitAsCompanion(player);
             ivy.rememberDialogueFlag(player, "ivy_recruited");
             ivy.rememberDialogueFlag(player, "cindervane_quest_completed");
+        }
+        String animationTrigger = node.ivyAnimationTrigger();
+        if (!animationTrigger.isBlank()) {
+            ivy.playDialogueAnimation(animationTrigger);
         }
     }
 

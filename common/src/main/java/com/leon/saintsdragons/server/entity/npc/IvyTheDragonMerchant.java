@@ -1,3 +1,4 @@
+
 // I know that we are upside down, so hold your tongue and hear me out
 
 package com.leon.saintsdragons.server.entity.npc;
@@ -34,6 +35,7 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
@@ -234,6 +236,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.run");
+    private static final RawAnimation EMBARRASSED = RawAnimation.begin().thenPlay("ivy_oleander.animation.embarrassed");
+    private static final RawAnimation SIGH = RawAnimation.begin().thenPlay("ivy_oleander.animation.sigh");
+    private static final RawAnimation HMM_TRADER = RawAnimation.begin().thenPlayAndHold("ivy_oleander.animation.hmm_trader");
+    private static final RawAnimation HMM_GARDENER = RawAnimation.begin().thenPlayAndHold("ivy_oleander.animation.hmm_gardener");
+    private static final RawAnimation HMM_DRAGON_ADVICE = RawAnimation.begin().thenPlayAndHold("ivy_oleander.animation.hmm_dragon_advice");
+    private static final RawAnimation HMM_TRADER_EXIT_TO_IDLE = RawAnimation.begin().thenPlay("ivy_oleander.animation.hmm_trader_exit_to_idle");
+    private static final RawAnimation HMM_GARDENER_EXIT_TO_IDLE = RawAnimation.begin().thenPlay("ivy_oleander.animation.hmm_garderner_exit_to_idle");
+    private static final RawAnimation HMM_DRAGON_ADVICE_EXIT_TO_IDLE = RawAnimation.begin().thenPlay("ivy_oleander.animation.hmm_dragon_advice_exit_to_idle");
     private static final String PASSIVE_USE_CONTROLLER = "passive_use";
     private static final RawAnimation MAIN_HAND_EAT = RawAnimation.begin().thenPlay("ivy_oleander.animation.main_hand_eat");
     private static final RawAnimation MAIN_HAND_DRINK = RawAnimation.begin().thenPlay("ivy_oleander.animation.main_hand_drink");
@@ -250,6 +260,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final String TRESPASSER_IMPRESSION = "trespasser";
     private static final String RUDE_IMPRESSION = "rude";
     private static final String WARES_IMPRESSION = "wares";
+    private static final double XP_PICKUP_RADIUS = 1.0D;
+    private static final int XP_PICKUP_INTERVAL = 4;
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private int tradeAnimTicks = 0;
     private boolean lastTradingState = false;
@@ -278,8 +290,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private int passiveUseCooldown;
     private int waterClutchCooldown;
     private int waterClutchWaterTicks;
+    private int xpPickupCooldown;
     @Nullable
     private BlockPos waterClutchWaterPos;
+    @Nullable
+    private String holdingDialogueExpressionTrigger;
 
     public IvyTheDragonMerchant(EntityType<? extends AbstractVillager> entityType, Level level) {
         super(entityType, level);
@@ -414,8 +429,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         goalSelector.addGoal(2, new OpenDoorGoal(this, true));
         goalSelector.addGoal(2, getBoxingCombat().createGoal());
         goalSelector.addGoal(3, getCompanionController().createStayGoal());
-        goalSelector.addGoal(4, getCompanionController().createFollowOwnerGoal());
-        goalSelector.addGoal(5, new RandomStrollGoal(this, 0.6) {
+        goalSelector.addGoal(4, getCompanionController().createLadderClimbGoal());
+        goalSelector.addGoal(5, getCompanionController().createFollowOwnerGoal());
+        goalSelector.addGoal(6, new RandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
@@ -436,7 +452,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                         && super.canContinueToUse();
             }
         });
-        goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 6.0f) {
+        goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 6.0f) {
             @Override
             public boolean canUse() {
                 return !IvyTheDragonMerchant.this.isInDialogue()
@@ -451,7 +467,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                         && super.canContinueToUse();
             }
         });
-        goalSelector.addGoal(7, new RandomLookAroundGoal(this) {
+        goalSelector.addGoal(8, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
                 return !IvyTheDragonMerchant.this.isInDialogue()
@@ -650,6 +666,90 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             target.setSecondsOnFire(fireAspect * 4);
         }
         sword.getItem().hurtEnemy(sword, target, this);
+    }
+
+    void handleCombatKill(LivingEntity target) {
+        if (!(level() instanceof ServerLevel server) || target.isAlive() || !(target instanceof Mob mob)) {
+            return;
+        }
+        int xp = mob.getExperienceReward();
+        if (xp <= 0) {
+            return;
+        }
+        int remainingXp = isTame() ? applyMendingFromExperience(xp) : xp;
+        if (remainingXp > 0) {
+            ExperienceOrb.award(server, target.position(), remainingXp);
+        }
+    }
+
+    private void tickExperiencePickup() {
+        if (!isTame() || !(level() instanceof ServerLevel server)) {
+            return;
+        }
+        if (xpPickupCooldown > 0) {
+            xpPickupCooldown--;
+            return;
+        }
+        xpPickupCooldown = XP_PICKUP_INTERVAL;
+
+        List<ExperienceOrb> orbs = level().getEntitiesOfClass(ExperienceOrb.class,
+                getBoundingBox().inflate(XP_PICKUP_RADIUS),
+                orb -> orb.isAlive() && orb.tickCount > 2 && orb.getValue() > 0);
+        for (ExperienceOrb orb : orbs) {
+            pickupExperienceOrb(server, orb);
+        }
+    }
+
+    private void pickupExperienceOrb(ServerLevel server, ExperienceOrb orb) {
+        int originalValue = orb.getValue();
+        int remainingValue = applyMendingFromExperience(originalValue);
+        if (remainingValue == originalValue) {
+            return;
+        }
+
+        take(orb, 1);
+        playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 0.1F,
+                (getRandom().nextFloat() - getRandom().nextFloat()) * 0.35F + 0.9F);
+        if (remainingValue <= 0) {
+            orb.discard();
+        } else {
+            Vec3 pos = orb.position();
+            orb.discard();
+            ExperienceOrb.award(server, pos, remainingValue);
+        }
+    }
+
+    private int applyMendingFromExperience(int xp) {
+        int remainingXp = xp;
+        while (remainingXp > 0) {
+            ItemStack stack = getRandomDamagedMendingItem();
+            if (stack.isEmpty()) {
+                break;
+            }
+            int repairedDurability = Math.min(remainingXp * 2, stack.getDamageValue());
+            if (repairedDurability <= 0) {
+                break;
+            }
+            stack.setDamageValue(stack.getDamageValue() - repairedDurability);
+            remainingXp -= repairedDurability / 2;
+        }
+        if (remainingXp != xp) {
+            ivyInventory.setChanged();
+        }
+        return Math.max(0, remainingXp);
+    }
+
+    private ItemStack getRandomDamagedMendingItem() {
+        List<ItemStack> stacks = new ArrayList<>();
+        for (int slot = 0; slot < IvyInventoryMenu.IVY_SLOT_COUNT; slot++) {
+            ItemStack stack = ivyInventory.getItem(slot);
+            if (!stack.isEmpty()
+                    && stack.isDamaged()
+                    && EnchantmentHelper.getItemEnchantmentLevel(Enchantments.MENDING, stack) > 0) {
+                stacks.add(stack);
+            }
+        }
+        return stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(getRandom().nextInt(stacks.size()));
     }
 
     boolean isBoxingSwordStyle() {
@@ -1158,6 +1258,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         tickDialogueTradeResume();
         tickCombatChatter();
         tickIdleChatter();
+        tickExperiencePickup();
         getCompanionController().tick();
         clearInvalidDialogueBlockingTarget();
         if (hasLiveTarget() && isInDialogue()) {
@@ -1842,6 +1943,44 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         triggerAnim("movement", "trade_stop");
     }
 
+    public void playDialogueAnimation(String trigger) {
+        if (level().isClientSide || getBoxingCombat().isActive()) {
+            return;
+        }
+        setIdleVariantActive(false);
+        getNavigation().stop();
+        holdingDialogueExpressionTrigger = isHoldingDialogueExpressionTrigger(trigger) ? trigger : null;
+        triggerAnim("movement", trigger);
+    }
+
+    public void exitDialogueExpressionAnimation() {
+        if (level().isClientSide || holdingDialogueExpressionTrigger == null) {
+            return;
+        }
+        String exitTrigger = dialogueExpressionExitTrigger(holdingDialogueExpressionTrigger);
+        holdingDialogueExpressionTrigger = null;
+        getNavigation().stop();
+        if (exitTrigger != null && !getBoxingCombat().isActive()) {
+            triggerAnim("movement", exitTrigger);
+        }
+    }
+
+    private static boolean isHoldingDialogueExpressionTrigger(String trigger) {
+        return "hmm_trader".equals(trigger)
+                || "hmm_gardener".equals(trigger)
+                || "hmm_dragon_advice".equals(trigger);
+    }
+
+    @Nullable
+    private static String dialogueExpressionExitTrigger(String trigger) {
+        return switch (trigger) {
+            case "hmm_trader" -> "hmm_trader_exit_to_idle";
+            case "hmm_gardener" -> "hmm_gardener_exit_to_idle";
+            case "hmm_dragon_advice" -> "hmm_dragon_advice_exit_to_idle";
+            default -> null;
+        };
+    }
+
     private void setupMovementController(AnimationController<IvyTheDragonMerchant> controller) {
         controller.triggerableAnim("trade_start", TRADE_START);
         controller.triggerableAnim("trading", TRADING);
@@ -1850,6 +1989,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.greetings"));
         controller.triggerableAnim("reaction_to_egg",
                 RawAnimation.begin().thenPlay("ivy_oleander.animation.reaction_to_egg"));
+        controller.triggerableAnim("embarrassed", EMBARRASSED);
+        controller.triggerableAnim("sigh", SIGH);
+        controller.triggerableAnim("hmm_trader", HMM_TRADER);
+        controller.triggerableAnim("hmm_gardener", HMM_GARDENER);
+        controller.triggerableAnim("hmm_dragon_advice", HMM_DRAGON_ADVICE);
+        controller.triggerableAnim("hmm_trader_exit_to_idle", HMM_TRADER_EXIT_TO_IDLE);
+        controller.triggerableAnim("hmm_gardener_exit_to_idle", HMM_GARDENER_EXIT_TO_IDLE);
+        controller.triggerableAnim("hmm_dragon_advice_exit_to_idle", HMM_DRAGON_ADVICE_EXIT_TO_IDLE);
     }
 
     private void setupPassiveUseController(AnimationController<IvyTheDragonMerchant> controller) {

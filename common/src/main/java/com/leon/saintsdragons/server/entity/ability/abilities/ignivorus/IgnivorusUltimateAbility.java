@@ -110,7 +110,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 dragon.setTakeoff(false);
                 dragon.setDeltaMovement(Vec3.ZERO);
                 dragon.setUltimateCameraZoomActive(true);
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "phase2_ultimate");
+                dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "phase2_ultimate");
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 127);
                 }
@@ -146,7 +146,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                         dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_START_AIR.get(), 1.0f, 1.0f, 54);
                     }
                 } else {
-                    dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "ultimate_start");
+                    dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "ultimate_start");
                     if (!dragon.level().isClientSide) {
                         dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_START.get(), 1.0f, 1.0f, 92);
                     }
@@ -192,7 +192,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_air");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 112);
             } else {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "ultimate");
+                dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "ultimate");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE.get(), 1.0f, 1.0f, 127);
             }
             loopAnimPlayed = true;
@@ -218,7 +218,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_end_air");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END_AIR.get(), 1.0f, 1.0f, 38);
             } else {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "ultimate_end");
+                dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "ultimate_end");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END.get(), 1.0f, 1.0f, 57);
             }
             endAnimPlayed = true;

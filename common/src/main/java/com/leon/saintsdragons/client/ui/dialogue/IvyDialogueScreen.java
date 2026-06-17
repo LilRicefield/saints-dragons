@@ -65,6 +65,7 @@ public class IvyDialogueScreen extends Screen {
     private static final int NAME_INPUT_MAX_RAW_LENGTH = 128;
     private static final int NAME_INPUT_MAX_NON_WHITESPACE = 50;
     private static final long VOICE_BLIP_INTERVAL_MS = 72L;
+    private static final double CAMERA_TARGET_Y_OFFSET = -0.25D;
 
     private MessageDialogueOpen message;
     private final long boxStartTime;
@@ -571,7 +572,7 @@ public class IvyDialogueScreen extends Screen {
             return;
         }
         Vec3 eye = minecraft.player.getEyePosition();
-        Vec3 target = speaker.getEyePosition();
+        Vec3 target = speaker.getEyePosition().add(0.0D, CAMERA_TARGET_Y_OFFSET, 0.0D);
         double dx = target.x - eye.x;
         double dy = target.y - eye.y;
         double dz = target.z - eye.z;

@@ -52,6 +52,10 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         public boolean recruitsIvy() {
             return type == Type.RECRUIT_IVY;
         }
+
+        public String ivyAnimationTrigger() {
+            return type.ivyAnimationTrigger();
+        }
     }
 
     public record Choice(Component text, String next, String impression, String setFlag, String requiresFlag, String hiddenIfFlag,
@@ -77,7 +81,25 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         OPEN_INVENTORY,
         USE_PLAYER_NAME,
         NAME_INPUT,
-        RECRUIT_IVY;
+        RECRUIT_IVY,
+        IVY_EMBARRASSED,
+        IVY_SIGH,
+        IVY_HMM_TRADER,
+        IVY_HMM_GARDENER,
+        IVY_HMM_DRAGON_ADVICE,
+        IVY_HMM_EXIT_TO_IDLE;
+
+        public String ivyAnimationTrigger() {
+            return switch (this) {
+                case IVY_EMBARRASSED -> "embarrassed";
+                case IVY_SIGH -> "sigh";
+                case IVY_HMM_TRADER -> "hmm_trader";
+                case IVY_HMM_GARDENER -> "hmm_gardener";
+                case IVY_HMM_DRAGON_ADVICE -> "hmm_dragon_advice";
+                case IVY_HMM_EXIT_TO_IDLE -> "hmm_dragon_advice_exit_to_idle";
+                default -> "";
+            };
+        }
 
         public static Type byName(String name) {
             if ("end_dialogue".equalsIgnoreCase(name)) {
@@ -97,6 +119,24 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
             }
             if ("recruit_ivy".equalsIgnoreCase(name)) {
                 return RECRUIT_IVY;
+            }
+            if ("ivy_embarrassed".equalsIgnoreCase(name)) {
+                return IVY_EMBARRASSED;
+            }
+            if ("ivy_sigh".equalsIgnoreCase(name)) {
+                return IVY_SIGH;
+            }
+            if ("ivy_hmm_trader".equalsIgnoreCase(name)) {
+                return IVY_HMM_TRADER;
+            }
+            if ("ivy_hmm_gardener".equalsIgnoreCase(name)) {
+                return IVY_HMM_GARDENER;
+            }
+            if ("ivy_hmm_dragon_advice".equalsIgnoreCase(name)) {
+                return IVY_HMM_DRAGON_ADVICE;
+            }
+            if ("ivy_hmm_exit_to_idle".equalsIgnoreCase(name)) {
+                return IVY_HMM_EXIT_TO_IDLE;
             }
             return DEFAULT;
         }

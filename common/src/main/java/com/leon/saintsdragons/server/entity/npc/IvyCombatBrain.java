@@ -911,6 +911,9 @@ public class IvyCombatBrain {
         if (damaged && swordDamage) {
             ivy.applyEquippedSwordPostHit(target);
         }
+        if (damaged && !target.isAlive()) {
+            ivy.handleCombatKill(target);
+        }
         Vec3 knockback = target.position().subtract(ivy.position());
         if (knockback.horizontalDistanceSqr() > 1.0E-4D) {
             double knockbackStrength = hit.knockback + (swordDamage ? ivy.getEquippedSwordKnockbackBonus() * 0.35D : 0.0D);

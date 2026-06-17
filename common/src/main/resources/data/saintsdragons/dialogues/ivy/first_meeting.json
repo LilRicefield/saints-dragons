@@ -147,6 +147,7 @@
       ]
     },
     "c_wares_misread": {
+      "type": "ivy_embarrassed",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
@@ -167,7 +168,40 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "WHAT?? Wha--you should've... you shouldn't even be thinking about that in the first place! Ugh... *She sighs in defeat.* Then? Would you like to trade with me?"
+        "text": "WHAT?? Wha--you should've... you shouldn't even be thinking about that in the first place!"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "c_your_fault_sigh"
+        }
+      ]
+    },
+    "c_your_fault_sigh": {
+      "type": "ivy_sigh",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Ugh... *She sighs in defeat.*"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "c_your_fault_trade_prompt"
+        }
+      ]
+    },
+    "c_your_fault_trade_prompt": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Then? Would you like to trade with me?"
       },
       "choices": [
         {
@@ -236,6 +270,7 @@
       ]
     },
     "d_who_are_you_1": {
+      "type": "ivy_hmm_trader",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
@@ -252,6 +287,7 @@
       ]
     },
     "d_who_are_you_2": {
+      "type": "ivy_hmm_gardener",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
@@ -268,6 +304,7 @@
       ]
     },
     "d_who_are_you_3": {
+      "type": "ivy_hmm_dragon_advice",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
@@ -284,6 +321,7 @@
       ]
     },
     "d_who_are_you_4": {
+      "type": "ivy_hmm_exit_to_idle",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },

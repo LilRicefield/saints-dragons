@@ -68,7 +68,7 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
             dragon.lockRiderControls(29);
             boolean useRight = dragon.shouldUseRightWingSwipe();
             String animationName = useRight ? "stomp_right" : "stomp_left";
-            dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, animationName);
+            dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, animationName);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_STOMP.get(), 1.0f, 1.0f, 68);
             }

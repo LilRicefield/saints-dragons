@@ -70,11 +70,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void triggerBulldozeEnterAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "bulldozer_enter");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "bulldozer_enter");
     }
 
     public void triggerBulldozeExitAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "bulldozer_exit");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "bulldozer_exit");
     }
 
     public void triggerPhase2EnterAnimation() {
@@ -86,7 +86,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void triggerLeapImpactAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "leap_impact");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "leap_impact");
     }
 
     public void setupActionController(AnimationController<Ignivorus> controller) {
@@ -106,6 +106,27 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
     public void setupMovementController(AnimationController<Ignivorus> controller) {
         AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        controller.triggerableAnim("wing_swipe_left",
+                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
+        controller.triggerableAnim("wing_swipe_right",
+                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
+        controller.triggerableAnim("bulldozer_enter",
+                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
+        controller.triggerableAnim("bulldozer_exit",
+                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_exit"));
+        controller.triggerableAnim("stomp_left",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_left"));
+        controller.triggerableAnim("stomp_right",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_right"));
+        controller.triggerableAnim("leap_impact",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
+        controller.triggerableAnim("ultimate_start",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
+        controller.triggerableAnim("ultimate",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
+        controller.triggerableAnim("ultimate_end",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
+        controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
     }
 
     public void setupTransitionController(AnimationController<Ignivorus> controller) {
@@ -134,26 +155,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void setupFastActionController(AnimationController<Ignivorus> controller) {
-        controller.triggerableAnim("wing_swipe_left",
-                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
-        controller.triggerableAnim("wing_swipe_right",
-                RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_right"));
-        controller.triggerableAnim("bulldozer_enter",
-                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_enter"));
-        controller.triggerableAnim("bulldozer_exit",
-                RawAnimation.begin().thenPlay("animation.ignivorus.bulldozer_exit"));
         controller.triggerableAnim("phase2_enter",
                 RawAnimation.begin().thenPlay("animation.ignivorus.phase2_enter"));
         controller.triggerableAnim("phase2_exit",
                 RawAnimation.begin().thenPlay("animation.ignivorus.phase2_exit"));
-        controller.triggerableAnim("stomp_left",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_left"));
-        controller.triggerableAnim("stomp_right",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_stomp_right"));
         controller.triggerableAnim("ignivorus_flex",
                 RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
-        controller.triggerableAnim("leap_impact",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
         controller.triggerableAnim("fireball_level1_charge",
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge"));
         controller.triggerableAnim("fireball_level2_charge",
@@ -168,13 +175,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_shoots"));
         controller.triggerableAnim("fireball_level3_shoot",
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_shoots"));
-        controller.triggerableAnim("ultimate_start",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
-        controller.triggerableAnim("ultimate",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
-        controller.triggerableAnim("ultimate_end",
-                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
-        controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
     }
 
     public PlayState movementPredicate(AnimationState<Ignivorus> state) {
