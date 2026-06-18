@@ -134,6 +134,30 @@ final class IvyCompanionController {
         ownerCombatTimestampsSynced = true;
     }
 
+    void resumeOwnerDefenseAfterRecovery() {
+        rememberOwnerCombatTimestamps();
+        LivingEntity target = getCurrentOwnerDefenseTarget();
+        if (target != null) {
+            ivy.setTarget(target);
+        }
+    }
+
+    @Nullable
+    private LivingEntity getCurrentOwnerDefenseTarget() {
+        LivingEntity owner = ivy.getOwner();
+        if (!(owner instanceof Player) || !owner.isAlive() || owner.level().dimension() != ivy.level().dimension()) {
+            return null;
+        }
+
+        LivingEntity hurtBy = owner.getLastHurtByMob();
+        if (canTargetForOwner(hurtBy, owner)) {
+            return hurtBy;
+        }
+
+        LivingEntity hurtMob = owner.getLastHurtMob();
+        return canTargetForOwner(hurtMob, owner) ? hurtMob : null;
+    }
+
     private class StayGoal extends Goal {
         StayGoal() {
             setFlags(EnumSet.of(Goal.Flag.MOVE));

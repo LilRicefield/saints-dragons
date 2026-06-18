@@ -46,6 +46,9 @@ public class IvySoundProfile implements HumanSoundProfile {
             case "ivy_sigh" -> playCustomSound(handler, "ivy_sigh", ModSounds.IVY_SIGH.get(), volume, pitch, 20);
             case "ivy_hmm_trader" -> playCustomSound(handler, "ivy_hmm_trader", ModSounds.IVY_HMM_TRADER.get(), volume, pitch, 20);
             case "ivy_hmm_gardener" -> playCustomSound(handler, "ivy_hmm_gardener", ModSounds.IVY_HMM_GARDENER.get(), volume, pitch, 20);
+            case "ivy_about_to_die" -> playCustomSound(handler, "ivy_about_to_die", ModSounds.IVY_ABOUT_TO_DIE.get(), volume, pitch, 20);
+            case "ivy_actually_die" -> playCustomSound(handler, "ivy_actually_die", ModSounds.IVY_ACTUALLY_DIE.get(), volume, pitch, 20);
+            case "ivy_die" -> playCustomSound(handler, "ivy_die", ModSounds.IVY_DIE.get(), volume, pitch, 20);
             default -> false;
         };
     }

@@ -6,6 +6,8 @@ import com.mojang.datafixers.util.Pair;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -15,7 +17,6 @@ import net.minecraft.world.inventory.SimpleContainerData;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.SwordItem;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -157,10 +158,15 @@ public class IvyInventoryMenu extends AbstractContainerMenu {
                 case BOOTS -> BOOTS_SLOT;
             };
         }
-        if (stack.getItem() instanceof SwordItem) {
+        if (isWeaponStack(stack)) {
             return SWORD_SLOT;
         }
         return -1;
+    }
+
+    private static boolean isWeaponStack(ItemStack stack) {
+        return !stack.isEmpty()
+                && !stack.getAttributeModifiers(EquipmentSlot.MAINHAND).get(Attributes.ATTACK_DAMAGE).isEmpty();
     }
 
     private static final class ArmorSlot extends Slot {
@@ -201,7 +207,7 @@ public class IvyInventoryMenu extends AbstractContainerMenu {
 
         @Override
         public boolean mayPlace(@NotNull ItemStack stack) {
-            return stack.getItem() instanceof SwordItem;
+            return isWeaponStack(stack);
         }
 
         @Override

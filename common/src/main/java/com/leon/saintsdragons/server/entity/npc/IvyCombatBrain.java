@@ -17,12 +17,12 @@ import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
-import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 
 import javax.annotation.Nullable;
 import java.util.EnumSet;
+import java.util.Map;
 
 public class IvyCombatBrain {
     private static final RawAnimation ORTHODOX_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.orthodox_idle");
@@ -35,8 +35,48 @@ public class IvyCombatBrain {
     private static final RawAnimation SWORD_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_walk_backwards");
     private static final RawAnimation SWORD_RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_run");
     private static final RawAnimation SWORD_FAST_WALK_BACKWARDS = RawAnimation.begin().thenLoop("ivy_oleander.animation.sword_fast_walk_backwards");
+    private static final RawAnimation TO_ORTHODOX = play("ivy_oleander.animation.to_orthodox");
+    private static final RawAnimation EXIT_ORTHODOX = play("ivy_oleander.animation.exit_orthodox");
+    private static final RawAnimation SWORD_UNSHEATHE = play("ivy_oleander.animation.sword_unsheathe");
+    private static final RawAnimation SWORD_TO_ORTHODOX = play("ivy_oleander.animation.sword_to_orthodox");
+    private static final Map<String, RawAnimation> COMBAT_ACTION_ANIMATIONS = Map.ofEntries(
+            Map.entry("sword_quick_stab", play("ivy_oleander.animation.sword_quick_stab")),
+            Map.entry("sword_swing", play("ivy_oleander.animation.sword_swing")),
+            Map.entry("sword_slash_stab_stab", play("ivy_oleander.animation.sword_slash_stab_stab")),
+            Map.entry("sword_swing_slash", play("ivy_oleander.animation.sword_swing_slash")),
+            Map.entry("sword_dash_forward_spin_slash", play("ivy_oleander.animation.sword_dash_forward_spin_slash")),
+            Map.entry("orthodox_left_jab", play("ivy_oleander.animation.orthodox_left_jab")),
+            Map.entry("orthodox_right_hook", play("ivy_oleander.animation.orthodox_right_hook")),
+            Map.entry("orthodox_left_jab_right_cross", play("ivy_oleander.animation.orthodox_left_jab_right_cross")),
+            Map.entry("orthodox_jab_jab_hook", play("ivy_oleander.animation.orthodox_jab_jab_hook")),
+            Map.entry("orthodox_sword_jab_jab_swing", play("ivy_oleander.animation.orthodox_sword_jab_jab_swing")),
+            Map.entry("orthodox_sword_left_jab_right_swing", play("ivy_oleander.animation.orthodox_sword_left_jab_right_swing")),
+            Map.entry("orthodox_right_hook_uppercut", play("ivy_oleander.animation.orthodox_right_hook_uppercut")),
+            Map.entry("orthodox_dash_forward_right_cross", play("ivy_oleander.animation.orthodox_dash_forward_right_cross")),
+            Map.entry("orthodox_throw_projectiles", play("ivy_oleander.animation.orthodox_throw_projectiles")),
+            Map.entry("sword_throw_projectiles", play("ivy_oleander.animation.sword_throw_projectiles")),
+            Map.entry("orthodox_retreat_to_drink", play("ivy_oleander.animation.orthodox_retreat_to_drink")),
+            Map.entry("orthodox_retreat_to_eat", play("ivy_oleander.animation.orthodox_retreat_to_eat")),
+            Map.entry("sword_retreat_to_drink", play("ivy_oleander.animation.sword_retreat_to_drink")),
+            Map.entry("sword_retreat_to_eat", play("ivy_oleander.animation.sword_retreat_to_eat")),
+            Map.entry("dodge_backwards", play("ivy_oleander.animation.dodge_backwards")),
+            Map.entry("dodge_left", play("ivy_oleander.animation.dodge_left")),
+            Map.entry("dodge_right", play("ivy_oleander.animation.dodge_right")),
+            Map.entry("sword_dodge_backwards", play("ivy_oleander.animation.sword_dodge_backwards")),
+            Map.entry("sword_dodge_left", play("ivy_oleander.animation.sword_dodge_left")),
+            Map.entry("sword_dodge_right", play("ivy_oleander.animation.sword_dodge_right")),
+            Map.entry("sword_dodge_left_parry", play("ivy_oleander.animation.sword_dodge_left_parry")),
+            Map.entry("sword_dodge_right_parry", play("ivy_oleander.animation.sword_dodge_right_parry")),
+            Map.entry("dodge_left_liver_shot", play("ivy_oleander.animation.dodge_left_liver_shot")),
+            Map.entry("dodge_right_liver_shot", play("ivy_oleander.animation.dodge_right_liver_shot"))
+    );
 
-    private static final int STANCE_TRANSITION_TICKS = 10;
+    private static RawAnimation play(String animation) {
+        return RawAnimation.begin().thenPlay(animation);
+    }
+
+    private static final int ORTHODOX_STANCE_TRANSITION_TICKS = 10;
+    private static final int SWORD_STANCE_TRANSITION_TICKS = 17;
     private static final int EXIT_STANCE_TICKS = 10;
     private static final int JAB_ACTION_TICKS = 10;
     private static final int HOOK_ACTION_TICKS = 13;
@@ -172,6 +212,7 @@ public class IvyCombatBrain {
     private int targetStillTicks;
     private int targetMovingTicks;
     private int movingPressureCommitCooldown;
+    private String lastAppliedCombatAnimation = "";
 
     public IvyCombatBrain(IvyTheDragonMerchant ivy) {
         this.ivy = ivy;
@@ -181,84 +222,27 @@ public class IvyCombatBrain {
         return new BoxingGoal();
     }
 
-    public void setupMovementController(AnimationController<IvyTheDragonMerchant> controller) {
-        controller.triggerableAnim("to_orthodox",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.to_orthodox"));
-        controller.triggerableAnim("exit_orthodox",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.exit_orthodox"));
-        controller.triggerableAnim("sword_unsheathe",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_unsheathe"));
-        controller.triggerableAnim("sword_to_orthodox",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_to_orthodox"));
-        controller.triggerableAnim("sword_quick_stab",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_quick_stab"));
-        controller.triggerableAnim("sword_swing",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_swing"));
-        controller.triggerableAnim("sword_slash_stab_stab",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_slash_stab_stab"));
-        controller.triggerableAnim("sword_swing_slash",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_swing_slash"));
-        controller.triggerableAnim("sword_dash_forward_spin_slash",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dash_forward_spin_slash"));
-        controller.triggerableAnim("orthodox_left_jab",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_left_jab"));
-        controller.triggerableAnim("orthodox_right_hook",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_right_hook"));
-        controller.triggerableAnim("orthodox_left_jab_right_cross",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_left_jab_right_cross"));
-        controller.triggerableAnim("orthodox_jab_jab_hook",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_jab_jab_hook"));
-        controller.triggerableAnim("orthodox_sword_jab_jab_swing",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_sword_jab_jab_swing"));
-        controller.triggerableAnim("orthodox_sword_left_jab_right_swing",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_sword_left_jab_right_swing"));
-        controller.triggerableAnim("orthodox_right_hook_uppercut",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_right_hook_uppercut"));
-        controller.triggerableAnim("orthodox_dash_forward_right_cross",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_dash_forward_right_cross"));
-        controller.triggerableAnim("orthodox_throw_projectiles",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_throw_projectiles"));
-        controller.triggerableAnim("sword_throw_projectiles",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_throw_projectiles"));
-        controller.triggerableAnim("orthodox_retreat_to_drink",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_retreat_to_drink"));
-        controller.triggerableAnim("orthodox_retreat_to_eat",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.orthodox_retreat_to_eat"));
-        controller.triggerableAnim("sword_retreat_to_drink",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_retreat_to_drink"));
-        controller.triggerableAnim("sword_retreat_to_eat",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_retreat_to_eat"));
-        controller.triggerableAnim("dodge_backwards",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_backwards"));
-        controller.triggerableAnim("dodge_left",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_left"));
-        controller.triggerableAnim("dodge_right",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_right"));
-        controller.triggerableAnim("sword_dodge_backwards",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_backwards"));
-        controller.triggerableAnim("sword_dodge_left",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_left"));
-        controller.triggerableAnim("sword_dodge_right",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_right"));
-        controller.triggerableAnim("sword_dodge_left_parry",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_left_parry"));
-        controller.triggerableAnim("sword_dodge_right_parry",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.sword_dodge_right_parry"));
-        controller.triggerableAnim("dodge_left_liver_shot",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_left_liver_shot"));
-        controller.triggerableAnim("dodge_right_liver_shot",
-                RawAnimation.begin().thenPlay("ivy_oleander.animation.dodge_right_liver_shot"));
-    }
-
     public <T extends GeoEntity> boolean applyMovementAnimation(AnimationState<T> state) {
+        if (ivy.isDownedOrArising()) {
+            return false;
+        }
         if (!isActive()) {
             return false;
+        }
+        if (ivy.isBoxingExiting() || ivy.getBoxingActionTicks() > 0) {
+            if (applyCombatActionAnimation(state)) {
+                return true;
+            }
         }
         if (ivy.isBoxingExiting()) {
             return true;
         }
         if (ivy.getBoxingActionTicks() > 0) {
             return true;
+        }
+        if (!lastAppliedCombatAnimation.isEmpty()) {
+            state.getController().forceAnimationReset();
+            lastAppliedCombatAnimation = "";
         }
         if (ivy.isBoxingBackingUp()) {
             AnimationHelper.setAndContinue(state, ivy.isBoxingFast() ? fastWalkBackwardsAnimation() : walkBackwardsAnimation());
@@ -270,6 +254,40 @@ public class IvyCombatBrain {
         return true;
     }
 
+    private <T extends GeoEntity> boolean applyCombatActionAnimation(AnimationState<T> state) {
+        String animation = ivy.getBoxingAnimation();
+        RawAnimation rawAnimation = combatActionAnimation(animation);
+        if (rawAnimation == null) {
+            return false;
+        }
+        if (!animation.equals(lastAppliedCombatAnimation)) {
+            state.getController().forceAnimationReset();
+            lastAppliedCombatAnimation = animation;
+        }
+        AnimationHelper.setAndContinue(state, rawAnimation);
+        return true;
+    }
+
+    @Nullable
+    private RawAnimation combatActionAnimation(String animation) {
+        RawAnimation stanceAnimation = stanceTransitionAnimation(animation);
+        if (stanceAnimation != null) {
+            return stanceAnimation;
+        }
+        return COMBAT_ACTION_ANIMATIONS.get(animation);
+    }
+
+    @Nullable
+    private RawAnimation stanceTransitionAnimation(String animation) {
+        return switch (animation) {
+            case "to_orthodox" -> TO_ORTHODOX;
+            case "exit_orthodox" -> EXIT_ORTHODOX;
+            case "sword_unsheathe" -> SWORD_UNSHEATHE;
+            case "sword_to_orthodox" -> SWORD_TO_ORTHODOX;
+            default -> null;
+        };
+    }
+
     public boolean isActive() {
         return ivy.isBoxingStance() || ivy.isBoxingExiting();
     }
@@ -279,69 +297,82 @@ public class IvyCombatBrain {
     }
 
     public boolean isUsingSwordStyle() {
-        return ivy.isBoxingSwordStyle();
+        return currentStance().usesSword();
     }
 
-    private boolean shouldUseSwordStyle(@Nullable LivingEntity target) {
-        return ivy.hasEquippedSword();
+    private CombatStance currentStance() {
+        return CombatStance.fromSwordStyle(ivy.isBoxingSwordStyle());
+    }
+
+    private CombatStance selectStance() {
+        return ivy.hasEquippedSword() ? CombatStance.SWORD : CombatStance.ORTHODOX;
+    }
+
+    private void setCombatStance(CombatStance stance) {
+        ivy.setBoxingSwordStyle(stance.usesSword());
     }
 
     private RawAnimation idleAnimation() {
-        return isUsingSwordStyle() ? SWORD_IDLE : ORTHODOX_IDLE;
+        return currentStance().idleAnimation;
     }
 
     private RawAnimation walkAnimation() {
-        return isUsingSwordStyle() ? SWORD_WALK : ORTHODOX_WALK;
+        return currentStance().walkAnimation;
     }
 
     private RawAnimation walkBackwardsAnimation() {
-        return isUsingSwordStyle() ? SWORD_WALK_BACKWARDS : ORTHODOX_WALK_BACKWARDS;
+        return currentStance().walkBackwardsAnimation;
     }
 
     private RawAnimation fastWalkAnimation() {
-        return isUsingSwordStyle() ? SWORD_RUN : ORTHODOX_FAST_WALK;
+        return currentStance().fastWalkAnimation;
     }
 
     private RawAnimation fastWalkBackwardsAnimation() {
-        return isUsingSwordStyle() ? SWORD_FAST_WALK_BACKWARDS : ORTHODOX_FAST_WALK_BACKWARDS;
+        return currentStance().fastWalkBackwardsAnimation;
     }
 
     private String enterStanceTrigger() {
-        return isUsingSwordStyle() ? "sword_unsheathe" : "to_orthodox";
+        return currentStance().enterTrigger;
+    }
+
+    private int enterStanceTicks() {
+        return currentStance().enterTicks;
     }
 
     private String exitStanceTrigger(boolean swordStyle) {
-        return swordStyle ? "sword_unsheathe" : "exit_orthodox";
+        return CombatStance.fromSwordStyle(swordStyle).exitTrigger;
     }
 
     private String retreatDrinkTrigger() {
-        return isUsingSwordStyle() ? "sword_retreat_to_drink" : "orthodox_retreat_to_drink";
+        return currentStance().retreatDrinkTrigger;
     }
 
     private String retreatEatTrigger() {
-        return isUsingSwordStyle() ? "sword_retreat_to_eat" : "orthodox_retreat_to_eat";
+        return currentStance().retreatEatTrigger;
     }
 
     private String dodgeBackwardsTrigger() {
-        return isUsingSwordStyle() ? "sword_dodge_backwards" : "dodge_backwards";
+        return currentStance().dodgeBackwardsTrigger;
     }
 
     private String dodgeLeftTrigger() {
-        return isUsingSwordStyle() ? "sword_dodge_left" : "dodge_left";
+        return currentStance().dodgeLeftTrigger;
     }
 
     private String dodgeRightTrigger() {
-        return isUsingSwordStyle() ? "sword_dodge_right" : "dodge_right";
+        return currentStance().dodgeRightTrigger;
     }
 
     public boolean shouldHoldGroundAgainstKnockback() {
         return isActive()
+                && !ivy.isDownedOrArising()
                 && ivy.getBoxingActionTicks() > 0
                 && (state == CombatState.ATTACKING || state == CombatState.DODGING);
     }
 
     public void onHurt(@NotNull DamageSource source, boolean wasHurt) {
-        if (!wasHurt || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
+        if (!wasHurt || ivy.isDownedOrArising() || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
             return;
         }
         if (attacker instanceof Player) {
@@ -356,7 +387,7 @@ public class IvyCombatBrain {
     }
 
     public boolean tryDodgeOnHit(@NotNull DamageSource source, float amount) {
-        if (amount <= 0.0F || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
+        if (amount <= 0.0F || ivy.isDownedOrArising() || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
             return false;
         }
         if (attacker instanceof Player) {
@@ -414,7 +445,7 @@ public class IvyCombatBrain {
     }
 
     public void dodgeBlockedHit(@NotNull DamageSource source) {
-        if (ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy || !attacker.isAlive()) {
+        if (ivy.isDownedOrArising() || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy || !attacker.isAlive()) {
             return;
         }
         if (attacker instanceof Player) {
@@ -430,6 +461,12 @@ public class IvyCombatBrain {
     }
 
     public void tick() {
+        if (ivy.isDownedOrArising()) {
+            if (isActive() || ivy.getBoxingActionTicks() > 0 || ivy.isBoxingRecovering()) {
+                clear();
+            }
+            return;
+        }
         if (retreatRecoveryCooldown > 0) {
             retreatRecoveryCooldown--;
         }
@@ -458,6 +495,7 @@ public class IvyCombatBrain {
             ivy.setBoxingActionTicks(actionTicks - 1);
             if (actionTicks - 1 <= 0) {
                 ivy.setCombatSwordHidden(false);
+                ivy.setBoxingAnimation("");
             }
             if (ivy.isBoxingRecovering()) {
                 if (recoveryConsumeTicks > 0 && --recoveryConsumeTicks <= 0) {
@@ -521,6 +559,7 @@ public class IvyCombatBrain {
         }
         if (projectileDashTicks > 0 && --projectileDashTicks <= 0) {
             applyProjectileDash();
+            startProjectileDashAttack();
         }
         if (comboRetreatTicks > 0 && --comboRetreatTicks <= 0) {
             applyComboRetreat();
@@ -580,8 +619,8 @@ public class IvyCombatBrain {
         ivy.hasImpulse = true;
         ivy.setBoxingMovement(true, true);
         ivy.setBoxingActionTicks(DODGE_ACTION_TICKS);
+        ivy.setBoxingAnimation(dodgeBackwardsTrigger());
         setState(CombatState.RETREATING_TO_RECOVER, DODGE_ACTION_TICKS);
-        ivy.triggerAnim("movement", dodgeBackwardsTrigger());
     }
 
     private void startRecoveryAnimation() {
@@ -593,12 +632,12 @@ public class IvyCombatBrain {
         ivy.setBoxingMovement(false, false);
         ivy.setDeltaMovement(0.0D, ivy.getDeltaMovement().y, 0.0D);
         ivy.setBoxingActionTicks(RETREAT_RECOVERY_ACTION_TICKS);
+        ivy.setBoxingAnimation(pendingRecoveryAction == IvyTheDragonMerchant.RECOVERY_DRINK
+                ? retreatDrinkTrigger()
+                : retreatEatTrigger());
         ivy.setBoxingRecoveryAction(pendingRecoveryAction);
         recoveryConsumeTicks = RETREAT_RECOVERY_CONSUME_TICKS;
         setState(CombatState.RECOVERING, RETREAT_RECOVERY_ACTION_TICKS);
-        ivy.triggerAnim("movement", pendingRecoveryAction == IvyTheDragonMerchant.RECOVERY_DRINK
-                ? retreatDrinkTrigger()
-                : retreatEatTrigger());
         pendingRecoveryAction = IvyTheDragonMerchant.RECOVERY_NONE;
         recoveryRetreatTicks = 0;
         recoveryBackstepCooldown = 0;
@@ -662,6 +701,10 @@ public class IvyCombatBrain {
     }
 
     private void beginStance() {
+        if (ivy.isDownedOrArising()) {
+            clear();
+            return;
+        }
         if (exitTicks > 0) {
             exitTicks = 0;
             ivy.setBoxingExiting(false);
@@ -669,14 +712,15 @@ public class IvyCombatBrain {
             return;
         }
         ivy.cancelPassiveAnimationsForCombat();
-        ivy.setBoxingSwordStyle(shouldUseSwordStyle(ivy.getTarget()));
+        setCombatStance(selectStance());
         ivy.setBoxingStance(true);
-        ivy.setBoxingActionTicks(STANCE_TRANSITION_TICKS);
-        setState(CombatState.ENTERING_STANCE, STANCE_TRANSITION_TICKS);
-        ivy.triggerAnim("movement", enterStanceTrigger());
+        int stanceTicks = enterStanceTicks();
+        ivy.setBoxingActionTicks(stanceTicks);
+        ivy.setBoxingAnimation(enterStanceTrigger());
+        setState(CombatState.ENTERING_STANCE, stanceTicks);
     }
 
-    private void clear() {
+    void clear() {
         attackCooldown = 0;
         dashCrossCooldown = 0;
         throwProjectilesCooldown = 0;
@@ -712,6 +756,7 @@ public class IvyCombatBrain {
         setState(CombatState.RECOVERING, 0);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(0);
+        ivy.setBoxingAnimation("");
         ivy.setBoxingExiting(false);
         ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         ivy.setCombatSwordHidden(false);
@@ -743,7 +788,7 @@ public class IvyCombatBrain {
         ivy.setBoxingStance(false);
         ivy.setBoxingSwordStyle(swordStyle);
         ivy.setBoxingExiting(true);
-        ivy.triggerAnim("movement", exitStanceTrigger(swordStyle));
+        ivy.setBoxingAnimation(exitStanceTrigger(swordStyle));
     }
 
     private void clearAttackTimers() {
@@ -764,12 +809,14 @@ public class IvyCombatBrain {
     }
 
     private void startAttack(LivingEntity target, AttackType attack) {
-        ivy.setBoxingSwordStyle(shouldUseSwordStyle(target));
-        boolean swordStyle = isUsingSwordStyle();
+        CombatStance stance = selectStance();
+        setCombatStance(stance);
+        boolean swordStyle = stance.usesSword();
         AttackMove move = attack.move(swordStyle);
         setState(CombatState.ATTACKING, move.actionTicks);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(move.actionTicks);
+        ivy.setBoxingAnimation(move.trigger);
         ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         ivy.setCombatSwordHidden(swordStyle && attack == AttackType.THROW_PROJECTILES);
         attackCooldown = move.cooldownTicks;
@@ -799,7 +846,6 @@ public class IvyCombatBrain {
         impactTargetId = target.getId();
         pendingMove = move;
         pendingCounter = null;
-        ivy.triggerAnim("movement", move.trigger);
     }
 
     private void startDodge(LivingEntity target) {
@@ -818,7 +864,7 @@ public class IvyCombatBrain {
         approachNudgeTicks = 0;
         comboRetreatTicks = 0;
         pendingCounter = null;
-        ivy.triggerAnim("movement", switch (dodge) {
+        ivy.setBoxingAnimation(switch (dodge) {
             case 0 -> dodgeLeftTrigger();
             case 1 -> dodgeRightTrigger();
             default -> dodgeBackwardsTrigger();
@@ -847,13 +893,15 @@ public class IvyCombatBrain {
     }
 
     private void startCounterDodge(LivingEntity target) {
-        ivy.setBoxingSwordStyle(shouldUseSwordStyle(target));
+        CombatStance stance = selectStance();
+        setCombatStance(stance);
         CounterType counter = ivy.getRandom().nextBoolean() ? CounterType.LEFT_LIVER_SHOT : CounterType.RIGHT_LIVER_SHOT;
-        boolean swordStyle = isUsingSwordStyle();
+        boolean swordStyle = stance.usesSword();
         int actionTicks = counter.actionTicks(swordStyle);
         setState(CombatState.DODGING, actionTicks);
         ivy.setBoxingMovement(false, false);
         ivy.setBoxingActionTicks(actionTicks);
+        ivy.setBoxingAnimation(counter.trigger(swordStyle));
         ivy.setBoxingRecoveryAction(IvyTheDragonMerchant.RECOVERY_NONE);
         ivy.setCombatSwordHidden(false);
         dodgeCooldown = DODGE_COOLDOWN_TICKS + 6;
@@ -867,7 +915,6 @@ public class IvyCombatBrain {
         comboRetreatTicks = 0;
         impactTargetId = target.getId();
         pendingCounter = counter;
-        ivy.triggerAnim("movement", counter.trigger(swordStyle));
         applyDiagonalCounterStep(target, counter);
     }
 
@@ -1004,6 +1051,13 @@ public class IvyCombatBrain {
         }
         Vec3 step = toward.normalize().scale(pendingMove.dashStrength);
         setComboHorizontalImpulse(step, 0.03D);
+    }
+
+    private void startProjectileDashAttack() {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+        startAttack(target, AttackType.DASH_FORWARD_RIGHT_CROSS);
     }
 
     private void applySwordDash() {
@@ -1422,11 +1476,7 @@ public class IvyCombatBrain {
         }
 
         private boolean canBox(@Nullable LivingEntity target) {
-            if (target == null || !target.isAlive() || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation()) {
-                return true;
-            }
-            double distanceSqr = ivy.distanceToSqr(target);
-            return !(distanceSqr <= 256.0D) || (!(distanceSqr <= 36.0D) && !ivy.hasLineOfSight(target) && !isTargetingIvy(target));
+            return target == null || !target.isAlive() || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation();
         }
     }
 
@@ -1593,10 +1643,6 @@ public class IvyCombatBrain {
         return target != null && target.isAlive() && !target.isRemoved();
     }
 
-    private boolean isTargetingIvy(LivingEntity target) {
-        return target instanceof Mob mob && mob.getTarget() == ivy;
-    }
-
     @Nullable
     private LivingEntity findNearestAggressorTargetingIvy() {
         LivingEntity best = null;
@@ -1625,6 +1671,63 @@ public class IvyCombatBrain {
         EXITING,
         RETREATING_TO_RECOVER,
         RECOVERING
+    }
+
+    private enum CombatStance {
+        ORTHODOX(false, ORTHODOX_IDLE, ORTHODOX_WALK, ORTHODOX_WALK_BACKWARDS,
+                ORTHODOX_FAST_WALK, ORTHODOX_FAST_WALK_BACKWARDS,
+                "to_orthodox", ORTHODOX_STANCE_TRANSITION_TICKS, "exit_orthodox",
+                "orthodox_retreat_to_drink", "orthodox_retreat_to_eat",
+                "dodge_backwards", "dodge_left", "dodge_right"),
+        SWORD(true, SWORD_IDLE, SWORD_WALK, SWORD_WALK_BACKWARDS,
+                SWORD_RUN, SWORD_FAST_WALK_BACKWARDS,
+                "sword_unsheathe", SWORD_STANCE_TRANSITION_TICKS, "sword_unsheathe",
+                "sword_retreat_to_drink", "sword_retreat_to_eat",
+                "sword_dodge_backwards", "sword_dodge_left", "sword_dodge_right");
+
+        private final boolean usesSword;
+        private final RawAnimation idleAnimation;
+        private final RawAnimation walkAnimation;
+        private final RawAnimation walkBackwardsAnimation;
+        private final RawAnimation fastWalkAnimation;
+        private final RawAnimation fastWalkBackwardsAnimation;
+        private final String enterTrigger;
+        private final int enterTicks;
+        private final String exitTrigger;
+        private final String retreatDrinkTrigger;
+        private final String retreatEatTrigger;
+        private final String dodgeBackwardsTrigger;
+        private final String dodgeLeftTrigger;
+        private final String dodgeRightTrigger;
+
+        CombatStance(boolean usesSword, RawAnimation idleAnimation, RawAnimation walkAnimation,
+                     RawAnimation walkBackwardsAnimation, RawAnimation fastWalkAnimation,
+                     RawAnimation fastWalkBackwardsAnimation, String enterTrigger, int enterTicks,
+                     String exitTrigger, String retreatDrinkTrigger, String retreatEatTrigger,
+                     String dodgeBackwardsTrigger, String dodgeLeftTrigger, String dodgeRightTrigger) {
+            this.usesSword = usesSword;
+            this.idleAnimation = idleAnimation;
+            this.walkAnimation = walkAnimation;
+            this.walkBackwardsAnimation = walkBackwardsAnimation;
+            this.fastWalkAnimation = fastWalkAnimation;
+            this.fastWalkBackwardsAnimation = fastWalkBackwardsAnimation;
+            this.enterTrigger = enterTrigger;
+            this.enterTicks = enterTicks;
+            this.exitTrigger = exitTrigger;
+            this.retreatDrinkTrigger = retreatDrinkTrigger;
+            this.retreatEatTrigger = retreatEatTrigger;
+            this.dodgeBackwardsTrigger = dodgeBackwardsTrigger;
+            this.dodgeLeftTrigger = dodgeLeftTrigger;
+            this.dodgeRightTrigger = dodgeRightTrigger;
+        }
+
+        private static CombatStance fromSwordStyle(boolean swordStyle) {
+            return swordStyle ? SWORD : ORTHODOX;
+        }
+
+        private boolean usesSword() {
+            return usesSword;
+        }
     }
 
     private enum AttackType {

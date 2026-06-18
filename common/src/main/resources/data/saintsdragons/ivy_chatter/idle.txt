@@ -1,0 +1,9 @@
+chatter.saintsdragons.ivy.idle.0
+chatter.saintsdragons.ivy.idle.1
+chatter.saintsdragons.ivy.idle.2
+chatter.saintsdragons.ivy.idle.3
+chatter.saintsdragons.ivy.idle.4
+chatter.saintsdragons.ivy.idle.5
+chatter.saintsdragons.ivy.idle.6
+chatter.saintsdragons.ivy.idle.7
+chatter.saintsdragons.ivy.idle.8

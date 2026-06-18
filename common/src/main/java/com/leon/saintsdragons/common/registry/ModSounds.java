@@ -48,6 +48,9 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IVY_SIGH = registerSound("ivy_sigh");
     public static final Supplier<SoundEvent> IVY_HMM_TRADER = registerSound("ivy_hmm_trader");
     public static final Supplier<SoundEvent> IVY_HMM_GARDENER = registerSound("ivy_hmm_gardener");
+    public static final Supplier<SoundEvent> IVY_ABOUT_TO_DIE = registerSound("ivy_about_to_die");
+    public static final Supplier<SoundEvent> IVY_ACTUALLY_DIE = registerSound("ivy_actually_die");
+    public static final Supplier<SoundEvent> IVY_DIE = registerSound("ivy_die");
     public static final Supplier<SoundEvent> BLEEDING_BOLT = registerSound("bleeding_bolt");
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");

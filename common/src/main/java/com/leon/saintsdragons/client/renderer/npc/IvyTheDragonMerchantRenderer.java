@@ -29,6 +29,11 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
         return 0.000001f;
     }
 
+    @Override
+    protected float getDeathMaxRotation(IvyTheDragonMerchant animatable) {
+        return 0.0F;
+    }
+
     public IvyTheDragonMerchantRenderer(EntityRendererProvider.Context renderManager) {
         super(renderManager, new IvyTheDragonMerchantModel());
         this.addRenderLayer(new IvyHeldItemLayer(this));
@@ -51,6 +56,7 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
                 || entity.distanceToSqr(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()) > CHATTER_RENDER_DISTANCE_SQR) {
             return;
         }
+        chatter = resolveChatterText(entity, chatter);
         ChatterRenderState state = getChatterState(entity.getId(), chatter);
         String visibleChatter = state.visibleText();
         if (visibleChatter.isEmpty()) {
@@ -75,6 +81,12 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
             chatterStates.put(entityId, state);
         }
         return state;
+    }
+
+    private static String resolveChatterText(IvyTheDragonMerchant entity, String translationKey) {
+        String text = net.minecraft.network.chat.Component.translatable(translationKey).getString();
+        String name = entity.getIdleChatterName();
+        return text.replace("{name}", name);
     }
 
     private void playVoiceBlipForNewText(String visibleText, ChatterRenderState state) {
