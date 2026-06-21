@@ -19,6 +19,7 @@ import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.cindervane.CindervaneRiderController;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -836,6 +837,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected boolean canAddPassenger(@NotNull Entity passenger) {
         if (passenger instanceof Player) {
+            return this.getPassengers().size() < getMaxPassengers();
+        }
+        if (passenger instanceof IvyTheDragonMerchant ivy
+                && ivy.isTame()
+                && java.util.Objects.equals(ivy.getOwnerUUID(), getOwnerUUID())) {
             return this.getPassengers().size() < getMaxPassengers();
         }
         if (autoGrabPassengerMountAllowed && passenger instanceof LivingEntity) {

@@ -132,6 +132,13 @@
   "chatter.saintsdragons.ivy.downed.8": "Come on. Get up, Ivy...",
   "chatter.saintsdragons.ivy.downed.9": "This is not it...",
   "chatter.saintsdragons.ivy.downed.10": "Help me get up, {name}...",
+  "chatter.saintsdragons.ivy.underwater.0": "Not now, {name}. Let's get to the surface first.",
+  "chatter.saintsdragons.ivy.underwater.1": "Talking underwater is how people drown, {name}.",
+  "chatter.saintsdragons.ivy.underwater.2": "Can we talk later? I'm a little busy not swallowing water.",
+  "chatter.saintsdragons.ivy.underwater.3": "Are you half-Volitans or half-Varasuchus?",
+  "chatter.saintsdragons.ivy.underwater.4": "Are you a mermaid? We can't talk now...",
+  "chatter.saintsdragons.ivy.underwater.5": "Blub blub.",
+  "chatter.saintsdragons.ivy.underwater.6": "I'm not a fish, {name}.",
 
   "saintsdragons.gui.dragon_ally.title": "Player Ally Management",
   "saintsdragons.gui.dragon_ally.username_input": "Enter username...",

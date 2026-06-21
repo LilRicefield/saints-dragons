@@ -266,7 +266,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private int tempInvulnTicks = 0;
     private float sleepLockedYaw = 0.0F;
     private float sleepLockedPitch = 0.0F;
-    private final DragonSwimSteeringController swimSteering;
+    private final GenericSwimSteeringController swimSteering;
     private final AsyncSwimController asyncSwimController;
 
     public Volitans(EntityType<? extends TamableAnimal> type, Level level) {
@@ -274,7 +274,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.setMaxUpStep(1.0F);
         this.riderController = new VolitansRiderController(this);
-        this.swimSteering = new DragonSwimSteeringController(this);
+        this.swimSteering = new GenericSwimSteeringController(this);
         this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
         this.movementController = new AnimationController<>(this, "movement",
                 VolitansAnimationHandler.MOVEMENT_TRIGGER_TRANSITION_TICKS, animationHandler::movementPredicate);

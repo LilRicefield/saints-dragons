@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueDefinition;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueRegistry;
@@ -13,6 +14,8 @@ import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry
 import com.leon.saintsdragons.server.entity.npc.chatter.IvyChatterRegistry;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
+import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -29,6 +32,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.CombatRules;
 import net.minecraft.world.entity.AgeableMob;
@@ -46,7 +50,6 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -55,6 +58,7 @@ import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.entity.monster.Evoker;
 import net.minecraft.world.entity.monster.Pillager;
 import net.minecraft.world.entity.monster.Vindicator;
@@ -64,6 +68,7 @@ import net.minecraft.world.entity.monster.Zombie;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -141,6 +146,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_IDLE_VARIANT_ACTIVE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_CLIMBING_LADDER =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BOXING_STANCE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BOXING_BACKING_UP =
@@ -175,7 +182,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final int WATER_CLUTCH_ACTION_TICKS = 14;
     private static final int WATER_CLUTCH_COOLDOWN_TICKS = 80;
     private static final int WATER_CLUTCH_CLEAR_TICKS = 22;
-    private static final float WATER_CLUTCH_MIN_FALL_DISTANCE = 8.0F;
+    private static final float WATER_CLUTCH_MIN_FALL_DISTANCE = 5.0F;
     private static final double WATER_CLUTCH_MIN_FALL_SPEED = -0.55D;
     private static final int WATER_CLUTCH_GROUND_SCAN_BLOCKS = 5;
     private static final int DOWNED_BLEED_OUT_TICKS = 20 * 90;
@@ -202,6 +209,15 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.run");
+    private static final RawAnimation FALLING = RawAnimation.begin().thenLoop("ivy_oleander.animation.falling");
+    private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.swim_idle");
+    private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("ivy_oleander.animation.swim");
+    private static final RawAnimation SWIM_FAST = RawAnimation.begin().thenLoop("ivy_oleander.animation.swim_fast");
+    private static final RawAnimation WATER_WADE_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.water_wade_idle");
+    private static final RawAnimation WATER_WADING = RawAnimation.begin().thenLoop("ivy_oleander.animation.water_wading");
+    private static final RawAnimation CLIMBING = RawAnimation.begin().thenLoop("ivy_oleander.animation.climbing");
+    private static final RawAnimation CLIMB_IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.climb_idle");
+    private static final RawAnimation MOUNTING = RawAnimation.begin().thenLoop("ivy_oleander.animation.mounting");
     private static final RawAnimation ABOUT_TO_DIE = RawAnimation.begin().thenPlayAndHold("ivy_oleander.animation.about_to_die");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("ivy_oleander.animation.die");
     private static final RawAnimation ARISE = RawAnimation.begin().thenPlay("ivy_oleander.animation.arise");
@@ -243,6 +259,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private boolean wasMovementStopped = false;
     private boolean wasDownedOrArisingAnimation = false;
     private boolean wasBoxingAnimation = false;
+    private final IvyMovementVisualState movementVisualState = new IvyMovementVisualState();
+    private final GenericSwimSteeringController swimSteering;
+    private final AsyncSwimController asyncSwimController;
     private IvyBodyControl bodyControl;
     private IvyCompanionController companionController;
     public final SmoothValue bodyRotDeviation = SmoothValue.rotation(0.0);
@@ -283,6 +302,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         super(entityType, level);
         this.setPersistenceRequired();
         this.lookControl = new GenericLookControl(this);
+        this.swimSteering = new GenericSwimSteeringController(this);
+        this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
+        this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
         this.soundHandler = new HumanSoundHandler(this, new IvySoundProfile());
         this.restockInterval = Math.max(1, resolveRestockInterval());
         this.restockTimer = this.restockInterval;
@@ -415,6 +438,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.entityData.define(DATA_IDLE_CHATTER_NAME, "");
         this.entityData.define(DATA_TRADE_ANIM_STATE, TradeAnimState.NONE.id);
         this.entityData.define(DATA_IDLE_VARIANT_ACTIVE, false);
+        this.entityData.define(DATA_CLIMBING_LADDER, false);
         this.entityData.define(DATA_BOXING_STANCE, false);
         this.entityData.define(DATA_BOXING_BACKING_UP, false);
         this.entityData.define(DATA_BOXING_FAST, false);
@@ -442,16 +466,21 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     protected void registerGoals() {
         goalSelector.addGoal(0, new DialogueTalkGoal());
         goalSelector.addGoal(1, new TradingStillGoal());
-        goalSelector.addGoal(1, new FloatGoal(this));
+        goalSelector.addGoal(1, IvySwimGoal.breathe(this));
         goalSelector.addGoal(2, new OpenDoorGoal(this, true));
         goalSelector.addGoal(2, getBoxingCombat().createGoal());
+        goalSelector.addGoal(2, getCompanionController().createBoardOwnerVehicleGoal());
+        goalSelector.addGoal(3, IvySwimGoal.target(this));
         goalSelector.addGoal(3, getCompanionController().createStayGoal());
+        goalSelector.addGoal(4, IvySwimGoal.followOwner(this));
         goalSelector.addGoal(4, getCompanionController().createLadderClimbGoal());
         goalSelector.addGoal(5, getCompanionController().createFollowOwnerGoal());
         goalSelector.addGoal(6, new RandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
+                        && (!IvyTheDragonMerchant.this.isInWaterOrBubble()
+                        || IvyTheDragonMerchant.this.isInShallowWaterForWading())
                         && (!IvyTheDragonMerchant.this.isTame()
                         || IvyTheDragonMerchant.this.getCompanionCommand() == CompanionCommand.WANDER)
                         && !IvyTheDragonMerchant.this.isInDialogue()
@@ -462,6 +491,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             @Override
             public boolean canContinueToUse() {
                 return IvyTheDragonMerchant.this.getTarget() == null
+                        && (!IvyTheDragonMerchant.this.isInWaterOrBubble()
+                        || IvyTheDragonMerchant.this.isInShallowWaterForWading())
                         && (!IvyTheDragonMerchant.this.isTame()
                         || IvyTheDragonMerchant.this.getCompanionCommand() == CompanionCommand.WANDER)
                         && !IvyTheDragonMerchant.this.isInDialogue()
@@ -530,6 +561,59 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     public boolean isRunning() {
         return this.entityData.get(DATA_RUNNING);
+    }
+
+    boolean isInShallowWaterForWading() {
+        if (!isInWaterOrBubble() || isUnderWater()) {
+            return false;
+        }
+        BlockPos feet = BlockPos.containing(getX(), getBoundingBox().minY, getZ());
+        if (!level().getFluidState(feet).is(FluidTags.WATER)) {
+            return false;
+        }
+        return onGround() && getFluidDepthUp(feet) <= 1 && getFluidDepthDown(feet) <= 1;
+    }
+
+    boolean isCombatBlockedByWater() {
+        return isUnderWater() || (isInWaterOrBubble() && !isInShallowWaterForWading());
+    }
+
+    boolean isRidingCompanionVehicle() {
+        return getVehicle() instanceof Boat || getVehicle() instanceof Cindervane;
+    }
+
+    int getFluidDepthUp() {
+        return getFluidDepthUp(BlockPos.containing(getX(), getBoundingBox().minY, getZ()));
+    }
+
+    int getFluidDepthDown() {
+        return getFluidDepthDown(BlockPos.containing(getX(), getBoundingBox().minY, getZ()));
+    }
+
+    private int getFluidDepthDown(BlockPos start) {
+        BlockPos cursor = start;
+        if (!level().getFluidState(cursor).is(FluidTags.WATER)) {
+            return 0;
+        }
+        int startY = start.getY();
+        int worldBottom = level().getMinBuildHeight();
+        while (cursor.getY() > worldBottom && level().getFluidState(cursor).is(FluidTags.WATER)) {
+            cursor = cursor.below();
+        }
+        return startY - cursor.getY();
+    }
+
+    private int getFluidDepthUp(BlockPos start) {
+        BlockPos cursor = start;
+        int worldTop = level().getMaxBuildHeight();
+        while (cursor.getY() < worldTop && level().getFluidState(cursor).is(FluidTags.WATER)) {
+            cursor = cursor.above();
+        }
+        return cursor.getY() - start.getY();
+    }
+
+    AsyncSwimController getAsyncSwimController() {
+        return asyncSwimController;
     }
 
     private TradeAnimState getTradeAnimState() {
@@ -971,6 +1055,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             return InteractionResult.CONSUME;
         }
         clearInvalidDialogueBlockingTarget();
+        if (isCombatBlockedByWater()) {
+            if (player instanceof ServerPlayer) {
+                speakUnderwaterChatter(player);
+            }
+            return InteractionResult.CONSUME;
+        }
         if (isTrading()
                 || isInDialogue()
                 || getTradeAnimState() != TradeAnimState.NONE
@@ -1101,7 +1191,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         AnimationController<IvyTheDragonMerchant> movementController =
-                new AnimationController<>(this, "movement", 4, this::animationPredicate)
+                new AnimationController<>(this, "movement", 3, this::animationPredicate)
                         .receiveTriggeredAnimations();
         movementController.setSoundKeyframeHandler(this::handleSoundKeyframe);
         movementController.setParticleKeyframeHandler(this::handleParticleKeyframe);
@@ -1158,6 +1248,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             wasDownedOrArisingAnimation = true;
             return PlayState.STOP;
         }
+        if (isRidingCompanionVehicle()) {
+            clearMovementTriggerIfNeeded(state);
+            AnimationHelper.setAndContinue(state, MOUNTING);
+            state.getController().transitionLength(2);
+            return PlayState.CONTINUE;
+        }
         TradeAnimState tradeState = getTradeAnimState();
         if (tradeState == TradeAnimState.LOOP) {
             AnimationHelper.setAndContinue(state, TRADING);
@@ -1192,16 +1288,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             wasBoxingAnimation = false;
         }
 
-        state.getController().transitionLength(4);
-        if (state.isMoving()) {
-            if (isRunning()) {
-                AnimationHelper.setAndContinue(state, RUN);
-            } else {
-                AnimationHelper.setAndContinue(state, WALK);
-            }
-        } else {
-            AnimationHelper.setAndContinue(state, IDLE);
-        }
+        movementVisualState.apply(state, this, IDLE, WALK, RUN, FALLING, CLIMBING, CLIMB_IDLE,
+                SWIM_IDLE, SWIM, SWIM_FAST, WATER_WADE_IDLE, WATER_WADING);
         return PlayState.CONTINUE;
     }
 
@@ -1552,6 +1640,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
+        if (target != null && (isCombatBlockedByWater() || isRidingCompanionVehicle())) {
+            super.setTarget(null);
+            getBoxingCombat().clear();
+            return;
+        }
         if (target instanceof Player || (isTame() && isOwnedBy(target))) {
             super.setTarget(null);
             return;
@@ -1614,6 +1707,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         }
         tickTradingAnimation();
         tickDialogueTradeResume();
+        tickWaterCombatBlock();
         tickCombatChatter();
         tickIdleChatter();
         tickExperiencePickup();
@@ -1942,6 +2036,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                 || isBoxingRecovering();
     }
 
+    boolean isClimbingLadder() {
+        return this.entityData.get(DATA_CLIMBING_LADDER);
+    }
+
+    void setClimbingLadder(boolean climbing) {
+        this.entityData.set(DATA_CLIMBING_LADDER, climbing);
+    }
+
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -2113,6 +2215,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         return stack.getItem() instanceof ArmorItem armor && armor.getType() == type;
     }
 
+    private void tickWaterCombatBlock() {
+        if (!isCombatBlockedByWater()) {
+            return;
+        }
+        boolean hadTarget = getTarget() != null;
+        if (hadTarget) {
+            super.setTarget(null);
+        }
+        if (hadTarget || getBoxingCombat().isActive()) {
+            getBoxingCombat().clear();
+        }
+    }
+
     private void tickRestocking() {
         int interval = this.restockInterval;
         if (restockTimer > interval) {
@@ -2210,6 +2325,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         setChatter(IvyChatterRegistry.OWNER_HURT, player);
         idleChatterTicks = IDLE_CHATTER_DURATION;
         idleChatterCooldown = Math.max(idleChatterCooldown, 120);
+    }
+
+    private void speakUnderwaterChatter(Player player) {
+        setChatter(IvyChatterRegistry.UNDERWATER, player);
+        idleChatterTicks = IDLE_CHATTER_DURATION;
+        idleChatterCooldown = Math.max(idleChatterCooldown, 80);
     }
 
     public void refuseRenameAttempt() {
@@ -2517,7 +2638,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                 && getTradeAnimState() == TradeAnimState.NONE;
     }
 
-    private boolean isInDialogue() {
+    boolean isInDialogue() {
         return !level().isClientSide && DialogueSessionRegistry.hasSpeaker(this);
     }
 

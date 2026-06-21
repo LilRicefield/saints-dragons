@@ -1346,6 +1346,10 @@ public class IvyCombatBrain {
 
         @Override
         public boolean canUse() {
+            if (ivy.isCombatBlockedByWater()) {
+                clear();
+                return false;
+            }
             LivingEntity target = selectPriorityTarget(ivy.getTarget());
             if (canBox(target)) {
                 return false;
@@ -1358,6 +1362,10 @@ public class IvyCombatBrain {
 
         @Override
         public boolean canContinueToUse() {
+            if (ivy.isCombatBlockedByWater()) {
+                clear();
+                return false;
+            }
             LivingEntity target = selectPriorityTarget(ivy.getTarget());
             if (canBox(target)) {
                 return false;
@@ -1392,6 +1400,10 @@ public class IvyCombatBrain {
 
         @Override
         public void tick() {
+            if (ivy.isCombatBlockedByWater()) {
+                clear();
+                return;
+            }
             LivingEntity target = selectPriorityTarget(ivy.getTarget());
             if (target == null) {
                 return;

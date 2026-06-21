@@ -4,7 +4,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 
-public class DragonSwimSteeringController {
+public class GenericSwimSteeringController {
     private static final double HORIZONTAL_VELOCITY_LERP = 0.28D;
     private static final double VERTICAL_VELOCITY_LERP = 0.22D;
 
@@ -15,7 +15,7 @@ public class DragonSwimSteeringController {
     private boolean initialized;
     private boolean moving;
 
-    public DragonSwimSteeringController(Mob mob) {
+    public GenericSwimSteeringController(Mob mob) {
         this.mob = mob;
     }
 

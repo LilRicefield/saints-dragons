@@ -6,7 +6,7 @@ import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
-import com.leon.saintsdragons.server.ai.goals.base.DragonSwimSteeringController;
+import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -170,7 +170,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private UUID assignedParentUuid;
     private boolean familySpawnPending = false;
     private int pendingFamilyBabyCount = 0;
-    private final DragonSwimSteeringController waterPathSteering;
+    private final GenericSwimSteeringController waterPathSteering;
     private final AsyncSwimController waterPathController;
     private DragonLocomotionMode locomotionMode = DragonLocomotionMode.GROUND;
 
@@ -188,7 +188,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.sitComponent = createSitComponent();
         this.babyComponent = createBabyComponent();
         this.lookControl = new DragonLookControl<>(this);
-        this.waterPathSteering = new DragonSwimSteeringController(this);
+        this.waterPathSteering = new GenericSwimSteeringController(this);
         this.waterPathController = new AsyncSwimController(this, this.waterPathSteering);
     }
 

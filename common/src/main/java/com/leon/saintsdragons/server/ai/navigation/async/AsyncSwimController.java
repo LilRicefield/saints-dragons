@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
-import com.leon.saintsdragons.server.ai.goals.base.DragonSwimSteeringController;
+import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
 import com.leon.saintsdragons.server.ai.pathfinding.AsyncDragonPathfinder;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
@@ -18,11 +18,13 @@ public class AsyncSwimController {
     private static final double REJECTED_TARGET_DISTANCE_SQR = 4.0D * 4.0D;
 
     private final Mob host;
-    private final DragonSwimSteeringController steering;
+    private final GenericSwimSteeringController steering;
     private final List<Vec3> pathNodes = new ArrayList<>();
     private Vec3 target;
     private double speed;
     private float turnSpeed = 8.0F;
+    private boolean liveTracking;
+    private double liveArrivalDistance = 1.5D;
     private int currentPathIndex;
     private int recalcCooldown;
     private boolean calculating;
@@ -34,7 +36,7 @@ public class AsyncSwimController {
     private int rejectedTargetCooldown;
     private Vec3 rejectedTarget;
 
-    public AsyncSwimController(Mob host, DragonSwimSteeringController steering) {
+    public AsyncSwimController(Mob host, GenericSwimSteeringController steering) {
         this.host = host;
         this.steering = steering;
         this.lastStuckCheckPosition = host.position();
@@ -44,6 +46,7 @@ public class AsyncSwimController {
         if (isRejectedTarget(target)) {
             return false;
         }
+        this.liveTracking = false;
         this.target = target;
         this.speed = speed;
         this.turnSpeed = turnSpeed;
@@ -53,10 +56,30 @@ public class AsyncSwimController {
         return true;
     }
 
+    public boolean trackMovingTarget(Vec3 target, double speed, float turnSpeed, double arrivalDistance) {
+        if (target == null) {
+            return false;
+        }
+        this.liveTracking = true;
+        this.target = target;
+        this.speed = speed;
+        this.turnSpeed = turnSpeed;
+        this.liveArrivalDistance = Math.max(0.5D, arrivalDistance);
+        this.pathNodes.clear();
+        this.currentPathIndex = 0;
+        this.calculating = false;
+        this.pathRequestGeneration++;
+        return true;
+    }
+
     public void serverTick() {
         tickRejectedTargetCooldown();
         if (target == null) {
             steering.slow(0.86D);
+            return;
+        }
+        if (liveTracking) {
+            tickLiveTracking();
             return;
         }
 
@@ -88,6 +111,7 @@ public class AsyncSwimController {
 
     public void stop() {
         this.target = null;
+        this.liveTracking = false;
         this.pathNodes.clear();
         this.currentPathIndex = 0;
         this.calculating = false;
@@ -98,6 +122,7 @@ public class AsyncSwimController {
 
     public void clear() {
         this.target = null;
+        this.liveTracking = false;
         this.pathNodes.clear();
         this.currentPathIndex = 0;
         this.calculating = false;
@@ -123,6 +148,20 @@ public class AsyncSwimController {
         }
         Vec3 end = pathNodes.get(pathNodes.size() - 1);
         return end.distanceToSqr(newTarget) > 9.0D;
+    }
+
+    private void tickLiveTracking() {
+        double distSq = host.position().distanceToSqr(target);
+        double arrivalSq = liveArrivalDistance * liveArrivalDistance;
+        if (distSq <= arrivalSq) {
+            steering.slow(0.82D);
+            return;
+        }
+
+        double distance = Math.sqrt(distSq);
+        double easingRange = Math.max(2.0D, liveArrivalDistance * 2.5D);
+        double easedSpeed = speed * Math.min(1.0D, Math.max(0.25D, (distance - liveArrivalDistance) / easingRange));
+        steering.moveToward(target, easedSpeed, turnSpeed);
     }
 
     private void requestPath(Vec3 requestedTarget) {

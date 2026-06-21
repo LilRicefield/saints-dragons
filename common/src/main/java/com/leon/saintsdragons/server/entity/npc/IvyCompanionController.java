@@ -1,12 +1,16 @@
 package com.leon.saintsdragons.server.entity.npc;
 
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.Boat;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LadderBlock;
@@ -21,6 +25,11 @@ final class IvyCompanionController {
     private static final double FOLLOW_STOP_DISTANCE_SQR = 2.25D;
     private static final double FOLLOW_RUN_DISTANCE_SQR = 20.25D;
     private static final double FOLLOW_TELEPORT_DISTANCE_SQR = 4096.0D;
+    private static final double BOAT_BOARD_DISTANCE_SQR = 5.0D;
+    private static final double BOAT_NAVIGATION_SPEED = 1.3D;
+    private static final double BOAT_SWIM_SPEED = 0.28D;
+    private static final float BOAT_SWIM_TURN_SPEED = 10.0F;
+    private static final double BOAT_SWIM_ARRIVAL_DISTANCE = 1.5D;
     private static final double FOLLOW_WALK_SPEED = 1.0D;
     private static final double FOLLOW_RUN_SPEED = 1.3D;
     private static final double DIRECT_FOLLOW_WALK_SPEED = 0.18D;
@@ -53,11 +62,22 @@ final class IvyCompanionController {
     }
 
     void tick() {
+        tickOwnerVehicleDismount();
         if (ladderRetryCooldown > 0) {
             ladderRetryCooldown--;
         }
         if (ivy.getTarget() != null || ivy.getCompanionCommand() != IvyTheDragonMerchant.CompanionCommand.FOLLOW) {
             ivy.setRunning(false);
+        }
+    }
+
+    private void tickOwnerVehicleDismount() {
+        Entity vehicle = ivy.getVehicle();
+        if (!isOwnerVehicle(vehicle) || !(ivy.getOwner() instanceof Player owner)) {
+            return;
+        }
+        if (owner.getVehicle() != vehicle) {
+            ivy.stopRiding();
         }
     }
 
@@ -67,6 +87,10 @@ final class IvyCompanionController {
 
     Goal createFollowOwnerGoal() {
         return new FollowOwnerGoal();
+    }
+
+    Goal createBoardOwnerVehicleGoal() {
+        return new BoardOwnerVehicleGoal();
     }
 
     Goal createLadderClimbGoal() {
@@ -88,7 +112,8 @@ final class IvyCompanionController {
         return ivy.isTame()
                 && ivy.getOwner() instanceof Player
                 && !ivy.isCompanionAiBlocked()
-                && ivy.isAlive();
+                && ivy.isAlive()
+                && !ivy.isCombatBlockedByWater();
     }
 
     @Nullable
@@ -207,6 +232,9 @@ final class IvyCompanionController {
             if (!canUseCompanionMovement(IvyTheDragonMerchant.CompanionCommand.FOLLOW)) {
                 return false;
             }
+            if (isInDeepWater()) {
+                return false;
+            }
             LivingEntity resolvedOwner = ivy.getOwner();
             if (resolvedOwner == null
                     || !resolvedOwner.isAlive()
@@ -224,6 +252,7 @@ final class IvyCompanionController {
                     && owner.isAlive()
                     && owner.level().dimension() == ivy.level().dimension()
                     && canUseCompanionMovement(IvyTheDragonMerchant.CompanionCommand.FOLLOW)
+                    && !isInDeepWater()
                     && ivy.distanceToSqr(owner) > FOLLOW_STOP_DISTANCE_SQR;
         }
 
@@ -280,6 +309,10 @@ final class IvyCompanionController {
             ivy.setRunning(true);
         }
 
+        private boolean isInDeepWater() {
+            return ivy.isInWaterOrBubble() && !ivy.isInShallowWaterForWading();
+        }
+
         private boolean tryTeleportNearOwner(LivingEntity owner) {
             if (!(ivy.level() instanceof ServerLevel serverLevel)) {
                 return false;
@@ -301,6 +334,101 @@ final class IvyCompanionController {
             }
             return false;
         }
+    }
+
+    private class BoardOwnerVehicleGoal extends Goal {
+        private Entity vehicle;
+
+        BoardOwnerVehicleGoal() {
+            setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+        }
+
+        @Override
+        public boolean canUse() {
+            Entity ownerVehicle = getOwnerVehicle();
+            if (!canBoard(ownerVehicle)) {
+                return false;
+            }
+            vehicle = ownerVehicle;
+            return true;
+        }
+
+        @Override
+        public boolean canContinueToUse() {
+            return canBoard(vehicle) && getOwnerVehicle() == vehicle;
+        }
+
+        @Override
+        public void start() {
+            ivy.getNavigation().stop();
+        }
+
+        @Override
+        public void stop() {
+            vehicle = null;
+            ivy.setRunning(false);
+            ivy.getNavigation().stop();
+            AsyncSwimController controller = ivy.getAsyncSwimController();
+            if (controller != null) {
+                controller.stop();
+            }
+        }
+
+        @Override
+        public void tick() {
+            if (vehicle == null) {
+                return;
+            }
+            ivy.getLookControl().setLookAt(vehicle, 30.0F, 30.0F);
+            if (ivy.distanceToSqr(vehicle) <= BOAT_BOARD_DISTANCE_SQR) {
+                ivy.getNavigation().stop();
+                AsyncSwimController controller = ivy.getAsyncSwimController();
+                if (controller != null) {
+                    controller.stop();
+                }
+                ivy.startRiding(vehicle, true);
+                return;
+            }
+
+            if (ivy.isInWaterOrBubble() && !ivy.isInShallowWaterForWading()) {
+                ivy.getNavigation().stop();
+                AsyncSwimController controller = ivy.getAsyncSwimController();
+                if (controller != null
+                        && controller.trackMovingTarget(vehicle.position(), BOAT_SWIM_SPEED,
+                        BOAT_SWIM_TURN_SPEED, BOAT_SWIM_ARRIVAL_DISTANCE)) {
+                    controller.serverTick();
+                }
+                return;
+            }
+
+            ivy.setRunning(true);
+            ivy.getNavigation().moveTo(vehicle, BOAT_NAVIGATION_SPEED);
+        }
+
+        @Nullable
+        private Entity getOwnerVehicle() {
+            if (!(ivy.getOwner() instanceof Player owner) || !owner.isAlive()) {
+                return null;
+            }
+            Entity vehicle = owner.getVehicle();
+            if (vehicle instanceof Cindervane cindervane && !cindervane.isOwnedBy(owner)) {
+                return null;
+            }
+            return isOwnerVehicle(vehicle) ? vehicle : null;
+        }
+
+        private boolean canBoard(@Nullable Entity candidate) {
+            return candidate != null
+                    && candidate.isAlive()
+                    && candidate.level().dimension() == ivy.level().dimension()
+                    && !ivy.isPassenger()
+                    && candidate.getPassengers().size() < 2
+                    && canUseCompanionMovement(IvyTheDragonMerchant.CompanionCommand.FOLLOW);
+        }
+    }
+
+    private static boolean isOwnerVehicle(@Nullable Entity vehicle) {
+        return vehicle instanceof Boat || vehicle instanceof Cindervane;
     }
 
     private class LadderClimbGoal extends Goal {
@@ -353,6 +481,7 @@ final class IvyCompanionController {
         public void start() {
             phase = Phase.APPROACH;
             exitTicks = 0;
+            ivy.setClimbingLadder(false);
             ivy.setRunning(false);
         }
 
@@ -365,6 +494,7 @@ final class IvyCompanionController {
             ivy.setNoGravity(false);
             ivy.setShiftKeyDown(false);
             ivy.setRunning(false);
+            ivy.setClimbingLadder(false);
             ivy.fallDistance = 0.0F;
             owner = null;
             plan = null;
@@ -421,6 +551,7 @@ final class IvyCompanionController {
         }
 
         private void tickClimb() {
+            ivy.setClimbingLadder(true);
             BlockPos currentLadder = plan.ladderAt(Mth.floor(ivy.getY()));
             if (!isLadder(currentLadder)) {
                 currentLadder = plan.startLadder();
@@ -465,6 +596,7 @@ final class IvyCompanionController {
                 ivy.moveTo(ivy.getX(), targetY, ivy.getZ(), ivy.getYRot(), ivy.getXRot());
                 ivy.setNoGravity(false);
                 ivy.setShiftKeyDown(false);
+                ivy.setClimbingLadder(false);
                 phase = Phase.EXIT;
                 exitTicks = LADDER_EXIT_TICKS;
                 return;

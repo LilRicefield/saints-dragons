@@ -10,6 +10,7 @@ public final class IvyChatterRegistry {
     public static final String OWNER_HURT = "owner_hurt";
     public static final String RENAME_REFUSAL = "rename_refusal";
     public static final String DOWNED = "downed";
+    public static final String UNDERWATER = "underwater";
 
     private static final Map<String, List<String>> POOLS = new ConcurrentHashMap<>();
 
@@ -95,6 +96,11 @@ public final class IvyChatterRegistry {
                         "chatter.saintsdragons.ivy.downed.5",
                         "chatter.saintsdragons.ivy.downed.6",
                         "chatter.saintsdragons.ivy.downed.7"
+                ),
+                UNDERWATER, List.of(
+                        "chatter.saintsdragons.ivy.underwater.0",
+                        "chatter.saintsdragons.ivy.underwater.1",
+                        "chatter.saintsdragons.ivy.underwater.2"
                 )
         );
     }

@@ -172,7 +172,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
     private final RiftDrakeLookController landLookControl;
-    private final DragonSwimSteeringController swimSteering;
+    private final GenericSwimSteeringController swimSteering;
     private final AsyncSwimController asyncSwimController;
     private DragonGroundWanderGoal<Varasuchus> groundWanderGoal;
     private boolean swimming;
@@ -236,7 +236,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.groundNavigation = new PathNavigateGround(this, level);
         this.landMoveControl = new RiftDrakeMoveControl(this);
         this.landLookControl = new RiftDrakeLookController(this);
-        this.swimSteering = new DragonSwimSteeringController(this);
+        this.swimSteering = new GenericSwimSteeringController(this);
         this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
         this.navigation = this.groundNavigation;
         this.moveControl = this.landMoveControl;
