@@ -11,6 +11,9 @@ public final class IvyChatterRegistry {
     public static final String RENAME_REFUSAL = "rename_refusal";
     public static final String DOWNED = "downed";
     public static final String UNDERWATER = "underwater";
+    public static final String COMMAND_FOLLOW = "command_follow";
+    public static final String COMMAND_STAY = "command_stay";
+    public static final String COMMAND_WANDER = "command_wander";
 
     private static final Map<String, List<String>> POOLS = new ConcurrentHashMap<>();
 
@@ -101,6 +104,21 @@ public final class IvyChatterRegistry {
                         "chatter.saintsdragons.ivy.underwater.0",
                         "chatter.saintsdragons.ivy.underwater.1",
                         "chatter.saintsdragons.ivy.underwater.2"
+                ),
+                COMMAND_FOLLOW, List.of(
+                        "chatter.saintsdragons.ivy.command_follow.0",
+                        "chatter.saintsdragons.ivy.command_follow.1",
+                        "chatter.saintsdragons.ivy.command_follow.2"
+                ),
+                COMMAND_STAY, List.of(
+                        "chatter.saintsdragons.ivy.command_stay.0",
+                        "chatter.saintsdragons.ivy.command_stay.1",
+                        "chatter.saintsdragons.ivy.command_stay.2"
+                ),
+                COMMAND_WANDER, List.of(
+                        "chatter.saintsdragons.ivy.command_wander.0",
+                        "chatter.saintsdragons.ivy.command_wander.1",
+                        "chatter.saintsdragons.ivy.command_wander.2"
                 )
         );
     }

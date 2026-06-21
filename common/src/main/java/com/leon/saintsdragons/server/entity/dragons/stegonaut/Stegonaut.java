@@ -114,7 +114,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private boolean boundToBinder = false;
     @Nullable
     private UUID packLeaderUuid;
-    private int groundStepSoundCooldownTicks = 0;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
@@ -407,18 +406,14 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     private void setupAnimationControllers() {
-        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+                fastActionController, vocalController, interactionController);
         animationController.setupMovementController(movementController);
-        transitionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationController.setupTransitionController(transitionController);
         animationController.setupActionController(actionController);
-        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationController.setupFastActionController(fastActionController);
-        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         AnimationHelper.registerGrumbles(vocalController, this);
-        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationController.setupInteractionController(interactionController);
-        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
     }
 
     @Override
@@ -714,7 +709,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         if (!level().isClientSide) {
             tickFeedingCooldown();
             handleAmbientSounds();
-            tickGroundStepAudio();
         }
         screenShakeComponent.tick();
 
@@ -761,31 +755,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private boolean shouldStaySeatedCommand() {
         return this.isTame() && this.getCommand() == 1;
     }
-    private void tickGroundStepAudio() {
-        if (groundStepSoundCooldownTicks > 0) {
-            groundStepSoundCooldownTicks--;
-        }
-        if (isBaby() || isSleeping() || isSleepTransitioning() || isOrderedToSit() || areRiderControlsLocked() || !onGround() || isInWaterOrBubble()) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        int moveState = getMovementState();
-        if (moveState <= 0) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        if (groundStepSoundCooldownTicks > 0) {
-            return;
-        }
-        boolean running = moveState == 2;
-        int duration = running ? 27 : 40;
-        getSoundHandler().playMovingEntitySound(
-                running ? ModSounds.STEGONAUT_RUN.get() : ModSounds.STEGONAUT_WALK.get(),
-                1.0f, isBaby() ? 1.6f : 1.0f, duration
-        );
-        groundStepSoundCooldownTicks = duration;
-    }
-
     public void playEatMovingSound() {
         if (!level().isClientSide) {
             getSoundHandler().playMovingEntitySound(ModSounds.STEGONAUT_EAT.get(), 1.0f, isBaby() ? 1.6f : 1.0f, 22);

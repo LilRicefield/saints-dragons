@@ -577,17 +577,6 @@
       }
     ]
   },
-  "cindervane_run": {
-    "subtitle": "subtitles.saintsdragons.cindervane_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/cindervane/cindervane_run",
-        "volume": 1.5,
-        "pitch": 1.0,
-        "attenuation_distance": 16
-      }
-    ]
-  },
   "cindervane_flap": {
     "subtitle": "subtitles.saintsdragons.cindervane_flap",
     "sounds": [
@@ -785,17 +774,6 @@
       }
     ]
   },
-  "raevyx_walk": {
-    "subtitle": "subtitles.saintsdragons.raevyx_walk",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_walk",
-        "volume": 3.0,
-        "pitch": 1.0,
-        "attenuation_distance": 32
-      }
-    ]
-  },
   "raevyx_flap": {
     "subtitle": "subtitles.saintsdragons.raevyx_flap",
     "sounds": [
@@ -961,28 +939,6 @@
       }
     ]
   },
-  "stegonaut_walk": {
-    "subtitle": "subtitles.saintsdragons.stegonaut_walk",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/stegonaut/stegonaut_walk",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "stegonaut_run": {
-    "subtitle": "subtitles.saintsdragons.stegonaut_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/stegonaut/stegonaut_run",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 10
-      }
-    ]
-  },
   "varasuchus_grumble1": {
     "subtitle": "subtitles.saintsdragons.varasuchus_grumble1",
     "sounds": [
@@ -1068,50 +1024,6 @@
         "volume": 2.5,
         "pitch": 1.0,
         "attenuation_distance": 48
-      }
-    ]
-  },
-  "varasuchus_walk": {
-    "subtitle": "subtitles.saintsdragons.varasuchus_walk",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/varasuchus/varasuchus_walk",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "varasuchus_run": {
-    "subtitle": "subtitles.saintsdragons.varasuchus_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/varasuchus/varasuchus_run",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "varasuchus_walk2": {
-    "subtitle": "subtitles.saintsdragons.varasuchus_walk2",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/varasuchus/varasuchus_walk2",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 16
-      }
-    ]
-  },
-  "varasuchus_run2": {
-    "subtitle": "subtitles.saintsdragons.varasuchus_run2",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/varasuchus/varasuchus_run2",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 16
       }
     ]
   },
@@ -1423,17 +1335,6 @@
       }
     ]
   },
-  "ignivorus_walk": {
-    "subtitle": "subtitles.saintsdragons.ignivorus_walk",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/ignivorus/ignivorus_walk",
-        "volume": 1.5,
-        "pitch": 1.0,
-        "attenuation_distance": 40
-      }
-    ]
-  },
   "ignivorus_phase2_enter": {
     "subtitle": "subtitles.saintsdragons.ignivorus_phase2_enter",
     "sounds": [
@@ -1442,39 +1343,6 @@
         "volume": 3.0,
         "pitch": 1.0,
         "attenuation_distance": 64
-      }
-    ]
-  },
-  "ignivorus_phase2_walk": {
-    "subtitle": "subtitles.saintsdragons.ignivorus_phase2_walk",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_walk",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 40
-      }
-    ]
-  },
-  "ignivorus_run": {
-    "subtitle": "subtitles.saintsdragons.ignivorus_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/ignivorus/ignivorus_run",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 40
-      }
-    ]
-  },
-  "ignivorus_phase2_run": {
-    "subtitle": "subtitles.saintsdragons.ignivorus_phase2_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/ignivorus/ignivorus_phase2_run",
-        "volume": 2.5,
-        "pitch": 1.0,
-        "attenuation_distance": 40
       }
     ]
   },
@@ -1774,17 +1642,6 @@
       }
     ]
   },
-  "raevyx_run": {
-    "subtitle": "subtitles.saintsdragons.raevyx_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/raevyx/raevyx_run",
-        "volume": 3.5,
-        "pitch": 1.0,
-        "attenuation_distance": 36
-      }
-    ]
-  },
   "raevyx_landed": {
     "subtitle": "subtitles.saintsdragons.raevyx_landed",
     "sounds": [
@@ -2005,28 +1862,6 @@
       }
     ]
   },
-  "volitans_walk": {
-    "subtitle": "subtitles.saintsdragons.volitans_walk",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/volitans/volitans_walk",
-        "volume": 1.5,
-        "pitch": 1.0,
-        "attenuation_distance": 20
-      }
-    ]
-  },
-  "volitans_run": {
-    "subtitle": "subtitles.saintsdragons.volitans_run",
-    "sounds": [
-      {
-        "name": "saintsdragons:entity/volitans/volitans_run",
-        "volume": 2.0,
-        "pitch": 1.0,
-        "attenuation_distance": 20
-      }
-    ]
-  },
   "volitans_eat": {
     "subtitle": "subtitles.saintsdragons.volitans_eat",
     "sounds": [
@@ -2233,6 +2068,66 @@
         "volume": 1.2,
         "pitch": 1.0,
         "attenuation_distance": 20
+      }
+    ]
+  },
+  "mossback_step": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/mossback/mossback_step",
+        "volume": 2.0,
+        "attenuation_distance": 8
+      }
+    ]
+  },
+  "stegonaut_step": {
+    "sounds": [{
+        "name": "saintsdragons:entity/stegonaut/stegonaut_step",
+        "volume": 2.0,
+        "attenuation_distance": 32 }]
+  },
+  "raevyx_step": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_step",
+        "volume": 2.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "cindervane_step": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_step",
+        "volume": 2.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "varasuchus_step": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_step",
+        "volume": 2.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "ignivorus_step": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_step",
+        "volume": 2.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "volitans_step": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_step",
+        "volume": 2.0,
+        "attenuation_distance": 32
       }
     ]
   }

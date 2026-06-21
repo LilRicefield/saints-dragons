@@ -290,23 +290,23 @@ public class Mossback extends Animal implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "thrown", 1, state -> {
+        var thrownController = new AnimationController<>(this, "thrown", 1, state -> {
             if (isThrown() || isThrownAirborne()) {
                 state.setAndContinue(THROWN);
                 return PlayState.CONTINUE;
             }
             return PlayState.STOP;
-        }));
+        });
 
-        controllers.add(new AnimationController<>(this, "landed", 1, state -> {
+        var landedController = new AnimationController<>(this, "landed", 1, state -> {
             if (getLandedTicks() > 0) {
                 state.setAndContinue(LANDED);
                 return PlayState.CONTINUE;
             }
             return PlayState.STOP;
-        }));
+        });
 
-        controllers.add(new AnimationController<>(this, "movement", 2, state -> {
+        var movementController = new AnimationController<>(this, "movement", 2, state -> {
             if (isThrown() || isThrownAirborne()) {
                 return PlayState.STOP;
             }
@@ -319,7 +319,12 @@ public class Mossback extends Animal implements GeoEntity {
                 AnimationHelper.setAndContinue(state, IDLE);
             }
             return PlayState.CONTINUE;
-        }));
+        });
+
+        AnimationHelper.registerStepKeyframes(this, thrownController, landedController, movementController);
+        controllers.add(thrownController);
+        controllers.add(landedController);
+        controllers.add(movementController);
     }
 
     @Override

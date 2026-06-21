@@ -280,7 +280,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     private float prevCinematicZoomProgress = 0.0F;
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 520;
-    private int groundStepSoundCooldownTicks = 0;
     private int teethChipDropCooldownTicks = 0;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     public Ignivorus(EntityType<? extends Ignivorus> type, Level level) {
@@ -499,7 +498,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             }
             tickFireBreathEnergy();
             tickTerrainClearing();
-            tickGroundStepAudio();
             handleAmbientSounds();
             int cooldown = this.entityData.get(DATA_FEEDING_COOLDOWN);
             if (cooldown > 0) {
@@ -2757,14 +2755,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void setupAnimationControllers() {
-        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        transitionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+                fastActionController, flightController, vocalController, interactionController);
         AnimationHelper.registerGrumbles(vocalController, this);
-        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationHandler.setupMovementController(movementController);
         animationHandler.setupTransitionController(transitionController);
         animationHandler.setupFastActionController(fastActionController);
@@ -2788,43 +2781,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         return IgnivorusSoundProfile.INSTANCE;
     }
 
-    @Override
-    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
-    }
-
-    private void tickGroundStepAudio() {
-        if (groundStepSoundCooldownTicks > 0) {
-            groundStepSoundCooldownTicks--;
-        }
-        if (isBaby() || isAerial() || isInWaterOrBubble() || !onGround()) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        int moveState = getMovementState();
-        if (moveState <= 0) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        if (groundStepSoundCooldownTicks > 0) {
-            return;
-        }
-        boolean running = moveState == 2;
-        if (isPhase2Active()) {
-            int duration = running ? 33 : 42;
-            getSoundHandler().playMovingEntitySound(
-                    running ? ModSounds.IGNIVORUS_PHASE2_RUN.get() : ModSounds.IGNIVORUS_PHASE2_WALK.get(),
-                    1.0f, 1.0f, duration
-            );
-            groundStepSoundCooldownTicks = duration;
-            return;
-        }
-        int duration = running ? 25 : 42;
-        getSoundHandler().playMovingEntitySound(
-                running ? ModSounds.IGNIVORUS_RUN.get() : ModSounds.IGNIVORUS_WALK.get(),
-                1.0f, 1.0f, duration
-        );
-        groundStepSoundCooldownTicks = duration;
-    }
     private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
 
     public void setServerBonePosition(String boneName, Vec3 position) {

@@ -204,7 +204,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private int nextBuckAttemptTick = 0;
     private int wildRideBuckCooldownTicks = 0;
     private int cumulativeWildRideProgress = 0;
-    private int groundStepSoundCooldownTicks = 0;
     @Nullable
     private UUID babyProtectionAggroTargetUuid;
 
@@ -614,15 +613,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     private void setupAnimationControllers() {
-        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+                fastActionController, vocalController, interactionController);
         animationHandler.setupMovementController(movementController);
-        transitionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationHandler.setupTransitionController(transitionController);
-        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         AnimationHelper.registerGrumbles(vocalController, this);
-        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupInteractionController(interactionController);
@@ -693,7 +688,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             tickLeapState();
             handleAmbientSounds();
             tickRiderControlLock();
-            tickGroundStepAudio();
             tickWildRideBuckCooldown();
             boolean inWater = this.isInWaterOrBubble();
             if (inWater) {
@@ -1376,40 +1370,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public DragonAbilityType<?, ?> getChannelingAbility() {
         return ModAbilities.VARASUCHUS_PHASE_SHIFT;
-    }
-
-    private void tickGroundStepAudio() {
-        if (groundStepSoundCooldownTicks > 0) {
-            groundStepSoundCooldownTicks--;
-        }
-        if (this.isBaby() || this.isInWaterOrBubble() || this.isSwimming() || !this.onGround() || this.areRiderControlsLocked()) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        int moveState = getMovementState();
-        if (moveState <= 0) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        if (groundStepSoundCooldownTicks > 0) {
-            return;
-        }
-        boolean running = moveState == 2;
-        if (this.isPhaseTwoActive()) {
-            int duration = running ? 24 : 45;
-            this.getSoundHandler().playMovingEntitySound(
-                    running ? ModSounds.VARASUCHUS_RUN2.get() : ModSounds.VARASUCHUS_WALK2.get(),
-                    1.0f, 1.0f, duration
-            );
-            groundStepSoundCooldownTicks = duration;
-            return;
-        }
-        int duration = running ? 27 : 40;
-        this.getSoundHandler().playMovingEntitySound(
-                running ? ModSounds.VARASUCHUS_RUN.get() : ModSounds.VARASUCHUS_WALK.get(),
-                1.0f, 1.0f, duration
-        );
-        groundStepSoundCooldownTicks = duration;
     }
 
     private void handleRiddenSwimming(Vec3 input) {

@@ -16617,6 +16617,14 @@
 						}
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "stegonaut_step"
+				},
+				"1.0": {
+					"effect": "stegonaut_step"
+				}
 			}
 		},
 		"animation.stegonaut.run": {
@@ -20878,6 +20886,14 @@
 							"vector": [0, 0, 0]
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "stegonaut_step"
+				},
+				"0.625": {
+					"effect": "stegonaut_step"
 				}
 			}
 		},
@@ -56680,6 +56696,11 @@
 							"vector": [-0.02, 4.98, -0.44]
 						}
 					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "stegonaut_slam"
 				}
 			}
 		},

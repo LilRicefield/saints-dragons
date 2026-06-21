@@ -99,13 +99,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final double RIDER_RUN_SPEED = 0.35D;
     private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
     private static final float DEFAULT_DASH_DAMAGE = 10.0F;
-    private static final int WALK_SOUND_DURATION_TICKS = 32;
     private static final double GROUND_REND_BOLT_LINK_START_REACH = 1.1D;
     private static final double GROUND_REND_MAX_LINK_DISTANCE_SQR = 16.0D;
     private static final int GROUND_REND_BOLT_LIFETIME = 5;
-    private static final int RUN_SOUND_DURATION_TICKS = 25;
-    private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = WALK_SOUND_DURATION_TICKS;
-    private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = RUN_SOUND_DURATION_TICKS;
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_NIGHT_GOLD = 1;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
@@ -497,32 +493,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.timeFlying = 0;
         this.landingFlag = false;
         this.landingTimer = 0;
-    }
-
-    @Override
-    protected void playStepSound(@Nonnull BlockPos pos, @Nonnull BlockState state) {
-        if (isBaby()) {
-            return;
-        }
-        if (this.level().isClientSide) {
-            return;
-        }
-        if (isAerial() || isInWaterOrBubble()) {
-            return;
-        }
-
-        boolean running = getMovementState() == 2;
-        playGroundStepLoopSound(
-                ModSounds.RAEVYX_WALK.get(),
-                ModSounds.RAEVYX_RUN.get(),
-                WALK_SOUND_DURATION_TICKS,
-                RUN_SOUND_DURATION_TICKS,
-                WALK_SOUND_REPLAY_INTERVAL_TICKS,
-                RUN_SOUND_REPLAY_INTERVAL_TICKS,
-                running,
-                1.0f,
-                1.0f
-        );
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -2696,14 +2666,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void setupAnimationControllers() {
-        movementController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        transitionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        actionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        fastActionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        flightController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
+        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+                fastActionController, flightController, vocalController, interactionController);
         AnimationHelper.registerGrumbles(vocalController, this);
-        vocalController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
-        interactionController.setSoundKeyframeHandler(event -> handleAnimationSound(event.getKeyframeData().getSound()));
         animationHandler.setupMovementController(movementController);
         animationHandler.setupTransitionController(transitionController);
         animationHandler.setupActionController(actionController);

@@ -163,11 +163,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final int SLEEP_WAKE_SUPPRESSION_TICKS = 20;
     private static final int LANDED_CONTROL_LOCK_TICKS = 20;
     private static final int LANDED_RECOVERY_TICKS = 23;
-    private static final int WALK_SOUND_DURATION_TICKS = 33;
-    private static final int RUN_SOUND_DURATION_TICKS = 30;
     private static final int EAT_SOUND_DURATION_TICKS = 34;
-    private static final long WALK_SOUND_REPLAY_INTERVAL_TICKS = 33;
-    private static final long RUN_SOUND_REPLAY_INTERVAL_TICKS = 25;
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
     private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = 30;
@@ -395,32 +391,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         applyConfiguredAttributes();
         this.setHealth(this.getMaxHealth());
         return spawnData;
-    }
-
-    @Override
-    protected void playStepSound(@NotNull BlockPos pos, @NotNull BlockState state) {
-        if (isBaby()) {
-            return;
-        }
-        if (this.level().isClientSide) {
-            return;
-        }
-        if (isAerial() || isInWaterOrBubble() || isBurrowing()) {
-            return;
-        }
-
-        boolean running = getMovementState() == 2;
-        playGroundStepLoopSound(
-                ModSounds.VOLITANS_WALK.get(),
-                ModSounds.VOLITANS_RUN.get(),
-                WALK_SOUND_DURATION_TICKS,
-                RUN_SOUND_DURATION_TICKS,
-                WALK_SOUND_REPLAY_INTERVAL_TICKS,
-                RUN_SOUND_REPLAY_INTERVAL_TICKS,
-                running,
-                1.0f,
-                1.0f
-        );
     }
 
     @Override
@@ -1307,61 +1277,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void setupAnimationControllers() {
-        movementController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        actionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
+        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+                fastActionController, flightController, airActionController, vocalController, interactionController);
         animationHandler.setupActionController(actionController);
-        fastActionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupFastActionController(fastActionController);
-        flightController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupFlightController(flightController);
-        airActionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupAirActionController(airActionController);
         AnimationHelper.registerGrumbles(vocalController, this);
-        vocalController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
-        interactionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupMovementController(movementController);
-        transitionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupTransitionController(transitionController);
     }
 

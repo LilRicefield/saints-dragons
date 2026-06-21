@@ -41,6 +41,7 @@ import javax.annotation.Nullable;
 import com.leon.saintsdragons.util.math.SmoothValue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
@@ -264,6 +265,32 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
     }
 
+    public final void playAnimationKeyframeSound(String soundKey) {
+        if (soundKey == null || soundKey.isEmpty()) {
+            return;
+        }
+
+        ResourceLocation soundId = null;
+        ResourceLocation entityTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(getType());
+        if ("step".equals(soundKey) && entityTypeId != null) {
+            soundId = new ResourceLocation(entityTypeId.getNamespace(), entityTypeId.getPath() + "_step");
+        } else if (soundKey.endsWith("_step") && entityTypeId != null) {
+            soundId = new ResourceLocation(entityTypeId.getNamespace(), soundKey);
+        } else if (soundKey.indexOf(':') >= 0) {
+            soundId = ResourceLocation.tryParse(soundKey);
+        }
+
+        if (soundId != null) {
+            SoundEvent sound = soundId != null ? BuiltInRegistries.SOUND_EVENT.get(soundId) : null;
+            if (sound != null) {
+                getSoundHandler().playClientSound(this, position(), sound, 1.0f, 1.0f);
+                return;
+            }
+        }
+
+        handleAnimationSound(soundKey);
+    }
+
     protected void resetAmbientSoundTimer(int minDelayTicks, int maxDelayTicks) {
         ambientSoundTimer = 0;
         int min = Math.max(1, minDelayTicks);
@@ -302,28 +329,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             return second;
         }
         return fallback;
-    }
-
-    protected void playGroundStepLoopSound(SoundEvent walkSound, SoundEvent runSound,
-                                           int walkDurationTicks, int runDurationTicks,
-                                           long walkReplayIntervalTicks, long runReplayIntervalTicks,
-                                           boolean running, float volume, float pitch) {
-        if (level().isClientSide || isBaby()) {
-            return;
-        }
-
-        long now = level().getGameTime();
-        long minIntervalTicks = running ? runReplayIntervalTicks : walkReplayIntervalTicks;
-        if (now - getSoundHandler().getLastStepTick() < minIntervalTicks) {
-            return;
-        }
-        getSoundHandler().setLastStepTick(now);
-        getSoundHandler().playMovingEntitySound(
-                running ? runSound : walkSound,
-                volume,
-                pitch,
-                running ? runDurationTicks : walkDurationTicks
-        );
     }
 
     @Nullable

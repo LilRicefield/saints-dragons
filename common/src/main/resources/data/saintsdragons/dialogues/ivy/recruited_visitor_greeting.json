@@ -1,0 +1,78 @@
+{
+  "start_at": "visitor_greeting",
+  "states": {
+    "visitor_greeting": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "I already have a travelling companion. But I can still trade with you."
+        },
+        {
+          "text": "I am spoken for, in the companion sense. The shop is still open, though."
+        },
+        {
+          "text": "Sorry. My companion and I travel together. That does not mean I have stopped being a trader."
+        },
+        {
+          "text": "There's little I can say to you, I'm afraid. We can still trade."
+        },
+        {
+          "text": "Sorry. There's only so much of me to go around. We can still trade."
+        },
+        {
+          "text": "You seem nice and all, but I've teamed up with someone else. We can still trade, though."
+        }
+      ],
+      "choices": [
+        {
+          "text": {
+            "text": "I'd like to trade."
+          },
+          "next": "trade"
+        },
+        {
+          "text": {
+            "text": "Just saying hello."
+          },
+          "next": "goodbye"
+        }
+      ]
+    },
+    "trade": {
+      "type": "open_trade",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Of course. Take a look."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "visitor_greeting"
+        }
+      ]
+    },
+    "goodbye": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "texts": [
+        {
+          "text": "No worries. Safe travels."
+        },
+        {
+          "text": "Hello to you too. Take care."
+        },
+        {
+          "text": "All right. Take care."
+        }
+      ]
+    }
+  }
+}

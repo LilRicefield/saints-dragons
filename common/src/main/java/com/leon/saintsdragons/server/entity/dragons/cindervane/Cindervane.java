@@ -164,7 +164,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                     .add("cindervane_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
                     .build();
 
-    private int groundStepSoundCooldownTicks = 0;
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
@@ -517,7 +516,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
         tickFeedingCooldown();
         handleAmbientSounds();
-        tickGroundStepAudio();
 
         if (isSleeping() || isSleepingEntering() || isSleepTransitioning()) {
             if (this.getTarget() != null || this.isAggressive()) {
@@ -605,26 +603,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return "grumble2";
         }
         return "grumble3";
-    }
-
-    private void tickGroundStepAudio() {
-        if (groundStepSoundCooldownTicks > 0) {
-            groundStepSoundCooldownTicks--;
-        }
-        if (isBaby() || isAerial() || isInWaterOrBubble() || !onGround()) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        int moveState = getMovementState();
-        if (moveState != 2) {
-            groundStepSoundCooldownTicks = 0;
-            return;
-        }
-        if (groundStepSoundCooldownTicks > 0) {
-            return;
-        }
-        getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_RUN.get(), 1.0f, 1.0f, 22);
-        groundStepSoundCooldownTicks = 30;
     }
 
     public void playEatMovingSound() {
@@ -1340,55 +1318,15 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     private void setupAnimationControllers() {
-        movementController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
+        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+                fastActionController, flightController, vocalController, interactionController);
         animationHandler.setupMovementController(movementController);
-        transitionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupTransitionController(transitionController);
         animationHandler.setupActionController(actionController);
-        actionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupFastActionController(fastActionController);
-        fastActionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupFlightController(flightController);
-        flightController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         AnimationHelper.registerGrumbles(vocalController, this);
-        vocalController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
         animationHandler.setupInteractionController(interactionController);
-        interactionController.setSoundKeyframeHandler(event -> {
-            String soundKey = event.getKeyframeData().getSound();
-            if (soundKey != null && !soundKey.isEmpty()) {
-                handleAnimationSound(soundKey);
-            }
-        });
     }
 
     @Override

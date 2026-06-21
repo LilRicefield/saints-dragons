@@ -3,6 +3,12 @@ package com.leon.saintsdragons.util.animation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
+import software.bernie.geckolib.core.animatable.GeoAnimatable;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
@@ -30,6 +36,37 @@ public final class AnimationHelper {
     public static final String DIE = "die";
 
     private AnimationHelper() {
+    }
+
+    @SafeVarargs
+    public static <T extends DragonEntity> void registerSoundKeyframes(T dragon, AnimationController<T>... controllers) {
+        for (AnimationController<T> controller : controllers) {
+            controller.setSoundKeyframeHandler(event -> dragon.playAnimationKeyframeSound(event.getKeyframeData().getSound()));
+        }
+    }
+
+    @SafeVarargs
+    public static <T extends GeoAnimatable> void registerStepKeyframes(Entity entity, AnimationController<T>... controllers) {
+        ResourceLocation entityTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        if (entityTypeId == null) {
+            return;
+        }
+
+        for (AnimationController<T> controller : controllers) {
+            controller.setSoundKeyframeHandler(event -> {
+                String soundKey = event.getKeyframeData().getSound();
+                ResourceLocation soundId = "step".equals(soundKey)
+                        ? new ResourceLocation(entityTypeId.getNamespace(), entityTypeId.getPath() + "_step")
+                        : soundKey != null && soundKey.endsWith("_step")
+                                ? new ResourceLocation(entityTypeId.getNamespace(), soundKey)
+                                : null;
+                SoundEvent sound = soundId != null ? BuiltInRegistries.SOUND_EVENT.get(soundId) : null;
+                if (sound != null) {
+                    entity.level().playLocalSound(entity.getX(), entity.getY(), entity.getZ(), sound,
+                            SoundSource.NEUTRAL, 1.0f, 1.0f, false);
+                }
+            });
+        }
     }
 
     public static <T extends RideableDragonBase> void register(AnimationController<T> controller, Animations animations) {

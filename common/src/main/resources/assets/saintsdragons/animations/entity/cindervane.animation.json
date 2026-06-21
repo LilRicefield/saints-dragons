@@ -8503,6 +8503,14 @@
 						"vector": [0.8, 1, 1]
 					}
 				}
+			},
+			"sound_effects": {
+				"0.0": {
+					"effect": "cindervane_step"
+				},
+				"0.75": {
+					"effect": "cindervane_step"
+				}
 			}
 		},
 		"animation.cindervane.glide": {
@@ -20820,6 +20828,101 @@
 			}
 		},
 		"animation.cindervane.pose": {
+			"loop": true,
+			"bones": {
+				"tail1": {
+					"rotation": {
+						"vector": [-15, -10, 0]
+					}
+				},
+				"tail2": {
+					"rotation": {
+						"vector": [-12.51153, 2.4407, -0.54143]
+					}
+				},
+				"tail4": {
+					"rotation": {
+						"vector": [-12.5, 12.5, 0]
+					}
+				},
+				"heightController": {
+					"rotation": {
+						"vector": [18.64973, -6.27967, 24.24769]
+					}
+				},
+				"leftforearm": {
+					"rotation": {
+						"vector": [0, 0, 15]
+					}
+				},
+				"leftarm": {
+					"rotation": {
+						"vector": [0, 0, -15]
+					}
+				},
+				"neck1Controller": {
+					"rotation": {
+						"vector": [4.06136, -16.768, -9.24609]
+					}
+				},
+				"headController": {
+					"rotation": {
+						"vector": [-12.5, 0, 0]
+					}
+				},
+				"jawController": {
+					"rotation": {
+						"vector": [30, 0, 0]
+					}
+				},
+				"leftforearm2": {
+					"rotation": {
+						"vector": [0, 0, 22.5]
+					}
+				},
+				"neck2Controller": {
+					"rotation": {
+						"vector": [12.5, 0, 0]
+					}
+				},
+				"neck3Controller": {
+					"rotation": {
+						"vector": [14.22066, -29.74358, 7.12056]
+					}
+				},
+				"neck4Controller": {
+					"rotation": {
+						"vector": [17.5, 0, 0]
+					}
+				},
+				"bone": {
+					"rotation": {
+						"vector": [-20.11435, -9.91358, 1.31845]
+					}
+				},
+				"tail3": {
+					"rotation": {
+						"vector": [-5, 12.5, 0]
+					}
+				},
+				"rightarm": {
+					"rotation": {
+						"vector": [0, 0, -15]
+					}
+				},
+				"rightforearm": {
+					"rotation": {
+						"vector": [0, 0, -10]
+					}
+				},
+				"rightforearm2": {
+					"rotation": {
+						"vector": [0, 0, -15]
+					}
+				}
+			}
+		},
+		"animation.cindervane.pose2": {
 			"loop": true,
 			"bones": {
 				"tail1": {

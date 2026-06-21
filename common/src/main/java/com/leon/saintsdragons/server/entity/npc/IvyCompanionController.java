@@ -21,10 +21,10 @@ import javax.annotation.Nullable;
 import java.util.EnumSet;
 
 final class IvyCompanionController {
-    private static final double FOLLOW_START_DISTANCE_SQR = 6.25D;
-    private static final double FOLLOW_STOP_DISTANCE_SQR = 2.25D;
-    private static final double FOLLOW_RUN_DISTANCE_SQR = 20.25D;
-    private static final double FOLLOW_TELEPORT_DISTANCE_SQR = 4096.0D;
+    private static final double FOLLOW_START_DISTANCE_SQR = 10.0D;
+    private static final double FOLLOW_STOP_DISTANCE_SQR = 5.0D;
+    private static final double FOLLOW_RUN_DISTANCE_SQR = 18.0D;
+    private static final double  FOLLOW_TELEPORT_DISTANCE_SQR = 128.0D;
     private static final double BOAT_BOARD_DISTANCE_SQR = 5.0D;
     private static final double BOAT_NAVIGATION_SPEED = 1.3D;
     private static final double BOAT_SWIM_SPEED = 0.28D;
@@ -111,6 +111,7 @@ final class IvyCompanionController {
     private boolean canDefendOwner() {
         return ivy.isTame()
                 && ivy.getOwner() instanceof Player
+                && ivy.getCompanionCommand() == IvyTheDragonMerchant.CompanionCommand.FOLLOW
                 && !ivy.isCompanionAiBlocked()
                 && ivy.isAlive()
                 && !ivy.isCombatBlockedByWater();

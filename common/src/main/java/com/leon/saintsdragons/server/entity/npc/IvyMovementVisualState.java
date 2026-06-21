@@ -22,6 +22,7 @@ final class IvyMovementVisualState {
     void apply(AnimationState<?> state,
                IvyTheDragonMerchant ivy,
                RawAnimation idle,
+               RawAnimation sit,
                RawAnimation walk,
                RawAnimation run,
                RawAnimation falling,
@@ -43,6 +44,7 @@ final class IvyMovementVisualState {
             case FALLING -> AnimationHelper.setAndContinue(state, falling);
             case CLIMBING -> AnimationHelper.setAndContinue(state, climbing);
             case CLIMB_IDLE -> AnimationHelper.setAndContinue(state, climbIdle);
+            case SIT -> AnimationHelper.setAndContinue(state, sit);
             case RUN -> AnimationHelper.setAndContinue(state, run);
             case WALK -> AnimationHelper.setAndContinue(state, walk);
             case IDLE -> AnimationHelper.setAndContinue(state, idle);
@@ -56,6 +58,12 @@ final class IvyMovementVisualState {
 
         if (ivy.isClimbingLadder()) {
             return Math.abs(yVelocity) > 0.01D ? State.CLIMBING : State.CLIMB_IDLE;
+        }
+
+        if (ivy.getCompanionCommand() == IvyTheDragonMerchant.CompanionCommand.STAY
+                && grounded
+                && !ivy.isInWaterOrBubble()) {
+            return State.SIT;
         }
 
         if (ivy.isInWaterOrBubble()) {
@@ -119,6 +127,7 @@ final class IvyMovementVisualState {
 
     enum State {
         IDLE,
+        SIT,
         WALK,
         RUN,
         FALLING,

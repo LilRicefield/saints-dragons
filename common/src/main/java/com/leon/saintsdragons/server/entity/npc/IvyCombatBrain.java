@@ -1346,7 +1346,7 @@ public class IvyCombatBrain {
 
         @Override
         public boolean canUse() {
-            if (ivy.isCombatBlockedByWater()) {
+            if (isCombatBlocked()) {
                 clear();
                 return false;
             }
@@ -1362,7 +1362,7 @@ public class IvyCombatBrain {
 
         @Override
         public boolean canContinueToUse() {
-            if (ivy.isCombatBlockedByWater()) {
+            if (isCombatBlocked()) {
                 clear();
                 return false;
             }
@@ -1400,7 +1400,7 @@ public class IvyCombatBrain {
 
         @Override
         public void tick() {
-            if (ivy.isCombatBlockedByWater()) {
+            if (isCombatBlocked()) {
                 clear();
                 return;
             }
@@ -1487,9 +1487,14 @@ public class IvyCombatBrain {
             circle(target, distanceSqr);
         }
 
-        private boolean canBox(@Nullable LivingEntity target) {
-            return target == null || !target.isAlive() || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation();
-        }
+    private boolean canBox(@Nullable LivingEntity target) {
+        return target == null || !target.isAlive() || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation();
+    }
+
+    }
+
+    private boolean isCombatBlocked() {
+        return ivy.isCombatBlockedByWater() || ivy.isCombatBlockedByCommand();
     }
 
     private boolean isPressureTarget(LivingEntity target) {
@@ -1502,6 +1507,9 @@ public class IvyCombatBrain {
 
     @Nullable
     private LivingEntity selectPriorityTarget(@Nullable LivingEntity currentTarget) {
+        if (isCombatBlocked()) {
+            return null;
+        }
         if (currentTarget instanceof Player && isValidTarget(currentTarget)) {
             return currentTarget;
         }

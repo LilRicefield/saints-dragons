@@ -5,7 +5,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.sound.api.DragonSoundSpec;
 import com.leon.saintsdragons.sound.server.DragonSoundOrchestrator;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.Level;
@@ -23,7 +22,6 @@ public class DragonSoundHandler {
             "die", 62
     );
     private final Map<String, Integer> vocalCooldowns = new HashMap<>();
-    private long lastStepTick = -100;
     private static final int COOLDOWN_PRUNE_INTERVAL_TICKS = 200;
     private int pruneCooldownCounter = 0;
 
@@ -98,10 +96,6 @@ public class DragonSoundHandler {
         if (sound == null) {
             return;
         }
-        if (shouldSuppressLocomotionSound(sound)) {
-            lastStepTick = dragon.tickCount;
-            return;
-        }
         DragonSoundOrchestrator.play(
                 dragon,
                 DragonSoundSpec.moving(sound, SoundSource.NEUTRAL, volume, pitch, durationTicks)
@@ -158,23 +152,4 @@ public class DragonSoundHandler {
         return dragon;
     }
 
-    public long getLastStepTick() {
-        return lastStepTick;
-    }
-
-    public void setLastStepTick(long tick) {
-        this.lastStepTick = tick;
-    }
-
-    private boolean shouldSuppressLocomotionSound(SoundEvent sound) {
-        if (!dragon.areRiderControlsLocked()) {
-            return false;
-        }
-        var key = BuiltInRegistries.SOUND_EVENT.getKey(sound);
-        if (key == null) {
-            return false;
-        }
-        String path = key.getPath();
-        return path.contains("walk") || path.contains("run");
-    }
 }
