@@ -21,7 +21,7 @@ public class StegonautAnimationHandler {
     private static final RawAnimation SWIM_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.swim");
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sleep");
     private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sit");
-    private static final RawAnimation JUMP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.jump");
+    private static final RawAnimation JUMP_ANIM = RawAnimation.begin().thenPlay("animation.stegonaut.jump");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.stegonaut.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.stegonaut.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.stegonaut.fall_asleep");
@@ -59,10 +59,6 @@ public class StegonautAnimationHandler {
         if (drake.isInWaterOrBubble()) {
             state.getController().transitionLength(GROUND_TRANSITIONS.water());
             state.setAndContinue(SWIM_ANIM);
-            return PlayState.CONTINUE;
-        } else if (drake.isRiddenGroundJumpAirborne()) {
-            state.getController().transitionLength(GROUND_TRANSITIONS.bodyTransition());
-            state.setAndContinue(JUMP_ANIM);
             return PlayState.CONTINUE;
         }
 
@@ -116,6 +112,11 @@ public class StegonautAnimationHandler {
     }
 
     public void setupFastActionController(AnimationController<Stegonaut> controller) {
+        AnimationHelper.register(controller, "jump", JUMP_ANIM);
+    }
+
+    public void triggerRiderJumpAnimation() {
+        drake.triggerAnim(FAST_ACTION_CONTROLLER, "jump");
     }
 
     public void setupInteractionController(AnimationController<Stegonaut> controller) {

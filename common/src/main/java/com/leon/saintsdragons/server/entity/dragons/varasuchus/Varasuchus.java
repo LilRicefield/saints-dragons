@@ -317,13 +317,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             return false;
         }
 
-        return switch (action) {
-            case DOUBLE_TAP_W -> {
-                onRiderDash(player);
-                yield true;
-            }
-            default -> super.handleCustomRiderAction(player, action, abilityName, locked);
-        };
+        if (action == DragonRiderAction.DOUBLE_TAP_W) {
+            onRiderDash(player);
+            return true;
+        }
+        return super.handleCustomRiderAction(player, action, abilityName, locked);
     }
 
     @Override
@@ -746,9 +744,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             if (this.isInWaterOrBubble()) {
                 handleRiddenSwimming(motion);
             } else {
-                setGoingUp(false);
-                setGoingDown(false);
-                travelRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
+                travelStandardRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
             }
         } else {
             super.travel(motion);
@@ -861,6 +857,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
+    protected void onGroundDragonJumped(int jumpPower) {
+        super.onGroundDragonJumped(jumpPower);
+        animationHandler.triggerRiderJumpAnimation();
+    }
+
+    @Override
     protected double getRiderJumpStrength() {
         return RIDER_JUMP_STRENGTH;
     }
@@ -930,12 +932,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    public boolean causeFallDamage(float fallDistance, float damageMultiplier, @NotNull DamageSource source) {
-        this.fallDistance = 0.0F;
-        return false;
-    }
-
-    @Override
     public void jumpFromGround() {
         super.jumpFromGround();
         this.setGroundMoveStateFromRider(1);
@@ -970,7 +966,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             super.setTarget(null);
             return;
         }
-        if (target == null || !isBabyProtectionAggroTarget(target)) {
+        if (!isBabyProtectionAggroTarget(target)) {
             clearBabyProtectionAggroTarget();
         }
         super.setTarget(target);
@@ -1324,11 +1320,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (getMeleeMode() == 1) {
             return new RiderAbilityBinding(ModAbilities.VARASUCHUS_HORN_GORE.getName(), RiderAbilityBinding.Activation.PRESS);
         } else {
-            try {
-                if (isPhaseTwoActive()) {
-                    return new RiderAbilityBinding(ModAbilities.VARASUCHUS_BITE2.getName(), RiderAbilityBinding.Activation.PRESS);
-                }
-            } catch (Exception e) {
+            if (isPhaseTwoActive()) {
+                return new RiderAbilityBinding(ModAbilities.VARASUCHUS_BITE2.getName(), RiderAbilityBinding.Activation.PRESS);
             }
             return new RiderAbilityBinding(ModAbilities.VARASUCHUS_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
         }
@@ -1873,10 +1866,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     protected void onSleepFallAsleepAnimation() {
         animationHandler.triggerFallAsleepAnimation();
-    }
-
-    @Override
-    protected void onSleepLoopAnimation() {
     }
 
     @Override

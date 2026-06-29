@@ -157,7 +157,7 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
     }
 
     protected void onGroundDragonJumped(int jumpPower) {
-        setGroundMoveStateFromRider(1);
+        updateRiderGroundMoveState(getLastRiderForward(), getLastRiderStrafe());
         riderJumpLeftGround = false;
         riderJumpAnimationTicks = 0;
         riderJumpAnimationHoldTicks = 0;
@@ -219,6 +219,19 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
     protected abstract double getRiderJumpStrength();
 
     protected abstract double getRiderJumpForwardBoost();
+
+    protected void travelStandardRiddenGround(Player player, Vec3 riderInput, float riddenSpeed) {
+        if (areRiderControlsLocked()) {
+            setDeltaMovement(Vec3.ZERO);
+            return;
+        }
+        if (getNavigation().getPath() != null) {
+            getNavigation().stop();
+        }
+        setGoingUp(false);
+        setGoingDown(false);
+        travelRiddenGround(player, riderInput, riddenSpeed);
+    }
 
     protected void travelRiddenGround(Player player, Vec3 riderInput, float riddenSpeed) {
         setSpeed(riddenSpeed);

@@ -262,6 +262,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected void onGroundDragonJumped(int jumpPower) {
         super.onGroundDragonJumped(jumpPower);
+        animationController.triggerRiderJumpAnimation();
     }
 
     @Override
@@ -588,7 +589,9 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected void onSleepFreezeTick() {
         super.onSleepFreezeTick();
-        this.setOrderedToSit(true);
+        if (!isSleepingExiting()) {
+            this.setOrderedToSit(true);
+        }
     }
 
     @Override
@@ -600,10 +603,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected void onSleepFallAsleepAnimation() {
         animationController.triggerFallAsleepAnimation();
-    }
-
-    @Override
-    protected void onSleepLoopAnimation() {
     }
 
     @Override
@@ -936,17 +935,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            if (areRiderControlsLocked()) {
-                this.setDeltaMovement(Vec3.ZERO);
-                return;
-            }
-            if (this.getNavigation().getPath() != null) {
-                this.getNavigation().stop();
-            }
-
-            setGoingUp(false);
-            setGoingDown(false);
-            travelRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
+            travelStandardRiddenGround(player, getRiddenInput(player, motion), riderController.getRiddenSpeed(player));
             return;
         }
 
