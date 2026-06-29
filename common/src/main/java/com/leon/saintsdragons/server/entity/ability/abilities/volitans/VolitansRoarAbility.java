@@ -73,7 +73,10 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
             Volitans dragon = getUser();
             airOrWaterRoar = dragon.isFlying() || dragon.isInWaterOrBubble();
             groundedRoar = !airOrWaterRoar;
-            dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, airOrWaterRoar ? "roar_air_water" : "roar");
+            dragon.triggerAnim(
+                    airOrWaterRoar ? VolitansAnimationHandler.FAST_ACTION_CONTROLLER : VolitansAnimationHandler.MOVEMENT_CONTROLLER,
+                    airOrWaterRoar ? "roar_air_water" : "roar"
+            );
             if (!airOrWaterRoar) {
                 dragon.lockRiderControls(ROAR_ANIM_TOTAL_TICKS);
                 dragon.blockTakeoffInput(ROAR_ANIM_TOTAL_TICKS + GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS);

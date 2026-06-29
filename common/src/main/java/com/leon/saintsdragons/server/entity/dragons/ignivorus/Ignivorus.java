@@ -215,7 +215,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                     .add("ignivorus_roar", IgnivorusAnimationHandler.ACTION_CONTROLLER, "animation.ignivorus.roar",
                             ModSounds.IGNIVORUS_ROAR, 1.8f, 0.85f, 0.15f,
                             false, false, false)
-                    .add("ignivorus_flex", IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "animation.ignivorus.flex",
+                    .add("ignivorus_flex", IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "animation.ignivorus.flex",
                             ModSounds.IGNIVORUS_FLEX, 2.0f, 0.95f, 0.05f,
                             false, false, true)
                     .add("ignivorus_grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.ignivorus.grumble1",
@@ -1924,7 +1924,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             long now = level().getGameTime();
             if (now - lastAiLandedAnimTick >= 15L) {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, landedAnim);
+                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2444,7 +2444,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             @Override
             public void onRiderLanded() {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, landedAnim);
+                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {

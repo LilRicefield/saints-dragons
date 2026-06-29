@@ -70,7 +70,7 @@ public final class VolitansAnimationHandler {
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 3, 4, 4, 4, 4, 4, 4);
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
-            new AnimationHelper.FlightAnimations(TAKEOFF, null, LANDED, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+            new AnimationHelper.FlightAnimations(TAKEOFF, null, null, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(2, 6, 6, 3, 6, 6, 6, 2);
     private static final int ACTION_TRANSITION_TICKS = 4;
@@ -92,18 +92,20 @@ public final class VolitansAnimationHandler {
     }
 
     public void setupFlightController(AnimationController<Volitans> controller) {
-        AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, LANDED);
+        AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, null);
         controller.triggerableAnim("slamming", SLAMMING);
         controller.triggerableAnim("slammed", SLAMMED);
     }
 
     public void setupMovementController(AnimationController<Volitans> controller) {
         AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         AnimationHelper.register(controller, "sleep_underwater", SLEEP_UNDERWATER);
         AnimationHelper.register(controller, "dash_backwards", DASH_BACKWARDS);
         AnimationHelper.register(controller, "dash_forward", DASH_FORWARD);
         AnimationHelper.register(controller, "dodge_left", DODGE_LEFT);
         AnimationHelper.register(controller, "dodge_right", DODGE_RIGHT);
+        AnimationHelper.register(controller, "roar", ROAR);
     }
 
     public void setupTransitionController(AnimationController<Volitans> controller) {
@@ -130,7 +132,6 @@ public final class VolitansAnimationHandler {
     public void setupFastActionController(AnimationController<Volitans> controller) {
         controller.triggerableAnim("bite", BITE);
         controller.triggerableAnim("enter_burrow", ENTER_BURROW);
-        controller.triggerableAnim("roar", ROAR);
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
     }
 
@@ -181,6 +182,11 @@ public final class VolitansAnimationHandler {
 
         if (aerialState) {
             return PlayState.STOP;
+        }
+
+        PlayState dance = AnimationHelper.tryHandleDance(state, dragon, GROUND_TRANSITIONS.idle());
+        if (dance != null) {
+            return dance;
         }
 
         if (dragon.isFallingForAnimation()) {

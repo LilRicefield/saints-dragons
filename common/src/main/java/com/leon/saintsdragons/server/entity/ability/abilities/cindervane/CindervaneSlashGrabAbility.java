@@ -74,7 +74,7 @@ public class CindervaneSlashGrabAbility extends DragonAbility<Cindervane> {
         }
         if (section.sectionType == STARTUP) {
             Cindervane dragon = getUser();
-            dragon.triggerAnim(CindervaneAnimationHandler.ACTION_CONTROLLER, "slash_left");
+            dragon.triggerAnim(CindervaneAnimationHandler.MOVEMENT_CONTROLLER, "slash_left");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_SLASH.get(), 1.0f, 1.0f, 40);
             }

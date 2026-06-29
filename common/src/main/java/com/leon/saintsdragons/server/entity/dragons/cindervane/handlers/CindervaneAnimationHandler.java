@@ -36,7 +36,7 @@ public class CindervaneAnimationHandler {
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
-            new AnimationHelper.FlightAnimations(TAKEOFF, null, LANDED, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+            new AnimationHelper.FlightAnimations(TAKEOFF, null, null, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(1, 8, 6, 3, 6, 6, 3, 1);
     private static final int ACTION_TRANSITION_TICKS = 4;
@@ -55,8 +55,6 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.roar_air"));
         controller.triggerableAnim("magma_blast",
                 RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
-        controller.triggerableAnim("slash_left",
-                RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
         amphithere.getVocalEntries().forEach((key, entry) -> {
             if (!ACTION_CONTROLLER.equals(entry.controllerId())) {
                 return;
@@ -69,6 +67,9 @@ public class CindervaneAnimationHandler {
 
     public void setupMovementController(AnimationController<Cindervane> controller) {
         AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
+        controller.triggerableAnim("slash_left",
+                RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
     }
 
     public void setupTransitionController(AnimationController<Cindervane> controller) {
@@ -79,7 +80,7 @@ public class CindervaneAnimationHandler {
     }
 
     public void setupFlightController(AnimationController<Cindervane> controller) {
-        AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, LANDED);
+        AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, null);
     }
 
     public void setupInteractionController(AnimationController<Cindervane> controller) {
@@ -139,6 +140,12 @@ public class CindervaneAnimationHandler {
 
         if (aerialState) {
             return PlayState.STOP;
+        }
+
+        PlayState dance = AnimationHelper.tryHandleDance(state, amphithere, GROUND_TRANSITIONS.idle());
+        if (dance != null) {
+            state.getController().setAnimationSpeed(1.0f);
+            return dance;
         }
 
         if (amphithere.isVehicle()) {

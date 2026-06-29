@@ -66,6 +66,9 @@ public final class DragonRiderFlightController {
         boolean hasInput = Math.abs(forwardInput) > 0.01D || Math.abs(strafeInput) > 0.01D;
         double diveIntensity = diveIntensity(pitchRadians);
         boolean diving = forwardInput > 0.01D && diveIntensity > 0.0D;
+        boolean verticalKeyPitchingForward = !keyPitchMode
+                && forwardInput > 0.01D
+                && dragon.isGoingUp() != dragon.isGoingDown();
 
         double currentFlightSpeed = tickThrottle(dragon, hasInput, forwardInput, diveIntensity, settings);
         dragon.setRiderFlightThrottle(currentFlightSpeed);
@@ -111,9 +114,9 @@ public final class DragonRiderFlightController {
         if (!diving) {
             if (takeoffBoostActive && (!takeoffBoostRequiresGoingUp || dragon.isGoingUp())) {
                 vertical = Math.max(vertical + settings.takeoffBoost(), takeoffMinVertical);
-            } else if (dragon.isGoingUp()) {
+            } else if (!verticalKeyPitchingForward && dragon.isGoingUp()) {
                 vertical += settings.ascendThrust();
-            } else if (dragon.isGoingDown()) {
+            } else if (!verticalKeyPitchingForward && dragon.isGoingDown()) {
                 vertical -= settings.descendThrust();
             }
         }

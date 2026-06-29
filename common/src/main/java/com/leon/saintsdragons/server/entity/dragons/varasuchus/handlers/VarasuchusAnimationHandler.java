@@ -39,6 +39,14 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation TAIL_SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.varasuchus.tail_swipe_left");
     private static final RawAnimation PHASE2_DASH_LEFT = RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_left");
     private static final RawAnimation PHASE2_DASH_RIGHT = RawAnimation.begin().thenPlay("animation.varasuchus.phase2_dash_right");
+    private static final RawAnimation PHASE1 = RawAnimation.begin().thenPlay("animation.varasuchus.phase1");
+    private static final RawAnimation PHASE2 = RawAnimation.begin().thenPlay("animation.varasuchus.phase2");
+    private static final RawAnimation PHASE1_UNDERWATER = RawAnimation.begin().thenPlay("animation.varasuchus.phase1_underwater");
+    private static final RawAnimation PHASE2_UNDERWATER = RawAnimation.begin().thenPlay("animation.varasuchus.phase2_underwater");
+    private static final RawAnimation TAILGUARD = RawAnimation.begin().thenPlay("animation.varasuchus.tailguard");
+    private static final RawAnimation TAILGUARD_HOLD = RawAnimation.begin().thenLoop("animation.varasuchus.tailguard_hold");
+    private static final RawAnimation TAILGUARD_CANCEL = RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_cancel");
+    private static final RawAnimation TAILGUARD_PARRY = RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_parry");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_LOOP, WAKE_UP, SWIM_MOVE, null, JUMP);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -51,8 +59,6 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 RawAnimation.begin().thenPlay("animation.varasuchus.bite"));
         controller.triggerableAnim("bite2", BITE2);
         controller.triggerableAnim("horn_gore", HORN_GORE);
-        controller.triggerableAnim("flex", FLEX);
-        controller.triggerableAnim("flex2", FLEX2);
     }
 
     public PlayState movementPredicate(AnimationState<Varasuchus> state) {
@@ -109,6 +115,11 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 return restPose;
             }
 
+            PlayState dance = AnimationHelper.tryHandleDance(state, drake, GROUND_TRANSITIONS.idle());
+            if (dance != null) {
+                return dance;
+            }
+
             int groundState = drake.getEffectiveGroundState();
             boolean phaseTwo = drake.isPhaseTwoActive();
             boolean isAggressive = drake.shouldUseRunAnimation() && isMovingLand;
@@ -140,6 +151,16 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         AnimationHelper.register(controller, "tail_swipe_left", TAIL_SWIPE_LEFT);
         AnimationHelper.register(controller, "phase2_dash_left", PHASE2_DASH_LEFT);
         AnimationHelper.register(controller, "phase2_dash_right", PHASE2_DASH_RIGHT);
+        AnimationHelper.register(controller, "flex", FLEX);
+        AnimationHelper.register(controller, "flex2", FLEX2);
+        AnimationHelper.register(controller, "phase1", PHASE1);
+        AnimationHelper.register(controller, "phase2", PHASE2);
+        AnimationHelper.register(controller, "phase1_underwater", PHASE1_UNDERWATER);
+        AnimationHelper.register(controller, "phase2_underwater", PHASE2_UNDERWATER);
+        AnimationHelper.register(controller, "tailguard", TAILGUARD);
+        AnimationHelper.register(controller, "tailguard_hold", TAILGUARD_HOLD);
+        AnimationHelper.register(controller, "tailguard_cancel", TAILGUARD_CANCEL);
+        AnimationHelper.register(controller, "tailguard_parry", TAILGUARD_PARRY);
     }
     public void setupTransitionController(AnimationController<Varasuchus> controller) {
         AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
@@ -161,17 +182,9 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
     }
     public void triggerFlexAnimation() {
-        drake.triggerAnim(ACTION_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");
+        drake.triggerAnim(MOVEMENT_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");
     }
     public void setupFastActionController(AnimationController<Varasuchus> controller) {
-        controller.triggerableAnim("phase1",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase1"));
-        controller.triggerableAnim("phase2",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase2"));
-        controller.triggerableAnim("phase2_underwater",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase2_underwater"));
-        controller.triggerableAnim("phase1_underwater",
-                RawAnimation.begin().thenPlay("animation.varasuchus.phase1_underwater"));
         controller.triggerableAnim("tail_attack_right",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_attack_right"));
         controller.triggerableAnim("tail_attack_left",
@@ -186,14 +199,6 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
                 RawAnimation.begin().thenPlay("animation.varasuchus.run_and_claw_right"));
         controller.triggerableAnim("slash_barrage",
                 RawAnimation.begin().thenPlay("animation.varasuchus.slash_barrage"));
-        controller.triggerableAnim("tailguard",
-                RawAnimation.begin().thenPlay("animation.varasuchus.tailguard"));
-        controller.triggerableAnim("tailguard_hold",
-                RawAnimation.begin().thenLoop("animation.varasuchus.tailguard_hold"));
-        controller.triggerableAnim("tailguard_cancel",
-                RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_cancel"));
-        controller.triggerableAnim("tailguard_parry",
-                RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_parry"));
     }
     public void setupInteractionController(AnimationController<Varasuchus> controller) {
         controller.triggerableAnim(AnimationHelper.EAT,

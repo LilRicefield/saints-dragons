@@ -132,7 +132,7 @@ public abstract class RideableDragonBase extends DragonEntity {
         boolean locked = isRiderInputLocked(player);
         applyRiderVerticalInput(player, msg.goingUp(), msg.goingDown(), locked);
         handleRiderAction(player, msg.action(), msg.abilityName(), locked);
-        applyRiderMovementInput(player, msg.forward(), msg.strafe(), msg.yaw(), locked);
+        applyRiderMovementInput(player, msg.forward(), msg.strafe(), locked);
     }
 
     protected boolean isRiderInputLocked(Player player) {
@@ -153,7 +153,7 @@ public abstract class RideableDragonBase extends DragonEntity {
         return Math.abs(value) > 0.02f ? value : 0f;
     }
 
-    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, boolean locked) {
         float clampedForward = locked ? 0f : applyInputDeadzone(forward);
         float clampedStrafe = locked ? 0f : applyInputDeadzone(strafe);
         setLastRiderForward(clampedForward);
@@ -214,7 +214,7 @@ public abstract class RideableDragonBase extends DragonEntity {
             case STOP_PITCH_MODE -> setRiderPitchKeyMode(false);
             case DOUBLE_TAP_A -> { if (!locked) onRiderDodge(player, true); }
             case DOUBLE_TAP_D -> { if (!locked) onRiderDodge(player, false); }
-            case OPEN_INVENTORY -> { if (!locked) onRiderOpenInventory(player); }
+            case OPEN_INVENTORY -> onRiderOpenInventory(player);
             default -> { }
         }
     }

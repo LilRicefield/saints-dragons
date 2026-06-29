@@ -57,9 +57,8 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
             );
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 2, 4, 4, 4, 4, 4, 4);
-
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
-            new AnimationHelper.FlightAnimations(TAKEOFF, RIDER_TAKEOFF, LANDED, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+            new AnimationHelper.FlightAnimations(TAKEOFF, RIDER_TAKEOFF, null, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(1, 12, 6, 3, 6, 4, 3, 1);
     private static final int ACTION_TRANSITION_TICKS = 3;
@@ -117,7 +116,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public void setupFlightController(AnimationController<Raevyx> controller) {
-        AnimationHelper.registerFlightStandard(controller, TAKEOFF, RIDER_TAKEOFF, LANDED);
+        AnimationHelper.registerFlightStandard(controller, TAKEOFF, RIDER_TAKEOFF, null);
         AnimationHelper.registerFlight(controller, DODGE_AIR_LEFT,
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
         AnimationHelper.registerFlight(controller, DODGE_AIR_RIGHT,
@@ -128,6 +127,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
     public void setupMovementController(AnimationController<Raevyx> controller) {
         AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         controller.triggerableAnim("dodge_left",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
         controller.triggerableAnim("dodge_right",
@@ -136,10 +136,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
         controller.triggerableAnim("ground_rend",
                 RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
+        registerVocalTriggers(controller, MOVEMENT_CONTROLLER);
     }
 
     public void setupActionController(AnimationController<Raevyx> controller) {
-        registerVocalTriggers(controller, ACTION_CONTROLLER);
         controller.triggerableAnim("summon_storm",
                 RawAnimation.begin().thenPlay("animation.raevyx.summon_storm"));
     }

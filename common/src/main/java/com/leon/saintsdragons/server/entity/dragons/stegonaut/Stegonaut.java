@@ -18,9 +18,10 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.Stegonaut
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautSoundProfile;
 import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderController;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
-import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
+import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
@@ -77,7 +78,7 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen {
+public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen, DragonChestCarrier {
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.STEGONAUT_ID;
@@ -764,6 +765,11 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         return this.entityData.get(DATA_HAS_CHEST);
     }
 
+    @Override
+    public boolean hasAttachedChest() {
+        return hasStegonautChest();
+    }
+
     public void setStegonautChest(boolean value) {
         this.entityData.set(DATA_HAS_CHEST, value);
         if (!value) {
@@ -771,8 +777,23 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         }
     }
 
+    @Override
+    public void setAttachedChest(boolean value) {
+        setStegonautChest(value);
+    }
+
     public Container getStegonautChestInventory() {
         return stegonautChestInventory;
+    }
+
+    @Override
+    public Container getAttachedChestInventory() {
+        return getStegonautChestInventory();
+    }
+
+    @Override
+    public void removeAttachedChestAndDropContents() {
+        removeStegonautChestAndDropContents();
     }
 
     private void openStegonautInventory(ServerPlayer player) {
@@ -780,7 +801,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             return;
         }
         player.openMenu(new SimpleMenuProvider(
-                (containerId, playerInventory, ignored) -> new StegonautInventoryMenu(containerId, playerInventory, this),
+                (containerId, playerInventory, ignored) -> new DragonInventoryMenu(containerId, playerInventory, this),
                 this.getDisplayName()
         ));
     }

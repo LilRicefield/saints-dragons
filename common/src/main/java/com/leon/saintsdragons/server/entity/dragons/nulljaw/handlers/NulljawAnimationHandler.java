@@ -31,6 +31,11 @@ public final class NulljawAnimationHandler {
             return PlayState.STOP;
         }
 
+        PlayState dance = AnimationHelper.tryHandleDance(state, dragon, MOVEMENT_TRANSITION_TICKS);
+        if (dance != null) {
+            return dance;
+        }
+
         state.getController().transitionLength(MOVEMENT_TRANSITION_TICKS);
         if (dragon.shouldUseHoverAnimation()) {
             AnimationHelper.setAndContinue(state, HOVER);

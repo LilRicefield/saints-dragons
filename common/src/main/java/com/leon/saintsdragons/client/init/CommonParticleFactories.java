@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.particle.DragonDustParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningChainParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
+import com.leon.saintsdragons.client.particle.SonicRingParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
@@ -18,6 +19,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
+        register(registrar, ModParticles.RAEVYX_SONIC_RING.get(), SonicRingParticle.Factory::new);
         register(registrar, ModParticles.DRAGON_DUST.get(), DragonDustParticle.Factory::new);
         register(registrar, ModParticles.MOSSBACK_POISON_FUME.get(), MossbackPoisonFumeParticle.Factory::new);
     }

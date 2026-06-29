@@ -185,6 +185,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
     }
 
+    public boolean isRiderDiving() {
+        return riderDiving;
+    }
+
     protected void onRiderDiveExited(Player rider, double diveIntensity) {
     }
 
@@ -193,9 +197,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             updateRiderDivingState(player, false, 0.0D);
             return;
         }
-        float pitchRadians = isRiderPitchKeyMode()
-                ? DragonRiderControllerHelper.resolveKeyPitchRadians(this, getRiderKeyPitchDegrees())
-                : player.getXRot() * Mth.DEG_TO_RAD;
+        float pitchRadians = DragonRiderControllerHelper.resolveRiderPitchRadians(
+                this,
+                player,
+                getRiderKeyPitchDegrees()
+        );
         double diveIntensity = DragonRiderFlightController.diveIntensity(pitchRadians);
         updateRiderDivingState(player, forward > 0.01F && diveIntensity > 0.0D, diveIntensity);
     }
@@ -235,8 +241,8 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     @Override
-    protected void applyRiderMovementInput(Player player, float forward, float strafe, float yaw, boolean locked) {
-        super.applyRiderMovementInput(player, forward, strafe, yaw, locked);
+    protected void applyRiderMovementInput(Player player, float forward, float strafe, boolean locked) {
+        super.applyRiderMovementInput(player, forward, strafe, locked);
         updateServerRiderDiveInput(player, forward, locked);
     }
 
@@ -684,9 +690,21 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     public void tick() {
         wasAerialForDustAtTickStart = isAerial();
         super.tick();
+        tickServerRiderDiveInput();
         tickRiderDiveBoostHoldState();
         tickNearGroundFlightDust();
         tickNearWaterFlightSplash();
+    }
+
+    private void tickServerRiderDiveInput() {
+        if (level().isClientSide) {
+            return;
+        }
+        if (getControllingPassenger() instanceof Player player) {
+            updateServerRiderDiveInput(player, getLastRiderForward(), areRiderControlsLocked());
+        } else if (riderDiving) {
+            updateRiderDivingState(null, false, 0.0D);
+        }
     }
 
     private void tickRiderDiveBoostHoldState() {
@@ -1677,31 +1695,36 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         Vec3 velocity = getDeltaMovement();
         float targetPitchRad;
         boolean riddenPitch = false;
+        boolean verticalKeyPitch = false;
+        boolean slowRiderPitch = false;
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             riddenPitch = true;
             boolean useKeyPitch = isRiderPitchKeyMode();
+            verticalKeyPitch = isGoingUp() != isGoingDown();
 
-            if (useKeyPitch) {
-                float rawKeyPitchRad = 0f;
-                if (isGoingUp()) {
-                    rawKeyPitchRad = (float) Math.toRadians(getRiderKeyPitchDegrees());
-                } else if (isGoingDown()) {
-                    rawKeyPitchRad = (float) -Math.toRadians(getRiderKeyPitchDegrees());
-                }
-                targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(state, rawKeyPitchRad);
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
+            boolean verticalKeyPitchRelease = state.verticalKeyPitchSmoothing
+                    && !verticalKeyPitch
+                    && !useKeyPitch
+                    && !hasMovementInput;
+            slowRiderPitch = verticalKeyPitch || verticalKeyPitchRelease;
+            float rawRiderPitchRad = DragonRiderControllerHelper.resolveRiderFlightVisualPitchRadians(
+                    this,
+                    player,
+                    getRiderKeyPitchDegrees(),
+                    hasMovementInput
+            );
+
+            if (rawRiderPitchRad != 0.0F || useKeyPitch || hasMovementInput || verticalKeyPitch || verticalKeyPitchRelease) {
+                targetPitchRad = slowRiderPitch
+                        ? DragonFlightVisuals.smoothRiderVerticalKeyPitchInput(state, rawRiderPitchRad)
+                        : DragonFlightVisuals.smoothRiderPitchInput(state, rawRiderPitchRad);
             } else {
-                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-                float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-                boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
-
-                if (hasMovementInput) {
-                    float rawPlayerPitchRad = -(float) Math.toRadians(player.getXRot());
-                    targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(state, rawPlayerPitchRad);
-                } else {
-                    DragonFlightVisuals.clearRiderPitchInput(state);
-                    targetPitchRad = 0f;
-                }
+                DragonFlightVisuals.clearRiderPitchInput(state);
+                targetPitchRad = 0f;
             }
 
             if (wantsRiderLandingPitch(player, useKeyPitch) && isNearStandardPitchLandingBlendTerrain()) {
@@ -1717,8 +1740,18 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
 
         state.flightPitchRad = riddenPitch
-                ? DragonFlightVisuals.approachRiderPitch(state.flightPitchRad, targetPitchRad)
+                ? (slowRiderPitch
+                        ? DragonFlightVisuals.approachRiderVerticalKeyPitch(state.flightPitchRad, targetPitchRad)
+                        : DragonFlightVisuals.approachRiderPitch(state.flightPitchRad, targetPitchRad))
                 : DragonFlightVisuals.approachAiPitch(state.flightPitchRad, targetPitchRad);
+        state.verticalKeyPitchSmoothing = verticalKeyPitch
+                || (riddenPitch
+                        && state.verticalKeyPitchSmoothing
+                        && !this.isGoingUp()
+                        && !this.isGoingDown()
+                        && Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) <= 0.01F
+                        && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) <= 0.01F
+                        && Math.abs(state.flightPitchRad) > 0.01F);
         this.entityData.set(pitchAccessor, state.flightPitchRad);
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {

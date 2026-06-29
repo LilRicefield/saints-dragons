@@ -9,7 +9,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
-import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
+import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -89,7 +89,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         pillarsSpawned = false;
         Stegonaut dragon = getUser();
         dragon.lockRiderControls(3);
-        dragon.triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "ground_slam");
+        dragon.triggerAnim(StegonautAnimationHandler.MOVEMENT_CONTROLLER, "ground_slam");
         playSlamSound(false);
     }
 
@@ -128,7 +128,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         phase = Phase.SECOND_SLAM;
         phaseTicks = 0;
         pillarsSpawned = false;
-        getUser().triggerAnim(StegonautAnimationHandler.ACTION_CONTROLLER, "ground_slam2");
+        getUser().triggerAnim(StegonautAnimationHandler.MOVEMENT_CONTROLLER, "ground_slam2");
         playSlamSound(true);
     }
 
@@ -249,7 +249,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         Stegonaut dragon = getUser();
         if (dragon.level() instanceof ServerLevel server) {
             double y = dragon.getBoundingBox().minY + 0.02D;
-            server.addFreshEntity(new StegonautGroundCrackEntity(server, new Vec3(dragon.getX(), y, dragon.getZ()), dragon.getYRot()));
+            server.addFreshEntity(new GroundCrackEntity(server, new Vec3(dragon.getX(), y, dragon.getZ()), dragon.getYRot()));
         }
     }
 

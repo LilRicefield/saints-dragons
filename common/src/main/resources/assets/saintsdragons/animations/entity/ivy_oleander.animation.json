@@ -8804,7 +8804,7 @@
 				}
 			}
 		},
-		"ivy_oleander.animation.bang_bang_bang": {
+		"ivy_oleander.animation.dance": {
 			"loop": true,
 			"animation_length": 0.875,
 			"bones": {

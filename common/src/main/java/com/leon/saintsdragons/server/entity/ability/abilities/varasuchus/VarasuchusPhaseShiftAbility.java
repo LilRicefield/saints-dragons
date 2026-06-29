@@ -67,7 +67,7 @@ public class VarasuchusPhaseShiftAbility extends DragonAbility<Varasuchus> {
         phaseToggleApplied = true;
 
         String trigger = resolveAnimationTrigger();
-        dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, trigger);
+        dragon.triggerAnim(VarasuchusAnimationHandler.MOVEMENT_CONTROLLER, trigger);
 
         if (enteringPhaseTwo && !dragon.level().isClientSide) {
             dragon.startPhaseShiftScreenShake(transitionTicks, 1.5F);

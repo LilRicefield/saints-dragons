@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
+import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueDefinition;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueRegistry;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry;
@@ -116,7 +117,7 @@ import software.bernie.geckolib.core.keyframe.event.SoundKeyframeEvent;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nullable;
 
-public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity, OwnableEntity {
+public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity, OwnableEntity, DancingEntity {
     static final int RECOVERY_NONE = 0;
     static final int RECOVERY_DRINK = 1;
     static final int RECOVERY_EAT = 2;
@@ -148,6 +149,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final EntityDataAccessor<Boolean> DATA_IDLE_VARIANT_ACTIVE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_CLIMBING_LADDER =
+            SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DANCING =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_BOXING_STANCE =
             SynchedEntityData.defineId(IvyTheDragonMerchant.class, EntityDataSerializers.BOOLEAN);
@@ -208,6 +211,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final RawAnimation TRADING = RawAnimation.begin().thenLoop("ivy_oleander.animation.trading");
     private static final RawAnimation TRADE_STOP = RawAnimation.begin().thenPlay("ivy_oleander.animation.trade_stop");
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("ivy_oleander.animation.idle");
+    private static final RawAnimation DANCE = RawAnimation.begin().thenLoop("ivy_oleander.animation.dance");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("ivy_oleander.animation.sit");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("ivy_oleander.animation.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("ivy_oleander.animation.run");
@@ -443,6 +447,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.entityData.define(DATA_TRADE_ANIM_STATE, TradeAnimState.NONE.id);
         this.entityData.define(DATA_IDLE_VARIANT_ACTIVE, false);
         this.entityData.define(DATA_CLIMBING_LADDER, false);
+        this.entityData.define(DATA_DANCING, false);
         this.entityData.define(DATA_BOXING_STANCE, false);
         this.entityData.define(DATA_BOXING_BACKING_UP, false);
         this.entityData.define(DATA_BOXING_FAST, false);
@@ -1165,6 +1170,42 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     }
 
     @Override
+    public void setRecordPlayingNearby(BlockPos jukebox, boolean playing) {
+        super.setRecordPlayingNearby(jukebox, playing);
+        setDancing(playing);
+    }
+
+    @Override
+    public boolean isDancing() {
+        return this.entityData.get(DATA_DANCING);
+    }
+
+    @Override
+    public void setDancing(boolean dancing) {
+        this.entityData.set(DATA_DANCING, dancing);
+    }
+
+    @Override
+    public RawAnimation getDanceAnimation() {
+        return DANCE;
+    }
+
+    @Override
+    public boolean canDance() {
+        return isAlive()
+                && !isDowned()
+                && getDownedAriseTicks() <= 0
+                && !isRidingCompanionVehicle()
+                && getTradeAnimState() == TradeAnimState.NONE
+                && !isIdleVariantActive()
+                && !isInDialogue()
+                && !getBoxingCombat().isActive()
+                && !isInWaterOrBubble()
+                && !isClimbingLadder()
+                && getTarget() == null;
+    }
+
+    @Override
     public void overrideOffers(MerchantOffers offers) {}
 
     @Override
@@ -1284,6 +1325,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             state.getController().forceAnimationReset();
             wasMovementStopped = false;
             wasDownedOrArisingAnimation = false;
+        }
+
+        PlayState dance = AnimationHelper.tryHandleDance(state, this, 3);
+        if (dance != null) {
+            return dance;
         }
 
         if (getBoxingCombat().isActive()) {
@@ -1717,6 +1763,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         }
         tickDownedState();
         if (isDowned() || getDownedAriseTicks() > 0) {
+            tickDancing();
             return;
         }
         tickTradingAnimation();
@@ -1734,12 +1781,26 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         getBoxingCombat().tick();
         tickPassiveUse();
         tickRestocking();
+        tickDancing();
         if (bodyControl != null) {
             if (getBoxingCombat().isActive()) {
                 getBoxingCombat().tickRotationLock();
             } else {
                 bodyControl.serverTick();
             }
+        }
+    }
+
+    private void tickDancing() {
+        if ((!canDance() && !isDancing()) || !DancingEntity.shouldScanForJukebox(this)) {
+            if (isDancing() && canDance()) {
+                DancingEntity.holdStillForDance(this);
+            }
+            return;
+        }
+        setDancing(DancingEntity.hasPlayingJukeboxNearby(this));
+        if (isDancing() && canDance()) {
+            DancingEntity.holdStillForDance(this);
         }
     }
 

@@ -26,6 +26,8 @@ public class StegonautAnimationHandler {
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.stegonaut.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.stegonaut.fall_asleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.stegonaut.wake_up");
+    private static final RawAnimation GROUND_SLAM = RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam");
+    private static final RawAnimation GROUND_SLAM2 = RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam2");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE_ANIM, WALK_ANIM, RUN_ANIM, SIT_ANIM, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_ANIM, WAKE_UP, SWIM_ANIM, null, JUMP_ANIM);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -71,6 +73,11 @@ public class StegonautAnimationHandler {
             return restPose;
         }
 
+        PlayState dance = AnimationHelper.tryHandleDance(state, drake, GROUND_TRANSITIONS.idle());
+        if (dance != null) {
+            return dance;
+        }
+
         return AnimationHelper.handleGroundMovement(
                 state, drake, IDLE_ANIM, WALK_ANIM, RUN_ANIM,
                 GROUND_TRANSITIONS.moving(), GROUND_TRANSITIONS.idle()
@@ -90,15 +97,13 @@ public class StegonautAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating_shoot"));
         actionController.triggerableAnim("ground_eating_cancel",
                 RawAnimation.begin().thenPlay("animation.stegonaut.ground_eating_cancel"));
-        actionController.triggerableAnim("ground_slam",
-                RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam"));
-        actionController.triggerableAnim("ground_slam2",
-                RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam2"));
 
     }
 
     public void setupMovementController(AnimationController<Stegonaut> controller) {
         AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, "ground_slam", GROUND_SLAM);
+        AnimationHelper.register(controller, "ground_slam2", GROUND_SLAM2);
     }
 
     public void setupTransitionController(AnimationController<Stegonaut> controller) {

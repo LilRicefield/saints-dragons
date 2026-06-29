@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
-import com.leon.saintsdragons.server.menu.StegonautInventoryMenu;
+import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
@@ -17,9 +17,9 @@ public final class ModMenus {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.MENU, () -> BuiltInRegistries.MENU, SaintsDragonsCommon.MOD_ID);
 
-    public static final Supplier<MenuType<StegonautInventoryMenu>> STEGONAUT_INVENTORY =
+    public static final Supplier<MenuType<DragonInventoryMenu>> STEGONAUT_INVENTORY =
             REGISTER.register("stegonaut_inventory",
-                    () -> new MenuType<>(StegonautInventoryMenu::new, FeatureFlags.DEFAULT_FLAGS));
+                    () -> new MenuType<>(DragonInventoryMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static final Supplier<MenuType<IvyInventoryMenu>> IVY_INVENTORY =
             REGISTER.register("ivy_inventory",

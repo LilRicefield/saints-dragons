@@ -101,6 +101,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_DASH = registerSound("raevyx_dash");
     public static final Supplier<SoundEvent> RAEVYX_GROUND_REND = registerSound("raevyx_ground_rend");
     public static final Supplier<SoundEvent> RAEVYX_DIVE_LOOP = registerSound("raevyx_dive_loop");
+    public static final Supplier<SoundEvent> RAEVYX_DIVE_IMPACT = registerSound("raevyx_dive_impact");
     public static final Supplier<SoundEvent> RAEVYX_STEP = registerSound("raevyx_step");
 
     // Cindervane

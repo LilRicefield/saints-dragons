@@ -145,6 +145,18 @@
 					]
 				},
 				{
+					"name": "chestsLayer",
+					"parent": "neck1Controller",
+					"pivot": [9, 23, -27],
+					"cubes": [
+						{"origin": [9, 20, -32], "size": [6, 8, 8], "uv": [77, 250]},
+						{"origin": [14, 24, -29], "size": [2, 3, 2], "uv": [87, 266]},
+						{"origin": [-16, 24, -29], "size": [2, 3, 2], "uv": [87, 266], "mirror": true},
+						{"origin": [-15, 20, -32], "size": [6, 8, 8], "uv": [77, 250], "mirror": true},
+						{"origin": [-10, 14.75, -30], "size": [20, 18.75, 4], "uv": [67, 271]}
+					]
+				},
+				{
 					"name": "leftfrontleg",
 					"parent": "heightController",
 					"pivot": [14.25, 23.63288, -12.90327],

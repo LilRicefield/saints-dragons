@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -76,7 +77,11 @@ public final class DragonRiderControllerHelper {
         if (dragon.isRiderPitchKeyMode()) {
             return resolveKeyPitchRadians(dragon, keyPitchDegrees);
         }
-        return (float) Math.toRadians(player.getXRot());
+        float mousePitchRad = (float) Math.toRadians(player.getXRot());
+        if (!(dragon instanceof RideableFlyingDragon) || !dragon.isFlying()) {
+            return mousePitchRad;
+        }
+        return applyVerticalFlightPitchBias(dragon, mousePitchRad);
     }
 
     public static float resolveRiderPitchDegrees(RideableDragonBase dragon, Player player, float keyPitchDegrees) {
@@ -94,6 +99,20 @@ public final class DragonRiderControllerHelper {
         return 0.0F;
     }
 
+    public static float resolveRiderFlightVisualPitchRadians(RideableDragonBase dragon, Player player,
+                                                             float keyPitchDegrees,
+                                                             boolean hasMovementInput) {
+        boolean verticalPitchInput = dragon.isGoingUp() != dragon.isGoingDown();
+        if (dragon.isRiderPitchKeyMode()) {
+            return Mth.clamp(-resolveKeyPitchRadians(dragon, keyPitchDegrees), -Mth.HALF_PI, Mth.HALF_PI);
+        }
+        if (hasMovementInput || verticalPitchInput) {
+            float pitchRad = resolveRiderPitchRadians(dragon, player, keyPitchDegrees);
+            return Mth.clamp(-pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+        }
+        return 0.0F;
+    }
+
     public static float resolveKeyPitchRadians(RideableDragonBase dragon, float keyPitchDegrees) {
         if (dragon.isGoingUp()) {
             return (float) -Math.toRadians(keyPitchDegrees);
@@ -102,5 +121,21 @@ public final class DragonRiderControllerHelper {
             return (float) Math.toRadians(keyPitchDegrees);
         }
         return 0.0F;
+    }
+
+    private static float applyVerticalFlightPitchBias(RideableDragonBase dragon, float mousePitchRad) {
+        if (dragon.isGoingUp() == dragon.isGoingDown()) {
+            return Mth.clamp(mousePitchRad, -Mth.HALF_PI, Mth.HALF_PI);
+        }
+
+        boolean movingForward = dragon.getLastRiderForward() > 0.01F;
+        float verticalPitchDegrees = movingForward ? 45.0F : 90.0F;
+        float verticalPitchRad = (float) Math.toRadians(verticalPitchDegrees);
+        float pitchBias = dragon.isGoingUp() ? -verticalPitchRad : verticalPitchRad;
+        if (Math.signum(mousePitchRad) != Math.signum(pitchBias)
+                && Math.abs(mousePitchRad) >= Math.abs(pitchBias)) {
+            return 0.0F;
+        }
+        return Mth.clamp(mousePitchRad + pitchBias, -Mth.HALF_PI, Mth.HALF_PI);
     }
 }

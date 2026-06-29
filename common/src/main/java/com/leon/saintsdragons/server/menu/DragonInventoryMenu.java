@@ -2,14 +2,16 @@ package com.leon.saintsdragons.server.menu;
 
 import com.leon.saintsdragons.common.registry.ModMenus;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.ContainerData;
 import net.minecraft.world.inventory.SimpleContainerData;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.sounds.SoundEvents;
@@ -17,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
-public class StegonautInventoryMenu extends AbstractContainerMenu {
+public class DragonInventoryMenu extends AbstractContainerMenu {
     private static final int CHEST_SLOT_INDEX = 0;
     private static final int CARGO_SLOT_START = 1;
     private static final int CARGO_COLUMNS = 5;
@@ -33,24 +35,31 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
     private final Container chestSlotInventory;
     private final ContainerData data;
     @Nullable
-    private final Stegonaut stegonaut;
+    private final DragonChestCarrier chestCarrier;
+    @Nullable
+    private final Entity carrierEntity;
 
-    public StegonautInventoryMenu(int containerId, Inventory playerInventory) {
+    public DragonInventoryMenu(int containerId, Inventory playerInventory) {
         this(containerId, playerInventory, null, new SimpleContainer(CARGO_SLOT_COUNT), new SimpleContainerData(1));
     }
 
-    public StegonautInventoryMenu(int containerId, Inventory playerInventory, Stegonaut stegonaut) {
-        this(containerId, playerInventory, stegonaut, stegonaut.getStegonautChestInventory(), new SimpleContainerData(1));
-        this.data.set(0, stegonaut.hasStegonautChest() ? 1 : 0);
+    public DragonInventoryMenu(int containerId, Inventory playerInventory, Stegonaut stegonaut) {
+        this(containerId, playerInventory, (DragonChestCarrier) stegonaut);
     }
 
-    private StegonautInventoryMenu(int containerId,
-                                   Inventory playerInventory,
-                                   @Nullable Stegonaut stegonaut,
-                                   Container cargoInventory,
-                                   ContainerData data) {
+    public DragonInventoryMenu(int containerId, Inventory playerInventory, DragonChestCarrier chestCarrier) {
+        this(containerId, playerInventory, chestCarrier, chestCarrier.getAttachedChestInventory(), new SimpleContainerData(1));
+        this.data.set(0, chestCarrier.hasAttachedChest() ? 1 : 0);
+    }
+
+    private DragonInventoryMenu(int containerId,
+                                Inventory playerInventory,
+                                @Nullable DragonChestCarrier chestCarrier,
+                                Container cargoInventory,
+                                ContainerData data) {
         super(ModMenus.STEGONAUT_INVENTORY.get(), containerId);
-        this.stegonaut = stegonaut;
+        this.chestCarrier = chestCarrier;
+        this.carrierEntity = chestCarrier instanceof Entity entity ? entity : null;
         this.cargoInventory = cargoInventory;
         this.data = data;
         this.chestSlotInventory = new SimpleContainer(1);
@@ -58,7 +67,17 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
         addDataSlots(data);
         syncChestIndicator();
 
-        this.addSlot(new ChestAttachSlot(this.chestSlotInventory, CHEST_SLOT_INDEX, 8, 18));
+        this.addSlot(new DragonChestAttachmentSlot(
+                this.chestSlotInventory,
+                CHEST_SLOT_INDEX,
+                8,
+                18,
+                this::hasChestInstalled,
+                stack -> stack.is(Items.CHEST),
+                this::installChest,
+                (player, stack) -> removeChest(),
+                this::syncChestIndicator
+        ));
 
         for (int row = 0; row < CARGO_ROWS; row++) {
             for (int col = 0; col < CARGO_COLUMNS; col++) {
@@ -98,8 +117,8 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
 
     @Override
     public void broadcastChanges() {
-        if (this.stegonaut != null) {
-            this.data.set(0, this.stegonaut.hasStegonautChest() ? 1 : 0);
+        if (this.chestCarrier != null) {
+            this.data.set(0, this.chestCarrier.hasAttachedChest() ? 1 : 0);
             syncChestIndicator();
         }
         super.broadcastChanges();
@@ -107,10 +126,10 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(@NotNull Player player) {
-        if (this.stegonaut == null) {
+        if (this.carrierEntity == null) {
             return true;
         }
-        return this.stegonaut.isAlive() && this.stegonaut.distanceTo(player) < 8.0F;
+        return this.carrierEntity.isAlive() && this.carrierEntity.distanceTo(player) < 8.0F;
     }
 
     @Override
@@ -121,13 +140,17 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
             ItemStack stack = slot.getItem();
             original = stack.copy();
 
-            if (index < CARGO_SLOT_END) {
+            if (index == CHEST_SLOT_INDEX) {
+                if (!quickMoveAttachedChestToPlayer()) {
+                    return ItemStack.EMPTY;
+                }
+            } else if (index < CARGO_SLOT_END) {
                 if (!this.moveItemStackTo(stack, PLAYER_INV_START, HOTBAR_END, true)) {
                     return ItemStack.EMPTY;
                 }
             } else {
                 if (!hasChestInstalled() && stack.is(Items.CHEST)) {
-                    if (!this.moveItemStackTo(stack, CHEST_SLOT_INDEX, CARGO_SLOT_START, false)) {
+                    if (!quickMovePlayerChestIntoAttachment(player, index, stack)) {
                         return ItemStack.EMPTY;
                     }
                 } else if (hasChestInstalled()) {
@@ -173,6 +196,51 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
         }
     }
 
+    private void installChest() {
+        if (this.chestCarrier == null || this.chestCarrier.hasAttachedChest()) {
+            return;
+        }
+        this.chestCarrier.setAttachedChest(true);
+        this.data.set(0, 1);
+        if (this.carrierEntity != null) {
+            this.carrierEntity.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+        }
+        syncChestIndicator();
+    }
+
+    private void removeChest() {
+        if (this.chestCarrier == null || !this.chestCarrier.hasAttachedChest()) {
+            return;
+        }
+        this.chestCarrier.removeAttachedChestAndDropContents();
+        this.data.set(0, 0);
+        syncChestIndicator();
+    }
+
+    private boolean quickMovePlayerChestIntoAttachment(Player player, int index, ItemStack stack) {
+        if (this.chestCarrier == null || this.chestCarrier.hasAttachedChest() || !stack.is(Items.CHEST)) {
+            return false;
+        }
+        installChest();
+        if (!hasChestInstalled()) {
+            return false;
+        }
+        stack.shrink(1);
+        return true;
+    }
+
+    private boolean quickMoveAttachedChestToPlayer() {
+        if (this.chestCarrier == null || !hasChestInstalled()) {
+            return false;
+        }
+        ItemStack chest = new ItemStack(Items.CHEST);
+        if (!this.moveItemStackTo(chest, PLAYER_INV_START, HOTBAR_END, true)) {
+            return false;
+        }
+        removeChest();
+        return true;
+    }
+
     private final class CargoSlot extends Slot {
         private CargoSlot(Container container, int index, int x, int y) {
             super(container, index, x, y);
@@ -189,44 +257,4 @@ public class StegonautInventoryMenu extends AbstractContainerMenu {
         }
     }
 
-    private final class ChestAttachSlot extends Slot {
-        private ChestAttachSlot(Container container, int index, int x, int y) {
-            super(container, index, x, y);
-        }
-
-        @Override
-        public boolean mayPlace(@NotNull ItemStack stack) {
-            return !hasChestInstalled() && stack.is(Items.CHEST);
-        }
-
-        @Override
-        public boolean mayPickup(@NotNull Player player) {
-            return hasChestInstalled();
-        }
-
-        @Override
-        public void setChanged() {
-            super.setChanged();
-            if (stegonaut != null && !stegonaut.hasStegonautChest()) {
-                ItemStack stack = this.getItem();
-                if (stack.is(Items.CHEST)) {
-                    stegonaut.setStegonautChest(true);
-                    data.set(0, 1);
-                    stegonaut.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
-                    this.container.setItem(CHEST_SLOT_INDEX, ItemStack.EMPTY);
-                }
-            }
-            syncChestIndicator();
-        }
-
-        @Override
-        public void onTake(@NotNull Player player, @NotNull ItemStack stack) {
-            super.onTake(player, stack);
-            if (stegonaut != null && stegonaut.hasStegonautChest()) {
-                stegonaut.removeStegonautChestAndDropContents();
-                data.set(0, 0);
-            }
-            syncChestIndicator();
-        }
-    }
 }

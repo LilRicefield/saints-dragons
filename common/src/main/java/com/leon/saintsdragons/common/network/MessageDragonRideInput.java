@@ -11,8 +11,7 @@ public record MessageDragonRideInput(
         DragonRiderAction action,
         String abilityName,
         float forward,
-        float strafe,
-        float yaw
+        float strafe
 ) {
     private static final int MAX_ABILITY_NAME_LENGTH = 64;
 
@@ -29,7 +28,6 @@ public record MessageDragonRideInput(
         }
         buf.writeFloat(msg.forward());
         buf.writeFloat(msg.strafe());
-        buf.writeFloat(msg.yaw());
     }
 
     public static MessageDragonRideInput decode(FriendlyByteBuf buf) {
@@ -45,8 +43,7 @@ public record MessageDragonRideInput(
         }
         float forward = buf.readFloat();
         float strafe = buf.readFloat();
-        float yaw = buf.readFloat();
-        return new MessageDragonRideInput(goingUp, goingDown, action, abilityName, forward, strafe, yaw);
+        return new MessageDragonRideInput(goingUp, goingDown, action, abilityName, forward, strafe);
     }
 
     public static void handle(MessageDragonRideInput msg, ServerPlayer player) {

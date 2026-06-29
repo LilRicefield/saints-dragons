@@ -76,7 +76,7 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
             phase = Phase.STARTUP;
             phaseTicks = 0;
             dragon.lockRiderControls(3);
-            dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard");
+            dragon.triggerAnim(VarasuchusAnimationHandler.MOVEMENT_CONTROLLER, "tailguard");
             dragon.getSoundHandler().playClientSound(dragon, dragon.position(), ModSounds.VARASUCHUS_GUARDING.get(), 1.2f, 1.0f);
         }
     }
@@ -133,7 +133,7 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
         phaseTicks = 0;
         Varasuchus dragon = getUser();
         dragon.lockRiderControls(PARRY_TICKS);
-        dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard_parry");
+        dragon.triggerAnim(VarasuchusAnimationHandler.MOVEMENT_CONTROLLER, "tailguard_parry");
         dragon.getSoundHandler().playClientSound(dragon, dragon.position(), ModSounds.VARASUCHUS_PARRY.get(), 1.4f, 1.0f);
         applyParryHit();
         return true;
@@ -148,7 +148,7 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
         phaseTicks = 0;
         Varasuchus dragon = getUser();
         dragon.lockRiderControls(CANCEL_TICKS);
-        dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard_cancel");
+        dragon.triggerAnim(VarasuchusAnimationHandler.MOVEMENT_CONTROLLER, "tailguard_cancel");
     }
 
     private void beginHold() {
@@ -157,7 +157,7 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
         if (!holdLoopStarted) {
             holdLoopStarted = true;
             Varasuchus dragon = getUser();
-            dragon.triggerAnim(VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, "tailguard_hold");
+            dragon.triggerAnim(VarasuchusAnimationHandler.MOVEMENT_CONTROLLER, "tailguard_hold");
         }
         getUser().lockRiderControls(3);
     }

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
+import com.leon.saintsdragons.common.particle.raevyx.SonicRingData;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.particles.ParticleType;
@@ -41,6 +42,15 @@ public final class ModParticles {
                         @Override
                         public com.mojang.serialization.Codec<RaevyxLightningChainData> codec() {
                             return RaevyxLightningChainData.CODEC(this);
+                        }
+                    });
+
+    public static final Supplier<ParticleType<SonicRingData>> RAEVYX_SONIC_RING =
+            REGISTER.register("raevyx_sonic_ring",
+                    () -> new ParticleType<>(false, SonicRingData.DESERIALIZER) {
+                        @Override
+                        public com.mojang.serialization.Codec<SonicRingData> codec() {
+                            return SonicRingData.CODEC(this);
                         }
                     });
 

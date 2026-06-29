@@ -31,6 +31,7 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxDiveImpactAbility;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
@@ -166,7 +167,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             .add("roar", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_ground", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_ground", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
             .add("roar_air", RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "animation.raevyx.roar_air", ModSounds.RAEVYX_ROAR, 1.4f, 0.9f, 0.15f, false, false, false)
-            .add("flex", RaevyxAnimationHandler.ACTION_CONTROLLER, "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
+            .add("flex", RaevyxAnimationHandler.MOVEMENT_CONTROLLER, "animation.raevyx.flex", ModSounds.RAEVYX_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
             .add("raevyx_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.raevyx.hurt", ModSounds.RAEVYX_HURT, 1.2f, 0.95f, 0.1f, true, true, true)
             .add("raevyx_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.raevyx.die", ModSounds.RAEVYX_DIE, 1.5f, 0.95f, 0.1f, false, true, true)
             .build();
@@ -206,6 +207,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private final RaevyxInteractionHandler lightningInteractionHandler;
     private final RaevyxAnimationHandler animationHandler;
     private final RaevyxRiderController riderController;
+    private final RaevyxDiveImpactAbility diveImpactAbility;
     private final AnimationController<Raevyx> movementController;
     private final AnimationController<Raevyx> transitionController;
     private final AnimationController<Raevyx> actionController;
@@ -411,7 +413,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
+            triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
             getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
             suppressSleep(60);
         }
@@ -440,6 +442,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.lightningInteractionHandler = new RaevyxInteractionHandler(this);
         this.animationHandler = new RaevyxAnimationHandler(this);
         this.riderController = new RaevyxRiderController(this);
+        this.diveImpactAbility = new RaevyxDiveImpactAbility(this);
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
         this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
@@ -1340,6 +1343,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tickStandardPitchingLogic();
         tickBarrelRollLogic();
         tickScreenShake();
+        if (!level().isClientSide) {
+            diveImpactAbility.tickServer();
+        }
         tickFlightLifecycle();
         if (!level().isClientSide) {
             syncCustomDiveLoopEnabled();
@@ -1839,7 +1845,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
+                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
                 markLandedNow();
                 lockRiderControls(30);

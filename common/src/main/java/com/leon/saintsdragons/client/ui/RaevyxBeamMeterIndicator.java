@@ -86,7 +86,7 @@ public class RaevyxBeamMeterIndicator {
             return;
         }
 
-        float clampedPartial = clamp(partialTicks, 0.0f, 1.0f);
+        float clampedPartial = clamp(partialTicks);
         float smoothFill = lerp(previousAnimatedFill, animatedFill, clampedPartial);
         float smoothAlpha = lerp(previousFadeAlpha, fadeAlpha, clampedPartial);
         float smoothRedFlash = lerp(previousRedFlashAlpha, redFlashAlpha, clampedPartial);
@@ -127,8 +127,8 @@ public class RaevyxBeamMeterIndicator {
     public boolean shouldRender() {
         return true;
     }
-    private static float clamp(float value, float min, float max) {
-        return Math.max(min, Math.min(max, value));
+    private static float clamp(float value) {
+        return Math.max((float) 0.0, Math.min((float) 1.0, value));
     }
 
     private static float lerp(float start, float end, float t) {

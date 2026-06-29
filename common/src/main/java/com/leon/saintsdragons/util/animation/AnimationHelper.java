@@ -2,6 +2,7 @@ package com.leon.saintsdragons.util.animation;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
@@ -34,6 +35,7 @@ public final class AnimationHelper {
     public static final String PHASE2_LANDED = "phase2_landed";
     public static final String EAT = "eat";
     public static final String DIE = "die";
+    public static final String DANCE = "dance";
 
     private AnimationHelper() {
     }
@@ -159,6 +161,11 @@ public final class AnimationHelper {
         }
         if (sitProgress > 0f) {
             return PlayState.STOP;
+        }
+
+        PlayState dance = tryHandleDance(state, dragon, transitions.idle());
+        if (dance != null) {
+            return dance;
         }
 
         PlayState special = specialStates.handle(state, dragon, animations, transitions);
@@ -343,6 +350,19 @@ public final class AnimationHelper {
         }
 
         return null;
+    }
+
+    public static PlayState tryHandleDance(AnimationState<?> state, DancingEntity dancer, int transitionTicks) {
+        if (!dancer.isDancing() || !dancer.canDance()) {
+            return null;
+        }
+        RawAnimation animation = dancer.getDanceAnimation();
+        if (animation == null) {
+            return PlayState.STOP;
+        }
+        state.getController().transitionLength(transitionTicks);
+        setAndContinue(state, animation);
+        return PlayState.CONTINUE;
     }
 
     public static PlayState handleGroundMovement(AnimationState<?> state,

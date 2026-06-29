@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.effect.stegonaut;
+package com.leon.saintsdragons.server.entity.effect;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import net.minecraft.nbt.CompoundTag;
@@ -11,16 +11,16 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-public class StegonautGroundCrackEntity extends Entity {
+public class GroundCrackEntity extends Entity {
     private static final int DURATION = 34;
     private int age;
 
-    public StegonautGroundCrackEntity(EntityType<? extends StegonautGroundCrackEntity> type, Level level) {
+    public GroundCrackEntity(EntityType<? extends GroundCrackEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
     }
 
-    public StegonautGroundCrackEntity(Level level, Vec3 position, float yaw) {
+    public GroundCrackEntity(Level level, Vec3 position, float yaw) {
         this(ModEntities.STEGONAUT_GROUND_CRACK.get(), level);
         setPos(position);
         setYRot(yaw);

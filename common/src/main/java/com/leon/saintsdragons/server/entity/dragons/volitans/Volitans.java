@@ -29,6 +29,7 @@ import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
+import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.controller.volitans.VolitansRiderController;
@@ -237,6 +238,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private float flightPitchRad = 0f;
     private float prevFlightPitchRad = 0f;
     private float smoothedPlayerPitchRad = 0f;
+    private boolean verticalKeyPitchSmoothing = false;
     private final ScreenShakeComponent screenShakeComponent;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int riderBackDashCooldownTicks = 0;
@@ -569,7 +571,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
-        triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "roar");
+        triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "roar");
         getSoundHandler().playClientSound(this, position(), ModSounds.VOLITANS_ROAR.get(), 1.6f, 1.0f);
     }
 
@@ -2005,7 +2007,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
+            triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
             if (!isBaby()) {
                 getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
             }
@@ -2464,36 +2466,39 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if ((!isFlying() && !inWater) || isLanding()) {
             flightPitchRad = 0f;
             smoothedPlayerPitchRad = 0f;
+            verticalKeyPitchSmoothing = false;
             this.entityData.set(DATA_FLIGHT_PITCH, 0f);
             return;
         }
 
         float targetPitchRad = 0f;
+        boolean slowVerticalKeyPitch = false;
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            boolean useKeyPitch = isRiderPitchKeyMode();
-            if (useKeyPitch) {
-                float rawKeyPitchRad = 0f;
-                if (isGoingUp()) {
-                    rawKeyPitchRad = (float) -Math.toRadians(25.0F);
-                } else if (isGoingDown()) {
-                    rawKeyPitchRad = (float) Math.toRadians(25.0F);
-                }
-                smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawKeyPitchRad * 0.35f;
+            float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
+            float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
+            boolean hasMovementInput = Math.abs(riderForward) > 0.01f
+                    || Math.abs(riderStrafe) > 0.01f
+                    || Math.abs(player.zza) > 0.01f
+                    || Math.abs(player.xxa) > 0.01f;
+            boolean verticalKeyPitch = isGoingUp() != isGoingDown();
+            boolean verticalKeyPitchRelease = verticalKeyPitchSmoothing
+                    && !verticalKeyPitch
+                    && !isRiderPitchKeyMode()
+                    && !hasMovementInput;
+            slowVerticalKeyPitch = verticalKeyPitch || verticalKeyPitchRelease;
+            float rawRiderPitchRad = DragonRiderControllerHelper.resolveRiderPitchRadians(
+                    this,
+                    player,
+                    25.0F
+            );
+            if (rawRiderPitchRad != 0.0F || isRiderPitchKeyMode() || hasMovementInput || verticalKeyPitch || verticalKeyPitchRelease) {
+                float memory = slowVerticalKeyPitch ? 0.82f : 0.65f;
+                float blend = slowVerticalKeyPitch ? 0.18f : 0.35f;
+                smoothedPlayerPitchRad = smoothedPlayerPitchRad * memory + rawRiderPitchRad * blend;
                 targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
             } else {
-                float riderForward = this.entityData.get(DATA_RIDER_FORWARD);
-                float riderStrafe = this.entityData.get(DATA_RIDER_STRAFE);
-                boolean hasMovementInput = Math.abs(riderForward) > 0.01f
-                        || Math.abs(riderStrafe) > 0.01f
-                        || Math.abs(player.zza) > 0.01f
-                        || Math.abs(player.xxa) > 0.01f;
-                if (hasMovementInput) {
-                    float rawPlayerPitchRad = (float) Math.toRadians(player.getXRot());
-                    smoothedPlayerPitchRad = smoothedPlayerPitchRad * 0.65f + rawPlayerPitchRad * 0.35f;
-                    targetPitchRad = Mth.clamp(smoothedPlayerPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
-                } else {
-                    smoothedPlayerPitchRad = 0f;
-                }
+                smoothedPlayerPitchRad = 0f;
+                verticalKeyPitchSmoothing = false;
             }
         } else {
             Vec3 velocity = getDeltaMovement();
@@ -2505,7 +2510,16 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
         }
 
-        flightPitchRad = Mth.lerp(0.35f, flightPitchRad, targetPitchRad);
+        boolean verticalKeyPitch = isVehicle() && isGoingUp() != isGoingDown();
+        flightPitchRad = Mth.lerp(slowVerticalKeyPitch ? 0.18f : 0.35f, flightPitchRad, targetPitchRad);
+        verticalKeyPitchSmoothing = verticalKeyPitch
+                || (isVehicle()
+                        && verticalKeyPitchSmoothing
+                        && !isGoingUp()
+                        && !isGoingDown()
+                        && Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) <= 0.01f
+                        && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) <= 0.01f
+                        && Math.abs(flightPitchRad) > 0.01f);
         if (Math.abs(flightPitchRad) < 0.001f) {
             flightPitchRad = 0f;
         }
@@ -2659,7 +2673,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
+                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
                 if (!isBaby()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
                 }

@@ -30,10 +30,12 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
+import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -60,6 +62,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -71,6 +74,9 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
@@ -98,6 +104,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -106,7 +113,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane> {
+public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>, DragonChestCarrier {
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.CINDERVANE_ID;
@@ -135,6 +142,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_SLASH_GRAB_PASSENGER_ID =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDING_SETTLE_TICKS = 4;
     private static final int LANDED_RECOVERY_TICKS = 34;
     public static final int TAKEOFF_ANIMATION_TICKS = 25;
@@ -151,6 +160,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final double PACK_SEARCH_RADIUS = 48.0D;
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 420;
+    private static final int CINDERVANE_CHEST_SLOTS = 15;
     public static final double RIDER_WALK_SPEED = 0.18D;
     public static final double RIDER_RUN_SPEED = 0.26D;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
@@ -175,6 +185,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private final AnimationController<Cindervane> flightController;
     private final AnimationController<Cindervane> vocalController;
     private final AnimationController<Cindervane> interactionController;
+    private final SimpleContainer cindervaneChestInventory = new SimpleContainer(CINDERVANE_CHEST_SLOTS);
     private int targetCooldown;
     private int airTicks;
     public int groundTicks;
@@ -193,7 +204,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case ABILITY_USE, ABILITY_STOP -> true;
+            case ABILITY_USE, ABILITY_STOP, OPEN_INVENTORY -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -374,6 +385,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.entityData.define(DATA_ACCUMULATED_ROLL, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
+        this.entityData.define(DATA_HAS_CHEST, false);
     }
 
     @Override
@@ -687,7 +699,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
             @Override
             public void onRiderLanded() {
-                triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
+                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
                 markLandedNow();
                 lockRiderControls(34);
@@ -1469,6 +1481,77 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
+    protected void onRiderOpenInventory(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            openCindervaneInventory(serverPlayer);
+        }
+    }
+
+    private void openCindervaneInventory(ServerPlayer player) {
+        if (!this.isAlive() || player.distanceToSqr(this) > 64.0D) {
+            return;
+        }
+        player.openMenu(new SimpleMenuProvider(
+                (containerId, playerInventory, ignored) -> new DragonInventoryMenu(containerId, playerInventory, this),
+                this.getDisplayName()
+        ));
+    }
+
+    private void dropCindervaneChestContents() {
+        for (int slot = 0; slot < cindervaneChestInventory.getContainerSize(); slot++) {
+            ItemStack stack = cindervaneChestInventory.getItem(slot);
+            if (!stack.isEmpty()) {
+                this.spawnAtLocation(stack.copy());
+                cindervaneChestInventory.setItem(slot, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    public void removeCindervaneChestAndDropContents() {
+        if (this.level().isClientSide || !hasCindervaneChest()) {
+            return;
+        }
+        dropCindervaneChestContents();
+        setCindervaneChest(false);
+        this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+    }
+
+    public boolean hasCindervaneChest() {
+        return this.entityData.get(DATA_HAS_CHEST);
+    }
+
+    @Override
+    public boolean hasAttachedChest() {
+        return hasCindervaneChest();
+    }
+
+    public void setCindervaneChest(boolean value) {
+        this.entityData.set(DATA_HAS_CHEST, value);
+        if (!value) {
+            cindervaneChestInventory.clearContent();
+        }
+    }
+
+    @Override
+    public void setAttachedChest(boolean value) {
+        setCindervaneChest(value);
+    }
+
+    public Container getCindervaneChestInventory() {
+        return cindervaneChestInventory;
+    }
+
+    @Override
+    public Container getAttachedChestInventory() {
+        return getCindervaneChestInventory();
+    }
+
+    @Override
+    public void removeAttachedChestAndDropContents() {
+        removeCindervaneChestAndDropContents();
+    }
+
+    @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
             DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
@@ -1490,6 +1573,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
         if (this.packLeaderUuid != null) {
             tag.putUUID("PackLeaderUuid", this.packLeaderUuid);
+        }
+        tag.putBoolean("CindervaneHasChest", hasCindervaneChest());
+        if (hasCindervaneChest()) {
+            tag.put("CindervaneChestItems", cindervaneChestInventory.createTag());
         }
     }
 
@@ -1515,6 +1602,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.setNoGravity(isFlying() || isHovering());
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
+        }
+        setCindervaneChest(tag.getBoolean("CindervaneHasChest"));
+        if (hasCindervaneChest() && tag.contains("CindervaneChestItems", Tag.TAG_LIST)) {
+            cindervaneChestInventory.fromTag(tag.getList("CindervaneChestItems", Tag.TAG_COMPOUND));
         }
         if (!level().isClientSide) {
             this.tickCount = 0;
@@ -1645,7 +1736,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return;
         }
         if (!level().isClientSide) {
-            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.LANDED);
+            triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
             getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
             suppressSleep(60);
         }

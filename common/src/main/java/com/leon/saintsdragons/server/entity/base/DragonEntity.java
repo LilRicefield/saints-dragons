@@ -27,12 +27,14 @@ import com.leon.saintsdragons.server.entity.controller.DragonLookControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -89,12 +91,13 @@ import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.RawAnimation;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import java.util.List;
 import java.util.UUID;
 import java.util.EnumSet;
 
-public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon, DragonMovementCapable {
+public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon, DragonMovementCapable, DancingEntity {
     protected static final int DAMAGE_SLEEP_SUPPRESSION_TICKS = 20 * 30;
     private static final DragonVariantSet DEFAULT_VARIANTS = DragonVariantSet.of(
             DragonVariant.of(0, "default", 1)
@@ -112,6 +115,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_ENTERING =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_SLEEPING_EXITING =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_DANCING =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
@@ -155,6 +160,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private float clientTailDragVelocity = 0.0f;
     @Nullable
     private Dragons cachedDragonType;
+    @Nullable
+    private RawAnimation cachedDanceAnimation;
     private boolean dying = false;
     @Nullable
     private LivingEntity lastDamager;
@@ -406,10 +413,48 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.entityData.define(DATA_SLEEPING, false);
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
+        this.entityData.define(DATA_DANCING, false);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
         this.entityData.define(DATA_TEXTURE_VARIANT_ID, SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID.toString());
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT_ID, "");
+    }
+
+    @Override
+    public void setRecordPlayingNearby(BlockPos jukebox, boolean playing) {
+        super.setRecordPlayingNearby(jukebox, playing);
+        setDancing(playing);
+    }
+
+    @Override
+    public boolean isDancing() {
+        return this.entityData.get(DATA_DANCING);
+    }
+
+    @Override
+    public void setDancing(boolean dancing) {
+        this.entityData.set(DATA_DANCING, dancing);
+    }
+
+    @Override
+    public RawAnimation getDanceAnimation() {
+        if (cachedDanceAnimation == null) {
+            ResourceLocation entityTypeId = BuiltInRegistries.ENTITY_TYPE.getKey(getType());
+            String dragonName = entityTypeId != null ? entityTypeId.getPath() : "dragon";
+            cachedDanceAnimation = AnimationHelper.loop(dragonName, AnimationHelper.DANCE);
+        }
+        return cachedDanceAnimation;
+    }
+
+    @Override
+    public boolean canDance() {
+        return isAlive()
+                && isBaby()
+                && !isDying()
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && !isVehicle()
+                && getTarget() == null;
     }
 
     public float smoothTailDragVelocity(float targetDegrees) {
@@ -1872,6 +1917,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             if (recoveryComponent != null) {
                 recoveryComponent.tick();
             }
+            tickDancing();
         }
 
         if (!level().isClientSide && this.dragonBodyControl != null) {
@@ -1880,6 +1926,19 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (level().isClientSide) {
             syncClientSitProgress();
             tickClientRotationAnimationState();
+        }
+    }
+
+    private void tickDancing() {
+        if ((!isBaby() && !isDancing()) || !DancingEntity.shouldScanForJukebox(this)) {
+            if (isDancing() && canDance()) {
+                DancingEntity.holdStillForDance(this);
+            }
+            return;
+        }
+        setDancing(DancingEntity.hasPlayingJukeboxNearby(this));
+        if (isDancing() && canDance()) {
+            DancingEntity.holdStillForDance(this);
         }
     }
 

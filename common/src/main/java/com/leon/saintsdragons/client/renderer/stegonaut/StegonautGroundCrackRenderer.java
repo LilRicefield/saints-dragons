@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.renderer.stegonaut;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundCrackEntity;
+import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -16,7 +16,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-public class StegonautGroundCrackRenderer extends EntityRenderer<StegonautGroundCrackEntity> {
+public class StegonautGroundCrackRenderer extends EntityRenderer<GroundCrackEntity> {
     private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/particle/ground_crack.png");
 
     public StegonautGroundCrackRenderer(EntityRendererProvider.Context context) {
@@ -25,7 +25,7 @@ public class StegonautGroundCrackRenderer extends EntityRenderer<StegonautGround
     }
 
     @Override
-    public void render(@NotNull StegonautGroundCrackEntity entity, float entityYaw, float partialTicks,
+    public void render(@NotNull GroundCrackEntity entity, float entityYaw, float partialTicks,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         float opacity = entity.getOpacity(partialTicks);
         if (opacity <= 0.001F) {
@@ -80,7 +80,7 @@ public class StegonautGroundCrackRenderer extends EntityRenderer<StegonautGround
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull StegonautGroundCrackEntity entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull GroundCrackEntity entity) {
         return TEXTURE;
     }
 }

@@ -2,26 +2,18 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
-import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.ability.debug.DragonAbilityDebug;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.OwnableEntity;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.phys.Vec3;
 
-import java.util.*;
+import java.util.List;
 
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
@@ -33,11 +25,6 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
     private static final double HITBOX_FORWARD_OFFSET = 2.0;
     private static final int DEBUG_COLOR = 0x33D1FF;
     private static final int DEBUG_TICKS = 20;
-    private static final float CHAIN_DAMAGE_BASE = 10.0f;
-    private static final double CHAIN_RADIUS = 7.0;
-    private static final int CHAIN_JUMPS = 5;
-    private static final float CHAIN_FALLOFF = 0.75f;
-    private static final int CHAIN_VISUAL_LIFETIME = 5;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 3),
@@ -74,9 +61,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
             LivingEntity primary = findPrimaryTarget();
             if (primary != null) {
                 bitePrimary(primary);
-                if (!isProtectedTamedPet(primary) && !DragonElementalImmunity.isElectricityImmune(primary)) {
-                    chainFrom(primary);
-                }
+                RaevyxChainLightningAbility.chainFromBite(getUser(), primary);
             }
             didHitThisActive = true;
         }
@@ -129,95 +114,7 @@ public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
                 .abilityDamage("bite", BASE_DAMAGE);
     }
 
-    private void chainFrom(LivingEntity start) {
-        Raevyx wyvern = getUser();
-        Set<LivingEntity> hit = new HashSet<>();
-        hit.add(start);
-
-        LivingEntity current = start;
-        float damage = CHAIN_DAMAGE_BASE;
-
-        for (int i = 0; i < CHAIN_JUMPS; i++) {
-            LivingEntity next = findNearestChainTarget(current, hit);
-            if (next == null) break;
-
-            float mult = wyvern.getDamageMultiplier();
-            DamageSource chainSource = next instanceof DragonEntity
-                    ? wyvern.level().damageSources().mobAttack(wyvern)
-                    : wyvern.level().damageSources().lightningBolt();
-            if (!DragonElementalImmunity.isElectricityImmune(next)) {
-                next.hurt(chainSource, damage * mult);
-            }
-            wyvern.noteAggroFrom(next);
-            spawnArc(current.position().add(0, current.getBbHeight() * 0.5, 0),
-                    next.position().add(0, next.getBbHeight() * 0.5, 0));
-
-            hit.add(next);
-            current = next;
-            damage *= CHAIN_FALLOFF;
-        }
-    }
-
-    private LivingEntity findNearestChainTarget(LivingEntity origin, Set<LivingEntity> exclude) {
-        Raevyx wyvern = getUser();
-        double range = CHAIN_RADIUS;
-        List<LivingEntity> nearby = origin.level().getEntitiesOfClass(
-                LivingEntity.class,
-                origin.getBoundingBox().inflate(range, range, range),
-                entity -> entity != origin && origin.distanceTo(entity) <= range + entity.getBbWidth() / 2.0F
-        );
-        LivingEntity best = null;
-        double bestDist = Double.MAX_VALUE;
-        for (LivingEntity e : nearby) {
-            if (e == wyvern
-                    || exclude.contains(e)
-                    || !e.isAlive()
-                    || !e.attackable()
-                    || isAllied(wyvern, e)
-                    || isProtectedTamedPet(e)
-                    || DragonElementalImmunity.isElectricityImmune(e)) {
-                continue;
-            }
-            double d = e.distanceToSqr(origin);
-            if (d < bestDist) {
-                if (!wyvern.getSensing().hasLineOfSight(e)) continue;
-                bestDist = d;
-                best = e;
-            }
-        }
-        return best;
-    }
-
-    private boolean isProtectedTamedPet(LivingEntity entity) {
-        if (entity instanceof DragonEntity) {
-            return false;
-        }
-        if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
-            return true;
-        }
-        return entity instanceof OwnableEntity ownable && ownable.getOwnerUUID() != null;
-    }
-
     private boolean isAllied(Raevyx wyvern, Entity other) {
         return wyvern.isAlly(other);
-    }
-
-    private void spawnArc(Vec3 from, Vec3 to) {
-        if (!(getLevel() instanceof ServerLevel server)) return;
-
-        server.addFreshEntity(new RaevyxGroundRendTrailEntity(server, from, to, 1.0F, CHAIN_VISUAL_LIFETIME, server.random.nextLong()));
-
-        Vec3 midpoint = from.lerp(to, 0.5D);
-        server.sendParticles(
-                ParticleTypes.ELECTRIC_SPARK,
-                midpoint.x,
-                midpoint.y,
-                midpoint.z,
-                2,
-                0.06D,
-                0.06D,
-                0.06D,
-                0.0D
-        );
     }
 }
