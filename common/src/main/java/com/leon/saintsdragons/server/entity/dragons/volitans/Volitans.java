@@ -893,7 +893,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return true;
         }
 
-        if (action == DragonRiderAction.TOGGLE_MELEE && !locked) {
+        if (action == DragonRiderAction.TOGGLE_MELEE) {
             if (combatManager.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
                 toggleBreathMode();
                 player.displayClientMessage(
@@ -1090,11 +1090,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 boolean riddenByOwner = isRiddenByOwner();
                 if (this.onGround() && !isTakeoff() && !isGoingUp()) {
                     handleAiLandingComplete();
-                } else if (!riddenByOwner && this.getDeltaMovement().horizontalDistanceSqr() < 0.01D) {
-                    setHovering(true);
-                } else {
-                    setHovering(false);
-                }
+                } else setHovering(!riddenByOwner && this.getDeltaMovement().horizontalDistanceSqr() < 0.01D);
             }
 
         }
@@ -1347,15 +1343,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (breathLocator != null) {
             return breathLocator;
         }
-        return computeBreathOriginFallback(1.0F);
+        return computeBreathOriginFallback();
     }
 
-    private Vec3 computeBreathOriginFallback(float partialTicks) {
-        double x = Mth.lerp(partialTicks, this.xo, this.getX());
-        double y = Mth.lerp(partialTicks, this.yo, this.getY());
-        double z = Mth.lerp(partialTicks, this.zo, this.getZ());
-        float yawDeg = Mth.lerp(partialTicks, this.yHeadRotO, this.yHeadRot);
-        float pitchDeg = Mth.lerp(partialTicks, this.xRotO, this.getXRot());
+    private Vec3 computeBreathOriginFallback() {
+        double x = Mth.lerp((float) 1.0, this.xo, this.getX());
+        double y = Mth.lerp((float) 1.0, this.yo, this.getY());
+        double z = Mth.lerp((float) 1.0, this.zo, this.getZ());
+        float yawDeg = Mth.lerp((float) 1.0, this.yHeadRotO, this.yHeadRot);
+        float pitchDeg = Mth.lerp((float) 1.0, this.xRotO, this.getXRot());
         double yaw = Math.toRadians(yawDeg);
         double pitch = Math.toRadians(pitchDeg);
         double localRight = 0.0D;
@@ -1544,7 +1540,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
         tempInvulnTicks--;
         if (tempInvulnTicks <= 0) {
-            tempInvulnTicks = 0;
             if (!isDying()) {
                 setInvulnerable(false);
             }
@@ -1795,11 +1790,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    public double getShakeDistance() {
-        return 20.0D;
-    }
-
-    @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
         return abilityType == ModAbilities.VOLITANS_ROAR
                 || abilityType == ModAbilities.VOLITANS_BURROW
@@ -1839,18 +1829,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         setWaterBreathEnergy(energy);
     }
 
-    public float getCurrentBreathEnergy() {
-        return getWaterBreathEnergy();
-    }
-
-    public void setCurrentBreathEnergy(float energy) {
-        setWaterBreathEnergy(energy);
-    }
-
-    public boolean hasCurrentBreathEnergy() {
-        return DragonBreathComponent.canUse(getCurrentBreathGauge(), BREATH_DEPLETED_THRESHOLD);
-    }
-
     public boolean isWaterBreathDepleted() {
         return this.entityData.get(DATA_WATER_BREATH_DEPLETED);
     }
@@ -1865,14 +1843,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void setPoisonBreathDepleted(boolean depleted) {
-        setWaterBreathDepleted(depleted);
-    }
-
-    public boolean isCurrentBreathDepleted() {
-        return isWaterBreathDepleted();
-    }
-
-    public void setCurrentBreathDepleted(boolean depleted) {
         setWaterBreathDepleted(depleted);
     }
 
@@ -2068,10 +2038,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (isAbilityActive(ModAbilities.VOLITANS_POISON_BALL) && !isFlying() && !isInWaterOrBubble()) {
             return true;
         }
-        if (isAbilityActive(ModAbilities.VOLITANS_BURROW) && !isBurrowing()) {
-            return true;
-        }
-        return false;
+        return isAbilityActive(ModAbilities.VOLITANS_BURROW) && !isBurrowing();
     }
 
     public boolean shouldAiHoldPositionForAbility() {
@@ -2079,24 +2046,20 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 || (isAbilityActive(ModAbilities.VOLITANS_BREATH) && !isFlying());
     }
 
-    public boolean requestPoisonBallRelease() {
+    public void requestPoisonBallRelease() {
         var active = combatManager.getActiveAbility();
         if (active instanceof VolitansPoisonBallAbility poisonBallAbility
                 && active.getAbilityType() == ModAbilities.VOLITANS_POISON_BALL) {
             poisonBallAbility.requestRelease();
-            return true;
         }
-        return false;
     }
 
-    public boolean requestBurrowExit(boolean withBurst) {
+    public void requestBurrowExit(boolean withBurst) {
         var active = combatManager.getActiveAbility();
         if (active instanceof VolitansBurrowAbility burrowAbility
                 && active.getAbilityType() == ModAbilities.VOLITANS_BURROW) {
             burrowAbility.requestExit(withBurst);
-            return true;
         }
-        return false;
     }
 
     private boolean tryReactiveGroundDodge(@Nullable LivingEntity threat) {
@@ -2111,9 +2074,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
         double dragScale = 1.0D - Math.pow(RIDER_SIDE_DODGE_HORIZONTAL_DRAG, RIDER_SIDE_DODGE_DURATION_TICKS);
-        if (dragScale <= 1.0E-6D) {
-            return false;
-        }
         double perTickSpeed = RIDER_SIDE_DODGE_DISTANCE_BLOCKS
                 * (1.0D - RIDER_SIDE_DODGE_HORIZONTAL_DRAG) / dragScale;
 
@@ -2550,11 +2510,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return false;
         }
 
-        if (Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f) {
-            return false;
-        }
-
-        return true;
+        return !(Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.05f);
     }
 
     @Override
@@ -3006,11 +2962,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (!isInWaterOrBubble()) {
             setOrderedToSit(true);
         }
-    }
-
-    @Override
-    protected void onSleepWakeUpImmediate() {
-        setOrderedToSit(false);
     }
 
     private void updateSittingProgress() {
