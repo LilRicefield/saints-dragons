@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.camera;
 
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -26,7 +27,8 @@ public final class DragonRideCameraController {
                 || vehicle instanceof Varasuchus
                 || vehicle instanceof Stegonaut
                 || vehicle instanceof Volitans
-                || vehicle instanceof Nulljaw;
+                || vehicle instanceof Nulljaw
+                || vehicle instanceof Atroxiia;
     }
 
     public static CameraOutput update(Entity vehicle, float partialTick) {

@@ -31,18 +31,16 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
         super("ignivorus");
     }
 
-    private static final ResourceLocation TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus.png");
-    private static final ResourceLocation FEMALE_TEXTURE_SECOND_VARIANT = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus_female.png");
+    private static final ResourceLocation CRIMSON_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus.png");
+    private static final ResourceLocation CRIMSON_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/ignivorus/crimson_ignivorus_female.png");
 
     @Override
     protected ResourceLocation getAdultTexture(Ignivorus entity) {
         if (entity.hasCustomTextureVariant()) {
             return super.getAdultTexture(entity);
         }
-        int variant = entity.getTextureVariant();
-        boolean isFemale = entity.isFemale();
-        if (variant == 1) {
-            return isFemale ? FEMALE_TEXTURE_SECOND_VARIANT : TEXTURE_SECOND_VARIANT;
+        if (entity.getTextureVariant() == Ignivorus.VARIANT_CRIMSON) {
+            return entity.isFemale() ? CRIMSON_FEMALE_TEXTURE : CRIMSON_TEXTURE;
         }
         return super.getAdultTexture(entity);
     }

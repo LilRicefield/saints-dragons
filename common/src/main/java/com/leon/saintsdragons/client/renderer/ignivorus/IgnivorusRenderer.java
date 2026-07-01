@@ -36,8 +36,8 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final double SNAPSHOT_PRECISION = 1000.0D;
     private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
 
-    public IgnivorusRenderer(EntityRendererProvider.Context renderManager) {
-        super(renderManager, new IgnivorusModel());
+    public IgnivorusRenderer(EntityRendererProvider.Context context) {
+        super(context, new IgnivorusModel());
         this.addRenderLayer(new IgnivorusNightEmissiveLayer(this));
         this.addRenderLayer(new IgnivorusMouthSmokeLayer());
         this.addRenderLayer(new IgnivorusGlowLayer(this));

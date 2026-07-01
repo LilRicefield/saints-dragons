@@ -34,10 +34,10 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAW_MOOP.get());
                                 output.accept(ModItems.COOKED_MOOP.get());
                                 output.accept(ModItems.BUCKET_OF_MOOP.get());
-                                output.accept(ModArmor.RAEVYX_ARMOR_HELMET.get());
-                                output.accept(ModArmor.RAEVYX_ARMOR_CHESTPLATE.get());
-                                output.accept(ModArmor.RAEVYX_ARMOR_LEGGINGS.get());
-                                output.accept(ModArmor.RAEVYX_ARMOR_BOOTS.get());
+                                output.accept(ModArmors.RAEVYX_ARMOR_HELMET.get());
+                                output.accept(ModArmors.RAEVYX_ARMOR_CHESTPLATE.get());
+                                output.accept(ModArmors.RAEVYX_ARMOR_LEGGINGS.get());
+                                output.accept(ModArmors.RAEVYX_ARMOR_BOOTS.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
@@ -65,6 +65,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.STEGONAUT_SPAWN_EGG.get());
                                 output.accept(ModItems.VOLITANS_SPAWN_EGG.get());
                                 output.accept(ModItems.NULLJAW_SPAWN_EGG.get());
+                                output.accept(ModItems.ATROXIIA_SPAWN_EGG.get());
                                 output.accept(ModItems.MOOP_SPAWN_EGG.get());
                                 output.accept(ModItems.MOSSBACK_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());

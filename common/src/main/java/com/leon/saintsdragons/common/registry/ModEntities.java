@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -90,9 +91,15 @@ public final class ModEntities {
     public static final Supplier<EntityType<Nulljaw>> NULLJAW =
             REGISTER.register("nulljaw", () -> EntityType.Builder.of(Nulljaw::new, MobCategory.MONSTER)
                     .sized(1.20F, 1.15F)
-                    .clientTrackingRange(48)
+                    .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("nulljaw"));
+    public static final Supplier<EntityType<Atroxiia>> ATROXIIA =
+            REGISTER.register("atroxiia", () -> EntityType.Builder.of(Atroxiia::new, MobCategory.CREATURE)
+                    .sized(3.20F, 4.75F)
+                    .clientTrackingRange(48)
+                    .updateInterval(1)
+                    .build("atroxiia"));
 
     public static final Supplier<EntityType<Moop>> MOOP =
             REGISTER.register("moop", () -> EntityType.Builder.of(Moop::new, MobCategory.WATER_AMBIENT)

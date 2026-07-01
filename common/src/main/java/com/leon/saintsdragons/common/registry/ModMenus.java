@@ -17,8 +17,8 @@ public final class ModMenus {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.MENU, () -> BuiltInRegistries.MENU, SaintsDragonsCommon.MOD_ID);
 
-    public static final Supplier<MenuType<DragonInventoryMenu>> STEGONAUT_INVENTORY =
-            REGISTER.register("stegonaut_inventory",
+    public static final Supplier<MenuType<DragonInventoryMenu>> DRAGON_INVENTORY =
+            REGISTER.register("dragon_inventory",
                     () -> new MenuType<>(DragonInventoryMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     public static final Supplier<MenuType<IvyInventoryMenu>> IVY_INVENTORY =

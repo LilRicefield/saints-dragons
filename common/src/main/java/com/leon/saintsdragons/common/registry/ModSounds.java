@@ -62,6 +62,13 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> MOSSBACK_TOXIN = registerSound("mossback_toxin");
     public static final Supplier<SoundEvent> MOSSBACK_STEP = registerSound("mossback_step");
 
+    // Atroxiia
+    public static final Supplier<SoundEvent> ATROXIIA_SLAM = registerSound("atroxiia_slam");
+    public static final Supplier<SoundEvent> ATROXIIA_STEP = registerSound("atroxiia_step");
+    public static final Supplier<SoundEvent> ATROXIIA_SWIPE = registerSound("atroxiia_swipe");
+    public static final Supplier<SoundEvent> ATROXIIA_PRECISE_STRIKE = registerSound("atroxiia_precise_strike");
+    public static final Supplier<SoundEvent> ATROXIIA_DEVASTATING_SWEEP = registerSound("atroxiia_devastating_sweep");
+
     // Stegonaut
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_2 = registerSound("stegonaut_grumble2");

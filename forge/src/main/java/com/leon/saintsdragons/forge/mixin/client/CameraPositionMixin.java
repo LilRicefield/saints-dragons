@@ -6,6 +6,7 @@ import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -109,7 +110,8 @@ public abstract class CameraPositionMixin {
                 || dragon instanceof Ignivorus
                 || dragon instanceof Varasuchus
                 || dragon instanceof Stegonaut
-                || dragon instanceof Volitans;
+                || dragon instanceof Volitans
+                || dragon instanceof Atroxiia;
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {

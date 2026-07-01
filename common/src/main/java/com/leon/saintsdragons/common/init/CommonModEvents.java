@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.command.DragonAllyCommand;
 import com.leon.saintsdragons.server.command.DragonSetGenderCommand;
 import com.leon.saintsdragons.server.command.DragonSetVariantCommand;
 import com.leon.saintsdragons.server.command.DragonTameCommand;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -46,6 +47,7 @@ public final class CommonModEvents {
         registrar.accept(ModEntities.IGNIVORUS.get(), Ignivorus.createAttributes());
         registrar.accept(ModEntities.VOLITANS.get(), Volitans.createAttributes());
         registrar.accept(ModEntities.NULLJAW.get(), Nulljaw.createAttributes());
+        registrar.accept(ModEntities.ATROXIIA.get(), Atroxiia.createAttributes());
         registrar.accept(ModEntities.MOOP.get(), Moop.createAttributes());
         registrar.accept(ModEntities.MOSSBACK.get(), Mossback.createAttributes());
         registrar.accept(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchant.createAttributes());

@@ -23,12 +23,13 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
             0.25f, 0.50f, 0.75f, 0.80f, 0.95f
     );
 
-public CindervaneModel() {
-    super("cindervane");
-}
-
-    private static final ResourceLocation ALBINO_MALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino.png");
+    private static final ResourceLocation ALBINO_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino.png");
     private static final ResourceLocation ALBINO_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino_female.png");
+
+    public CindervaneModel() {
+        super("cindervane");
+    }
+
     @Override
     public void setCustomAnimations(Cindervane entity, long instanceId, AnimationState<Cindervane> animationState) {
         super.setCustomAnimations(entity, instanceId, animationState);
@@ -61,8 +62,8 @@ public CindervaneModel() {
         if (entity.hasCustomTextureVariant()) {
             return super.getAdultTexture(entity);
         }
-        if (entity.getTextureVariant() == 1) {
-            return entity.isFemale() ? ALBINO_FEMALE_TEXTURE : ALBINO_MALE_TEXTURE;
+        if (entity.getTextureVariant() == Cindervane.VARIANT_ALBINO) {
+            return entity.isFemale() ? ALBINO_FEMALE_TEXTURE : ALBINO_TEXTURE;
         }
         return super.getAdultTexture(entity);
     }

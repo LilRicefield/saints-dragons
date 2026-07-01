@@ -81,7 +81,8 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.STEGONAUT_SPAWN_EGG.get())
                 .add(ModItems.VARASUCHUS_SPAWN_EGG.get())
                 .add(ModItems.VOLITANS_SPAWN_EGG.get())
-                .add(ModItems.MOSSBACK_SPAWN_EGG.get());
+                .add(ModItems.MOSSBACK_SPAWN_EGG.get())
+                .add(ModItems.ATROXIIA_SPAWN_EGG.get());
 
         tag(ModTags.Items.CINDERVANE_FOODS)
                 .add(Items.CHICKEN)

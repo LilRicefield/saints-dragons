@@ -8,7 +8,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
-@Environment(EnvType.CLIENT)
 public class VarasuchusRenderer extends DragonGeoEntityRenderer<Varasuchus> {
     private static final String PASSENGER_BONE = "passengerBone";
     private static final float PASSENGER_X = 0.0f;

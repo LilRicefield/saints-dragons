@@ -35,6 +35,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation STEGONAUT_ID = SaintsDragonsCommon.rl("stegonaut");
     public static final ResourceLocation VOLITANS_ID = SaintsDragonsCommon.rl("volitans");
     public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
+    public static final ResourceLocation ATROXIIA_ID = SaintsDragonsCommon.rl("atroxiia");
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = "forge".equals(Services.PLATFORM.getPlatformId());
@@ -498,6 +499,21 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "legacy_taming", true,
                         "aggressive_wild", false
                 )
+        );
+    }
+
+    private static DragonAttributeConfig atroxiiaDefaults() {
+        return new DragonAttributeConfig(
+                200.0D,
+                10.0D,
+                0.0D,
+                Map.of(
+                        "slam", DragonAbilityOverride.ofDamage(16.0D),
+                        "swipe", DragonAbilityOverride.ofDamage(12.0D),
+                        "precise_strike", DragonAbilityOverride.ofDamage(9.0D)
+                ),
+                Map.of(),
+                Map.of("aggressive_wild", false)
         );
     }
 
@@ -1217,6 +1233,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(STEGONAUT_ID, stegonautDefaults());
         base.put(VOLITANS_ID, volitansDefaults());
         base.put(NULLJAW_ID, nulljawDefaults());
+        base.put(ATROXIIA_ID, atroxiiaDefaults());
         return base;
     }
 

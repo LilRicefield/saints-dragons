@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -106,6 +107,18 @@ public final class RiderConfig {
     public static final double VARASUCHUS_CAPTURE_DISTANCE = 80.0;
     public static final float VARASUCHUS_YAW_OFFSET_DEG = -180.0f;
 
+    // ===== ATROXIIA TUNING =====
+    public static final String ATROXIIA_BONE = "passengerBone";
+    public static final float ATROXIIA_SEAT_X = 0.0f;
+    public static final float ATROXIIA_SEAT_Y = 3.8f;
+    public static final float ATROXIIA_SEAT_Z = -0.55f;
+    public static final float ATROXIIA_FIRST_PERSON_X = 0.0f;
+    public static final float ATROXIIA_FIRST_PERSON_Y = 1.0f;
+    public static final float ATROXIIA_FIRST_PERSON_Z = 0.0f;
+    public static final long ATROXIIA_STALE_MS = 200L;
+    public static final double ATROXIIA_CAPTURE_DISTANCE = 80.0;
+    public static final float ATROXIIA_YAW_OFFSET_DEG = -180.0f;
+
     private static Map<Class<?>, RiderSpec> riderConfigs;
 
     private RiderConfig() {
@@ -179,6 +192,14 @@ public final class RiderConfig {
                 VARASUCHUS_STALE_MS,
                 VARASUCHUS_CAPTURE_DISTANCE,
                 VARASUCHUS_YAW_OFFSET_DEG
+        ));
+        riderConfigs.put(Atroxiia.class, new RiderSpec(
+                ATROXIIA_BONE,
+                new Vector3f(ATROXIIA_SEAT_X, ATROXIIA_SEAT_Y, ATROXIIA_SEAT_Z),
+                new Vector3f(ATROXIIA_FIRST_PERSON_X, ATROXIIA_FIRST_PERSON_Y, ATROXIIA_FIRST_PERSON_Z),
+                ATROXIIA_STALE_MS,
+                ATROXIIA_CAPTURE_DISTANCE,
+                ATROXIIA_YAW_OFFSET_DEG
         ));
     }
 

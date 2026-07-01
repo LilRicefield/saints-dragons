@@ -8,8 +8,8 @@ import net.minecraft.world.item.Rarity;
 
 import java.util.function.Supplier;
 
-public final class ModArmor {
-    private ModArmor() {}
+public final class ModArmors {
+    private ModArmors() {}
 
     public static final Supplier<Item> RAEVYX_ARMOR_HELMET =
             ModItems.REGISTER.register("raevyx_armor_helmet",

@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.leon.saintsdragons.platform.Services;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -37,6 +38,7 @@ public final class DragonRideCameraTuning {
     public static final CameraProfile STEGONAUT = new CameraProfile(8.0f, 8.0f, 0.0f, 0.05f, 0.15, 0.12, 0.0, 0.0, 0.0f, 0.0f, 0.15f);
     public static final CameraProfile VOLITANS = new CameraProfile(12.0f, 20.0f, 5.5f, 0.05f, 0.15, 0.12, 0.0, 6.0, 0.0f, 10.0f, 0.15f);
     public static final CameraProfile NULLJAW = new CameraProfile(3.0f, 8.0f, 0.0f, 0.05f, 0.15, 0.12, 0.0, 1.0, 0.0f, 0.0f, 0.15f);
+    public static final CameraProfile ATROXIIA = new CameraProfile(10.0f, 10.0f, 0.0f, 0.05f, 0.15, 0.12, 1.0, 1.0, 0.0f, 0.0f, 0.15f);
     public static final CameraProfile DEFAULT = new CameraProfile(15.0f, 15.0f, 5.5f, 0.05f, 0.15, 0.12, 0.0, 0.0, 0.0f, 0.0f, 0.15f);
 
     private static final Map<String, CameraProfile> DEFAULT_PROFILES = new HashMap<>();
@@ -58,6 +60,7 @@ public final class DragonRideCameraTuning {
         DEFAULT_PROFILES.put("stegonaut", STEGONAUT);
         DEFAULT_PROFILES.put("volitans", VOLITANS);
         DEFAULT_PROFILES.put("nulljaw", NULLJAW);
+        DEFAULT_PROFILES.put("atroxiia", ATROXIIA);
         DEFAULT_PROFILES.put("default", DEFAULT);
 
         PROFILE_KEYS.put(Raevyx.class, "raevyx");
@@ -67,6 +70,7 @@ public final class DragonRideCameraTuning {
         PROFILE_KEYS.put(Stegonaut.class, "stegonaut");
         PROFILE_KEYS.put(Volitans.class, "volitans");
         PROFILE_KEYS.put(Nulljaw.class, "nulljaw");
+        PROFILE_KEYS.put(Atroxiia.class, "atroxiia");
     }
 
     public static boolean isAirOrWaterMode(Entity vehicle) {
@@ -89,6 +93,9 @@ public final class DragonRideCameraTuning {
             return true;
         }
         if (vehicle instanceof Stegonaut) {
+            return false;
+        }
+        if (vehicle instanceof Atroxiia) {
             return false;
         }
         return false;
@@ -162,16 +169,24 @@ public final class DragonRideCameraTuning {
         }
 
         Map<String, CameraProfile> mergedProfiles = new HashMap<>(DEFAULT_PROFILES);
+        boolean missingDefaultProfile = false;
         try (BufferedReader reader = Files.newBufferedReader(configPath, StandardCharsets.UTF_8)) {
             JsonElement element = JsonParser.parseReader(reader);
             JsonObject root = GsonHelper.convertToJsonObject(element, FILE_NAME);
             for (Map.Entry<String, CameraProfile> entry : DEFAULT_PROFILES.entrySet()) {
                 String key = entry.getKey();
                 if (!root.has(key) || !root.get(key).isJsonObject()) {
+                    root.add(key, writeProfile(entry.getValue()));
+                    missingDefaultProfile = true;
                     continue;
                 }
                 JsonObject profileJson = GsonHelper.convertToJsonObject(root.get(key), key);
                 mergedProfiles.put(key, readProfile(profileJson, entry.getValue()));
+            }
+            if (missingDefaultProfile) {
+                try (BufferedWriter writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
+                    writer.write(GSON.toJson(root));
+                }
             }
             activeProfiles = mergedProfiles;
             lastKnownModifiedTime = Files.getLastModifiedTime(configPath).toMillis();

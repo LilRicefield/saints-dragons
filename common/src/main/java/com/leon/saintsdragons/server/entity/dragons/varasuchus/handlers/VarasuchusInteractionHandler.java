@@ -278,16 +278,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
     }
 
     private InteractionResult handleMounting(Player player) {
-        if (!dragon.canOwnerMount(player) || dragon.isVehicle()) {
-            return InteractionResult.PASS;
-        }
-
-        if (!dragon.level().isClientSide) {
-            dragon.prepareForMounting();
-            player.startRiding(dragon);
-        }
-
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return handleStandardMounting(player);
     }
 
     private InteractionResult handleCommandCycling(Player player) {

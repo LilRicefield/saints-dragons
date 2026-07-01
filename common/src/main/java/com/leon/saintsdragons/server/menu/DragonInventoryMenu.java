@@ -57,7 +57,7 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
                                 @Nullable DragonChestCarrier chestCarrier,
                                 Container cargoInventory,
                                 ContainerData data) {
-        super(ModMenus.STEGONAUT_INVENTORY.get(), containerId);
+        super(ModMenus.DRAGON_INVENTORY.get(), containerId);
         this.chestCarrier = chestCarrier;
         this.carrierEntity = chestCarrier instanceof Entity entity ? entity : null;
         this.cargoInventory = cargoInventory;

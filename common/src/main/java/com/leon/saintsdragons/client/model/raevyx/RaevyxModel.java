@@ -32,7 +32,6 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
 
     private static final ResourceLocation NIGHT_GOLD_TEXTURE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_night_gold.png");
     private static final ResourceLocation NIGHT_GOLD_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/raevyx/raevyx_night_gold_female.png");
-    private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/raevyx/baby_raevyx.png");
 
     @Override
     protected ResourceLocation getAdultTexture(Raevyx entity) {
@@ -44,11 +43,6 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             return entity.isFemale() ? NIGHT_GOLD_FEMALE_TEXTURE : NIGHT_GOLD_TEXTURE;
         }
         return super.getAdultTexture(entity);
-    }
-
-    @Override
-    protected ResourceLocation getBabyTexture(Raevyx entity) {
-        return BABY_TEXTURE;
     }
 
     @Override

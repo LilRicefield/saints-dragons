@@ -4,6 +4,10 @@ import com.leon.saintsdragons.server.entity.ability.DieAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaDevastatingSweepAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSlamAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSwipeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneFireBodyAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneRoarAbility;
@@ -43,6 +47,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansH
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansPoisonBallAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansUltimateAbility;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -53,6 +58,11 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
 
 public final class ModAbilities {
+    public static final DragonAbilityType<Atroxiia, AtroxiiaSlamAbility> ATROXIIA_SLAM = register("atroxiia_slam", AtroxiiaSlamAbility::new);
+    public static final DragonAbilityType<Atroxiia, AtroxiiaSwipeAbility> ATROXIIA_SWIPE = register("atroxiia_swipe", AtroxiiaSwipeAbility::new);
+    public static final DragonAbilityType<Atroxiia, AtroxiiaPreciseStrikeAbility> ATROXIIA_PRECISE_STRIKE = register("atroxiia_precise_strike", AtroxiiaPreciseStrikeAbility::new);
+    public static final DragonAbilityType<Atroxiia, AtroxiiaDevastatingSweepAbility> ATROXIIA_DEVASTATING_SWEEP = register("atroxiia_devastating_sweep", AtroxiiaDevastatingSweepAbility::new);
+
     public static final DragonAbilityType<Raevyx, RaevyxBiteAbility> RAEVYX_BITE = register("raevyx_bite", RaevyxBiteAbility::new);
     public static final DragonAbilityType<Raevyx, RaevyxHornGoreAbility> RAEVYX_HORN_GORE = register("raevyx_horn_gore", RaevyxHornGoreAbility::new);
     public static final DragonAbilityType<Raevyx, RaevyxBeamAbility> RAEVYX_LIGHTNING_BEAM = register("raevyx_lightning_beam", RaevyxBeamAbility::new);

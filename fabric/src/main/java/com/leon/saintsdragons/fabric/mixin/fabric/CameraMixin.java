@@ -8,6 +8,7 @@ import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -192,7 +193,8 @@ public abstract class CameraMixin implements CameraAccessor {
                 || dragon instanceof Ignivorus
                 || dragon instanceof Varasuchus
                 || dragon instanceof Stegonaut
-                || dragon instanceof Volitans;
+                || dragon instanceof Volitans
+                || dragon instanceof Atroxiia;
     }
 
     private static boolean saintsdragons$usesAerialBankingCamera(RideableDragonBase dragon) {

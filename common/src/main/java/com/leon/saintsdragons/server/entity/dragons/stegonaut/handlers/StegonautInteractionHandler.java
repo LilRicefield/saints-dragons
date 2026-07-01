@@ -144,16 +144,7 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
     }
 
     private InteractionResult handleMounting(Player player) {
-        if (!dragon.canOwnerMount(player) || dragon.isVehicle()) {
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
-        }
-
-        if (!dragon.level().isClientSide) {
-            dragon.prepareForMounting();
-            player.startRiding(dragon);
-        }
-
-        return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        return handleStandardMounting(player);
     }
 
     private InteractionResult handleBreeding(Player player, ItemStack heldItem) {

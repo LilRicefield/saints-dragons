@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -37,6 +38,10 @@ public enum Dragons {
     NULLJAW("nulljaw",
         DragonAttributeConfigLoader.NULLJAW_ID,
         Nulljaw.class, ModEntities.NULLJAW),
+
+    ATROXIIA("atroxiia",
+        DragonAttributeConfigLoader.ATROXIIA_ID,
+        Atroxiia.class, ModEntities.ATROXIIA),
 
     IGNIVORUS("ignivorus",
         DragonAttributeConfigLoader.IGNIVORUS_ID,

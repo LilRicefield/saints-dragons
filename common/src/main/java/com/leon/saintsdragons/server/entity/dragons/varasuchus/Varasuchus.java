@@ -88,6 +88,35 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen {
+    public Varasuchus(EntityType<? extends Varasuchus> type, Level level) {
+        super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
+        this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
+        this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
+        this.setMaxUpStep(1.4F);
+        this.groundNavigation = new PathNavigateGround(this, level);
+        this.landMoveControl = new RiftDrakeMoveControl(this);
+        this.landLookControl = new RiftDrakeLookController(this);
+        this.swimSteering = new GenericSwimSteeringController(this);
+        this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
+        this.navigation = this.groundNavigation;
+        this.moveControl = this.landMoveControl;
+        this.lookControl = this.landLookControl;
+        this.riderController = new VarasuchusRiderController(this);
+        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
+        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
+        this.actionController = new AnimationController<>(this, VarasuchusAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
+        this.fastActionController = new AnimationController<>(this, VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
+        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
+        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
+        setupAnimationControllers();
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+            this.setHealth(this.getMaxHealth());
+        }
+    }
+
     public static final ResourceLocation VOID_KISSED_VARIANT_ID = SaintsDragonsCommon.rl("void_kissed");
 
     public static boolean shouldUseVoidKissedVariant(Level level) {
@@ -224,35 +253,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     public void setFeedingCooldown(int ticks) {
         this.entityData.set(DATA_FEEDING_COOLDOWN, ticks);
-    }
-
-    public Varasuchus(EntityType<? extends Varasuchus> type, Level level) {
-        super(type, level);
-        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
-        this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
-        this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
-        this.setMaxUpStep(1.4F);
-        this.groundNavigation = new PathNavigateGround(this, level);
-        this.landMoveControl = new RiftDrakeMoveControl(this);
-        this.landLookControl = new RiftDrakeLookController(this);
-        this.swimSteering = new GenericSwimSteeringController(this);
-        this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
-        this.navigation = this.groundNavigation;
-        this.moveControl = this.landMoveControl;
-        this.lookControl = this.landLookControl;
-        this.riderController = new VarasuchusRiderController(this);
-        this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
-        this.actionController = new AnimationController<>(this, VarasuchusAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
-        this.fastActionController = new AnimationController<>(this, VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
-        this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
-        this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
-        setupAnimationControllers();
-        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
-        if (!level.isClientSide) {
-            applyConfiguredAttributes();
-            this.setHealth(this.getMaxHealth());
-        }
     }
 
     @Override

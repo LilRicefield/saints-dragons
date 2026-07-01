@@ -8,9 +8,14 @@ import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     private static final float PASSENGER_SEAT0_X = 0.0f, PASSENGER_SEAT0_Y = -3.0f, PASSENGER_SEAT0_Z = 0.0f;
@@ -22,10 +27,10 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     private static final float AUTO_MOUNT_OFFSET_Z = 0.0f;
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0;
-    private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
+    private final Map<Integer, Integer> lastBoneSnapshotHashes = new HashMap<>();
 
-    public CindervaneRenderer(EntityRendererProvider.Context renderManager) {
-        super(renderManager, new CindervaneModel());
+    public CindervaneRenderer(EntityRendererProvider.Context context) {
+        super(context, new CindervaneModel());
         this.addRenderLayer(new CindervaneNightEmissiveLayer(this));
     }
 
@@ -71,8 +76,8 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     }
 
     @Override
-    protected void afterDragonRender(Cindervane entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
-                                     net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
+    protected void afterDragonRender(Cindervane entity, PoseStack poseStack,
+                                     MultiBufferSource bufferSource, float partialTick) {
         sendBonePositionsToServer(entity);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
@@ -92,7 +97,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
             return;
         }
 
-        java.util.Map<String, Vec3> positions = new java.util.HashMap<>(1);
+        Map<String, Vec3> positions = new HashMap<>(1);
         Vec3 autoMount = entity.getClientLocatorPosition(AUTO_MOUNT_LOCATOR);
         if (autoMount != null) {
             positions.put(AUTO_MOUNT_LOCATOR, autoMount);
@@ -111,7 +116,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
         NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
     }
 
-    private static int computeSnapshotHash(java.util.Map<String, Vec3> positions) {
+    private static int computeSnapshotHash(Map<String, Vec3> positions) {
         int hash = 1;
         Vec3 autoMount = positions.get(AUTO_MOUNT_LOCATOR);
         if (autoMount != null) {

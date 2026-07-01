@@ -2016,6 +2016,50 @@
       }
     ]
   },
+  "atroxiia_slam": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_slam",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_slam",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_swipe": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_swipe",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_swipe",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_precise_strike": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_precise_strike",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_precise_strike",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_devastating_sweep": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_devastating_sweep",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_devastating_sweep",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "nulljaw_grumble1": {
     "subtitle": "subtitles.saintsdragons.nulljaw_grumble1",
     "sounds": [
@@ -2137,6 +2181,16 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/volitans/volitans_step",
+        "volume": 2.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_step": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_step",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_step",
         "volume": 2.0,
         "attenuation_distance": 32
       }

@@ -6,7 +6,6 @@ import com.leon.saintsdragons.common.item.DragonAllyBookItem;
 import com.leon.saintsdragons.common.item.ArrowOfVenomItem;
 import com.leon.saintsdragons.common.item.MossbackItem;
 import com.leon.saintsdragons.common.item.NulljawBinderItem;
-import com.leon.saintsdragons.common.item.RaevyxArmorItem;
 import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
 import com.leon.saintsdragons.common.item.RaevyxBinderItem;
 import com.leon.saintsdragons.common.item.VolitansBinderItem;
@@ -20,8 +19,6 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
@@ -35,7 +32,6 @@ public class ModItems {
     public static final RegistryHelper.RegistryWrapper<Item> REGISTER =
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.ITEM, () -> BuiltInRegistries.ITEM, SaintsDragonsCommon.MOD_ID);
-
 
     public static final Supplier<Item> RAEVYX_SPAWN_EGG =
             REGISTER.register("raevyx_spawn_egg",
@@ -90,6 +86,13 @@ public class ModItems {
                     () -> Services.PLATFORM.createSpawnEgg(
                             ModEntities.NULLJAW,
                             0x121118, 0x7E8BA6,
+                            new Item.Properties()
+                    ));
+    public static final Supplier<Item> ATROXIIA_SPAWN_EGG =
+            REGISTER.register("atroxiia_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.ATROXIIA,
+                            0xFFFFFF, 0x808080,
                             new Item.Properties()
                     ));
 
@@ -156,6 +159,7 @@ public class ModItems {
                                     .durability(0)
                     ));
 
+    //it's unused but important
     public static final Supplier<Item> DRAGON_ENCOUNTER_ICON =
             REGISTER.register("dragon_encounter_icon",
                     () -> new Item(new Item.Properties()));
@@ -179,6 +183,7 @@ public class ModItems {
                                     .stacksTo(1)
                                     .durability(256)
                     ));
+    //end
 
     public static final Supplier<Item> GOLDEN_DRAGON_BRUSH =
             REGISTER.register("golden_dragon_brush",
@@ -366,7 +371,7 @@ public class ModItems {
     }
 
     public static void register() {
-        ModArmor.init();
+        ModArmors.init();
         ModPotionItems.init();
         REGISTER.register();
     }
