@@ -2,7 +2,6 @@ package com.leon.saintsdragons.server.ai.goals.cindervane;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
-import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -123,8 +122,8 @@ public class CindervaneAirCombatGoal extends Goal {
         }
 
         if (amphithere.isLanding()) {
-            if (!amphithere.getNavigation().isInProgress()) {
-                if (!isTargetAirborne(target) && DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED)) {
+            if (!amphithere.getAIMovement().isPathing()) {
+                if (!isTargetAirborne(target) && amphithere.getAIMovement().trySetLandingWaypoint(target, LANDING_SPEED)) {
                     return;
                 }
                 amphithere.setLanding(false);
@@ -134,7 +133,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
         if (!isTargetAirborne(target)) {
             if (amphithere.isAerial()) {
-                DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED);
+                amphithere.getAIMovement().trySetLandingWaypoint(target, LANDING_SPEED);
             }
             return;
         }
@@ -147,7 +146,7 @@ public class CindervaneAirCombatGoal extends Goal {
 
         if (!hasLineOfSight && lostSightTicks >= LOST_SIGHT_LANDING_TICKS) {
             if (amphithere.isAerial() && !amphithere.isLanding()) {
-                if (DragonLandingHelper.tryBeginAggroLanding(amphithere, target, LANDING_SPEED)) {
+                if (amphithere.getAIMovement().trySetLandingWaypoint(target, LANDING_SPEED)) {
                     return;
                 }
                 amphithere.setHovering(false);

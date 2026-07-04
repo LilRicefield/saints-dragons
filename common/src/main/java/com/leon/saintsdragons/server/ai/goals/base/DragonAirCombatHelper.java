@@ -104,14 +104,14 @@ public final class DragonAirCombatHelper {
                 && !targetAirborneCheck.isTargetAirborne(target)
                 && dragon.isAerial()
                 && !dragon.isLanding()) {
-            DragonLandingHelper.tryBeginAggroLanding(dragon, target, landingSpeed);
+            dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed);
             return;
         }
 
         if (clearInvalidOrMissingTarget && (target == null || !dragon.isTargetValid(target))) {
             dragon.setTarget(null);
             if (dragon.isAerial() && !dragon.isLanding()) {
-                DragonLandingHelper.tryBeginAggroLanding(dragon, null, landingSpeed);
+                dragon.getAIMovement().trySetLandingWaypoint((LivingEntity) null, landingSpeed);
             }
         }
     }
@@ -128,13 +128,13 @@ public final class DragonAirCombatHelper {
         if (!validTarget || targetOutOfRange) {
             dragon.setTarget(null);
             if (dragon.isAerial() && !dragon.isLanding()) {
-                DragonLandingHelper.tryBeginAggroLanding(dragon, null, landingSpeed);
+                dragon.getAIMovement().trySetLandingWaypoint((LivingEntity) null, landingSpeed);
             }
             return;
         }
 
         if (!targetAirborneCheck.isTargetAirborne(target) && dragon.isAerial() && !dragon.isLanding()) {
-            DragonLandingHelper.tryBeginAggroLanding(dragon, target, landingSpeed);
+            dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed);
         }
     }
 
@@ -151,11 +151,11 @@ public final class DragonAirCombatHelper {
         if (!dragon.isLanding()) {
             return false;
         }
-        if (!dragon.getNavigation().isInProgress()) {
+        if (!dragon.getAIMovement().isPathing()) {
             if (target != null
                     && dragon.isTargetValid(target)
                     && !isTargetAirborne(dragon, target)
-                    && DragonLandingHelper.tryBeginAggroLanding(dragon, target, landingSpeed)) {
+                    && dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed)) {
                 return true;
             }
             if (dragon instanceof DragonFlightCapable flightCapable) {
@@ -170,7 +170,7 @@ public final class DragonAirCombatHelper {
             return false;
         }
         if (dragon.isAerial()) {
-            DragonLandingHelper.tryBeginAggroLanding(dragon, target, landingSpeed);
+            dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed);
             return true;
         }
         return false;
@@ -213,11 +213,20 @@ public final class DragonAirCombatHelper {
     }
 
     public static boolean isTargetAirborne(RideableDragonBase dragon, LivingEntity target, double minHeightAboveGround) {
-        if (target == null || target.onGround()) {
+        if (target == null) {
             return false;
         }
         if (target.getVehicle() instanceof LivingEntity vehicle) {
+            if (vehicle instanceof DragonFlightCapable flightCapable) {
+                return flightCapable.isFlying()
+                        || flightCapable.isTakeoff()
+                        || flightCapable.isHovering()
+                        || (flightCapable.isLanding() && !vehicle.onGround());
+            }
             return !vehicle.onGround();
+        }
+        if (target.onGround()) {
+            return false;
         }
         if (target instanceof Player player && player.isFallFlying()) {
             return true;

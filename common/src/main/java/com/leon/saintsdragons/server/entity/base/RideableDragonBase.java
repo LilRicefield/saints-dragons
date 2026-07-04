@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
+import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
@@ -69,6 +70,7 @@ public abstract class RideableDragonBase extends DragonEntity {
     private boolean riderWasAirborneForLanding = false;
     private int riderAirborneTicksForLanding = 0;
     private double riderFlightThrottle = 0.0D;
+    private final DragonAIMovementController aiMovement = new DragonAIMovementController(this);
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -94,6 +96,10 @@ public abstract class RideableDragonBase extends DragonEntity {
     }
 
     protected void defineRideableDragonData() {
+    }
+
+    public DragonAIMovementController getAIMovement() {
+        return this.aiMovement;
     }
 
     public void setClientLocatorPosition(String name, Vec3 pos) {
@@ -911,6 +917,10 @@ public abstract class RideableDragonBase extends DragonEntity {
     @Override
     public void tick() {
         super.tick();
+
+        if (!level().isClientSide) {
+            this.aiMovement.serverTick();
+        }
 
         if (!level().isClientSide && this.tickCount == 1) {
             initializeAnimationState();

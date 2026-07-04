@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
@@ -109,7 +108,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     public void stop() {
-        DragonGroundMovementHelper.stopGroundMovement(dragon);
+        dragon.getAIMovement().stop();
         clearForceFollow();
         resetPathTracking();
     }
@@ -135,8 +134,8 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         if (shouldUseWaterFollowing(owner)) {
             handleWaterFollowing(owner, distance);
         } else if (dragon.isLanding()) {
-            if (!dragon.getNavigation().isInProgress()) {
-                DragonLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
+            if (!dragon.getAIMovement().isPathing()) {
+                dragon.getAIMovement().setLandingWaypoint(owner, getFlightFollowSpeed());
             }
         } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             handleFlightFollowing(owner, ownerAirborne);
@@ -172,7 +171,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             BlockPos candidate = ownerPos.offset(dx, 0, dz);
             if (isTeleportFriendlyBlock(dragon.level(), candidate)) {
                 dragon.teleportTo(candidate.getX() + 0.5D, candidate.getY(), candidate.getZ() + 0.5D);
-                dragon.getNavigation().stop();
+                dragon.getAIMovement().stop();
                 return true;
             }
         }
@@ -198,7 +197,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             boolean shouldLand = !shouldFly && !ownerAirborne && horizontalDistance < config.landingDistance;
 
             if (shouldLand && !dragon.isLanding()) {
-                DragonLandingHelper.beginAggroLanding(dragon, owner, getFlightFollowSpeed());
+                dragon.getAIMovement().setLandingWaypoint(owner, getFlightFollowSpeed());
                 pathRecalcCooldown = 0;
             }
         }
@@ -218,7 +217,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         if (distToTargetSq > 1.0) {
             requestAirMove(targetPos, followSpeed);
         } else {
-            dragon.getNavigation().stop();
+            dragon.getAIMovement().stop();
         }
     }
 
@@ -243,20 +242,20 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     private void handleGroundFollowing(LivingEntity owner, double distance) {
         if (distance <= config.stopFollowDist) {
             if (dragon.getGroundMoveState() > 0) {
-                DragonGroundMovementHelper.stopGroundMovement(dragon);
+                dragon.getAIMovement().stop();
             }
             pathRecalcCooldown = 0;
             return;
         }
         boolean shouldRun = distance > config.runDist;
-        DragonGroundMovementHelper.setGroundMoveState(dragon, shouldRun);
+        dragon.getAIMovement().setGroundMoveState(shouldRun);
         double baseSpeed = shouldRun ? config.runSpeed : config.walkSpeed;
         double speed = baseSpeed * (1.0 + (distance / 50.0));
         speed = Math.min(speed, shouldRun ? config.maxRunSpeed : config.maxWalkSpeed);
         updateGroundPath(owner, speed, distance, shouldRun);
-        if (dragon.getNavigation().isStuck()) {
+        if (dragon.getAIMovement().hasFailed()) {
             dragon.getJumpControl().jump();
-            DragonGroundMovementHelper.stopGroundMovement(dragon);
+            dragon.getAIMovement().stop();
             pathRecalcCooldown = 0;
         }
     }
@@ -268,11 +267,11 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
         }
 
         boolean ownerMoved = hasOwnerMovedSignificantly(owner);
-        boolean navIdle = dragon.getNavigation().isDone() || !dragon.getNavigation().isInProgress();
+        boolean navIdle = dragon.getAIMovement().hasArrived() || !dragon.getAIMovement().isPathing();
 
         if (navIdle || ownerMoved || pathRecalcCooldown <= 0) {
-            if (!DragonGroundMovementHelper.moveToLivingTarget(dragon, owner, speed, running)) {
-                DragonGroundMovementHelper.moveToPosition(dragon, owner.position(), speed, running);
+            if (!dragon.getAIMovement().moveToGroundTarget(owner, speed, running)) {
+                dragon.getAIMovement().moveToGroundPosition(owner.position(), speed, running);
             }
             rememberOwnerPosition(owner);
             pathRecalcCooldown = computeRepathCooldown(distance, running);
@@ -327,16 +326,16 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
     }
 
     private void handleWaterFollowing(LivingEntity owner, double distance) {
-        DragonGroundMovementHelper.stopGroundMovement(dragon);
+        dragon.getAIMovement().stop();
 
         if (distance <= config.stopFollowDist) {
-            DragonGroundMovementHelper.setGroundIdle(dragon);
+            dragon.getAIMovement().setGroundIdle();
             dragon.setDeltaMovement(dragon.getDeltaMovement().scale(0.85D));
             return;
         }
 
         boolean shouldRun = distance > config.runDist;
-        DragonGroundMovementHelper.setGroundMoveState(dragon, shouldRun);
+        dragon.getAIMovement().setGroundMoveState(shouldRun);
 
         double dx = owner.getX() - dragon.getX();
         double dy = (owner.getY() + owner.getEyeHeight() * 0.5D) - (dragon.getY() + dragon.getEyeHeight() * 0.5D);
@@ -465,11 +464,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     private void requestAirMove(Vec3 target, double speed) {
         if (shouldRefreshAirMoveTarget(target, speed)) {
-            if (dragon instanceof RideableFlyingDragon flyingDragon) {
-                flyingDragon.trackAiFlightTarget(target, speed);
-            } else {
-                dragon.getNavigation().moveTo(target.x, target.y, target.z, speed);
-            }
+            dragon.getAIMovement().setWaypoint(target, speed);
             lastAirMoveTarget = target;
             lastAirMoveSpeed = speed;
             airMoveRefreshCooldown = airMoveRefreshInterval(speed);

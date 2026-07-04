@@ -52,7 +52,7 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
             return false;
         }
 
-        return dragon.getNavigation().isInProgress();
+        return dragon.getAIMovement().isPathing();
     }
 
     @Override
@@ -61,7 +61,7 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
         Vec3 wanderPos = getWanderPosition();
         if (wanderPos != null) {
             dragon.setGroundMoveStateFromAI(1);
-            dragon.getNavigation().moveTo(wanderPos.x, wanderPos.y, wanderPos.z, speed);
+            dragon.getAIMovement().moveToGroundPosition(wanderPos, speed, false);
         }
     }
 
@@ -69,13 +69,13 @@ public class DragonGroundWanderGoal<T extends RideableDragonBase> extends Dragon
     public void stop() {
         dragon.setGroundMoveStateFromAI(0);
         if (!dragon.isAerial()) {
-            dragon.getNavigation().stop();
+            dragon.getAIMovement().stop();
         }
     }
 
     @Override
     public void tick() {
-        if (dragon.getNavigation().isInProgress()) {
+        if (dragon.getAIMovement().isPathing()) {
             dragon.setGroundMoveStateFromAI(1);
         }
     }

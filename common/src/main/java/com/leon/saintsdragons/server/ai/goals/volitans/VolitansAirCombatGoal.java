@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.ai.goals.volitans;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
-import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
@@ -88,7 +87,7 @@ public class VolitansAirCombatGoal extends Goal {
         }
         if (!isTargetAirborne(target)) {
             if (dragon.isAerial()) {
-                DragonLandingHelper.beginAggroLanding(dragon, target, 1.0D);
+                dragon.getAIMovement().setLandingWaypoint(target, 1.0D);
                 return true;
             }
             return false;
@@ -133,12 +132,12 @@ public class VolitansAirCombatGoal extends Goal {
         }
 
         if (dragon.isLanding()) {
-            if (!dragon.getNavigation().isInProgress()) {
+            if (!dragon.getAIMovement().isPathing()) {
                 LivingEntity landingTarget = dragon.getTarget();
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && DragonLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.0D)) {
+                        && dragon.getAIMovement().trySetLandingWaypoint(landingTarget, 1.0D)) {
                     return;
                 }
                 dragon.setLanding(false);
@@ -160,7 +159,7 @@ public class VolitansAirCombatGoal extends Goal {
         dragon.getLookControl().setLookAt(target, 35.0F, 35.0F);
 
         if (dragon.isTakeoff() && dragon.onGround()) {
-            dragon.getNavigation().stop();
+            dragon.getAIMovement().stop();
             return;
         }
 

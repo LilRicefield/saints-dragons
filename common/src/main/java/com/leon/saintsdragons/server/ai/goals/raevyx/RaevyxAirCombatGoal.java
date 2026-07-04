@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.ai.goals.raevyx;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
-import com.leon.saintsdragons.server.ai.goals.base.DragonLandingHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -102,7 +101,7 @@ public class RaevyxAirCombatGoal extends Goal {
 
         if (!isTargetAirborne(target)) {
             if (dragon.isAerial()) {
-                DragonLandingHelper.beginAggroLanding(dragon, target, 1.6D);
+                dragon.getAIMovement().setLandingWaypoint(target, 1.6D);
                 return true;
             }
             return false;
@@ -141,12 +140,12 @@ public class RaevyxAirCombatGoal extends Goal {
     @Override
     public void tick() {
         if (dragon.isLanding()) {
-            if (!dragon.getNavigation().isInProgress()) {
+            if (!dragon.getAIMovement().isPathing()) {
                 LivingEntity landingTarget = dragon.getTarget();
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && DragonLandingHelper.tryBeginAggroLanding(dragon, landingTarget, 1.6D)) {
+                        && dragon.getAIMovement().trySetLandingWaypoint(landingTarget, 1.6D)) {
                     return;
                 }
                 dragon.setLanding(false);
@@ -177,7 +176,7 @@ public class RaevyxAirCombatGoal extends Goal {
 
         if (!isTargetAirborne(target)) {
             if (dragon.isAerial()) {
-                DragonLandingHelper.tryBeginAggroLanding(dragon, target, 1.6D);
+                dragon.getAIMovement().trySetLandingWaypoint(target, 1.6D);
             }
             return;
         }
@@ -302,7 +301,7 @@ public class RaevyxAirCombatGoal extends Goal {
 
 
     private void triggerEmergencyLanding() {
-        DragonLandingHelper.tryBeginAggroLanding(dragon, dragon.getTarget(), 1.6D);
+        dragon.getAIMovement().trySetLandingWaypoint(dragon.getTarget(), 1.6D);
         shotFromBelowCounter = 0;
     }
 

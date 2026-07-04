@@ -88,7 +88,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
         } else {
             dragon.beginAiFlight();
         }
-        dragon.moveAiFlightTo(targetPosition, cruiseSpeed);
+        dragon.getAIMovement().setWaypoint(targetPosition, cruiseSpeed);
     }
 
     @Override
@@ -102,8 +102,8 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
         if (dragon.isLanding()) {
             if (targetPosition == null) {
                 beginLandingApproach();
-            } else if (!dragon.getNavigation().isInProgress()) {
-                dragon.moveAiFlightTo(targetPosition, landingSpeed);
+            } else if (!dragon.getAIMovement().isPathing()) {
+                dragon.getAIMovement().trySetLandingWaypoint(targetPosition, landingSpeed);
             }
             return;
         }
@@ -111,7 +111,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
         if (needsNewCruiseTarget()) {
             targetPosition = findCruiseTarget();
             timeSinceTargetChange = 0;
-            dragon.moveAiFlightTo(targetPosition, cruiseSpeed);
+            dragon.getAIMovement().setWaypoint(targetPosition, cruiseSpeed);
         }
     }
 
@@ -119,7 +119,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
     public void stop() {
         targetPosition = null;
         timeSinceTargetChange = 0;
-        dragon.getNavigation().stop();
+        dragon.getAIMovement().stop();
         if (!dragon.isFlying()) {
             lastLandingTime = dragon.level().getGameTime();
         }
@@ -178,13 +178,12 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
     }
 
     protected void beginLandingApproach() {
-        Vec3 landingTarget = dragon.findStandardAiLandingTarget(null);
+        Vec3 landingTarget = dragon.getAIMovement().findLandingTarget(null);
         if (landingTarget == null) {
             return;
         }
         targetPosition = landingTarget;
-        dragon.beginAiLanding();
-        dragon.moveAiFlightTo(landingTarget, landingSpeed);
+        dragon.getAIMovement().trySetLandingWaypoint(landingTarget, landingSpeed);
     }
 
     private boolean needsNewCruiseTarget() {

@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonGroundMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -129,7 +128,7 @@ public class RaevyxGroundCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        DragonGroundMovementHelper.stopGroundMovement(wyvern);
+        wyvern.getAIMovement().stop();
         wyvern.setAggressive(false);
         pathRecalcCooldown = 0;
         resetCombatPacing();
@@ -147,7 +146,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         LivingEntity target = wyvern.getTarget();
         if (target != null) {
             wyvern.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            DragonGroundMovementHelper.moveToLivingTarget(wyvern, target, chaseSpeed, true);
+            wyvern.getAIMovement().moveToGroundTarget(target, chaseSpeed, true);
             rememberTargetPosition(target);
         }
     }
@@ -170,7 +169,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         LivingEntity target = wyvern.getTarget();
         if (target != null) {
             if (wyvern.isGroundRending()) {
-                DragonGroundMovementHelper.stopGroundMovement(wyvern);
+                wyvern.getAIMovement().stop();
                 pathRecalcCooldown = 0;
                 return;
             }
@@ -230,7 +229,7 @@ public class RaevyxGroundCombatGoal extends Goal {
                     updateChasePath(target);
                 }
             } else {
-                DragonGroundMovementHelper.stopGroundMovement(wyvern);
+                wyvern.getAIMovement().stop();
                 pathRecalcCooldown = 0;
                 tryAttack(target);
             }
@@ -297,7 +296,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (!canUseAiAbility(ModAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
             return false;
         }
-        DragonGroundMovementHelper.stopGroundMovement(wyvern);
+        wyvern.getAIMovement().stop();
         pathRecalcCooldown = 0;
         if (!startAiAbility(ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
             return false;
@@ -340,7 +339,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (!hasLineOfSight || gap > groundRendRange || gap < groundRendMinRange) {
             return false;
         }
-        DragonGroundMovementHelper.stopGroundMovement(wyvern);
+        wyvern.getAIMovement().stop();
         pathRecalcCooldown = 0;
         if (!startGroundRend()) {
             return false;
@@ -358,7 +357,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (!hasLineOfSight || gap < groundRendMinRange || gap > groundRendRange) {
             return false;
         }
-        DragonGroundMovementHelper.stopGroundMovement(wyvern);
+        wyvern.getAIMovement().stop();
         pathRecalcCooldown = 0;
         if (!startGroundRend()) {
             return false;
@@ -521,12 +520,12 @@ public class RaevyxGroundCombatGoal extends Goal {
             rememberTargetPosition(target);
             double distance = wyvern.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
-            DragonGroundMovementHelper.moveToLivingTarget(wyvern, target, chaseSpeed, true);
+            wyvern.getAIMovement().moveToGroundTarget(target, chaseSpeed, true);
         }
     }
 
     private void handleWaterCombat(LivingEntity target) {
-        DragonGroundMovementHelper.stopGroundMovement(wyvern);
+        wyvern.getAIMovement().stop();
 
         // Keep roar opener behavior in water too.
         if (!hasUsedRoarOpener) {

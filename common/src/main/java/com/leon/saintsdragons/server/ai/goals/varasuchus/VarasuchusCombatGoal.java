@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.varasuchus;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonGroundMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
@@ -77,7 +76,7 @@ public class VarasuchusCombatGoal extends Goal {
             if (drake.isInWaterOrBubble()) {
                 updateWaterChase(target, WATER_CHASE_START_MULTIPLIER);
             } else {
-                DragonGroundMovementHelper.moveToLivingTarget(drake, target, CHASE_SPEED, true);
+                drake.getAIMovement().moveToGroundTarget(target, CHASE_SPEED, true);
                 rememberTargetPosition(target);
             }
         }
@@ -85,7 +84,7 @@ public class VarasuchusCombatGoal extends Goal {
 
     @Override
     public void stop() {
-        DragonGroundMovementHelper.stopGroundMovement(drake);
+        drake.getAIMovement().stop();
         drake.setAggressive(false);
         attackCooldown = 0;
         pathRecalcCooldown = 0;
@@ -128,7 +127,7 @@ public class VarasuchusCombatGoal extends Goal {
                 if (drake.isInWaterOrBubble()) {
                     drake.setDeltaMovement(drake.getDeltaMovement().scale(0.85D));
                 } else {
-                    DragonGroundMovementHelper.stopGroundMovement(drake);
+                    drake.getAIMovement().stop();
                     pathRecalcCooldown = 0;
                 }
             } else {
@@ -246,12 +245,12 @@ public class VarasuchusCombatGoal extends Goal {
             rememberTargetPosition(target);
             double distance = drake.distanceTo(target);
             pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
-            DragonGroundMovementHelper.moveToLivingTarget(drake, target, CHASE_SPEED, true);
+            drake.getAIMovement().moveToGroundTarget(target, CHASE_SPEED, true);
         }
     }
 
     private void updateWaterChase(LivingEntity target, double multiplier) {
-        DragonGroundMovementHelper.stopGroundMovement(drake);
+        drake.getAIMovement().stop();
 
         double dx = target.getX() - drake.getX();
         double dy = (target.getY() + target.getEyeHeight() * 0.5) - (drake.getY() + drake.getEyeHeight() * 0.5);

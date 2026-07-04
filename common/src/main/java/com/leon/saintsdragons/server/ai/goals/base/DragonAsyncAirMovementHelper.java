@@ -26,7 +26,7 @@ public final class DragonAsyncAirMovementHelper {
     }
 
     public static void holdPosition(RideableFlyingDragon dragon) {
-        dragon.getNavigation().stop();
+        dragon.getAIMovement().stop();
     }
 
     public static void moveToward(RideableFlyingDragon dragon, Vec3 destination, double speedScale) {
@@ -34,6 +34,6 @@ public final class DragonAsyncAirMovementHelper {
             return;
         }
         dragon.beginAiFlight();
-        dragon.trackAiFlightTarget(destination, speedScale);
+        dragon.getAIMovement().setWaypoint(destination, speedScale);
     }
 }

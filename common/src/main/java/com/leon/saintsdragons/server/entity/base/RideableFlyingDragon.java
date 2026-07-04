@@ -1442,6 +1442,21 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         moveAiFlightTo(target, speed);
     }
 
+    public void clearAiFlightTarget() {
+        this.asyncAirController.clearAllWaypoints();
+    }
+
+    public boolean isAiFlightPathing() {
+        AsyncFlightController.PathState state = this.asyncAirController.getState();
+        return state == AsyncFlightController.PathState.CALCULATING
+                || state == AsyncFlightController.PathState.FOLLOWING
+                || state == AsyncFlightController.PathState.STUCK;
+    }
+
+    public boolean isAiFlightDone() {
+        return this.asyncAirController.isIdle();
+    }
+
     public @Nullable Vec3 findStandardAiFlightTarget(double maxTurnDegrees, double minRange, double extraRange,
                                                      double maxHeightAboveGround, boolean widerSearch) {
         Vec3 dragonPos = position();

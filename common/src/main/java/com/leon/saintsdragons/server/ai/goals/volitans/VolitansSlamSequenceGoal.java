@@ -113,7 +113,7 @@ public class VolitansSlamSequenceGoal extends Goal {
         cancelPreSequenceAbilities();
         dragon.setAiSpecialCombatActive(true);
         dragon.setAggressive(true);
-        dragon.getNavigation().stop();
+        dragon.getAIMovement().stop();
         dragon.beginAiFlight();
         transitionTo(Phase.TRACK);
     }
