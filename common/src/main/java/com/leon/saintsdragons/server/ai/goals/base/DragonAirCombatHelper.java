@@ -190,6 +190,23 @@ public final class DragonAirCombatHelper {
         );
     }
 
+    public static boolean shouldDiveChase(RideableFlyingDragon dragon,
+                                          LivingEntity target,
+                                          double minTargetHeightAboveGround,
+                                          double minHeightAdvantage,
+                                          double maxHorizontalDistance) {
+        if (!dragon.isFlying() || dragon.isLanding() || !isTargetAirborne(dragon, target, minTargetHeightAboveGround)) {
+            return false;
+        }
+        double heightAdvantage = dragon.getY() - (target.getY() + target.getBbHeight() * 0.5D);
+        if (heightAdvantage < minHeightAdvantage) {
+            return false;
+        }
+        double dx = target.getX() - dragon.getX();
+        double dz = target.getZ() - dragon.getZ();
+        return dx * dx + dz * dz <= maxHorizontalDistance * maxHorizontalDistance;
+    }
+
     public static void holdMeleePosition(RideableFlyingDragon dragon, LivingEntity target,
                                          double targetHeightOffset, double approachDistance,
                                          double farSpeed, double nearSpeed) {

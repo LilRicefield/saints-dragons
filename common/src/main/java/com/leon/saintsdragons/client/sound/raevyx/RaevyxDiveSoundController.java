@@ -64,6 +64,10 @@ public final class RaevyxDiveSoundController {
             stopLoop(minecraft, id);
             return;
         }
+        if (!raevyx.isVehicle()) {
+            stopLoop(minecraft, id);
+            return;
+        }
 
         float intensity = DragonDiveEffectIntensity.get(raevyx);
         if (intensity <= 0.0F) {

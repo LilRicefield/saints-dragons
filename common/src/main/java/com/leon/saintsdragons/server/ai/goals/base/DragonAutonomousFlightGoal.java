@@ -1,8 +1,11 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
@@ -18,6 +21,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
     private int timeSinceTargetChange;
     private long lastLandingTime;
     private int decisionCooldown;
+    private boolean currentCruiseDive;
 
     protected DragonAutonomousFlightGoal(T dragon, DragonFlightBehaviorProfile profile,
                                          double cruiseSpeed, double landingSpeed, int takeoffAnimationTicks) {
@@ -88,7 +92,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
         } else {
             dragon.beginAiFlight();
         }
-        dragon.getAIMovement().setWaypoint(targetPosition, cruiseSpeed);
+        dragon.getAIMovement().setWaypoint(targetPosition, getCruiseSpeed(targetPosition));
     }
 
     @Override
@@ -111,7 +115,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
         if (needsNewCruiseTarget()) {
             targetPosition = findCruiseTarget();
             timeSinceTargetChange = 0;
-            dragon.getAIMovement().setWaypoint(targetPosition, cruiseSpeed);
+            dragon.getAIMovement().setWaypoint(targetPosition, getCruiseSpeed(targetPosition));
         }
     }
 
@@ -119,6 +123,7 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
     public void stop() {
         targetPosition = null;
         timeSinceTargetChange = 0;
+        currentCruiseDive = false;
         dragon.getAIMovement().stop();
         if (!dragon.isFlying()) {
             lastLandingTime = dragon.level().getGameTime();
@@ -168,13 +173,25 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
     }
 
     protected Vec3 findCruiseTarget() {
-        return dragon.findStandardAiFlightTarget(
+        currentCruiseDive = false;
+        Vec3 cruiseTarget = dragon.findStandardAiFlightTarget(
                 getCruiseTurnDegrees(),
                 getCruiseMinRange(),
                 getCruiseExtraRange(),
                 getMaxHeightAboveGround(),
                 dragon.isFlightControllerStuck()
         );
+        if (cruiseTarget == null || !shouldUseAutonomousDiveTarget(cruiseTarget)) {
+            return cruiseTarget;
+        }
+
+        Vec3 diveTarget = buildAutonomousDiveTarget(cruiseTarget);
+        currentCruiseDive = diveTarget != cruiseTarget;
+        return diveTarget;
+    }
+
+    protected double getCruiseSpeed(Vec3 targetPosition) {
+        return currentCruiseDive ? getAutonomousDiveSpeed() : cruiseSpeed;
     }
 
     protected void beginLandingApproach() {
@@ -241,5 +258,75 @@ public abstract class DragonAutonomousFlightGoal<T extends RideableFlyingDragon>
 
     protected double getMaxHeightAboveGround() {
         return 50.0D;
+    }
+
+    protected boolean shouldUseAutonomousDiveTarget(Vec3 cruiseTarget) {
+        if (!dragon.isFlying() || dragon.isLanding() || dragon.getTarget() != null) {
+            return false;
+        }
+        if (dragon.isInWater() || dragon.isInWaterOrBubble() || dragon.isInLava()) {
+            return false;
+        }
+        if (!canAutonomousDiveInWeather() && (dragon.level().isThundering() || dragon.level().isRaining())) {
+            return false;
+        }
+        if (dragon.getRandom().nextInt(Math.max(1, getAutonomousDiveRoll())) != 0) {
+            return false;
+        }
+        return altitudeAboveTerrain(dragon.position()) >= getAutonomousDiveMinAltitude();
+    }
+
+    protected boolean canAutonomousDiveInWeather() {
+        return false;
+    }
+
+    protected int getAutonomousDiveRoll() {
+        return 3;
+    }
+
+    protected double getAutonomousDiveMinAltitude() {
+        return 28.0D;
+    }
+
+    protected double getAutonomousDiveAngleDegrees() {
+        return 34.0D;
+    }
+
+    protected double getAutonomousDivePullOutAltitude() {
+        return 10.0D;
+    }
+
+    protected double getAutonomousDiveSpeed() {
+        return cruiseSpeed * 1.6D;
+    }
+
+    private Vec3 buildAutonomousDiveTarget(Vec3 cruiseTarget) {
+        Vec3 current = dragon.position();
+        double dx = cruiseTarget.x - current.x;
+        double dz = cruiseTarget.z - current.z;
+        double horizontalDistance = Math.sqrt(dx * dx + dz * dz);
+        if (horizontalDistance < 8.0D) {
+            return cruiseTarget;
+        }
+
+        double groundY = dragon.level().getHeight(
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Mth.floor(cruiseTarget.x),
+                Mth.floor(cruiseTarget.z)
+        );
+        double pullOutY = groundY + getAutonomousDivePullOutAltitude();
+        double angledY = current.y - horizontalDistance * Math.tan(Math.toRadians(getAutonomousDiveAngleDegrees()));
+        double targetY = Mth.clamp(angledY, pullOutY, current.y - 2.0D);
+        return new Vec3(cruiseTarget.x, targetY, cruiseTarget.z);
+    }
+
+    private double altitudeAboveTerrain(Vec3 position) {
+        BlockPos pos = BlockPos.containing(position);
+        int groundY = dragon.level().getHeight(
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                pos.getX(),
+                pos.getZ()
+        );
+        return position.y - groundY;
     }
 }

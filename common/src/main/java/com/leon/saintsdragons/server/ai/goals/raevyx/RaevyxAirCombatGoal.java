@@ -15,6 +15,9 @@ import java.util.EnumSet;
 public class RaevyxAirCombatGoal extends Goal {
     private final Raevyx dragon;
     private static final double CHASE_SPEED = 6.0D;
+    private static final double DIVE_CHASE_SPEED = 7.5D;
+    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
+    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
     private static final double BITE_TRIGGER_RANGE = 7.0;
     private static final double ENGAGEMENT_DISTANCE = 30.0;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
@@ -174,6 +177,11 @@ public class RaevyxAirCombatGoal extends Goal {
             return;
         }
 
+        checkEmergencyLanding(target);
+        if (dragon.isLanding()) {
+            return;
+        }
+
         if (!isTargetAirborne(target)) {
             if (dragon.isAerial()) {
                 dragon.getAIMovement().trySetLandingWaypoint(target, 1.6D);
@@ -183,7 +191,6 @@ public class RaevyxAirCombatGoal extends Goal {
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        checkEmergencyLanding(target);
         double distance = dragon.distanceTo(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
@@ -248,7 +255,21 @@ public class RaevyxAirCombatGoal extends Goal {
 
 
     private void chaseTarget(LivingEntity target) {
+        if (shouldDiveChase(target)) {
+            DragonAirCombatHelper.chasePredicted(dragon, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
+            return;
+        }
         DragonAirCombatHelper.chasePredicted(dragon, target, 5.0D, 0.5D, 0.15D, 0.5D, CHASE_SPEED);
+    }
+
+    private boolean shouldDiveChase(LivingEntity target) {
+        return DragonAirCombatHelper.shouldDiveChase(
+                dragon,
+                target,
+                8.0D,
+                DIVE_CHASE_MIN_HEIGHT_ADVANTAGE,
+                DIVE_CHASE_MAX_HORIZONTAL_DISTANCE
+        );
     }
 
     private void maintainCombatPosition(LivingEntity target) {

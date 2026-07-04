@@ -96,12 +96,16 @@ public class DragonAIMovementController {
     }
 
     public boolean setGroundWaypoint(Vec3 target, double speed) {
+        return setGroundWaypoint(target, speed, false);
+    }
+
+    private boolean setGroundWaypoint(Vec3 target, double speed, boolean running) {
         if (target == null || !canUseGroundNavigation()) {
             clearGroundPath();
             return false;
         }
         waypointQueue.clear();
-        return startWaypoint(new QueuedWaypoint(target, speed, false, MovementMode.GROUND));
+        return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.GROUND));
     }
 
     public boolean addGroundWaypoint(Vec3 target, double speed) {
@@ -118,12 +122,12 @@ public class DragonAIMovementController {
 
     public boolean moveToGroundTarget(LivingEntity target, double speed, boolean running) {
         setGroundMoveState(running);
-        return setGroundWaypoint(target, speed);
+        return target != null && setGroundWaypoint(target.position(), speed, running);
     }
 
     public boolean moveToGroundPosition(Vec3 target, double speed, boolean running) {
         setGroundMoveState(running);
-        return setGroundWaypoint(target, speed);
+        return setGroundWaypoint(target, speed, running);
     }
 
     public void setLandingWaypoint(@Nullable LivingEntity target, double speed) {

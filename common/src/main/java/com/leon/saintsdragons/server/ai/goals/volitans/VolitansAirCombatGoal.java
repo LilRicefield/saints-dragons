@@ -20,6 +20,9 @@ public class VolitansAirCombatGoal extends Goal {
     private static final double CHASE_HEIGHT_OFFSET = 2.0D;
     private static final double MELEE_HEIGHT_OFFSET = 0.0D;
     private static final double CHASE_SPEED = 2.0D;
+    private static final double DIVE_CHASE_SPEED = 3.1D;
+    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
+    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
     private static final double POSITION_SPEED = 0.85D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final int MELEE_CADENCE_TICKS = 30;
@@ -226,7 +229,7 @@ public class VolitansAirCombatGoal extends Goal {
             return;
         }
 
-        flyTowardTarget(target, CHASE_SPEED, CHASE_HEIGHT_OFFSET);
+        chaseTarget(target);
     }
 
     private void tryMelee(LivingEntity target) {
@@ -286,6 +289,24 @@ public class VolitansAirCombatGoal extends Goal {
 
     private void flyTowardTarget(LivingEntity target, double speedScale, double heightOffset) {
         DragonAirCombatHelper.chasePredicted(dragon, target, 5.0D, heightOffset, 0.12D, 0.5D, speedScale);
+    }
+
+    private void chaseTarget(LivingEntity target) {
+        if (shouldDiveChase(target)) {
+            DragonAirCombatHelper.chasePredicted(dragon, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
+            return;
+        }
+        flyTowardTarget(target, CHASE_SPEED, CHASE_HEIGHT_OFFSET);
+    }
+
+    private boolean shouldDiveChase(LivingEntity target) {
+        return DragonAirCombatHelper.shouldDiveChase(
+                dragon,
+                target,
+                8.0D,
+                DIVE_CHASE_MIN_HEIGHT_ADVANTAGE,
+                DIVE_CHASE_MAX_HORIZONTAL_DISTANCE
+        );
     }
 
     private boolean isValidTarget(LivingEntity target) {

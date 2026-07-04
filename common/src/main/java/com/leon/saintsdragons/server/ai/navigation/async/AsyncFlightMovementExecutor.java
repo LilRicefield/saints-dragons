@@ -10,6 +10,10 @@ class AsyncFlightMovementExecutor {
     private static final double VERTICAL_SPEED_DEADZONE = 0.04D;
     private static final double HORIZONTAL_VELOCITY_LERP = 0.18D;
     private static final double VERTICAL_VELOCITY_LERP = 0.10D;
+    private static final double LANDING_HORIZONTAL_VELOCITY_LERP = 0.28D;
+    private static final double LANDING_VERTICAL_VELOCITY_LERP = 0.36D;
+    private static final double LANDING_MIN_DESCENT_SPEED = 0.75D;
+    private static final double LANDING_VERTICAL_SPEED_SCALE = 1.35D;
     private static final float MAX_YAW_STEP = 5.0f;
     private static final float MAX_PITCH_STEP = 2.5f;
     private static final float PITCH_DEADZONE_DEGREES = 3.5f;
@@ -55,14 +59,19 @@ class AsyncFlightMovementExecutor {
                 desiredVertical = Math.min(0.35D, Math.max(0.12D, toWaypoint.y * 0.08D));
             }
         }
-        if (landingTarget && currentWaypoint.y <= dragonPos.y && distToFinalWaypoint < arrivalDist * 3.0D) {
-            desiredVertical = Math.min(desiredVertical, -0.15D);
+        if (landingTarget && currentWaypoint.y <= dragonPos.y) {
+            double altitudeToLanding = Math.max(0.0D, dragonPos.y - currentWaypoint.y);
+            double minLandingDescent = Math.min(1.0D, Math.max(0.25D, altitudeToLanding * 0.06D));
+            desiredVertical = Math.min(desiredVertical, -minLandingDescent);
         }
         Vec3 targetVelocity = new Vec3(
                 desiredDirection.x * desiredSpeed,
-                desiredVertical * desiredSpeed,
+                desiredVertical * desiredSpeed * (landingTarget && desiredVertical < 0.0D ? LANDING_VERTICAL_SPEED_SCALE : 1.0D),
                 desiredDirection.z * desiredSpeed
         );
+        if (landingTarget && currentWaypoint.y <= dragonPos.y && targetVelocity.y > -LANDING_MIN_DESCENT_SPEED) {
+            targetVelocity = new Vec3(targetVelocity.x, -LANDING_MIN_DESCENT_SPEED, targetVelocity.z);
+        }
         Vec3 velocityBaseline = this.smoothedVelocity;
         if (velocityBaseline.lengthSqr() < 1.0E-4 && currentVelocity.lengthSqr() > 1.0E-4) {
             velocityBaseline = currentVelocity;
@@ -147,11 +156,12 @@ class AsyncFlightMovementExecutor {
     }
 
     private static Vec3 lerpVelocity(Vec3 from, Vec3 to, boolean landingTarget) {
-        double verticalLerp = landingTarget ? 0.18D : VERTICAL_VELOCITY_LERP;
+        double horizontalLerp = landingTarget ? LANDING_HORIZONTAL_VELOCITY_LERP : HORIZONTAL_VELOCITY_LERP;
+        double verticalLerp = landingTarget ? LANDING_VERTICAL_VELOCITY_LERP : VERTICAL_VELOCITY_LERP;
         return new Vec3(
-                Mth.lerp(HORIZONTAL_VELOCITY_LERP, from.x, to.x),
+                Mth.lerp(horizontalLerp, from.x, to.x),
                 Mth.lerp(verticalLerp, from.y, to.y),
-                Mth.lerp(HORIZONTAL_VELOCITY_LERP, from.z, to.z)
+                Mth.lerp(horizontalLerp, from.z, to.z)
         );
     }
 }

@@ -16,6 +16,9 @@ import java.util.EnumSet;
 
 public class IgnivorusAirCombatGoal extends Goal {
     private static final double DIRECT_CHASE_SPEED = 3.75D;
+    private static final double DIVE_CHASE_SPEED = 5.5D;
+    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
+    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
     private static final double LANDING_SPEED = 1.5D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final double BITE_RANGE = 16.0D;
@@ -262,7 +265,21 @@ public class IgnivorusAirCombatGoal extends Goal {
     }
 
     private void chaseTarget(LivingEntity target) {
+        if (shouldDiveChase(target)) {
+            DragonAirCombatHelper.chasePredicted(dragon, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
+            return;
+        }
         DragonAirCombatHelper.chasePredicted(dragon, target, 5.0D, 0.5D, 0.15D, 0.5D, DIRECT_CHASE_SPEED);
+    }
+
+    private boolean shouldDiveChase(LivingEntity target) {
+        return DragonAirCombatHelper.shouldDiveChase(
+                dragon,
+                target,
+                Math.max(2.5D, target.getBbHeight() * 0.75D),
+                DIVE_CHASE_MIN_HEIGHT_ADVANTAGE,
+                DIVE_CHASE_MAX_HORIZONTAL_DISTANCE
+        );
     }
 
 

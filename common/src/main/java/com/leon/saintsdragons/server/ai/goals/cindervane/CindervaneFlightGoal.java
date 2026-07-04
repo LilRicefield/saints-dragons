@@ -6,6 +6,8 @@ import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.LivingEntity;
 
 public class CindervaneFlightGoal extends DragonAutonomousFlightGoal<Cindervane> {
+    private static final double AUTONOMOUS_DIVE_SPEED = 2.2D;
+
     private boolean wasThundering;
     private boolean wasRaining;
 
@@ -146,6 +148,11 @@ public class CindervaneFlightGoal extends DragonAutonomousFlightGoal<Cindervane>
             return 30.0D;
         }
         return 80.0D;
+    }
+
+    @Override
+    protected double getAutonomousDiveSpeed() {
+        return AUTONOMOUS_DIVE_SPEED;
     }
 
     private boolean isWildNight() {
