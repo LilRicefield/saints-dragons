@@ -68,6 +68,10 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.ATROXIIA_SPAWN_EGG.get());
                                 output.accept(ModItems.MOOP_SPAWN_EGG.get());
                                 output.accept(ModItems.MOSSBACK_SPAWN_EGG.get());
+                                output.accept(ModItems.LATCHER_SPAWN_EGG.get());
+                                output.accept(ModItems.WINGED_SPAWN_EGG.get());
+                                output.accept(ModItems.WHETTLED_SPAWN_EGG.get());
+                                output.accept(ModItems.DRACONIAN_SWARM_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());
 
                                 })

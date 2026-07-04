@@ -24,6 +24,10 @@ public interface PlatformHelper {
                         int primaryColor,
                         int secondaryColor,
                         Item.Properties properties);
+    Item createDraconianSwarmSpawnEgg(Supplier<? extends EntityType<? extends Mob>> displayEntityType,
+                                      int primaryColor,
+                                      int secondaryColor,
+                                      Item.Properties properties);
     Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
                          Fluid fluid,
                          SoundEvent emptySound,

@@ -11,6 +11,9 @@ import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.draconianswarm.Latcher;
+import com.leon.saintsdragons.server.entity.draconianswarm.Winged;
+import com.leon.saintsdragons.server.entity.draconianswarm.Whettled;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
 import com.leon.saintsdragons.server.entity.effect.DragonWaterSplashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
@@ -100,6 +103,27 @@ public final class ModEntities {
                     .clientTrackingRange(48)
                     .updateInterval(1)
                     .build("atroxiia"));
+
+    public static final Supplier<EntityType<Latcher>> LATCHER =
+            REGISTER.register("latcher", () -> EntityType.Builder.of(Latcher::new, MobCategory.MONSTER)
+                    .sized(2.0F, 2.0F)
+                    .clientTrackingRange(32)
+                    .updateInterval(1)
+                    .build("latcher"));
+
+    public static final Supplier<EntityType<Winged>> WINGED =
+            REGISTER.register("winged", () -> EntityType.Builder.of(Winged::new, MobCategory.MONSTER)
+                    .sized(1.5F, 1.5F)
+                    .clientTrackingRange(32)
+                    .updateInterval(1)
+                    .build("winged"));
+
+    public static final Supplier<EntityType<Whettled>> WHETTLED =
+            REGISTER.register("whettled", () -> EntityType.Builder.of(Whettled::new, MobCategory.MONSTER)
+                    .sized(2.25F, 2.0F)
+                    .clientTrackingRange(32)
+                    .updateInterval(1)
+                    .build("whettled"));
 
     public static final Supplier<EntityType<Moop>> MOOP =
             REGISTER.register("moop", () -> EntityType.Builder.of(Moop::new, MobCategory.WATER_AMBIENT)

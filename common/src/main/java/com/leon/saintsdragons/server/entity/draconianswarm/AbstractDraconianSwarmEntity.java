@@ -1,0 +1,239 @@
+package com.leon.saintsdragons.server.entity.draconianswarm;
+
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmChaseTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmFloatWanderGoal;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightMoveControl;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlyingPathNavigation;
+import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
+import com.leon.saintsdragons.server.entity.controller.GenericLookControl;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.ai.control.BodyRotationControl;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
+import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
+import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
+import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.util.GeckoLibUtil;
+
+public abstract class AbstractDraconianSwarmEntity extends Monster implements GeoEntity {
+    private static final double VISUAL_PITCH_MIN_SPEED_SQ = 0.0025D;
+    private static final double VISUAL_PITCH_VERTICAL_DEADZONE = 0.015D;
+    private static final float VISUAL_PITCH_LERP = 0.28F;
+
+    private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
+    private final AsyncSwarmFlightController swarmFlightController;
+    private DragonBodyControl bodyControl;
+    private float prevFlightPitchRad;
+    private float flightPitchRad;
+    private float prevTailDragYawDeg;
+    private float tailDragYawDeg;
+    private boolean deathAnimationStarted;
+
+    protected AbstractDraconianSwarmEntity(EntityType<? extends AbstractDraconianSwarmEntity> entityType, Level level) {
+        super(entityType, level);
+        this.swarmFlightController = new AsyncSwarmFlightController(this);
+        this.lookControl = new GenericLookControl(this);
+        this.navigation = createSwarmNavigation(level);
+        this.moveControl = new AsyncSwarmFlightMoveControl(this, this.swarmFlightController);
+        this.setNoGravity(true);
+        this.setPathfindingMalus(BlockPathTypes.WALKABLE, -1.0F);
+        this.setPathfindingMalus(BlockPathTypes.WATER, -1.0F);
+        this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, -1.0F);
+        this.setPathfindingMalus(BlockPathTypes.FENCE, -1.0F);
+    }
+
+    @Override
+    protected void registerGoals() {
+        this.goalSelector.addGoal(0, new FloatGoal(this));
+        this.goalSelector.addGoal(3, new DraconianSwarmChaseTargetGoal(this, getChaseFlightSpeed()));
+        this.goalSelector.addGoal(7, new DraconianSwarmFloatWanderGoal(this, getWanderFlightSpeed()));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+
+        this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
+        this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::canTargetFromSwarm));
+    }
+
+    @Override
+    public void tick() {
+        super.tick();
+        tickVisualFlightPitch();
+        tickTailDragYaw();
+        this.setNoGravity(true);
+        if (!level().isClientSide) {
+            if (this.bodyControl != null) {
+                this.bodyControl.serverTick();
+            }
+            this.swarmFlightController.serverTick();
+        }
+    }
+
+    @Override
+    protected @NotNull BodyRotationControl createBodyControl() {
+        this.bodyControl = new DragonBodyControl(this, getBodyTurnSpeed());
+        return this.bodyControl;
+    }
+
+    @Override
+    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
+        FlyingPathNavigation navigation = new FlyingPathNavigation(this, level);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanPassDoors(false);
+        navigation.setCanFloat(false);
+        return navigation;
+    }
+
+    protected PathNavigation createSwarmNavigation(Level level) {
+        AsyncSwarmFlyingPathNavigation navigation = new AsyncSwarmFlyingPathNavigation(this, level, this.swarmFlightController);
+        navigation.setCanOpenDoors(false);
+        navigation.setCanPassDoors(false);
+        navigation.setCanFloat(false);
+        return navigation;
+    }
+
+    @Override
+    public float getWalkTargetValue(@NotNull BlockPos pos, @NotNull LevelReader level) {
+        return level.getBlockState(pos).isAir() ? 10.0F : 0.0F;
+    }
+
+    @Override
+    public boolean causeFallDamage(float distance, float damageMultiplier, @NotNull DamageSource source) {
+        return false;
+    }
+
+    @Override
+    protected SoundEvent getHurtSound(@NotNull DamageSource source) {
+        return ModSounds.DRACONIAN_SWARM_HURT.get();
+    }
+
+    @Override
+    protected SoundEvent getDeathSound() {
+        return ModSounds.DRACONIAN_SWARM_DEATH.get();
+    }
+
+    @Override
+    protected SoundEvent getAmbientSound() {
+        return switch (getRandom().nextInt(3)) {
+            case 0 -> ModSounds.DRACONIAN_SWARM_IDLE_0.get();
+            case 1 -> ModSounds.DRACONIAN_SWARM_IDLE_1.get();
+            default -> ModSounds.DRACONIAN_SWARM_IDLE_2.get();
+        };
+    }
+
+    @Override
+    public void die(@NotNull DamageSource source) {
+        super.die(source);
+        if (!this.deathAnimationStarted) {
+            this.deathAnimationStarted = true;
+            playDeathAnimation();
+            this.swarmFlightController.clearWaypoint();
+            setDeltaMovement(Vec3.ZERO);
+        }
+    }
+
+    protected void playDeathAnimation() {
+    }
+
+    @Override
+    protected void checkFallDamage(double y, boolean onGround, @NotNull net.minecraft.world.level.block.state.BlockState state,
+                                   @NotNull BlockPos pos) {
+    }
+
+    @Override
+    public boolean onClimbable() {
+        return false;
+    }
+
+    public AsyncSwarmFlightController getSwarmFlightController() {
+        return this.swarmFlightController;
+    }
+
+    protected double getWanderFlightSpeed() {
+        return 0.20D;
+    }
+
+    protected double getChaseFlightSpeed() {
+        return 0.28D;
+    }
+
+    public double getChaseSpeed() {
+        return getChaseFlightSpeed();
+    }
+
+    protected float getBodyTurnSpeed() {
+        return 0.35F;
+    }
+
+    protected boolean canTargetFromSwarm(LivingEntity target) {
+        return target.isAlive()
+                && !(target instanceof AbstractDraconianSwarmEntity)
+                && !(target instanceof Mob mob && mob.getType() == getType());
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return this.animationCache;
+    }
+
+    public float getFlightPitchRadians(float partialTick) {
+        return Mth.lerp(partialTick, this.prevFlightPitchRad, this.flightPitchRad);
+    }
+
+    public float getTailDragYawRadians(float partialTick) {
+        return Mth.lerp(partialTick, this.prevTailDragYawDeg, this.tailDragYawDeg) * Mth.DEG_TO_RAD;
+    }
+
+    private void tickVisualFlightPitch() {
+        this.prevFlightPitchRad = this.flightPitchRad;
+
+        Vec3 velocity = getDeltaMovement();
+        if (velocity.lengthSqr() < VISUAL_PITCH_MIN_SPEED_SQ) {
+            this.flightPitchRad = Mth.lerp(VISUAL_PITCH_LERP, this.flightPitchRad, 0.0F);
+            return;
+        }
+
+        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        double verticalSpeed = Math.abs(velocity.y) < VISUAL_PITCH_VERTICAL_DEADZONE ? 0.0D : velocity.y;
+        float targetPitchRad = horizontalSpeed <= 1.0E-4D
+                ? (verticalSpeed > 0.0D ? Mth.HALF_PI : -Mth.HALF_PI)
+                : (float) Math.atan2(verticalSpeed, horizontalSpeed);
+        targetPitchRad = Mth.clamp(targetPitchRad, -0.95F, 0.95F);
+        this.flightPitchRad = Mth.lerp(VISUAL_PITCH_LERP, this.flightPitchRad, targetPitchRad);
+        if (Math.abs(this.flightPitchRad) < 0.001F) {
+            this.flightPitchRad = 0.0F;
+        }
+    }
+
+    private void tickTailDragYaw() {
+        this.prevTailDragYawDeg = this.tailDragYawDeg;
+
+        float bodyYawDelta = Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO);
+        float entityYawDelta = Mth.wrapDegrees(this.getYRot() - this.yRotO);
+        float targetDelta = Math.abs(bodyYawDelta) > 0.01F ? bodyYawDelta : entityYawDelta;
+        float targetYaw = Mth.clamp(targetDelta * 4.0F, -55.0F, 55.0F);
+        this.tailDragYawDeg = Mth.lerp(0.32F, this.tailDragYawDeg, targetYaw);
+        if (Math.abs(this.tailDragYawDeg) < 0.01F) {
+            this.tailDragYawDeg = 0.0F;
+        }
+    }
+}

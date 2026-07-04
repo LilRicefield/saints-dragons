@@ -2,6 +2,9 @@ package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.renderer.atroxiia.AtroxiiaRenderer;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneMagmaBlockRenderer;
+import com.leon.saintsdragons.client.renderer.draconianswarm.LatcherRenderer;
+import com.leon.saintsdragons.client.renderer.draconianswarm.WingedRenderer;
+import com.leon.saintsdragons.client.renderer.draconianswarm.WhettledRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonWaterSplashRenderer;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneRenderer;
@@ -76,6 +79,9 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.VOLITANS_POISON_BALL.get(), VolitansPoisonBallRenderer::new);
         registrar.register(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchantRenderer::new);
         registrar.register(ModEntities.ATROXIIA.get(), AtroxiiaRenderer::new);
+        registrar.register(ModEntities.LATCHER.get(), LatcherRenderer::new);
+        registrar.register(ModEntities.WINGED.get(), WingedRenderer::new);
+        registrar.register(ModEntities.WHETTLED.get(), WhettledRenderer::new);
     }
 
     public static void registerMenuScreens() {

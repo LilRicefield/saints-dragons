@@ -112,6 +112,38 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> LATCHER_SPAWN_EGG =
+            REGISTER.register("latcher_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.LATCHER,
+                            0x000000, 0xFFFFFF,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> WINGED_SPAWN_EGG =
+            REGISTER.register("winged_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.WINGED,
+                            0x000000, 0xFFFFFF,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> WHETTLED_SPAWN_EGG =
+            REGISTER.register("whettled_spawn_egg",
+                    () -> Services.PLATFORM.createSpawnEgg(
+                            ModEntities.WHETTLED,
+                            0x000000, 0xFFFFFF,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> DRACONIAN_SWARM_SPAWN_EGG =
+            REGISTER.register("draconian_swarm_spawn_egg",
+                    () -> Services.PLATFORM.createDraconianSwarmSpawnEgg(
+                            ModEntities.LATCHER,
+                            0x000000, 0xFFFFFF,
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(

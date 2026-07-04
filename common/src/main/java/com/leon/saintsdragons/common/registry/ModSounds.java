@@ -55,6 +55,16 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");
 
+    // Draconian Swarm
+    public static final Supplier<SoundEvent> LATCHER_BITE = registerSound("latcher_bite");
+    public static final Supplier<SoundEvent> DRACONIAN_SWARM_HURT = registerSound("draconian_swarm_hurt");
+    public static final Supplier<SoundEvent> DRACONIAN_SWARM_DEATH = registerSound("draconian_swarm_death");
+    public static final Supplier<SoundEvent> DRACONIAN_SWARM_IDLE_0 = registerSound("draconian_swarm_idle0");
+    public static final Supplier<SoundEvent> DRACONIAN_SWARM_IDLE_1 = registerSound("draconian_swarm_idle1");
+    public static final Supplier<SoundEvent> DRACONIAN_SWARM_IDLE_2 = registerSound("draconian_swarm_idle2");
+    public static final Supplier<SoundEvent> WHETTLED_STRIKE = registerSound("whettled_strike");
+    public static final Supplier<SoundEvent> WHETTLED_STRIKE_2 = registerSound("whettled_strike2");
+
     //Mossy
     public static final Supplier<SoundEvent> MOSSBACK_HURT = registerSound("mossback_hurt");
     public static final Supplier<SoundEvent> MOSSBACK_DIE = registerSound("mossback_die");

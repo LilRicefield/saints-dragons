@@ -2186,6 +2186,72 @@
       }
     ]
   },
+  "latcher_bite": {
+    "subtitle": "subtitles.saintsdragons.latcher_bite",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/latcher_bite",
+        "attenuation_distance": 16
+      }
+    ]
+  },
+  "draconian_swarm_hurt": {
+    "subtitle": "subtitles.saintsdragons.draconian_swarm_hurt",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/draconian_swarm_hurt",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "draconian_swarm_death": {
+    "subtitle": "subtitles.saintsdragons.draconian_swarm_death",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/draconian_swarm_death",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "draconian_swarm_idle0": {
+    "sounds": [
+      {
+          "name": "saintsdragons:entity/draconianswarm/draconian_swarm_idle0",
+          "attenuation_distance": 32
+      }
+    ]
+  },
+  "draconian_swarm_idle1": {
+    "sounds":[
+      {
+        "name": "saintsdragons:entity/draconianswarm/draconian_swarm_idle1",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "draconian_swarm_idle2": {
+    "sounds": [
+      {"name": "saintsdragons:entity/draconianswarm/draconian_swarm_idle2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "whettled_strike": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/whettled_strike",
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "whettled_strike2": {
+    "sounds": [
+      {
+      "name": "saintsdragons:entity/draconianswarm/whettled_strike2",
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "atroxiia_step": {
     "subtitle": "subtitles.saintsdragons.atroxiia_step",
     "sounds": [

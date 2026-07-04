@@ -90,6 +90,19 @@ public final class ForgePlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public Item createDraconianSwarmSpawnEgg(Supplier<? extends EntityType<? extends Mob>> displayEntityType,
+                                             int primaryColor,
+                                             int secondaryColor,
+                                             Item.Properties properties) {
+        return new ForgeSpawnEggItem(displayEntityType, primaryColor, secondaryColor, properties) {
+            @Override
+            public net.minecraft.world.InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
+                return com.leon.saintsdragons.common.item.DraconianSwarmSpawnEggSpawner.useOn(context);
+            }
+        };
+    }
+
+    @Override
     public Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
                                 Fluid fluid,
                                 SoundEvent emptySound,
