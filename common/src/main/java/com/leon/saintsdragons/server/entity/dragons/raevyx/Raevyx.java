@@ -32,9 +32,10 @@ import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailE
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxDiveImpactAbility;
+import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
+import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
-import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
@@ -117,20 +118,16 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final int AGGRO_TTL_TICKS = 200;
     public static final double BREED_PARTNER_RANGE = 8.0D;
     public static final double BREED_DISTANCE_SQR = 16.0D;
-    private static final double DODGE_HORIZONTAL_DRAG = 0.92D;
-    private static final double DODGE_VERTICAL_DRAG = 0.95D;
     private static final int DODGE_DURATION_TICKS = 12;
     private static final int DODGE_IFRAMES_TICKS = 8;
     private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
     private static final int FLEX_CONTROL_LOCK_TICKS = 65;
     private static final int FLEX_COOLDOWN_TICKS = 120;
     private static final int AI_DODGE_COOLDOWN_TICKS = 60;
-    private static final double DODGE_DISTANCE_BLOCKS = 20;
-    private static final double AIR_DODGE_DISTANCE_MULTIPLIER = 5.75D;
+    private static final double DODGE_DISTANCE_BLOCKS = 10.0D;
+    private static final double AIR_DODGE_DISTANCE_MULTIPLIER = 3.0D;
+    private static final double DASH_NUDGE_DRAG = 0.9D;
     private static final float REACTIVE_HIT_DODGE_CHANCE = 0.35F;
-    private static final double DASH_HORIZONTAL_DRAG = 0.92D;
-    private static final double DASH_VERTICAL_DRAG = 0.95D;
-    final int DODGE_CONTROL_LOCK = 12;
     public static final EntityDataAccessor<Boolean> DATA_LANDED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_BEAMING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
@@ -144,7 +141,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final EntityDataAccessor<Float> DATA_BEAM_START_X = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> DATA_BEAM_START_Y = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> DATA_BEAM_START_Z = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Boolean> DATA_DODGING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_DASHING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+    public static final EntityDataAccessor<Integer> DATA_RIDER_NUDGE_TICKS = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.INT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_X = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_Z = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_DRAG = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_GROUND_RENDING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.INT);
@@ -180,19 +182,50 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public int landingTimer = 0;
     public int landedTimer = 0;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
-    private final DragonDashAndDodgeComponent dodgeMotion = new DragonDashAndDodgeComponent(this);
+    private final DragonForwardMovementComponent dashDodgeNudge = new DragonForwardMovementComponent(
+            this,
+            new DragonForwardMovementComponent.StateAccess() {
+                @Override
+                public void start(int ticks, Vec3 velocity, boolean dashing, boolean dodging, double horizontalDrag) {
+                    setRaevyxNudgeState(ticks, velocity, dashing, dodging, horizontalDrag);
+                }
+
+                @Override
+                public int ticks() {
+                    return getRaevyxNudgeTicks();
+                }
+
+                @Override
+                public void setTicks(int ticks) {
+                    setRaevyxNudgeTicks(ticks);
+                }
+
+                @Override
+                public Vec3 velocity() {
+                    return getRaevyxNudgeVector();
+                }
+
+                @Override
+                public void setVelocity(Vec3 velocity) {
+                    setRaevyxNudgeVelocity(velocity);
+                }
+
+                @Override
+                public double horizontalDrag() {
+                    return getRaevyxNudgeDrag();
+                }
+
+                @Override
+                public void clear() {
+                    clearRaevyxNudgeState();
+                }
+            }
+    );
     int dodgeCooldownTicks = 0;
     int aiDodgeCooldownTicks = 0;
     int dodgeIFramesTicks = 0;
     private boolean lastDashWasRight = false;
     private final Map<Integer, Integer> dashHitCooldowns = new HashMap<>();
-    private final DragonDashAndDodgeComponent dashMotion =
-            new DragonDashAndDodgeComponent(this, active -> {
-                this.entityData.set(DATA_DASHING, active);
-                if (!active) {
-                    dashHitCooldowns.clear();
-                }
-            });
     private boolean groundRending = false;
     private Vec3 groundRendVec = Vec3.ZERO;
     private float groundRendTravelSpeed = 0.0F;
@@ -537,7 +570,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected void defineRideableDragonData() {
         this.entityData.define(DATA_LANDED, false);
+        this.entityData.define(DATA_DODGING, false);
         this.entityData.define(DATA_DASHING, false);
+        this.entityData.define(DATA_RIDER_NUDGE_TICKS, 0);
+        this.entityData.define(DATA_RIDER_NUDGE_X, 0.0F);
+        this.entityData.define(DATA_RIDER_NUDGE_Z, 0.0F);
+        this.entityData.define(DATA_RIDER_NUDGE_DRAG, 1.0F);
         this.entityData.define(DATA_LAST_DASH_RIGHT, false);
         this.entityData.define(DATA_GROUND_RENDING, false);
     }
@@ -585,7 +623,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
-        if (locked || isGroundRending()) {
+        if (isGroundRending()) {
             return false;
         }
 
@@ -594,8 +632,16 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 onRiderDash(player);
                 yield true;
             }
+            case DOUBLE_TAP_A -> {
+                onRiderDodge(player, true);
+                yield true;
+            }
             case DOUBLE_TAP_S -> {
                 onRiderBackwardDodge(player);
+                yield true;
+            }
+            case DOUBLE_TAP_D -> {
+                onRiderDodge(player, false);
                 yield true;
             }
             default -> false;
@@ -1007,10 +1053,59 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         return riderController.getDismountLocationForPassenger(passenger);
     }
 
-    public boolean isDodging() { return dodgeMotion.isActive(); }
+    public boolean isDodging() { return this.entityData.get(DATA_DODGING); }
     public boolean isDashing() {
         return this.entityData.get(DATA_DASHING);
     }
+
+    private static double constantNudgeSpeed(double distanceBlocks, int durationTicks) {
+        return durationTicks <= 0 ? 0.0D : distanceBlocks / durationTicks;
+    }
+
+    void setRaevyxNudgeState(int ticks, Vec3 velocity, boolean dashing, boolean dodging, double horizontalDrag) {
+        this.entityData.set(DATA_RIDER_NUDGE_TICKS, Math.max(1, ticks));
+        this.entityData.set(DATA_RIDER_NUDGE_X, (float) velocity.x);
+        this.entityData.set(DATA_RIDER_NUDGE_Z, (float) velocity.z);
+        this.entityData.set(DATA_RIDER_NUDGE_DRAG, (float) horizontalDrag);
+        this.entityData.set(DATA_DASHING, dashing);
+        this.entityData.set(DATA_DODGING, dodging);
+    }
+
+    int getRaevyxNudgeTicks() {
+        return this.entityData.get(DATA_RIDER_NUDGE_TICKS);
+    }
+
+    void setRaevyxNudgeTicks(int ticks) {
+        this.entityData.set(DATA_RIDER_NUDGE_TICKS, Math.max(0, ticks));
+    }
+
+    Vec3 getRaevyxNudgeVector() {
+        return new Vec3(
+                this.entityData.get(DATA_RIDER_NUDGE_X),
+                0.0D,
+                this.entityData.get(DATA_RIDER_NUDGE_Z)
+        );
+    }
+
+    void setRaevyxNudgeVelocity(Vec3 velocity) {
+        this.entityData.set(DATA_RIDER_NUDGE_X, (float) velocity.x);
+        this.entityData.set(DATA_RIDER_NUDGE_Z, (float) velocity.z);
+    }
+
+    double getRaevyxNudgeDrag() {
+        return this.entityData.get(DATA_RIDER_NUDGE_DRAG);
+    }
+
+    void clearRaevyxNudgeState() {
+        this.entityData.set(DATA_RIDER_NUDGE_TICKS, 0);
+        this.entityData.set(DATA_RIDER_NUDGE_X, 0.0F);
+        this.entityData.set(DATA_RIDER_NUDGE_Z, 0.0F);
+        this.entityData.set(DATA_RIDER_NUDGE_DRAG, 1.0F);
+        this.entityData.set(DATA_DASHING, false);
+        this.entityData.set(DATA_DODGING, false);
+        dashHitCooldowns.clear();
+    }
+
     public boolean wasLastDashRight() {
         return this.entityData.get(DATA_LAST_DASH_RIGHT);
     }
@@ -1039,48 +1134,32 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public float getRiderForwardInput() { return this.entityData.get(DATA_RIDER_FORWARD); }
 
     public void beginDodge(Vec3 vec, int ticks) {
-        boolean airDodge = this.isFlying();
-        double horizontalDrag = airDodge ? 0.96D : DODGE_HORIZONTAL_DRAG;
-        double airborneScale = airDodge ? 1.0D : 0.88D;
-        dodgeMotion.start(vec, new DragonDashAndDodgeComponent.MotionConfig(
-                ticks,
-                0,
-                horizontalDrag,
-                DODGE_VERTICAL_DRAG,
-                airborneScale,
-                !airDodge
-        ));
+        dashDodgeNudge.startDodge(vec, ticks);
     }
 
     @Override
     protected void onRiderDodge(Player player, boolean isLeft) {
-        if (isGroundRending() || areRiderControlsLocked() || (isTamingStunned() && !isTame())) {
+        if (isGroundRending() || (isTamingStunned() && !isTame())) {
             return;
         }
         if (isInWaterOrBubble()) {
             return;
         }
-        if (dashMotion.isActive()) {
-            dashMotion.cancelActive();
+        if (isDashing()) {
+            dashDodgeNudge.cancelActive();
         }
 
         if (dodgeCooldownTicks > 0) {
             return;
         }
 
-        final int DODGE_CONTROL_LOCK = 12;
         double dodgeDistance = isFlying() ? DODGE_DISTANCE_BLOCKS * AIR_DODGE_DISTANCE_MULTIPLIER : DODGE_DISTANCE_BLOCKS;
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
-                dodgeDistance,
-                DODGE_HORIZONTAL_DRAG,
-                DODGE_DURATION_TICKS
-        );
+        double perTickSpeed = constantNudgeSpeed(dodgeDistance, DODGE_DURATION_TICKS);
         if (perTickSpeed <= 0.0D) {
             return;
         }
-        Vec3 dodgeVector = DragonDashAndDodgeComponent.horizontalRight(this.getYRot()).scale(isLeft ? perTickSpeed : -perTickSpeed);
+        Vec3 dodgeVector = DragonMotionMath.horizontalRight(this.getYRot()).scale(isLeft ? perTickSpeed : -perTickSpeed);
         beginDodge(dodgeVector, DODGE_DURATION_TICKS);
-        lockRiderControls(DODGE_CONTROL_LOCK);
         dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
         dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
@@ -1099,14 +1178,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onRiderBackwardDodge(Player player) {
-        if (isGroundRending() || areRiderControlsLocked() || (isTamingStunned() && !isTame())) {
+        if (isGroundRending() || (isTamingStunned() && !isTame())) {
             return;
         }
         if (isInWaterOrBubble()) {
             return;
         }
-        if (dashMotion.isActive()) {
-            dashMotion.cancelActive();
+        if (isDashing()) {
+            dashDodgeNudge.cancelActive();
         }
 
         if (dodgeCooldownTicks > 0) {
@@ -1114,17 +1193,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
 
         double dodgeDistance = isFlying() ? DODGE_DISTANCE_BLOCKS * AIR_DODGE_DISTANCE_MULTIPLIER : DODGE_DISTANCE_BLOCKS;
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
-                dodgeDistance,
-                DODGE_HORIZONTAL_DRAG,
-                DODGE_DURATION_TICKS
-        );
+        double perTickSpeed = constantNudgeSpeed(dodgeDistance, DODGE_DURATION_TICKS);
         if (perTickSpeed <= 0.0D) {
             return;
         }
-        Vec3 dodgeVector = DragonDashAndDodgeComponent.horizontalForward(this.getYRot()).scale(-perTickSpeed);
+        Vec3 dodgeVector = DragonMotionMath.horizontalForward(this.getYRot()).scale(-perTickSpeed);
         beginDodge(dodgeVector, DODGE_DURATION_TICKS);
-        lockRiderControls(DODGE_CONTROL_LOCK);
         dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
         dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
@@ -1140,19 +1214,15 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return false;
         }
 
-        if (dashMotion.isActive()) {
-            dashMotion.cancelActive();
+        if (isDashing()) {
+            dashDodgeNudge.cancelActive();
         }
 
         if (aiDodgeCooldownTicks > 0) {
             return false;
         }
 
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
-                DODGE_DISTANCE_BLOCKS,
-                DODGE_HORIZONTAL_DRAG,
-                DODGE_DURATION_TICKS
-        );
+        double perTickSpeed = constantNudgeSpeed(DODGE_DISTANCE_BLOCKS, DODGE_DURATION_TICKS);
         if (perTickSpeed <= 0.0D) {
             return false;
         }
@@ -1164,9 +1234,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
         Vec3 dodgeVector;
         if (doBackward) {
-            dodgeVector = DragonDashAndDodgeComponent.horizontalForward(this.getYRot()).scale(-perTickSpeed);
+            dodgeVector = DragonMotionMath.horizontalForward(this.getYRot()).scale(-perTickSpeed);
         } else {
-            dodgeVector = DragonDashAndDodgeComponent.horizontalRight(this.getYRot()).scale(isLeft ? perTickSpeed : -perTickSpeed);
+            dodgeVector = DragonMotionMath.horizontalRight(this.getYRot()).scale(isLeft ? perTickSpeed : -perTickSpeed);
         }
 
         beginDodge(dodgeVector, DODGE_DURATION_TICKS);
@@ -1222,14 +1292,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     private void tickDashState() {
-        dashMotion.tickState();
+        dashDodgeNudge.tickServerState();
 
         dashHitCooldowns.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - 1);
             return entry.getValue() <= 0;
         });
 
-        if (dashMotion.isActive()) {
+        if (isDashing()) {
             Vec3 damageCenter = this.getBoundingBox().getCenter()
                     .add(getLookAngle().normalize().scale(this.getBbWidth() * 0.75D));
             AABB dragonBox = this.getBoundingBox().inflate(1.5D);
@@ -1281,22 +1351,22 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void onRiderDash(Player player) {
-        if (isGroundRending() || areRiderControlsLocked()) {
+        if (isGroundRending()) {
             return;
         }
         if (isAerial() || isInWaterOrBubble()) {
             return;
         }
-        if (dashMotion.getCooldownTicks() > 0) {
+        if (dashDodgeNudge.getDashCooldownTicks() > 0) {
             return;
         }
-        if (dashMotion.isActive()) {
+        if (isDashing()) {
             return;
         }
 
         final int DASH_DURATION = 27;
         final int DASH_COOLDOWN = 30;
-        final double DASH_DISTANCE = 30; // blocks
+        final double DASH_DISTANCE = 32.0D;
         if (!beginForwardDashMotion(DASH_DURATION, DASH_COOLDOWN, DASH_DISTANCE)) {
             return;
         }
@@ -1310,23 +1380,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
 
     public boolean beginForwardDashMotion(int durationTicks, int cooldownTicks, double distanceBlocks) {
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
-                distanceBlocks,
-                DASH_HORIZONTAL_DRAG,
-                durationTicks
-        );
+        double perTickSpeed = DragonMotionMath.speedForIntegratedDistance(distanceBlocks, DASH_NUDGE_DRAG, durationTicks);
         if (perTickSpeed <= 0.0D) {
             return false;
         }
-        Vec3 dashVector = DragonDashAndDodgeComponent.horizontalForward(this.getYRot()).scale(perTickSpeed);
-        return dashMotion.start(dashVector, new DragonDashAndDodgeComponent.MotionConfig(
-                durationTicks,
-                cooldownTicks,
-                DASH_HORIZONTAL_DRAG,
-                DASH_VERTICAL_DRAG,
-                0.90D,
-                true
-        ));
+        Vec3 dashVector = DragonMotionMath.horizontalForward(this.getYRot()).scale(perTickSpeed);
+        return dashDodgeNudge.startDash(dashVector, durationTicks, cooldownTicks, DASH_NUDGE_DRAG);
     }
 
     private float getConfiguredDashDamage() {
@@ -1398,7 +1457,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         if (dodgeIFramesTicks > 0) {
             dodgeIFramesTicks--;
         }
-        if (dashMotion.isActive() || dashMotion.getCooldownTicks() > 0 || !dashHitCooldowns.isEmpty()) {
+        if (dashDodgeNudge.isActive() || dashDodgeNudge.getDashCooldownTicks() > 0 || !dashHitCooldowns.isEmpty()) {
             tickDashState();
         }
         tamingController.tickServer();
@@ -1436,11 +1495,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             tickAnimationStates();
         }
         if (this.isDodging()) {
-            dodgeMotion.tickMovement();
             return;
-        }
-        if (dashMotion.isActive()) {
-            dashMotion.tickMovement();
         }
 
         if (isGroundRending()) {
@@ -1757,7 +1812,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     }
     
     private void tickRiderControlLockMovement() {
-        if (!areRiderControlsLocked()) {
+        if (!areRiderControlsLocked() || dashDodgeNudge.isActive()) {
             return;
         }
         if (getControllingPassenger() == null) {
@@ -1960,12 +2015,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     public void travel(@NotNull Vec3 motion) {
-        if (this.isDodging()) {
-            super.travel(Vec3.ZERO);
-            return;
-        }
-        if (dashMotion.isActive()) {
-            super.travel(Vec3.ZERO);
+        if (dashDodgeNudge.isActive()) {
+            if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isFlying() && !isInWaterOrBubble() && !isInLava()) {
+                this.setSpeed(this.getRiddenSpeed(player));
+                super.travel(motion);
+            }
+            dashDodgeNudge.applyTravelMotion();
             return;
         }
         if (isGroundRending()) {

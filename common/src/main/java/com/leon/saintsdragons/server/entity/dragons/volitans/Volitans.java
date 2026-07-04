@@ -28,7 +28,8 @@ import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
-import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
+import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
+import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -153,6 +154,16 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_RIDER_NUDGE_TICKS =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_X =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_Z =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_DRAG =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_RIDER_NUDGE_MODE =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
 
     private static final double RIDER_WALK_SPEED = 0.24D;
     private static final double RIDER_RUN_SPEED = 0.34D;
@@ -173,9 +184,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final int FLEX_CONTROL_LOCK_TICKS = 65;
     private static final int FLEX_COOLDOWN_TICKS = 65;
     private static final int RIDER_BACK_DASH_LOCK_TICKS = 0;
-    private static final double RIDER_BACK_DASH_SPEED = 2.60D;
-    private static final double RIDER_BACK_DASH_GROUND_LIFT = 0.0D;
     private static final int RIDER_BACK_DASH_DURATION_TICKS = 8;
+    private static final double RIDER_BACK_DASH_DISTANCE_BLOCKS = 12.0D;
     private static final double RIDER_BACK_DASH_HORIZONTAL_DRAG = 0.90D;
     private static final double RIDER_BACK_DASH_VERTICAL_DRAG = 0.95D;
     private static final int RIDER_BACK_DASH_RECOVERY_TICKS = 5;
@@ -190,18 +200,20 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final double RIDER_BACK_DASH_SPIKE_Y_OFFSET = -3.0D;
     private static final float REACTIVE_HIT_EVADE_CHANCE = 0.35F;
     private static final int RIDER_FORWARD_DASH_DURATION_TICKS = 25; // 1.25s
-    private static final double RIDER_FORWARD_DASH_DISTANCE_BLOCKS = 32.0D;
+    private static final double RIDER_FORWARD_DASH_DISTANCE_BLOCKS = 26.0D;
     private static final double RIDER_FORWARD_DASH_HORIZONTAL_DRAG = 0.90D;
-    private static final double RIDER_FORWARD_DASH_VERTICAL_DRAG = 0.95D;
     private static final int RIDER_FORWARD_DASH_DAMAGE_TICK = 14; // late hit near animation end
     private static final float RIDER_FORWARD_DASH_DAMAGE = 16.0F;
     private static final double RIDER_FORWARD_DASH_DAMAGE_RADIUS = 8.0D;
     private static final int RIDER_SIDE_DODGE_DURATION_TICKS = 7;
-    private static final double RIDER_SIDE_DODGE_HORIZONTAL_DRAG = 0.90D;
     private static final double RIDER_SIDE_DODGE_VERTICAL_DRAG = 0.95D;
-    private static final double RIDER_SIDE_DODGE_DISTANCE_BLOCKS = 10.0D;
+    private static final double RIDER_SIDE_DODGE_DISTANCE_BLOCKS = 7.0D;
     private static final int RIDER_SIDE_DODGE_RECOVERY_TICKS = 5;
     private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = 0.82D;
+    private static final int RIDER_NUDGE_NONE = 0;
+    private static final int RIDER_NUDGE_FORWARD_DASH = 1;
+    private static final int RIDER_NUDGE_BACK_DASH = 2;
+    private static final int RIDER_NUDGE_SIDE_DODGE = 3;
     private static final float BREATH_DEPLETED_THRESHOLD = 0.01F;
     private static final float BREATH_REARM_THRESHOLD = 0.20F;
     private static final int SPINE_DROP_COOLDOWN_TICKS = 30;
@@ -242,19 +254,50 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final ScreenShakeComponent screenShakeComponent;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int riderBackDashCooldownTicks = 0;
-    private boolean riderForwardDashing = false;
     private boolean riderForwardDashDamageApplied = false;
-    private final DragonDashAndDodgeComponent riderForwardDashMotion =
-            new DragonDashAndDodgeComponent(this, active -> this.riderForwardDashing = active);
-    private boolean riderBackDashing = false;
-    private final DragonDashAndDodgeComponent riderBackDashMotion =
-            new DragonDashAndDodgeComponent(this, active -> this.riderBackDashing = active);
+    private final DragonForwardMovementComponent riderGroundNudge = new DragonForwardMovementComponent(
+            this,
+            new DragonForwardMovementComponent.StateAccess() {
+                @Override
+                public void start(int ticks, Vec3 velocity, boolean dashing, boolean dodging, double horizontalDrag) {
+                    setRiderNudgeState(ticks, velocity, horizontalDrag);
+                    entityData.set(DATA_RIDER_NUDGE_MODE, dashing ? RIDER_NUDGE_FORWARD_DASH : dodging ? RIDER_NUDGE_SIDE_DODGE : RIDER_NUDGE_NONE);
+                }
+
+                @Override
+                public int ticks() {
+                    return entityData.get(DATA_RIDER_NUDGE_TICKS);
+                }
+
+                @Override
+                public void setTicks(int ticks) {
+                    entityData.set(DATA_RIDER_NUDGE_TICKS, Math.max(0, ticks));
+                }
+
+                @Override
+                public Vec3 velocity() {
+                    return getRiderNudgeVelocity();
+                }
+
+                @Override
+                public void setVelocity(Vec3 velocity) {
+                    setRiderNudgeVelocity(velocity);
+                }
+
+                @Override
+                public double horizontalDrag() {
+                    return entityData.get(DATA_RIDER_NUDGE_DRAG);
+                }
+
+                @Override
+                public void clear() {
+                    clearRiderNudgeState();
+                }
+            }
+    );
     private Vec3 riderBackDashVec = Vec3.ZERO;
     private int riderBackDashRecoveryTicks = 0;
     private int riderBackDashSpikeDelayTicks = 0;
-    private boolean riderSideDodging = false;
-    private final DragonDashAndDodgeComponent riderSideDodgeMotion =
-            new DragonDashAndDodgeComponent(this, active -> this.riderSideDodging = active);
     private Vec3 riderSideDodgeVec = Vec3.ZERO;
     private int riderSideDodgeRecoveryTicks = 0;
     private int takeoffInputBlockTicks = 0;
@@ -607,6 +650,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_VENOM_NEUTRALIZED_TICKS, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
+        this.entityData.define(DATA_RIDER_NUDGE_TICKS, 0);
+        this.entityData.define(DATA_RIDER_NUDGE_X, 0.0F);
+        this.entityData.define(DATA_RIDER_NUDGE_Z, 0.0F);
+        this.entityData.define(DATA_RIDER_NUDGE_DRAG, 1.0F);
+        this.entityData.define(DATA_RIDER_NUDGE_MODE, RIDER_NUDGE_NONE);
     }
 
     @Override
@@ -912,19 +960,21 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     protected void onRiderBackwardDodge(Player player) {
-        if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0 || riderForwardDashing
-                || riderBackDashing || riderBackDashRecoveryTicks > 0
-                || riderSideDodging || riderSideDodgeRecoveryTicks > 0
+        if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0 || isRiderForwardDashing()
+                || isRiderBackDashing() || riderBackDashRecoveryTicks > 0
+                || isRiderSideDodging() || riderSideDodgeRecoveryTicks > 0
                 || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition() || (isTamingStunned() && !isTame())) {
             return;
         }
 
         Vec3 forward = getRiderDashForwardVector();
         Vec3 backward = new Vec3(-forward.x, 0.0D, -forward.z).normalize();
-        Vec3 launch = new Vec3(backward.x * RIDER_BACK_DASH_SPEED, getDeltaMovement().y, backward.z * RIDER_BACK_DASH_SPEED);
-        if (onGround() && !isFlying() && !isInWaterOrBubble()) {
-            launch = launch.add(0.0D, RIDER_BACK_DASH_GROUND_LIFT, 0.0D);
-        }
+        double perTickSpeed = DragonMotionMath.speedForIntegratedDistance(
+                RIDER_BACK_DASH_DISTANCE_BLOCKS,
+                RIDER_BACK_DASH_HORIZONTAL_DRAG,
+                RIDER_BACK_DASH_DURATION_TICKS
+        );
+        Vec3 launch = new Vec3(backward.x * perTickSpeed, 0.0D, backward.z * perTickSpeed);
 
         beginRiderBackDash(launch);
         if (RIDER_BACK_DASH_LOCK_TICKS > 0) {
@@ -933,14 +983,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
         triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "dash_backwards");
         playBackwardDashSound();
-        scheduleBackwardDashSpikes();
     }
 
     @Override
     protected void onRiderDash(Player player) {
         if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0
-                || riderForwardDashing || riderBackDashing || riderBackDashRecoveryTicks > 0
-                || riderSideDodging || riderSideDodgeRecoveryTicks > 0
+                || isRiderForwardDashing() || isRiderBackDashing() || riderBackDashRecoveryTicks > 0
+                || isRiderSideDodging() || riderSideDodgeRecoveryTicks > 0
                 || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition()) {
             return;
         }
@@ -948,7 +997,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         float yawRad = (float) Math.toRadians(this.getYRot());
         double forwardX = -Math.sin(yawRad);
         double forwardZ = Math.cos(yawRad);
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
+        double perTickSpeed = DragonMotionMath.speedForIntegratedDistance(
                 RIDER_FORWARD_DASH_DISTANCE_BLOCKS,
                 RIDER_FORWARD_DASH_HORIZONTAL_DRAG,
                 RIDER_FORWARD_DASH_DURATION_TICKS
@@ -966,8 +1015,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void onRiderDodge(Player player, boolean isLeft) {
         if (isBurrowing() || isFlying() || isInWaterOrBubble() || riderBackDashCooldownTicks > 0
-                || riderForwardDashing || riderBackDashing || riderBackDashRecoveryTicks > 0
-                || riderSideDodging || riderSideDodgeRecoveryTicks > 0
+                || isRiderForwardDashing() || isRiderBackDashing() || riderBackDashRecoveryTicks > 0
+                || isRiderSideDodging() || riderSideDodgeRecoveryTicks > 0
                 || !isAlive() || isDying() || isOrderedToSit() || isInSitTransition() || (isTamingStunned() && !isTame())) {
             return;
         }
@@ -975,11 +1024,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         float yawRad = (float) Math.toRadians(this.getYRot());
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
-                RIDER_SIDE_DODGE_DISTANCE_BLOCKS,
-                RIDER_SIDE_DODGE_HORIZONTAL_DRAG,
-                RIDER_SIDE_DODGE_DURATION_TICKS
-        );
+        double perTickSpeed = RIDER_SIDE_DODGE_DISTANCE_BLOCKS / RIDER_SIDE_DODGE_DURATION_TICKS;
         if (perTickSpeed <= 0.0D) {
             return;
         }
@@ -1026,28 +1071,35 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                     && areRiderControlsLocked()
                     && !isUltimateSlamActive()
                     && combatManager.getActiveAbility() == null
-                    && !riderForwardDashing
-                    && !riderBackDashing
+                    && !isRiderForwardDashing()
+                    && !isRiderBackDashing()
                     && riderBackDashRecoveryTicks <= 0
-                    && !riderSideDodging
+                    && !isRiderSideDodging()
                     && riderSideDodgeRecoveryTicks <= 0) {
                 // Safety net for stale lock state mismatches while airborne.
                 clearRiderControlLock();
             }
-            if (riderForwardDashing) {
-                riderForwardDashMotion.tickState();
-                handleRiderForwardDashMovement();
+            if (isRiderForwardDashing()) {
+                riderGroundNudge.tickServerState();
                 tickRiderForwardDashDamage();
             }
-            if (riderBackDashing) {
-                handleRiderBackDashMovement();
+            if (isRiderBackDashing()) {
+                riderGroundNudge.tickServerState();
+                if (!riderGroundNudge.isActive()) {
+                    riderBackDashVec = riderGroundNudge.getLastVelocity();
+                    riderBackDashRecoveryTicks = RIDER_BACK_DASH_RECOVERY_TICKS;
+                }
             }
             if (riderBackDashRecoveryTicks > 0) {
                 handleRiderBackDashRecoveryMovement();
             }
             tickBackwardDashSpikes();
-            if (riderSideDodging) {
-                handleRiderSideDodgeMovement();
+            if (isRiderSideDodging()) {
+                riderGroundNudge.tickServerState();
+                if (!riderGroundNudge.isActive()) {
+                    riderSideDodgeVec = riderGroundNudge.getLastVelocity();
+                    riderSideDodgeRecoveryTicks = RIDER_SIDE_DODGE_RECOVERY_TICKS;
+                }
             }
             if (riderSideDodgeRecoveryTicks > 0) {
                 handleRiderSideDodgeRecoveryMovement();
@@ -1191,20 +1243,23 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             return;
         }
 
-        if (riderForwardDashing) {
+        if (isRiderForwardDashing()) {
             super.travel(Vec3.ZERO);
+            riderGroundNudge.applyTravelMotion();
             return;
         }
-        if (riderBackDashing) {
+        if (isRiderBackDashing()) {
             super.travel(Vec3.ZERO);
+            riderGroundNudge.applyTravelMotion();
             return;
         }
         if (riderBackDashRecoveryTicks > 0) {
             super.travel(Vec3.ZERO);
             return;
         }
-        if (riderSideDodging) {
+        if (isRiderSideDodging()) {
             super.travel(Vec3.ZERO);
+            riderGroundNudge.applyTravelMotion();
             return;
         }
         if (riderSideDodgeRecoveryTicks > 0) {
@@ -2015,9 +2070,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public boolean isGroundMobilityActive() {
-        return riderBackDashing
+        return isRiderBackDashing()
                 || riderBackDashRecoveryTicks > 0
-                || riderSideDodging
+                || isRiderSideDodging()
                 || riderSideDodgeRecoveryTicks > 0;
     }
 
@@ -2073,9 +2128,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         float yawRad = (float) Math.toRadians(this.getYRot());
         double rightX = Math.cos(yawRad);
         double rightZ = Math.sin(yawRad);
-        double dragScale = 1.0D - Math.pow(RIDER_SIDE_DODGE_HORIZONTAL_DRAG, RIDER_SIDE_DODGE_DURATION_TICKS);
-        double perTickSpeed = RIDER_SIDE_DODGE_DISTANCE_BLOCKS
-                * (1.0D - RIDER_SIDE_DODGE_HORIZONTAL_DRAG) / dragScale;
+        double perTickSpeed = RIDER_SIDE_DODGE_DISTANCE_BLOCKS / RIDER_SIDE_DODGE_DURATION_TICKS;
 
         boolean isLeft = this.getRandom().nextBoolean();
         if (threat != null) {
@@ -2117,13 +2170,17 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
         Vec3 forward = getRiderDashForwardVector();
         Vec3 backward = new Vec3(-forward.x, 0.0D, -forward.z).normalize();
-        Vec3 launch = new Vec3(backward.x * RIDER_BACK_DASH_SPEED, 0.0D, backward.z * RIDER_BACK_DASH_SPEED);
+        double perTickSpeed = DragonMotionMath.speedForIntegratedDistance(
+                RIDER_BACK_DASH_DISTANCE_BLOCKS,
+                RIDER_BACK_DASH_HORIZONTAL_DRAG,
+                RIDER_BACK_DASH_DURATION_TICKS
+        );
+        Vec3 launch = new Vec3(backward.x * perTickSpeed, 0.0D, backward.z * perTickSpeed);
         beginRiderBackDash(launch);
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
         aiGroundMobilityCooldownTicks = 26;
         triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, "dash_backwards");
         playBackwardDashSound();
-        scheduleBackwardDashSpikes();
         return true;
     }
 
@@ -2154,27 +2211,62 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         return new Vec3(-Mth.sin(yawRad), 0.0D, Mth.cos(yawRad)).normalize();
     }
 
+    private void setRiderNudgeState(int ticks, Vec3 velocity, double horizontalDrag) {
+        this.entityData.set(DATA_RIDER_NUDGE_TICKS, Math.max(1, ticks));
+        this.entityData.set(DATA_RIDER_NUDGE_X, (float) velocity.x);
+        this.entityData.set(DATA_RIDER_NUDGE_Z, (float) velocity.z);
+        this.entityData.set(DATA_RIDER_NUDGE_DRAG, (float) horizontalDrag);
+    }
+
+    private Vec3 getRiderNudgeVelocity() {
+        return new Vec3(
+                this.entityData.get(DATA_RIDER_NUDGE_X),
+                0.0D,
+                this.entityData.get(DATA_RIDER_NUDGE_Z)
+        );
+    }
+
+    private void setRiderNudgeVelocity(Vec3 velocity) {
+        this.entityData.set(DATA_RIDER_NUDGE_X, (float) velocity.x);
+        this.entityData.set(DATA_RIDER_NUDGE_Z, (float) velocity.z);
+    }
+
+    private void clearRiderNudgeState() {
+        this.entityData.set(DATA_RIDER_NUDGE_TICKS, 0);
+        this.entityData.set(DATA_RIDER_NUDGE_X, 0.0F);
+        this.entityData.set(DATA_RIDER_NUDGE_Z, 0.0F);
+        this.entityData.set(DATA_RIDER_NUDGE_DRAG, 1.0F);
+        this.entityData.set(DATA_RIDER_NUDGE_MODE, RIDER_NUDGE_NONE);
+    }
+
+    private boolean isRiderForwardDashing() {
+        return this.entityData.get(DATA_RIDER_NUDGE_MODE) == RIDER_NUDGE_FORWARD_DASH;
+    }
+
+    private boolean isRiderBackDashing() {
+        return this.entityData.get(DATA_RIDER_NUDGE_MODE) == RIDER_NUDGE_BACK_DASH;
+    }
+
+    private boolean isRiderSideDodging() {
+        return this.entityData.get(DATA_RIDER_NUDGE_MODE) == RIDER_NUDGE_SIDE_DODGE;
+    }
+
     private void beginRiderBackDash(Vec3 vec) {
         blockTakeoffInput(RIDER_BACK_DASH_DURATION_TICKS + RIDER_BACK_DASH_RECOVERY_TICKS);
-        this.riderForwardDashMotion.clear();
+        this.riderGroundNudge.cancelActive();
         this.riderForwardDashDamageApplied = false;
         this.riderBackDashRecoveryTicks = 0;
-        this.riderSideDodgeMotion.clear();
         this.riderSideDodgeVec = Vec3.ZERO;
         this.riderSideDodgeRecoveryTicks = 0;
         this.riderBackDashSpikeDelayTicks = RIDER_BACK_DASH_SPIKE_DELAY_TICKS;
-        this.riderBackDashMotion.start(vec, new DragonDashAndDodgeComponent.MotionConfig(
+        if (this.riderGroundNudge.startDash(
+                vec,
                 RIDER_BACK_DASH_DURATION_TICKS,
                 0,
-                RIDER_BACK_DASH_HORIZONTAL_DRAG,
-                RIDER_BACK_DASH_VERTICAL_DRAG,
-                0.90D,
-                true
-        ));
-    }
-
-    private void scheduleBackwardDashSpikes() {
-        this.riderBackDashSpikeDelayTicks = RIDER_BACK_DASH_SPIKE_DELAY_TICKS;
+                RIDER_BACK_DASH_HORIZONTAL_DRAG
+        )) {
+            this.entityData.set(DATA_RIDER_NUDGE_MODE, RIDER_NUDGE_BACK_DASH);
+        }
     }
 
     private void tickBackwardDashSpikes() {
@@ -2183,14 +2275,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
         if (--riderBackDashSpikeDelayTicks == 0) {
             fireBackwardDashSpikes();
-        }
-    }
-
-    private void handleRiderBackDashMovement() {
-        riderBackDashMotion.tickMovement();
-        if (!riderBackDashMotion.isActive()) {
-            riderBackDashVec = riderBackDashMotion.getLastVelocity();
-            riderBackDashRecoveryTicks = RIDER_BACK_DASH_RECOVERY_TICKS;
         }
     }
 
@@ -2216,29 +2300,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     private void beginRiderSideDodge(Vec3 vec) {
         blockTakeoffInput(RIDER_SIDE_DODGE_DURATION_TICKS + RIDER_SIDE_DODGE_RECOVERY_TICKS);
-        this.riderForwardDashMotion.clear();
+        this.riderGroundNudge.cancelActive();
         this.riderForwardDashDamageApplied = false;
-        this.riderBackDashMotion.clear();
         this.riderBackDashRecoveryTicks = 0;
         this.riderBackDashVec = Vec3.ZERO;
         this.riderBackDashSpikeDelayTicks = 0;
         this.riderSideDodgeRecoveryTicks = 0;
-        this.riderSideDodgeMotion.start(vec, new DragonDashAndDodgeComponent.MotionConfig(
-                RIDER_SIDE_DODGE_DURATION_TICKS,
-                0,
-                RIDER_SIDE_DODGE_HORIZONTAL_DRAG,
-                RIDER_SIDE_DODGE_VERTICAL_DRAG,
-                0.88D,
-                true
-        ));
-    }
-
-    private void handleRiderSideDodgeMovement() {
-        riderSideDodgeMotion.tickMovement();
-        if (!riderSideDodgeMotion.isActive()) {
-            riderSideDodgeVec = riderSideDodgeMotion.getLastVelocity();
-            riderSideDodgeRecoveryTicks = RIDER_SIDE_DODGE_RECOVERY_TICKS;
-        }
+        this.riderGroundNudge.startDodge(vec, RIDER_SIDE_DODGE_DURATION_TICKS);
     }
 
     private void handleRiderSideDodgeRecoveryMovement() {
@@ -2263,41 +2331,31 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     private void beginRiderForwardDash(Vec3 vec) {
         blockTakeoffInput(RIDER_FORWARD_DASH_DURATION_TICKS);
-        this.riderForwardDashMotion.start(vec, new DragonDashAndDodgeComponent.MotionConfig(
+        this.riderGroundNudge.startDash(
+                vec,
                 RIDER_FORWARD_DASH_DURATION_TICKS,
                 0,
-                RIDER_FORWARD_DASH_HORIZONTAL_DRAG,
-                RIDER_FORWARD_DASH_VERTICAL_DRAG,
-                0.90D,
-                true
-        ));
+                RIDER_FORWARD_DASH_HORIZONTAL_DRAG
+        );
         this.riderForwardDashDamageApplied = false;
 
-        this.riderBackDashMotion.clear();
         this.riderBackDashRecoveryTicks = 0;
         this.riderBackDashVec = Vec3.ZERO;
         this.riderBackDashSpikeDelayTicks = 0;
-        this.riderSideDodgeMotion.clear();
         this.riderSideDodgeRecoveryTicks = 0;
         this.riderSideDodgeVec = Vec3.ZERO;
     }
 
     private void clearGroundMobilityState() {
-        this.riderForwardDashMotion.clear();
+        this.riderGroundNudge.cancelActive();
         this.riderForwardDashDamageApplied = false;
 
-        this.riderBackDashMotion.clear();
         this.riderBackDashRecoveryTicks = 0;
         this.riderBackDashVec = Vec3.ZERO;
         this.riderBackDashSpikeDelayTicks = 0;
 
-        this.riderSideDodgeMotion.clear();
         this.riderSideDodgeRecoveryTicks = 0;
         this.riderSideDodgeVec = Vec3.ZERO;
-    }
-
-    private void handleRiderForwardDashMovement() {
-        riderForwardDashMotion.tickMovement();
     }
 
     private double getGroundBurstVerticalVelocity() {
@@ -2311,7 +2369,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void tickRiderForwardDashDamage() {
-        if (riderForwardDashDamageApplied || riderForwardDashMotion.getElapsedTicks() < RIDER_FORWARD_DASH_DAMAGE_TICK
+        if (riderForwardDashDamageApplied || riderGroundNudge.getElapsedTicks() < RIDER_FORWARD_DASH_DAMAGE_TICK
                 || level().isClientSide || !this.isVehicle()) {
             return;
         }
@@ -2497,10 +2555,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 && !isInWaterOrBubble()
                 && !areRiderControlsLocked()
                 && !isGroundMobilityActive()
-                && !riderForwardDashing
-                && !riderBackDashing
+                && !isRiderForwardDashing()
+                && !isRiderBackDashing()
                 && riderBackDashRecoveryTicks <= 0
-                && !riderSideDodging
+                && !isRiderSideDodging()
                 && riderSideDodgeRecoveryTicks <= 0;
     }
 
@@ -2519,10 +2577,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 && !isInWaterOrBubble()
                 && !areRiderControlsLocked()
                 && !isGroundMobilityActive()
-                && !riderForwardDashing
-                && !riderBackDashing
+                && !isRiderForwardDashing()
+                && !isRiderBackDashing()
                 && riderBackDashRecoveryTicks <= 0
-                && !riderSideDodging
+                && !isRiderSideDodging()
                 && riderSideDodgeRecoveryTicks <= 0
                 && this.entityData.get(DATA_RIDER_FORWARD) > 0.1f
                 && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
@@ -2559,10 +2617,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 && activeAbility.getAbilityType() != ModAbilities.VOLITANS_POISON_BALL;
         return isBurrowing()
                 || takeoffInputBlockTicks > 0
-                || riderForwardDashing
-                || riderBackDashing
+                || isRiderForwardDashing()
+                || isRiderBackDashing()
                 || riderBackDashRecoveryTicks > 0
-                || riderSideDodging
+                || isRiderSideDodging()
                 || riderSideDodgeRecoveryTicks > 0
                 || areRiderControlsLocked()
                 || isInSitTransition()

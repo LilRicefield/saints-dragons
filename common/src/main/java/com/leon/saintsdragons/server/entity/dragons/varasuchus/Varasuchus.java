@@ -26,7 +26,8 @@ import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
-import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
+import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
+import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusTailguardAbility;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -153,6 +154,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final EntityDataAccessor<Boolean> DATA_PHASE_TWO = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_WILD_RIDE_ACTIVE = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_LEAPING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_GROUND_DASH_TICKS = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_DASH_X = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_DASH_Z = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_DASH_DRAG = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.INT);
@@ -174,7 +179,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.5F;
     private static final double LEAP_HORIZONTAL_DRAG = 0.92D;
-    private static final double LEAP_VERTICAL_DRAG = 0.98D;
     private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
     private static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;
     private static final int MIN_WILD_TAME_TICKS = 60;
@@ -224,8 +228,54 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final ScreenShakeComponent screenShakeComponent;
     private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int phaseTwoLingerTicks = 0;
-    private final DragonDashAndDodgeComponent groundDash =
-            new DragonDashAndDodgeComponent(this, active -> this.entityData.set(DATA_LEAPING, active));
+    private final DragonForwardMovementComponent groundDash = new DragonForwardMovementComponent(
+            this,
+            new DragonForwardMovementComponent.StateAccess() {
+                @Override
+                public void start(int ticks, Vec3 velocity, boolean dashing, boolean dodging, double horizontalDrag) {
+                    entityData.set(DATA_GROUND_DASH_TICKS, Math.max(1, ticks));
+                    entityData.set(DATA_GROUND_DASH_X, (float) velocity.x);
+                    entityData.set(DATA_GROUND_DASH_Z, (float) velocity.z);
+                    entityData.set(DATA_GROUND_DASH_DRAG, (float) horizontalDrag);
+                    entityData.set(DATA_LEAPING, dashing);
+                }
+
+                @Override
+                public int ticks() {
+                    return entityData.get(DATA_GROUND_DASH_TICKS);
+                }
+
+                @Override
+                public void setTicks(int ticks) {
+                    entityData.set(DATA_GROUND_DASH_TICKS, Math.max(0, ticks));
+                }
+
+                @Override
+                public Vec3 velocity() {
+                    return new Vec3(entityData.get(DATA_GROUND_DASH_X), 0.0D, entityData.get(DATA_GROUND_DASH_Z));
+                }
+
+                @Override
+                public void setVelocity(Vec3 velocity) {
+                    entityData.set(DATA_GROUND_DASH_X, (float) velocity.x);
+                    entityData.set(DATA_GROUND_DASH_Z, (float) velocity.z);
+                }
+
+                @Override
+                public double horizontalDrag() {
+                    return entityData.get(DATA_GROUND_DASH_DRAG);
+                }
+
+                @Override
+                public void clear() {
+                    entityData.set(DATA_GROUND_DASH_TICKS, 0);
+                    entityData.set(DATA_GROUND_DASH_X, 0.0F);
+                    entityData.set(DATA_GROUND_DASH_Z, 0.0F);
+                    entityData.set(DATA_GROUND_DASH_DRAG, 1.0F);
+                    entityData.set(DATA_LEAPING, false);
+                }
+            }
+    );
     private boolean leapDamageApplied = false;
     private boolean lastDashWasRight = false;
     private boolean wildRideActive = false;
@@ -399,9 +449,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         final int LEAP_COOLDOWN = phaseTwo
                 ? 38
                 : 60;
-        final double LEAP_DISTANCE = 32;
-        Vec3 forward = DragonDashAndDodgeComponent.horizontalForward(this.getYRot());
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
+        final double LEAP_DISTANCE = 26.0D;
+        Vec3 forward = DragonMotionMath.horizontalForward(this.getYRot());
+        double perTickSpeed = DragonMotionMath.speedForIntegratedDistance(
                 LEAP_DISTANCE,
                 LEAP_HORIZONTAL_DRAG,
                 LEAP_DURATION
@@ -411,15 +461,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
         Vec3 leapVector = forward.scale(perTickSpeed);
 
-        DragonDashAndDodgeComponent.MotionConfig dashConfig = new DragonDashAndDodgeComponent.MotionConfig(
+        if (!groundDash.startDash(
+                leapVector,
                 LEAP_DURATION,
                 LEAP_COOLDOWN,
-                LEAP_HORIZONTAL_DRAG,
-                LEAP_VERTICAL_DRAG,
-                0.90D,
-                true
-        );
-        if (!groundDash.start(leapVector, dashConfig)) {
+                LEAP_HORIZONTAL_DRAG
+        )) {
             return;
         }
         leapDamageApplied = false;
@@ -507,6 +554,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.entityData.define(DATA_PHASE_TWO, false);
         this.entityData.define(DATA_WILD_RIDE_ACTIVE, false);
         this.entityData.define(DATA_LEAPING, false);
+        this.entityData.define(DATA_GROUND_DASH_TICKS, 0);
+        this.entityData.define(DATA_GROUND_DASH_X, 0.0F);
+        this.entityData.define(DATA_GROUND_DASH_Z, 0.0F);
+        this.entityData.define(DATA_GROUND_DASH_DRAG, 1.0F);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
@@ -675,9 +726,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         updateSittingProgress();
         tickFeedingCooldown();
 
-        if (groundDash.isActive()) {
-            groundDash.tickMovement();
-        }
         if (level().isClientSide && groundDash.getCooldownTicks() > 0) {
             groundDash.tickCooldown();
         }
@@ -731,6 +779,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public void travel(@NotNull Vec3 motion) {
         if (isGroundDashing()) {
             super.travel(Vec3.ZERO);
+            groundDash.applyTravelMotion();
             return;
         }
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isWildRideActive()) {

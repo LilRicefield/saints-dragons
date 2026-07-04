@@ -9,7 +9,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
-import com.leon.saintsdragons.server.entity.component.DragonDashAndDodgeComponent;
+import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.controller.atroxiia.AtroxiiaRiderController;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaInteractionHandler;
@@ -395,23 +395,22 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
                 animationHandler::triggerSitUpAnimation);
     }
 
-    public boolean beginPreciseStrikeNudge(int durationTicks, double distanceBlocks) {
-        double perTickSpeed = DragonDashAndDodgeComponent.speedForIntegratedDistance(
+    public void beginPreciseStrikeNudge(int durationTicks, double distanceBlocks) {
+        double perTickSpeed = DragonMotionMath.speedForIntegratedDistance(
                 distanceBlocks,
                 PRECISE_STRIKE_NUDGE_DRAG,
                 durationTicks
         );
         if (perTickSpeed <= 0.0D) {
-            return false;
+            return;
         }
-        Vec3 nudgeVector = DragonDashAndDodgeComponent.horizontalForward(getYRot()).scale(perTickSpeed);
+        Vec3 nudgeVector = DragonMotionMath.horizontalForward(getYRot()).scale(perTickSpeed);
         this.entityData.set(DATA_PRECISE_STRIKE_NUDGE_X, (float) nudgeVector.x);
         this.entityData.set(DATA_PRECISE_STRIKE_NUDGE_Z, (float) nudgeVector.z);
         this.entityData.set(DATA_PRECISE_STRIKE_NUDGE_TICKS, Math.max(1, durationTicks));
         setDeltaMovement(getDeltaMovement().add(nudgeVector.x, 0.0D, nudgeVector.z));
         hasImpulse = true;
         hurtMarked = true;
-        return true;
     }
 
     private void tickPreciseStrikeNudge() {
