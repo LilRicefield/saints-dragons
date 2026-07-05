@@ -20,7 +20,11 @@ public class LatcherBiteGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity target = this.latcher.getTarget();
-        return target != null && target.isAlive();
+        return target != null
+                && target.isAlive()
+                && this.latcher.canStartCombatAttack()
+                && isInBiteRange(target)
+                && this.latcher.tryClaimCombatAttack();
     }
 
     @Override
@@ -30,6 +34,7 @@ public class LatcherBiteGoal extends Goal {
 
     @Override
     public void stop() {
+        this.latcher.releaseCombatAttack();
         this.attackTick = -1;
         this.cooldown = 0;
     }
@@ -48,7 +53,9 @@ public class LatcherBiteGoal extends Goal {
         if (this.attackTick >= 0) {
             this.attackTick++;
             if (this.attackTick == DAMAGE_TICK && isInBiteRange(target)) {
-                this.latcher.doHurtTarget(target);
+                if (this.latcher.doHurtTarget(target)) {
+                    this.latcher.requestCombatRetreat();
+                }
             }
             if (this.attackTick >= ATTACK_INTERVAL) {
                 this.attackTick = -1;

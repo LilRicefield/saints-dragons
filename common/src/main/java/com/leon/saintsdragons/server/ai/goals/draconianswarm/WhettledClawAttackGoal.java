@@ -22,7 +22,12 @@ public class WhettledClawAttackGoal extends Goal {
     @Override
     public boolean canUse() {
         LivingEntity target = this.whettled.getTarget();
-        return !this.whettled.isSwooping() && target != null && target.isAlive();
+        return this.whettled.canStartCombatAttack()
+                && !this.whettled.isSwooping()
+                && target != null
+                && target.isAlive()
+                && isInRange(target)
+                && this.whettled.tryClaimCombatAttack();
     }
 
     @Override
@@ -32,6 +37,7 @@ public class WhettledClawAttackGoal extends Goal {
 
     @Override
     public void stop() {
+        this.whettled.releaseCombatAttack();
         this.attackTick = -1;
         this.cooldown = 0;
     }
@@ -54,8 +60,12 @@ public class WhettledClawAttackGoal extends Goal {
                         entity -> entity.isAlive()
                                 && entity != this.whettled
                                 && !(entity instanceof AbstractDraconianSwarmEntity));
+                boolean hit = false;
                 for (LivingEntity victim : victims) {
-                    this.whettled.doHurtTarget(victim);
+                    hit |= this.whettled.doHurtTarget(victim);
+                }
+                if (hit) {
+                    this.whettled.requestCombatRetreat();
                 }
             }
             if (this.attackTick >= ATTACK_INTERVAL) {

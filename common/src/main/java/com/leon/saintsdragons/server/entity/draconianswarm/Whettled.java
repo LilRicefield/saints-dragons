@@ -39,25 +39,35 @@ public class Whettled extends AbstractDraconianSwarmEntity implements SwoopingSw
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 16.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
-                .add(Attributes.FOLLOW_RANGE, 28.0D)
+                .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.ATTACK_DAMAGE, 4.0D);
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new DraconianSwarmSwoopAttackGoal<>(this, 0.72D));
+        this.goalSelector.addGoal(1, new DraconianSwarmSwoopAttackGoal<>(this, 0.72D, 0, 55, 1));
         this.goalSelector.addGoal(2, new WhettledClawAttackGoal(this));
     }
 
     @Override
     protected double getWanderFlightSpeed() {
-        return 0.24D;
+        return 0.33D;
     }
 
     @Override
     protected double getChaseFlightSpeed() {
-        return 0.38D;
+        return 0.53D;
+    }
+
+    @Override
+    public CombatStyle getCombatStyle() {
+        return CombatStyle.PRECISE;
+    }
+
+    @Override
+    public double getCombatRetreatDistance() {
+        return 7.0D;
     }
 
     @Override

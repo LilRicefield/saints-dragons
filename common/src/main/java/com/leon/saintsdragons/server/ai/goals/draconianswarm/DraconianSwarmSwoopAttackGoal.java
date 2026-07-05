@@ -16,25 +16,32 @@ public class DraconianSwarmSwoopAttackGoal<T extends AbstractDraconianSwarmEntit
     private static final double PASS_THROUGH_DISTANCE = 5.0D;
     private static final double ANIMATION_START_FORWARD_SPEED = 0.22D;
     private static final int MAX_SWOOP_TICKS = 24;
-    private static final int COOLDOWN_TICKS = 70;
-
     private final T swarm;
     private final double swoopSpeed;
+    private final int cooldownTicks;
+    private final int activationChance;
     private Vec3 destination;
     private Vec3 attackDirection = Vec3.ZERO;
     private int swoopTicks;
-    private int cooldown = 30;
+    private int cooldown;
     private boolean animationTriggered;
     private boolean hitTarget;
 
-    public DraconianSwarmSwoopAttackGoal(T swarm, double swoopSpeed) {
+    public DraconianSwarmSwoopAttackGoal(T swarm, double swoopSpeed, int initialCooldown,
+                                         int cooldownTicks, int activationChance) {
         this.swarm = swarm;
         this.swoopSpeed = swoopSpeed;
+        this.cooldown = initialCooldown;
+        this.cooldownTicks = cooldownTicks;
+        this.activationChance = Math.max(1, activationChance);
         setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
     @Override
     public boolean canUse() {
+        if (!this.swarm.canStartCombatAttack()) {
+            return false;
+        }
         if (this.cooldown > 0) {
             this.cooldown--;
             return false;
@@ -46,7 +53,8 @@ public class DraconianSwarmSwoopAttackGoal<T extends AbstractDraconianSwarmEntit
         double distanceSq = this.swarm.distanceToSqr(target);
         return distanceSq >= MIN_START_DISTANCE_SQ
                 && distanceSq <= MAX_START_DISTANCE_SQ
-                && this.swarm.getRandom().nextInt(12) == 0;
+                && this.swarm.getRandom().nextInt(this.activationChance) == 0
+                && this.swarm.tryClaimCombatAttack();
     }
 
     @Override
@@ -125,20 +133,10 @@ public class DraconianSwarmSwoopAttackGoal<T extends AbstractDraconianSwarmEntit
     @Override
     public void stop() {
         this.swarm.setSwooping(false);
-        LivingEntity target = this.swarm.getTarget();
-        if (target != null && target.isAlive()) {
-            Vec3 velocity = target.getDeltaMovement();
-            Vec3 chaseTarget = target.position().add(
-                    velocity.x * 3.0D,
-                    target.getBbHeight() * 0.55D + velocity.y,
-                    velocity.z * 3.0D);
-            this.swarm.getSwarmFlightController().setDirectWaypoint(chaseTarget, this.swarm.getChaseSpeed());
-        } else {
-            this.swarm.getSwarmFlightController().clearWaypoint();
-        }
+        this.swarm.requestCombatRetreat();
         this.destination = null;
         this.attackDirection = Vec3.ZERO;
-        this.cooldown = COOLDOWN_TICKS;
+        this.cooldown = this.cooldownTicks;
     }
 
     private boolean hasPassedDestination() {

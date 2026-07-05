@@ -35,25 +35,45 @@ public class Winged extends AbstractDraconianSwarmEntity implements SwoopingSwar
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 8.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.50D)
-                .add(Attributes.FOLLOW_RANGE, 28.0D)
+                .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.ATTACK_DAMAGE, 1.5D);
     }
 
     @Override
     protected void registerGoals() {
         super.registerGoals();
-        this.goalSelector.addGoal(1, new DraconianSwarmSwoopAttackGoal<>(this, 0.82D));
+        this.goalSelector.addGoal(1, new DraconianSwarmSwoopAttackGoal<>(this, 0.82D, 30, 70, 12));
         this.goalSelector.addGoal(2, new WingedPullAttackGoal(this));
     }
 
     @Override
     protected double getWanderFlightSpeed() {
-        return 0.30D;
+        return 0.38D;
     }
 
     @Override
     protected double getChaseFlightSpeed() {
-        return 0.55;
+        return 0.68D;
+    }
+
+    @Override
+    public double getCombatOrbitRadius() {
+        return 8.0D;
+    }
+
+    @Override
+    public double getCombatOrbitHeight() {
+        return 3.0D;
+    }
+
+    @Override
+    public int getOrbitDurationTicks() {
+        return 25 + getRandom().nextInt(25);
+    }
+
+    @Override
+    public double getCombatRetreatDistance() {
+        return 9.0D;
     }
 
     @Override

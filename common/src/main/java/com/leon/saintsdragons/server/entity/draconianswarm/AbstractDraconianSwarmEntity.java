@@ -1,7 +1,8 @@
 package com.leon.saintsdragons.server.entity.draconianswarm;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmChaseTargetGoal;
+import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCombatMovementGoal;
+import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCoordinator;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmFloatWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightMoveControl;
@@ -47,6 +48,9 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     private float prevTailDragYawDeg;
     private float tailDragYawDeg;
     private boolean deathAnimationStarted;
+    private boolean combatAttackWindow;
+    private boolean combatRetreatRequested;
+    private double combatRetreatDistance;
 
     protected AbstractDraconianSwarmEntity(EntityType<? extends AbstractDraconianSwarmEntity> entityType, Level level) {
         super(entityType, level);
@@ -64,14 +68,15 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(3, new DraconianSwarmChaseTargetGoal(this, getChaseFlightSpeed()));
+        this.goalSelector.addGoal(3, new DraconianSwarmCombatMovementGoal(this));
         this.goalSelector.addGoal(7, new DraconianSwarmFloatWanderGoal(this, getWanderFlightSpeed()));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, this::canTargetFromSwarm));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(
+                this, LivingEntity.class, 10, true, false, this::canTargetFromSwarm));
     }
 
     @Override
@@ -145,6 +150,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         super.die(source);
         if (!this.deathAnimationStarted) {
             this.deathAnimationStarted = true;
+            releaseCombatAttack();
             playDeathAnimation();
             this.swarmFlightController.clearWaypoint();
             setDeltaMovement(Vec3.ZERO);
@@ -180,6 +186,68 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         return getChaseFlightSpeed();
     }
 
+    public CombatStyle getCombatStyle() {
+        return CombatStyle.ORBIT_THEN_ATTACK;
+    }
+
+    public double getCombatOrbitRadius() {
+        return 6.0D;
+    }
+
+    public double getCombatOrbitHeight() {
+        return 1.5D;
+    }
+
+    public int getOrbitDurationTicks() {
+        return 35 + getRandom().nextInt(25);
+    }
+
+    public double getOrbitSpeed() {
+        return getChaseSpeed() * 0.85D;
+    }
+
+    public double getRetreatSpeed() {
+        return getChaseSpeed() * 1.1D;
+    }
+
+    public double getCombatRetreatDistance() {
+        return 8.0D;
+    }
+
+    public boolean canStartCombatAttack() {
+        return this.combatAttackWindow;
+    }
+
+    public boolean tryClaimCombatAttack() {
+        LivingEntity target = getTarget();
+        return this.combatAttackWindow
+                && target != null
+                && DraconianSwarmCoordinator.tryClaimAttack(this, target);
+    }
+
+    public void releaseCombatAttack() {
+        DraconianSwarmCoordinator.releaseAttack(this);
+    }
+
+    public void setCombatAttackWindow(boolean attackWindow) {
+        this.combatAttackWindow = attackWindow;
+    }
+
+    public void requestCombatRetreat() {
+        releaseCombatAttack();
+        this.combatRetreatRequested = true;
+        this.combatRetreatDistance = getCombatRetreatDistance();
+    }
+
+    public boolean hasCombatRetreatRequest() {
+        return this.combatRetreatRequested;
+    }
+
+    public double consumeCombatRetreatDistance() {
+        this.combatRetreatRequested = false;
+        return this.combatRetreatDistance > 0.0D ? this.combatRetreatDistance : getCombatRetreatDistance();
+    }
+
     protected float getBodyTurnSpeed() {
         return 0.35F;
     }
@@ -188,6 +256,16 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         return target.isAlive()
                 && !(target instanceof AbstractDraconianSwarmEntity)
                 && !(target instanceof Mob mob && mob.getType() == getType());
+    }
+
+    @Override
+    public boolean canAttack(@NotNull LivingEntity target) {
+        return !(target instanceof AbstractDraconianSwarmEntity) && super.canAttack(target);
+    }
+
+    public enum CombatStyle {
+        ORBIT_THEN_ATTACK,
+        PRECISE
     }
 
     @Override

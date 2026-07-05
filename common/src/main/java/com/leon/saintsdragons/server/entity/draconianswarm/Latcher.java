@@ -33,7 +33,7 @@ public class Latcher extends AbstractDraconianSwarmEntity {
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 12.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
-                .add(Attributes.FOLLOW_RANGE, 24.0D)
+                .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D);
     }
 
@@ -41,6 +41,36 @@ public class Latcher extends AbstractDraconianSwarmEntity {
     protected void registerGoals() {
         super.registerGoals();
         this.goalSelector.addGoal(2, new LatcherBiteGoal(this));
+    }
+
+    @Override
+    protected double getWanderFlightSpeed() {
+        return 0.30D;
+    }
+
+    @Override
+    protected double getChaseFlightSpeed() {
+        return 0.44D;
+    }
+
+    @Override
+    public double getCombatOrbitRadius() {
+        return 5.5D;
+    }
+
+    @Override
+    public double getCombatOrbitHeight() {
+        return 0.75D;
+    }
+
+    @Override
+    public int getOrbitDurationTicks() {
+        return 30 + getRandom().nextInt(30);
+    }
+
+    @Override
+    public double getCombatRetreatDistance() {
+        return 7.0D;
     }
 
     @Override
