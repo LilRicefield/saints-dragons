@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "saintsdragons:gui/draconiccodex/icons/armor_icon"
+    "layer0": "saintsdragons:item/armors/raevyx/raevyx_boots"
   }
 }

@@ -38,6 +38,10 @@ public class SaintsCreativeTab {
                                 output.accept(ModArmors.RAEVYX_ARMOR_CHESTPLATE.get());
                                 output.accept(ModArmors.RAEVYX_ARMOR_LEGGINGS.get());
                                 output.accept(ModArmors.RAEVYX_ARMOR_BOOTS.get());
+                                output.accept(ModArmors.IGNIVORUS_ARMOR_HELMET.get());
+                                output.accept(ModArmors.IGNIVORUS_ARMOR_CHESTPLATE.get());
+                                output.accept(ModArmors.IGNIVORUS_ARMOR_LEGGINGS.get());
+                                output.accept(ModArmors.IGNIVORUS_ARMOR_BOOTS.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
@@ -72,6 +76,8 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.WINGED_SPAWN_EGG.get());
                                 output.accept(ModItems.WHETTLED_SPAWN_EGG.get());
                                 output.accept(ModItems.DRACONIAN_SWARM_SPAWN_EGG.get());
+                                output.accept(ModItems.DRACONIAN_PELLUCIDA.get());
+                                output.accept(ModItems.DRACONIAN_NUCLEUS.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());
 
                                 })

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.registry;
 
+import com.leon.saintsdragons.common.item.IgnivorusArmorItem;
 import com.leon.saintsdragons.common.item.RaevyxArmorItem;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterials;
@@ -42,6 +43,26 @@ public final class ModArmors {
                             ArmorItem.Type.BOOTS,
                             new Item.Properties().rarity(Rarity.RARE)
                     ));
+
+    public static final Supplier<Item> IGNIVORUS_ARMOR_HELMET =
+            ModItems.REGISTER.register("ignivorus_armor_helmet",
+                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.HELMET,
+                            new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final Supplier<Item> IGNIVORUS_ARMOR_CHESTPLATE =
+            ModItems.REGISTER.register("ignivorus_armor_chestplate",
+                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.CHESTPLATE,
+                            new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final Supplier<Item> IGNIVORUS_ARMOR_LEGGINGS =
+            ModItems.REGISTER.register("ignivorus_armor_leggings",
+                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.LEGGINGS,
+                            new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final Supplier<Item> IGNIVORUS_ARMOR_BOOTS =
+            ModItems.REGISTER.register("ignivorus_armor_boots",
+                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.BOOTS,
+                            new Item.Properties().rarity(Rarity.RARE)));
 
     public static void init() {}
 }

@@ -153,6 +153,14 @@ public class ModItems {
                     ));
 
     // Block Items
+    public static final Supplier<Item> DRACONIAN_PELLUCIDA =
+            REGISTER.register("draconian_pellucida",
+                    () -> new BlockItem(ModBlocks.DRACONIAN_PELLUCIDA.get(), new Item.Properties()));
+
+    public static final Supplier<Item> DRACONIAN_NUCLEUS =
+            REGISTER.register("draconian_nucleus",
+                    () -> new BlockItem(ModBlocks.DRACONIAN_NUCLEUS.get(), new Item.Properties()));
+
     public static final Supplier<Item> RAEVYX_EGG =
             REGISTER.register("raevyx_egg",
                     () -> new BlockItem(ModBlocks.RAEVYX_EGG.get(),

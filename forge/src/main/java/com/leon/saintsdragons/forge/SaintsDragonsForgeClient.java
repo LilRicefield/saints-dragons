@@ -2,6 +2,12 @@ package com.leon.saintsdragons.forge;
 
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.ModBlocks;
+import com.leon.saintsdragons.common.registry.ModBlockEntities;
+import com.leon.saintsdragons.client.model.block.DraconianNucleusModel;
+import com.leon.saintsdragons.client.renderer.block.DraconianNucleusRenderer;
+import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -14,12 +20,20 @@ public final class SaintsDragonsForgeClient {
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         CommonClientModEvents.registerEntityRenderers(event::registerEntityRenderer);
+        event.registerBlockEntityRenderer(ModBlockEntities.DRACONIAN_NUCLEUS.get(), DraconianNucleusRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
+        event.registerLayerDefinition(DraconianNucleusModel.LAYER_LOCATION, DraconianNucleusModel::createBodyLayer);
     }
 
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             CommonClientModEvents.registerMenuScreens();
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.DRACONIAN_PELLUCIDA.get(), RenderType.translucent());
+            ItemBlockRenderTypes.setRenderLayer(ModBlocks.DRACONIAN_NUCLEUS.get(), RenderType.translucent());
         });
     }
 }

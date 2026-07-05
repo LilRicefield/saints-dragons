@@ -1,0 +1,64 @@
+{
+	"parent": "minecraft:block/block",
+	"format_version": "1.21.11",
+	"credit": "Made with Blockbench",
+	"texture_size": [48, 48],
+	"textures": {
+		"0": "saintsdragons:block/draconic_nucleus",
+		"particle": "saintsdragons:block/draconic_nucleus"
+	},
+	"elements": [
+		{
+			"from": [2, 2, 2],
+			"to": [14, 14, 14],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [4, 4, 8, 8], "texture": "#0"},
+				"east": {"uv": [0, 4, 4, 8], "texture": "#0"},
+				"south": {"uv": [12, 4, 16, 8], "texture": "#0"},
+				"west": {"uv": [8, 4, 12, 8], "texture": "#0"},
+				"up": {"uv": [8, 4, 4, 0], "texture": "#0"},
+				"down": {"uv": [12, 0, 8, 4], "texture": "#0"}
+			}
+		},
+		{
+			"from": [4, 4, 4],
+			"to": [12, 12, 12],
+			"rotation": {"angle": 0, "axis": "y", "origin": [8, 8, 8]},
+			"faces": {
+				"north": {"uv": [2.66667, 10.66667, 5.33333, 13.33333], "texture": "#0"},
+				"east": {"uv": [0, 10.66667, 2.66667, 13.33333], "texture": "#0"},
+				"south": {"uv": [8, 10.66667, 10.66667, 13.33333], "texture": "#0"},
+				"west": {"uv": [5.33333, 10.66667, 8, 13.33333], "texture": "#0"},
+				"up": {"uv": [5.33333, 10.66667, 2.66667, 8], "texture": "#0"},
+				"down": {"uv": [8, 8, 5.33333, 10.66667], "texture": "#0"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "root",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [
+				{
+					"name": "outerlayer",
+					"origin": [8, 8, 8],
+					"scope": 0,
+					"color": 0,
+					"children": [
+						0,
+						{
+							"name": "innerlayer",
+							"origin": [8, 8, 8],
+							"scope": 0,
+							"color": 0,
+							"children": [1]
+						}
+					]
+				}
+			]
+		}
+	]
+}

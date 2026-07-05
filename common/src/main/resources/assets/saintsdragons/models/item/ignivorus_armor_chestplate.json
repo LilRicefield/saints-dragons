@@ -1,0 +1,4 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": { "layer0": "saintsdragons:item/armors/ignivorus/ignivorus_chestplate" }
+}

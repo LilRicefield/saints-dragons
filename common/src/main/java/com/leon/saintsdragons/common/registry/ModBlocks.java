@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.block.CindervaneEggBlock;
 import com.leon.saintsdragons.common.block.VarasuchusEggBlock;
 import com.leon.saintsdragons.common.block.VolitansEggBlock;
 import com.leon.saintsdragons.common.block.StegonautEggBlock;
+import com.leon.saintsdragons.common.block.DraconianNucleusBlock;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -76,6 +77,25 @@ public class ModBlocks {
                             .sound(SoundType.METAL)
                             .noOcclusion()
                             .randomTicks()));
+
+    public static final Supplier<Block> DRACONIAN_PELLUCIDA =
+            REGISTER.register("draconian_pellucida",
+                    () -> new Block(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_BLACK)
+                            .strength(1.0F)
+                            .sound(SoundType.SLIME_BLOCK)
+                            .requiresCorrectToolForDrops()
+                            .noOcclusion()));
+
+    public static final Supplier<Block> DRACONIAN_NUCLEUS =
+            REGISTER.register("draconian_nucleus",
+                    () -> new DraconianNucleusBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_BLACK)
+                            .strength(3.0F, 6.0F)
+                            .sound(SoundType.SCULK_CATALYST)
+                            .requiresCorrectToolForDrops()
+                            .lightLevel(state -> 8)
+                            .noOcclusion()));
 
     public static void register() {
         REGISTER.register();
