@@ -41,9 +41,9 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int END_DUST_TICKS = 62;
     private static final double DUST_VIEW_DISTANCE = 128.0D;
     private static final double AI_STEER_BACK_RANGE = 6.0D;
-    private static final float RIDER_SURGE_SPEED = 1.8F;
-    private static final float RIDER_RECOVERY_END_SPEED = 0.18F;
-    private static final double AI_FORWARD_SPEED = 1.6D;
+    private static final float RIDER_SURGE_SPEED = 2.0F;
+    private static final float RIDER_RECOVERY_END_SPEED = 0.25F;
+    private static final double AI_FORWARD_SPEED = 0.9D;
     private static final double AI_RECOVERY_END_SPEED = AI_FORWARD_SPEED * (RIDER_RECOVERY_END_SPEED / RIDER_SURGE_SPEED);
     private static final float HIT_DAMAGE = 5.0F;
     private static final float SUPERCHARGED_HIT_DAMAGE = HIT_DAMAGE * 2.0F;
@@ -145,6 +145,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.STARTUP && wyvern.isVehicle()) {
             Vec3 current = wyvern.getDeltaMovement();
             wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
+            wyvern.setGroundRendVelocity(Vec3.ZERO);
             wyvern.setGroundRendTravelSpeed(0.0F);
             return;
         }
@@ -155,12 +156,12 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 wyvern.setGroundRendTravelSpeed(speed);
                 Vec3 current = wyvern.getDeltaMovement();
                 if (speed <= 0.0F) {
+                    wyvern.setGroundRendVelocity(Vec3.ZERO);
                     wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
                     return;
                 }
                 Vec3 forward = getForwardDir(wyvern).scale(speed);
-                wyvern.setDeltaMovement(forward.x, current.y, forward.z);
-                wyvern.hasImpulse = true;
+                wyvern.setGroundRendVelocity(forward);
                 applyGroundRendHits(wyvern, getForwardDir(wyvern));
                 if (shouldSpawnGroundRendTrailParticles()) {
                     wyvern.spawnGroundRendTrailParticles(getForwardDir(wyvern), speed);
@@ -191,12 +192,12 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 wyvern.setGroundRendTravelSpeed(speed);
                 Vec3 current = wyvern.getDeltaMovement();
                 if (speed <= 0.0F) {
+                    wyvern.setGroundRendVelocity(Vec3.ZERO);
                     wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
                     return;
                 }
                 Vec3 forward = getForwardDir(wyvern).scale(speed);
-                wyvern.setDeltaMovement(forward.x, current.y, forward.z);
-                wyvern.hasImpulse = true;
+                wyvern.setGroundRendVelocity(forward);
                 applyGroundRendHits(wyvern, getForwardDir(wyvern));
                 if (shouldSpawnGroundRendTrailParticles()) {
                     wyvern.spawnGroundRendTrailParticles(getForwardDir(wyvern), speed);

@@ -149,6 +149,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_DRAG = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_GROUND_RENDING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Float> DATA_GROUND_REND_X = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_GROUND_REND_Z = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
@@ -227,7 +229,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     private boolean lastDashWasRight = false;
     private final Map<Integer, Integer> dashHitCooldowns = new HashMap<>();
     private boolean groundRending = false;
-    private Vec3 groundRendVec = Vec3.ZERO;
     private float groundRendTravelSpeed = 0.0F;
     @Nullable
     private Vec3 groundRendLeftTrailAnchor = null;
@@ -578,6 +579,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.entityData.define(DATA_RIDER_NUDGE_DRAG, 1.0F);
         this.entityData.define(DATA_LAST_DASH_RIGHT, false);
         this.entityData.define(DATA_GROUND_RENDING, false);
+        this.entityData.define(DATA_GROUND_REND_X, 0.0F);
+        this.entityData.define(DATA_GROUND_REND_Z, 0.0F);
     }
 
     @Override
@@ -1115,15 +1118,39 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.groundRending = rending;
         this.entityData.set(DATA_GROUND_RENDING, rending);
         if (rending && !wasGroundRending) {
+            // Ground Rend owns continuous horizontal movement for its full animation.
+            dashDodgeNudge.cancelActive();
             clearGroundRendTrailAnchors();
         }
         if (!rending) {
-            this.groundRendVec = Vec3.ZERO;
+            dashDodgeNudge.cancelActive();
+            setGroundRendVelocity(Vec3.ZERO);
             this.groundRendTravelSpeed = 0.0F;
             clearGroundRendTrailAnchors();
         }
     }
-    public void setGroundRendVelocity(Vec3 vec) { this.groundRendVec = vec; }
+    public void setGroundRendVelocity(Vec3 vec) {
+        this.entityData.set(DATA_GROUND_REND_X, (float) vec.x);
+        this.entityData.set(DATA_GROUND_REND_Z, (float) vec.z);
+        if (!isGroundRending()) {
+            return;
+        }
+        if (vec.horizontalDistanceSqr() < 1.0E-6D) {
+            dashDodgeNudge.cancelActive();
+        } else if (dashDodgeNudge.isActive()) {
+            dashDodgeNudge.updateContinuous(vec, 3);
+        } else {
+            dashDodgeNudge.startContinuous(vec, 3);
+        }
+    }
+
+    private Vec3 getGroundRendVelocity() {
+        return new Vec3(
+                this.entityData.get(DATA_GROUND_REND_X),
+                0.0D,
+                this.entityData.get(DATA_GROUND_REND_Z)
+        );
+    }
     public void setGroundRendTravelSpeed(float speed) {
         this.groundRendTravelSpeed = Math.max(0.0F, speed);
     }
@@ -1498,9 +1525,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return;
         }
 
-        if (isGroundRending()) {
-            handleGroundRendMovement();
-        }
         if (isBeaming() || beamAimDir != null) {
             tickBeamLook();
         }
@@ -1996,23 +2020,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
     }
 
-    private void handleGroundRendMovement() {
-        Vec3 horizontal = this.isVehicle() && this.getControllingPassenger() instanceof Player
-                ? this.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D)
-                : new Vec3(groundRendVec.x, 0.0D, groundRendVec.z);
-
-        double yVel = this.getDeltaMovement().y;
-        if (!this.onGround()) {
-            yVel = Math.min((yVel - 0.24D) * 0.98D, -0.5D);
-            horizontal = horizontal.scale(0.9D);
-        } else {
-            yVel = Math.max(0.0D, yVel);
-        }
-
-        this.setDeltaMovement(horizontal.x, yVel, horizontal.z);
-        this.hasImpulse = true;
-    }
-
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (dashDodgeNudge.isActive()) {
@@ -2020,7 +2027,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
                 this.setSpeed(this.getRiddenSpeed(player));
                 super.travel(motion);
             }
-            dashDodgeNudge.applyTravelMotion();
+            if (isGroundRending()) {
+                dashDodgeNudge.applyContinuousTravelMotion();
+            } else {
+                dashDodgeNudge.applyTravelMotion();
+            }
             return;
         }
         if (isGroundRending()) {

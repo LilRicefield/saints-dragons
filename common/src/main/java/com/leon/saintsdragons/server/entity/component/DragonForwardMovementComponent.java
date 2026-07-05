@@ -22,6 +22,19 @@ public final class DragonForwardMovementComponent {
         start(velocity, durationTicks);
     }
 
+    public boolean startContinuous(Vec3 velocity, int durationTicks) {
+        return start(velocity, durationTicks, 0, false, false, 1.0D);
+    }
+
+    public void updateContinuous(Vec3 velocity, int durationTicks) {
+        if (!isActive()) {
+            return;
+        }
+        this.lastVelocity = velocity;
+        state.setVelocity(velocity);
+        state.setTicks(Math.max(state.ticks(), Math.max(1, durationTicks)));
+    }
+
     public boolean startDash(Vec3 velocity, int durationTicks, int cooldownTicks) {
         return startDash(velocity, durationTicks, cooldownTicks, 1.0D);
     }
@@ -124,6 +137,19 @@ public final class DragonForwardMovementComponent {
         } else {
             dragon.setDeltaMovement(nudge.x, currentMotion.y, nudge.z);
         }
+        dragon.hasImpulse = true;
+        dragon.hurtMarked = true;
+    }
+
+    public void applyContinuousTravelMotion() {
+        if (!isActive()) {
+            return;
+        }
+        Vec3 motion = state.velocity();
+        lastVelocity = motion;
+        moveInStepFriendlySlices(motion);
+        Vec3 current = dragon.getDeltaMovement();
+        dragon.setDeltaMovement(0.0D, current.y, 0.0D);
         dragon.hasImpulse = true;
         dragon.hurtMarked = true;
     }

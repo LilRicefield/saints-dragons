@@ -2,7 +2,9 @@ package com.leon.saintsdragons.server.ai.goals.raevyx;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -21,14 +23,13 @@ public class RaevyxGroundCombatGoal extends Goal {
     private final double goreRange = 4.5;
     private final double groundRendRange = 8.5;
     private final double groundRendMinRange = 3.4;
-    private final double chaseSpeed = 0.95;
+    private final double chaseSpeed = DragonAIMovementController.GROUND_SPRINT_SPEED;
     private int attackCooldown = 0;
     private int pathRecalcCooldown = 0;
+    private int pathFailureBackoff = 0;
     private double lastTargetX;
     private double lastTargetY;
     private double lastTargetZ;
-    private boolean hasUsedRoarOpener = false;
-    private int roarOpenerDelay = 0;
     private int beamCooldown = 0;
     private static final int BEAM_COOLDOWN_TICKS = 3600;
     private int groundRendCooldown = 0;
@@ -131,22 +132,22 @@ public class RaevyxGroundCombatGoal extends Goal {
         wyvern.getAIMovement().stop();
         wyvern.setAggressive(false);
         pathRecalcCooldown = 0;
+        pathFailureBackoff = 0;
         resetCombatPacing();
-        hasUsedRoarOpener = false;
-        roarOpenerDelay = 0;
     }
 
     @Override
     public void start() {
         wyvern.setAggressive(true);
         resetCombatPacing();
-        hasUsedRoarOpener = false;
-        roarOpenerDelay = wyvern.isSleepTransitioning() ? 30 : 8;
 
         LivingEntity target = wyvern.getTarget();
         if (target != null) {
             wyvern.getLookControl().setLookAt(target, 30.0F, 30.0F);
-            wyvern.getAIMovement().moveToGroundTarget(target, chaseSpeed, true);
+            if (!wyvern.getAIMovement().moveToGroundTarget(target, chaseSpeed, true)) {
+                wyvern.getAIMovement().setGroundIdle();
+                pathFailureBackoff = 20;
+            }
             rememberTargetPosition(target);
         }
     }
@@ -180,28 +181,6 @@ public class RaevyxGroundCombatGoal extends Goal {
                 return;
             }
             boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(target);
-            if (!biteOnlyPrey && !hasUsedRoarOpener) {
-                if (wyvern.isSleepTransitioning()) {
-                    roarOpenerDelay = Math.max(roarOpenerDelay, 8);
-                    updateChasePath(target);
-                    return;
-                }
-                if (roarOpenerDelay > 0) {
-                    roarOpenerDelay--;
-                    updateChasePath(target);
-                } else {
-                    if (!canUseAiAbility(ModAbilities.RAEVYX_ROAR, true)) {
-                        updateChasePath(target);
-                        return;
-                    }
-                    if (startAiAbility(ModAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
-                        hasUsedRoarOpener = true;
-                        attackCooldown = 40;
-                        postRoarGroundRendTicks = 40;
-                    }
-                }
-                return;
-            }
             double gap = getGapToTarget(target);
             boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
             boolean beamReady = beamCooldown <= 0;
@@ -209,6 +188,10 @@ public class RaevyxGroundCombatGoal extends Goal {
                 tickCombatPacing(target, gap, hasLineOfSight, beamReady);
             }
             if (!biteOnlyPrey && tryGroundRendPressure(target, gap, hasLineOfSight)) {
+                return;
+            }
+
+            if (!biteOnlyPrey && tryRoar(gap, hasLineOfSight)) {
                 return;
             }
 
@@ -229,6 +212,10 @@ public class RaevyxGroundCombatGoal extends Goal {
                     updateChasePath(target);
                 }
             } else {
+                if (attackCooldown > 0 || wyvern.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
+                    updateChasePath(target);
+                    return;
+                }
                 wyvern.getAIMovement().stop();
                 pathRecalcCooldown = 0;
                 tryAttack(target);
@@ -290,6 +277,9 @@ public class RaevyxGroundCombatGoal extends Goal {
     }
 
     private boolean tryDirectedBeam(LivingEntity target, boolean hasLineOfSight, boolean beamReady) {
+        if (RaevyxBeamAbility.isAtAiBeamMercyThreshold(target)) {
+            return false;
+        }
         if (!shouldTryBeam(getGapToTarget(target), hasLineOfSight, beamReady, isCurrentlyAttacking(), attackCooldown)) {
             return false;
         }
@@ -303,6 +293,23 @@ public class RaevyxGroundCombatGoal extends Goal {
         }
         attackCooldown = 60;
         beamCooldown = BEAM_COOLDOWN_TICKS;
+        return true;
+    }
+
+    private boolean tryRoar(double gap, boolean hasLineOfSight) {
+        if (attackCooldown > 0 || isCurrentlyAttacking() || !hasLineOfSight || gap > 18.0D) {
+            return false;
+        }
+        if (wyvern.getRandom().nextFloat() >= 0.045F || !canUseAiAbility(ModAbilities.RAEVYX_ROAR, true)) {
+            return false;
+        }
+        wyvern.getAIMovement().stop();
+        pathRecalcCooldown = 0;
+        if (!startAiAbility(ModAbilities.RAEVYX_ROAR, true, 24, 70, 80, 32)) {
+            return false;
+        }
+        attackCooldown = 24;
+        postRoarGroundRendTicks = 40;
         return true;
     }
 
@@ -516,33 +523,49 @@ public class RaevyxGroundCombatGoal extends Goal {
         if (wyvern.isInWaterOrBubble()) {
             return;
         }
-        if (--pathRecalcCooldown <= 0 || targetMovedSignificantly(target)) {
+
+        if (pathFailureBackoff > 0) {
+            pathFailureBackoff--;
+            updateGroundMoveState();
+            return;
+        }
+        if (pathRecalcCooldown > 0) {
+            pathRecalcCooldown--;
+        }
+
+        boolean targetMoved = targetMovedSignificantly(target);
+        boolean navigationIdle = wyvern.getAIMovement().hasArrived()
+                || !wyvern.getAIMovement().isPathing();
+        boolean shouldRepath = wyvern.getAIMovement().hasFailed()
+                || pathRecalcCooldown <= 0
+                || (targetMoved && navigationIdle);
+
+        if (shouldRepath) {
             rememberTargetPosition(target);
             double distance = wyvern.distanceTo(target);
-            pathRecalcCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
-            wyvern.getAIMovement().moveToGroundTarget(target, chaseSpeed, true);
+            int baseCooldown = Mth.clamp((int) (distance * 0.6D), 5, 20);
+            boolean started = wyvern.getAIMovement().moveToGroundTarget(target, chaseSpeed, true);
+            if (started) {
+                pathRecalcCooldown = baseCooldown;
+            } else {
+                wyvern.getAIMovement().setGroundIdle();
+                pathRecalcCooldown = Math.max(baseCooldown, 20);
+                pathFailureBackoff = 20 + wyvern.getRandom().nextInt(21);
+            }
+        }
+        updateGroundMoveState();
+    }
+
+    private void updateGroundMoveState() {
+        if (!wyvern.isFlying() && wyvern.onGround() && wyvern.getAIMovement().isPathing()) {
+            wyvern.getAIMovement().setGroundRun();
+        } else {
+            wyvern.getAIMovement().setGroundIdle();
         }
     }
 
     private void handleWaterCombat(LivingEntity target) {
         wyvern.getAIMovement().stop();
-
-        // Keep roar opener behavior in water too.
-        if (!hasUsedRoarOpener) {
-            if (wyvern.isSleepTransitioning()) {
-                roarOpenerDelay = Math.max(roarOpenerDelay, 8);
-            } else if (roarOpenerDelay > 0) {
-                roarOpenerDelay--;
-            } else {
-                if (!canUseAiAbility(ModAbilities.RAEVYX_ROAR, true)) {
-                    return;
-                }
-                if (startAiAbility(ModAbilities.RAEVYX_ROAR, true, 40, 80, 120, 40)) {
-                    hasUsedRoarOpener = true;
-                    attackCooldown = 40;
-                }
-            }
-        }
 
         boolean hasLineOfSight = wyvern.getSensing().hasLineOfSight(target);
         double gap = getGapToTarget(target);
@@ -571,7 +594,7 @@ public class RaevyxGroundCombatGoal extends Goal {
         wyvern.setDeltaMovement(nx, ny, nz);
         wyvern.getMoveControl().setWantedPosition(target.getX(), targetY, target.getZ(), 1.0D);
 
-        if (hasUsedRoarOpener && inAttackRange && hasLineOfSight) {
+        if (inAttackRange && hasLineOfSight) {
             tryAttack(target);
         }
     }

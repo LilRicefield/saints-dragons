@@ -19,6 +19,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
+    public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;
     private static final double AI_TARGET_HIT_RADIUS = 0.55D;
     private static final double RIDER_BEAM_RADIUS = 1.2D;
     private static final double AI_BEAM_RADIUS = 0.75D;
@@ -124,6 +125,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
                 interrupt();
                 return;
             }
+            if (isAtAiBeamMercyThreshold(wyvern.getTarget())) {
+                interrupt();
+                return;
+            }
         }
         BeamPath path = computeBeamPath(wyvern);
         if (path == null) {
@@ -218,7 +223,16 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
 
         var hitPos = hit.orElse(start);
-        target.hurt(resolveBeamDamageSource(wyvern, target), damage);
+        float mercyFloor = target.getMaxHealth() * AI_BEAM_MERCY_HEALTH_FRACTION;
+        float allowedDamage = Math.max(0.0F, target.getHealth() - mercyFloor);
+        if (allowedDamage <= 0.0F) {
+            interrupt();
+            return;
+        }
+        target.hurt(resolveBeamDamageSource(wyvern, target), Math.min(damage, allowedDamage));
+        if (isAtAiBeamMercyThreshold(target)) {
+            interrupt();
+        }
         var away = target.position().subtract(hitPos).normalize();
         target.push(away.x * 0.15, 0.08, away.z * 0.15);
     }
@@ -238,6 +252,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
 
         return true;
+    }
+
+    public static boolean isAtAiBeamMercyThreshold(LivingEntity target) {
+        return target != null
+                && target.getHealth() <= target.getMaxHealth() * AI_BEAM_MERCY_HEALTH_FRACTION;
     }
 
     private DamageSource resolveBeamDamageSource(Raevyx wyvern, LivingEntity target) {

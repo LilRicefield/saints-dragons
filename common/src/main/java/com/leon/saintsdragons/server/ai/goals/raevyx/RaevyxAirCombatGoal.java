@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -200,6 +201,7 @@ public class RaevyxAirCombatGoal extends Goal {
             }
             maintainBitePosition(target);
         } else if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)
+                && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target)
                 && distance >= BEAM_MIN_RANGE
                 && distance <= BEAM_MAX_RANGE
                 && hasLineOfSight
@@ -240,6 +242,7 @@ public class RaevyxAirCombatGoal extends Goal {
                 attackCooldown = 20;
             }
         } else if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)
+                && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target)
                 && distance >= BEAM_MIN_RANGE
                 && distance <= BEAM_MAX_RANGE
                 && beamCooldown <= 0) {
