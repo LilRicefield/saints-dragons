@@ -12,7 +12,6 @@ public class DraconianSwarmCombatMovementGoal extends Goal {
     private Vec3 retreatPoint;
     private int phaseTicks;
     private int waypointTicks;
-    private int focusedTicks;
 
     public DraconianSwarmCombatMovementGoal(AbstractDraconianSwarmEntity swarm) {
         this.swarm = swarm;
@@ -57,14 +56,6 @@ public class DraconianSwarmCombatMovementGoal extends Goal {
         }
 
         this.swarm.getLookControl().setLookAt(target, 100.0F, 100.0F);
-        if (this.phase != Phase.RETREAT && DraconianSwarmCoordinator.isPlayerFocusing(this.swarm, target)) {
-            if (++this.focusedTicks >= 4) {
-                this.focusedTicks = 0;
-                beginRetreat(this.swarm.getCombatRetreatDistance() + 3.0D);
-            }
-        } else {
-            this.focusedTicks = 0;
-        }
         if (this.swarm.hasCombatRetreatRequest()) {
             beginRetreat(this.swarm.consumeCombatRetreatDistance());
         }

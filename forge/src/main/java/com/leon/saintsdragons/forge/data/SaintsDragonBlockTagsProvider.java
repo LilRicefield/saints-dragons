@@ -22,8 +22,6 @@ public final class SaintsDragonBlockTagsProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
-        tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DRACONIAN_PELLUCIDA.get());
-        tag(net.minecraft.tags.BlockTags.MINEABLE_WITH_PICKAXE).add(ModBlocks.DRACONIAN_NUCLEUS.get());
         tag(ModTags.Blocks.CINDERVANE_EGGS).add(ModBlocks.CINDERVANE_EGG.get());
         tag(ModTags.Blocks.IGNIVORUS_EGGS).add(ModBlocks.IGNIVORUS_EGG.get());
         tag(ModTags.Blocks.RAEVYX_EGGS).add(ModBlocks.RAEVYX_EGG.get());

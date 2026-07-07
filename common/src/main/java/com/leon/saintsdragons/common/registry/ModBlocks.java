@@ -82,18 +82,16 @@ public class ModBlocks {
             REGISTER.register("draconian_pellucida",
                     () -> new Block(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_BLACK)
-                            .strength(1.0F)
+                            .strength(0.0F)
                             .sound(SoundType.SLIME_BLOCK)
-                            .requiresCorrectToolForDrops()
                             .noOcclusion()));
 
     public static final Supplier<Block> DRACONIAN_NUCLEUS =
             REGISTER.register("draconian_nucleus",
                     () -> new DraconianNucleusBlock(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_BLACK)
-                            .strength(3.0F, 6.0F)
-                            .sound(SoundType.SCULK_CATALYST)
-                            .requiresCorrectToolForDrops()
+                            .strength(0.5F)
+                            .sound(SoundType.SLIME_BLOCK)
                             .lightLevel(state -> 8)
                             .noOcclusion()));
 

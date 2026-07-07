@@ -52,6 +52,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
+import net.minecraft.world.entity.ai.goal.MoveTowardsRestrictionGoal;
 import net.minecraft.world.entity.ai.goal.OpenDoorGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.RandomStrollGoal;
@@ -254,6 +255,10 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final String DOWNED_BLEED_TICKS_TAG = "DownedBleedTicks";
     private static final String DOWNED_FINISH_HITS_TAG = "DownedFinishHits";
     private static final String DOWNED_REVIVE_PROGRESS_TAG = "DownedReviveProgress";
+    private static final String HOUSE_HOME_X_TAG = "HouseHomeX";
+    private static final String HOUSE_HOME_Y_TAG = "HouseHomeY";
+    private static final String HOUSE_HOME_Z_TAG = "HouseHomeZ";
+    private static final int HOUSE_ROAM_RADIUS = 16;
     private static final String TRESPASSER_IMPRESSION = "trespasser";
     private static final String RUDE_IMPRESSION = "rude";
     private static final String WARES_IMPRESSION = "wares";
@@ -300,6 +305,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private int downedAggroClearCooldown;
     private boolean finishingDownedDeath;
     @Nullable
+    private BlockPos houseHome;
+    @Nullable
     private BlockPos waterClutchWaterPos;
     @Nullable
     private String holdingDialogueExpressionTrigger;
@@ -343,6 +350,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         setTame(true);
         setOwnerUUID(player.getUUID());
         setCommand(CompanionCommand.FOLLOW.id);
+        clearHouseHome();
         this.setPersistenceRequired();
     }
 
@@ -484,6 +492,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         goalSelector.addGoal(4, IvySwimGoal.followOwner(this));
         goalSelector.addGoal(4, getCompanionController().createLadderClimbGoal());
         goalSelector.addGoal(5, getCompanionController().createFollowOwnerGoal());
+        goalSelector.addGoal(6, new MoveTowardsRestrictionGoal(this, 0.8D));
         goalSelector.addGoal(6, new RandomStrollGoal(this, 0.6) {
             @Override
             public boolean canUse() {
@@ -1750,6 +1759,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     @Override
     public void tick() {
+        if (!level().isClientSide && !isTame() && this.houseHome == null) {
+            setHouseHome(this.blockPosition());
+        }
         if (!level().isClientSide && !isDowned()) {
             tickWaterClutchBeforeMovement();
         }
@@ -2133,6 +2145,11 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         tag.putInt(DOWNED_BLEED_TICKS_TAG, Math.max(0, downedBleedTicks));
         tag.putInt(DOWNED_FINISH_HITS_TAG, Math.max(0, downedFinishHits));
         tag.putInt(DOWNED_REVIVE_PROGRESS_TAG, Math.max(0, downedReviveProgress));
+        if (this.houseHome != null && !isTame()) {
+            tag.putInt(HOUSE_HOME_X_TAG, this.houseHome.getX());
+            tag.putInt(HOUSE_HOME_Y_TAG, this.houseHome.getY());
+            tag.putInt(HOUSE_HOME_Z_TAG, this.houseHome.getZ());
+        }
         ListTag knownDialogueList = new ListTag();
         for (Map.Entry<UUID, String> entry : rememberedDialogueNames.entrySet()) {
             CompoundTag knownTag = new CompoundTag();
@@ -2173,6 +2190,18 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             setOwnerUUID(null);
         }
         setCommand(tag.contains(COMMAND_TAG, Tag.TAG_INT) ? tag.getInt(COMMAND_TAG) : CompanionCommand.WANDER.id);
+        if (!isTame()
+                && tag.contains(HOUSE_HOME_X_TAG, Tag.TAG_INT)
+                && tag.contains(HOUSE_HOME_Y_TAG, Tag.TAG_INT)
+                && tag.contains(HOUSE_HOME_Z_TAG, Tag.TAG_INT)) {
+            setHouseHome(new BlockPos(
+                    tag.getInt(HOUSE_HOME_X_TAG),
+                    tag.getInt(HOUSE_HOME_Y_TAG),
+                    tag.getInt(HOUSE_HOME_Z_TAG)
+            ));
+        } else {
+            clearHouseHome();
+        }
         setDowned(tag.getBoolean(DOWNED_TAG));
         downedBleedTicks = tag.contains(DOWNED_BLEED_TICKS_TAG, Tag.TAG_INT)
                 ? Math.max(0, tag.getInt(DOWNED_BLEED_TICKS_TAG))
@@ -2288,6 +2317,16 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     private boolean isArmorOfType(ItemStack stack, ArmorItem.Type type) {
         return stack.getItem() instanceof ArmorItem armor && armor.getType() == type;
+    }
+
+    private void setHouseHome(BlockPos home) {
+        this.houseHome = home.immutable();
+        this.restrictTo(this.houseHome, HOUSE_ROAM_RADIUS);
+    }
+
+    private void clearHouseHome() {
+        this.houseHome = null;
+        this.clearRestriction();
     }
 
     private void tickWaterCombatBlock() {

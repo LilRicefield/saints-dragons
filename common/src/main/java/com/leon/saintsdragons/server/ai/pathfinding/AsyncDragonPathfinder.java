@@ -35,6 +35,15 @@ public final class AsyncDragonPathfinder {
     }
 
     public static void calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
+        calculateFlyingPathAsync(dragon, target, callback, false);
+    }
+
+    public static void calculateSwarmFlyingPathAsync(Mob swarm, Vec3 target, Consumer<Path> callback) {
+        calculateFlyingPathAsync(swarm, target, callback, true);
+    }
+
+    private static void calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback,
+                                                  boolean useSwarmClearance) {
         if (dragon.level().isClientSide) {
             return;
         }
@@ -66,7 +75,9 @@ public final class AsyncDragonPathfinder {
         CompletableFuture
                 .supplyAsync(() -> {
                     try {
-                        NodeEvaluator nodeEvaluator = new AsyncDragonFlyNodeEvaluator();
+                        NodeEvaluator nodeEvaluator = useSwarmClearance
+                                ? new AsyncSwarmFlyNodeEvaluator()
+                                : new AsyncDragonFlyNodeEvaluator();
                         nodeEvaluator.setCanPassDoors(true);
                         nodeEvaluator.setCanOpenDoors(true);
                         nodeEvaluator.setCanFloat(true);

@@ -840,7 +840,6 @@
 			}
 		},
 		"winged.animation.spawn": {
-			"loop": "hold_on_last_frame",
 			"animation_length": 1,
 			"bones": {
 				"head": {

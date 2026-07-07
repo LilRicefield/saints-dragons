@@ -144,6 +144,9 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> DRACONIAN_FLESH =
+            REGISTER.register("draconian_flesh", () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(

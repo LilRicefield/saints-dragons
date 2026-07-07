@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.particle.DragonDustParticle;
+import com.leon.saintsdragons.client.particle.DraconianNucleusParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningChainParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
@@ -22,6 +23,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.RAEVYX_SONIC_RING.get(), SonicRingParticle.Factory::new);
         register(registrar, ModParticles.DRAGON_DUST.get(), DragonDustParticle.Factory::new);
         register(registrar, ModParticles.MOSSBACK_POISON_FUME.get(), MossbackPoisonFumeParticle.Factory::new);
+        register(registrar, ModParticles.DRACONIAN_NUCLEUS_PARTICLE.get(), DraconianNucleusParticle.Factory::new);
     }
 
     private static <T extends ParticleOptions> void register(Registrar registrar,

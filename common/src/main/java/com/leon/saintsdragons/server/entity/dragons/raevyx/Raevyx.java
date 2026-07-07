@@ -1,6 +1,8 @@
 // zap van dink
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.particle.raevyx.*;
@@ -1424,6 +1426,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public void tick() {
         super.tick();
+        if (level() instanceof ServerLevel serverLevel) {
+            DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
+        }
         tickControllers();
         tickBankingLogic();
         tickStandardPitchingLogic();

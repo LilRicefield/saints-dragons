@@ -2,14 +2,19 @@ package com.leon.saintsdragons.server.entity.dragons.util;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.RandomSource;
 
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -28,6 +33,176 @@ public final class DragonDestructionManager {
     private static final int FIRE_BODY_SMOKER_BOOST_TICKS = 6;
     private static final int FIRE_BODY_BLAST_FURNACE_BOOST_TICKS = 6;
     private static final int FIRE_BODY_FURNACE_LIT_TICKS = 20;
+    private static final int PASSIVE_TREE_CHECK_INTERVAL = 3;
+    private static final int MAX_TREE_LOGS = 192;
+    private static final int MAX_TREE_LEAVES = 768;
+    private static final int MAX_LEAF_DISTANCE = 6;
+
+    public static void applyPassiveTreeDestruction(ServerLevel level, DragonEntity dragon) {
+        if (level == null || dragon == null) {
+            return;
+        }
+
+        boolean griefingAllowed = DragonGriefingRules.canDestroyBlocks(level);
+        if (dragon.isBaby() || !dragon.isAlive() || !griefingAllowed
+                || (dragon.tickCount + dragon.getId()) % PASSIVE_TREE_CHECK_INTERVAL != 0) {
+            return;
+        }
+
+        Vec3 planarMotion = new Vec3(dragon.getDeltaMovement().x, 0.0D, dragon.getDeltaMovement().z);
+        double horizontalReach = Math.max(0.75D, dragon.getBbWidth() * 0.25D);
+        AABB contactBounds = dragon.getBoundingBox().inflate(horizontalReach, 0.25D, horizontalReach);
+        if (planarMotion.lengthSqr() > 1.0E-4D) {
+            Vec3 probe = planarMotion.normalize().scale(Math.min(1.5D, 0.5D + planarMotion.length() * 2.0D));
+            contactBounds = contactBounds.expandTowards(probe.x, 0.0D, probe.z);
+        }
+
+        BlockPos contactedLog = findContactedTreeLog(level, contactBounds);
+        if (contactedLog == null) {
+            return;
+        }
+
+        Set<BlockPos> logs = gatherConnectedLogs(level, contactedLog);
+        if (logs.size() < 2) {
+            return;
+        }
+        Set<BlockPos> leaves = gatherTreeLeaves(level, logs);
+
+        destroyTreeBlocks(level, dragon, leaves);
+        destroyTreeBlocks(level, dragon, logs);
+    }
+
+    private static int destroyTreeBlocks(ServerLevel level, DragonEntity dragon, Set<BlockPos> blocks) {
+        int destroyed = 0;
+        for (BlockPos pos : blocks) {
+            if (level.destroyBlock(pos, false, dragon)) {
+                destroyed++;
+            }
+        }
+        return destroyed;
+    }
+
+    private static BlockPos findContactedTreeLog(ServerLevel level, AABB bounds) {
+        BlockPos contactedLeaf = null;
+        for (BlockPos pos : BlockPos.betweenClosed(
+                Mth.floor(bounds.minX), Mth.floor(bounds.minY), Mth.floor(bounds.minZ),
+                Mth.floor(bounds.maxX), Mth.floor(bounds.maxY), Mth.floor(bounds.maxZ))) {
+            if (!level.isLoaded(pos)) {
+                continue;
+            }
+            BlockState state = level.getBlockState(pos);
+            if (state.is(BlockTags.LOGS)) {
+                return pos.immutable();
+            }
+            if (contactedLeaf == null && isNaturalTreeLeaf(state, 0)) {
+                contactedLeaf = pos.immutable();
+            }
+        }
+        return contactedLeaf == null ? null : findLogConnectedToLeaf(level, contactedLeaf);
+    }
+
+    private static BlockPos findLogConnectedToLeaf(ServerLevel level, BlockPos origin) {
+        Set<BlockPos> visited = new HashSet<>();
+        ArrayDeque<LeafSearchNode> open = new ArrayDeque<>();
+        open.add(new LeafSearchNode(origin, 0));
+
+        while (!open.isEmpty() && visited.size() < MAX_TREE_LEAVES) {
+            LeafSearchNode search = open.removeFirst();
+            if (search.distance() > MAX_LEAF_DISTANCE || !visited.add(search.pos())
+                    || !level.isLoaded(search.pos())) {
+                continue;
+            }
+
+            BlockState state = level.getBlockState(search.pos());
+            if (state.is(BlockTags.LOGS)) {
+                return search.pos();
+            }
+            if (!state.is(BlockTags.LEAVES)) {
+                continue;
+            }
+            for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+                open.addLast(new LeafSearchNode(
+                        search.pos().relative(direction).immutable(), search.distance() + 1));
+            }
+        }
+        return null;
+    }
+
+    private static Set<BlockPos> gatherConnectedLogs(ServerLevel level, BlockPos origin) {
+        Set<BlockPos> logs = new HashSet<>();
+        ArrayDeque<BlockPos> open = new ArrayDeque<>();
+        open.add(origin);
+
+        while (!open.isEmpty() && logs.size() < MAX_TREE_LOGS) {
+            BlockPos current = open.removeFirst();
+            if (!logs.add(current) || !level.isLoaded(current)
+                    || !level.getBlockState(current).is(BlockTags.LOGS)) {
+                logs.remove(current);
+                continue;
+            }
+
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        if (dx == 0 && dy == 0 && dz == 0) {
+                            continue;
+                        }
+                        BlockPos neighbor = current.offset(dx, dy, dz);
+                        if (!logs.contains(neighbor) && level.isLoaded(neighbor)
+                                && level.getBlockState(neighbor).is(BlockTags.LOGS)) {
+                            open.addLast(neighbor.immutable());
+                        }
+                    }
+                }
+            }
+        }
+        return logs;
+    }
+
+    private static Set<BlockPos> gatherTreeLeaves(ServerLevel level, Set<BlockPos> logs) {
+        Set<BlockPos> leaves = new HashSet<>();
+        Set<BlockPos> visited = new HashSet<>();
+        ArrayDeque<LeafSearchNode> open = new ArrayDeque<>();
+        for (BlockPos log : logs) {
+            for (Direction direction : Direction.values()) {
+                open.addLast(new LeafSearchNode(log.relative(direction).immutable(), 1));
+            }
+        }
+
+        while (!open.isEmpty() && leaves.size() < MAX_TREE_LEAVES) {
+            LeafSearchNode search = open.removeFirst();
+            if (search.distance() > MAX_LEAF_DISTANCE || !visited.add(search.pos())
+                    || !level.isLoaded(search.pos())) {
+                continue;
+            }
+
+            BlockState state = level.getBlockState(search.pos());
+            if (!isNaturalTreeLeaf(state, search.distance())) {
+                continue;
+            }
+            leaves.add(search.pos());
+            for (Direction direction : Direction.values()) {
+                open.addLast(new LeafSearchNode(search.pos().relative(direction).immutable(), search.distance() + 1));
+            }
+        }
+        return leaves;
+    }
+
+    private static boolean isNaturalTreeLeaf(BlockState state, int distance) {
+        if (!state.is(BlockTags.LEAVES)) {
+            return false;
+        }
+        if (state.hasProperty(BlockStateProperties.PERSISTENT)
+                && state.getValue(BlockStateProperties.PERSISTENT)) {
+            return false;
+        }
+        return distance == 0
+                || !state.hasProperty(BlockStateProperties.DISTANCE)
+                || state.getValue(BlockStateProperties.DISTANCE) == distance;
+    }
+
+    private record LeafSearchNode(BlockPos pos, int distance) {
+    }
     public static void applyFireBreathImpact(ServerLevel level,
                                              DragonEntity dragon,
                                              Vec3 impactPoint,

@@ -106,7 +106,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Latcher>> LATCHER =
             REGISTER.register("latcher", () -> EntityType.Builder.of(Latcher::new, MobCategory.MONSTER)
-                    .sized(2.0F, 2.0F)
+                    .sized(1.75F, 1.75F)
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("latcher"));
@@ -120,7 +120,7 @@ public final class ModEntities {
 
     public static final Supplier<EntityType<Whettled>> WHETTLED =
             REGISTER.register("whettled", () -> EntityType.Builder.of(Whettled::new, MobCategory.MONSTER)
-                    .sized(2.25F, 2.0F)
+                    .sized(1.5F, 1.5F)
                     .clientTrackingRange(32)
                     .updateInterval(1)
                     .build("whettled"));

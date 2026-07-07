@@ -42,6 +42,9 @@ public class DragonBodyControl extends BodyRotationControl {
             freezeSeatedRotation();
             return;
         }
+        if (tickCombatFacingLock()) {
+            return;
+        }
 
         for (int i = this.histPosX.length - 1; i > 0; --i) {
             this.histPosX[i] = this.histPosX[i - 1];
@@ -73,6 +76,9 @@ public class DragonBodyControl extends BodyRotationControl {
         }
         if (shouldLockForSitting()) {
             freezeSeatedRotation();
+            return;
+        }
+        if (tickCombatFacingLock()) {
             return;
         }
         for (int i = this.histPosX.length - 1; i > 0; --i) {
@@ -131,6 +137,21 @@ public class DragonBodyControl extends BodyRotationControl {
             return false;
         }
         return dragon.isOrderedToSit() || dragon.getSitProgress() > 0.0f;
+    }
+
+    private boolean tickCombatFacingLock() {
+        if (!(this.entity instanceof CombatBodyFacingLock lock) || !lock.isCombatBodyFacingLocked()) {
+            return false;
+        }
+
+        float yaw = Mth.approachDegrees(
+                this.entity.yBodyRot,
+                lock.getCombatBodyFacingYaw(),
+                lock.getCombatBodyFacingTurnSpeed());
+        this.entity.yBodyRot = yaw;
+        this.targetYawHead = this.entity.yHeadRot;
+        clampHeadBodyDifference();
+        return true;
     }
 
     private void freezeSeatedRotation() {

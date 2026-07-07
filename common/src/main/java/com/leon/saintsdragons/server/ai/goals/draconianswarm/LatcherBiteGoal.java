@@ -53,9 +53,7 @@ public class LatcherBiteGoal extends Goal {
         if (this.attackTick >= 0) {
             this.attackTick++;
             if (this.attackTick == DAMAGE_TICK && isInBiteRange(target)) {
-                if (this.latcher.doHurtTarget(target)) {
-                    this.latcher.requestCombatRetreat();
-                }
+                this.latcher.doHurtTarget(target);
             }
             if (this.attackTick >= ATTACK_INTERVAL) {
                 this.attackTick = -1;

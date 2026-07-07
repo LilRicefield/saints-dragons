@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
@@ -438,6 +440,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
     @Override
     public void tick() {
         super.tick();
+
+        if (level() instanceof ServerLevel serverLevel) {
+            DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
+        }
 
         if (isDying() || this.dead) {
             stopCustomStateForDeath();

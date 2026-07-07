@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 
 public final class DraconianSwarmCoordinator {
     private static final int ATTACK_RESERVATION_TICKS = 80;
@@ -47,17 +45,6 @@ public final class DraconianSwarmCoordinator {
 
     public static void releaseAttack(AbstractDraconianSwarmEntity swarm) {
         ATTACK_RESERVATIONS.entrySet().removeIf(entry -> entry.getValue().attacker.equals(swarm.getUUID()));
-    }
-
-    public static boolean isPlayerFocusing(AbstractDraconianSwarmEntity swarm, LivingEntity target) {
-        if (!(target instanceof Player player) || !player.hasLineOfSight(swarm)) {
-            return false;
-        }
-        Vec3 toSwarm = swarm.getBoundingBox().getCenter().subtract(player.getEyePosition());
-        if (toSwarm.lengthSqr() > 324.0D || toSwarm.lengthSqr() < 1.0E-4D) {
-            return false;
-        }
-        return player.getViewVector(1.0F).dot(toSwarm.normalize()) >= 0.94D;
     }
 
     public record OrbitSlot(int index, int count) {

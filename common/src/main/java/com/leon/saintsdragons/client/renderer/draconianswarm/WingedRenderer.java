@@ -27,7 +27,7 @@ public class WingedRenderer extends GeoEntityRenderer<Winged> {
     @Override
     public RenderType getRenderType(Winged animatable, ResourceLocation texture,
                                     @Nullable MultiBufferSource bufferSource, float partialTick) {
-        return RenderType.entityTranslucentCull(texture);
+        return RenderType.entityCutout(texture);
     }
 
     @Override

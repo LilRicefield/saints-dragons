@@ -24,6 +24,7 @@ public class WingedPullAttackGoal extends Goal {
         LivingEntity target = this.winged.getTarget();
         return this.winged.canStartCombatAttack()
                 && !this.winged.isSwooping()
+                && !this.winged.isDiveBombReady()
                 && target != null
                 && target.isAlive()
                 && isInAttackRange(target)
@@ -32,7 +33,10 @@ public class WingedPullAttackGoal extends Goal {
 
     @Override
     public boolean canContinueToUse() {
-        return canUse();
+        LivingEntity target = this.winged.getTarget();
+        return this.attackTick >= 0
+                ? !this.winged.isSwooping() && target != null && target.isAlive()
+                : canUse();
     }
 
     @Override
@@ -57,6 +61,7 @@ public class WingedPullAttackGoal extends Goal {
             this.attackTick++;
             if (this.attackTick == IMPACT_TICK && isInAttackRange(target)) {
                 if (this.winged.doHurtTarget(target)) {
+                    this.winged.recordPullAttackHit();
                     pullTarget(target);
                     this.winged.requestCombatRetreat();
                 }

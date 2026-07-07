@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
@@ -720,6 +722,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public void tick() {
         super.tick();
+
+        if (level() instanceof ServerLevel serverLevel) {
+            DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
+        }
 
         tickSittingState();
         tickScreenShake();

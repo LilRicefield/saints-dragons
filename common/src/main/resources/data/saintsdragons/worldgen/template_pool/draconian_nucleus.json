@@ -1,0 +1,15 @@
+{
+  "name": "saintsdragons:draconian_nucleus",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "saintsdragons:draconian_nucleus",
+        "projection": "rigid",
+        "processors": "minecraft:empty"
+      }
+    }
+  ]
+}

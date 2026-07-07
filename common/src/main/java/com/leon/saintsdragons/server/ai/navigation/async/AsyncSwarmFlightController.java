@@ -13,6 +13,8 @@ public class AsyncSwarmFlightController {
     private static final int STUCK_THRESHOLD_TICKS = 30;
     private static final double STUCK_DISTANCE_SQ = 0.04D;
     private static final double LOOK_AHEAD_DISTANCE = 4.0D;
+    private static final double NODE_REACHED_DISTANCE = 1.25D;
+    private static final double COLLISION_SAMPLE_STEP = 0.4D;
 
     private final Mob mob;
     private final AsyncSwarmFlightMovementExecutor movementExecutor;
@@ -125,7 +127,7 @@ public class AsyncSwarmFlightController {
         this.state = State.CALCULATING;
         this.recalcTicks = 0;
         long generation = ++this.pathGeneration;
-        AsyncDragonPathfinder.calculateFlyingPathAsync(this.mob, target, path -> {
+        AsyncDragonPathfinder.calculateSwarmFlyingPathAsync(this.mob, target, path -> {
             if (generation != this.pathGeneration || this.mob.isRemoved() || !this.mob.isAlive()) {
                 return;
             }
@@ -137,19 +139,20 @@ public class AsyncSwarmFlightController {
                 return;
             }
 
-            cachePath(path, target);
+            cachePath(path, target, path.canReach());
             this.state = State.FOLLOWING;
         });
     }
 
-    private void cachePath(Path path, Vec3 target) {
+    private void cachePath(Path path, Vec3 target, boolean canReach) {
         this.pathNodes.clear();
         this.pathIndex = 0;
         for (int i = 0; i < path.getNodeCount(); i++) {
             Node node = path.getNode(i);
             this.pathNodes.add(new Vec3(node.x + 0.5D, node.y + 0.5D, node.z + 0.5D));
         }
-        if (this.pathNodes.isEmpty() || this.pathNodes.get(this.pathNodes.size() - 1).distanceToSqr(target) > 1.0D) {
+        if (canReach && (this.pathNodes.isEmpty()
+                || this.pathNodes.get(this.pathNodes.size() - 1).distanceToSqr(target) > 1.0D)) {
             this.pathNodes.add(target);
         }
     }
@@ -161,10 +164,39 @@ public class AsyncSwarmFlightController {
 
         Vec3 pos = this.mob.position();
         while (this.pathIndex + 1 < this.pathNodes.size()
-                && pos.distanceToSqr(this.pathNodes.get(this.pathIndex)) < LOOK_AHEAD_DISTANCE * LOOK_AHEAD_DISTANCE) {
+                && pos.distanceToSqr(this.pathNodes.get(this.pathIndex))
+                < NODE_REACHED_DISTANCE * NODE_REACHED_DISTANCE) {
             this.pathIndex++;
         }
-        return this.pathNodes.get(Math.min(this.pathIndex, this.pathNodes.size() - 1));
+
+        int visibleIndex = this.pathIndex;
+        for (int candidate = this.pathIndex + 1; candidate < this.pathNodes.size(); candidate++) {
+            Vec3 candidateNode = this.pathNodes.get(candidate);
+            if (pos.distanceToSqr(candidateNode) > LOOK_AHEAD_DISTANCE * LOOK_AHEAD_DISTANCE
+                    || !isSegmentClear(pos, candidateNode)) {
+                break;
+            }
+            visibleIndex = candidate;
+        }
+        this.pathIndex = visibleIndex;
+        return this.pathNodes.get(visibleIndex);
+    }
+
+    private boolean isSegmentClear(Vec3 start, Vec3 end) {
+        Vec3 offset = end.subtract(start);
+        double distance = offset.length();
+        if (distance < 1.0E-4D) {
+            return true;
+        }
+
+        int samples = Math.max(1, (int) Math.ceil(distance / COLLISION_SAMPLE_STEP));
+        for (int sample = 1; sample <= samples; sample++) {
+            Vec3 step = offset.scale((double) sample / samples);
+            if (!this.mob.level().noCollision(this.mob, this.mob.getBoundingBox().move(step))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private double calculateArrivalDistance() {

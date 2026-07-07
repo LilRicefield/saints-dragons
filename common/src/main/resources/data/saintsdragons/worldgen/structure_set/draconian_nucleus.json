@@ -1,0 +1,14 @@
+{
+  "structures": [
+    {
+      "structure": "saintsdragons:draconian_nucleus",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 192,
+    "separation": 96,
+    "salt": 17384629
+  }
+}

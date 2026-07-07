@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+
 import com.leon.saintsdragons.common.block.VolitansEggBlock;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -1042,6 +1044,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     public void tick() {
         super.tick();
+        if (level() instanceof ServerLevel serverLevel) {
+            DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
+        }
         tickScreenShake();
 
         if (!this.level().isClientSide) {
@@ -1239,7 +1244,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     public void travel(@NotNull Vec3 motion) {
         if (isUltimateSlamActive()) {
-            this.move(MoverType.SELF, this.getDeltaMovement());
+            Vec3 current = this.getDeltaMovement();
+            double verticalMotion = this.isGoingDown() ? Math.min(current.y, -2.5D) : 0.0D;
+            Vec3 slamMotion = new Vec3(current.x, verticalMotion, current.z);
+            this.setDeltaMovement(slamMotion);
+            this.move(MoverType.SELF, slamMotion);
+            this.hasImpulse = true;
+            this.hurtMarked = true;
             return;
         }
 
@@ -1990,6 +2001,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void startUltimateSlamMovement() {
+        clearGroundMobilityState();
+        getAIMovement().stop();
+        getNavigation().stop();
         this.entityData.set(DATA_ULTIMATE_SLAM_ACTIVE, true);
         setFlying(true);
         setTakeoff(false);

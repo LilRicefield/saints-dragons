@@ -33,7 +33,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private static final int COOLDOWN_TICKS = 40;
     private static final int POST_IMPACT_TAKEOFF_BLOCK_TICKS = 8;
 
-    private static final double SLAM_INITIAL_SPEED = -1.5D;
+    private static final double SLAM_INITIAL_SPEED = -2.5D;
     private static final double SLAM_EXTRA_PULL_PER_TICK = 0.15D;
     private static final double HORIZONTAL_DAMPING = 0.78D;
 
