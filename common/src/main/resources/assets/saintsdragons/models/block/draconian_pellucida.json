@@ -1,5 +1,6 @@
 {
   "parent": "minecraft:block/block",
+  "credit": "Leon, Eve",
   "textures": {
     "all": "saintsdragons:block/draconian_pellucida",
     "particle": "saintsdragons:block/draconian_pellucida"

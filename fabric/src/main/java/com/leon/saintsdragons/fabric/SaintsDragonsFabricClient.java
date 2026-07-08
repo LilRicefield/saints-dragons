@@ -24,7 +24,6 @@ public final class SaintsDragonsFabricClient implements ClientModInitializer {
     public void onInitializeClient() {
         CommonClientModEvents.registerEntityRenderers(EntityRendererRegistry::register);
         CommonClientModEvents.registerMenuScreens();
-        BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.DRACONIAN_PELLUCIDA.get(), RenderType.translucent());
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.DRACONIAN_NUCLEUS.get(), RenderType.translucent());
         EntityModelLayerRegistry.registerModelLayer(
                 DraconianNucleusModel.LAYER_LOCATION,

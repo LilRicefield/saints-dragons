@@ -1,7 +1,6 @@
 {
 	"parent": "minecraft:block/block",
-	"format_version": "1.21.11",
-	"credit": "Made with Blockbench",
+	"credit": "Leon, Eve",
 	"texture_size": [48, 48],
 	"textures": {
 		"0": "saintsdragons:block/draconic_nucleus",

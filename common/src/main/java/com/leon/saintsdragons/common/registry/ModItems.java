@@ -137,6 +137,18 @@ public class ModItems {
     public static final Supplier<Item> DRACONIAN_FLESH =
             REGISTER.register("draconian_flesh", () -> new Item(new Item.Properties()));
 
+    public static final Supplier<Item> RAW_WORLDROOT =
+            REGISTER.register("raw_worldroot", () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> DRAGONHEART_CHUNK =
+            REGISTER.register("dragonheart_chunk", () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> DRAGONHEART_ALLOY =
+            REGISTER.register("dragonheart_alloy", () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> WORLDROOT_INGOT =
+            REGISTER.register("worldroot_ingot", () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
@@ -153,6 +165,30 @@ public class ModItems {
     public static final Supplier<Item> DRACONIAN_NUCLEUS =
             REGISTER.register("draconian_nucleus",
                     () -> new BlockItem(ModBlocks.DRACONIAN_NUCLEUS.get(), new Item.Properties()));
+
+    public static final Supplier<Item> DRAGONHEART_ORE =
+            REGISTER.register("dragonheart_ore",
+                    () -> new BlockItem(ModBlocks.DRAGONHEART_ORE.get(), new Item.Properties()));
+
+    public static final Supplier<Item> DRAGONHEART_ALLOY_BLOCK =
+            REGISTER.register("dragonheart_alloy_block",
+                    () -> new BlockItem(ModBlocks.DRAGONHEART_ALLOY_BLOCK.get(), new Item.Properties()));
+
+    public static final Supplier<Item> DRAGONHEART_BLOCK =
+            REGISTER.register("dragonheart_block",
+                    () -> new BlockItem(ModBlocks.DRAGONHEART_BLOCK.get(), new Item.Properties()));
+
+    public static final Supplier<Item> DEEPSLATE_WORLDROOT_ORE =
+            REGISTER.register("deepslate_worldroot_ore",
+                    () -> new BlockItem(ModBlocks.DEEPSLATE_WORLDROOT_ORE.get(), new Item.Properties()));
+
+    public static final Supplier<Item> WORLDROOT_BLOCK =
+            REGISTER.register("worldroot_block",
+                    () -> new BlockItem(ModBlocks.WORLDROOT_BLOCK.get(), new Item.Properties()));
+
+    public static final Supplier<Item> RAW_WORLDROOT_BLOCK =
+            REGISTER.register("raw_worldroot_block",
+                    () -> new BlockItem(ModBlocks.RAW_WORLDROOT_BLOCK.get(), new Item.Properties()));
 
     public static final Supplier<Item> RAEVYX_EGG =
             REGISTER.register("raevyx_egg",

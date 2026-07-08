@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_dragonheart_alloy": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonheart_alloy"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dragonheart_alloy"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:dragonheart_alloy_block"
+    ]
+  }
+}

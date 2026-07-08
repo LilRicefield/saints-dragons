@@ -1,18 +1,13 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.block.RaevyxEggBlock;
-import com.leon.saintsdragons.common.block.IgnivorusEggBlock;
-import com.leon.saintsdragons.common.block.CindervaneEggBlock;
-import com.leon.saintsdragons.common.block.VarasuchusEggBlock;
-import com.leon.saintsdragons.common.block.VolitansEggBlock;
-import com.leon.saintsdragons.common.block.StegonautEggBlock;
-import com.leon.saintsdragons.common.block.DraconianNucleusBlock;
+import com.leon.saintsdragons.common.block.*;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -81,7 +76,7 @@ public class ModBlocks {
     public static final Supplier<Block> DRACONIAN_PELLUCIDA =
             REGISTER.register("draconian_pellucida",
                     () -> new Block(BlockBehaviour.Properties.of()
-                            .mapColor(MapColor.COLOR_BLACK)
+                            .mapColor(MapColor.COLOR_PURPLE)
                             .strength(0.0F)
                             .sound(SoundType.SLIME_BLOCK)
                             .noOcclusion()));
@@ -89,11 +84,43 @@ public class ModBlocks {
     public static final Supplier<Block> DRACONIAN_NUCLEUS =
             REGISTER.register("draconian_nucleus",
                     () -> new DraconianNucleusBlock(BlockBehaviour.Properties.of()
-                            .mapColor(MapColor.COLOR_BLACK)
+                            .mapColor(MapColor.COLOR_PURPLE)
                             .strength(0.5F)
                             .sound(SoundType.SLIME_BLOCK)
                             .lightLevel(state -> 8)
                             .noOcclusion()));
+    public static final Supplier<Block> DRAGONHEART_ALLOY_BLOCK =
+            REGISTER.register("dragonheart_alloy_block",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK)
+                            .mapColor(MapColor.COLOR_RED)
+                            .strength(12.0F, 1200.0F)
+                            .requiresCorrectToolForDrops()));
+    public static final Supplier<Block> DRAGONHEART_BLOCK =
+            REGISTER.register("dragonheart_block",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK)
+                            .mapColor(MapColor.COLOR_RED)
+                            .strength(12.0F, 1200.0F)
+                            .requiresCorrectToolForDrops()));
+    public static final Supplier<Block> DEEPSLATE_WORLDROOT_ORE =
+            REGISTER.register("deepslate_worldroot_ore",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.DEEPSLATE_DIAMOND_ORE)
+                            .mapColor(MapColor.COLOR_LIGHT_BLUE)
+                            .requiresCorrectToolForDrops()));
+    public static final Supplier<Block> DRAGONHEART_ORE =
+            REGISTER.register("dragonheart_ore",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.END_STONE)
+                            .mapColor(MapColor.COLOR_YELLOW)
+                            .requiresCorrectToolForDrops()));
+    public static final Supplier<Block> WORLDROOT_BLOCK =
+            REGISTER.register("worldroot_block",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.IRON_BLOCK)
+                            .mapColor(MapColor.COLOR_BROWN)
+                            .requiresCorrectToolForDrops()));
+    public static final Supplier<Block> RAW_WORLDROOT_BLOCK =
+            REGISTER.register("raw_worldroot_block",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.RAW_IRON_BLOCK)
+                            .mapColor(MapColor.COLOR_BROWN)
+                            .requiresCorrectToolForDrops()));
 
     public static void register() {
         REGISTER.register();

@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "WWW",
+    "WWW",
+    "WWW"
+  ],
+  "key": {
+    "W": {
+      "item": "saintsdragons:worldroot_ingot"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:worldroot_block"
+  }
+}

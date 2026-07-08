@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_dragonheart_chunk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonheart_chunk"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dragonheart_chunk"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:dragonheart_block"
+    ]
+  }
+}
