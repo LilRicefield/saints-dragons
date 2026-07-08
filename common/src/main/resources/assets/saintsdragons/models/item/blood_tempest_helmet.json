@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "saintsdragons:item/armors/raevyx/raevyx_helmet"
+    "layer0": "saintsdragons:item/armors/blood_tempest_helmet"
   }
 }

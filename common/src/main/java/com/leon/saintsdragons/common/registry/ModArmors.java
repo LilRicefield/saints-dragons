@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
-import com.leon.saintsdragons.common.item.IgnivorusArmorItem;
-import com.leon.saintsdragons.common.item.RaevyxArmorItem;
+import com.leon.saintsdragons.common.item.DragonlordArmorItem;
+import com.leon.saintsdragons.common.item.BloodTempestArmorItem;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterials;
 import net.minecraft.world.item.Item;
@@ -12,56 +12,56 @@ import java.util.function.Supplier;
 public final class ModArmors {
     private ModArmors() {}
 
-    public static final Supplier<Item> RAEVYX_ARMOR_HELMET =
-            ModItems.REGISTER.register("raevyx_armor_helmet",
-                    () -> new RaevyxArmorItem(
+    public static final Supplier<Item> BLOOD_TEMPEST_HELMET =
+            ModItems.REGISTER.register("blood_tempest_helmet",
+                    () -> new BloodTempestArmorItem(
                             ArmorMaterials.DIAMOND,
                             ArmorItem.Type.HELMET,
                             new Item.Properties().rarity(Rarity.RARE)
                     ));
 
-    public static final Supplier<Item> RAEVYX_ARMOR_CHESTPLATE =
-            ModItems.REGISTER.register("raevyx_armor_chestplate",
-                    () -> new RaevyxArmorItem(
+    public static final Supplier<Item> BLOOD_TEMPEST_CHESTPLATE =
+            ModItems.REGISTER.register("blood_tempest_chestplate",
+                    () -> new BloodTempestArmorItem(
                             ArmorMaterials.DIAMOND,
                             ArmorItem.Type.CHESTPLATE,
                             new Item.Properties().rarity(Rarity.RARE)
                     ));
 
-    public static final Supplier<Item> RAEVYX_ARMOR_LEGGINGS =
-            ModItems.REGISTER.register("raevyx_armor_leggings",
-                    () -> new RaevyxArmorItem(
+    public static final Supplier<Item> BLOOD_TEMPEST_LEGGINGS =
+            ModItems.REGISTER.register("blood_tempest_leggings",
+                    () -> new BloodTempestArmorItem(
                             ArmorMaterials.DIAMOND,
                             ArmorItem.Type.LEGGINGS,
                             new Item.Properties().rarity(Rarity.RARE)
                     ));
 
-    public static final Supplier<Item> RAEVYX_ARMOR_BOOTS =
-            ModItems.REGISTER.register("raevyx_armor_boots",
-                    () -> new RaevyxArmorItem(
+    public static final Supplier<Item> BLOOD_TEMPEST_BOOTS =
+            ModItems.REGISTER.register("blood_tempest_boots",
+                    () -> new BloodTempestArmorItem(
                             ArmorMaterials.DIAMOND,
                             ArmorItem.Type.BOOTS,
                             new Item.Properties().rarity(Rarity.RARE)
                     ));
 
-    public static final Supplier<Item> IGNIVORUS_ARMOR_HELMET =
-            ModItems.REGISTER.register("ignivorus_armor_helmet",
-                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.HELMET,
+    public static final Supplier<Item> DRAGONLORD_HELMET =
+            ModItems.REGISTER.register("dragonlord_helmet",
+                    () -> new DragonlordArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.HELMET,
                             new Item.Properties().rarity(Rarity.RARE)));
 
-    public static final Supplier<Item> IGNIVORUS_ARMOR_CHESTPLATE =
-            ModItems.REGISTER.register("ignivorus_armor_chestplate",
-                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.CHESTPLATE,
+    public static final Supplier<Item> DRAGONLORD_CHESTPLATE =
+            ModItems.REGISTER.register("dragonlord_chestplate",
+                    () -> new DragonlordArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.CHESTPLATE,
                             new Item.Properties().rarity(Rarity.RARE)));
 
-    public static final Supplier<Item> IGNIVORUS_ARMOR_LEGGINGS =
-            ModItems.REGISTER.register("ignivorus_armor_leggings",
-                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.LEGGINGS,
+    public static final Supplier<Item> DRAGONLORD_LEGGINGS =
+            ModItems.REGISTER.register("dragonlord_leggings",
+                    () -> new DragonlordArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.LEGGINGS,
                             new Item.Properties().rarity(Rarity.RARE)));
 
-    public static final Supplier<Item> IGNIVORUS_ARMOR_BOOTS =
-            ModItems.REGISTER.register("ignivorus_armor_boots",
-                    () -> new IgnivorusArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.BOOTS,
+    public static final Supplier<Item> DRAGONLORD_BOOTS =
+            ModItems.REGISTER.register("dragonlord_boots",
+                    () -> new DragonlordArmorItem(ArmorMaterials.DIAMOND, ArmorItem.Type.BOOTS,
                             new Item.Properties().rarity(Rarity.RARE)));
 
     public static void init() {}

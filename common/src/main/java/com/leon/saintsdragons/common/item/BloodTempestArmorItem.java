@@ -11,11 +11,11 @@ import java.util.function.Supplier;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 
-public class RaevyxArmorItem extends ArmorItem implements GeoItem {
+public class BloodTempestArmorItem extends ArmorItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final Supplier<Object> renderProvider = this::createFabricRenderProvider;
 
-    public RaevyxArmorItem(ArmorMaterial armorMaterial, Type type, Properties properties) {
+    public BloodTempestArmorItem(ArmorMaterial armorMaterial, Type type, Properties properties) {
         super(armorMaterial, type, properties);
     }
 
@@ -45,7 +45,7 @@ public class RaevyxArmorItem extends ArmorItem implements GeoItem {
         try {
             Class<?> renderProviderClass = Class.forName("software.bernie.geckolib.animatable.client.RenderProvider");
             return Proxy.newProxyInstance(
-                    RaevyxArmorItem.class.getClassLoader(),
+                    BloodTempestArmorItem.class.getClassLoader(),
                     new Class<?>[]{renderProviderClass},
                     (proxyInstance, method, args) -> {
                         if ("getHumanoidArmorModel".equals(method.getName()) || "getGenericArmorModel".equals(method.getName())) {
@@ -62,7 +62,7 @@ public class RaevyxArmorItem extends ArmorItem implements GeoItem {
         try {
             Class<?> extensions = Class.forName("net.minecraftforge.client.extensions.common.IClientItemExtensions");
             Object proxy = Proxy.newProxyInstance(
-                    RaevyxArmorItem.class.getClassLoader(),
+                    BloodTempestArmorItem.class.getClassLoader(),
                     new Class<?>[]{extensions},
                     (proxyInstance, method, args) -> {
                         if ("getHumanoidArmorModel".equals(method.getName()) || "getGenericArmorModel".equals(method.getName())) {
@@ -80,7 +80,7 @@ public class RaevyxArmorItem extends ArmorItem implements GeoItem {
             return null;
         }
         try {
-            Class<?> provider = Class.forName("com.leon.saintsdragons.client.renderer.armor.RaevyxArmorRenderProvider");
+            Class<?> provider = Class.forName("com.leon.saintsdragons.client.renderer.armor.BloodTempestRenderProvider");
             return provider.getMethod("getHumanoidArmorModel", Object.class, Object.class, Object.class, Object.class)
                     .invoke(null, args[0], args[1], args[2], args[3]);
         } catch (ReflectiveOperationException ignored) {

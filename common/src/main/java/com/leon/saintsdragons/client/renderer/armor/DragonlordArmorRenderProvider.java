@@ -5,22 +5,22 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-public final class IgnivorusArmorRenderProvider {
-    private static IgnivorusArmorRenderer renderer;
+public final class DragonlordArmorRenderProvider {
+    private static DragonlordArmorRenderer renderer;
 
-    private IgnivorusArmorRenderProvider() {
+    private DragonlordArmorRenderProvider() {
     }
 
     public static Object getHumanoidArmorModel(Object entity, Object stack, Object slot, Object original) {
-        IgnivorusArmorRenderer armorRenderer = renderer();
+        DragonlordArmorRenderer armorRenderer = renderer();
         armorRenderer.prepForRender((LivingEntity) entity, (ItemStack) stack, (EquipmentSlot) slot,
                 (HumanoidModel<?>) original);
         return armorRenderer;
     }
 
-    private static IgnivorusArmorRenderer renderer() {
+    private static DragonlordArmorRenderer renderer() {
         if (renderer == null) {
-            renderer = new IgnivorusArmorRenderer();
+            renderer = new DragonlordArmorRenderer();
         }
         return renderer;
     }

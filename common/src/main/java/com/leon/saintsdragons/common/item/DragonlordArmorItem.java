@@ -11,11 +11,11 @@ import java.lang.reflect.Proxy;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-public class IgnivorusArmorItem extends ArmorItem implements GeoItem {
+public class DragonlordArmorItem extends ArmorItem implements GeoItem {
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final Supplier<Object> renderProvider = this::createFabricRenderProvider;
 
-    public IgnivorusArmorItem(ArmorMaterial material, Type type, Properties properties) {
+    public DragonlordArmorItem(ArmorMaterial material, Type type, Properties properties) {
         super(material, type, properties);
     }
 
@@ -44,7 +44,7 @@ public class IgnivorusArmorItem extends ArmorItem implements GeoItem {
     private Object createFabricRenderProvider() {
         try {
             Class<?> providerClass = Class.forName("software.bernie.geckolib.animatable.client.RenderProvider");
-            return Proxy.newProxyInstance(IgnivorusArmorItem.class.getClassLoader(), new Class<?>[]{providerClass},
+            return Proxy.newProxyInstance(DragonlordArmorItem.class.getClassLoader(), new Class<?>[]{providerClass},
                     (proxy, method, args) -> {
                         if ("getHumanoidArmorModel".equals(method.getName()) || "getGenericArmorModel".equals(method.getName())) {
                             return getHumanoidArmorModel(args);
@@ -59,7 +59,7 @@ public class IgnivorusArmorItem extends ArmorItem implements GeoItem {
     public void initializeClient(Consumer<Object> consumer) {
         try {
             Class<?> extensions = Class.forName("net.minecraftforge.client.extensions.common.IClientItemExtensions");
-            Object proxy = Proxy.newProxyInstance(IgnivorusArmorItem.class.getClassLoader(), new Class<?>[]{extensions},
+            Object proxy = Proxy.newProxyInstance(DragonlordArmorItem.class.getClassLoader(), new Class<?>[]{extensions},
                     (proxyInstance, method, args) -> {
                         if ("getHumanoidArmorModel".equals(method.getName()) || "getGenericArmorModel".equals(method.getName())) {
                             return getHumanoidArmorModel(args);
@@ -76,7 +76,7 @@ public class IgnivorusArmorItem extends ArmorItem implements GeoItem {
             return null;
         }
         try {
-            Class<?> provider = Class.forName("com.leon.saintsdragons.client.renderer.armor.IgnivorusArmorRenderProvider");
+            Class<?> provider = Class.forName("com.leon.saintsdragons.client.renderer.armor.DragonlordArmorRenderProvider");
             return provider.getMethod("getHumanoidArmorModel", Object.class, Object.class, Object.class, Object.class)
                     .invoke(null, args[0], args[1], args[2], args[3]);
         } catch (ReflectiveOperationException ignored) {

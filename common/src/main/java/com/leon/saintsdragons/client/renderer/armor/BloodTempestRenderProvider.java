@@ -5,14 +5,14 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-public final class RaevyxArmorRenderProvider {
-    private static RaevyxArmorRenderer renderer;
+public final class BloodTempestRenderProvider {
+    private static BloodTempestArmorRenderer renderer;
 
-    private RaevyxArmorRenderProvider() {
+    private BloodTempestRenderProvider() {
     }
 
     public static Object getHumanoidArmorModel(Object livingEntity, Object itemStack, Object equipmentSlot, Object original) {
-        RaevyxArmorRenderer armorRenderer = renderer();
+        BloodTempestArmorRenderer armorRenderer = renderer();
         armorRenderer.prepForRender(
                 (LivingEntity) livingEntity,
                 (ItemStack) itemStack,
@@ -22,9 +22,9 @@ public final class RaevyxArmorRenderProvider {
         return armorRenderer;
     }
 
-    private static RaevyxArmorRenderer renderer() {
+    private static BloodTempestArmorRenderer renderer() {
         if (renderer == null) {
-            renderer = new RaevyxArmorRenderer();
+            renderer = new BloodTempestArmorRenderer();
         }
         return renderer;
     }
