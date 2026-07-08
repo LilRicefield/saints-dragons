@@ -36,6 +36,12 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation VOLITANS_ID = SaintsDragonsCommon.rl("volitans");
     public static final ResourceLocation NULLJAW_ID = SaintsDragonsCommon.rl("nulljaw");
     public static final ResourceLocation ATROXIIA_ID = SaintsDragonsCommon.rl("atroxiia");
+    public static final ResourceLocation DRACONIAN_SWARM_ID = SaintsDragonsCommon.rl("draconian_swarm");
+    public static final int SWARM_WAVE_MIN_COUNT = 1;
+    public static final int SWARM_WAVE_MAX_COUNT = 50;
+    public static final int SWARM_WAVE_1_DEFAULT_COUNT = 3;
+    public static final int SWARM_WAVE_2_DEFAULT_COUNT = 6;
+    public static final int SWARM_WAVE_3_DEFAULT_COUNT = 9;
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = "forge".equals(Services.PLATFORM.getPlatformId());
@@ -515,6 +521,83 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(),
                 Map.of("aggressive_wild", false)
         );
+    }
+
+    private static DragonAttributeConfig draconianSwarmDefaults() {
+        int wave1Count = SWARM_WAVE_1_DEFAULT_COUNT;
+        int wave2Count = SWARM_WAVE_2_DEFAULT_COUNT;
+        int wave3Count = SWARM_WAVE_3_DEFAULT_COUNT;
+        double latcherMaxHealth = 12.0D;
+        double latcherArmor = 0.0D;
+        double latcherBiteDamage = 2.0D;
+        double wingedMaxHealth = 8.0D;
+        double wingedArmor = 0.0D;
+        double wingedHookAndPullDamage = 1.5D;
+        double wingedDiveBombDamage = 2.025D;
+        double whettledMaxHealth = 16.0D;
+        double whettledArmor = 0.0D;
+        double whettledClawAttackDamage = 4.0D;
+        double whettledLungeDamage = 9.0D;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                wave1Count = ((Number) configClass.getField("SWARM_WAVE_1_COUNT").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WAVE_1_COUNT").get(null))).intValue();
+                wave2Count = ((Number) configClass.getField("SWARM_WAVE_2_COUNT").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WAVE_2_COUNT").get(null))).intValue();
+                wave3Count = ((Number) configClass.getField("SWARM_WAVE_3_COUNT").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WAVE_3_COUNT").get(null))).intValue();
+                latcherMaxHealth = (double) configClass.getField("SWARM_LATCHER_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_MAX_HEALTH").get(null));
+                latcherArmor = (double) configClass.getField("SWARM_LATCHER_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_ARMOR").get(null));
+                latcherBiteDamage = (double) configClass.getField("SWARM_LATCHER_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_BITE_DAMAGE").get(null));
+                wingedMaxHealth = (double) configClass.getField("SWARM_WINGED_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_MAX_HEALTH").get(null));
+                wingedArmor = (double) configClass.getField("SWARM_WINGED_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_ARMOR").get(null));
+                wingedHookAndPullDamage = (double) configClass.getField("SWARM_WINGED_HOOK_AND_PULL_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_HOOK_AND_PULL_DAMAGE").get(null));
+                wingedDiveBombDamage = (double) configClass.getField("SWARM_WINGED_DIVE_BOMB_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_DIVE_BOMB_DAMAGE").get(null));
+                whettledMaxHealth = (double) configClass.getField("SWARM_WHETTLED_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_MAX_HEALTH").get(null));
+                whettledArmor = (double) configClass.getField("SWARM_WHETTLED_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_ARMOR").get(null));
+                whettledClawAttackDamage = (double) configClass.getField("SWARM_WHETTLED_CLAW_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_CLAW_ATTACK_DAMAGE").get(null));
+                whettledLungeDamage = (double) configClass.getField("SWARM_WHETTLED_LUNGE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_LUNGE_DAMAGE").get(null));
+            } catch (Exception ignored) {
+            }
+        }
+
+        return new DragonAttributeConfig(
+                latcherMaxHealth,
+                latcherArmor,
+                0.0D,
+                Map.of(
+                        "latcher_bite", DragonAbilityOverride.ofDamage(latcherBiteDamage),
+                        "winged_attack", DragonAbilityOverride.ofDamage(wingedHookAndPullDamage),
+                        "winged_attack2", DragonAbilityOverride.ofDamage(wingedDiveBombDamage),
+                        "whettled_clawattack", DragonAbilityOverride.ofDamage(whettledClawAttackDamage),
+                        "whettled_movehornattack", DragonAbilityOverride.ofDamage(whettledLungeDamage)
+                ),
+                Map.of(
+                        "wave_1_count", (double) clampSwarmWaveCount(wave1Count),
+                        "wave_2_count", (double) clampSwarmWaveCount(wave2Count),
+                        "wave_3_count", (double) clampSwarmWaveCount(wave3Count),
+                        "latcher_max_health", latcherMaxHealth,
+                        "latcher_armor", latcherArmor,
+                        "winged_max_health", wingedMaxHealth,
+                        "winged_armor", wingedArmor,
+                        "whettled_max_health", whettledMaxHealth,
+                        "whettled_armor", whettledArmor
+                ),
+                Map.of()
+        );
+    }
+
+    public static int clampSwarmWaveCount(int count) {
+        return Math.max(SWARM_WAVE_MIN_COUNT, Math.min(SWARM_WAVE_MAX_COUNT, count));
+    }
+
+    public static int swarmWaveCount(DragonAttributeConfig config, int wave) {
+        int fallback = switch (wave) {
+            case 1 -> SWARM_WAVE_1_DEFAULT_COUNT;
+            case 2 -> SWARM_WAVE_2_DEFAULT_COUNT;
+            case 3 -> SWARM_WAVE_3_DEFAULT_COUNT;
+            default -> SWARM_WAVE_1_DEFAULT_COUNT;
+        };
+        return clampSwarmWaveCount((int) Math.round(config.extraDouble("wave_" + wave + "_count", fallback)));
     }
 
     private static DragonAttributeConfig volitansDefaults() {
@@ -1234,6 +1317,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(VOLITANS_ID, volitansDefaults());
         base.put(NULLJAW_ID, nulljawDefaults());
         base.put(ATROXIIA_ID, atroxiiaDefaults());
+        base.put(DRACONIAN_SWARM_ID, draconianSwarmDefaults());
         return base;
     }
 
@@ -1291,6 +1375,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             hints.addProperty("phase2_toggle_off_chance", "Chance from 0 to 1 to switch from phase 2 back to phase 1 when grounded");
             hints.addProperty("phase2_decision_min_ticks", "Minimum ticks between phase switch checks (20 ticks = 1 second)");
             hints.addProperty("phase2_decision_max_ticks", "Maximum ticks between phase switch checks (20 ticks = 1 second)");
+        } else if (id.equals(DRACONIAN_SWARM_ID)) {
+            hints.addProperty("wave_1_count", "Exact swarm entities spawned in wave 1 (1 to 50)");
+            hints.addProperty("wave_2_count", "Exact swarm entities spawned in wave 2 (1 to 50)");
+            hints.addProperty("wave_3_count", "Exact swarm entities spawned in wave 3 (1 to 50)");
+            hints.addProperty("latcher_max_health", "Latcher max health");
+            hints.addProperty("latcher_armor", "Latcher armor");
+            hints.addProperty("winged_max_health", "Winged max health");
+            hints.addProperty("winged_armor", "Winged armor");
+            hints.addProperty("whettled_max_health", "Whettled max health");
+            hints.addProperty("whettled_armor", "Whettled armor");
         }
         return hints;
     }

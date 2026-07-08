@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
@@ -29,7 +30,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         VARASUCHUS,
         IGNIVORUS,
         VOLITANS,
-        NULLJAW
+        NULLJAW,
+        DRACONIAN_SWARM
     }
 
     private Section section = Section.CINDERVANE;
@@ -48,14 +50,15 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
             case NULLJAW -> addNulljawEntries(entries);
+            case DRACONIAN_SWARM -> addDraconianSwarmEntries(entries);
         }
     }
 
     @Override
     protected void addHeaderButtons() {
-        int buttonWidth = Math.min(90, (width - 84) / 7);
+        int buttonWidth = Math.min(80, (width - 84) / 8);
         int spacing = 6;
-        int totalWidth = buttonWidth * 7 + spacing * 6;
+        int totalWidth = buttonWidth * 8 + spacing * 7;
         int startX = (width - totalWidth) / 2;
         int y = 32;
 
@@ -108,6 +111,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startX + (buttonWidth + spacing) * 6, y, buttonWidth, 20).build());
 
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.draconian_swarm"), button -> {
+            if (section != Section.DRACONIAN_SWARM) {
+                section = Section.DRACONIAN_SWARM;
+                rebuildWidgets();
+            }
+        }).bounds(startX + (buttonWidth + spacing) * 7, y, buttonWidth, 20).build());
+
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
             rebuildWidgets();
@@ -158,6 +168,9 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 } else if (dragon instanceof Nulljaw nulljaw) {
                     nulljaw.applyConfiguredAttributes();
                 }
+            }
+            for (AbstractDraconianSwarmEntity swarm : level.getEntitiesOfClass(AbstractDraconianSwarmEntity.class, bounds)) {
+                swarm.applyConfiguredAttributes();
             }
         }
     }
@@ -608,6 +621,69 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
     }
 
+    private void addDraconianSwarmEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_1_count"),
+                () -> ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.get().doubleValue(),
+                value -> ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.set(clampSwarmWaveCount(value)),
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_2_count"),
+                () -> ForgeDragonAttributesConfig.SWARM_WAVE_2_COUNT.get().doubleValue(),
+                value -> ForgeDragonAttributesConfig.SWARM_WAVE_2_COUNT.set(clampSwarmWaveCount(value)),
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_3_count"),
+                () -> ForgeDragonAttributesConfig.SWARM_WAVE_3_COUNT.get().doubleValue(),
+                value -> ForgeDragonAttributesConfig.SWARM_WAVE_3_COUNT.set(clampSwarmWaveCount(value)),
+                null));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.max_health"),
+                ForgeDragonAttributesConfig.SWARM_LATCHER_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.SWARM_LATCHER_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.armor"),
+                ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR::get,
+                ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.bite"),
+                ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE::set,
+                null));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.max_health"),
+                ForgeDragonAttributesConfig.SWARM_WINGED_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.SWARM_WINGED_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.armor"),
+                ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR::get,
+                ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.attack"),
+                ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE::get,
+                ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.attack2"),
+                ForgeDragonAttributesConfig.SWARM_WINGED_DIVE_BOMB_DAMAGE::get,
+                ForgeDragonAttributesConfig.SWARM_WINGED_DIVE_BOMB_DAMAGE::set,
+                null));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.max_health"),
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.armor"),
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR::get,
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.clawattack"),
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE::get,
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.movehornattack"),
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_LUNGE_DAMAGE::get,
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_LUNGE_DAMAGE::set,
+                null));
+    }
+
     private void addVolitansEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.volitans")));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.max_health"),
@@ -742,6 +818,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD::get,
                 ForgeDragonAttributesConfig.VOLITANS_AGGRESSIVE_WILD::set,
                 null));
+    }
+
+    private static int clampSwarmWaveCount(double value) {
+        return DragonAttributeConfigLoader.clampSwarmWaveCount((int) Math.round(value));
     }
 
     private void resetSection() {
@@ -895,6 +975,22 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case NULLJAW -> {
                 ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.set(ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_ARMOR.set(ForgeDragonAttributesConfig.NULLJAW_ARMOR.getDefault());
+            }
+            case DRACONIAN_SWARM -> {
+                ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.set(ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WAVE_2_COUNT.set(ForgeDragonAttributesConfig.SWARM_WAVE_2_COUNT.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WAVE_3_COUNT.set(ForgeDragonAttributesConfig.SWARM_WAVE_3_COUNT.getDefault());
+                ForgeDragonAttributesConfig.SWARM_LATCHER_MAX_HEALTH.set(ForgeDragonAttributesConfig.SWARM_LATCHER_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR.set(ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WINGED_MAX_HEALTH.set(ForgeDragonAttributesConfig.SWARM_WINGED_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR.set(ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WINGED_DIVE_BOMB_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WINGED_DIVE_BOMB_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_MAX_HEALTH.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_LUNGE_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_LUNGE_DAMAGE.getDefault());
             }
         }
 

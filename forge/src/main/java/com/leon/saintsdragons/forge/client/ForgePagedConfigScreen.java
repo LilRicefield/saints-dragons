@@ -3,6 +3,7 @@ package com.leon.saintsdragons.forge.client;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -544,6 +545,108 @@ public abstract class ForgePagedConfigScreen extends Screen {
         @Override
         protected int getHeight() {
             return 24;
+        }
+    }
+
+    protected static final class IntSliderEntry extends ConfigEntry {
+        private final IntSupplier getter;
+        private final IntConsumer setter;
+        private final Runnable saver;
+        private final int min;
+        private final int max;
+        private final int defaultValue;
+        private final java.util.function.IntFunction<Component> textGetter;
+        private int value;
+        private AbstractSliderButton slider;
+
+        protected IntSliderEntry(Component label, IntSupplier getter, IntConsumer setter, Runnable saver,
+                                 int min, int max, int defaultValue,
+                                 java.util.function.IntFunction<Component> textGetter) {
+            super(label);
+            this.getter = getter;
+            this.setter = setter;
+            this.saver = saver;
+            this.min = min;
+            this.max = max;
+            this.defaultValue = defaultValue;
+            this.textGetter = textGetter;
+            this.value = clamp(getter.getAsInt());
+        }
+
+        @Override
+        protected void addWidgets(ForgePagedConfigScreen screen) {
+            slider = new AbstractSliderButton(inputX, y, inputWidth, 18, messageFor(value), normalized(value)) {
+                @Override
+                protected void updateMessage() {
+                    setMessage(messageFor(valueFromSlider(this.value)));
+                }
+
+                @Override
+                protected void applyValue() {
+                    IntSliderEntry.this.value = valueFromSlider(this.value);
+                }
+            };
+            screen.addRenderableWidget(slider);
+        }
+
+        @Override
+        protected void updateWidgetPositions() {
+            slider.setX(inputX);
+            slider.setY(y);
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            slider.render(graphics, mouseX, mouseY, partialTick);
+        }
+
+        @Override
+        protected void setVisible(boolean visible) {
+            slider.visible = visible;
+            slider.active = visible;
+        }
+
+        @Override
+        protected void storeValue() {
+            if (slider != null) {
+                value = clamp(value);
+            }
+        }
+
+        @Override
+        protected void applyValue() {
+            setter.accept(value);
+            if (saver != null) {
+                saver.run();
+            }
+        }
+
+        @Override
+        protected int getHeight() {
+            return 24;
+        }
+
+        private Component messageFor(int value) {
+            return textGetter == null ? Component.literal(Integer.toString(value)) : textGetter.apply(value);
+        }
+
+        private double normalized(int value) {
+            if (max <= min) {
+                return 0.0D;
+            }
+            return (clamp(value) - min) / (double) (max - min);
+        }
+
+        private int valueFromSlider(double sliderValue) {
+            if (max <= min) {
+                return defaultValue;
+            }
+            int parsed = min + (int) Math.round(sliderValue * (max - min));
+            return clamp(parsed);
+        }
+
+        private int clamp(int value) {
+            return Math.max(min, Math.min(max, value));
         }
     }
 

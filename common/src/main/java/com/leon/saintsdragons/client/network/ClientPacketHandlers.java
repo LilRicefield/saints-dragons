@@ -15,7 +15,9 @@ import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
+import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
+import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -93,6 +95,10 @@ public final class ClientPacketHandlers {
 
     public static void handleSwarmBattleMusic(MessageSwarmBattleMusic message) {
         SwarmBattleMusicController.signal(message.active(), message.durationTicks());
+    }
+
+    public static void handleSwarmWaveBar(MessageSwarmWaveBar message) {
+        SwarmWaveBarOverlay.signal(message.active(), message.wave(), message.progress(), message.durationTicks());
     }
 
     public static void handleAbilityDebugBox(MessageDragonAbilityDebugBox message) {

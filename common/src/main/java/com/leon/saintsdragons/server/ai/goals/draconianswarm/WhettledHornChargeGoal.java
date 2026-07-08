@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.ai.goals.draconianswarm;
 import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.server.entity.draconianswarm.Whettled;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -15,7 +14,6 @@ public class WhettledHornChargeGoal extends Goal {
     private static final double MIN_DISTANCE_SQ = 12.25D;
     private static final double MAX_DISTANCE_SQ = 225.0D;
     private static final double CHARGE_SPEED = 1.50D;
-    private static final double DAMAGE_MULTIPLIER = 2.25D;
     private static final double PASS_THROUGH_DISTANCE = 7.0D;
     private static final int WARNING_TICKS = 12;
     private static final int MAX_CHARGE_TICKS = 24;
@@ -134,7 +132,7 @@ public class WhettledHornChargeGoal extends Goal {
             return;
         }
         LivingEntity victim = hits.contains(target) ? target : hits.get(0);
-        float damage = (float) (this.whettled.getAttributeValue(Attributes.ATTACK_DAMAGE) * DAMAGE_MULTIPLIER);
+        float damage = (float) this.whettled.getLungeDamage();
         if (victim.hurt(this.whettled.damageSources().mobAttack(this.whettled), damage)) {
             if (!this.animationTriggered) {
                 this.animationTriggered = true;

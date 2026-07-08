@@ -82,6 +82,14 @@ public final class ForgePlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public float getSwarmBattleMusicVolume() {
+        if (ForgeClientConfig.SWARM_BATTLE_MUSIC_VOLUME == null) {
+            return 1.0F;
+        }
+        return Math.max(0, Math.min(100, ForgeClientConfig.SWARM_BATTLE_MUSIC_VOLUME.get())) / 100.0F;
+    }
+
+    @Override
     public Item createSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType,
                                int primaryColor,
                                int secondaryColor,

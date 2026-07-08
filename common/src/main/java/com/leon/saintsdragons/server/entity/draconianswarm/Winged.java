@@ -38,10 +38,30 @@ public class Winged extends AbstractDraconianSwarmEntity {
 
     public static AttributeSupplier.@NotNull Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 8.0D)
+                .add(Attributes.MAX_HEALTH, swarmHealth("winged", 8.0D))
                 .add(Attributes.MOVEMENT_SPEED, 0.50D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
-                .add(Attributes.ATTACK_DAMAGE, 1.5D);
+                .add(Attributes.ATTACK_DAMAGE, swarmAbilityDamage("winged_attack", 1.5D))
+                .add(Attributes.ARMOR, swarmArmor("winged", 0.0D));
+    }
+
+    @Override
+    protected double getConfiguredMaxHealth() {
+        return swarmHealth("winged", 8.0D);
+    }
+
+    @Override
+    protected double getConfiguredArmor() {
+        return swarmArmor("winged", 0.0D);
+    }
+
+    @Override
+    protected double getConfiguredAttackDamage() {
+        return swarmAbilityDamage("winged_attack", 1.5D);
+    }
+
+    public double getDiveBombDamage() {
+        return swarmAbilityDamage("winged_attack2", 2.025D);
     }
 
     @Override

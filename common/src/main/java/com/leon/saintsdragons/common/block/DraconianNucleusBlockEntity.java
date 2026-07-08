@@ -1,7 +1,9 @@
 package com.leon.saintsdragons.common.block;
 
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
+import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -35,16 +37,14 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
     private static final int SPAWN_INTERVAL = 10;
     private static final int BATTLE_MUSIC_SIGNAL_INTERVAL = 20;
     private static final int BATTLE_MUSIC_SIGNAL_DURATION = 60;
+    private static final int BATTLE_MUSIC_START_DELAY = 30;
+    private static final int WAVE_BAR_SIGNAL_DURATION = 40;
     private static final int FIRST_WAVE_EFFECT_DELAY = 200;
     private static final int FIRST_WAVE_SPAWN_DELAY = 220;
     private static final int LATER_WAVE_SPAWN_DELAY = 40;
     private static final double ACTIVATION_RADIUS = 20.0D;
     private static final double ADVANCEMENT_RADIUS = 64.0D;
-    private static final int[][] WAVE_COMPOSITIONS = {
-            {1, 1, 1},
-            {2, 2, 2},
-            {2, 3, 3}
-    };
+    private static final int WAVE_COUNT = 3;
     private static final BlockPos[] SPAWN_OFFSETS = {
             new BlockPos(0, 3, 0),
             new BlockPos(2, 3, 0),
@@ -66,6 +66,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
     private long summonEffectsGameTime;
     private long controllerCooldownUntilGameTime;
     private long lastBattleMusicSignalGameTime;
+    private long battleMusicStartGameTime;
     private boolean controllerActivationOnly;
     private boolean harvestUnlocked;
     private boolean deactivatedByController;
@@ -133,6 +134,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.encounterState = EncounterState.SPAWNING;
         this.nextActionGameTime = gameTime + FIRST_WAVE_SPAWN_DELAY;
         this.summonEffectsGameTime = gameTime + FIRST_WAVE_EFFECT_DELAY;
+        this.battleMusicStartGameTime = gameTime + FIRST_WAVE_SPAWN_DELAY + BATTLE_MUSIC_START_DELAY;
         this.harvestUnlocked = false;
         this.deactivatedByController = false;
         this.summonEffectsActive = false;
@@ -182,6 +184,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.nextActionGameTime = 0L;
         this.summonEffectsGameTime = 0L;
         this.controllerCooldownUntilGameTime = level.getGameTime() + 1200L;
+        this.battleMusicStartGameTime = 0L;
         this.activeSwarms.clear();
         this.encounterState = EncounterState.DORMANT;
         this.harvestUnlocked = true;
@@ -267,30 +270,30 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
     }
 
     private EntityType<? extends AbstractDraconianSwarmEntity> getNextSwarmType() {
-        int[] composition = WAVE_COMPOSITIONS[this.currentWave - 1];
-        if (this.spawnedThisWave < composition[0]) {
-            return ModEntities.LATCHER.get();
-        }
-        if (this.spawnedThisWave < composition[0] + composition[1]) {
-            return ModEntities.WINGED.get();
-        }
-        return ModEntities.WHETTLED.get();
+        return switch (this.spawnedThisWave % 3) {
+            case 0 -> ModEntities.LATCHER.get();
+            case 1 -> ModEntities.WINGED.get();
+            default -> ModEntities.WHETTLED.get();
+        };
     }
 
     private int getWaveSize() {
-        int[] composition = WAVE_COMPOSITIONS[this.currentWave - 1];
-        return composition[0] + composition[1] + composition[2];
+        return DragonAttributeConfigLoader.swarmWaveCount(
+                DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID),
+                this.currentWave);
     }
 
     private void finishWave(long gameTime) {
         this.activeSwarms.clear();
-        if (this.currentWave >= WAVE_COMPOSITIONS.length) {
+        if (this.currentWave >= WAVE_COUNT) {
             this.encounterState = EncounterState.COMPLETE;
             this.harvestUnlocked = true;
             this.deactivatedByController = false;
             this.summonEffectsActive = false;
+            this.battleMusicStartGameTime = 0L;
             if (this.level instanceof ServerLevel serverLevel) {
                 awardNearbyAdvancement(serverLevel, this.worldPosition, "vanquish_draconian_swarm", "vanquish_draconian_swarm");
+                stopNearbyBattleMusic(serverLevel);
             }
         } else {
             beginNextWave(gameTime);
@@ -308,6 +311,9 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.nextActionGameTime = gameTime + LATER_WAVE_SPAWN_DELAY;
         this.summonEffectsGameTime = gameTime;
         this.summonEffectsActive = true;
+        if (this.battleMusicStartGameTime == 0L) {
+            this.battleMusicStartGameTime = gameTime + BATTLE_MUSIC_START_DELAY;
+        }
         syncChanged();
     }
 
@@ -355,6 +361,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         AABB stopArea = new AABB(this.worldPosition).inflate(ADVANCEMENT_RADIUS);
         for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, stopArea, ServerPlayer::isAlive)) {
             NetworkHandler.sendToPlayer(player, new MessageSwarmBattleMusic(false, 0));
+            NetworkHandler.sendToPlayer(player, new MessageSwarmWaveBar(false, 0, 0.0F, 0));
         }
     }
 
@@ -364,9 +371,20 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         }
         this.lastBattleMusicSignalGameTime = gameTime;
         AABB battleArea = new AABB(this.worldPosition).inflate(ADVANCEMENT_RADIUS);
+        int wave = this.currentWave;
+        float progress = getWaveBarProgress();
+        boolean musicActive = this.battleMusicStartGameTime == 0L || gameTime >= this.battleMusicStartGameTime;
         for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, battleArea, ServerPlayer::isAlive)) {
-            NetworkHandler.sendToPlayer(player, new MessageSwarmBattleMusic(true, BATTLE_MUSIC_SIGNAL_DURATION));
+            if (musicActive) {
+                NetworkHandler.sendToPlayer(player, new MessageSwarmBattleMusic(true, BATTLE_MUSIC_SIGNAL_DURATION));
+            }
+            NetworkHandler.sendToPlayer(player, new MessageSwarmWaveBar(true, wave, progress, WAVE_BAR_SIGNAL_DURATION));
         }
+    }
+
+    private float getWaveBarProgress() {
+        int waveSize = Math.max(1, getWaveSize());
+        return Math.max(0.0F, Math.min(1.0F, (float) this.remainingThisWave / (float) waveSize));
     }
 
     private static boolean hasSurvivalPlayer(ServerLevel level, BlockPos pos) {
@@ -388,6 +406,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         tag.putLong("NextActionGameTime", this.nextActionGameTime);
         tag.putLong("SummonEffectsGameTime", this.summonEffectsGameTime);
         tag.putLong("ControllerCooldownUntilGameTime", this.controllerCooldownUntilGameTime);
+        tag.putLong("BattleMusicStartGameTime", this.battleMusicStartGameTime);
         tag.putBoolean("ControllerActivationOnly", this.controllerActivationOnly);
         tag.putBoolean("HarvestUnlocked", this.harvestUnlocked);
         tag.putBoolean("DeactivatedByController", this.deactivatedByController);
@@ -419,6 +438,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.nextActionGameTime = tag.getLong("NextActionGameTime");
         this.summonEffectsGameTime = tag.getLong("SummonEffectsGameTime");
         this.controllerCooldownUntilGameTime = tag.getLong("ControllerCooldownUntilGameTime");
+        this.battleMusicStartGameTime = tag.getLong("BattleMusicStartGameTime");
         this.controllerActivationOnly = tag.getBoolean("ControllerActivationOnly");
         this.harvestUnlocked = tag.getBoolean("HarvestUnlocked") || this.encounterState == EncounterState.COMPLETE;
         this.deactivatedByController = tag.getBoolean("DeactivatedByController");

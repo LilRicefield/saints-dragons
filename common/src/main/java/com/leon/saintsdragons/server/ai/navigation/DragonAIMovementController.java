@@ -16,8 +16,6 @@ import java.util.Queue;
 
 public class DragonAIMovementController {
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
-    public static final double GROUND_WANDER_SPEED = 0.5D;
-    public static final double GROUND_CHASE_SPEED = 0.60D;
     public static final double GROUND_SPRINT_SPEED = 0.80D;
 
     private final RideableDragonBase dragon;

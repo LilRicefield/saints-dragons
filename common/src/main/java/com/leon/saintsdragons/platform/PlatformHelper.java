@@ -20,6 +20,7 @@ public interface PlatformHelper {
     String getPlatformId();
     boolean isModLoaded(String modId);
     boolean isGenericDiveLoopEnabled();
+    float getSwarmBattleMusicVolume();
     Item createSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType,
                         int primaryColor,
                         int secondaryColor,

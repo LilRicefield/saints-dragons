@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.sound;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.platform.Services;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -46,7 +47,7 @@ public class SwarmBattleLoopSound extends AbstractTickableSoundInstance {
             return;
         }
 
-        this.volume = this.fade * MAX_VOLUME;
+        this.volume = this.fade * MAX_VOLUME * Services.PLATFORM.getSwarmBattleMusicVolume();
         this.pitch = 1.0F;
     }
 

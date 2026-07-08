@@ -1002,6 +1002,8 @@
   "saintsdragons.config_screen.others.dive_speed_lines.tooltip": "关闭后隐藏飞龙高速俯冲时的屏幕边缘速度线",
   "saintsdragons.config_screen.others.generic_dive_loop": "俯冲掠风声通用循环音效",
   "saintsdragons.config_screen.others.generic_dive_loop.tooltip": "关闭后禁用骑乘、潜水或飞行时掠风声通用的本地循环音效",
+  "saintsdragons.config_screen.others.swarm_battle_music_volume": "龙裔虫群战斗音乐音量",
+  "saintsdragons.config_screen.others.swarm_battle_music_volume.tooltip": "龙裔虫群战斗音乐的本地音量倍率",
   "saintsdragons.config_screen.others.stegonaut_buffs": "启用坚甲龙BUFF",
   "saintsdragons.config_screen.others.stegonaut_buffs.tooltip": "关闭后禁用坚甲龙的范围BUFF给于和储器BUFF给予",
   "saintsdragons.config_screen.others.hunger_decay": "启用饥饿衰减",
@@ -1011,13 +1013,11 @@
   "saintsdragons.config_screen.others.wiki_reminder": "启用Wiki提醒",
   "saintsdragons.config_screen.others.wiki_reminder.tooltip": "当玩家加入世界时显示一次性的本模组维基链接",
   "saintsdragons.config_screen.others.ivy": "龙商常春藤",
-  "saintsdragons.config_screen.others.ivy.enabled": "龙商常春藤居所生成",
-  "saintsdragons.config_screen.others.ivy.enabled.tooltip": "关闭后常春藤的居所不再生成，且禁止常春藤在新生成或未生成的区块中的结构里刷新",
   "saintsdragons.config_screen.others.ivy.restock_interval": "补货冷却（游戏刻）",
   "saintsdragons.config_screen.others.ivy.restock_interval.tooltip": "补货冷却游戏刻（20刻 = 1秒，24000 = 20分钟）",
-  "text.autoconfig.saintsdragonsspawning.option.ivyHouseEnabled": "启用常春藤居所生成",
-  "text.autoconfig.saintsdragonsspawning.option.ivyHouseEnabled.@Tooltip": "关闭后常春藤的居所不再生成，且禁止常春藤在新生成或未生成的区块中的结构里刷新",
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval": "常春藤补货冷却",
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "补货冷却游戏刻（20刻 = 1秒，24000 = 20分钟）",
-  "saintsdragons.config_screen.others.dragon_terrain": "防止龙被卡住（破坏方块）"
+  "saintsdragons.config_screen.others.dragon_terrain": "防止龙被卡住（破坏方块）",
+  "gui.saintsdragons.draconian_swarm": "龙裔虫群",
+  "gui.saintsdragons.draconian_swarm.wave": "龙裔虫群 - 第%s波"
 }

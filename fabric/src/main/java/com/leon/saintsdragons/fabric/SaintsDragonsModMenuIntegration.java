@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricClientConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricServerConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
@@ -303,6 +304,24 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         nulljawBuffer.maxHealth = nulljawCurrent.maxHealth();
         nulljawBuffer.armor = nulljawCurrent.armor();
 
+        DragonAttributeConfig swarmCurrent = loader.getConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID);
+        DragonAttributeConfig swarmDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID);
+        DraconianSwarmAttributeBuffer swarmBuffer = new DraconianSwarmAttributeBuffer();
+        swarmBuffer.wave1Count = DragonAttributeConfigLoader.swarmWaveCount(swarmCurrent, 1);
+        swarmBuffer.wave2Count = DragonAttributeConfigLoader.swarmWaveCount(swarmCurrent, 2);
+        swarmBuffer.wave3Count = DragonAttributeConfigLoader.swarmWaveCount(swarmCurrent, 3);
+        swarmBuffer.latcherMaxHealth = swarmCurrent.extraDouble("latcher_max_health", swarmDefaults.extraDouble("latcher_max_health", 12.0D));
+        swarmBuffer.latcherArmor = swarmCurrent.extraDouble("latcher_armor", swarmDefaults.extraDouble("latcher_armor", 0.0D));
+        swarmBuffer.latcherBiteDamage = swarmCurrent.abilityDamage("latcher_bite", swarmDefaults.abilityDamage("latcher_bite", 2.0D));
+        swarmBuffer.wingedMaxHealth = swarmCurrent.extraDouble("winged_max_health", swarmDefaults.extraDouble("winged_max_health", 8.0D));
+        swarmBuffer.wingedArmor = swarmCurrent.extraDouble("winged_armor", swarmDefaults.extraDouble("winged_armor", 0.0D));
+        swarmBuffer.wingedHookAndPullDamage = swarmCurrent.abilityDamage("winged_attack", swarmDefaults.abilityDamage("winged_attack", 1.5D));
+        swarmBuffer.wingedDiveBombDamage = swarmCurrent.abilityDamage("winged_attack2", swarmDefaults.abilityDamage("winged_attack2", 2.025D));
+        swarmBuffer.whettledMaxHealth = swarmCurrent.extraDouble("whettled_max_health", swarmDefaults.extraDouble("whettled_max_health", 16.0D));
+        swarmBuffer.whettledArmor = swarmCurrent.extraDouble("whettled_armor", swarmDefaults.extraDouble("whettled_armor", 0.0D));
+        swarmBuffer.whettledClawAttackDamage = swarmCurrent.abilityDamage("whettled_clawattack", swarmDefaults.abilityDamage("whettled_clawattack", 4.0D));
+        swarmBuffer.whettledLungeDamage = swarmCurrent.abilityDamage("whettled_movehornattack", swarmDefaults.abilityDamage("whettled_movehornattack", 9.0D));
+
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(TITLE);
@@ -323,9 +342,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
                 SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
                 SaintsDragonsConfig.WIKI_REMINDER_ENABLED.save();
-                SaintsDragonsConfig.IVY_HOUSE_ENABLED.save();
                 SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.save();
-                persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer);
+                persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer, swarmBuffer);
                 refreshLoadedDragonAttributesOnIntegratedServer();
             }
         });
@@ -403,6 +421,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
             addVolitansAttributes(attributes, entryBuilder, volitansBuffer, volitansDefaults);
             addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
+            addDraconianSwarmAttributes(attributes, entryBuilder, swarmBuffer, swarmDefaults);
         }
 
         ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
@@ -464,6 +483,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.generic_dive_loop.tooltip"))
          .setSaveConsumer(value -> clientConfig.genericDiveLoopEnabled = value)
           .build());
+        others.addEntry(entryBuilder.startIntSlider(
+                Component.translatable("saintsdragons.config_screen.others.swarm_battle_music_volume"),
+                clientConfig.swarmBattleMusicVolume,
+                0,
+                100
+        ).setDefaultValue(100)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.swarm_battle_music_volume.tooltip"))
+         .setTextGetter(value -> Component.literal(value + "%"))
+         .setSaveConsumer(value -> clientConfig.swarmBattleMusicVolume = value)
+         .build());
         if (!remoteServer) {
             others.addEntry(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
@@ -486,13 +515,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.wiki_reminder.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.WIKI_REMINDER_ENABLED.set(value))
               .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
-                    Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
-                    SaintsDragonsConfig.IVY_HOUSE_ENABLED.get()
-            ).setDefaultValue(SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT)
-             .setTooltip(Component.translatable("saintsdragons.config_screen.others.ivy.enabled.tooltip"))
-             .setSaveConsumer(value -> SaintsDragonsConfig.IVY_HOUSE_ENABLED.set(value))
-             .build());
             others.addEntry(entryBuilder.startIntSlider(
                     Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                     SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.get(),
@@ -1492,13 +1514,113 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
+    private void addDraconianSwarmAttributes(ConfigCategory category,
+                                             ConfigEntryBuilder entryBuilder,
+                                             DraconianSwarmAttributeBuffer buffer,
+                                             DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_1_count"), buffer.wave1Count)
+                .setDefaultValue(DragonAttributeConfigLoader.swarmWaveCount(defaults, 1))
+                .setMin(DragonAttributeConfigLoader.SWARM_WAVE_MIN_COUNT)
+                .setMax(DragonAttributeConfigLoader.SWARM_WAVE_MAX_COUNT)
+                .setSaveConsumer(value -> buffer.wave1Count = DragonAttributeConfigLoader.clampSwarmWaveCount(value))
+                .build());
+        entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_2_count"), buffer.wave2Count)
+                .setDefaultValue(DragonAttributeConfigLoader.swarmWaveCount(defaults, 2))
+                .setMin(DragonAttributeConfigLoader.SWARM_WAVE_MIN_COUNT)
+                .setMax(DragonAttributeConfigLoader.SWARM_WAVE_MAX_COUNT)
+                .setSaveConsumer(value -> buffer.wave2Count = DragonAttributeConfigLoader.clampSwarmWaveCount(value))
+                .build());
+        entries.add(entryBuilder.startIntField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_3_count"), buffer.wave3Count)
+                .setDefaultValue(DragonAttributeConfigLoader.swarmWaveCount(defaults, 3))
+                .setMin(DragonAttributeConfigLoader.SWARM_WAVE_MIN_COUNT)
+                .setMax(DragonAttributeConfigLoader.SWARM_WAVE_MAX_COUNT)
+                .setSaveConsumer(value -> buffer.wave3Count = DragonAttributeConfigLoader.clampSwarmWaveCount(value))
+                .build());
+        entries.add(entryBuilder.startTextDescription(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher")).build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.max_health"), buffer.latcherMaxHealth)
+                .setDefaultValue(defaults.extraDouble("latcher_max_health", 12.0D))
+                .setMin(1.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.latcherMaxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.armor"), buffer.latcherArmor)
+                .setDefaultValue(defaults.extraDouble("latcher_armor", 0.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.latcherArmor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.bite"), buffer.latcherBiteDamage)
+                .setDefaultValue(defaults.abilityDamage("latcher_bite", 2.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.latcherBiteDamage = value)
+                .build());
+        entries.add(entryBuilder.startTextDescription(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged")).build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.max_health"), buffer.wingedMaxHealth)
+                .setDefaultValue(defaults.extraDouble("winged_max_health", 8.0D))
+                .setMin(1.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.wingedMaxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.armor"), buffer.wingedArmor)
+                .setDefaultValue(defaults.extraDouble("winged_armor", 0.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.wingedArmor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.attack"), buffer.wingedHookAndPullDamage)
+                .setDefaultValue(defaults.abilityDamage("winged_attack", 1.5D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.wingedHookAndPullDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.attack2"), buffer.wingedDiveBombDamage)
+                .setDefaultValue(defaults.abilityDamage("winged_attack2", 2.025D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.wingedDiveBombDamage = value)
+                .build());
+        entries.add(entryBuilder.startTextDescription(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled")).build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.max_health"), buffer.whettledMaxHealth)
+                .setDefaultValue(defaults.extraDouble("whettled_max_health", 16.0D))
+                .setMin(1.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.whettledMaxHealth = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.armor"), buffer.whettledArmor)
+                .setDefaultValue(defaults.extraDouble("whettled_armor", 0.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.whettledArmor = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.clawattack"), buffer.whettledClawAttackDamage)
+                .setDefaultValue(defaults.abilityDamage("whettled_clawattack", 4.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.whettledClawAttackDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.movehornattack"), buffer.whettledLungeDamage)
+                .setDefaultValue(defaults.abilityDamage("whettled_movehornattack", 9.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.whettledLungeDamage = value)
+                .build());
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.draconian_swarm"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
     private void persistDragonAttributes(CindervaneAttributeBuffer cindervaneBuffer,
                                          StegonautAttributeBuffer stegonautBuffer,
                                          RaevyxAttributeBuffer raevyxBuffer,
                                          VarasuchusAttributeBuffer varasuchusBuffer,
                                          IgnivorusAttributeBuffer ignivorusBuffer,
                                          VolitansAttributeBuffer volitansBuffer,
-                                         NulljawAttributeBuffer nulljawBuffer) {
+                                         NulljawAttributeBuffer nulljawBuffer,
+                                         DraconianSwarmAttributeBuffer swarmBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
@@ -1661,6 +1783,32 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 new HashMap<>(nulljawCurrent.extraBooleans())
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
+
+        Map<String, DragonAbilityOverride> swarmAbilities = new HashMap<>();
+        swarmAbilities.put("latcher_bite", DragonAbilityOverride.ofDamage(swarmBuffer.latcherBiteDamage));
+        swarmAbilities.put("winged_attack", DragonAbilityOverride.ofDamage(swarmBuffer.wingedHookAndPullDamage));
+        swarmAbilities.put("winged_attack2", DragonAbilityOverride.ofDamage(swarmBuffer.wingedDiveBombDamage));
+        swarmAbilities.put("whettled_clawattack", DragonAbilityOverride.ofDamage(swarmBuffer.whettledClawAttackDamage));
+        swarmAbilities.put("whettled_movehornattack", DragonAbilityOverride.ofDamage(swarmBuffer.whettledLungeDamage));
+        DragonAttributeConfig updatedSwarm = new DragonAttributeConfig(
+                swarmBuffer.latcherMaxHealth,
+                swarmBuffer.latcherArmor,
+                0.0D,
+                swarmAbilities,
+                Map.of(
+                        "wave_1_count", (double) DragonAttributeConfigLoader.clampSwarmWaveCount(swarmBuffer.wave1Count),
+                        "wave_2_count", (double) DragonAttributeConfigLoader.clampSwarmWaveCount(swarmBuffer.wave2Count),
+                        "wave_3_count", (double) DragonAttributeConfigLoader.clampSwarmWaveCount(swarmBuffer.wave3Count),
+                        "latcher_max_health", swarmBuffer.latcherMaxHealth,
+                        "latcher_armor", swarmBuffer.latcherArmor,
+                        "winged_max_health", swarmBuffer.wingedMaxHealth,
+                        "winged_armor", swarmBuffer.wingedArmor,
+                        "whettled_max_health", swarmBuffer.whettledMaxHealth,
+                        "whettled_armor", swarmBuffer.whettledArmor
+                ),
+                Map.of()
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID, updatedSwarm);
     }
 
     private static final class CindervaneAttributeBuffer {
@@ -1821,6 +1969,23 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double armor;
     }
 
+    private static final class DraconianSwarmAttributeBuffer {
+        int wave1Count;
+        int wave2Count;
+        int wave3Count;
+        double latcherMaxHealth;
+        double latcherArmor;
+        double latcherBiteDamage;
+        double wingedMaxHealth;
+        double wingedArmor;
+        double wingedHookAndPullDamage;
+        double wingedDiveBombDamage;
+        double whettledMaxHealth;
+        double whettledArmor;
+        double whettledClawAttackDamage;
+        double whettledLungeDamage;
+    }
+
     private static Map<String, Double> buildRaevyxExtras(RaevyxAttributeBuffer buffer) {
         Map<String, Double> extras = new HashMap<>();
         extras.put("taming_chance_base", buffer.tamingChanceBase);
@@ -1907,6 +2072,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         dragon.applyConfiguredAttributes();
                     } else if (entity instanceof Nulljaw dragon) {
                         dragon.applyConfiguredAttributes();
+                    } else if (entity instanceof AbstractDraconianSwarmEntity swarm) {
+                        swarm.applyConfiguredAttributes();
                     }
                 }
             }

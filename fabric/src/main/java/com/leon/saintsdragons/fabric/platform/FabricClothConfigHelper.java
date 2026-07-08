@@ -212,7 +212,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "hungerDecayEnabled" -> () -> serverHolder().getConfig().hungerDecayEnabled;
             case "happinessDecayEnabled" -> () -> serverHolder().getConfig().happinessDecayEnabled;
             case "wikiReminderEnabled" -> () -> serverHolder().getConfig().wikiReminderEnabled;
-            case "ivyHouseEnabled" -> () -> serverHolder().getConfig().ivyHouseEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -235,7 +234,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "hungerDecayEnabled" -> value -> serverHolder().getConfig().hungerDecayEnabled = value;
             case "happinessDecayEnabled" -> value -> serverHolder().getConfig().happinessDecayEnabled = value;
             case "wikiReminderEnabled" -> value -> serverHolder().getConfig().wikiReminderEnabled = value;
-            case "ivyHouseEnabled" -> value -> serverHolder().getConfig().ivyHouseEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }

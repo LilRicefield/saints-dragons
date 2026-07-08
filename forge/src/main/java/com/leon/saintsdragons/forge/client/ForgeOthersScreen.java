@@ -79,6 +79,16 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                 ForgeClientConfig.GENERIC_DIVE_LOOP_ENABLED::set,
                 ForgeClientConfig.CLIENT_SPEC::save
         ));
+        entries.add(new IntSliderEntry(
+                Component.translatable("saintsdragons.config_screen.others.swarm_battle_music_volume"),
+                () -> ForgeClientConfig.SWARM_BATTLE_MUSIC_VOLUME.get(),
+                ForgeClientConfig.SWARM_BATTLE_MUSIC_VOLUME::set,
+                ForgeClientConfig.CLIENT_SPEC::save,
+                0,
+                100,
+                100,
+                value -> Component.literal(value + "%")
+        ));
 
         if (!remoteServer) {
             entries.add(new BooleanEntry(
@@ -102,12 +112,6 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
 
             // Ivy the Dragon Merchant
             entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.others.ivy")));
-            entries.add(new BooleanEntry(
-                    Component.translatable("saintsdragons.config_screen.others.ivy.enabled"),
-                    SaintsDragonsConfig.IVY_HOUSE_ENABLED::get,
-                    SaintsDragonsConfig.IVY_HOUSE_ENABLED::set,
-                    SaintsDragonsConfig.IVY_HOUSE_ENABLED::save
-            ));
             entries.add(new IntEntry(
                     Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                     SaintsDragonsConfig.IVY_RESTOCK_INTERVAL::get,

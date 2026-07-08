@@ -36,7 +36,8 @@ public class DraconianNucleusModel extends HierarchicalModel<Entity> {
         PartDefinition modelRoot = mesh.getRoot();
         PartDefinition root = modelRoot.addOrReplaceChild("root", CubeListBuilder.create(),
                 PartPose.offset(0.0F, 16.0F, 0.0F));
-        PartDefinition outer = root.addOrReplaceChild("outerlayer",
+        PartDefinition group = root.addOrReplaceChild("group", CubeListBuilder.create(), PartPose.ZERO);
+        PartDefinition outer = group.addOrReplaceChild("outerlayer",
                 CubeListBuilder.create().texOffs(0, 0)
                         .addBox(-6.0F, -6.0F, -6.0F, 12.0F, 12.0F, 12.0F, new CubeDeformation(0.0F)),
                 PartPose.ZERO);

@@ -9,6 +9,7 @@ public final class ForgeClientConfig {
     public static ForgeConfigSpec.BooleanValue DIVE_CAMERA_WOBBLE_ENABLED;
     public static ForgeConfigSpec.BooleanValue DIVE_SPEED_LINES_ENABLED;
     public static ForgeConfigSpec.BooleanValue GENERIC_DIVE_LOOP_ENABLED;
+    public static ForgeConfigSpec.IntValue SWARM_BATTLE_MUSIC_VOLUME;
 
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
@@ -26,6 +27,9 @@ public final class ForgeClientConfig {
         GENERIC_DIVE_LOOP_ENABLED = builder
                 .comment("Enable the local generic wind loop while riding diving flying dragons")
                 .define("generic_dive_loop", true);
+        SWARM_BATTLE_MUSIC_VOLUME = builder
+                .comment("Local Draconian Swarm battle music volume, in percent")
+                .defineInRange("swarm_battle_music_volume", 100, 0, 100);
         builder.pop();
 
         CLIENT_SPEC = builder.build();

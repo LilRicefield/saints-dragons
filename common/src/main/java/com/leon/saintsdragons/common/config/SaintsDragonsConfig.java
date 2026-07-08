@@ -51,7 +51,6 @@ public final class SaintsDragonsConfig {
     public static final boolean HUNGER_DECAY_ENABLED_DEFAULT = true;
     public static final boolean HAPPINESS_DECAY_ENABLED_DEFAULT = true;
     public static final boolean WIKI_REMINDER_ENABLED_DEFAULT = true;
-    public static final boolean IVY_HOUSE_ENABLED_DEFAULT = true;
     public static final int IVY_RESTOCK_INTERVAL_DEFAULT = 24000;
 
     public static ConfigHelper.IntValue RAEVYX_SPAWN_WEIGHT;
@@ -95,7 +94,6 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue HUNGER_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue HAPPINESS_DECAY_ENABLED;
     public static ConfigHelper.BooleanValue WIKI_REMINDER_ENABLED;
-    public static ConfigHelper.BooleanValue IVY_HOUSE_ENABLED;
     public static ConfigHelper.IntValue IVY_RESTOCK_INTERVAL;
 
     private static volatile boolean initialized = false;
@@ -191,17 +189,11 @@ public final class SaintsDragonsConfig {
         serverBuilder.pop();
 
         serverBuilder.push("ivy");
-        serverBuilder.comment("Global toggle for Ivy's house structure generation and Ivy spawning from that structure.");
-        IVY_HOUSE_ENABLED = serverBuilder.defineBoolean("ivyHouseEnabled", IVY_HOUSE_ENABLED_DEFAULT);
         serverBuilder.comment("Ticks between Ivy's trade restocks (20 ticks = 1 second, 24000 = 20 minutes).");
         IVY_RESTOCK_INTERVAL = serverBuilder.defineInt("ivyRestockInterval", IVY_RESTOCK_INTERVAL_DEFAULT, 20, 72000);
         serverBuilder.pop();
 
         serverBuilder.build();
-    }
-
-    public static boolean isIvyHouseEnabled() {
-        return IVY_HOUSE_ENABLED == null || IVY_HOUSE_ENABLED.get();
     }
 
     public static int getIvyRestockInterval() {

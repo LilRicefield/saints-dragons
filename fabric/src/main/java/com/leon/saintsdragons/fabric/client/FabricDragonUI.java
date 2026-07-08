@@ -7,6 +7,7 @@ import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
 import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
 import com.leon.saintsdragons.client.ui.MeleeModeNotification;
 import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
+import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
 import com.leon.saintsdragons.client.ui.VolitansBreathMeterIndicator;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -81,6 +82,8 @@ public final class FabricDragonUI {
 
             int width = client.getWindow().getGuiScaledWidth();
             int height = client.getWindow().getGuiScaledHeight();
+
+            SwarmWaveBarOverlay.render(graphics, width, tickDelta);
 
             if (FabricClientConfigAccess.isDiveSpeedLinesEnabled()) {
                 diveSpeedLineOverlay.render(graphics, width, height, tickDelta);

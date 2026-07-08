@@ -41,10 +41,6 @@ public final class SaintsDragonsFabricServerConfig implements ConfigData {
 
     @ConfigEntry.Category("ivy")
     @ConfigEntry.Gui.Tooltip
-    public boolean ivyHouseEnabled = SaintsDragonsConfig.IVY_HOUSE_ENABLED_DEFAULT;
-
-    @ConfigEntry.Category("ivy")
-    @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 20, max = 72000)
     public int ivyRestockInterval = SaintsDragonsConfig.IVY_RESTOCK_INTERVAL_DEFAULT;
 }

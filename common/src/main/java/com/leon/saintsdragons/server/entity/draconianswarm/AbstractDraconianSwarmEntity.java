@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.draconianswarm;
 
 import com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCombatMovementGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCoordinator;
@@ -16,10 +18,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
@@ -32,6 +38,7 @@ import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +71,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     private UUID encounterId;
     private int encounterWave;
     private boolean nucleusDeathReported;
+    private boolean initialConfiguredAttributesApplied;
 
     protected AbstractDraconianSwarmEntity(EntityType<? extends AbstractDraconianSwarmEntity> entityType, Level level) {
         super(entityType, level);
@@ -77,6 +85,59 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, -1.0F);
         this.setPathfindingMalus(BlockPathTypes.FENCE, -1.0F);
     }
+
+    protected static DragonAttributeConfig swarmConfig() {
+        return DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID);
+    }
+
+    protected static double swarmHealth(String creatureKey, double fallback) {
+        DragonAttributeConfig config = swarmConfig();
+        if ("latcher".equals(creatureKey)) {
+            return config.extraDouble("latcher_max_health", config.maxHealth());
+        }
+        return config.extraDouble(creatureKey + "_max_health", fallback);
+    }
+
+    protected static double swarmArmor(String creatureKey, double fallback) {
+        DragonAttributeConfig config = swarmConfig();
+        if ("latcher".equals(creatureKey)) {
+            return config.extraDouble("latcher_armor", config.armor());
+        }
+        return config.extraDouble(creatureKey + "_armor", fallback);
+    }
+
+    protected static double swarmAbilityDamage(String abilityKey, double fallback) {
+        return swarmConfig().abilityDamage(abilityKey, fallback);
+    }
+
+    public void applyConfiguredAttributes() {
+        applyConfiguredAttributes(false);
+    }
+
+    private void applyInitialConfiguredAttributes() {
+        if (this.initialConfiguredAttributesApplied) {
+            return;
+        }
+        this.initialConfiguredAttributesApplied = true;
+        applyConfiguredAttributes(true);
+    }
+
+    private void applyConfiguredAttributes(boolean fillHealth) {
+        getAttribute(Attributes.MAX_HEALTH).setBaseValue(getConfiguredMaxHealth());
+        getAttribute(Attributes.ARMOR).setBaseValue(getConfiguredArmor());
+        getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(getConfiguredAttackDamage());
+        if (fillHealth) {
+            setHealth(getMaxHealth());
+        } else if (getHealth() > getMaxHealth()) {
+            setHealth(getMaxHealth());
+        }
+    }
+
+    protected abstract double getConfiguredMaxHealth();
+
+    protected abstract double getConfiguredArmor();
+
+    protected abstract double getConfiguredAttackDamage();
 
     @Override
     protected void registerGoals() {
@@ -97,7 +158,21 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     }
 
     @Override
+    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor level,
+                                                 @NotNull DifficultyInstance difficulty,
+                                                 @NotNull MobSpawnType spawnType,
+                                                 @Nullable SpawnGroupData spawnGroupData,
+                                                 @Nullable CompoundTag tag) {
+        SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnGroupData, tag);
+        applyInitialConfiguredAttributes();
+        return data;
+    }
+
+    @Override
     public void tick() {
+        if (!level().isClientSide) {
+            applyInitialConfiguredAttributes();
+        }
         super.tick();
         tickVisualFlightPitch();
         tickTailDragYaw();
@@ -286,6 +361,8 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.initialConfiguredAttributesApplied = true;
+        applyConfiguredAttributes();
         if (tag.contains("NucleusPos") && tag.hasUUID("NucleusEncounter")) {
             this.nucleusPos = BlockPos.of(tag.getLong("NucleusPos"));
             this.encounterId = tag.getUUID("NucleusEncounter");

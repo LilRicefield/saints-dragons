@@ -4,7 +4,6 @@ import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwar
 import com.leon.saintsdragons.server.entity.draconianswarm.Winged;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -14,7 +13,6 @@ import java.util.List;
 
 public class WingedDiveBombGoal extends Goal {
     private static final double MAX_DISTANCE_SQ = 256.0D;
-    private static final double DAMAGE_MULTIPLIER = 1.35D;
     private static final int TRACK_TICKS = 8;
     private static final int DIVE_CURVE_TICKS = 21;
 
@@ -169,7 +167,7 @@ public class WingedDiveBombGoal extends Goal {
             return;
         }
         LivingEntity victim = hits.contains(target) ? target : hits.get(0);
-        float damage = (float) (this.winged.getAttributeValue(Attributes.ATTACK_DAMAGE) * DAMAGE_MULTIPLIER);
+        float damage = (float) this.winged.getDiveBombDamage();
         if (victim.hurt(this.winged.damageSources().mobAttack(this.winged), damage)) {
             victim.setDeltaMovement(victim.getDeltaMovement().scale(0.25D)
                     .add(this.attackDirection.scale(0.9D)).add(0.0D, 0.12D, 0.0D));

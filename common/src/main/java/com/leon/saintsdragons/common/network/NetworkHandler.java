@@ -138,6 +138,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageSwarmWaveBar.class,
+                id("swarm_wave_bar"),
+                MessageSwarmWaveBar::encode,
+                MessageSwarmWaveBar::decode,
+                MessageSwarmWaveBar::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDragonAbilityDebugBox.class,
                 id("dragon_ability_debug_box"),
                 MessageDragonAbilityDebugBox::encode,

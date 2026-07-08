@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.animation.AnimationDefinition;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
@@ -27,7 +28,10 @@ public class DraconianNucleusRenderer implements BlockEntityRenderer<DraconianNu
     public void render(@NotNull DraconianNucleusBlockEntity nucleus, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer,
                        int packedLight, int packedOverlay) {
-        this.model.animate(DraconianNucleusAnimations.IDLE, nucleus.getAnimationTimeMillis(partialTick));
+        AnimationDefinition animation = nucleus.hasActiveEncounter()
+                ? DraconianNucleusAnimations.SPAWN
+                : DraconianNucleusAnimations.IDLE;
+        this.model.animate(animation, nucleus.getAnimationTimeMillis(partialTick));
         poseStack.pushPose();
         poseStack.translate(0.5D, 1.5D, 0.5D);
         poseStack.scale(1.0F, -1.0F, -1.0F);

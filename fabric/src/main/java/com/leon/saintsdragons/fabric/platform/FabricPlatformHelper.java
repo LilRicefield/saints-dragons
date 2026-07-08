@@ -84,6 +84,11 @@ public final class FabricPlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public float getSwarmBattleMusicVolume() {
+        return FabricClientConfigAccess.getSwarmBattleMusicVolume();
+    }
+
+    @Override
     public Item createSpawnEgg(Supplier<? extends EntityType<? extends Mob>> entityType,
                                int primaryColor,
                                int secondaryColor,

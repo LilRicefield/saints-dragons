@@ -45,4 +45,15 @@ public final class FabricClientConfigAccess {
             return true;
         }
     }
+
+    public static float getSwarmBattleMusicVolume() {
+        try {
+            int volume = AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)
+                    .getConfig()
+                    .swarmBattleMusicVolume;
+            return Math.max(0, Math.min(100, volume)) / 100.0F;
+        } catch (RuntimeException ignored) {
+            return 1.0F;
+        }
+    }
 }

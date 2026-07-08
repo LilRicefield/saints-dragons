@@ -105,10 +105,30 @@ public class Whettled extends AbstractDraconianSwarmEntity implements CombatBody
 
     public static AttributeSupplier.@NotNull Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 16.0D)
+                .add(Attributes.MAX_HEALTH, swarmHealth("whettled", 16.0D))
                 .add(Attributes.MOVEMENT_SPEED, 0.30D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
-                .add(Attributes.ATTACK_DAMAGE, 4.0D);
+                .add(Attributes.ATTACK_DAMAGE, swarmAbilityDamage("whettled_clawattack", 4.0D))
+                .add(Attributes.ARMOR, swarmArmor("whettled", 0.0D));
+    }
+
+    @Override
+    protected double getConfiguredMaxHealth() {
+        return swarmHealth("whettled", 16.0D);
+    }
+
+    @Override
+    protected double getConfiguredArmor() {
+        return swarmArmor("whettled", 0.0D);
+    }
+
+    @Override
+    protected double getConfiguredAttackDamage() {
+        return swarmAbilityDamage("whettled_clawattack", 4.0D);
+    }
+
+    public double getLungeDamage() {
+        return swarmAbilityDamage("whettled_movehornattack", 9.0D);
     }
 
     @Override

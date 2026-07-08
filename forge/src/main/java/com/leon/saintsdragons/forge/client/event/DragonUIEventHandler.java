@@ -7,6 +7,7 @@ import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
 import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
 import com.leon.saintsdragons.client.ui.MeleeModeNotification;
 import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
+import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
 import com.leon.saintsdragons.client.ui.VolitansBreathMeterIndicator;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -81,6 +82,10 @@ public class DragonUIEventHandler {
 
         int screenWidth = minecraft.getWindow().getGuiScaledWidth();
         int screenHeight = minecraft.getWindow().getGuiScaledHeight();
+
+        if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()) {
+            SwarmWaveBarOverlay.render(event.getGuiGraphics(), screenWidth, event.getPartialTick());
+        }
 
         if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()
                 && ForgeClientConfig.DIVE_SPEED_LINES_ENABLED.get()) {

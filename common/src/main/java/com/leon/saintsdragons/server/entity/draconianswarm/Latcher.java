@@ -35,10 +35,26 @@ public class Latcher extends AbstractDraconianSwarmEntity {
 
     public static AttributeSupplier.@NotNull Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 12.0D)
+                .add(Attributes.MAX_HEALTH, swarmHealth("latcher", 12.0D))
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
-                .add(Attributes.ATTACK_DAMAGE, 2.0D);
+                .add(Attributes.ATTACK_DAMAGE, swarmAbilityDamage("latcher_bite", 2.0D))
+                .add(Attributes.ARMOR, swarmArmor("latcher", 0.0D));
+    }
+
+    @Override
+    protected double getConfiguredMaxHealth() {
+        return swarmHealth("latcher", 12.0D);
+    }
+
+    @Override
+    protected double getConfiguredArmor() {
+        return swarmArmor("latcher", 0.0D);
+    }
+
+    @Override
+    protected double getConfiguredAttackDamage() {
+        return swarmAbilityDamage("latcher_bite", 2.0D);
     }
 
     @Override
