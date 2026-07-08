@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.draconianswarm;
 
+import com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCombatMovementGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCoordinator;
@@ -215,6 +216,13 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         if (this.nucleusPos == null || this.encounterId == null) {
             return;
         }
+        if (level() instanceof ServerLevel serverLevel
+                && (!(serverLevel.getBlockEntity(this.nucleusPos)
+                instanceof DraconianNucleusBlockEntity nucleus)
+                || !nucleus.isActiveEncounter(this.encounterId))) {
+            discard();
+            return;
+        }
 
         Vec3 nucleusCenter = Vec3.atCenterOf(this.nucleusPos);
         LivingEntity target = getTarget();
@@ -246,7 +254,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         }
         this.nucleusDeathReported = true;
         if (serverLevel.getBlockEntity(this.nucleusPos)
-                instanceof com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity nucleus) {
+                instanceof DraconianNucleusBlockEntity nucleus) {
             nucleus.onSwarmDefeated(this.encounterId, this.encounterWave, getUUID());
         }
     }

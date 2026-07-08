@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
+import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxDiveSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
@@ -21,6 +22,7 @@ public final class CommonClientLifecycleEvents {
 
     public static void onEndClientTick(Minecraft minecraft) {
         DragonSoundRuntime.tick(minecraft);
+        SwarmBattleMusicController.tick(minecraft);
         DragonDiveSoundController.tick(minecraft);
         RaevyxDiveSoundController.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);

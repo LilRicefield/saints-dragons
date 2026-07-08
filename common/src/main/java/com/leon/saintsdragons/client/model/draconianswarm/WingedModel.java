@@ -12,7 +12,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 public class WingedModel extends GeoModel<Winged> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/winged.geo.json");
     private static final ResourceLocation TEXTURE =
-            SaintsDragonsCommon.rl("textures/entity/draconianswarm/winged/winged.png");
+            SaintsDragonsCommon.rl("textures/entity/draconian_swarm/winged/winged.png");
     private static final ResourceLocation ANIMATIONS =
             SaintsDragonsCommon.rl("animations/entity/winged.animation.json");
 

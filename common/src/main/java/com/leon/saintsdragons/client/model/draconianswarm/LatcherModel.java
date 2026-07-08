@@ -13,7 +13,7 @@ public class LatcherModel extends GeoModel<Latcher> {
     private static final ResourceLocation MODEL =
             SaintsDragonsCommon.rl("geo/entity/latcher.geo.json");
     private static final ResourceLocation TEXTURE =
-            SaintsDragonsCommon.rl("textures/entity/draconianswarm/latcher/latcher.png");
+            SaintsDragonsCommon.rl("textures/entity/draconian_swarm/latcher/latcher.png");
     private static final ResourceLocation ANIMATIONS =
             SaintsDragonsCommon.rl("animations/entity/latcher.animation.json");
 

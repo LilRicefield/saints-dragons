@@ -2,6 +2,10 @@ package com.leon.saintsdragons.common.block;
 
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.RenderShape;
@@ -33,8 +37,30 @@ public class DraconianNucleusBlock extends BaseEntityBlock {
     }
 
     @Override
+    public float getDestroyProgress(@NotNull BlockState state, @NotNull Player player,
+                                    @NotNull BlockGetter level, @NotNull BlockPos pos) {
+        if (player.isCreative()) {
+            return super.getDestroyProgress(state, player, level, pos);
+        }
+        if (level.getBlockEntity(pos) instanceof DraconianNucleusBlockEntity nucleus && nucleus.isHarvestable()) {
+            return super.getDestroyProgress(state, player, level, pos);
+        }
+        return 0.0F;
+    }
+
+    @Override
     public @Nullable BlockEntity newBlockEntity(@NotNull BlockPos pos, @NotNull BlockState state) {
         return new DraconianNucleusBlockEntity(pos, state);
+    }
+
+    @Override
+    public void setPlacedBy(@NotNull Level level, @NotNull BlockPos pos, @NotNull BlockState state,
+                            @Nullable LivingEntity placer, @NotNull ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (!level.isClientSide && placer instanceof Player player
+                && level.getBlockEntity(pos) instanceof DraconianNucleusBlockEntity nucleus) {
+            nucleus.setControllerActivationOnly(player);
+        }
     }
 
     @Override

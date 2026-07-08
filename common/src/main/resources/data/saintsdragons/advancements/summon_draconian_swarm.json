@@ -1,0 +1,23 @@
+{
+  "parent": "saintsdragons:encounter_draconian_swarm",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:draconian_controller"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.summon_draconian_swarm.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.summon_draconian_swarm.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "summon_draconian_swarm": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

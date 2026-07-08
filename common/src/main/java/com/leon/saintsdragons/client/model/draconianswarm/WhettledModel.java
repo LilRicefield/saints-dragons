@@ -10,7 +10,7 @@ import software.bernie.geckolib.model.GeoModel;
 public class WhettledModel extends GeoModel<Whettled> {
     private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/whettled.geo.json");
     private static final ResourceLocation TEXTURE =
-            SaintsDragonsCommon.rl("textures/entity/draconianswarm/whettled/whettled.png");
+            SaintsDragonsCommon.rl("textures/entity/draconian_swarm/whettled/whettled.png");
     private static final ResourceLocation ANIMATIONS =
             SaintsDragonsCommon.rl("animations/entity/whettled.animation.json");
 

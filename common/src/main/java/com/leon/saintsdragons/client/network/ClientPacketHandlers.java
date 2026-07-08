@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.network;
 
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
+import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueScreen;
@@ -13,6 +14,7 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
+import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -87,6 +89,10 @@ public final class ClientPacketHandlers {
                 message.pitch(),
                 message.durationTicks()
         );
+    }
+
+    public static void handleSwarmBattleMusic(MessageSwarmBattleMusic message) {
+        SwarmBattleMusicController.signal(message.active(), message.durationTicks());
     }
 
     public static void handleAbilityDebugBox(MessageDragonAbilityDebugBox message) {

@@ -2214,6 +2214,7 @@
     ]
   },
   "draconian_swarm_idle0": {
+    "subtitle": "subtitles.saintsdragons.draconian_swarm_idle",
     "sounds": [
       {
           "name": "saintsdragons:entity/draconianswarm/draconian_swarm_idle0",
@@ -2222,6 +2223,7 @@
     ]
   },
   "draconian_swarm_idle1": {
+    "subtitle": "subtitles.saintsdragons.draconian_swarm_idle",
     "sounds":[
       {
         "name": "saintsdragons:entity/draconianswarm/draconian_swarm_idle1",
@@ -2230,6 +2232,7 @@
     ]
   },
   "draconian_swarm_idle2": {
+    "subtitle": "subtitles.saintsdragons.draconian_swarm_idle",
     "sounds": [
       {"name": "saintsdragons:entity/draconianswarm/draconian_swarm_idle2",
         "attenuation_distance": 32
@@ -2237,6 +2240,7 @@
     ]
   },
   "whettled_strike": {
+    "subtitle": "subtitles.saintsdragons.whettled_strike",
     "sounds": [
       {
         "name": "saintsdragons:entity/draconianswarm/whettled_strike",
@@ -2245,10 +2249,41 @@
     ]
   },
   "whettled_strike2": {
+    "subtitle": "subtitles.saintsdragons.whettled_strike2",
     "sounds": [
       {
       "name": "saintsdragons:entity/draconianswarm/whettled_strike2",
         "attenuation_distance": 32
+      }
+    ]
+  },
+  "draconian_nucleus_summon": {
+    "subtitle": "subtitles.saintsdragons.draconian_nucleus_summon",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/draconian_nucleus_summon",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "draconian_nucleus_summon_phase_2_and_3": {
+    "subtitle": "subtitles.saintsdragons.draconian_nucleus_summon_phase_2_and_3",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/draconian_nucleus_summon_phase_2_and_3",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "swarm_battle_loop": {
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/draconianswarm/swarm_battle_loop",
+        "stream": true
       }
     ]
   },

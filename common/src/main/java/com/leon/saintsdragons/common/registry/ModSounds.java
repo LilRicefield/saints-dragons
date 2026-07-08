@@ -62,6 +62,10 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> DRACONIAN_SWARM_IDLE_0 = registerSound("draconian_swarm_idle0");
     public static final Supplier<SoundEvent> DRACONIAN_SWARM_IDLE_1 = registerSound("draconian_swarm_idle1");
     public static final Supplier<SoundEvent> DRACONIAN_SWARM_IDLE_2 = registerSound("draconian_swarm_idle2");
+    public static final Supplier<SoundEvent> DRACONIAN_NUCLEUS_SUMMON = registerSound("draconian_nucleus_summon");
+    public static final Supplier<SoundEvent> DRACONIAN_NUCLEUS_SUMMON_PHASE_2_AND_3 =
+            registerSound("draconian_nucleus_summon_phase_2_and_3");
+    public static final Supplier<SoundEvent> SWARM_BATTLE_LOOP = registerSound("swarm_battle_loop");
     public static final Supplier<SoundEvent> WHETTLED_STRIKE = registerSound("whettled_strike");
     public static final Supplier<SoundEvent> WHETTLED_STRIKE_2 = registerSound("whettled_strike2");
 

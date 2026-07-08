@@ -1,17 +1,7 @@
 package com.leon.saintsdragons.common.registry;
 
-import com.leon.saintsdragons.common.item.CindervaneBinderItem;
-import com.leon.saintsdragons.common.item.DragonBrushItem;
-import com.leon.saintsdragons.common.item.DragonAllyBookItem;
-import com.leon.saintsdragons.common.item.ArrowOfVenomItem;
-import com.leon.saintsdragons.common.item.MossbackItem;
-import com.leon.saintsdragons.common.item.NulljawBinderItem;
-import com.leon.saintsdragons.common.item.VarasuchusBinderItem;
-import com.leon.saintsdragons.common.item.RaevyxBinderItem;
-import com.leon.saintsdragons.common.item.VolitansBinderItem;
+import com.leon.saintsdragons.common.item.*;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
-import com.leon.saintsdragons.common.item.IgnivorusBinderItem;
-import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
@@ -207,6 +197,10 @@ public class ModItems {
             REGISTER.register("dragon_encounter_icon",
                     () -> new Item(new Item.Properties()));
 
+    public static final Supplier<Item> DRACONIAN_NUCLEUS_PARTICLE_ICON =
+            REGISTER.register("draconian_nucleus_particle_icon",
+                    () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_BINDER_ICON =
             REGISTER.register("dragon_binder_icon",
                     () -> new Item(new Item.Properties()));
@@ -396,6 +390,13 @@ public class ModItems {
                                             .nutrition(10)
                                             .saturationMod(1.2f)
                                             .build())
+                    ));
+    public static final Supplier<Item> DRACONIAN_CONTROLLER =
+            REGISTER.register("draconian_controller",
+                    () -> new DraconianControllerItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0)
                     ));
 
     public static final Supplier<Item> BLEEDING_BOLT_MUSIC_DISC =

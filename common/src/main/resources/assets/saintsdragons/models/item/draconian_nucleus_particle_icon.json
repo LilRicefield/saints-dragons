@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "saintsdragons:item/advancements/draconian_nucleus_particle"
+  }
+}

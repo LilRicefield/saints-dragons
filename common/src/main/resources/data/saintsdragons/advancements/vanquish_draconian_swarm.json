@@ -1,0 +1,23 @@
+{
+  "parent": "saintsdragons:encounter_draconian_swarm",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:draconian_flesh"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.vanquish_draconian_swarm.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.vanquish_draconian_swarm.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "vanquish_draconian_swarm": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

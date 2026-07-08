@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_draconian_flesh": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:draconian_flesh"
+            ]
+          }
+        ]
+      }
+    },
+    "has_ender_pearl": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:ender_pearl"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_ender_pearl",
+      "has_draconian_flesh"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:draconian_controller"
+    ]
+  }
+}

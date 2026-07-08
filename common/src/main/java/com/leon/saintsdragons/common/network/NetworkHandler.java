@@ -130,6 +130,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageSwarmBattleMusic.class,
+                id("swarm_battle_music"),
+                MessageSwarmBattleMusic::encode,
+                MessageSwarmBattleMusic::decode,
+                MessageSwarmBattleMusic::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDragonAbilityDebugBox.class,
                 id("dragon_ability_debug_box"),
                 MessageDragonAbilityDebugBox::encode,

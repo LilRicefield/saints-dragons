@@ -1,21 +1,30 @@
 package com.leon.saintsdragons.common.block;
 
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
+import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -24,8 +33,13 @@ import java.util.UUID;
 public class DraconianNucleusBlockEntity extends BlockEntity {
     private static final int PLAYER_CHECK_INTERVAL = 20;
     private static final int SPAWN_INTERVAL = 10;
-    private static final int WAVE_INTERMISSION = 100;
+    private static final int BATTLE_MUSIC_SIGNAL_INTERVAL = 20;
+    private static final int BATTLE_MUSIC_SIGNAL_DURATION = 60;
+    private static final int FIRST_WAVE_EFFECT_DELAY = 200;
+    private static final int FIRST_WAVE_SPAWN_DELAY = 220;
+    private static final int LATER_WAVE_SPAWN_DELAY = 40;
     private static final double ACTIVATION_RADIUS = 20.0D;
+    private static final double ADVANCEMENT_RADIUS = 64.0D;
     private static final int[][] WAVE_COMPOSITIONS = {
             {1, 1, 1},
             {2, 2, 2},
@@ -49,6 +63,14 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
     private int spawnedThisWave;
     private int remainingThisWave;
     private long nextActionGameTime;
+    private long summonEffectsGameTime;
+    private long controllerCooldownUntilGameTime;
+    private long lastBattleMusicSignalGameTime;
+    private boolean controllerActivationOnly;
+    private boolean harvestUnlocked;
+    private boolean deactivatedByController;
+    private boolean summonEffectsActive;
+    private UUID ownerId;
     private final Set<UUID> activeSwarms = new HashSet<>();
 
     public DraconianNucleusBlockEntity(BlockPos pos, BlockState state) {
@@ -58,7 +80,9 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
     public static void tick(Level level, BlockPos pos, BlockState state, DraconianNucleusBlockEntity nucleus) {
         nucleus.animationTicks++;
         if (level.isClientSide) {
-            spawnNucleusSmoke(level, pos);
+            if (nucleus.summonEffectsActive) {
+                spawnNucleusSmoke(level, pos);
+            }
             return;
         }
         if (level instanceof ServerLevel serverLevel) {
@@ -68,9 +92,19 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
 
     private void tickEncounter(ServerLevel level, BlockPos pos) {
         long gameTime = level.getGameTime();
+        if (this.encounterState == EncounterState.SPAWNING && !this.summonEffectsActive
+                && gameTime >= this.summonEffectsGameTime) {
+            this.summonEffectsActive = true;
+            syncChanged();
+        }
+        if (hasActiveEncounter() && this.spawnedThisWave > 0) {
+            signalNearbyBattleMusic(level, gameTime);
+        }
         switch (this.encounterState) {
             case DORMANT -> {
-                if (gameTime % PLAYER_CHECK_INTERVAL == 0 && hasSurvivalPlayer(level, pos)) {
+                if (!this.controllerActivationOnly && gameTime % PLAYER_CHECK_INTERVAL == 0
+                        && gameTime >= this.controllerCooldownUntilGameTime
+                        && hasSurvivalPlayer(level, pos)) {
                     beginEncounter(gameTime);
                 }
             }
@@ -97,8 +131,86 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.remainingThisWave = 0;
         this.activeSwarms.clear();
         this.encounterState = EncounterState.SPAWNING;
-        this.nextActionGameTime = gameTime;
-        setChanged();
+        this.nextActionGameTime = gameTime + FIRST_WAVE_SPAWN_DELAY;
+        this.summonEffectsGameTime = gameTime + FIRST_WAVE_EFFECT_DELAY;
+        this.harvestUnlocked = false;
+        this.deactivatedByController = false;
+        this.summonEffectsActive = false;
+        playSummonSound(ModSounds.DRACONIAN_NUCLEUS_SUMMON.get());
+        syncChanged();
+    }
+
+    public void setControllerActivationOnly(Player owner) {
+        this.controllerActivationOnly = true;
+        this.harvestUnlocked = false;
+        this.deactivatedByController = false;
+        this.controllerCooldownUntilGameTime = 0L;
+        this.ownerId = owner.getUUID();
+        syncChanged();
+    }
+
+    public boolean activateFromController(Player player, long gameTime) {
+        if (!this.controllerActivationOnly
+                || (this.harvestUnlocked && !this.deactivatedByController)
+                || !canUseController(player) || this.encounterState != EncounterState.DORMANT
+                || gameTime < this.controllerCooldownUntilGameTime) {
+            return false;
+        }
+        beginEncounter(gameTime);
+        if (player instanceof ServerPlayer serverPlayer) {
+            DragonUtilities.awardAdvancement(serverPlayer, "summon_draconian_swarm", "summon_draconian_swarm");
+        }
+        return true;
+    }
+
+    public boolean deactivateFromController(ServerLevel level, Player player) {
+        if (!this.controllerActivationOnly || !canUseController(player) || !hasActiveEncounter()) {
+            return false;
+        }
+
+        for (UUID swarmId : Set.copyOf(this.activeSwarms)) {
+            Entity entity = level.getEntity(swarmId);
+            if (entity instanceof AbstractDraconianSwarmEntity swarm) {
+                swarm.remove(Entity.RemovalReason.DISCARDED);
+            }
+        }
+
+        this.encounterId = null;
+        this.currentWave = 0;
+        this.spawnedThisWave = 0;
+        this.remainingThisWave = 0;
+        this.nextActionGameTime = 0L;
+        this.summonEffectsGameTime = 0L;
+        this.controllerCooldownUntilGameTime = level.getGameTime() + 1200L;
+        this.activeSwarms.clear();
+        this.encounterState = EncounterState.DORMANT;
+        this.harvestUnlocked = true;
+        this.deactivatedByController = true;
+        this.summonEffectsActive = false;
+        stopNearbyBattleMusic(level);
+        syncChanged();
+        return true;
+    }
+
+    public boolean isHarvestable() {
+        return this.harvestUnlocked
+                || (this.controllerActivationOnly
+                && this.encounterState == EncounterState.DORMANT
+                && this.encounterId == null);
+    }
+
+    private boolean canUseController(Player player) {
+        return this.ownerId == null || this.ownerId.equals(player.getUUID());
+    }
+
+    public boolean hasActiveEncounter() {
+        return this.encounterState == EncounterState.SPAWNING
+                || this.encounterState == EncounterState.ACTIVE
+                || this.encounterState == EncounterState.INTERMISSION;
+    }
+
+    public boolean isActiveEncounter(UUID encounterId) {
+        return encounterId != null && encounterId.equals(this.encounterId) && hasActiveEncounter();
     }
 
     private void tickSpawning(ServerLevel level, BlockPos pos, long gameTime) {
@@ -107,13 +219,19 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         }
         if (this.spawnedThisWave >= getWaveSize()) {
             this.encounterState = EncounterState.ACTIVE;
-            setChanged();
+            syncChanged();
             return;
         }
 
         EntityType<? extends AbstractDraconianSwarmEntity> type = getNextSwarmType();
         AbstractDraconianSwarmEntity swarm = type.create(level);
         if (swarm != null && spawnSwarm(level, pos, swarm)) {
+            if (this.currentWave == 1 && this.spawnedThisWave == 0) {
+                awardNearbyAdvancement(level, pos, "encounter_draconian_swarm", "encounter_draconian_swarm");
+            }
+            if (this.currentWave > 1 && this.spawnedThisWave == 0) {
+                playSummonSound(ModSounds.DRACONIAN_NUCLEUS_SUMMON_PHASE_2_AND_3.get());
+            }
             this.spawnedThisWave++;
             this.remainingThisWave++;
             this.activeSwarms.add(swarm.getUUID());
@@ -121,7 +239,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
             if (this.spawnedThisWave >= getWaveSize()) {
                 this.encounterState = EncounterState.ACTIVE;
             }
-            setChanged();
+            syncChanged();
         } else {
             this.nextActionGameTime = gameTime + SPAWN_INTERVAL;
         }
@@ -168,11 +286,17 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.activeSwarms.clear();
         if (this.currentWave >= WAVE_COMPOSITIONS.length) {
             this.encounterState = EncounterState.COMPLETE;
+            this.harvestUnlocked = true;
+            this.deactivatedByController = false;
+            this.summonEffectsActive = false;
+            if (this.level instanceof ServerLevel serverLevel) {
+                awardNearbyAdvancement(serverLevel, this.worldPosition, "vanquish_draconian_swarm", "vanquish_draconian_swarm");
+            }
         } else {
-            this.encounterState = EncounterState.INTERMISSION;
-            this.nextActionGameTime = gameTime + WAVE_INTERMISSION;
+            beginNextWave(gameTime);
+            return;
         }
-        setChanged();
+        syncChanged();
     }
 
     private void beginNextWave(long gameTime) {
@@ -181,8 +305,10 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.remainingThisWave = 0;
         this.activeSwarms.clear();
         this.encounterState = EncounterState.SPAWNING;
-        this.nextActionGameTime = gameTime;
-        setChanged();
+        this.nextActionGameTime = gameTime + LATER_WAVE_SPAWN_DELAY;
+        this.summonEffectsGameTime = gameTime;
+        this.summonEffectsActive = true;
+        syncChanged();
     }
 
     public void onSwarmDefeated(UUID encounterId, int wave, UUID swarmId) {
@@ -191,7 +317,7 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
             return;
         }
         this.remainingThisWave = Math.max(0, this.remainingThisWave - 1);
-        setChanged();
+        syncChanged();
     }
 
     private static void spawnNucleusSmoke(Level level, BlockPos pos) {
@@ -208,6 +334,39 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
 
     public long getAnimationTimeMillis(float partialTick) {
         return (long) ((this.animationTicks + partialTick) * 50.0F);
+    }
+
+    private void playSummonSound(net.minecraft.sounds.SoundEvent sound) {
+        if (this.level == null || this.level.isClientSide) {
+            return;
+        }
+        this.level.playSound(null, this.worldPosition.getX() + 0.5D, this.worldPosition.getY() + 0.5D,
+                this.worldPosition.getZ() + 0.5D, sound, SoundSource.BLOCKS, 3.0F, 1.0F);
+    }
+
+    private static void awardNearbyAdvancement(ServerLevel level, BlockPos pos, String advancementId, String criterion) {
+        AABB awardArea = new AABB(pos).inflate(ADVANCEMENT_RADIUS);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, awardArea, ServerPlayer::isAlive)) {
+            DragonUtilities.awardAdvancement(player, advancementId, criterion);
+        }
+    }
+
+    private void stopNearbyBattleMusic(ServerLevel level) {
+        AABB stopArea = new AABB(this.worldPosition).inflate(ADVANCEMENT_RADIUS);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, stopArea, ServerPlayer::isAlive)) {
+            NetworkHandler.sendToPlayer(player, new MessageSwarmBattleMusic(false, 0));
+        }
+    }
+
+    private void signalNearbyBattleMusic(ServerLevel level, long gameTime) {
+        if (gameTime - this.lastBattleMusicSignalGameTime < BATTLE_MUSIC_SIGNAL_INTERVAL) {
+            return;
+        }
+        this.lastBattleMusicSignalGameTime = gameTime;
+        AABB battleArea = new AABB(this.worldPosition).inflate(ADVANCEMENT_RADIUS);
+        for (ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class, battleArea, ServerPlayer::isAlive)) {
+            NetworkHandler.sendToPlayer(player, new MessageSwarmBattleMusic(true, BATTLE_MUSIC_SIGNAL_DURATION));
+        }
     }
 
     private static boolean hasSurvivalPlayer(ServerLevel level, BlockPos pos) {
@@ -227,6 +386,15 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         tag.putInt("SpawnedThisWave", this.spawnedThisWave);
         tag.putInt("RemainingThisWave", this.remainingThisWave);
         tag.putLong("NextActionGameTime", this.nextActionGameTime);
+        tag.putLong("SummonEffectsGameTime", this.summonEffectsGameTime);
+        tag.putLong("ControllerCooldownUntilGameTime", this.controllerCooldownUntilGameTime);
+        tag.putBoolean("ControllerActivationOnly", this.controllerActivationOnly);
+        tag.putBoolean("HarvestUnlocked", this.harvestUnlocked);
+        tag.putBoolean("DeactivatedByController", this.deactivatedByController);
+        tag.putBoolean("SummonEffectsActive", this.summonEffectsActive);
+        if (this.ownerId != null) {
+            tag.putUUID("OwnerId", this.ownerId);
+        }
         long[] swarmIds = new long[this.activeSwarms.size() * 2];
         int index = 0;
         for (UUID id : this.activeSwarms) {
@@ -249,10 +417,35 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         this.spawnedThisWave = tag.getInt("SpawnedThisWave");
         this.remainingThisWave = tag.getInt("RemainingThisWave");
         this.nextActionGameTime = tag.getLong("NextActionGameTime");
+        this.summonEffectsGameTime = tag.getLong("SummonEffectsGameTime");
+        this.controllerCooldownUntilGameTime = tag.getLong("ControllerCooldownUntilGameTime");
+        this.controllerActivationOnly = tag.getBoolean("ControllerActivationOnly");
+        this.harvestUnlocked = tag.getBoolean("HarvestUnlocked") || this.encounterState == EncounterState.COMPLETE;
+        this.deactivatedByController = tag.getBoolean("DeactivatedByController");
+        this.summonEffectsActive = tag.getBoolean("SummonEffectsActive");
+        this.ownerId = tag.hasUUID("OwnerId") ? tag.getUUID("OwnerId") : null;
         this.activeSwarms.clear();
         long[] swarmIds = tag.getLongArray("ActiveSwarms");
         for (int index = 0; index + 1 < swarmIds.length; index += 2) {
             this.activeSwarms.add(new UUID(swarmIds[index], swarmIds[index + 1]));
+        }
+    }
+
+    @Override
+    public @NotNull CompoundTag getUpdateTag() {
+        return saveWithoutMetadata();
+    }
+
+    @Override
+    public @Nullable ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
+    }
+
+    private void syncChanged() {
+        setChanged();
+        if (this.level != null && !this.level.isClientSide) {
+            BlockState state = getBlockState();
+            this.level.sendBlockUpdated(this.worldPosition, state, state, 3);
         }
     }
 
