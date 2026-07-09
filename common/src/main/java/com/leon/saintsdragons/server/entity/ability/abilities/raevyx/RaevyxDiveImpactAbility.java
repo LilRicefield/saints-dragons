@@ -2,7 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.common.particle.raevyx.SonicRingData;
+import com.leon.saintsdragons.common.particle.SonicRingData;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;

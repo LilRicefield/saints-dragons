@@ -13,11 +13,11 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
-public class DragonDustParticle extends TextureSheetParticle {
+public class DustParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
 
-    protected DragonDustParticle(ClientLevel level, double x, double y, double z,
-                                 double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites) {
+    protected DustParticle(ClientLevel level, double x, double y, double z,
+                           double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
         this.sprites = sprites;
         this.xd = xSpeed;
@@ -69,7 +69,7 @@ public class DragonDustParticle extends TextureSheetParticle {
             state = level.getBlockState(pos);
         }
 
-        int color = DragonDustParticle.getBlockColor(level, pos, state);
+        int color = DustParticle.getBlockColor(level, pos, state);
         this.rCol = ((color >> 16) & 255) / 255.0F;
         this.gCol = ((color >> 8) & 255) / 255.0F;
         this.bCol = (color & 255) / 255.0F;
@@ -102,7 +102,7 @@ public class DragonDustParticle extends TextureSheetParticle {
         public Particle createParticle(@NotNull SimpleParticleType type, @NotNull ClientLevel level,
                                        double x, double y, double z,
                                        double xSpeed, double ySpeed, double zSpeed) {
-            return new DragonDustParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
+            return new DustParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
         }
     }
 }

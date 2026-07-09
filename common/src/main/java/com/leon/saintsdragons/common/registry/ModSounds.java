@@ -54,6 +54,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> BLEEDING_BOLT = registerSound("bleeding_bolt");
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");
+    public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_DOUBLE_JUMP = registerSound("dragonlord_armor_double_jump");
+    public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_IMPACT = registerSound("dragonlord_armor_impact");
 
     // Draconian Swarm
     public static final Supplier<SoundEvent> LATCHER_BITE = registerSound("latcher_bite");

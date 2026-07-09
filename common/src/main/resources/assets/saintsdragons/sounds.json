@@ -412,6 +412,28 @@
       }
     ]
   },
+  "dragonlord_armor_double_jump": {
+    "subtitle": "subtitles.saintsdragons.dragonlord_armor_double_jump",
+    "sounds": [
+      {
+        "name": "saintsdragons:armor/dragonlord_armor/dragonlord_armor_double_jump",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "dragonlord_armor_impact": {
+    "subtitle": "subtitles.saintsdragons.dragonlord_armor_impact",
+    "sounds": [
+      {
+        "name": "saintsdragons:armor/dragonlord_armor/dragonlord_armor_impact",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "mossback_hurt": {
     "subtitle": "subtitles.saintsdragons.mossback_hurt",
     "sounds": [

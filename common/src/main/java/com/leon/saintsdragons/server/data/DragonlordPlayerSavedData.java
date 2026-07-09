@@ -43,6 +43,13 @@ public class DragonlordPlayerSavedData extends SavedData {
         return Optional.ofNullable(health);
     }
 
+    public Optional<Float> getHealth(UUID playerId) {
+        if (playerId == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(savedHealth.get(playerId));
+    }
+
     public void clearHealth(UUID playerId) {
         if (playerId != null && savedHealth.remove(playerId) != null) {
             setDirty();

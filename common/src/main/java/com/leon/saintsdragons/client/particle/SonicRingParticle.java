@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.particle;
 
-import com.leon.saintsdragons.common.particle.raevyx.SonicRingData;
+import com.leon.saintsdragons.common.particle.SonicRingData;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;

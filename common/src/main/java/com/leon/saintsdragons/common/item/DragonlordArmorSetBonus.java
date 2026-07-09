@@ -1,9 +1,15 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.registry.ModAttributes;
+import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.data.DragonlordPlayerSavedData;
+import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +20,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.HashSet;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,7 +32,12 @@ public final class DragonlordArmorSetBonus {
     private static final double LANDING_SHOCKWAVE_Y_RADIUS = 5.0D;
     private static final double LANDING_SHOCKWAVE_STRENGTH = 2.15D;
     private static final double LANDING_SHOCKWAVE_LIFT = 0.75D;
+    private static final double LANDING_SHOCKWAVE_MIN_DROP = 4.0D;
+    private static final float LANDING_IMPACT_RING_SCALE = 0.25F;
+    private static final int LANDING_IMPACT_DUST_COUNT = 18;
+    private static final int DOUBLE_JUMP_FLAME_COUNT = 20;
     private static final float FALL_DAMAGE_BLOCK_THRESHOLD = 16.0F;
+    private static final float VANILLA_PLAYER_MAX_HEALTH = 20.0F;
     private static final UUID DOUBLE_JUMP_MODIFIER_UUID = UUID.fromString("8e8d7d4f-14b7-4df2-aeaf-4b47e6c4f617");
     private static final AttributeModifier DOUBLE_JUMP_MODIFIER = new AttributeModifier(
             DOUBLE_JUMP_MODIFIER_UUID,
@@ -34,6 +47,7 @@ public final class DragonlordArmorSetBonus {
     );
     private static final Set<UUID> USED_MIDAIR_JUMP = new HashSet<>();
     private static final Set<UUID> PENDING_LANDING_SHOCKWAVE = new HashSet<>();
+    private static final Map<UUID, Double> DOUBLE_JUMP_PEAK_Y = new HashMap<>();
     private static final Set<UUID> PENDING_HEALTH_RESTORE = new HashSet<>();
 
     private DragonlordArmorSetBonus() {
@@ -59,6 +73,7 @@ public final class DragonlordArmorSetBonus {
         if (!fullSet || player.onClimbable() || player.isInWaterOrBubble()) {
             USED_MIDAIR_JUMP.remove(player.getUUID());
             PENDING_LANDING_SHOCKWAVE.remove(player.getUUID());
+            DOUBLE_JUMP_PEAK_Y.remove(player.getUUID());
             if (!fullSet) {
                 PENDING_HEALTH_RESTORE.remove(player.getUUID());
             }
@@ -66,15 +81,18 @@ public final class DragonlordArmorSetBonus {
         }
 
         restoreSavedHealthIfNeeded(player);
-        if (player.tickCount % 100 == 0) {
+        if (!PENDING_HEALTH_RESTORE.contains(player.getUUID()) && player.tickCount % 100 == 0) {
             saveHealthForReload(player);
         }
 
         if (player.onGround()) {
             if (PENDING_LANDING_SHOCKWAVE.remove(player.getUUID())) {
-                knockBackNearbyEntities(player);
+                tryLandingShockwave(player);
             }
             USED_MIDAIR_JUMP.remove(player.getUUID());
+            DOUBLE_JUMP_PEAK_Y.remove(player.getUUID());
+        } else if (PENDING_LANDING_SHOCKWAVE.contains(player.getUUID())) {
+            DOUBLE_JUMP_PEAK_Y.merge(player.getUUID(), player.getY(), Math::max);
         }
     }
 
@@ -99,6 +117,8 @@ public final class DragonlordArmorSetBonus {
         player.resetFallDistance();
         USED_MIDAIR_JUMP.add(player.getUUID());
         PENDING_LANDING_SHOCKWAVE.add(player.getUUID());
+        DOUBLE_JUMP_PEAK_Y.put(player.getUUID(), player.getY());
+        spawnDoubleJumpEffects(player);
         return true;
     }
 
@@ -148,6 +168,15 @@ public final class DragonlordArmorSetBonus {
         return stack.getItem() instanceof DragonlordArmorItem;
     }
 
+    private static void tryLandingShockwave(ServerPlayer player) {
+        double peakY = DOUBLE_JUMP_PEAK_Y.getOrDefault(player.getUUID(), player.getY());
+        if (peakY - player.getY() < LANDING_SHOCKWAVE_MIN_DROP) {
+            return;
+        }
+        knockBackNearbyEntities(player);
+        spawnLandingImpactEffects(player);
+    }
+
     private static void knockBackNearbyEntities(ServerPlayer player) {
         AABB hitbox = player.getBoundingBox().inflate(
                 LANDING_SHOCKWAVE_TOUCH_RADIUS,
@@ -180,13 +209,68 @@ public final class DragonlordArmorSetBonus {
         }
     }
 
-    private static void restoreSavedHealthIfNeeded(ServerPlayer player) {
-        if (!PENDING_HEALTH_RESTORE.remove(player.getUUID())) {
+    private static void spawnLandingImpactEffects(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel server)) {
             return;
         }
-        DragonlordPlayerSavedData.get(player.serverLevel())
-                .consumeHealth(player.getUUID())
-                .ifPresent(health -> player.setHealth(Math.min(health, player.getMaxHealth())));
+
+        Vec3 origin = player.position();
+        server.addFreshEntity(new ImpactRingEntity(server, origin.add(0.0D, 0.08D, 0.0D), LANDING_IMPACT_RING_SCALE));
+
+        double y = player.getBoundingBox().minY + 0.08D;
+        for (int i = 0; i < LANDING_IMPACT_DUST_COUNT; i++) {
+            double angle = (Math.PI * 2.0D * i) / LANDING_IMPACT_DUST_COUNT;
+            server.sendParticles(ModParticles.DRAGON_DUST.get(),
+                    origin.x, y, origin.z,
+                    0, Math.cos(angle) * 0.18D, 0.08D,
+                    Math.sin(angle) * 0.18D, 1.0D);
+        }
+
+        server.playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_IMPACT.get(),
+                SoundSource.PLAYERS, 0.9F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+    }
+
+    private static void spawnDoubleJumpEffects(ServerPlayer player) {
+        if (!(player.level() instanceof ServerLevel server)) {
+            return;
+        }
+
+        Vec3 origin = player.position();
+        double y = player.getY() + 0.35D;
+        for (int i = 0; i < DOUBLE_JUMP_FLAME_COUNT; i++) {
+            double angle = (Math.PI * 2.0D * i) / DOUBLE_JUMP_FLAME_COUNT;
+            server.sendParticles(ParticleTypes.FLAME,
+                    origin.x, y, origin.z,
+                    0, Math.cos(angle) * 0.18D, 0.02D,
+                    Math.sin(angle) * 0.18D, 1.0D);
+        }
+
+        server.playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_DOUBLE_JUMP.get(),
+                SoundSource.PLAYERS, 0.75F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+    }
+
+    private static void restoreSavedHealthIfNeeded(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        if (!PENDING_HEALTH_RESTORE.contains(playerId)) {
+            return;
+        }
+
+        DragonlordPlayerSavedData data = DragonlordPlayerSavedData.get(player.serverLevel());
+        var savedHealth = data.getHealth(playerId);
+        if (savedHealth.isEmpty()) {
+            PENDING_HEALTH_RESTORE.remove(playerId);
+            return;
+        }
+
+        float health = savedHealth.get();
+        float maxHealth = player.getMaxHealth();
+        if (health > VANILLA_PLAYER_MAX_HEALTH && maxHealth <= VANILLA_PLAYER_MAX_HEALTH + 0.01F) {
+            return;
+        }
+
+        data.consumeHealth(playerId);
+        PENDING_HEALTH_RESTORE.remove(playerId);
+        player.setHealth(Math.min(health, maxHealth));
     }
 
     private static boolean canShockwaveTarget(LivingEntity entity) {

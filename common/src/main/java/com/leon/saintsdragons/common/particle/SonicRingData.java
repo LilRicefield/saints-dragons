@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.common.particle.raevyx;
+package com.leon.saintsdragons.common.particle;
 
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.mojang.brigadier.StringReader;
