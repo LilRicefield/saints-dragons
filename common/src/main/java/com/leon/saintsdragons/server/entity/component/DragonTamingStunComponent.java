@@ -3,6 +3,8 @@ package com.leon.saintsdragons.server.entity.component;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -31,7 +33,28 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         return awaitingFeed;
     }
 
+    public boolean tryEnterHoldStateFromDamage(DamageSource source, float amount) {
+        if (dragon.level().isClientSide || source == null || amount <= 0.0F || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return false;
+        }
+        if (dragon.isTame() || dragon.isBaby() || isTamingStunned() || !canUseTamingStun()) {
+            return false;
+        }
+
+        float threshold = Math.max(0.0F, Math.min(getTamingThreshold(), dragon.getMaxHealth()));
+        if (threshold <= 0.0F || dragon.getHealth() <= threshold || dragon.getHealth() - amount > threshold) {
+            return false;
+        }
+
+        dragon.setHealth(Math.max(1.0F, threshold));
+        enterHoldState();
+        return true;
+    }
+
     public void enterStun() {
+        if (!canUseTamingStun()) {
+            return;
+        }
         awaitingFeed = false;
         stunGraceTicks = Math.max(stunGraceTicks, 20);
         recoveryTargetHealth = -1.0F;
@@ -41,6 +64,9 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     }
 
     public void enterHoldState() {
+        if (!canUseTamingStun()) {
+            return;
+        }
         awaitingFeed = true;
         stunGraceTicks = 0;
         recoveryTargetHealth = -1.0F;
@@ -54,6 +80,9 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     }
 
     public void setRecoveryTarget(float targetHealth) {
+        if (!canUseTamingStun()) {
+            return;
+        }
         awaitingFeed = false;
         recoveryTargetHealth = Math.max(0.0F, Math.min(targetHealth, dragon.getMaxHealth()));
         stunGraceTicks = Math.max(stunGraceTicks, 40);
@@ -106,7 +135,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         awaitingFeed = tag.getBoolean("TamingAwaitingFeed");
         stunTimeoutTicks = Math.max(0, tag.getInt("TamingStunTimeout"));
 
-        if (tag.getBoolean("TamingStunned")) {
+        if (tag.getBoolean("TamingStunned") && canUseTamingStun()) {
             setTamingStunned(true);
             if (aiLocked && !dragon.level().isClientSide) {
                 dragon.setNoAi(true);
@@ -129,6 +158,13 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     private void tickRecovery() {
         Level level = dragon.level();
         if (level.isClientSide) {
+            return;
+        }
+
+        if (!canUseTamingStun()) {
+            if (isTamingStunned() || aiLocked || awaitingFeed) {
+                clearRecovery();
+            }
             return;
         }
 
@@ -192,6 +228,11 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     }
 
     protected void ensureStunState() {
+        if (!canUseTamingStun()) {
+            clearRecovery();
+            return;
+        }
+
         boolean airborne = enforceGroundedStunPhysics();
         // Keep AI unlocked while airborne so physics integration can move the dragon downward.
         // Lock AI only once grounded to hold the stunned/downed posture.
@@ -227,6 +268,10 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     }
 
     private boolean enforceGroundedStunPhysics() {
+        if (!canUseTamingStun()) {
+            return false;
+        }
+
         boolean airborne = isInAerialStateForStun() || !dragon.onGround();
         dragon.setNoGravity(false);
         if (!airborne) {
@@ -246,9 +291,14 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         return true;
     }
 
+    private boolean canUseTamingStun() {
+        return !dragon.isDying() && dragon.isAlive() && dragon.getHealth() > 0.0F;
+    }
+
     protected abstract boolean isTamingStunned();
     protected abstract void setTamingStunned(boolean stunned);
     protected abstract boolean isBelowTamingThreshold();
+    protected abstract float getTamingThreshold();
     protected abstract String getTamingTimeoutTranslationKey();
     protected abstract boolean isInAerialStateForStun();
     protected abstract void clearAerialStateForStun();

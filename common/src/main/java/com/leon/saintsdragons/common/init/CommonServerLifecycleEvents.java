@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.init;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.data.WikiReminderSavedData;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -23,6 +24,10 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onEndServerTick(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            DragonlordArmorSetBonus.tick(player);
+        }
+
         if (server.getTickCount() % 20 == 0) {
             for (ServerLevel level : server.getAllLevels()) {
                 StegonautBuffAbility.updateAllPortableBuffs(level);
@@ -44,6 +49,7 @@ public final class CommonServerLifecycleEvents {
 
     public static void onServerStopping(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            DragonlordArmorSetBonus.saveHealthForReload(player);
             onPlayerDisconnect(player);
         }
 
@@ -54,6 +60,7 @@ public final class CommonServerLifecycleEvents {
 
     public static void onPlayerJoin(ServerPlayer player) {
         sendWikiReminder(player);
+        DragonlordArmorSetBonus.queueHealthRestore(player);
 
         RideableDragonBase dragon = findMountedDragon(player);
         if (dragon == null) {
@@ -81,6 +88,8 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onPlayerDisconnect(ServerPlayer player) {
+        DragonlordArmorSetBonus.saveHealthForReload(player);
+
         RideableDragonBase dragon = findMountedDragon(player);
         if (dragon == null) {
             return;

@@ -2,7 +2,9 @@ package com.leon.saintsdragons.fabric.server;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
+import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -24,6 +26,8 @@ public final class FabricServerEvents {
 
         ServerLifecycleEvents.SERVER_STOPPING.register(CommonServerLifecycleEvents::onServerStopping);
         ServerTickEvents.END_SERVER_TICK.register(CommonServerLifecycleEvents::onEndServerTick);
+        ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) ->
+                !(entity instanceof ServerPlayer player) || !DragonlordArmorSetBonus.blocksDamage(player, source));
 
         AttackEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
             if (world.isClientSide) {

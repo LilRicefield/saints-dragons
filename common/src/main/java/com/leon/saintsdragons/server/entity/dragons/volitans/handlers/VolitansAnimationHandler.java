@@ -154,12 +154,6 @@ public final class VolitansAnimationHandler {
         var controller = state.getController();
         boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
 
-        if (dragon.isTamingStunned()) {
-            controller.transitionLength(GROUND_TRANSITIONS.stunned());
-            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
-            return PlayState.CONTINUE;
-        }
-
         RawAnimation sleepPose = dragon.isInWaterOrBubble() ? SLEEP_UNDERWATER : SLEEP;
         PlayState restPose = AnimationHelper.tryHandleRestPose(
                 state, dragon, sleepPose, SIT, GROUND_TRANSITIONS.sleep(), GROUND_TRANSITIONS.sit()
@@ -202,6 +196,12 @@ public final class VolitansAnimationHandler {
             } else {
                 state.setAndContinue(SWIM_IDLE);
             }
+            return PlayState.CONTINUE;
+        }
+
+        if (dragon.isTamingStunned()) {
+            controller.transitionLength(GROUND_TRANSITIONS.idle());
+            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
             return PlayState.CONTINUE;
         }
 

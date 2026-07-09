@@ -581,6 +581,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             wakeUpImmediately();
             suppressSleep(200);
         }
+        if (tamingController.tryEnterHoldStateFromDamage(damageSource, amount)) {
+            return true;
+        }
         boolean hurt = super.hurt(damageSource, amount);
         if (hurt
                 && !level().isClientSide

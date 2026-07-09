@@ -2177,6 +2177,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             return false;
         }
 
+        if (tamingController.tryEnterHoldStateFromDamage(damageSource, amount)) {
+            return true;
+        }
+
         if (isTamingStunned() && !isTame()) {
 
             return super.hurt(damageSource, amount);

@@ -2,8 +2,10 @@ package com.leon.saintsdragons.forge.server.event;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
+import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,6 +27,16 @@ public class ServerEventHandler {
             return;
         }
         CommonServerLifecycleEvents.onPlayerJoin(player);
+    }
+
+    @SubscribeEvent
+    public static void onLivingAttack(LivingAttackEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        if (DragonlordArmorSetBonus.blocksDamage(player, event.getSource())) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent

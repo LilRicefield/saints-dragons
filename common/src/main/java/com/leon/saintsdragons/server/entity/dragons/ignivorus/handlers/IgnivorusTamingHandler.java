@@ -25,6 +25,11 @@ public class IgnivorusTamingHandler extends DragonTamingStunComponent<Ignivorus>
     }
 
     @Override
+    protected float getTamingThreshold() {
+        return dragon.getTamingThreshold();
+    }
+
+    @Override
     protected String getTamingTimeoutTranslationKey() {
         return "entity.saintsdragons.ignivorus.taming_timeout";
     }

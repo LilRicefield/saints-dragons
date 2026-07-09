@@ -66,6 +66,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerServerbound(
+                MessageDragonlordDoubleJump.class,
+                id("dragonlord_double_jump"),
+                MessageDragonlordDoubleJump::encode,
+                MessageDragonlordDoubleJump::decode,
+                MessageDragonlordDoubleJump::handle
+        );
+
+        NETWORK.registerServerbound(
                 MessageDialogueChoice.class,
                 id("dialogue_choice"),
                 MessageDialogueChoice::encode,

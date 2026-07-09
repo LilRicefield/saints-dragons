@@ -26,6 +26,7 @@ public final class SaintsDragonsCommon {
         DragonAttributeConfigLoader.bootstrap();
         SaintsDragonVariantRegistry.bootstrap();
         ModAbilities.register();
+        ModAttributes.register();
         ModEntities.register();
         ModBlocks.register();
         ModBlockEntities.register();

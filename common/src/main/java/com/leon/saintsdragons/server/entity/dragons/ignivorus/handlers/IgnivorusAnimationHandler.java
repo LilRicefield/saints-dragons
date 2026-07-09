@@ -193,11 +193,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
 
-        if (dragon.isTamingStunned()) {
-            controller.transitionLength(GROUND_TRANSITIONS.stunned());
-            AnimationHelper.setAndContinue(state, STUNNED);
-            return PlayState.CONTINUE;
-        }
         PlayState restPose = AnimationHelper.tryHandleRestPose(
                 state, dragon, SLEEP, SIT, GROUND_TRANSITIONS.sleep(), GROUND_TRANSITIONS.sit(), !aerialState
         );
@@ -293,6 +288,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         PlayState dance = AnimationHelper.tryHandleDance(state, dragon, GROUND_TRANSITIONS.idle());
         if (dance != null) {
             return dance;
+        }
+
+        if (dragon.isTamingStunned()) {
+            controller.transitionLength(GROUND_TRANSITIONS.idle());
+            AnimationHelper.setAndContinue(state, STUNNED);
+            return PlayState.CONTINUE;
         }
 
         int groundState = dragon.getEntityData().get(Ignivorus.DATA_GROUND_MOVE_STATE);

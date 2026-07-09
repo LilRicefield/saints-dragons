@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeReloadListener;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueReloadListener;
 import com.leon.saintsdragons.server.loot.DragonChestLootReloadListener;
 import com.leon.saintsdragons.common.init.CommonModEvents;
+import com.leon.saintsdragons.common.registry.ModAttributes;
 import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.forge.client.ForgeConfigRootScreen;
 import com.leon.saintsdragons.forge.data.SaintsDragonBiomeTagsProvider;
@@ -52,6 +53,7 @@ import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.EntityAttributeCreationEvent;
+import net.minecraftforge.event.entity.EntityAttributeModificationEvent;
 import net.minecraftforge.event.entity.SpawnPlacementRegisterEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.DistExecutor;
@@ -95,6 +97,7 @@ public final class SaintsDragonsForge {
 
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> ClientOnly::registerConfigScreen);
         modEventBus.addListener(this::onEntityAttributeCreation);
+        modEventBus.addListener(this::onEntityAttributeModification);
         modEventBus.addListener(this::onBuildCreativeTabs);
         modEventBus.addListener(this::onRegisterSpawnPlacements);
         modEventBus.addListener(this::onCommonSetup);
@@ -135,6 +138,13 @@ public final class SaintsDragonsForge {
     private void onEntityAttributeCreation(EntityAttributeCreationEvent event) {
         CommonModEvents.registerEntityAttributes((type, builder) -> event.put(type, builder.build()));
     }
+
+    private void onEntityAttributeModification(EntityAttributeModificationEvent event) {
+        event.add(EntityType.PLAYER, ModAttributes.DOUBLE_JUMP.get());
+        event.add(EntityType.PLAYER, ModAttributes.FIRE_RESISTANCE.get());
+        event.add(EntityType.PLAYER, ModAttributes.BLAST_RESISTANCE.get());
+    }
+
     private void onBuildCreativeTabs(BuildCreativeModeTabContentsEvent event) {
         CommonModEvents.registerCreativeTabEntries((tabKey, itemSupplier) -> {
             if (event.getTabKey().equals(tabKey)) {

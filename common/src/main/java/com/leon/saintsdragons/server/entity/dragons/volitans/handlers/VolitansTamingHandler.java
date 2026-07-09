@@ -26,6 +26,11 @@ public class VolitansTamingHandler extends DragonTamingStunComponent<Volitans> {
     }
 
     @Override
+    protected float getTamingThreshold() {
+        return dragon.getTamingThreshold();
+    }
+
+    @Override
     protected String getTamingTimeoutTranslationKey() {
         return "entity.saintsdragons.volitans.taming_timeout";
     }

@@ -25,6 +25,11 @@ public class RaevyxTamingHandler extends DragonTamingStunComponent<Raevyx> {
     }
 
     @Override
+    protected float getTamingThreshold() {
+        return dragon.getTamingThreshold();
+    }
+
+    @Override
     protected String getTamingTimeoutTranslationKey() {
         return "entity.saintsdragons.raevyx.taming_timeout";
     }

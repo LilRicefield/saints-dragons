@@ -1772,6 +1772,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (source.is(DamageTypes.MAGIC) && this.hasEffect(MobEffects.POISON)) {
             return false;
         }
+        if (tamingController.tryEnterHoldStateFromDamage(source, amount)) {
+            return true;
+        }
         if (tryReactiveHitEvade(source, amount)) {
             return false;
         }
