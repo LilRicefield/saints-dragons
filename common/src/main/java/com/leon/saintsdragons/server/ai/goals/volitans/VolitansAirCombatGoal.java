@@ -23,6 +23,7 @@ public class VolitansAirCombatGoal extends Goal {
     private static final double DIVE_CHASE_SPEED = 3.1D;
     private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
     private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
+    private static final double LANDING_SPEED = 1.6D;
     private static final double POSITION_SPEED = 0.85D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final int MELEE_CADENCE_TICKS = 30;
@@ -52,11 +53,15 @@ public class VolitansAirCombatGoal extends Goal {
         if (!isValidTarget(target)) {
             return false;
         }
-        if (!isTargetAirborne(target)) {
+        boolean dragonAirborne = dragon.isAerial();
+        boolean targetAirborne = isTargetAirborne(target);
+        if (!targetAirborne && !dragonAirborne) {
             return false;
         }
-        if (!dragon.isAerial() && !DragonAirCombatHelper.canTriggerAiFlightForTarget(dragon, target)) {
-            return false;
+        if (targetAirborne && !dragonAirborne) {
+            if (!DragonAirCombatHelper.canTriggerAiFlightForTarget(dragon, target)) {
+                return false;
+            }
         }
         return dragon.distanceToSqr(target) <= getMaxAggroDistanceSqr();
     }
@@ -90,7 +95,7 @@ public class VolitansAirCombatGoal extends Goal {
         }
         if (!isTargetAirborne(target)) {
             if (dragon.isAerial()) {
-                dragon.getAIMovement().setLandingWaypoint(target, 1.0D);
+                dragon.getAIMovement().setLandingWaypoint(target, LANDING_SPEED);
                 return true;
             }
             return false;
@@ -122,7 +127,7 @@ public class VolitansAirCombatGoal extends Goal {
         DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(
                 dragon,
                 target,
-                1.0D,
+                LANDING_SPEED,
                 this::isTargetAirborne,
                 getMaxAggroDistanceSqr()
         );
@@ -140,7 +145,7 @@ public class VolitansAirCombatGoal extends Goal {
                 if (landingTarget != null
                         && dragon.isTargetValid(landingTarget)
                         && !isTargetAirborne(landingTarget)
-                        && dragon.getAIMovement().trySetLandingWaypoint(landingTarget, 1.0D)) {
+                        && dragon.getAIMovement().trySetLandingWaypoint(landingTarget, LANDING_SPEED)) {
                     return;
                 }
                 dragon.setLanding(false);

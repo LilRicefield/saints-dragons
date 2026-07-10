@@ -73,7 +73,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         if (dragon.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player rider) {
             return dragon.isTame() && dragon.isOwnedBy(rider) && super.tryAbility();
         }
-        return !dragon.isVehicle() && dragon.isTargetValid(dragon.getTarget()) && super.tryAbility();
+        return false;
     }
 
     @Override

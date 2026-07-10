@@ -16,7 +16,6 @@ import com.leon.saintsdragons.server.ai.goals.volitans.VolitansAirCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFindSleepDepthGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFlightGoal;
-import com.leon.saintsdragons.server.ai.goals.volitans.VolitansSlamSequenceGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansGroundCombatGoal;
 import com.leon.saintsdragons.server.ai.goals.volitans.VolitansWaterCombatGoal;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -444,7 +443,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(1, new VolitansSlamSequenceGoal(this));
             this.goalSelector.addGoal(2, new VolitansGroundCombatGoal(this));
             this.goalSelector.addGoal(3, new VolitansAirCombatGoal(this));
             this.goalSelector.addGoal(4, new VolitansWaterCombatGoal(this));
@@ -2014,7 +2012,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void stopUltimateSlamMovement() {
+        if (!isUltimateSlamActive()) {
+            return;
+        }
         this.entityData.set(DATA_ULTIMATE_SLAM_ACTIVE, false);
+        if (isAiSpecialCombatActive() && !onGround() && !isVehicle() && !isPassenger() && !isInWaterOrBubble() && !isInLava()) {
+            beginAiFlight();
+        } else if (!onGround() && !isVehicle() && !isPassenger() && !isInWaterOrBubble() && !isInLava()) {
+            beginAiFlight();
+        }
     }
 
     public void beginAiTakeoff() {
