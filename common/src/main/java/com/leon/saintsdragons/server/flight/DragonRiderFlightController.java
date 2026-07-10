@@ -49,6 +49,7 @@ public final class DragonRiderFlightController {
                 takeoffBoostRequiresGoingUp,
                 takeoffMinVertical
         );
+        velocity = dragon.applyRiderWaterFlightTransition(velocity);
         dragon.move(MoverType.SELF, velocity);
         dragon.setDeltaMovement(velocity);
         dragon.calculateEntityAnimation(true);

@@ -787,11 +787,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
-    protected void switchToGroundNavigationAfterLanding() {
-        switchToGroundNavigation();
-    }
-
-    @Override
     protected void afterSwitchToGroundNavigation() {
         if (onGround()) {
             setDeltaMovement(Vec3.ZERO);
@@ -1286,12 +1281,16 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player rider
                 && this.isTame() && this.isOwnedBy(rider)) {
             Vec3 riddenInput = this.getRiddenInput(rider, motion);
-            if (isFlying()) {
+            boolean inWater = this.isInWaterOrBubble() || this.isInLava();
+            if (inWater && !level().isClientSide) {
+                clearRiderFlightStateInWaterIfNeeded();
+            }
+            if (isFlying() && (!inWater || shouldUseRiderFlightMovementInWater())) {
                 riderController.handleFlightTravel(rider, riddenInput);
                 return;
             }
 
-            if (this.isInWaterOrBubble() || this.isInLava()) {
+            if (inWater) {
                 riderController.handleSwimTravel(rider, riddenInput);
                 if (!level().isClientSide) {
                     setGroundMoveStateFromRider(0);
@@ -2045,7 +2044,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     public void handleAiLandingComplete() {
         if (isInWaterOrBubble()) {
             suppressSleep(60);
-            markLandedNow();
+            completeTouchdownLanding(LandingSource.AI);
             return;
         }
         if (!level().isClientSide) {
@@ -2055,7 +2054,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             }
             suppressSleep(60);
         }
-        markLandedNow();
+        completeTouchdownLanding(LandingSource.AI);
         startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
     }
 
@@ -2684,7 +2683,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
             @Override
             public void onWaterFlightCleared() {
-                markLandedNow();
+                completeTouchdownLanding(LandingSource.RIDER);
             }
 
             @Override
@@ -2709,7 +2708,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                     getSoundHandler().playMovingEntitySound(ModSounds.VOLITANS_LANDED.get(), 2.0f, 1.0f, 32);
                 }
                 lockRiderControls(LANDED_CONTROL_LOCK_TICKS);
-                markLandedNow();
+                completeTouchdownLanding(LandingSource.RIDER);
             }
         });
     }

@@ -437,15 +437,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         this.lastLandingGameTime = level().getGameTime();
     }
 
-    @Override
-    protected void switchToGroundNavigationAfterLanding() {
-        switchToGroundNavigation();
-    }
-
     public void handleAiLandingComplete() {
         if (isInWaterOrBubble()) {
             suppressSleep(60);
-            markLandedNow();
+            completeTouchdownLanding(LandingSource.AI);
             return;
         }
         if (!level().isClientSide) {
@@ -453,7 +448,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
             suppressSleep(60);
         }
-        markLandedNow();
+        completeTouchdownLanding(LandingSource.AI);
         startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
     }
 
@@ -1931,7 +1926,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
             public void onRiderLanded() {
                 triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LANDED.get(), 1.0f, 1.0f, 72);
-                markLandedNow();
+                completeTouchdownLanding(LandingSource.RIDER);
                 lockRiderControls(30);
             }
         });

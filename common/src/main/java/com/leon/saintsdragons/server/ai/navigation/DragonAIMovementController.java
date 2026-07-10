@@ -11,15 +11,11 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Queue;
-
 public class DragonAIMovementController {
     private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     public static final double GROUND_SPRINT_SPEED = 0.80D;
 
     private final RideableDragonBase dragon;
-    private final Queue<QueuedWaypoint> waypointQueue = new ArrayDeque<>();
     private @Nullable QueuedWaypoint currentWaypoint;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
@@ -35,7 +31,7 @@ public class DragonAIMovementController {
             return;
         }
         if (currentWaypoint != null && hasArrived()) {
-            advanceToNextWaypoint();
+            currentWaypoint = null;
         }
         if (!shouldUseAirMovement() && !canUseGroundNavigation()) {
             dragon.getNavigation().stop();
@@ -50,25 +46,7 @@ public class DragonAIMovementController {
         if (target == null || dragon.level().isClientSide) {
             return false;
         }
-        waypointQueue.clear();
         return startWaypoint(new QueuedWaypoint(target, speed, false, MovementMode.AUTO));
-    }
-
-    public boolean addWaypoint(LivingEntity target, double speed) {
-        return target != null && addWaypoint(target.position(), speed);
-    }
-
-    public boolean addWaypoint(Vec3 target, double speed) {
-        if (target == null || dragon.level().isClientSide) {
-            return false;
-        }
-
-        QueuedWaypoint waypoint = new QueuedWaypoint(target, speed, false, MovementMode.AUTO);
-        waypointQueue.add(waypoint);
-        if (!isPathing()) {
-            advanceToNextWaypoint();
-        }
-        return true;
     }
 
     public boolean setWaypoint(LivingEntity target, double speed, boolean running) {
@@ -81,7 +59,6 @@ public class DragonAIMovementController {
         if (target == null || dragon.level().isClientSide) {
             return false;
         }
-        waypointQueue.clear();
         return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.AUTO));
     }
 
@@ -102,20 +79,7 @@ public class DragonAIMovementController {
             clearGroundPath();
             return false;
         }
-        waypointQueue.clear();
         return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.GROUND));
-    }
-
-    public boolean addGroundWaypoint(Vec3 target, double speed) {
-        if (target == null || dragon.level().isClientSide) {
-            return false;
-        }
-
-        waypointQueue.add(new QueuedWaypoint(target, speed, false, MovementMode.GROUND));
-        if (!isPathing()) {
-            advanceToNextWaypoint();
-        }
-        return true;
     }
 
     public boolean moveToGroundTarget(LivingEntity target, double speed, boolean running) {
@@ -173,7 +137,6 @@ public class DragonAIMovementController {
         }
 
         flightCapable.beginAiLanding();
-        waypointQueue.clear();
         return startWaypoint(new QueuedWaypoint(landingTarget, speed, false, MovementMode.LANDING));
     }
 
@@ -209,7 +172,6 @@ public class DragonAIMovementController {
 
     public void clearAllWaypoints() {
         currentWaypoint = null;
-        waypointQueue.clear();
         dragon.getNavigation().stop();
         if (dragon instanceof RideableFlyingDragon flyingDragon) {
             flyingDragon.clearAiFlightTarget();
@@ -218,7 +180,6 @@ public class DragonAIMovementController {
 
     public void stop() {
         currentWaypoint = null;
-        waypointQueue.clear();
         if (shouldUseAirMovement()) {
             clearGroundPath();
             if (!(dragon instanceof RideableFlyingDragon)) {
@@ -260,7 +221,7 @@ public class DragonAIMovementController {
     }
 
     public boolean isPathing() {
-        if (currentWaypoint != null && waypointQueue.isEmpty() && hasArrived()) {
+        if (currentWaypoint != null && hasArrived()) {
             return false;
         }
         if (shouldUseAirMovement()) {
@@ -321,17 +282,14 @@ public class DragonAIMovementController {
 
         if (!canUseGroundNavigation()) {
             clearGroundPath();
+            currentWaypoint = null;
             return false;
         }
-        return dragon.getNavigation().moveTo(waypoint.target().x, waypoint.target().y, waypoint.target().z, waypoint.speed());
-    }
-
-    private void advanceToNextWaypoint() {
-        currentWaypoint = null;
-        if (waypointQueue.isEmpty()) {
-            return;
+        boolean started = dragon.getNavigation().moveTo(waypoint.target().x, waypoint.target().y, waypoint.target().z, waypoint.speed());
+        if (!started) {
+            currentWaypoint = null;
         }
-        startWaypoint(waypointQueue.poll());
+        return started;
     }
 
     private boolean canUseGroundNavigation() {

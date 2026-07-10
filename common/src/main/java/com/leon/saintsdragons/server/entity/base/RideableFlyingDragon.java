@@ -71,6 +71,12 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private static final double NEAR_GROUND_DUST_SCAN_DISTANCE = 10.0D;
     private static final int NEAR_GROUND_DUST_INTERVAL = 2;
     private static final int NEAR_WATER_SPLASH_INTERVAL = 2;
+    private static final int RIDER_WATER_FLIGHT_MIN_TICKS = 55;
+    private static final int RIDER_WATER_FLIGHT_MAX_TICKS = 100;
+    private static final double RIDER_WATER_FLIGHT_HANDOFF_SPEED = 0.12D;
+    private static final double RIDER_WATER_FLIGHT_HORIZONTAL_DRAG = 0.96D;
+    private static final double RIDER_WATER_FLIGHT_VERTICAL_DRAG = 0.92D;
+    private static final double RIDER_WATER_FLIGHT_SPEED_BLEED = 0.965D;
     protected static final DragonBarrelRollHelper.Config DEFAULT_BARREL_ROLL_CONFIG =
             new DragonBarrelRollHelper.Config(
                     0.88F,
@@ -95,6 +101,15 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private float accumulatedRoll = 0.0F;
     private int riderLandingBlendTicks = 0;
     private int riderDiveBoostHoldTicks = 0;
+    private int riderWaterFlightTransitionTicks = 0;
+    private int riderWaterFlightTransitionUpdatedTick = -1;
+    private double riderWaterFlightSpeedBudget = 0.0D;
+    private Vec3 lastRiderFlightVelocityBeforeWater = Vec3.ZERO;
+    private Vec3 lastRiderWaterFlightDampedVelocity = Vec3.ZERO;
+    private double lastRiderFlightThrottleBeforeWater = 0.0D;
+    private Vec3 lastRiderFlightSamplePosition = Vec3.ZERO;
+    private boolean hasLastRiderFlightSamplePosition = false;
+    private boolean wasRiderInWaterLastTick = false;
     private boolean riderDiving = false;
     private int nearGroundDustCooldown = 0;
     private int nearWaterSplashCooldown = 0;
@@ -651,6 +666,18 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         switchToGroundNavigation();
     }
 
+    protected void forceClearAerialStateForRiderWaterHandoff() {
+        clearAerialStateAndUseGroundNavigation();
+        if (isFlying()) {
+            boolean wasFlying = true;
+            this.entityData.set(getFlyingDataAccessor(), false);
+            afterFlyingDataSet(wasFlying, false);
+            onFlyingStateChanged(wasFlying, false);
+        }
+        resetRiderFlightThrottle();
+        setNoGravity(false);
+    }
+
     @Override
     public void setTakeoff(boolean takeoff) {
         boolean requestedTakeoff = normalizeTakeoffStateRequest(takeoff);
@@ -690,6 +717,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     public void tick() {
         wasAerialForDustAtTickStart = isAerial();
         super.tick();
+        tickRiderWaterFlightEntrySampling();
         tickServerRiderDiveInput();
         tickRiderDiveBoostHoldState();
         tickNearGroundFlightDust();
@@ -969,6 +997,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     protected void tickStandardTakeoffAndGroundedAerialRecovery() {
         takeoffComponent.tick();
         tickStandardLandedRecovery();
+        if (completeLandingOnGroundContact()) {
+            groundedAerialRecoveryTicks = 0;
+            return;
+        }
         groundedAerialRecoveryTicks = shouldSkipGroundedAerialRecovery()
                 ? 0
                 : DragonGroundedAerialRecovery.tick(
@@ -987,6 +1019,14 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                         getGroundedAerialRecoveryUpwardVelocityTolerance(),
                         this::completeGroundedAerialRecoveryLanding
                 );
+    }
+
+    protected boolean completeLandingOnGroundContact() {
+        if (level().isClientSide || !isLanding() || !onGround()) {
+            return false;
+        }
+        completeGroundedAerialRecoveryLanding();
+        return true;
     }
 
     protected void completeGroundedAerialRecoveryLanding() {
@@ -1202,14 +1242,25 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected boolean shouldClearRiderFlightStateInWater() {
+        if (isRiderWaterFlightTransitionActive()) {
+            if (isTakeoff() || riderTakeoffTicks > 0) {
+                return false;
+            }
+            return isRiderWaterFlightReadyForSwimHandoff();
+        }
         return riderFlightComponent.shouldClearFlightStateInWater(this.riderTakeoffTicks);
     }
 
     protected boolean clearRiderFlightStateInWaterIfNeeded() {
-        if (level().isClientSide || (!isInWaterOrBubble() && !isInLava()) || !shouldClearRiderFlightStateInWater()) {
+        if (level().isClientSide || (!isInWaterOrBubble() && !isInLava())) {
             return false;
         }
-        clearAerialStateAndUseGroundNavigation();
+        if (!shouldClearRiderFlightStateInWater()) {
+            return false;
+        }
+        resetRiderWaterFlightTransition();
+        forceClearAerialStateForRiderWaterHandoff();
+        clearRiderWaterFlightEntryCache();
         onRiderFlightStateClearedInWater();
         return true;
     }
@@ -1218,10 +1269,160 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected boolean shouldUseRiderFlightMovementInWater() {
-        return (isInWaterOrBubble() || isInLava()) && isFlying() && isGoingUp();
+        return isRiderWaterFlightTransitionActive() && !isRiderWaterFlightReadyForSwimHandoff();
+    }
+
+    protected boolean isRiderWaterFlightTransitionActive() {
+        return (isInWaterOrBubble() || isInLava())
+                && isVehicle()
+                && isFlying()
+                && !isTakeoff()
+                && riderTakeoffTicks <= 0;
+    }
+
+    protected boolean isRiderWaterFlightReadyForSwimHandoff() {
+        if (!isRiderWaterFlightTransitionActive()) {
+            return false;
+        }
+        if (riderWaterFlightTransitionTicks >= RIDER_WATER_FLIGHT_MAX_TICKS) {
+            return true;
+        }
+        return riderWaterFlightTransitionTicks >= RIDER_WATER_FLIGHT_MIN_TICKS
+                && Math.max(riderWaterFlightSpeedBudget, sampleRiderMovementVelocity(getDeltaMovement()).length()) <= RIDER_WATER_FLIGHT_HANDOFF_SPEED;
+    }
+
+    public Vec3 applyRiderWaterFlightTransition(Vec3 velocity) {
+        if (!isRiderWaterFlightTransitionActive()) {
+            resetRiderWaterFlightTransition();
+            cacheRiderFlightVelocityBeforeWater(velocity);
+            return velocity;
+        }
+        if (riderWaterFlightTransitionUpdatedTick == tickCount) {
+            return lastRiderWaterFlightDampedVelocity.lengthSqr() > 1.0E-5D ? lastRiderWaterFlightDampedVelocity : velocity;
+        }
+
+        if (riderWaterFlightTransitionTicks == 0) {
+            velocity = sampleRiderMovementVelocity(velocity);
+            double computedSpeed = velocity.length();
+            double cachedSpeed = lastRiderFlightVelocityBeforeWater.length();
+            if (cachedSpeed > computedSpeed) {
+                velocity = lastRiderFlightVelocityBeforeWater;
+            }
+            riderWaterFlightSpeedBudget = Math.max(
+                    Math.max(velocity.length(), getRiderFlightThrottle()),
+                    lastRiderFlightThrottleBeforeWater
+            );
+        } else {
+            velocity = lastRiderWaterFlightDampedVelocity.lengthSqr() > 1.0E-5D
+                    ? lastRiderWaterFlightDampedVelocity
+                    : sampleRiderMovementVelocity(velocity);
+        }
+        riderWaterFlightTransitionTicks++;
+        double progress = Mth.clamp((double) riderWaterFlightTransitionTicks / RIDER_WATER_FLIGHT_MAX_TICKS, 0.0D, 1.0D);
+        double horizontalDrag = Mth.lerp(progress, 0.99D, RIDER_WATER_FLIGHT_HORIZONTAL_DRAG);
+        double verticalDrag = Mth.lerp(progress, 0.97D, RIDER_WATER_FLIGHT_VERTICAL_DRAG);
+        Vec3 damped = velocity.multiply(horizontalDrag, verticalDrag, horizontalDrag);
+
+        riderWaterFlightSpeedBudget *= Mth.lerp(progress, 0.98D, RIDER_WATER_FLIGHT_SPEED_BLEED);
+        double throttleCap = Math.max(RIDER_WATER_FLIGHT_HANDOFF_SPEED * 0.5D, riderWaterFlightSpeedBudget);
+        double dampedSpeed = damped.length();
+        if (dampedSpeed > throttleCap && dampedSpeed > 1.0E-5D) {
+            damped = damped.scale(throttleCap / dampedSpeed);
+        }
+        if (wantsRiderWaterFlightLift()) {
+            double lift = Math.max(getRedirectedFlyingTakeoffVelocity() * 2.5D, getRiderWaterSwimAscendImpulse() * 4.0D);
+            damped = new Vec3(damped.x, Math.max(damped.y, lift), damped.z);
+        }
+        setRiderFlightThrottle(Math.min(damped.length(), throttleCap));
+        clearRiderDiveBoostHold();
+        riderWaterFlightTransitionUpdatedTick = tickCount;
+        lastRiderWaterFlightDampedVelocity = damped;
+        return damped;
+    }
+
+    private boolean wantsRiderWaterFlightLift() {
+        if (isGoingUp()) {
+            return true;
+        }
+        if (!(getControllingPassenger() instanceof Player player) || getLastRiderForward() <= 0.01F) {
+            return false;
+        }
+        float pitchRadians = DragonRiderControllerHelper.resolveRiderPitchRadians(this, player, getRiderKeyPitchDegrees());
+        return pitchRadians < -Math.toRadians(10.0D);
+    }
+
+    protected Vec3 tickRiderWaterFlightTransitionFromLandingBlend() {
+        Vec3 damped = applyRiderWaterFlightTransition(sampleRiderMovementVelocity(getDeltaMovement()));
+        setDeltaMovement(damped);
+        return damped;
+    }
+
+    protected void resetRiderWaterFlightTransition() {
+        riderWaterFlightTransitionTicks = 0;
+        riderWaterFlightTransitionUpdatedTick = -1;
+        riderWaterFlightSpeedBudget = 0.0D;
+        lastRiderWaterFlightDampedVelocity = Vec3.ZERO;
+    }
+
+    private void cacheRiderFlightVelocityBeforeWater(Vec3 velocity) {
+        if (level().isClientSide || !isVehicle() || !isFlying() || isInWaterOrBubble() || isInLava()) {
+            return;
+        }
+        lastRiderFlightVelocityBeforeWater = velocity;
+        lastRiderFlightThrottleBeforeWater = getRiderFlightThrottle();
+    }
+
+    private void tickRiderWaterFlightEntrySampling() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        boolean inWaterOrLava = isInWaterOrBubble() || isInLava();
+        Vec3 currentPosition = position();
+        Vec3 tickMovement = Vec3.ZERO;
+        if (hasLastRiderFlightSamplePosition) {
+            tickMovement = currentPosition.subtract(lastRiderFlightSamplePosition);
+        }
+
+        if (!inWaterOrLava && wasRiderInWaterLastTick) {
+            resetRiderWaterFlightTransition();
+            clearRiderWaterFlightEntryCache();
+        }
+
+        if (isVehicle() && isFlying()) {
+            if (inWaterOrLava && !wasRiderInWaterLastTick) {
+                resetRiderWaterFlightTransition();
+                lastRiderFlightVelocityBeforeWater = sampleRiderMovementVelocity(tickMovement);
+                lastRiderFlightThrottleBeforeWater = Math.max(getRiderFlightThrottle(), lastRiderFlightVelocityBeforeWater.length());
+            } else if (!inWaterOrLava) {
+                cacheRiderFlightVelocityBeforeWater(sampleRiderMovementVelocity(tickMovement));
+            }
+        }
+
+        wasRiderInWaterLastTick = inWaterOrLava;
+        lastRiderFlightSamplePosition = currentPosition;
+        hasLastRiderFlightSamplePosition = true;
+    }
+
+    private void clearRiderWaterFlightEntryCache() {
+        lastRiderFlightVelocityBeforeWater = Vec3.ZERO;
+        lastRiderFlightThrottleBeforeWater = 0.0D;
+    }
+
+    private Vec3 sampleRiderMovementVelocity(Vec3 preferredVelocity) {
+        if (preferredVelocity.lengthSqr() > 1.0E-5D) {
+            return preferredVelocity;
+        }
+        Vec3 currentVelocity = getDeltaMovement();
+        if (currentVelocity.lengthSqr() > 1.0E-5D) {
+            return currentVelocity;
+        }
+        Vec3 positionDelta = new Vec3(getX() - xo, getY() - yo, getZ() - zo);
+        return positionDelta.lengthSqr() > 1.0E-5D ? positionDelta : preferredVelocity;
     }
 
     protected void handleRiderWaterSwimming(Vec3 input) {
+        resetRiderWaterFlightTransition();
         Vec3 velocity = getDeltaMovement();
         double swimSpeed = getRiderWaterSwimSpeed();
         if (isAccelerating()) {
@@ -1609,6 +1810,18 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
     }
 
+    protected final void completeTouchdownLanding(LandingSource source) {
+        beforeTouchdownLanding(source);
+        markLandedNow();
+        afterTouchdownLanding(source);
+    }
+
+    protected void beforeTouchdownLanding(LandingSource source) {
+    }
+
+    protected void afterTouchdownLanding(LandingSource source) {
+    }
+
     protected void afterStandardLandingStateReset() {
     }
 
@@ -1627,6 +1840,12 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected void switchToGroundNavigationAfterLanding() {
+        switchToGroundNavigation();
+    }
+
+    protected enum LandingSource {
+        AI,
+        RIDER
     }
 
     @Override
@@ -2070,8 +2289,14 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             consumeRiderTouchdownFromAir(hooks.waterTouchdownVelocity());
             if (!level().isClientSide) {
                 hooks.clearLandingBlendSync();
-                if (isInFlightState() && hooks.shouldClearFlightStateInWater()) {
+                if (shouldUseRiderFlightMovementInWater()) {
+                    tickRiderWaterFlightTransitionFromLandingBlend();
+                }
+                if (isInFlightState() && hooks.shouldClearFlightStateInWater() && shouldClearRiderFlightStateInWater()) {
+                    resetRiderWaterFlightTransition();
                     hooks.onWaterFlightCleared();
+                    forceClearAerialStateForRiderWaterHandoff();
+                    clearRiderWaterFlightEntryCache();
                 }
             }
             return;

@@ -1918,15 +1918,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         timeFlying = 0;
     }
 
-    @Override
-    protected void switchToGroundNavigationAfterLanding() {
-        switchToGroundNavigation();
-    }
-
     public void handleAiLandingComplete() {
         if (isInWaterOrBubble()) {
             suppressSleep(60);
-            markLandedNow();
+            completeTouchdownLanding(LandingSource.AI);
             return;
         }
         if (!level().isClientSide) {
@@ -1944,7 +1939,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 lastAiLandedAnimTick = now;
             }
         }
-        markLandedNow();
+        completeTouchdownLanding(LandingSource.AI);
         startStandardLandedRecovery(isPhase2Active() ? PHASE2_LANDED_RECOVERY_TICKS : LANDED_RECOVERY_TICKS);
     }
 
@@ -2459,7 +2454,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
                 } else {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LANDED.get(), 1.0f, 1.0f, 42);
                 }
-                markLandedNow();
+                completeTouchdownLanding(LandingSource.RIDER);
                 lockRiderControls(13);
             }
         });

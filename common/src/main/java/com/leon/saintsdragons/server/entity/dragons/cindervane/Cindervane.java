@@ -144,7 +144,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
-    private static final int LANDING_SETTLE_TICKS = 4;
     private static final int LANDED_RECOVERY_TICKS = 34;
     public static final int TAKEOFF_ANIMATION_TICKS = 25;
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
@@ -190,7 +189,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private int airTicks;
     public int groundTicks;
     public int timeFlying = 0;
-    private int landingTicks;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
     private boolean autoGrabPassengerMountAllowed;
@@ -471,19 +469,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 airTicks = 0;
             }
 
-            if (isLanding()) {
-                if (onGroundNow) {
-                    landingTicks++;
-                    if (landingTicks >= LANDING_SETTLE_TICKS) {
-                        markLandedNow();
-                    }
-                } else {
-                    landingTicks = 0;
-                }
-            } else {
-                landingTicks = 0;
-            }
-
             tickAnimationStates();
         }
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
@@ -701,7 +686,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             public void onRiderLanded() {
                 triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.LANDED);
                 getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
-                markLandedNow();
+                completeTouchdownLanding(LandingSource.RIDER);
                 lockRiderControls(34);
             }
         });
@@ -769,7 +754,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     protected void afterInitializeAnimationState() {
         groundTicks = 0;
         airTicks = 0;
-        landingTicks = 0;
     }
 
     @Override
@@ -1592,7 +1576,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             this.packLeaderUuid = null;
         }
         if (!savedFlying) {
-            landingTicks = 0;
             airTicks = 0;
         } else {
             airTicks = Math.max(airTicks, 1);
@@ -1690,7 +1673,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void onLandingDataSet(boolean landing) {
-        landingTicks = 0;
         if (landing) {
             setHovering(false);
             setTakeoff(false);
@@ -1724,15 +1706,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.timeFlying = 0;
     }
 
-    @Override
-    protected void switchToGroundNavigationAfterLanding() {
-        switchToGroundNavigation();
-    }
-
     public void handleAiLandingComplete() {
         if (isInWaterOrBubble()) {
             suppressSleep(60);
-            markLandedNow();
+            completeTouchdownLanding(LandingSource.AI);
             return;
         }
         if (!level().isClientSide) {
@@ -1740,7 +1717,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_LANDED.get(), 1.0f, 1.0f, 59);
             suppressSleep(60);
         }
-        markLandedNow();
+        completeTouchdownLanding(LandingSource.AI);
         startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
     }
 
