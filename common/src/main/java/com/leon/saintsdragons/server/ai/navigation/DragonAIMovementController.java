@@ -14,9 +14,6 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public class DragonAIMovementController {
-    private static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
-    public static final double GROUND_SPRINT_SPEED = 0.80D;
-
     private final RideableDragonBase dragon;
     private @Nullable QueuedWaypoint currentWaypoint;
     private GroundPathState groundPathState = GroundPathState.IDLE;
@@ -158,7 +155,7 @@ public class DragonAIMovementController {
         double currentAltitude = Math.max(0.0D, dragon.getY()
                 - dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, dragon.getBlockX(), dragon.getBlockZ()));
         double minHorizontalDistanceSqr = currentAltitude > 6.0D
-                ? MIN_AIRBORNE_LANDING_HORIZONTAL * MIN_AIRBORNE_LANDING_HORIZONTAL
+                ? 6.0D * 6.0D
                 : 0.0D;
 
         for (int radius = 0; radius <= 32; radius += 8) {
