@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.block.VarasuchusEggBlockEntity;
 import com.leon.saintsdragons.common.block.StegonautEggBlockEntity;
 import com.leon.saintsdragons.common.block.VolitansEggBlockEntity;
 import com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity;
+import com.leon.saintsdragons.common.block.DraconicCrucibleBlockEntity;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -61,6 +62,12 @@ public final class ModBlockEntities {
             REGISTER.register("draconian_nucleus", () -> BlockEntityType.Builder.of(
                     DraconianNucleusBlockEntity::new,
                     ModBlocks.DRACONIAN_NUCLEUS.get()
+            ).build(null));
+
+    public static final Supplier<BlockEntityType<DraconicCrucibleBlockEntity>> DRACONIC_CRUCIBLE =
+            REGISTER.register("draconic_crucible", () -> BlockEntityType.Builder.of(
+                    DraconicCrucibleBlockEntity::new,
+                    ModBlocks.DRACONIC_CRUCIBLE.get()
             ).build(null));
 
     public static void register() {

@@ -1,0 +1,630 @@
+package com.leon.saintsdragons.common.block;
+
+import com.leon.saintsdragons.common.block.crucible.DraconicCrucibleFuelTier;
+import com.leon.saintsdragons.common.recipe.DraconicCrucibleShapedRecipe;
+import com.leon.saintsdragons.common.recipe.DraconicCrucibleSmeltingRecipe;
+import com.leon.saintsdragons.common.registry.ModBlockEntities;
+import com.leon.saintsdragons.common.registry.ModRecipes;
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.menu.DraconicCrucibleMenu;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.item.crafting.SmeltingRecipe;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntity {
+    public static final int OUTPUT_SLOT = 0;
+    public static final int FUEL_SLOT = 1;
+    public static final int INPUT_SLOT_START = 2;
+    public static final int INPUT_SLOT_COUNT = 9;
+    public static final int CONTAINER_SIZE = 11;
+    public static final int DATA_COUNT = 7;
+
+    private static final long ANIMATION_DURATION_TICKS = 20L;
+    private static final int THERMAL_CHARGE_MODEL_VERSION = 1;
+    private static final int SHAPED_JOB_SLOT = -1;
+    private static final int NO_JOB_SLOT = -2;
+
+    private NonNullList<ItemStack> items = NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
+    private int burnTime;
+    private int burnTimeTotal;
+    private int activeHeatLevel;
+    private int processingProgress;
+    private int processingTimeTotal;
+    private boolean processingLocked;
+    private boolean canStartProcessing;
+    private int processingRequiredHeatLevel;
+    private int processingFuelCost;
+    private int processingFuelSpent;
+    private int reservedFuelCharge;
+    private int reservedFuelHeatLevel;
+    private ItemStack pendingResult = ItemStack.EMPTY;
+    @Nullable
+    private ResourceLocation activeRecipeId;
+    private int activeInputSlot = NO_JOB_SLOT;
+
+    private int openers;
+    private boolean animationInitialized;
+    private boolean open;
+    private long animationStartTick;
+
+    private final ContainerData data = new ContainerData() {
+        @Override
+        public int get(int index) {
+            return switch (index) {
+                case 0 -> burnTime;
+                case 1 -> burnTimeTotal;
+                case 2 -> processingProgress;
+                case 3 -> processingTimeTotal;
+                case 4 -> activeHeatLevel;
+                case 5 -> processingLocked ? 1 : 0;
+                case 6 -> canStartProcessing ? 1 : 0;
+                default -> 0;
+            };
+        }
+
+        @Override
+        public void set(int index, int value) {
+            switch (index) {
+                case 0 -> burnTime = value;
+                case 1 -> burnTimeTotal = value;
+                case 2 -> processingProgress = value;
+                case 3 -> processingTimeTotal = value;
+                case 4 -> activeHeatLevel = value;
+                case 5 -> processingLocked = value != 0;
+                case 6 -> canStartProcessing = value != 0;
+                default -> {
+                }
+            }
+        }
+
+        @Override
+        public int getCount() {
+            return DATA_COUNT;
+        }
+    };
+
+    public DraconicCrucibleBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.DRACONIC_CRUCIBLE.get(), pos, state);
+    }
+
+    public static void serverTick(Level level, BlockPos pos, BlockState state,
+                                  DraconicCrucibleBlockEntity crucible) {
+        boolean changed = false;
+        if (crucible.activateReservedFuel() || crucible.storeInsertedFuel()) {
+            changed = true;
+        }
+
+        if (crucible.processingLocked
+                && crucible.burnTime > 0
+                && crucible.activeHeatLevel >= crucible.processingRequiredHeatLevel) {
+            int nextProgress = crucible.processingProgress + 1;
+            int targetFuelSpent = (int) Math.min(
+                    crucible.processingFuelCost,
+                    (long) crucible.processingFuelCost * nextProgress
+                            / Math.max(1, crucible.processingTimeTotal));
+            int fuelSpentThisTick = Math.max(0, targetFuelSpent - crucible.processingFuelSpent);
+            if (!crucible.consumeProcessingCharge(fuelSpentThisTick)) {
+                return;
+            }
+            crucible.processingProgress = nextProgress;
+            crucible.processingFuelSpent = targetFuelSpent;
+            changed = true;
+            if (crucible.processingProgress >= crucible.processingTimeTotal
+                    && crucible.canAcceptResult(crucible.pendingResult)) {
+                crucible.finishProcessing(level);
+                changed = true;
+            }
+        }
+
+        boolean canStart = crucible.computeCanStartProcessing(level);
+        if (crucible.canStartProcessing != canStart) {
+            crucible.canStartProcessing = canStart;
+            changed = true;
+        }
+
+        crucible.syncProcessingState();
+
+        if (changed) {
+            crucible.setChanged();
+        }
+    }
+
+    public boolean beginProcessing(Level level) {
+        if (this.processingLocked) {
+            return false;
+        }
+        if (activateReservedFuel() || storeInsertedFuel()) {
+            setChanged();
+        }
+        CrucibleJob job = findJob(level);
+        if (!canStartJob(job) && !replaceWithQueuedHigherTier(job)) {
+            return false;
+        }
+
+        int processingCost = DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel)
+                .processingCost(job.requiredHeatLevel());
+        if (this.burnTime < processingCost && !reserveQueuedFuel(job.requiredHeatLevel())) {
+            return false;
+        }
+
+        consumeJobInputs(job);
+        this.activeRecipeId = job.recipeId();
+        this.activeInputSlot = job.inputSlot();
+        this.processingProgress = 0;
+        this.processingTimeTotal = job.processingTime();
+        this.processingRequiredHeatLevel = job.requiredHeatLevel();
+        this.processingFuelCost = processingCost;
+        this.processingFuelSpent = 0;
+        this.pendingResult = job.result().copy();
+        this.processingLocked = true;
+        this.canStartProcessing = false;
+        syncProcessingState();
+        setChanged();
+        return true;
+    }
+
+    private boolean computeCanStartProcessing(Level level) {
+        if (this.processingLocked) {
+            return false;
+        }
+        CrucibleJob job = findJob(level);
+        return canStartJob(job) || canReplaceWithQueuedHigherTier(job);
+    }
+
+    private boolean canStartJob(@Nullable CrucibleJob job) {
+        if (job == null || !canAcceptResult(job.result())) {
+            return false;
+        }
+        DraconicCrucibleFuelTier activeTier =
+                DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel);
+        int processingCost = activeTier.processingCost(job.requiredHeatLevel());
+        if (!activeTier.canProcess(job.requiredHeatLevel())) {
+            return false;
+        }
+        if (this.burnTime >= processingCost) {
+            return true;
+        }
+
+        DraconicCrucibleFuelTier queuedTier =
+                DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
+        return queuedTier.canProcess(job.requiredHeatLevel())
+                && this.burnTime + queuedTier.chargeCapacity() >= processingCost;
+    }
+
+    private boolean canReplaceWithQueuedHigherTier(@Nullable CrucibleJob job) {
+        if (job == null || !canAcceptResult(job.result())) {
+            return false;
+        }
+        DraconicCrucibleFuelTier activeTier =
+                DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel);
+        DraconicCrucibleFuelTier queuedTier =
+                DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
+        return queuedTier.heatLevel() > activeTier.heatLevel()
+                && queuedTier.canProcess(job.requiredHeatLevel())
+                && queuedTier.chargeCapacity() >= queuedTier.processingCost(job.requiredHeatLevel());
+    }
+
+    private boolean replaceWithQueuedHigherTier(@Nullable CrucibleJob job) {
+        if (!canReplaceWithQueuedHigherTier(job)) {
+            return false;
+        }
+        DraconicCrucibleFuelTier queuedTier =
+                DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
+        this.items.get(FUEL_SLOT).shrink(1);
+        this.burnTime = queuedTier.chargeCapacity();
+        this.burnTimeTotal = queuedTier.chargeCapacity();
+        this.activeHeatLevel = queuedTier.heatLevel();
+        return true;
+    }
+
+    private boolean reserveQueuedFuel(int requiredHeatLevel) {
+        DraconicCrucibleFuelTier queuedTier =
+                DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
+        if (!queuedTier.canProcess(requiredHeatLevel)) {
+            return false;
+        }
+        this.items.get(FUEL_SLOT).shrink(1);
+        this.reservedFuelCharge = queuedTier.chargeCapacity();
+        this.reservedFuelHeatLevel = queuedTier.heatLevel();
+        return true;
+    }
+
+    private boolean activateReservedFuel() {
+        if (this.burnTime > 0 || this.reservedFuelCharge <= 0) {
+            return false;
+        }
+        this.burnTime = this.reservedFuelCharge;
+        this.burnTimeTotal = this.reservedFuelCharge;
+        this.activeHeatLevel = this.reservedFuelHeatLevel;
+        this.reservedFuelCharge = 0;
+        this.reservedFuelHeatLevel = 0;
+        return true;
+    }
+
+    private boolean consumeProcessingCharge(int amount) {
+        if (this.burnTime + this.reservedFuelCharge < amount) {
+            return false;
+        }
+        int remaining = amount;
+        while (remaining > 0) {
+            if (this.burnTime == 0 && !activateReservedFuel()) {
+                return false;
+            }
+            int spent = Math.min(this.burnTime, remaining);
+            this.burnTime -= spent;
+            remaining -= spent;
+            if (this.burnTime == 0) {
+                this.burnTimeTotal = 0;
+                this.activeHeatLevel = 0;
+            }
+        }
+        return true;
+    }
+
+    @Nullable
+    private CrucibleJob findJob(Level level) {
+        SimpleContainer grid = createGridView();
+        for (DraconicCrucibleShapedRecipe recipe :
+                level.getRecipeManager().getAllRecipesFor(ModRecipes.DRACONIC_CRUCIBLE_SHAPED_TYPE.get())) {
+            if (recipe.matches(grid, level)) {
+                return new CrucibleJob(
+                        recipe.getId(), SHAPED_JOB_SLOT,
+                        recipe.getResultItem(level.registryAccess()).copy(),
+                        recipe.requiredHeatLevel(), recipe.processingTime(), recipe);
+            }
+        }
+
+        for (int gridSlot = 0; gridSlot < INPUT_SLOT_COUNT; gridSlot++) {
+            int inventorySlot = INPUT_SLOT_START + gridSlot;
+            ItemStack input = this.items.get(inventorySlot);
+            if (input.isEmpty()) {
+                continue;
+            }
+
+            for (DraconicCrucibleSmeltingRecipe recipe :
+                    level.getRecipeManager().getAllRecipesFor(ModRecipes.DRACONIC_CRUCIBLE_SMELTING_TYPE.get())) {
+                if (recipe.ingredient().test(input)) {
+                    return new CrucibleJob(
+                            recipe.getId(), inventorySlot, recipe.result().copy(),
+                            recipe.requiredHeatLevel(), recipe.processingTime(), null);
+                }
+            }
+
+            SimpleContainer singleInput = new SimpleContainer(input);
+            SmeltingRecipe vanillaRecipe = level.getRecipeManager()
+                    .getRecipeFor(RecipeType.SMELTING, singleInput, level)
+                    .orElse(null);
+            if (vanillaRecipe != null) {
+                ItemStack result = vanillaRecipe.assemble(singleInput, level.registryAccess());
+                return new CrucibleJob(
+                        vanillaRecipe.getId(), inventorySlot, result,
+                        DraconicCrucibleFuelTier.LEVEL_1.heatLevel(), vanillaRecipe.getCookingTime(), null);
+            }
+        }
+        return null;
+    }
+
+    private SimpleContainer createGridView() {
+        SimpleContainer grid = new SimpleContainer(INPUT_SLOT_COUNT);
+        for (int slot = 0; slot < INPUT_SLOT_COUNT; slot++) {
+            grid.setItem(slot, this.items.get(INPUT_SLOT_START + slot));
+        }
+        return grid;
+    }
+
+    private boolean canAcceptResult(ItemStack result) {
+        if (result.isEmpty()) {
+            return false;
+        }
+        ItemStack output = this.items.get(OUTPUT_SLOT);
+        if (output.isEmpty()) {
+            return true;
+        }
+        return ItemStack.isSameItemSameTags(output, result)
+                && output.getCount() + result.getCount() <= output.getMaxStackSize();
+    }
+
+    private boolean storeInsertedFuel() {
+        DraconicCrucibleFuelTier tier = DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
+        if (tier == DraconicCrucibleFuelTier.NONE) {
+            return false;
+        }
+        if (this.burnTime > 0) {
+            return false;
+        }
+
+        ItemStack fuel = this.items.get(FUEL_SLOT);
+        fuel.shrink(1);
+        this.burnTime = tier.chargeCapacity();
+        this.burnTimeTotal = tier.chargeCapacity();
+        this.activeHeatLevel = tier.heatLevel();
+        return true;
+    }
+
+    private void consumeJobInputs(CrucibleJob job) {
+        if (job.shapedRecipe() != null) {
+            NonNullList<net.minecraft.world.item.crafting.Ingredient> ingredients =
+                    job.shapedRecipe().getIngredients();
+            for (int gridSlot = 0; gridSlot < INPUT_SLOT_COUNT; gridSlot++) {
+                if (!ingredients.get(gridSlot).isEmpty()) {
+                    this.items.get(INPUT_SLOT_START + gridSlot).shrink(1);
+                }
+            }
+        } else {
+            this.items.get(job.inputSlot()).shrink(1);
+        }
+    }
+
+    private void finishProcessing(Level level) {
+        ItemStack output = this.items.get(OUTPUT_SLOT);
+        if (output.isEmpty()) {
+            this.items.set(OUTPUT_SLOT, this.pendingResult.copy());
+        } else {
+            output.grow(this.pendingResult.getCount());
+        }
+        this.activeRecipeId = null;
+        this.activeInputSlot = NO_JOB_SLOT;
+        this.processingProgress = 0;
+        this.processingTimeTotal = 0;
+        this.processingRequiredHeatLevel = 0;
+        this.processingFuelCost = 0;
+        this.processingFuelSpent = 0;
+        this.pendingResult = ItemStack.EMPTY;
+        this.processingLocked = false;
+        beginProcessing(level);
+    }
+
+    public ContainerData getData() {
+        return this.data;
+    }
+
+    private void syncProcessingState() {
+        if (this.level == null) {
+            return;
+        }
+        BlockState lowerState = this.level.getBlockState(this.worldPosition);
+        if (!lowerState.is(getBlockState().getBlock())
+                || !lowerState.hasProperty(DraconicCrucibleBlock.LIT)) {
+            return;
+        }
+        if (lowerState.getValue(DraconicCrucibleBlock.LIT) != this.processingLocked) {
+            this.level.setBlock(this.worldPosition,
+                    lowerState.setValue(DraconicCrucibleBlock.LIT, this.processingLocked),
+                    Block.UPDATE_CLIENTS);
+        }
+    }
+
+    @Override
+    protected @NotNull Component getDefaultName() {
+        return Component.translatable("container.saintsdragons.draconic_crucible");
+    }
+
+    @Override
+    protected @NotNull AbstractContainerMenu createMenu(int containerId, @NotNull Inventory inventory) {
+        return new DraconicCrucibleMenu(containerId, inventory, this, this.data);
+    }
+
+    @Override
+    public int getContainerSize() {
+        return CONTAINER_SIZE;
+    }
+
+    @Override
+    protected @NotNull NonNullList<ItemStack> getItems() {
+        return this.items;
+    }
+
+    @Override
+    protected void setItems(@NotNull NonNullList<ItemStack> items) {
+        this.items = items;
+    }
+
+    @Override
+    public boolean canPlaceItem(int slot, @NotNull ItemStack stack) {
+        if (this.processingLocked) {
+            return false;
+        }
+        if (slot == OUTPUT_SLOT) {
+            return false;
+        }
+        if (slot == FUEL_SLOT) {
+            return DraconicCrucibleFuelTier.resolve(stack) != DraconicCrucibleFuelTier.NONE;
+        }
+        return slot >= INPUT_SLOT_START && slot < INPUT_SLOT_START + INPUT_SLOT_COUNT;
+    }
+
+    @Override
+    protected void saveAdditional(@NotNull CompoundTag tag) {
+        super.saveAdditional(tag);
+        if (!trySaveLootTable(tag)) {
+            ContainerHelper.saveAllItems(tag, this.items);
+        }
+        tag.putInt("BurnTime", this.burnTime);
+        tag.putInt("BurnTimeTotal", this.burnTimeTotal);
+        tag.putInt("ActiveHeatLevel", this.activeHeatLevel);
+        tag.putInt("ProcessingProgress", this.processingProgress);
+        tag.putInt("ProcessingTimeTotal", this.processingTimeTotal);
+        tag.putBoolean("ProcessingLocked", this.processingLocked);
+        tag.putInt("ProcessingRequiredHeatLevel", this.processingRequiredHeatLevel);
+        tag.putInt("ProcessingFuelCost", this.processingFuelCost);
+        tag.putInt("ProcessingFuelSpent", this.processingFuelSpent);
+        tag.putInt("ReservedFuelCharge", this.reservedFuelCharge);
+        tag.putInt("ReservedFuelHeatLevel", this.reservedFuelHeatLevel);
+        tag.putInt("ThermalChargeModelVersion", THERMAL_CHARGE_MODEL_VERSION);
+        if (!this.pendingResult.isEmpty()) {
+            tag.put("PendingResult", this.pendingResult.save(new CompoundTag()));
+        }
+        if (this.activeRecipeId != null) {
+            tag.putString("ActiveRecipe", this.activeRecipeId.toString());
+            tag.putInt("ActiveInputSlot", this.activeInputSlot);
+        }
+    }
+
+    @Override
+    public void load(@NotNull CompoundTag tag) {
+        super.load(tag);
+        this.items = NonNullList.withSize(CONTAINER_SIZE, ItemStack.EMPTY);
+        if (!tryLoadLootTable(tag)) {
+            ContainerHelper.loadAllItems(tag, this.items);
+        }
+        this.burnTime = tag.getInt("BurnTime");
+        this.burnTimeTotal = tag.getInt("BurnTimeTotal");
+        this.activeHeatLevel = tag.getInt("ActiveHeatLevel");
+        this.processingProgress = tag.getInt("ProcessingProgress");
+        this.processingTimeTotal = tag.getInt("ProcessingTimeTotal");
+        this.processingLocked = tag.getBoolean("ProcessingLocked");
+        this.processingRequiredHeatLevel = tag.getInt("ProcessingRequiredHeatLevel");
+        this.processingFuelCost = tag.getInt("ProcessingFuelCost");
+        this.processingFuelSpent = tag.getInt("ProcessingFuelSpent");
+        this.reservedFuelCharge = tag.getInt("ReservedFuelCharge");
+        this.reservedFuelHeatLevel = tag.getInt("ReservedFuelHeatLevel");
+        if (tag.getInt("ThermalChargeModelVersion") < THERMAL_CHARGE_MODEL_VERSION) {
+            migrateThermalCharge();
+        } else if (this.processingLocked && this.processingFuelCost <= 0) {
+            this.processingFuelCost = DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel)
+                    .processingCost(this.processingRequiredHeatLevel);
+            this.processingFuelSpent = (int) Math.min(
+                    this.processingFuelCost,
+                    (long) this.processingFuelCost * this.processingProgress
+                            / Math.max(1, this.processingTimeTotal));
+        }
+        this.pendingResult = tag.contains("PendingResult")
+                ? ItemStack.of(tag.getCompound("PendingResult"))
+                : ItemStack.EMPTY;
+        this.activeRecipeId = tag.contains("ActiveRecipe")
+                ? ResourceLocation.tryParse(tag.getString("ActiveRecipe"))
+                : null;
+        this.activeInputSlot = this.activeRecipeId == null
+                ? NO_JOB_SLOT
+                : tag.getInt("ActiveInputSlot");
+    }
+
+    private void migrateThermalCharge() {
+        DraconicCrucibleFuelTier tier = DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel);
+        int oldCapacity = this.burnTimeTotal;
+        int oldChargeBeforeCurrentJob = Math.min(oldCapacity, this.burnTime + this.processingFuelSpent);
+        int migratedCharge = oldCapacity <= 0
+                ? 0
+                : (tier.chargeCapacity() * oldChargeBeforeCurrentJob + oldCapacity - 1) / oldCapacity;
+
+        if (this.processingLocked) {
+            this.processingFuelCost = tier.processingCost(this.processingRequiredHeatLevel);
+            this.processingFuelSpent = (int) Math.min(
+                    this.processingFuelCost,
+                    (long) this.processingFuelCost * this.processingProgress
+                            / Math.max(1, this.processingTimeTotal));
+            migratedCharge = Math.max(0, migratedCharge - this.processingFuelSpent);
+        } else {
+            this.processingFuelCost = 0;
+            this.processingFuelSpent = 0;
+        }
+
+        this.burnTime = migratedCharge;
+        this.burnTimeTotal = migratedCharge > 0 ? tier.chargeCapacity() : 0;
+        if (migratedCharge == 0) {
+            this.activeHeatLevel = 0;
+        }
+    }
+
+    @Override
+    public void startOpen(@NotNull Player player) {
+        if (player.isSpectator() || this.level == null) {
+            return;
+        }
+        if (this.openers++ == 0) {
+            sendOpenState(true);
+        }
+    }
+
+    @Override
+    public void stopOpen(@NotNull Player player) {
+        if (player.isSpectator() || this.level == null) {
+            return;
+        }
+        this.openers = Math.max(0, this.openers - 1);
+        if (this.openers == 0) {
+            sendOpenState(false);
+        }
+    }
+
+    public boolean isUsableBy(@NotNull Player player) {
+        return this.level != null
+                && this.level.getBlockEntity(this.worldPosition) == this
+                && player.distanceToSqr(
+                        this.worldPosition.getX() + 0.5D,
+                        this.worldPosition.getY() + 0.5D,
+                        this.worldPosition.getZ() + 0.5D) <= 64.0D;
+    }
+
+    private void sendOpenState(boolean open) {
+        if (this.level != null) {
+            this.level.blockEvent(this.worldPosition, getBlockState().getBlock(), 1, open ? 1 : 0);
+            if (!this.level.isClientSide) {
+                this.level.playSound(null, this.worldPosition,
+                        open ? ModSounds.DRACONIC_CRUCIBLE_OPEN.get()
+                                : ModSounds.DRACONIC_CRUCIBLE_CLOSE.get(),
+                        SoundSource.BLOCKS, 0.5F,
+                        0.9F + this.level.random.nextFloat() * 0.1F);
+            }
+        }
+    }
+
+    @Override
+    public boolean triggerEvent(int id, int type) {
+        if (id == 1) {
+            boolean nextOpen = type > 0;
+            if (!this.animationInitialized || this.open != nextOpen) {
+                this.animationInitialized = true;
+                this.open = nextOpen;
+                this.animationStartTick = this.level == null ? 0L : this.level.getGameTime();
+            }
+            return true;
+        }
+        return super.triggerEvent(id, type);
+    }
+
+    public boolean hasAnimationState() {
+        return this.animationInitialized;
+    }
+
+    public boolean isOpen() {
+        return this.open;
+    }
+
+    public long getAnimationTimeMillis(float partialTick) {
+        if (this.level == null) {
+            return 0L;
+        }
+        double elapsedTicks = this.level.getGameTime() - this.animationStartTick + partialTick;
+        double clampedTicks = Math.max(0.0D, Math.min(ANIMATION_DURATION_TICKS, elapsedTicks));
+        return (long) (clampedTicks * 50.0D);
+    }
+
+    private record CrucibleJob(
+            ResourceLocation recipeId,
+            int inputSlot,
+            ItemStack result,
+            int requiredHeatLevel,
+            int processingTime,
+            @Nullable DraconicCrucibleShapedRecipe shapedRecipe
+    ) {
+    }
+}

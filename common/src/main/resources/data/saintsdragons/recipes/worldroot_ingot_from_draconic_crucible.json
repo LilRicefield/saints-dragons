@@ -1,0 +1,12 @@
+{
+  "type": "saintsdragons:draconic_crucible_smelting",
+  "ingredient": {
+    "item": "saintsdragons:raw_worldroot"
+  },
+  "result": {
+    "item": "saintsdragons:worldroot_ingot",
+    "count": 1
+  },
+  "required_heat_level": 2,
+  "processing_time": 200
+}

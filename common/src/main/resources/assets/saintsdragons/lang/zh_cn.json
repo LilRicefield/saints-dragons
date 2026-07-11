@@ -1034,5 +1034,10 @@
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "补货冷却游戏刻（20刻 = 1秒，24000 = 20分钟）",
   "saintsdragons.config_screen.others.dragon_terrain": "防止龙被卡住（破坏方块）",
   "gui.saintsdragons.draconian_swarm": "龙裔虫群",
-  "gui.saintsdragons.draconian_swarm.wave": "龙裔虫群 - 第%s波"
+  "gui.saintsdragons.draconian_swarm.wave": "龙裔虫群 - 第%s波",
+  "block.saintsdragons.draconic_crucible": "龙铸坩埚",
+  "container.saintsdragons.draconic_crucible": "龙铸坩埚",
+  "gui.saintsdragons.draconic_crucible.button": "坩埚控制",
+  "subtitles.saintsdragons.draconic_crucible_open": "龙铸坩埚打开",
+  "subtitles.saintsdragons.draconic_crucible_close": "龙铸坩埚关闭"
 }

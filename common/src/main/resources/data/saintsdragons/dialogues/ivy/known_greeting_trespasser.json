@@ -7,13 +7,13 @@
       },
       "texts": [
         {
-          "text": "Hello again. Still not trespassing, before you ask. *She smiles*."
+      "text": "Hello again. Still not trespassing, before you ask."
         },
         {
           "text": "Hello there, *trespasser*. Heh. I'm kidding."
         },
         {
-          "text": "Oh it's the trespass-- *ahem*, I mean, it's {name}! Hi. *She chuckles.*"
+      "text": "Oh it's the trespass-- *ahem*, I mean, it's {name}! Hi."
         }
       ],
       "choices": [

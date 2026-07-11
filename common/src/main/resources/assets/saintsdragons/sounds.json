@@ -2318,5 +2318,17 @@
         "attenuation_distance": 32
       }
     ]
+  },
+  "draconic_crucible_open": {
+    "subtitle": "subtitles.saintsdragons.draconic_crucible_open",
+    "sounds": [
+      "saintsdragons:draconic_crucible_open"
+    ]
+  },
+  "draconic_crucible_close": {
+    "subtitle": "subtitles.saintsdragons.draconic_crucible_close",
+    "sounds": [
+      "saintsdragons:draconic_crucible_close"
+    ]
   }
 }

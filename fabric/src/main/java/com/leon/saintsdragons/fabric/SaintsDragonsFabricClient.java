@@ -5,6 +5,8 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.client.model.block.DraconianNucleusModel;
 import com.leon.saintsdragons.client.renderer.block.DraconianNucleusRenderer;
+import com.leon.saintsdragons.client.model.block.DraconicCrucibleEntity;
+import com.leon.saintsdragons.client.renderer.block.DraconicCrucibleRenderer;
 import com.leon.saintsdragons.fabric.client.FabricDragonRideKeybinds;
 import com.leon.saintsdragons.fabric.client.FabricDragonUI;
 import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
@@ -28,9 +30,15 @@ public final class SaintsDragonsFabricClient implements ClientModInitializer {
         EntityModelLayerRegistry.registerModelLayer(
                 DraconianNucleusModel.LAYER_LOCATION,
                 DraconianNucleusModel::createBodyLayer);
+        EntityModelLayerRegistry.registerModelLayer(
+                DraconicCrucibleEntity.LAYER_LOCATION,
+                DraconicCrucibleEntity::createBodyLayer);
         BlockEntityRendererRegistry.register(
                 ModBlockEntities.DRACONIAN_NUCLEUS.get(),
                 DraconianNucleusRenderer::new);
+        BlockEntityRendererRegistry.register(
+                ModBlockEntities.DRACONIC_CRUCIBLE.get(),
+                DraconicCrucibleRenderer::new);
         EntityRendererRegistry.register(FabricPartEntities.DRAGON_PART, FabricDragonPartRenderer::new);
         FabricParticleRegistry.registerParticleFactories();
         FabricDragonRideKeybinds.init();

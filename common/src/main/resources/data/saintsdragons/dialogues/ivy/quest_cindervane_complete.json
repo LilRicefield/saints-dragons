@@ -85,7 +85,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Now go and get your first dragon. *She gives you a reassuring nod.*"
+      "text": "Now go and get your first dragon."
       }
     },
     "did_it_1": {
@@ -233,7 +233,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "...Didn't I tell you not to hit it? *She sighs, then softens a little.*"
+      "text": "...Didn't I tell you not to hit it?"
       },
       "choices": [
         {
@@ -317,7 +317,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Hah! Get a load of this... *She chuckles a bit.* You're humble. I like it."
+      "text": "Hah! Get a load of this... You're humble. I like it."
       },
       "choices": [
         {
@@ -421,7 +421,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Mm... now? Maybe having a companion like you wouldn't be a bad idea at all. *She smiles.*"
+      "text": "Mm... now? Maybe having a companion like you wouldn't be a bad idea at all."
       },
       "choices": [
         {
@@ -633,7 +633,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Well... I didn't say that. *She lets the silence hang for a second, then smiles.* But yes. I want to."
+      "text": "Well... I didn't say that. But yes. I want to."
       },
       "choices": [
         {

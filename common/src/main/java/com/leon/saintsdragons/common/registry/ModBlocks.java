@@ -89,6 +89,14 @@ public class ModBlocks {
                             .sound(SoundType.SLIME_BLOCK)
                             .lightLevel(state -> 8)
                             .noOcclusion()));
+    public static final Supplier<Block> DRACONIC_CRUCIBLE =
+            REGISTER.register("draconic_crucible",
+                    () -> new DraconicCrucibleBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_BLACK)
+                            .strength(5.0F, 6.0F)
+                            .sound(SoundType.METAL)
+                            .requiresCorrectToolForDrops()
+                            .noOcclusion()));
     public static final Supplier<Block> DRAGONHEART_ALLOY_BLOCK =
             REGISTER.register("dragonheart_alloy_block",
                     () -> new Block(BlockBehaviour.Properties.copy(Blocks.NETHERITE_BLOCK)

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;
 import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
+import com.leon.saintsdragons.server.menu.DraconicCrucibleMenu;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.flag.FeatureFlags;
@@ -24,6 +25,10 @@ public final class ModMenus {
     public static final Supplier<MenuType<IvyInventoryMenu>> IVY_INVENTORY =
             REGISTER.register("ivy_inventory",
                     () -> new MenuType<>(IvyInventoryMenu::new, FeatureFlags.DEFAULT_FLAGS));
+
+    public static final Supplier<MenuType<DraconicCrucibleMenu>> DRACONIC_CRUCIBLE =
+            REGISTER.register("draconic_crucible",
+                    () -> new MenuType<>(DraconicCrucibleMenu::new, FeatureFlags.DEFAULT_FLAGS));
 
     private ModMenus() {
     }

@@ -56,6 +56,12 @@ public final class ModTags {
         public static final TagKey<Item> STEGONAUT_FOODS = tag("foods/stegonaut");
         public static final TagKey<Item> VARASUCHUS_FOODS = tag("foods/varasuchus");
         public static final TagKey<Item> VOLITANS_FOODS = tag("foods/volitans");
+        public static final TagKey<Item> DRACONIC_CRUCIBLE_FUEL_LEVEL_1 =
+                tag("draconic_crucible/fuels/level_1");
+        public static final TagKey<Item> DRACONIC_CRUCIBLE_FUEL_LEVEL_2 =
+                tag("draconic_crucible/fuels/level_2");
+        public static final TagKey<Item> DRACONIC_CRUCIBLE_FUEL_LEVEL_3 =
+                tag("draconic_crucible/fuels/level_3");
 
         private Items() {
         }

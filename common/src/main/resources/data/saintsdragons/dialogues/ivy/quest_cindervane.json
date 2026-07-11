@@ -22,7 +22,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I want you to tame one. Properly, that is. Just to test your mettle. *She smiles.*"
+      "text": "I want you to tame one. Properly, that is. Just to test your mettle."
       },
       "choices": [
         {
@@ -188,7 +188,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "You... You already tamed one? *She blinks.*"
+      "text": "You... You already tamed one?"
       },
       "choices": [
         {
@@ -277,7 +277,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "We'll revisit the matter later, if you want to, of course. *She gives you a reassuring smile.*"
+      "text": "We'll revisit the matter later, if you want to, of course."
       },
       "choices": [
         {

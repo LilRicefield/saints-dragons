@@ -76,7 +76,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She shakes her head.* That's like saying every person with a sword is a knight."
+      "text": "That's like saying every person with a sword is a knight."
       },
       "choices": [
         {
@@ -220,7 +220,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She looks at you for a moment.* No, for most of the time."
+      "text": "No, for most of the time."
       },
       "choices": [
         {
@@ -284,7 +284,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater... *She mutters the last sentence*."
+      "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater..."
       },
       "choices": [
         {
@@ -332,7 +332,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She clears her throat.* Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed. *She smiles*."
+      "text": "Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed."
       },
       "choices": [
         {
@@ -381,7 +381,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She looks at you for a moment.* No, for most of the time."
+      "text": "No, for most of the time."
       },
       "choices": [
         {
@@ -445,7 +445,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater... *She mutters the last sentence*."
+      "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater..."
       },
       "choices": [
         {
@@ -493,7 +493,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She clears her throat.* Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed. *She smiles*."
+      "text": "Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed."
       },
       "choices": [
         {
@@ -628,7 +628,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Which was rude, because my Raevyx was right there. *She chuckles*."
+      "text": "Which was rude, because my Raevyx was right there."
       },
       "choices": [
         {
@@ -676,7 +676,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Almost... *Ivy lowers her gaze.* I think he won. I don't know."
+      "text": "Almost... I think he won. I don't know."
       },
       "choices": [
         {

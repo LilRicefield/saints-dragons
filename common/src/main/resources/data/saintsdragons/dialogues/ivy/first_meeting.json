@@ -80,7 +80,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*Ivy raises a brow.* Okaaay... Well, I was hoping you'd not say that..."
+      "text": "Okaaay... Well, I was hoping you'd not say that..."
       },
       "choices": [
         {
@@ -112,7 +112,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Welcome to my home. Where I live alone and... peaceful. *She has a slight sadness to her eyes.*"
+      "text": "Welcome to my home. Where I live alone and... peaceful."
       },
       "choices": [
         {
@@ -152,7 +152,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "...E-Excuse me? *She grimaces.* What--what was that supposed to mean? Was it such a good idea to say that to someone who you did not know? *She huffs.*"
+      "text": "...E-Excuse me? What--what was that supposed to mean? Was it such a good idea to say that to someone who you did not know?"
       },
       "choices": [
         {
@@ -185,7 +185,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ugh... *She sighs in defeat.*"
+      "text": "Ugh..."
       },
       "choices": [
         {
@@ -275,7 +275,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "That's a fair question. *She folds her arms loosely.* A trader, mostly."
+      "text": "That's a fair question. A trader, mostly."
       },
       "choices": [
         {
@@ -326,7 +326,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She tilts her head.* Though I suppose that doesn't really answer your question, does it?"
+      "text": "Though I suppose that doesn't really answer your question, does it?"
       },
       "choices": [
         {
@@ -397,7 +397,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She smiles faintly.* Then we'll call it progress."
+      "text": "Then we'll call it progress."
       },
       "choices": [
         {
@@ -464,7 +464,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She pauses.* ...Thank you. Most people just say it sounds like a plant. Which, well. It is. Two of them, actually. *She laughs quietly.*"
+      "text": "...Thank you. Most people just say it sounds like a plant. Which, well. It is. Two of them, actually."
       },
       "choices": [
         {
@@ -496,7 +496,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "That's kind of the point, I think. My mother had a thing for unusual things. *She shrugs.*"
+      "text": "That's kind of the point, I think. My mother had a thing for unusual things."
       },
       "choices": [
         {

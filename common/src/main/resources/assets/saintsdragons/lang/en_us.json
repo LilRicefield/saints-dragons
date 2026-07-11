@@ -70,6 +70,11 @@
   "block.saintsdragons.draconian_nucleus": "Draconian Nucleus",
   "item.saintsdragons.raw_worldroot": "Raw Worldroot",
   "item.saintsdragons.worldroot_ingot": "Worldroot Ingot",
+  "item.saintsdragons.worldroot_sword": "Worldroot Sword",
+  "item.saintsdragons.worldroot_pickaxe": "Worldroot Pickaxe",
+  "item.saintsdragons.worldroot_axe": "Worldroot Axe",
+  "item.saintsdragons.worldroot_shovel": "Worldroot Shovel",
+  "item.saintsdragons.worldroot_hoe": "Worldroot Hoe",
   "item.saintsdragons.dragonheart_chunk": "Dragonheart Chunk",
   "item.saintsdragons.dragonheart_alloy": "Dragonheart Alloy",
   "item.saintsdragons.stegonaut_spawn_egg": "Stegonaut Spawn Egg",
@@ -1043,5 +1048,10 @@
   "text.autoconfig.saintsdragonsspawning.option.ivyRestockInterval.@Tooltip": "Time in ticks between trade restocks (20 ticks = 1 second, 24000 = 20 minutes)",
   "saintsdragons.config_screen.others.dragon_terrain": "Dragon Anti-Stuck",
   "gui.saintsdragons.draconian_swarm": "Draconian Swarm",
-  "gui.saintsdragons.draconian_swarm.wave": "Draconian Swarm - Wave %s"
+  "gui.saintsdragons.draconian_swarm.wave": "Draconian Swarm - Wave %s",
+  "block.saintsdragons.draconic_crucible": "Draconic Crucible",
+  "container.saintsdragons.draconic_crucible": "Draconic Crucible",
+  "gui.saintsdragons.draconic_crucible.button": "Crucible control",
+  "subtitles.saintsdragons.draconic_crucible_open": "Draconic Crucible opens",
+  "subtitles.saintsdragons.draconic_crucible_close": "Draconic Crucible closes"
 }

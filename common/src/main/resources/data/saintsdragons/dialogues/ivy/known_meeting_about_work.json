@@ -146,7 +146,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And then ME, specifically. *She grits her teeth.* Have you even heard of a Mossback?? Actually, here's a better one: why does that thing exist?!"
+      "text": "And then ME, specifically. Have you even heard of a Mossback?? Actually, here's a better one: why does that thing exist?!"
       },
       "choices": [
         {
@@ -226,7 +226,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Don't even dare throw one at me, though. I'll hate you forever... *She glares at you.*"
+      "text": "Don't even dare throw one at me, though. I'll hate you forever..."
       },
       "choices": [
         {
@@ -242,7 +242,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*She then exhales.* So yes. People do ridiculous things with dragons."
+      "text": "So yes. People do ridiculous things with dragons."
       },
       "choices": [
         {
@@ -275,7 +275,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Mhm. *She nods.* Gardening."
+      "text": "Mhm. Gardening."
       },
       "choices": [
         {
@@ -323,7 +323,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "...and a few things that are useful when medicine is no longer the plan. *She smiles.*"
+      "text": "...and a few things that are useful when medicine is no longer the plan."
       },
       "choices": [
         {
@@ -484,7 +484,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ahem. Sorry. I didn't mean to yell. *She smiles meekly.*"
+      "text": "Ahem. Sorry. I didn't mean to yell."
       },
       "choices": [
         {

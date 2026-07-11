@@ -14,6 +14,9 @@ public final class ModSounds {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.SOUND_EVENT, () -> BuiltInRegistries.SOUND_EVENT, SaintsDragonsCommon.MOD_ID);
 
+    public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_OPEN = registerSound("draconic_crucible_open");
+    public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_CLOSE = registerSound("draconic_crucible_close");
+
     public static final Supplier<SoundEvent> IVY_TRADE_START = registerSound("ivy_trade_start");
     public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");
     public static final Supplier<SoundEvent> IVY_REACTION_TO_EGG = registerSound("ivy_reaction_to_egg");

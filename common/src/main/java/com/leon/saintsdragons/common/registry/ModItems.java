@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.item.*;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
+import com.leon.saintsdragons.common.item.tools.WorldrootTier;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
@@ -13,6 +14,11 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
+import net.minecraft.world.item.AxeItem;
+import net.minecraft.world.item.HoeItem;
+import net.minecraft.world.item.PickaxeItem;
+import net.minecraft.world.item.ShovelItem;
+import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.sounds.SoundEvents;
 
@@ -149,6 +155,26 @@ public class ModItems {
     public static final Supplier<Item> WORLDROOT_INGOT =
             REGISTER.register("worldroot_ingot", () -> new Item(new Item.Properties()));
 
+    public static final Supplier<Item> WORLDROOT_SWORD =
+            REGISTER.register("worldroot_sword",
+                    () -> new SwordItem(WorldrootTier.INSTANCE, 3, -2.4F, new Item.Properties()));
+
+    public static final Supplier<Item> WORLDROOT_PICKAXE =
+            REGISTER.register("worldroot_pickaxe",
+                    () -> new PickaxeItem(WorldrootTier.INSTANCE, 1, -2.8F, new Item.Properties()));
+
+    public static final Supplier<Item> WORLDROOT_AXE =
+            REGISTER.register("worldroot_axe",
+                    () -> new AxeItem(WorldrootTier.INSTANCE, 5.0F, -3.0F, new Item.Properties()));
+
+    public static final Supplier<Item> WORLDROOT_SHOVEL =
+            REGISTER.register("worldroot_shovel",
+                    () -> new ShovelItem(WorldrootTier.INSTANCE, 1.5F, -3.0F, new Item.Properties()));
+
+    public static final Supplier<Item> WORLDROOT_HOE =
+            REGISTER.register("worldroot_hoe",
+                    () -> new HoeItem(WorldrootTier.INSTANCE, -4, 0.0F, new Item.Properties()));
+
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",
                     () -> Services.PLATFORM.createSpawnEgg(
@@ -165,6 +191,10 @@ public class ModItems {
     public static final Supplier<Item> DRACONIAN_NUCLEUS =
             REGISTER.register("draconian_nucleus",
                     () -> new BlockItem(ModBlocks.DRACONIAN_NUCLEUS.get(), new Item.Properties()));
+
+    public static final Supplier<Item> DRACONIC_CRUCIBLE =
+            REGISTER.register("draconic_crucible",
+                    () -> new BlockItem(ModBlocks.DRACONIC_CRUCIBLE.get(), new Item.Properties()));
 
     public static final Supplier<Item> DRAGONHEART_ORE =
             REGISTER.register("dragonheart_ore",

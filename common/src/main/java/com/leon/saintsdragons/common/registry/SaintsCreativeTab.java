@@ -54,6 +54,11 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.VOLITANS_EGG.get());
                                 output.accept(ModItems.RAW_WORLDROOT.get());
                                 output.accept(ModItems.WORLDROOT_INGOT.get());
+                                output.accept(ModItems.WORLDROOT_SWORD.get());
+                                output.accept(ModItems.WORLDROOT_PICKAXE.get());
+                                output.accept(ModItems.WORLDROOT_AXE.get());
+                                output.accept(ModItems.WORLDROOT_SHOVEL.get());
+                                output.accept(ModItems.WORLDROOT_HOE.get());
                                 output.accept(ModItems.DRAGONHEART_CHUNK.get());
                                 output.accept(ModItems.DRAGONHEART_ALLOY.get());
                                 output.accept(ModItems.ARROW_OF_VENOM.get());
@@ -91,6 +96,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAW_WORLDROOT_BLOCK.get());
                                 output.accept(ModItems.DRACONIAN_PELLUCIDA.get());
                                 output.accept(ModItems.DRACONIAN_NUCLEUS.get());
+                                output.accept(ModItems.DRACONIC_CRUCIBLE.get());
 
 
                                 })

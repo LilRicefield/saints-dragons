@@ -37,6 +37,7 @@ import com.leon.saintsdragons.client.renderer.mossback.MossbackRenderer;
 import com.leon.saintsdragons.client.renderer.otheranimals.MoopRenderer;
 import com.leon.saintsdragons.client.ui.IvyInventoryScreen;
 import com.leon.saintsdragons.client.ui.DragonInventoryScreen;
+import com.leon.saintsdragons.client.ui.DraconicCrucibleScreen;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.world.entity.Entity;
@@ -87,6 +88,7 @@ public final class CommonClientModEvents {
     public static void registerMenuScreens() {
         MenuScreens.register(ModMenus.DRAGON_INVENTORY.get(), DragonInventoryScreen::new);
         MenuScreens.register(ModMenus.IVY_INVENTORY.get(), IvyInventoryScreen::new);
+        MenuScreens.register(ModMenus.DRACONIC_CRUCIBLE.get(), DraconicCrucibleScreen::new);
     }
 
     @FunctionalInterface

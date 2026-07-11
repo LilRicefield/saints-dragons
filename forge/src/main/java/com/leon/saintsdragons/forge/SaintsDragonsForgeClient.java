@@ -6,6 +6,8 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.client.model.block.DraconianNucleusModel;
 import com.leon.saintsdragons.client.renderer.block.DraconianNucleusRenderer;
+import com.leon.saintsdragons.client.model.block.DraconicCrucibleEntity;
+import com.leon.saintsdragons.client.renderer.block.DraconicCrucibleRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -21,11 +23,13 @@ public final class SaintsDragonsForgeClient {
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {
         CommonClientModEvents.registerEntityRenderers(event::registerEntityRenderer);
         event.registerBlockEntityRenderer(ModBlockEntities.DRACONIAN_NUCLEUS.get(), DraconianNucleusRenderer::new);
+        event.registerBlockEntityRenderer(ModBlockEntities.DRACONIC_CRUCIBLE.get(), DraconicCrucibleRenderer::new);
     }
 
     @SubscribeEvent
     public static void onRegisterLayerDefinitions(EntityRenderersEvent.RegisterLayerDefinitions event) {
         event.registerLayerDefinition(DraconianNucleusModel.LAYER_LOCATION, DraconianNucleusModel::createBodyLayer);
+        event.registerLayerDefinition(DraconicCrucibleEntity.LAYER_LOCATION, DraconicCrucibleEntity::createBodyLayer);
     }
 
     @SubscribeEvent

@@ -1,0 +1,12 @@
+{
+  "variants": {
+    "facing=north,lit=false": { "model": "saintsdragons:block/draconic_crucible" },
+    "facing=east,lit=false": { "model": "saintsdragons:block/draconic_crucible", "y": 90 },
+    "facing=south,lit=false": { "model": "saintsdragons:block/draconic_crucible", "y": 180 },
+    "facing=west,lit=false": { "model": "saintsdragons:block/draconic_crucible", "y": 270 },
+    "facing=north,lit=true": { "model": "saintsdragons:block/draconic_crucible" },
+    "facing=east,lit=true": { "model": "saintsdragons:block/draconic_crucible", "y": 90 },
+    "facing=south,lit=true": { "model": "saintsdragons:block/draconic_crucible", "y": 180 },
+    "facing=west,lit=true": { "model": "saintsdragons:block/draconic_crucible", "y": 270 }
+  }
+}
