@@ -1,9 +1,12 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.server.ai.goals.base.*;
-import com.leon.saintsdragons.server.ai.goals.stegonaut.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.StegonautCombatBrain;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
@@ -38,11 +41,13 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -79,6 +84,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen, DragonChestCarrier {
+    private static final StegonautCombatBrain DRAGON_BRAIN = new StegonautCombatBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.STEGONAUT_ID;
@@ -102,7 +108,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private static final int STEGONAUT_CHEST_SLOTS = 15;
     public static final double RIDER_WALK_SPEED = 0.1D;
     public static final double RIDER_RUN_SPEED = 0.25D;
-    private static final int MAX_PACK_SIZE = 6;
+    private static final int MAX_PACK_SIZE = 4;
     private static final double PACK_SEARCH_RADIUS = 48.0D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
@@ -171,7 +177,11 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(2, new DragonFollowParentGoal<>(this, Stegonaut.class, 0.70D));
         this.goalSelector.addGoal(3, new DragonBreedGoal<>(this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        this.goalSelector.addGoal(4, new StegonautCombatGoal(this));
+        this.goalSelector.addGoal(4, new DragonBrainGoal<>(
+                this,
+                DRAGON_BRAIN,
+                java.util.EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK)
+        ));
         this.goalSelector.addGoal(5, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forStegonaut()));
         this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Stegonaut.class, 0.75D, 16.0D, 8.0D));
         this.goalSelector.addGoal(7, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
@@ -192,6 +202,22 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
         return new PathNavigateGround(this, level);
+    }
+
+    @Override
+    protected Brain.Provider<Stegonaut> brainProvider() {
+        return DRAGON_BRAIN.brainProvider();
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return DragonBrain.makeBrain(DRAGON_BRAIN, dynamic);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        DragonBrain.tick(DRAGON_BRAIN, this);
+        super.customServerAiStep();
     }
 
     public static AttributeSupplier.Builder createAttributes() {

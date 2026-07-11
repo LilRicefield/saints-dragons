@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -14,10 +15,12 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusCombatBrain;
 import com.leon.saintsdragons.server.ai.goals.base.*;
-import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusAirCombatGoal;
-import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusFlightGoal;
-import com.leon.saintsdragons.server.ai.goals.ignivorus.IgnivorusGroundCombatGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -55,6 +58,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -99,7 +103,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
+public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider {
+    private static final IgnivorusCombatBrain DRAGON_BRAIN = new IgnivorusCombatBrain();
 
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -112,6 +117,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
     );
     public static final int TAKEOFF_ANIMATION_TICKS = 29;
+    public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
+            new DragonAirCombatSettings(
+                    TAKEOFF_ANIMATION_TICKS,
+                    1.5D,
+                    0,
+                    64.0D,
+                    2.5D,
+                    8.0D,
+                    5.0D
+            );
     private static final int LANDED_RECOVERY_TICKS = 18;
     private static final int PHASE2_LANDED_RECOVERY_TICKS = 20;
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
@@ -374,11 +389,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DragonFloatGoal(this, 0.018D, -0.02D, 0.95F));
+        this.goalSelector.addGoal(0, new DragonFloatGoal(this));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(2, new IgnivorusFlightGoal(this));
-            this.goalSelector.addGoal(3, new IgnivorusAirCombatGoal(this));
-            this.goalSelector.addGoal(3, new IgnivorusGroundCombatGoal(this));
+            this.goalSelector.addGoal(2, new DragonBrainGoal<>(
+                    this,
+                    DRAGON_BRAIN,
+                    java.util.EnumSet.of(
+                            net.minecraft.world.entity.ai.goal.Goal.Flag.MOVE,
+                            net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK
+                    )
+            ));
         }
         this.goalSelector.addGoal(5, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forIgnivorus()) {
             @Override
@@ -1941,6 +1961,86 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen {
         }
         completeTouchdownLanding(LandingSource.AI);
         startStandardLandedRecovery(isPhase2Active() ? PHASE2_LANDED_RECOVERY_TICKS : LANDED_RECOVERY_TICKS);
+    }
+
+    @Override
+    protected Brain.Provider<Ignivorus> brainProvider() {
+        return DRAGON_BRAIN.brainProvider();
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return DragonBrain.makeBrain(DRAGON_BRAIN, dynamic);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        DragonBrain.tick(DRAGON_BRAIN, this);
+        super.customServerAiStep();
+    }
+
+    public boolean shouldUseAirCombatBrain() {
+        if (isAerial() && isLanding() && !isVehicle() && !isPassenger() && !isOrderedToSit()) {
+            return true;
+        }
+        LivingEntity target = getTarget();
+        if (!isTargetValid(target)
+                || isBaby()
+                || isVehicle()
+                || isPassenger()
+                || isOrderedToSit()
+                || isAiSpecialCombatActive()
+                || areRiderControlsLocked()
+                || isLeaping()
+                || isLeapImpactRecovering()) {
+            return false;
+        }
+        if (target.isInWaterOrBubble()) {
+            return isAerial();
+        }
+        double targetAirborneHeight = getAiTargetAirborneHeight(target);
+        if (DragonAirCombatHelper.isTargetAirborne(this, target, targetAirborneHeight)) {
+            return DragonAirCombatHelper.canEngageAirborneTarget(
+                    this,
+                    target,
+                    AI_AIR_COMBAT_SETTINGS,
+                    targetAirborneHeight
+            );
+        }
+        return isAerial();
+    }
+
+    public boolean shouldUseCombatBrain() {
+        if (shouldUseAirCombatBrain()) {
+            return true;
+        }
+        LivingEntity target = getTarget();
+        if (!isTargetValid(target)
+                || isBaby()
+                || isVehicle()
+                || isPassenger()
+                || isOrderedToSit()
+                || isAiSpecialCombatActive()
+                || areRiderControlsLocked()
+                || isLeaping()
+                || isLeapImpactRecovering()) {
+            return false;
+        }
+        double followRange = getAttributeValue(Attributes.FOLLOW_RANGE);
+        if (followRange <= 0.0D) {
+            followRange = 32.0D;
+        }
+        return distanceToSqr(target) <= followRange * followRange;
+    }
+
+    @Override
+    public DragonAirCombatSettings getAiAirCombatSettings() {
+        return AI_AIR_COMBAT_SETTINGS;
+    }
+
+    @Override
+    public double getAiTargetAirborneHeight(LivingEntity target) {
+        return Math.max(AI_AIR_COMBAT_SETTINGS.targetAirborneHeight(), target.getBbHeight() * 0.75D);
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.pathfinding;
 
+import com.leon.saintsdragons.server.ai.navigation.PathFinderGround;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -36,6 +37,70 @@ public final class AsyncDragonPathfinder {
 
     public static void calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
         calculateFlyingPathAsync(dragon, target, callback, false);
+    }
+
+    public static void calculateGroundPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
+        if (dragon.level().isClientSide) {
+            return;
+        }
+        MinecraftServer server = dragon.getServer();
+        if (server == null) {
+            callback.accept(null);
+            return;
+        }
+
+        BlockPos startPos = dragon.blockPosition();
+        BlockPos targetPos = BlockPos.containing(target);
+        int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
+        int margin = Math.max(followRange, 32);
+        BlockPos minPos = new BlockPos(
+                Math.min(startPos.getX() - margin, targetPos.getX() - 16),
+                Math.min(startPos.getY() - margin, targetPos.getY() - 16),
+                Math.min(startPos.getZ() - margin, targetPos.getZ() - 16)
+        );
+        BlockPos maxPos = new BlockPos(
+                Math.max(startPos.getX() + margin, targetPos.getX() + 16),
+                Math.max(startPos.getY() + margin, targetPos.getY() + 16),
+                Math.max(startPos.getZ() + margin, targetPos.getZ() + 16)
+        );
+
+        PathNavigationRegion snapshot;
+        try {
+            snapshot = new PathNavigationRegion(dragon.level(), minPos, maxPos);
+        } catch (Exception exception) {
+            callback.accept(null);
+            return;
+        }
+
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator();
+                        nodeEvaluator.setCanPassDoors(true);
+                        PathFinder pathFinder = new PathFinderGround(nodeEvaluator, 5000);
+                        return pathFinder.findPath(
+                                snapshot,
+                                dragon,
+                                Set.of(targetPos),
+                                (float) followRange,
+                                0,
+                                1.0F
+                        );
+                    } catch (Exception exception) {
+                        return null;
+                    }
+                }, EXECUTOR)
+                .thenAccept(path -> {
+                    if (server.isStopped() || dragon.isRemoved()) {
+                        return;
+                    }
+                    server.execute(() -> {
+                        if (server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
+                            return;
+                        }
+                        callback.accept(path);
+                    });
+                });
     }
 
     public static void calculateSwarmFlyingPathAsync(Mob swarm, Vec3 target, Consumer<Path> callback) {

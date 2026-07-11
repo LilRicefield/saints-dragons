@@ -18,6 +18,8 @@ import java.util.EnumSet;
 public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCapable> extends DragonBaseGoal<T> {
     private static final double AIR_MOVE_TARGET_EPSILON_SQR = 9.0D;
     private static final double AIR_MOVE_SPEED_EPSILON = 0.15D;
+    private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
+    private static final double AIR_CATCH_UP_SPEED_MULTIPLIER = 1.35D;
 
     private final FollowConfig config;
 
@@ -108,6 +110,7 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     @Override
     public void stop() {
+        dragon.setAccelerating(false);
         dragon.getAIMovement().stop();
         clearForceFollow();
         resetPathTracking();
@@ -212,17 +215,28 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
         Vec3 targetPos = getFlightFollowTarget(owner, ownerAirborne);
-        double followSpeed = getFlightFollowSpeed();
         double distToTargetSq = dragon.distanceToSqr(targetPos.x, targetPos.y, targetPos.z);
+        boolean catchUp = shouldUseFlightCatchUp(targetPos);
+        double followSpeed = getFlightFollowSpeed(catchUp);
+        dragon.setAccelerating(catchUp);
         if (distToTargetSq > 1.0) {
             requestAirMove(targetPos, followSpeed);
         } else {
+            dragon.setAccelerating(false);
             dragon.getAIMovement().stop();
         }
     }
 
     protected double getFlightFollowSpeed() {
         return config.flightSpeed;
+    }
+
+    protected double getFlightFollowSpeed(boolean catchUp) {
+        return catchUp ? getFlightFollowSpeed() * AIR_CATCH_UP_SPEED_MULTIPLIER : getFlightFollowSpeed();
+    }
+
+    protected boolean shouldUseFlightCatchUp(Vec3 targetPos) {
+        return dragon.distanceToSqr(targetPos.x, targetPos.y, targetPos.z) > AIR_CATCH_UP_DISTANCE * AIR_CATCH_UP_DISTANCE;
     }
 
     protected Vec3 getFlightFollowTarget(LivingEntity owner, boolean ownerAirborne) {

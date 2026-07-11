@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
@@ -63,26 +64,55 @@ public class DragonFindWaterGoal<T extends DragonEntity & SemiAquaticDragon> ext
     @Override
     public boolean canContinueToUse() {
         if (!this.dragon.shouldEnterWater()) {
-            this.dragon.getNavigation().stop();
+            stopMovement();
             return false;
         }
         if (isFollowingOwnerOutOfWater()) {
-            this.dragon.getNavigation().stop();
+            stopMovement();
             return false;
         }
         return this.targetPos != null
-                && !this.dragon.getNavigation().isDone()
+                && isMovementActive()
                 && !isStandingInWater();
+    }
+
+    @Override
+    public void stop() {
+        stopMovement();
+        this.targetPos = null;
     }
 
     private void moveToTarget() {
         if (this.targetPos != null) {
-            this.dragon.getNavigation().moveTo(
-                    this.targetPos.getX(),
-                    this.targetPos.getY(),
-                    this.targetPos.getZ(),
-                    this.speedModifier
-            );
+            if (this.dragon instanceof RideableDragonBase rideable) {
+                rideable.getAIMovement().moveToGroundPosition(
+                        net.minecraft.world.phys.Vec3.atBottomCenterOf(this.targetPos),
+                        this.speedModifier,
+                        false
+                );
+            } else {
+                this.dragon.getNavigation().moveTo(
+                        this.targetPos.getX(),
+                        this.targetPos.getY(),
+                        this.targetPos.getZ(),
+                        this.speedModifier
+                );
+            }
+        }
+    }
+
+    private boolean isMovementActive() {
+        if (this.dragon instanceof RideableDragonBase rideable) {
+            return rideable.getAIMovement().isPathing();
+        }
+        return !this.dragon.getNavigation().isDone();
+    }
+
+    private void stopMovement() {
+        if (this.dragon instanceof RideableDragonBase rideable) {
+            rideable.getAIMovement().stop();
+        } else {
+            this.dragon.getNavigation().stop();
         }
     }
 

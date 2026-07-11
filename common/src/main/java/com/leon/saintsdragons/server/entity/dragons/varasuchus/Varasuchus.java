@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -13,7 +14,9 @@ import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.server.ai.goals.base.*;
-import com.leon.saintsdragons.server.ai.goals.varasuchus.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VarasuchusCombatBrain;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
@@ -56,6 +59,8 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.goal.BreathAirGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -91,6 +96,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen {
+    private static final VarasuchusCombatBrain DRAGON_BRAIN = new VarasuchusCombatBrain();
     public Varasuchus(EntityType<? extends Varasuchus> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
@@ -569,9 +575,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         super.registerGoals();
         this.goalSelector.addGoal(1, new BreathAirGoal(this));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(2, new VarasuchusCombatGoal(this));
+            this.goalSelector.addGoal(2, new DragonBrainGoal<>(
+                    this,
+                    DRAGON_BRAIN,
+                    EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK)
+            ));
         }
-        this.goalSelector.addGoal(3, new DragonSwimToTargetGoal(this, this::getAsyncSwimController, 8.0F, 0.30D, true));
         this.goalSelector.addGoal(5, new DragonLeaveWaterGoal<>(this));
         this.goalSelector.addGoal(6, new DragonFindWaterGoal<>(this));
         this.goalSelector.addGoal(7, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forVarasuchus()) {
@@ -590,8 +599,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 Varasuchus.this.setAccelerating(fast);
             }
         });
-        this.goalSelector.addGoal(8, new DragonSwimToTargetGoal(this, this::getAsyncSwimController, 8.0F, 0.25D, false, 20.0D, 16.0D));
-        this.goalSelector.addGoal(10, new DragonSwimWanderGoal(this, this::getAsyncSwimController, 6.0F, 0.20D, 30));
+        this.goalSelector.addGoal(8, new DragonSwimToTargetGoal(this, this::getAiSwimController, 8.0F, 0.25D, false, 20.0D, 16.0D));
+        this.goalSelector.addGoal(10, new DragonSwimWanderGoal(this, this::getAiSwimController, 6.0F, 0.20D, 30));
         this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100) {
             @Override
             protected boolean canUseAdditional() {
@@ -816,8 +825,25 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return 1;
     }
 
-    private AsyncSwimController getAsyncSwimController() {
+    @Override
+    public AsyncSwimController getAiSwimController() {
         return this.asyncSwimController;
+    }
+
+    @Override
+    protected Brain.Provider<Varasuchus> brainProvider() {
+        return DRAGON_BRAIN.brainProvider();
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return DragonBrain.makeBrain(DRAGON_BRAIN, dynamic);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        DragonBrain.tick(DRAGON_BRAIN, this);
+        super.customServerAiStep();
     }
 
     @Override

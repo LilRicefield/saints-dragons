@@ -130,16 +130,18 @@ public final class DragonDestructionManager {
 
     private static Set<BlockPos> gatherConnectedLogs(ServerLevel level, BlockPos origin) {
         Set<BlockPos> logs = new HashSet<>();
+        Set<BlockPos> discovered = new HashSet<>();
         ArrayDeque<BlockPos> open = new ArrayDeque<>();
-        open.add(origin);
+        BlockPos start = origin.immutable();
+        discovered.add(start);
+        open.add(start);
 
         while (!open.isEmpty() && logs.size() < MAX_TREE_LOGS) {
             BlockPos current = open.removeFirst();
-            if (!logs.add(current) || !level.isLoaded(current)
-                    || !level.getBlockState(current).is(BlockTags.LOGS)) {
-                logs.remove(current);
+            if (!level.isLoaded(current) || !level.getBlockState(current).is(BlockTags.LOGS)) {
                 continue;
             }
+            logs.add(current);
 
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
@@ -147,10 +149,11 @@ public final class DragonDestructionManager {
                         if (dx == 0 && dy == 0 && dz == 0) {
                             continue;
                         }
-                        BlockPos neighbor = current.offset(dx, dy, dz);
-                        if (!logs.contains(neighbor) && level.isLoaded(neighbor)
+                        BlockPos neighbor = current.offset(dx, dy, dz).immutable();
+                        if (discovered.add(neighbor)
+                                && level.isLoaded(neighbor)
                                 && level.getBlockState(neighbor).is(BlockTags.LOGS)) {
-                            open.addLast(neighbor.immutable());
+                            open.addLast(neighbor);
                         }
                     }
                 }

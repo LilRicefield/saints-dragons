@@ -61,6 +61,9 @@ class AsyncFlightPathResolver {
 
                 this.cachePathNodes(path, currentWaypoint);
                 this.component.setState(AsyncFlightController.PathState.FOLLOWING);
+            } else if (landingTarget) {
+                this.clearPathNodes();
+                this.component.setState(AsyncFlightController.PathState.FOLLOWING);
             } else {
                 this.handlePathCalculationFailure(currentWaypoint);
             }

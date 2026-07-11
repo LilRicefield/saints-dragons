@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
@@ -76,7 +77,7 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
     @Override
     public void stop() {
         parent = null;
-        baby.getNavigation().stop();
+        stopMovement();
         wanderCooldown = 0; // Reset cooldown
     }
 
@@ -100,7 +101,7 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         double minDistSq = minDist * minDist;
         double comfortableDistSq = minDistSq * 1.2;
         if (distToParent < minDistSq) {
-            baby.getNavigation().stop();
+            stopMovement();
             wanderCooldown = 40 + baby.getRandom().nextInt(40);
             return;
         }
@@ -116,11 +117,23 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         if (--timeToRecalcPath <= 0) {
             timeToRecalcPath = this.adjustedTickDelay(8);
             if (distToParent >= comfortableDistSq) {
-                baby.getNavigation().moveTo(parent, speedModifier);
+                if (baby instanceof RideableDragonBase rideable) {
+                    rideable.getAIMovement().moveToGroundTarget(parent, speedModifier, false);
+                } else {
+                    baby.getNavigation().moveTo(parent, speedModifier);
+                }
             } else {
-                baby.getNavigation().stop();
+                stopMovement();
                 wanderCooldown = 20 + baby.getRandom().nextInt(20);
             }
+        }
+    }
+
+    private void stopMovement() {
+        if (baby instanceof RideableDragonBase rideable) {
+            rideable.getAIMovement().stop();
+        } else {
+            baby.getNavigation().stop();
         }
     }
 

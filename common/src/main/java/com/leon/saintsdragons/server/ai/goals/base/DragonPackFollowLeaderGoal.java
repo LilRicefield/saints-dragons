@@ -25,6 +25,8 @@ import java.util.UUID;
 public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> extends Goal {
     private static final double AIR_MOVE_TARGET_EPSILON_SQR = 9.0D;
     private static final double AIR_MOVE_SPEED_EPSILON = 0.15D;
+    private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
+    private static final double AIR_CATCH_UP_SPEED_MULTIPLIER = 1.35D;
 
     private final T member;
     private final Class<T> memberClass;
@@ -114,6 +116,7 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
                 && member instanceof RideableDragonBase rideableMember
                 && rideableMember.canFly()) {
             flightMember.setHovering(false);
+            rideableMember.setAccelerating(false);
         }
         leader = null;
         pathRecalcCooldown = 0;
@@ -224,6 +227,9 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
 
         T best = member.canLeadPack() ? member : null;
         for (T candidate : nearby) {
+            if (!hasCapacityForMember(candidate, serverLevel)) {
+                continue;
+            }
             if (best == null || isBetterLeader(candidate, best)) {
                 best = candidate;
             }
@@ -271,9 +277,8 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
     private boolean hasCapacityForMember(T candidateLeader, ServerLevel serverLevel) {
         int maxPack = Math.max(1, candidateLeader.getMaxPackSize());
         UUID currentLeader = member.getPackLeaderUuid();
-        if (currentLeader != null && currentLeader.equals(candidateLeader.getUUID())) {
-            return true;
-        }
+        boolean alreadyFollowingCandidate = currentLeader != null
+                && currentLeader.equals(candidateLeader.getUUID());
         if (maxPack <= 1) {
             return false;
         }
@@ -293,7 +298,24 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
                 followers++;
             }
         }
-        return followers < maxPack - 1;
+        if (!alreadyFollowingCandidate) {
+            return followers < maxPack - 1;
+        }
+        if (followers <= maxPack - 1) {
+            return true;
+        }
+
+        int memberRank = 0;
+        for (T mate : nearby) {
+            if (mate == candidateLeader || mate == member) {
+                continue;
+            }
+            if (leaderId.equals(mate.getPackLeaderUuid())
+                    && compareUuid(mate.getUUID(), member.getUUID()) < 0) {
+                memberRank++;
+            }
+        }
+        return memberRank < maxPack - 1;
     }
 
     private boolean isPackCompatibleOrLeader(T other) {
@@ -423,8 +445,11 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
         }
 
         if (distanceToTargetSq > 1.0D) {
-            requestAirMove(rideableMember, target, getAirFollowSpeed(flightMember));
+            boolean catchUp = distanceToTargetSq > AIR_CATCH_UP_DISTANCE * AIR_CATCH_UP_DISTANCE;
+            rideableMember.setAccelerating(catchUp);
+            requestAirMove(rideableMember, target, getAirFollowSpeed(flightMember, catchUp));
         } else {
+            rideableMember.setAccelerating(false);
             rideableMember.getAIMovement().stop();
         }
         rememberLeaderPosition(currentLeader);
@@ -469,6 +494,11 @@ public class DragonPackFollowLeaderGoal<T extends DragonEntity & PackMember<T>> 
 
     private double getAirFollowSpeed(DragonFlightCapable flightMember) {
         return Math.max(1.0D, flightMember.getFlightSpeed() * 1.05D);
+    }
+
+    private double getAirFollowSpeed(DragonFlightCapable flightMember, boolean catchUp) {
+        double speed = getAirFollowSpeed(flightMember);
+        return catchUp ? speed * AIR_CATCH_UP_SPEED_MULTIPLIER : speed;
     }
 
     private void requestAirMove(RideableDragonBase rideableMember, Vec3 target, double speed) {

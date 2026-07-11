@@ -107,8 +107,10 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
                 speed = Math.min(speed, RIDEABLE_BREED_MOVE_SPEED);
                 rideable.setGroundMoveStateFromAI(1);
                 rideable.setRunning(false);
+                rideable.getAIMovement().moveToGroundTarget(this.partner, speed, false);
+            } else {
+                this.dragon.getNavigation().moveTo(this.partner, speed);
             }
-            this.dragon.getNavigation().moveTo(this.partner, speed);
         }
 
         ++this.loveTime;
@@ -252,10 +254,12 @@ public class DragonBreedGoal<T extends DragonEntity> extends Goal {
     }
 
     protected void stopBreedingMovement(DragonEntity dragon) {
-        dragon.getNavigation().stop();
         if (dragon instanceof RideableDragonBase rideable) {
+            rideable.getAIMovement().stop();
             rideable.setGroundMoveStateFromAI(0);
             rideable.setRunning(false);
+        } else {
+            dragon.getNavigation().stop();
         }
     }
 

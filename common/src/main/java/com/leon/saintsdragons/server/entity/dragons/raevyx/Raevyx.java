@@ -1,6 +1,7 @@
 // zap van dink
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
@@ -11,9 +12,12 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModTags;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.RaevyxCombatBrain;
 import com.leon.saintsdragons.server.ai.goals.base.*;
-import com.leon.saintsdragons.server.ai.goals.raevyx.RaevyxFlightGoal;
-import com.leon.saintsdragons.server.ai.goals.raevyx.*;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
@@ -67,6 +71,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
@@ -93,7 +98,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
+public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider {
+    private static final RaevyxCombatBrain DRAGON_BRAIN = new RaevyxCombatBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.RAEVYX_ID;
@@ -116,6 +122,16 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
     public static final int MAX_AMBIENT_DELAY = 600;
     public static final float MODEL_SCALE = 1.0f;
     public static final int TAKEOFF_ANIMATION_TICKS = 31;
+    public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
+            new DragonAirCombatSettings(
+                    TAKEOFF_ANIMATION_TICKS,
+                    1.6D,
+                    0,
+                    64.0D,
+                    8.0D,
+                    8.0D,
+                    5.0D
+            );
     private static final int LANDED_RECOVERY_TICKS = 38;
     public static final int AGGRO_TTL_TICKS = 200;
     public static final double BREED_PARTNER_RANGE = 8.0D;
@@ -266,10 +282,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DragonFloatGoal(this, 0.004D, -0.03D, 0.1F));
+        this.goalSelector.addGoal(0, new DragonFloatGoal(this));
         if (!this.isBaby()) {
-            this.goalSelector.addGoal(3, new RaevyxAirCombatGoal(this));
-            this.goalSelector.addGoal(3, new RaevyxGroundCombatGoal(this));
+            this.goalSelector.addGoal(3, new DragonBrainGoal<>(
+                    this,
+                    DRAGON_BRAIN,
+                    EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK)
+            ));
         }
         this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
         this.goalSelector.addGoal(7, new DragonFollowParentGoal<>(this, Raevyx.class, 1.15D));
@@ -287,7 +306,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         });
         this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 60));
         this.goalSelector.addGoal(10, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
-        this.goalSelector.addGoal(11, new RaevyxFlightGoal(this));
         this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
             @Override
             public boolean canUse() {
@@ -450,6 +468,52 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen {
         }
         completeTouchdownLanding(LandingSource.AI);
         startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
+    }
+
+    @Override
+    protected Brain.Provider<Raevyx> brainProvider() {
+        return DRAGON_BRAIN.brainProvider();
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return DragonBrain.makeBrain(DRAGON_BRAIN, dynamic);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        DragonBrain.tick(DRAGON_BRAIN, this);
+        super.customServerAiStep();
+    }
+
+    public boolean shouldUseCombatBrain() {
+        if (isAerial() && isLanding() && !isVehicle() && !isPassenger() && !isOrderedToSit()) {
+            return true;
+        }
+        LivingEntity target = getTarget();
+        if (!isTargetValid(target) || isBaby() || isVehicle() || isPassenger() || isOrderedToSit()) {
+            return false;
+        }
+        if (target.isInWaterOrBubble()) {
+            return isAerial()
+                    || distanceToSqr(target) <= DragonAirCombatHelper.maxAggroDistanceSqr(this, 32.0D);
+        }
+        if (DragonAirCombatHelper.isTargetAirborne(
+                this,
+                target,
+                AI_AIR_COMBAT_SETTINGS.targetAirborneHeight()
+        )) {
+            return DragonAirCombatHelper.canEngageAirborneTarget(this, target, AI_AIR_COMBAT_SETTINGS);
+        }
+        if (isAerial()) {
+            return true;
+        }
+        return distanceToSqr(target) <= DragonAirCombatHelper.maxAggroDistanceSqr(this, 32.0D);
+    }
+
+    @Override
+    public DragonAirCombatSettings getAiAirCombatSettings() {
+        return AI_AIR_COMBAT_SETTINGS;
     }
 
     @Override

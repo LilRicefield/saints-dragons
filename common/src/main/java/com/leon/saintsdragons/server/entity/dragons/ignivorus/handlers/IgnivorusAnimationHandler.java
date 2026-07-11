@@ -324,11 +324,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         if (dragon.isTakeoff()) {
             return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
-        DragonFlightStateEvaluator.VisualState visualState = dragon.getVisualFlightState(state.getPartialTick());
-        if (visualState == DragonFlightStateEvaluator.VisualState.FLAP && dragon.isAccelerating()) {
-            visualState = DragonFlightStateEvaluator.VisualState.SPRINT_FLAP;
-        }
-        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+        return AnimationHelper.handleFlightState(
+                state,
+                dragon.getVisualFlightState(state.getPartialTick()),
+                FLIGHT_ANIMATIONS,
+                FLIGHT_TRANSITIONS
+        );
     }
 
     public PlayState actionPredicate(AnimationState<Ignivorus> state) {

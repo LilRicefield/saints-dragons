@@ -102,7 +102,7 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
     @Override
     protected void tickRidden(Player player, Vec3 travelVector) {
         super.tickRidden(player, travelVector);
-        if (onGround()) {
+        if (isGroundedForRiderJump()) {
             riderJumping = false;
             if (playerJumpPendingScale > 0.0F && !riderJumping) {
                 executeRiderJump(playerJumpPendingScale, travelVector);

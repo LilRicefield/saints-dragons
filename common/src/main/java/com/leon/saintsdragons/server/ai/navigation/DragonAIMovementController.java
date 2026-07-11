@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
+import com.leon.saintsdragons.server.ai.pathfinding.AsyncDragonPathfinder;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -8,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,8 @@ public class DragonAIMovementController {
 
     private final RideableDragonBase dragon;
     private @Nullable QueuedWaypoint currentWaypoint;
+    private GroundPathState groundPathState = GroundPathState.IDLE;
+    private long groundPathRequestGeneration;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
         this.dragon = dragon;
@@ -30,10 +34,18 @@ public class DragonAIMovementController {
             clearAllWaypoints();
             return;
         }
-        if (currentWaypoint != null && hasArrived()) {
+        if (groundPathState == GroundPathState.FOLLOWING && dragon.getNavigation().isDone()) {
+            double arrivalDistance = Math.max(1.5D, dragon.getBbWidth() * 0.75D);
+            boolean reached = currentWaypoint != null
+                    && dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
+            groundPathState = reached ? GroundPathState.ARRIVED : GroundPathState.FAILED;
+            currentWaypoint = null;
+        } else if (currentWaypoint != null && hasArrived()) {
             currentWaypoint = null;
         }
         if (!shouldUseAirMovement() && !canUseGroundNavigation()) {
+            currentWaypoint = null;
+            resetGroundPathState();
             dragon.getNavigation().stop();
         }
     }
@@ -79,6 +91,7 @@ public class DragonAIMovementController {
             clearGroundPath();
             return false;
         }
+        ensureGroundNavigation();
         return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.GROUND));
     }
 
@@ -170,8 +183,72 @@ public class DragonAIMovementController {
         return null;
     }
 
+    public @Nullable Vec3 findTacticalLandingTarget(LivingEntity target,
+                                                     int maxSearchRadius,
+                                                     double maxVerticalDelta) {
+        if (target == null || !target.isAlive()) {
+            return null;
+        }
+
+        BlockPos origin = target.blockPosition();
+        for (int radius = 0; radius <= Math.max(0, maxSearchRadius); radius += 4) {
+            int attempts = radius == 0 ? 1 : 18;
+            for (int attempt = 0; attempt < attempts; attempt++) {
+                int dx = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                int dz = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
+                BlockPos column = origin.offset(dx, 0, dz);
+                if (!dragon.level().hasChunkAt(column)) {
+                    continue;
+                }
+
+                BlockPos ground = findLandingGround(dragon, column, origin.getY());
+                if (ground == null) {
+                    continue;
+                }
+                Vec3 landingTarget = new Vec3(
+                        column.getX() + 0.5D,
+                        ground.getY() + 1.0D,
+                        column.getZ() + 0.5D
+                );
+                if (isTacticalLandingTargetValid(
+                        landingTarget,
+                        target,
+                        maxSearchRadius,
+                        maxVerticalDelta
+                )) {
+                    return landingTarget;
+                }
+            }
+        }
+        return null;
+    }
+
+    public boolean isTacticalLandingTargetValid(Vec3 landingTarget,
+                                                 LivingEntity target,
+                                                 double maxHorizontalDistance,
+                                                 double maxVerticalDelta) {
+        if (landingTarget == null
+                || target == null
+                || !target.isAlive()) {
+            return false;
+        }
+        double dx = landingTarget.x - target.getX();
+        double dz = landingTarget.z - target.getZ();
+        if (dx * dx + dz * dz > maxHorizontalDistance * maxHorizontalDistance
+                || Math.abs(landingTarget.y - target.getY()) > maxVerticalDelta) {
+            return false;
+        }
+        BlockPos ground = BlockPos.containing(
+                landingTarget.x,
+                landingTarget.y - 1.0D,
+                landingTarget.z
+        );
+        return hasTacticalLandingFootprint(landingTarget, ground.getY());
+    }
+
     public void clearAllWaypoints() {
         currentWaypoint = null;
+        resetGroundPathState();
         dragon.getNavigation().stop();
         if (dragon instanceof RideableFlyingDragon flyingDragon) {
             flyingDragon.clearAiFlightTarget();
@@ -180,6 +257,7 @@ public class DragonAIMovementController {
 
     public void stop() {
         currentWaypoint = null;
+        resetGroundPathState();
         if (shouldUseAirMovement()) {
             clearGroundPath();
             if (!(dragon instanceof RideableFlyingDragon)) {
@@ -192,6 +270,19 @@ public class DragonAIMovementController {
             }
             setGroundIdle();
         }
+    }
+
+    public void stopAndClearAllMovement() {
+        currentWaypoint = null;
+        resetGroundPathState();
+        dragon.getNavigation().stop();
+        if (dragon instanceof RideableFlyingDragon flyingDragon) {
+            flyingDragon.clearAiFlightTarget();
+        }
+        if (!dragon.isVehicle()) {
+            dragon.setAccelerating(false);
+        }
+        setGroundIdle();
     }
 
     public void setGroundIdle() {
@@ -221,6 +312,10 @@ public class DragonAIMovementController {
     }
 
     public boolean isPathing() {
+        if (groundPathState == GroundPathState.CALCULATING
+                || groundPathState == GroundPathState.FOLLOWING) {
+            return true;
+        }
         if (currentWaypoint != null && hasArrived()) {
             return false;
         }
@@ -234,11 +329,20 @@ public class DragonAIMovementController {
     }
 
     public boolean hasArrived() {
+        if (groundPathState == GroundPathState.ARRIVED) {
+            return true;
+        }
+        if (groundPathState == GroundPathState.CALCULATING
+                || groundPathState == GroundPathState.FOLLOWING
+                || groundPathState == GroundPathState.FAILED) {
+            return false;
+        }
         if (currentWaypoint != null && currentWaypoint.mode().usesAir()) {
-            if (dragon instanceof RideableFlyingDragon flyingDragon) {
-                return flyingDragon.isAiFlightDone();
+            if (currentWaypoint.mode() == MovementMode.LANDING) {
+                return dragon.onGround();
             }
-            return dragon.getNavigation().isDone();
+            double arrivalDistance = Math.max(2.0D, dragon.getBbWidth());
+            return dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
         }
         if (shouldUseAirMovement()) {
             if (dragon instanceof RideableFlyingDragon flyingDragon) {
@@ -250,7 +354,22 @@ public class DragonAIMovementController {
     }
 
     public boolean hasFailed() {
-        return !shouldUseAirMovement() && canUseGroundNavigation() && dragon.getNavigation().isStuck();
+        return groundPathState == GroundPathState.FAILED
+                || (!shouldUseAirMovement()
+                && canUseGroundNavigation()
+                && dragon.getNavigation().isStuck());
+    }
+
+    public String getDebugMovementMode() {
+        return currentWaypoint == null ? "NONE" : currentWaypoint.mode().name();
+    }
+
+    public @Nullable Vec3 getDebugMovementTarget() {
+        return currentWaypoint == null ? null : currentWaypoint.target();
+    }
+
+    public double getDebugMovementSpeed() {
+        return currentWaypoint == null ? 0.0D : currentWaypoint.speed();
     }
 
     private boolean shouldUseAirMovement() {
@@ -265,7 +384,20 @@ public class DragonAIMovementController {
     }
 
     private boolean startWaypoint(QueuedWaypoint waypoint) {
+        if (!waypoint.mode().usesAir()
+                && currentWaypoint != null
+                && !currentWaypoint.mode().usesAir()
+                && currentWaypoint.target().distanceToSqr(waypoint.target()) < 1.0D
+                && (groundPathState == GroundPathState.CALCULATING
+                || groundPathState == GroundPathState.FOLLOWING)) {
+            currentWaypoint = waypoint;
+            return true;
+        }
+
         currentWaypoint = waypoint;
+        if (waypoint.mode() != MovementMode.GROUND) {
+            resetGroundPathState();
+        }
         if (waypoint.running()) {
             setGroundRun();
         } else if (waypoint.mode() == MovementMode.GROUND) {
@@ -273,6 +405,7 @@ public class DragonAIMovementController {
         }
 
         if (waypoint.mode().usesAir() || (waypoint.mode() == MovementMode.AUTO && shouldUseAirMovement())) {
+            resetGroundPathState();
             if (dragon instanceof RideableFlyingDragon flyingDragon) {
                 flyingDragon.trackAiFlightTarget(waypoint.target(), waypoint.speed());
                 return true;
@@ -283,13 +416,56 @@ public class DragonAIMovementController {
         if (!canUseGroundNavigation()) {
             clearGroundPath();
             currentWaypoint = null;
+            groundPathState = waypoint.mode() == MovementMode.GROUND
+                    ? GroundPathState.FAILED
+                    : GroundPathState.IDLE;
             return false;
         }
-        boolean started = dragon.getNavigation().moveTo(waypoint.target().x, waypoint.target().y, waypoint.target().z, waypoint.speed());
-        if (!started) {
-            currentWaypoint = null;
+        startGroundPathAsync(waypoint);
+        return true;
+    }
+
+    private void startGroundPathAsync(QueuedWaypoint waypoint) {
+        ensureGroundNavigation();
+        boolean replacingActivePath = groundPathState == GroundPathState.FOLLOWING
+                && !dragon.getNavigation().isDone();
+        if (!replacingActivePath) {
+            dragon.getNavigation().stop();
         }
-        return started;
+        long requestGeneration = ++groundPathRequestGeneration;
+        groundPathState = GroundPathState.CALCULATING;
+        AsyncDragonPathfinder.calculateGroundPathAsync(dragon, waypoint.target(), path -> {
+            if (requestGeneration != groundPathRequestGeneration
+                    || currentWaypoint == null
+                    || currentWaypoint.mode().usesAir()
+                    || !canUseGroundNavigation()) {
+                return;
+            }
+
+            if (path == null || path.getNodeCount() == 0) {
+                currentWaypoint = null;
+                groundPathState = GroundPathState.FAILED;
+                return;
+            }
+
+            Path resolvedPath = path;
+            boolean started = dragon.getNavigation().moveTo(resolvedPath, currentWaypoint.speed());
+            if (!started) {
+                currentWaypoint = null;
+                groundPathState = GroundPathState.FAILED;
+                return;
+            }
+            groundPathState = GroundPathState.FOLLOWING;
+        });
+    }
+
+    private void invalidateGroundPathRequest() {
+        groundPathRequestGeneration++;
+    }
+
+    private void resetGroundPathState() {
+        invalidateGroundPathRequest();
+        groundPathState = GroundPathState.IDLE;
     }
 
     private boolean canUseGroundNavigation() {
@@ -303,6 +479,12 @@ public class DragonAIMovementController {
                 && !dragon.isLanding()
                 && !dragon.isInWaterOrBubble()
                 && !dragon.isInLava();
+    }
+
+    private void ensureGroundNavigation() {
+        if (dragon instanceof RideableFlyingDragon flyingDragon) {
+            flyingDragon.switchToGroundNavigation();
+        }
     }
 
     private static @Nullable BlockPos findLandingGround(Mob dragon, BlockPos column, int originY) {
@@ -343,6 +525,40 @@ public class DragonAIMovementController {
                 && aboveTwoState.getFluidState().isEmpty();
     }
 
+    private boolean hasTacticalLandingFootprint(Vec3 landingTarget, int groundY) {
+        double halfWidth = dragon.getBbWidth() * 0.5D;
+        int minX = (int)Math.floor(landingTarget.x - halfWidth + 0.05D);
+        int maxX = (int)Math.floor(landingTarget.x + halfWidth - 0.05D);
+        int minZ = (int)Math.floor(landingTarget.z - halfWidth + 0.05D);
+        int maxZ = (int)Math.floor(landingTarget.z + halfWidth - 0.05D);
+        int clearanceHeight = Math.max(2, (int)Math.ceil(dragon.getBbHeight()));
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                BlockPos support = new BlockPos(x, groundY, z);
+                if (!dragon.level().hasChunkAt(support)) {
+                    return false;
+                }
+                var supportState = dragon.level().getBlockState(support);
+                if (supportState.isAir()
+                        || !supportState.getFluidState().isEmpty()
+                        || !supportState.isFaceSturdy(dragon.level(), support, Direction.UP)) {
+                    return false;
+                }
+
+                for (int dy = 1; dy <= clearanceHeight; dy++) {
+                    BlockPos clearance = support.above(dy);
+                    var clearanceState = dragon.level().getBlockState(clearance);
+                    if (!clearanceState.getCollisionShape(dragon.level(), clearance).isEmpty()
+                            || !clearanceState.getFluidState().isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     private record QueuedWaypoint(Vec3 target, double speed, boolean running, MovementMode mode) {
     }
 
@@ -354,5 +570,13 @@ public class DragonAIMovementController {
         private boolean usesAir() {
             return this == LANDING;
         }
+    }
+
+    private enum GroundPathState {
+        IDLE,
+        CALCULATING,
+        FOLLOWING,
+        ARRIVED,
+        FAILED
     }
 }

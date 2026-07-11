@@ -319,7 +319,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 Nulljaw.this.setHovering(false);
                 Nulljaw.this.setLanding(false);
                 Vec3 targetPos = getFlightFollowTarget(owner, true);
-                Nulljaw.this.flyToward(targetPos, getFlightFollowSpeed());
+                boolean catchUp = shouldUseFlightCatchUp(targetPos);
+                Nulljaw.this.setAccelerating(catchUp);
+                Nulljaw.this.flyToward(targetPos, getFlightFollowSpeed(catchUp));
             }
         });
         this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));

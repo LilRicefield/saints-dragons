@@ -210,13 +210,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return EnumSet.of(DragonMovementCapability.WALK);
     }
 
-    public AsyncSwimController getWaterPathController() {
+    public AsyncSwimController getAiSwimController() {
         return this.waterPathController;
     }
 
     protected void clearWaterPathController() {
-        this.waterPathController.clear();
-        this.waterPathSteering.clear();
+        AsyncSwimController controller = getAiSwimController();
+        controller.clear();
+        if (controller != this.waterPathController) {
+            this.waterPathController.clear();
+        }
     }
 
     public DragonLocomotionMode getLocomotionMode() {

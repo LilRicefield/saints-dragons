@@ -186,6 +186,8 @@ public final class DragonFlightStateEvaluator {
 
         if (horizontalSpeedSqr < AI_IDLE_HORIZONTAL_SPEED_SQR && Math.abs(verticalDelta) < AI_IDLE_VERTICAL_SPEED) {
             rawMode = MODE_FLY_IDLE;
+        } else if (input.accelerating) {
+            rawMode = MODE_SPRINT_FLAP;
         } else if (input.velocity.y > ASCENT_SPEED_THRESHOLD || input.goingUp) {
             rawMode = MODE_FLAP;
         } else {

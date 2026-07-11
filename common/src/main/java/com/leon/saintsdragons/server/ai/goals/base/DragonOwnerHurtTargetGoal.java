@@ -4,10 +4,6 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.target.OwnerHurtTargetGoal;
 
-/**
- * Custom OwnerHurtTargetGoal that respects the wyvern's ally system.
- * Prevents targeting allies even when the owner wants to attack them.
- */
 public class DragonOwnerHurtTargetGoal extends OwnerHurtTargetGoal {
     private final DragonEntity dragon;
     
@@ -21,8 +17,6 @@ public class DragonOwnerHurtTargetGoal extends OwnerHurtTargetGoal {
         if (!super.canUse()) {
             return false;
         }
-        
-        // Get the target that would be selected by the parent goal
         LivingEntity owner = dragon.getOwner();
         if (owner == null) {
             return false;
@@ -32,14 +26,11 @@ public class DragonOwnerHurtTargetGoal extends OwnerHurtTargetGoal {
         if (target == null) {
             return false;
         }
-        
-        // Use wyvern's canTarget method to respect ally system
         return dragon.canTarget(target);
     }
     
     @Override
     public void start() {
-        // Only start if we can still target the entity
         LivingEntity owner = dragon.getOwner();
         if (owner == null) {
             return;

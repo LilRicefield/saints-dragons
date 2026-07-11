@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -29,6 +30,30 @@ public final class DragonAirCombatHelper {
                 && !dragon.isVehicle()
                 && !dragon.isOrderedToSit()
                 && dragon.distanceToSqr(target) <= maxAggroDistanceSqr(dragon, fallbackFollowRange);
+    }
+
+    public static boolean canEngageAirborneTarget(RideableDragonBase dragon,
+                                                   LivingEntity target,
+                                                   DragonAirCombatSettings settings) {
+        return canEngageAirborneTarget(dragon, target, settings, settings.targetAirborneHeight());
+    }
+
+    public static boolean canEngageAirborneTarget(RideableDragonBase dragon,
+                                                   LivingEntity target,
+                                                   DragonAirCombatSettings settings,
+                                                   double targetAirborneHeight) {
+        if (dragon.isPassenger()
+                || !canUseAirCombat(dragon, target, settings.fallbackFollowRange())
+                || !isTargetAirborne(dragon, target, targetAirborneHeight)) {
+            return false;
+        }
+        return dragon.isAerial()
+                || (dragon.canTakeoff() && canTriggerAiFlightForTarget(
+                dragon,
+                target,
+                settings.takeoffTargetMinHeightAboveGround(),
+                settings.takeoffTargetMinHeightAboveDragon()
+        ));
     }
 
     public static boolean canTriggerAiFlight(RideableDragonBase dragon) {
@@ -121,11 +146,10 @@ public final class DragonAirCombatHelper {
                                                           double landingSpeed,
                                                           TargetAirborneCheck targetAirborneCheck,
                                                           double maxAggroDistanceSqr) {
-        dragon.setAggressive(false);
-
         boolean validTarget = target != null && dragon.isTargetValid(target);
         boolean targetOutOfRange = validTarget && dragon.distanceToSqr(target) > maxAggroDistanceSqr;
         if (!validTarget || targetOutOfRange) {
+            dragon.setAggressive(false);
             dragon.setTarget(null);
             if (dragon.isAerial() && !dragon.isLanding()) {
                 dragon.getAIMovement().trySetLandingWaypoint((LivingEntity) null, landingSpeed);

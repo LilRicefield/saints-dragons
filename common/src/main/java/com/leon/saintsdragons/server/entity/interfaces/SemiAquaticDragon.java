@@ -1,7 +1,10 @@
 package com.leon.saintsdragons.server.entity.interfaces;
 
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 
 public interface SemiAquaticDragon {
+    AsyncSwimController getAiSwimController();
+
     default double getSwimSpeed() {
         return 1.2D;
     }

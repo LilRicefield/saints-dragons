@@ -75,7 +75,7 @@ public class DragonWaterEscapeGoal<T extends DragonEntity> extends Goal {
     @Override
     public void stop() {
         this.target = null;
-        dragon.getWaterPathController().stop();
+        dragon.getAiSwimController().stop();
         cooldownTicks = 10;
     }
 
@@ -89,7 +89,7 @@ public class DragonWaterEscapeGoal<T extends DragonEntity> extends Goal {
         updateShoreLock();
         preserveEscapeAir();
 
-        AsyncSwimController controller = dragon.getWaterPathController();
+        AsyncSwimController controller = dragon.getAiSwimController();
         if (!controller.trackTarget(this.target.waterPosition(), this.swimSpeed, this.turnSpeed)) {
             EscapeTarget newTarget = findEscapeTarget();
             if (newTarget != null) {
@@ -99,7 +99,8 @@ public class DragonWaterEscapeGoal<T extends DragonEntity> extends Goal {
         }
         controller.serverTick();
 
-        if (this.target.isShoreTarget() && dragon.distanceToSqr(this.target.waterPosition()) <= SHORE_ASSIST_DISTANCE_SQR) {
+        if (this.target.isShoreTarget()
+                && dragon.distanceToSqr(this.target.waterPosition()) <= SHORE_ASSIST_DISTANCE_SQR) {
             applyShoreAssist(this.target.landPosition());
             return;
         }

@@ -1,64 +1,61 @@
 package com.leon.saintsdragons.server.ai.goals.base;
 
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.ai.goal.Goal;
+import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.EnumSet;
-
 /**
- * Gentle float goal for large dragons that prevents drowning without aggressive bouncing.
- * this only applies buoyancy when the dragon is actually sinking.
- * This prevents the bounce-out-of-water behavior seen with large entities.
+ * Vanilla floating with a small size-aware lift when a dragon presses into a bank.
  */
-public class DragonFloatGoal extends Goal {
+public class DragonFloatGoal extends FloatGoal {
+    private final Mob dragon;
 
-    private final Mob mob;
-    private static final double DEFAULT_GENTLE_BUOYANCY = 0.008; // Gentler than vanilla's 0.015
-    private static final double DEFAULT_SINKING_THRESHOLD = -0.01; // Only apply buoyancy if sinking
-    private static final float DEFAULT_JUMP_CHANCE = 0.8F;
-    private final double gentleBuoyancy;
-    private final double sinkingThreshold;
-    private final float jumpChance;
-
-    public DragonFloatGoal(Mob mob) {
-        this(mob, DEFAULT_GENTLE_BUOYANCY, DEFAULT_SINKING_THRESHOLD, DEFAULT_JUMP_CHANCE);
-    }
-
-    public DragonFloatGoal(Mob mob, double gentleBuoyancy, double sinkingThreshold, float jumpChance) {
-        this.mob = mob;
-        this.gentleBuoyancy = gentleBuoyancy;
-        this.sinkingThreshold = sinkingThreshold;
-        this.jumpChance = jumpChance;
-        this.setFlags(EnumSet.of(Flag.JUMP));
-    }
-
-    @Override
-    public boolean canUse() {
-        // Activate when in water and not flying/falling rapidly
-        return mob.isInWater() && mob.getFluidHeight(net.minecraft.tags.FluidTags.WATER) > mob.getFluidJumpThreshold();
-    }
-
-    @Override
-    public boolean requiresUpdateEveryTick() {
-        return true;
+    public DragonFloatGoal(Mob dragon) {
+        super(dragon);
+        this.dragon = dragon;
     }
 
     @Override
     public void tick() {
-        // Only apply upward force if dragon is actively sinking
-        Vec3 deltaMovement = mob.getDeltaMovement();
+        super.tick();
+        LivingEntity target = dragon.getTarget();
+        boolean targetOnLand = target != null && !target.isInWaterOrBubble();
+        boolean controllerStalled = targetOnLand
+                && dragon instanceof DragonEntity dragonEntity
+                && !dragonEntity.getAiSwimController().isMoving();
+        double terminalRange = Math.max(12.0D, Math.max(dragon.getBbWidth(), dragon.getBbHeight()) * 3.0D);
+        boolean terminalShoreNudge = controllerStalled
+                && dragon.distanceToSqr(target) <= terminalRange * terminalRange;
 
-        // If sinking (negative Y velocity), apply gentle buoyancy
-        if (deltaMovement.y < sinkingThreshold) {
-            // Apply gentler buoyancy than vanilla
-            mob.setDeltaMovement(deltaMovement.add(0.0, gentleBuoyancy, 0.0));
+        if ((!dragon.horizontalCollision && !terminalShoreNudge) || !dragon.isInWaterOrBubble()) {
+            return;
+        }
 
-            // If dragon is a swimmer or has jumping capability, allow jump
-            if (mob.getRandom().nextFloat() < jumpChance) {
-                mob.getJumpControl().jump();
+        Vec3 velocity = dragon.getDeltaMovement();
+        double bodyScale = Math.max(dragon.getBbWidth(), dragon.getBbHeight());
+        double minimumLift = Mth.clamp(0.10D + bodyScale * 0.025D, 0.14D, 0.36D);
+        double nextX = velocity.x;
+        double nextZ = velocity.z;
+        if (targetOnLand) {
+            Vec3 towardTarget = new Vec3(target.getX() - dragon.getX(), 0.0D, target.getZ() - dragon.getZ());
+            if (towardTarget.lengthSqr() > 1.0E-4D) {
+                Vec3 direction = towardTarget.normalize();
+                double minimumForward = Mth.clamp(0.08D + bodyScale * 0.015D, 0.12D, 0.24D);
+                double currentForward = nextX * direction.x + nextZ * direction.z;
+                if (currentForward < minimumForward) {
+                    double correction = minimumForward - currentForward;
+                    nextX += direction.x * correction;
+                    nextZ += direction.z * correction;
+                }
             }
         }
-        // If already floating or rising, don't add more upward force
+
+        if (velocity.y < minimumLift || nextX != velocity.x || nextZ != velocity.z) {
+            dragon.setDeltaMovement(nextX, Math.max(velocity.y, minimumLift), nextZ);
+            dragon.hasImpulse = true;
+        }
     }
 }

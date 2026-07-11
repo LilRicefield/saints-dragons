@@ -1,17 +1,13 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
+import com.leon.saintsdragons.server.ai.pathfinding.DragonWalkNodeEvaluator;
 import net.minecraft.util.Mth;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
-import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +24,7 @@ public class PathNavigateGround extends GroundPathNavigation {
 
     @Override
     protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
-        this.nodeEvaluator = new GroundNodeEvaluator();
+        this.nodeEvaluator = new DragonWalkNodeEvaluator();
         this.nodeEvaluator.setCanPassDoors(true);
         return new PathFinderGround(this.nodeEvaluator, maxVisitedNodes);
     }
@@ -131,22 +127,9 @@ public class PathNavigateGround extends GroundPathNavigation {
         }
 
         if (pathType == BlockPathTypes.WATER) {
-            // Permit water nodes only when the mob is already submerged so it can path out.
             return this.mob.isInWaterOrBubble();
         }
 
         return pathType != BlockPathTypes.OPEN;
-    }
-
-    private static final class GroundNodeEvaluator extends WalkNodeEvaluator {
-        @Override
-        public BlockPathTypes getBlockPathType(BlockGetter level, int x, int y, int z) {
-            BlockPos pos = new BlockPos(x, y, z);
-            BlockState state = level.getBlockState(pos);
-            if (state.is(Blocks.LADDER)) {
-                return BlockPathTypes.WALKABLE;
-            }
-            return super.getBlockPathType(level, x, y, z);
-        }
     }
 }
