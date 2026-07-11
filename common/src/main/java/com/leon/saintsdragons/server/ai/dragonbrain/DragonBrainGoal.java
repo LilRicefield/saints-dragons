@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.goal.Goal;
 
 import java.util.EnumSet;
@@ -24,7 +25,7 @@ public final class DragonBrainGoal<T extends RideableDragonBase> extends Goal {
         setFlags(flags);
     }
 
-    public net.minecraft.world.entity.ai.Brain<?> brain() {
+    public Brain<?> brain() {
         return dragon.getBrain();
     }
 
