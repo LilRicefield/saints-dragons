@@ -102,6 +102,7 @@ public final class ModTags {
         public static final TagKey<Biome> HAS_VOLITANS_FALLBACK = tag("has_volitans_fallback");
         public static final TagKey<Biome> HAS_MOOP = tag("has_moop");
         public static final TagKey<Biome> HAS_MOSSBACK = tag("has_mossback");
+        public static final TagKey<Biome> HAS_DRAGONHEART_ORE = tag("has_dragonheart_ore");
 
         private Biomes() {
         }

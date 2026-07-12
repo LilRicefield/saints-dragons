@@ -1,0 +1,31 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_worldroot_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:worldroot_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_worldroot_ingot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:worldroot_sword",
+      "saintsdragons:worldroot_pickaxe",
+      "saintsdragons:worldroot_axe",
+      "saintsdragons:worldroot_shovel",
+      "saintsdragons:worldroot_hoe"
+    ]
+  }
+}

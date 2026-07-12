@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.TagKey;
@@ -22,6 +23,10 @@ public final class Spawns {
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
     private static final ResourceKey<PlacedFeature> VARASUCHUS_EGG_PATCH =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("varasuchus_egg_patch"));
+    private static final ResourceKey<PlacedFeature> DEEPSLATE_WORLDROOT_ORE =
+            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("deepslate_worldroot_ore"));
+    private static final ResourceKey<PlacedFeature> DRAGONHEART_ORE =
+            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("dragonheart_ore"));
 
     private Spawns() {
     }
@@ -49,6 +54,8 @@ public final class Spawns {
 
         registerCindervaneEggs();
         registerVarasuchusEggs();
+        registerDeepslateWorldrootOre();
+        registerDragonheartOre();
         registerMoopSpawn();
         registerMossbackSpawn();
     }
@@ -94,6 +101,22 @@ public final class Spawns {
                 context -> DragonBiomeMatcher.isAllowed(context::hasTag, ModTags.Biomes.HAS_VARASUCHUS_EGGS),
                 GenerationStep.Decoration.VEGETAL_DECORATION,
                 VARASUCHUS_EGG_PATCH
+        );
+    }
+
+    private static void registerDeepslateWorldrootOre() {
+        BiomeModifications.addFeature(
+                BiomeSelectors.foundInOverworld(),
+                GenerationStep.Decoration.UNDERGROUND_ORES,
+                DEEPSLATE_WORLDROOT_ORE
+        );
+    }
+
+    private static void registerDragonheartOre() {
+        BiomeModifications.addFeature(
+                context -> context.hasTag(ModTags.Biomes.HAS_DRAGONHEART_ORE),
+                GenerationStep.Decoration.UNDERGROUND_ORES,
+                DRAGONHEART_ORE
         );
     }
 

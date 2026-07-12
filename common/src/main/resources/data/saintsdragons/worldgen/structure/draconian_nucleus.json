@@ -1,7 +1,7 @@
 {
   "type": "minecraft:jigsaw",
   "start_pool": "saintsdragons:draconian_nucleus",
-  "biomes": "minecraft:end_barrens",
+  "biomes": "#minecraft:has_structure/end_city",
   "start_height": {
     "type": "minecraft:uniform",
     "min_inclusive": {

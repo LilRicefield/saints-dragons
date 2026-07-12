@@ -1,0 +1,6 @@
+{
+  "type": "forge:add_features",
+  "biomes": "#saintsdragons:has_dragonheart_ore",
+  "features": "saintsdragons:dragonheart_ore",
+  "step": "underground_ores"
+}
