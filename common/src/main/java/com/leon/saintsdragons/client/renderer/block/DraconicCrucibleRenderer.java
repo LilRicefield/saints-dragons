@@ -33,13 +33,14 @@ public class DraconicCrucibleRenderer implements BlockEntityRenderer<DraconicCru
     public void render(@NotNull DraconicCrucibleBlockEntity crucible, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer,
                        int packedLight, int packedOverlay) {
-        if (crucible.hasAnimationState()) {
-            this.model.animate(
-                    crucible.isOpen() ? DraconicCrucibleAnimations.OPEN : DraconicCrucibleAnimations.CLOSE,
-                    crucible.getAnimationTimeMillis(partialTick));
-        } else {
-            this.model.resetPose();
-        }
+        boolean active = crucible.getBlockState().getValue(DraconicCrucibleBlock.LIT);
+        boolean open = crucible.hasAnimationState() ? crucible.isOpen() : !active;
+        long animationTime = crucible.hasAnimationState()
+                ? crucible.getAnimationTimeMillis(partialTick)
+                : 1_000L;
+        this.model.animate(
+                open ? DraconicCrucibleAnimations.OPEN : DraconicCrucibleAnimations.CLOSE,
+                animationTime);
 
         Direction facing = crucible.getBlockState().getValue(DraconicCrucibleBlock.FACING);
 
@@ -48,7 +49,6 @@ public class DraconicCrucibleRenderer implements BlockEntityRenderer<DraconicCru
         poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
         poseStack.scale(1.0F, -1.0F, -1.0F);
 
-        boolean active = crucible.getBlockState().getValue(DraconicCrucibleBlock.LIT);
         ResourceLocation texture = active ? ACTIVE_TEXTURE : TEXTURE;
         int modelLight = active ? LightTexture.FULL_BRIGHT : packedLight;
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));

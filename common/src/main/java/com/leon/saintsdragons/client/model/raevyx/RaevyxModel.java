@@ -13,6 +13,7 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.model.data.EntityModelData;
 public class RaevyxModel extends DragonGeoModel<Raevyx> {
+    private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
     private static final WeightedBoneChain NECK_FOLLOW = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "headController"},
             0.20f, 0.25f, 0.30f, 0.35f
@@ -65,6 +66,7 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyFlightPitch(entity, animationState);
+            applyDiveWingPose(entity, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
@@ -100,6 +102,36 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
 
         root.setRotX(snap.getRotX() + pitchRad);
+    }
+
+    private void applyDiveWingPose(Raevyx entity, float partialTick) {
+        float blend = Mth.clamp(entity.getDivePose(partialTick), 0.0F, 1.0F);
+        if (blend <= 0.001F) {
+            return;
+        }
+
+        applyDiveRotation("rightwing", blend, 16.0F, 43.0F, -7.5F);
+        applyDiveRotation("rightwingarm", blend, 1.0F, -72.0F, 7.0F);
+        applyDiveRotation("rightinnerphalanges", blend, 2.5F, 52.5F, 10.0F);
+        applyDiveRotation("rightmiddlephalanges", blend, 0.0F, 12.5F, 0.0F);
+        applyDiveRotation("rightmostmiddlephalanges", blend, 0.0F, 10.0F, 0.0F);
+        applyDiveRotation("rightouterphalanges", blend, 0.0F, 10.0F, 0.0F);
+
+        applyDiveRotation("leftwing", blend, 14.0F, -43.0F, 7.5F);
+        applyDiveRotation("leftwingarm", blend, 1.0F, 72.0F, -7.0F);
+        applyDiveRotation("leftinnerphalanges", blend, 2.5F, -52.5F, -10.0F);
+        applyDiveRotation("leftmiddlephalanegs", blend, 0.0F, -12.5F, 0.0F);
+        applyDiveRotation("lefttmostmiddlephalanges", blend, 0.0F, -10.0F, 0.0F);
+        applyDiveRotation("leftouterphalanges", blend, 0.0F, -10.0F, 0.0F);
+    }
+
+    private void applyDiveRotation(String boneName, float blend, float xDegrees, float yDegrees, float zDegrees) {
+        getBone(boneName).ifPresent(bone -> {
+            // GeckoLib converts Blockbench rotations with inverted X/Y axes.
+            bone.setRotX(bone.getRotX() - xDegrees * DEG_TO_RAD * blend);
+            bone.setRotY(bone.getRotY() - yDegrees * DEG_TO_RAD * blend);
+            bone.setRotZ(bone.getRotZ() + zDegrees * DEG_TO_RAD * blend);
+        });
     }
 
     private void applyNeckBankingLean(Raevyx entity, float partialTick) {

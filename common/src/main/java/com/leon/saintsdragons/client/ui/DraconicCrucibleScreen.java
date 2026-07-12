@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.block.crucible.DraconicCrucibleFuelTier;
 import com.leon.saintsdragons.server.menu.DraconicCrucibleMenu;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
@@ -127,18 +128,31 @@ public class DraconicCrucibleScreen extends AbstractContainerScreen<DraconicCruc
     }
 
     private int getGaugeFillHeight() {
-        int tierHeight = switch (this.menu.getHeatLevel()) {
-            case 1 -> GAUGE_LEVEL_1_HEIGHT;
-            case 2 -> GAUGE_LEVEL_2_HEIGHT;
-            case 3 -> GAUGE_LEVEL_3_HEIGHT;
-            default -> 0;
-        };
-        int total = this.menu.getBurnTimeTotal();
-        if (tierHeight == 0 || total <= 0) {
+        int charge = this.menu.getBurnTime();
+        if (charge <= 0) {
             return 0;
         }
-        return Math.min(tierHeight,
-                (tierHeight * this.menu.getBurnTime() + total - 1) / total);
+
+        int level1Charge = DraconicCrucibleFuelTier.LEVEL_1.chargeCapacity();
+        int level2Charge = DraconicCrucibleFuelTier.LEVEL_2.chargeCapacity();
+        int level3Charge = DraconicCrucibleFuelTier.LEVEL_3.chargeCapacity();
+        if (charge <= level1Charge) {
+            return scaleGaugeSegment(charge, 0, level1Charge, 0, GAUGE_LEVEL_1_HEIGHT);
+        }
+        if (charge <= level2Charge) {
+            return scaleGaugeSegment(charge, level1Charge, level2Charge,
+                    GAUGE_LEVEL_1_HEIGHT, GAUGE_LEVEL_2_HEIGHT);
+        }
+        return scaleGaugeSegment(Math.min(charge, level3Charge), level2Charge, level3Charge,
+                GAUGE_LEVEL_2_HEIGHT, GAUGE_LEVEL_3_HEIGHT);
+    }
+
+    private static int scaleGaugeSegment(int value, int valueStart, int valueEnd,
+                                         int pixelStart, int pixelEnd) {
+        int valueRange = Math.max(1, valueEnd - valueStart);
+        int pixelRange = pixelEnd - pixelStart;
+        int progress = Math.max(0, value - valueStart);
+        return Math.min(pixelEnd, pixelStart + (pixelRange * progress + valueRange - 1) / valueRange);
     }
 
     private int getArrowFillHeight() {

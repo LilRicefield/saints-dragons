@@ -14,6 +14,7 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
+    private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
     private static final WeightedBoneChain NECK = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "neck3Controller", "neck4Controller", "headController"},
             0.40f, 0.41f, 0.42f, 0.43f, 0.44f
@@ -67,6 +68,7 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
             applyBodyRotationDeviation(entity, partialTick);
             applyBankingRoll(entity, animationState);
             applyFlightPitch(entity, animationState);
+            applyDiveWingPose(entity, partialTick);
             applyNeckBankingLean(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
@@ -102,6 +104,39 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
 
         root.setRotX(snap.getRotX() + pitchRad);
+    }
+
+    private void applyDiveWingPose(Ignivorus entity, float partialTick) {
+        if (entity.isInWaterOrBubble()) {
+            return;
+        }
+
+        float blend = Mth.clamp(entity.getDivePose(partialTick), 0.0F, 1.0F);
+        if (blend <= 0.001F) {
+            return;
+        }
+
+        applyDiveRotation("leftwing", blend, 0.0F, -30.0F, 8.5F);
+        applyDiveRotation("leftwingjoint", blend, 0.0F, 77.5F, -7.5F);
+        applyDiveRotation("leftinnerphalanges", blend, -1.833F, -60.015F, -2.5F);
+        applyDiveRotation("leftphalanges", blend, 0.0F, 0.0F, 0.0F);
+        applyDiveRotation("leftmiddlephalanges", blend, 0.0F, -12.5F, 0.0F);
+        applyDiveRotation("leftouterphalanges", blend, 2.5F, -12.5F, 0.0F);
+
+        applyDiveRotation("rightwing", blend, 0.0F, 30.0F, -8.5F);
+        applyDiveRotation("rightwingjoint", blend, 0.0F, -77.5F, 7.5F);
+        applyDiveRotation("rightinnerphalanges", blend, -1.833F, 60.015F, 2.5F);
+        applyDiveRotation("rightphalanges", blend, 0.0F, 0.0F, 0.0F);
+        applyDiveRotation("rightmiddlephalanges", blend, 0.0F, 12.5F, 0.0F);
+        applyDiveRotation("rightouterphalanges", blend, 2.5F, 12.5F, 0.0F);
+    }
+
+    private void applyDiveRotation(String boneName, float blend, float xDegrees, float yDegrees, float zDegrees) {
+        getBone(boneName).ifPresent(bone -> {
+            bone.setRotX(bone.getRotX() - xDegrees * DEG_TO_RAD * blend);
+            bone.setRotY(bone.getRotY() - yDegrees * DEG_TO_RAD * blend);
+            bone.setRotZ(bone.getRotZ() + zDegrees * DEG_TO_RAD * blend);
+        });
     }
 
     private void applyNeckBankingLean(Ignivorus entity, float partialTick) {

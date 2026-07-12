@@ -21,6 +21,9 @@ public final class DragonFlightVisuals {
     private static final double AI_PITCH_MIN_HORIZONTAL_SPEED = 0.22D;
     private static final double AI_PITCH_VERTICAL_DEADZONE = 0.06D;
     private static final float AI_PITCH_DEADZONE_RAD = (float) Math.toRadians(4.0D);
+    private static final float DIVE_POSE_LERP = 0.50F;
+    private static final double FULL_DIVE_VERTICAL_RATIO = Math.sin(Math.toRadians(60.0D));
+    private static final double FULL_DIVE_CURVE_VALUE = Math.pow(FULL_DIVE_VERTICAL_RATIO, 1.5D);
 
     private DragonFlightVisuals() {
     }
@@ -63,6 +66,29 @@ public final class DragonFlightVisuals {
         state.flightPitchRad = 0f;
         state.smoothedPlayerPitchRad = 0f;
         state.verticalKeyPitchSmoothing = false;
+    }
+
+    public static void tickDivePose(DivePoseState state, boolean aerial, Vec3 velocity) {
+        state.prevDivePose = state.divePose;
+
+        float target = 0.0F;
+        if (aerial && velocity.y < 0.0D && velocity.lengthSqr() > 1.0E-6D) {
+            double normalizedDescent = Mth.clamp(-velocity.normalize().y, 0.0D, 1.0D);
+            target = (float) Mth.clamp(
+                    Math.pow(normalizedDescent, 1.5D) / FULL_DIVE_CURVE_VALUE,
+                    0.0D,
+                    1.0D
+            );
+        }
+
+        state.divePose = Mth.lerp(DIVE_POSE_LERP, state.divePose, target);
+        if (Math.abs(state.divePose) < 0.001F) {
+            state.divePose = 0.0F;
+        }
+    }
+
+    public static float getDivePose(DivePoseState state, float partialTick) {
+        return Mth.lerp(partialTick, state.prevDivePose, state.divePose);
     }
 
     public static float smoothRiderPitchInput(State state, float rawPitchRad) {
@@ -119,5 +145,10 @@ public final class DragonFlightVisuals {
         public float prevFlightPitchRad;
         public float smoothedPlayerPitchRad;
         public boolean verticalKeyPitchSmoothing;
+    }
+
+    public static final class DivePoseState {
+        public float divePose;
+        public float prevDivePose;
     }
 }

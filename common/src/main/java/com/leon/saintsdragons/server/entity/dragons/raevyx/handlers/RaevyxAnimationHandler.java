@@ -235,9 +235,13 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                     FLIGHT_TRANSITIONS
             );
         }
-        DragonFlightStateEvaluator.VisualState visualState = isInvertedGlideWindow(state.getPartialTick())
-                ? DragonFlightStateEvaluator.VisualState.GLIDE
-                : wyvern.getVisualFlightState(state.getPartialTick());
+        boolean invertedGlide = isInvertedGlideWindow(state.getPartialTick());
+        DragonFlightStateEvaluator.VisualState visualState = wyvern.getVisualFlightState(state.getPartialTick());
+        if (invertedGlide
+                || wyvern.isHoldingRiderDiveMomentum()
+                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
+        }
         return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
 

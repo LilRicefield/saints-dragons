@@ -9,8 +9,8 @@ import org.jetbrains.annotations.NotNull;
 public enum DraconicCrucibleFuelTier {
     NONE(0, 0, null),
     LEVEL_1(1, 5, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_1),
-    LEVEL_2(2, 9, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_2),
-    LEVEL_3(3, 18, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_3);
+    LEVEL_2(2, 11, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_2),
+    LEVEL_3(3, 17, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_3);
 
     private final int heatLevel;
     private final int chargeCapacity;
@@ -40,8 +40,26 @@ public enum DraconicCrucibleFuelTier {
         }
         return switch (requiredHeatLevel) {
             case 1 -> 1;
-            case 2 -> 3;
-            case 3 -> 18;
+            case 2 -> 2;
+            case 3 -> 6;
+            default -> Integer.MAX_VALUE;
+        };
+    }
+
+    public boolean canFund(int charge, int requiredHeatLevel) {
+        if (!canProcess(requiredHeatLevel)) {
+            return false;
+        }
+        int cost = processingCost(requiredHeatLevel);
+        return cost != Integer.MAX_VALUE
+                && charge >= minimumRemainingCharge(requiredHeatLevel) + cost;
+    }
+
+    public static int minimumRemainingCharge(int requiredHeatLevel) {
+        return switch (requiredHeatLevel) {
+            case 1 -> 0;
+            case 2 -> LEVEL_1.chargeCapacity;
+            case 3 -> LEVEL_2.chargeCapacity;
             default -> Integer.MAX_VALUE;
         };
     }
@@ -53,6 +71,19 @@ public enum DraconicCrucibleFuelTier {
             case 3 -> LEVEL_3;
             default -> NONE;
         };
+    }
+
+    public static @NotNull DraconicCrucibleFuelTier fromCharge(int charge) {
+        if (charge <= 0) {
+            return NONE;
+        }
+        if (charge <= LEVEL_1.chargeCapacity) {
+            return LEVEL_1;
+        }
+        if (charge <= LEVEL_2.chargeCapacity) {
+            return LEVEL_2;
+        }
+        return LEVEL_3;
     }
 
     public static @NotNull DraconicCrucibleFuelTier resolve(@NotNull ItemStack stack) {

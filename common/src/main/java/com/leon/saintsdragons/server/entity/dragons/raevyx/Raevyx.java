@@ -121,7 +121,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final int MIN_AMBIENT_DELAY = 200;
     public static final int MAX_AMBIENT_DELAY = 600;
     public static final float MODEL_SCALE = 1.0f;
-    public static final int TAKEOFF_ANIMATION_TICKS = 31;
+    public static final int TAKEOFF_ANIMATION_TICKS = 29;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,

@@ -235,6 +235,10 @@ public final class VolitansAnimationHandler {
                     dragon.getDeltaMovement()
             );
         }
+        if (dragon.isHoldingRiderDiveMomentum()
+                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
+        }
         return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
     public PlayState actionPredicate(AnimationState<Volitans> state) {

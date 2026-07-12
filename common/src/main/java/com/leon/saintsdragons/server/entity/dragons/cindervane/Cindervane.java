@@ -155,7 +155,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDED_RECOVERY_TICKS = 34;
-    public static final int TAKEOFF_ANIMATION_TICKS = 25;
+    public static final int TAKEOFF_ANIMATION_TICKS = 23;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,

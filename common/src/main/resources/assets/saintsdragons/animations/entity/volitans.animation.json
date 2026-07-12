@@ -55731,6 +55731,11 @@
 						"vector": ["-1+math.sin(query.anim_time * 280+ 30) * -2", "-6-math.sin(query.anim_time * 280) * 4", "-math.sin(query.anim_time * 280) * 60"]
 					}
 				},
+				"leftarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "2.5-math.sin(query.anim_time * 280- 100) * 60"]
@@ -55754,6 +55759,11 @@
 				"rightwing": {
 					"rotation": {
 						"vector": ["-1+math.sin(query.anim_time * 280+ 30) * -2", "6+math.sin(query.anim_time * 280) * 4", "math.sin(query.anim_time * 280) * 60"]
+					}
+				},
+				"rightarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightinnerphalanges": {
@@ -55920,9 +55930,29 @@
 						"vector": ["-3.881+math.sin(query.anim_time *300 - 50) * 10", -4.39064, "math.sin(query.anim_time *300 + 20) * -52.4503"]
 					}
 				},
+				"leftarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "15+math.sin(query.anim_time * 300- 100) * -50"]
+					}
+				},
+				"leftmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftmostouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightwing": {
@@ -55930,12 +55960,27 @@
 						"vector": ["-3.881+math.sin(query.anim_time *300 - 50) * 10", 4.39064, "-math.sin(query.anim_time *300 + 20) * -52.4503"]
 					}
 				},
+				"rightarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"rightinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "-15-math.sin(query.anim_time * 300- 100) * -50"]
 					}
 				},
+				"rightmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"rightouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightmostouterphalanges": {
 					"rotation": {
 						"vector": [0, 0, 0]
 					}
@@ -57074,6 +57119,11 @@
 						"vector": ["1+math.sin(query.anim_time * 260 + 30) * -2", "-6+math.sin(query.anim_time * 260 ) * -4", "0+math.sin(query.anim_time * 260 ) * -55"]
 					}
 				},
+				"leftarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "15+math.sin(query.anim_time * 260 - 100) * -50"]
@@ -57097,6 +57147,11 @@
 				"rightwing": {
 					"rotation": {
 						"vector": ["1+math.sin(query.anim_time * 260 + 30) * -2", "6-math.sin(query.anim_time * 260 ) * -4", "-0-math.sin(query.anim_time * 260 ) * -55"]
+					}
+				},
+				"rightarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightinnerphalanges": {
@@ -57652,9 +57707,29 @@
 						"vector": ["-1+math.sin(query.anim_time * 400) - 0.2", -2.5, "-7.5+math.sin(query.anim_time * 100 - 50) * -3"]
 					}
 				},
+				"leftarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "10+math.sin(query.anim_time * 400 + 100) * 2"]
+					}
+				},
+				"leftmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftmostouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightwing": {
@@ -57662,9 +57737,29 @@
 						"vector": ["-1+math.sin(query.anim_time * 400) - 0.2", 2.5, "7.5-math.sin(query.anim_time * 100 - 50) * -3"]
 					}
 				},
+				"rightarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"rightinnerphalanges": {
 					"rotation": {
 						"vector": [0, 0, "-10-math.sin(query.anim_time * 400 + 100) * 2"]
+					}
+				},
+				"rightmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightmostouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"neck1Controller": {

@@ -174,7 +174,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final double RIDER_RUN_SPEED = 0.34D;
     private static final double RIDER_BURROW_SPEED = 0.40D;
     private static final double RIDER_SWIM_SPEED = 1.42D;
-    public static final int TAKEOFF_ANIMATION_TICKS = 35;
+    public static final int TAKEOFF_ANIMATION_TICKS = 31;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,

@@ -87,6 +87,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             );
 
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
+    private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
     protected final PathNavigateGround groundNav;
     protected final FlyingPathNavigation airNav;
     protected final AsyncFlightController asyncAirController;
@@ -176,6 +177,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     public int getRiderDiveBoostHoldTicks() {
         return riderDiveBoostHoldTicks;
+    }
+
+    public boolean isHoldingRiderDiveMomentum() {
+        return riderDiveBoostHoldTicks > 0;
     }
 
     public void setRiderDiveBoostHoldTicks(int ticks) {
@@ -717,6 +722,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     public void tick() {
         wasAerialForDustAtTickStart = isAerial();
         super.tick();
+        DragonFlightVisuals.tickDivePose(
+                divePoseState,
+                isFlying() || isLanding() || isTakeoff(),
+                getDeltaMovement()
+        );
         tickRiderWaterFlightEntrySampling();
         tickServerRiderDiveInput();
         tickRiderDiveBoostHoldState();
@@ -2135,6 +2145,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             return 0.0F;
         }
         return Mth.lerp(partialTick, state.prevFlightPitchRad, state.flightPitchRad);
+    }
+
+    public float getDivePose(float partialTick) {
+        return DragonFlightVisuals.getDivePose(divePoseState, partialTick);
     }
 
     protected float getBarrelRollInputSpeed() {

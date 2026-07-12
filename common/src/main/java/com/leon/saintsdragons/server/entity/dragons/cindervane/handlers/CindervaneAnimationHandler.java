@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane.handlers;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
@@ -189,12 +190,12 @@ public class CindervaneAnimationHandler {
         if (amphithere.isTakeoff()) {
             return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
-        return AnimationHelper.handleFlightState(
-                state,
-                amphithere.getVisualFlightState(state.getPartialTick()),
-                FLIGHT_ANIMATIONS,
-                FLIGHT_TRANSITIONS
-        );
+        var visualState = amphithere.getVisualFlightState(state.getPartialTick());
+        if (amphithere.isHoldingRiderDiveMomentum()
+                || visualState == DragonFlightStateEvaluator.VisualState.GLIDE_DOWN) {
+            visualState = DragonFlightStateEvaluator.VisualState.GLIDE;
+        }
+        return AnimationHelper.handleFlightState(state, visualState, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
     }
     public PlayState actionPredicate(AnimationState<Cindervane> state) {
         state.getController().transitionLength(ACTION_TRANSITION_TICKS);

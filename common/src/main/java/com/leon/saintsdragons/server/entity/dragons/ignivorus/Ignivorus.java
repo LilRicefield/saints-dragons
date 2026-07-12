@@ -116,7 +116,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             DragonVariant.of(VARIANT_DEFAULT, "default", 95),
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
     );
-    public static final int TAKEOFF_ANIMATION_TICKS = 29;
+    public static final int TAKEOFF_ANIMATION_TICKS = 27;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,

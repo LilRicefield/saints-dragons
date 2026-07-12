@@ -38,7 +38,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     public static final int DATA_COUNT = 7;
 
     private static final long ANIMATION_DURATION_TICKS = 20L;
-    private static final int THERMAL_CHARGE_MODEL_VERSION = 1;
+    private static final int THERMAL_CHARGE_MODEL_VERSION = 2;
     private static final int SHAPED_JOB_SLOT = -1;
     private static final int NO_JOB_SLOT = -2;
 
@@ -60,7 +60,6 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     private ResourceLocation activeRecipeId;
     private int activeInputSlot = NO_JOB_SLOT;
 
-    private int openers;
     private boolean animationInitialized;
     private boolean open;
     private long animationStartTick;
@@ -155,15 +154,12 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             setChanged();
         }
         CrucibleJob job = findJob(level);
-        if (!canStartJob(job) && !replaceWithQueuedHigherTier(job)) {
+        if (job == null || !canAcceptResult(job.result()) || !ensureFuelForJob(job)) {
             return false;
         }
 
-        int processingCost = DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel)
+        int processingCost = DraconicCrucibleFuelTier.fromHeatLevel(job.requiredHeatLevel())
                 .processingCost(job.requiredHeatLevel());
-        if (this.burnTime < processingCost && !reserveQueuedFuel(job.requiredHeatLevel())) {
-            return false;
-        }
 
         consumeJobInputs(job);
         this.activeRecipeId = job.recipeId();
@@ -186,7 +182,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             return false;
         }
         CrucibleJob job = findJob(level);
-        return canStartJob(job) || canReplaceWithQueuedHigherTier(job);
+        return canStartJob(job);
     }
 
     private boolean canStartJob(@Nullable CrucibleJob job) {
@@ -194,56 +190,30 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             return false;
         }
         DraconicCrucibleFuelTier activeTier =
-                DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel);
-        int processingCost = activeTier.processingCost(job.requiredHeatLevel());
-        if (!activeTier.canProcess(job.requiredHeatLevel())) {
-            return false;
-        }
-        if (this.burnTime >= processingCost) {
+                DraconicCrucibleFuelTier.fromCharge(this.burnTime);
+        if (activeTier.canFund(this.burnTime, job.requiredHeatLevel())) {
             return true;
         }
 
         DraconicCrucibleFuelTier queuedTier =
                 DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
-        return queuedTier.canProcess(job.requiredHeatLevel())
-                && this.burnTime + queuedTier.chargeCapacity() >= processingCost;
+        return queuedTier.canFund(queuedTier.chargeCapacity(), job.requiredHeatLevel());
     }
 
-    private boolean canReplaceWithQueuedHigherTier(@Nullable CrucibleJob job) {
-        if (job == null || !canAcceptResult(job.result())) {
-            return false;
+    private boolean ensureFuelForJob(CrucibleJob job) {
+        DraconicCrucibleFuelTier activeTier = DraconicCrucibleFuelTier.fromCharge(this.burnTime);
+        if (activeTier.canFund(this.burnTime, job.requiredHeatLevel())) {
+            return true;
         }
-        DraconicCrucibleFuelTier activeTier =
-                DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel);
-        DraconicCrucibleFuelTier queuedTier =
-                DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
-        return queuedTier.heatLevel() > activeTier.heatLevel()
-                && queuedTier.canProcess(job.requiredHeatLevel())
-                && queuedTier.chargeCapacity() >= queuedTier.processingCost(job.requiredHeatLevel());
-    }
 
-    private boolean replaceWithQueuedHigherTier(@Nullable CrucibleJob job) {
-        if (!canReplaceWithQueuedHigherTier(job)) {
-            return false;
-        }
         DraconicCrucibleFuelTier queuedTier =
                 DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
+        if (!queuedTier.canFund(queuedTier.chargeCapacity(), job.requiredHeatLevel())) {
+            return false;
+        }
+
         this.items.get(FUEL_SLOT).shrink(1);
-        this.burnTime = queuedTier.chargeCapacity();
-        this.burnTimeTotal = queuedTier.chargeCapacity();
-        this.activeHeatLevel = queuedTier.heatLevel();
-        return true;
-    }
-
-    private boolean reserveQueuedFuel(int requiredHeatLevel) {
-        DraconicCrucibleFuelTier queuedTier =
-                DraconicCrucibleFuelTier.resolve(this.items.get(FUEL_SLOT));
-        if (!queuedTier.canProcess(requiredHeatLevel)) {
-            return false;
-        }
-        this.items.get(FUEL_SLOT).shrink(1);
-        this.reservedFuelCharge = queuedTier.chargeCapacity();
-        this.reservedFuelHeatLevel = queuedTier.heatLevel();
+        loadFuel(queuedTier);
         return true;
     }
 
@@ -251,31 +221,27 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         if (this.burnTime > 0 || this.reservedFuelCharge <= 0) {
             return false;
         }
-        this.burnTime = this.reservedFuelCharge;
-        this.burnTimeTotal = this.reservedFuelCharge;
-        this.activeHeatLevel = this.reservedFuelHeatLevel;
+        DraconicCrucibleFuelTier tier = DraconicCrucibleFuelTier.fromHeatLevel(this.reservedFuelHeatLevel);
+        this.burnTime = Math.min(this.reservedFuelCharge, tier.chargeCapacity());
+        this.burnTimeTotal = tier.chargeCapacity();
+        refreshActiveHeatLevel();
         this.reservedFuelCharge = 0;
         this.reservedFuelHeatLevel = 0;
         return true;
     }
 
     private boolean consumeProcessingCharge(int amount) {
-        if (this.burnTime + this.reservedFuelCharge < amount) {
+        if (amount <= 0) {
+            return true;
+        }
+        int minimumCharge = DraconicCrucibleFuelTier.minimumRemainingCharge(
+                this.processingRequiredHeatLevel);
+        if (minimumCharge == Integer.MAX_VALUE || this.burnTime - amount < minimumCharge) {
             return false;
         }
-        int remaining = amount;
-        while (remaining > 0) {
-            if (this.burnTime == 0 && !activateReservedFuel()) {
-                return false;
-            }
-            int spent = Math.min(this.burnTime, remaining);
-            this.burnTime -= spent;
-            remaining -= spent;
-            if (this.burnTime == 0) {
-                this.burnTimeTotal = 0;
-                this.activeHeatLevel = 0;
-            }
-        }
+
+        this.burnTime -= amount;
+        refreshActiveHeatLevel();
         return true;
     }
 
@@ -353,10 +319,24 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
 
         ItemStack fuel = this.items.get(FUEL_SLOT);
         fuel.shrink(1);
+        loadFuel(tier);
+        return true;
+    }
+
+    private void loadFuel(DraconicCrucibleFuelTier tier) {
         this.burnTime = tier.chargeCapacity();
         this.burnTimeTotal = tier.chargeCapacity();
         this.activeHeatLevel = tier.heatLevel();
-        return true;
+        this.reservedFuelCharge = 0;
+        this.reservedFuelHeatLevel = 0;
+    }
+
+    private void refreshActiveHeatLevel() {
+        this.activeHeatLevel = DraconicCrucibleFuelTier.fromCharge(this.burnTime).heatLevel();
+        if (this.burnTime <= 0) {
+            this.burnTime = 0;
+            this.burnTimeTotal = 0;
+        }
     }
 
     private void consumeJobInputs(CrucibleJob job) {
@@ -409,6 +389,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             this.level.setBlock(this.worldPosition,
                     lowerState.setValue(DraconicCrucibleBlock.LIT, this.processingLocked),
                     Block.UPDATE_CLIENTS);
+            sendVisualState(!this.processingLocked);
         }
     }
 
@@ -498,13 +479,17 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         this.reservedFuelHeatLevel = tag.getInt("ReservedFuelHeatLevel");
         if (tag.getInt("ThermalChargeModelVersion") < THERMAL_CHARGE_MODEL_VERSION) {
             migrateThermalCharge();
-        } else if (this.processingLocked && this.processingFuelCost <= 0) {
-            this.processingFuelCost = DraconicCrucibleFuelTier.fromHeatLevel(this.activeHeatLevel)
-                    .processingCost(this.processingRequiredHeatLevel);
-            this.processingFuelSpent = (int) Math.min(
-                    this.processingFuelCost,
-                    (long) this.processingFuelCost * this.processingProgress
-                            / Math.max(1, this.processingTimeTotal));
+        } else {
+            refreshActiveHeatLevel();
+            if (this.processingLocked && this.processingFuelCost <= 0) {
+                this.processingFuelCost = DraconicCrucibleFuelTier
+                        .fromHeatLevel(this.processingRequiredHeatLevel)
+                        .processingCost(this.processingRequiredHeatLevel);
+                this.processingFuelSpent = (int) Math.min(
+                        this.processingFuelCost,
+                        (long) this.processingFuelCost * this.processingProgress
+                                / Math.max(1, this.processingTimeTotal));
+            }
         }
         this.pendingResult = tag.contains("PendingResult")
                 ? ItemStack.of(tag.getCompound("PendingResult"))
@@ -526,7 +511,9 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
                 : (tier.chargeCapacity() * oldChargeBeforeCurrentJob + oldCapacity - 1) / oldCapacity;
 
         if (this.processingLocked) {
-            this.processingFuelCost = tier.processingCost(this.processingRequiredHeatLevel);
+            this.processingFuelCost = DraconicCrucibleFuelTier
+                    .fromHeatLevel(this.processingRequiredHeatLevel)
+                    .processingCost(this.processingRequiredHeatLevel);
             this.processingFuelSpent = (int) Math.min(
                     this.processingFuelCost,
                     (long) this.processingFuelCost * this.processingProgress
@@ -539,30 +526,29 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
 
         this.burnTime = migratedCharge;
         this.burnTimeTotal = migratedCharge > 0 ? tier.chargeCapacity() : 0;
-        if (migratedCharge == 0) {
-            this.activeHeatLevel = 0;
+        this.activeHeatLevel = DraconicCrucibleFuelTier.fromCharge(migratedCharge).heatLevel();
+
+        if (this.reservedFuelCharge > 0) {
+            DraconicCrucibleFuelTier reservedTier =
+                    DraconicCrucibleFuelTier.fromHeatLevel(this.reservedFuelHeatLevel);
+            int oldReservedCapacity = legacyChargeCapacity(this.reservedFuelHeatLevel);
+            this.reservedFuelCharge = oldReservedCapacity <= 0
+                    ? 0
+                    : Math.min(
+                            reservedTier.chargeCapacity(),
+                            (reservedTier.chargeCapacity() * this.reservedFuelCharge
+                                    + oldReservedCapacity - 1) / oldReservedCapacity
+                    );
         }
     }
 
-    @Override
-    public void startOpen(@NotNull Player player) {
-        if (player.isSpectator() || this.level == null) {
-            return;
-        }
-        if (this.openers++ == 0) {
-            sendOpenState(true);
-        }
-    }
-
-    @Override
-    public void stopOpen(@NotNull Player player) {
-        if (player.isSpectator() || this.level == null) {
-            return;
-        }
-        this.openers = Math.max(0, this.openers - 1);
-        if (this.openers == 0) {
-            sendOpenState(false);
-        }
+    private static int legacyChargeCapacity(int heatLevel) {
+        return switch (heatLevel) {
+            case 1 -> 5;
+            case 2 -> 9;
+            case 3 -> 18;
+            default -> 0;
+        };
     }
 
     public boolean isUsableBy(@NotNull Player player) {
@@ -574,7 +560,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
                         this.worldPosition.getZ() + 0.5D) <= 64.0D;
     }
 
-    private void sendOpenState(boolean open) {
+    public void sendVisualState(boolean open) {
         if (this.level != null) {
             this.level.blockEvent(this.worldPosition, getBlockState().getBlock(), 1, open ? 1 : 0);
             if (!this.level.isClientSide) {

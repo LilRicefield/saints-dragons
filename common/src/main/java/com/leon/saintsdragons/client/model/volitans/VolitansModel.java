@@ -14,6 +14,7 @@ import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 public class VolitansModel extends DragonGeoModel<Volitans> {
+    private static final float DEG_TO_RAD = Mth.DEG_TO_RAD;
     private static final WeightedBoneChain NECK = WeightedBoneChain.of(
             new String[] {"neck1Controller", "neck2Controller", "headController"},
             0.25f, 0.50f, 1.0f
@@ -61,6 +62,7 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             applyBodyRotationDeviation(entity, animationState.getPartialTick());
             applyBankingRoll(entity, animationState);
             applyFlightPitch(entity, animationState);
+            applyDiveWingPose(entity, animationState.getPartialTick());
             applyNeckBankingLean(entity, animationState.getPartialTick());
             applyGroundNeckTurn(entity, animationState.getPartialTick());
             applySwimPitch(entity, animationState.getPartialTick());
@@ -102,6 +104,39 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
         pitchRad = Mth.clamp(pitchRad, -Mth.HALF_PI, Mth.HALF_PI);
 
         root.setRotX(snap.getRotX() - pitchRad);
+    }
+
+    private void applyDiveWingPose(Volitans entity, float partialTick) {
+        if (entity.isInWaterOrBubble()) {
+            return;
+        }
+
+        float blend = Mth.clamp(entity.getDivePose(partialTick), 0.0F, 1.0F);
+        if (blend <= 0.001F) {
+            return;
+        }
+
+        applyDiveRotation("leftwing", blend, 0.0F, -27.5F, 0.0F);
+        applyDiveRotation("leftarm", blend, 10.4F, 76.1F, 3.9F);
+        applyDiveRotation("leftinnerphalanges", blend, 0.0F, -67.5F, -10.0F);
+        applyDiveRotation("leftmostinnerphalanges", blend, 0.0F, -12.5F, 0.0F);
+        applyDiveRotation("leftouterphalanges", blend, 0.0F, -7.5F, 0.0F);
+        applyDiveRotation("leftmostouterphalanges", blend, 0.0F, -8.5F, 0.0F);
+
+        applyDiveRotation("rightwing", blend, 0.0F, 27.5F, 0.0F);
+        applyDiveRotation("rightarm", blend, 10.4F, -76.1F, -3.9F);
+        applyDiveRotation("rightinnerphalanges", blend, 0.0F, 67.5F, 10.0F);
+        applyDiveRotation("rightmostinnerphalanges", blend, 0.0F, 12.5F, 0.0F);
+        applyDiveRotation("rightouterphalanges", blend, 0.0F, 7.5F, 0.0F);
+        applyDiveRotation("rightmostouterphalanges", blend, 0.0F, 8.5F, 0.0F);
+    }
+
+    private void applyDiveRotation(String boneName, float blend, float xDegrees, float yDegrees, float zDegrees) {
+        getBone(boneName).ifPresent(bone -> {
+            bone.setRotX(bone.getRotX() - xDegrees * DEG_TO_RAD * blend);
+            bone.setRotY(bone.getRotY() - yDegrees * DEG_TO_RAD * blend);
+            bone.setRotZ(bone.getRotZ() + zDegrees * DEG_TO_RAD * blend);
+        });
     }
 
     private void applyNeckFollow(Volitans entity, EntityModelData modelData, float partialTick) {
