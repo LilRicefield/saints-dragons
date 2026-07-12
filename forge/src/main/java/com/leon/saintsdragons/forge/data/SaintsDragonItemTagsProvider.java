@@ -67,7 +67,10 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .addTag(ModTags.Items.DRAGON_SCALES)
                 .addTag(ModTags.Items.DRAGON_TEETH)
                 .addTag(ModTags.Items.DRAGON_HEARTS)
-                .addTag(ModTags.Items.DRAGON_SPINES);
+                .addTag(ModTags.Items.DRAGON_SPINES)
+                .add(ModItems.RAEVYX_WING_HIDE.get())
+                .add(ModItems.RAEVYX_WINGTALON.get())
+                .add(ModItems.IGNIVORUS_WING_HIDE.get());
 
         tag(ModTags.Items.DRAGON_DROPS)
                 .addTag(ModTags.Items.DRAGON_PARTS)

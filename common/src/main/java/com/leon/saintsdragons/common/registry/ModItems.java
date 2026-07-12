@@ -339,14 +339,44 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> RAEVYX_WING_HIDE =
+            REGISTER.register("raevyx_wing_hide",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> RAEVYX_WINGTALON =
+            REGISTER.register("raevyx_wingtalon",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> CINDERVANE_SCALE =
             REGISTER.register("cindervane_scale",
                     () -> new Item(
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> SEARING_COAL =
+            REGISTER.register("searing_coal",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> ANCIENT_DRAGONITE_FRAGMENT =
+            REGISTER.register("ancient_dragonite_fragment",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> IGNIVORUS_SCALE =
             REGISTER.register("ignivorus_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> IGNIVORUS_WING_HIDE =
+            REGISTER.register("ignivorus_wing_hide",
                     () -> new Item(
                             new Item.Properties()
                     ));

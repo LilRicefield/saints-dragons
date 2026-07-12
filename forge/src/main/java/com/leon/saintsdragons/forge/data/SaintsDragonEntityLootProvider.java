@@ -6,6 +6,7 @@ import net.minecraft.data.loot.EntityLootSubProvider;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
@@ -25,10 +26,13 @@ public final class SaintsDragonEntityLootProvider extends EntityLootSubProvider 
     public void generate() {
         add(ModEntities.CINDERVANE.get(), LootTable.lootTable());
         add(ModEntities.NULLJAW.get(), LootTable.lootTable());
-        add(ModEntities.RAEVYX.get(), LootTable.lootTable());
+        add(ModEntities.RAEVYX.get(), LootTable.lootTable()
+                .withPool(fixedCountPool(ModItems.RAEVYX_WINGTALON.get(), 2))
+                .withPool(uniformCountPool(ModItems.RAEVYX_WING_HIDE.get(), 1, 4)));
         add(ModEntities.STEGONAUT.get(), LootTable.lootTable());
         add(ModEntities.VARASUCHUS.get(), LootTable.lootTable());
         add(ModEntities.IGNIVORUS.get(), LootTable.lootTable()
+                .withPool(uniformCountPool(ModItems.IGNIVORUS_WING_HIDE.get(), 1, 4))
                 .withPool(LootPool.lootPool()
                         .setRolls(ConstantValue.exactly(1))
                         .setBonusRolls(ConstantValue.exactly(0))
@@ -47,7 +51,23 @@ public final class SaintsDragonEntityLootProvider extends EntityLootSubProvider 
                 .withPool(fishPool(Items.PUFFERFISH)));
     }
 
-    private static LootPool.Builder fishPool(net.minecraft.world.level.ItemLike item) {
+    private static LootPool.Builder fixedCountPool(ItemLike item, int count) {
+        return LootPool.lootPool()
+                .setRolls(ConstantValue.exactly(1))
+                .setBonusRolls(ConstantValue.exactly(0))
+                .add(LootItem.lootTableItem(item)
+                        .apply(SetItemCountFunction.setCount(ConstantValue.exactly(count))));
+    }
+
+    private static LootPool.Builder uniformCountPool(ItemLike item, int min, int max) {
+        return LootPool.lootPool()
+                .setRolls(ConstantValue.exactly(1))
+                .setBonusRolls(ConstantValue.exactly(0))
+                .add(LootItem.lootTableItem(item)
+                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max))));
+    }
+
+    private static LootPool.Builder fishPool(ItemLike item) {
         return LootPool.lootPool()
                 .setRolls(ConstantValue.exactly(1))
                 .setBonusRolls(ConstantValue.exactly(0))

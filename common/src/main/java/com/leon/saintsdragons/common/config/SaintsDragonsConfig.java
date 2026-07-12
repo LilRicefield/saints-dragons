@@ -41,8 +41,6 @@ public final class SaintsDragonsConfig {
     public static final boolean RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
-    public static final boolean CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT = true;
-    public static final boolean VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT = true;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
     public static final boolean SCREEN_SHAKE_ENABLED_DEFAULT = true;
     public static final boolean BARREL_ROLL_ENABLED_DEFAULT = true;
@@ -64,12 +62,10 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue CINDERVANE_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
-    public static ConfigHelper.BooleanValue CINDERVANE_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue VARASUCHUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue VARASUCHUS_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue VARASUCHUS_MAX_GROUP_SIZE;
-    public static ConfigHelper.BooleanValue VARASUCHUS_EGG_BLOCK_WORLDGEN;
 
     public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
@@ -136,15 +132,11 @@ public final class SaintsDragonsConfig {
         CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", CINDERVANE_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         CINDERVANE_MIN_GROUP_SIZE = builder.defineInt("cindervaneMinGroupSize", CINDERVANE_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", CINDERVANE_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Whether Cindervane egg blocks generate in worldgen feature patches");
-        CINDERVANE_EGG_BLOCK_WORLDGEN = builder.defineBoolean("cindervaneEggBlockWorldgen", CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
 
         builder.comment("Varasuchus spawn settings");
         VARASUCHUS_SPAWN_WEIGHT = builder.defineInt("varasuchusSpawnWeight", VARASUCHUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         VARASUCHUS_MIN_GROUP_SIZE = builder.defineInt("varasuchusMinGroupSize", VARASUCHUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         VARASUCHUS_MAX_GROUP_SIZE = builder.defineInt("varasuchusMaxGroupSize", VARASUCHUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-        builder.comment("Whether Varasuchus egg blocks generate in worldgen feature patches");
-        VARASUCHUS_EGG_BLOCK_WORLDGEN = builder.defineBoolean("varasuchusEggBlockWorldgen", VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT);
 
         builder.comment("Ignivorus spawn settings");
         IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);

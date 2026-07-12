@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_cindervane_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:cindervane_scale"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_cindervane_scale"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:searing_coal"
+    ]
+  }
+}

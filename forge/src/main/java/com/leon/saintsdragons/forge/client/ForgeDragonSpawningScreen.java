@@ -175,10 +175,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::get,
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::set,
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::save));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
-                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::get,
-                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::set,
-                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN::save));
     }
 
     private void addVarasuchusEntries(List<ConfigEntry> entries) {
@@ -196,10 +192,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE::get,
                 SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE::set,
                 SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE::save));
-        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
-                SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN::get,
-                SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN::set,
-                SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN::save));
     }
 
     private void addIgnivorusEntries(List<ConfigEntry> entries) {
@@ -283,11 +275,9 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.set(SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.set(SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.set(SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE_DEFAULT);
-                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.set(SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN_DEFAULT);
                 SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.save();
-                SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.save();
             }
             case NULLJAW -> {
                 SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.set(SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT_DEFAULT);
@@ -301,11 +291,9 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT_DEFAULT);
                 SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.set(SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE_DEFAULT);
                 SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.set(SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE_DEFAULT);
-                SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN.set(SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN_DEFAULT);
                 SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.save();
-                SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN.save();
             }
             case IGNIVORUS -> {
                 SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT);

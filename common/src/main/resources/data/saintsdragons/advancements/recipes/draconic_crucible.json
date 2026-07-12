@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_ancient_dragonite_fragment": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ancient_dragonite_fragment"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_ancient_dragonite_fragment"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:draconic_crucible"
+    ]
+  }
+}

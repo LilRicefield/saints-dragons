@@ -109,7 +109,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.FLOWER_FOREST);
 
         addVarasuchusBiomes(ModTags.Biomes.HAS_VARASUCHUS);
-        addVarasuchusBiomes(ModTags.Biomes.HAS_VARASUCHUS_EGGS);
 
         tag(ModTags.Biomes.HAS_VOLITANS)
                 .addOptionalTag(rl("c", "ocean"))

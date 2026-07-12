@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.fabric.world;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
@@ -19,10 +18,6 @@ import net.minecraft.world.level.levelgen.placement.PlacedFeature;
 
 
 public final class Spawns {
-    private static final ResourceKey<PlacedFeature> CINDERVANE_EGG_PATCH =
-            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("cindervane_egg_patch"));
-    private static final ResourceKey<PlacedFeature> VARASUCHUS_EGG_PATCH =
-            ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("varasuchus_egg_patch"));
     private static final ResourceKey<PlacedFeature> DEEPSLATE_WORLDROOT_ORE =
             ResourceKey.create(Registries.PLACED_FEATURE, SaintsDragonsCommon.rl("deepslate_worldroot_ore"));
     private static final ResourceKey<PlacedFeature> DRAGONHEART_ORE =
@@ -52,8 +47,6 @@ public final class Spawns {
             );
         }
 
-        registerCindervaneEggs();
-        registerVarasuchusEggs();
         registerDeepslateWorldrootOre();
         registerDragonheartOre();
         registerMoopSpawn();
@@ -79,28 +72,6 @@ public final class Spawns {
                 10,
                 1,
                 2
-        );
-    }
-
-    private static void registerCindervaneEggs() {
-        if (!SaintsDragonsConfig.CINDERVANE_EGG_BLOCK_WORLDGEN.get()) {
-            return;
-        }
-        BiomeModifications.addFeature(
-                context -> DragonBiomeMatcher.isAllowed(context::hasTag, ModTags.Biomes.HAS_CINDERVANE),
-                GenerationStep.Decoration.VEGETAL_DECORATION,
-                CINDERVANE_EGG_PATCH
-        );
-    }
-
-    private static void registerVarasuchusEggs() {
-        if (!SaintsDragonsConfig.VARASUCHUS_EGG_BLOCK_WORLDGEN.get()) {
-            return;
-        }
-        BiomeModifications.addFeature(
-                context -> DragonBiomeMatcher.isAllowed(context::hasTag, ModTags.Biomes.HAS_VARASUCHUS_EGGS),
-                GenerationStep.Decoration.VEGETAL_DECORATION,
-                VARASUCHUS_EGG_PATCH
         );
     }
 

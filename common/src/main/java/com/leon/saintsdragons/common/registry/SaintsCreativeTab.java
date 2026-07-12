@@ -37,10 +37,15 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.COOKED_MOOP.get());
                                 output.accept(ModItems.BUCKET_OF_MOOP.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
+                                output.accept(ModItems.RAEVYX_WING_HIDE.get());
+                                output.accept(ModItems.RAEVYX_WINGTALON.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
+                                output.accept(ModItems.SEARING_COAL.get());
+                                output.accept(ModItems.ANCIENT_DRAGONITE_FRAGMENT.get());
                                 output.accept(ModItems.STEGONAUT_SCALE.get());
                                 output.accept(ModItems.VARASUCHUS_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
+                                output.accept(ModItems.IGNIVORUS_WING_HIDE.get());
                                 output.accept(ModItems.VOLITANS_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_HEART.get());
                                 output.accept(ModItems.IGNIVORUS_TOOTH.get());

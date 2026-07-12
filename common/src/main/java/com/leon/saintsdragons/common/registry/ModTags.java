@@ -97,7 +97,6 @@ public final class ModTags {
         public static final TagKey<Biome> HAS_STEGONAUT = tag("has_stegonaut");
         public static final TagKey<Biome> HAS_STEGONAUT_FALLBACK = tag("has_stegonaut_fallback");
         public static final TagKey<Biome> HAS_VARASUCHUS = tag("has_varasuchus");
-        public static final TagKey<Biome> HAS_VARASUCHUS_EGGS = tag("has_varasuchus_eggs");
         public static final TagKey<Biome> HAS_VOLITANS = tag("has_volitans");
         public static final TagKey<Biome> HAS_VOLITANS_FALLBACK = tag("has_volitans_fallback");
         public static final TagKey<Biome> HAS_MOOP = tag("has_moop");

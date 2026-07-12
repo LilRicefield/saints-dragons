@@ -63,10 +63,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
-    public boolean cindervaneEggBlockWorldgen = true;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int varasuchusSpawnWeight = 2;
 
@@ -79,10 +75,6 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int varasuchusMaxGroupSize = 2;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip
-    public boolean varasuchusEggBlockWorldgen = true;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip

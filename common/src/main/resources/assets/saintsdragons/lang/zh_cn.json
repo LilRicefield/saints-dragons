@@ -25,6 +25,8 @@
   "attribute.name.saintsdragons.blast_resistance": "爆炸抗性",
   "item.saintsdragons.raevyx_scale": "殷雷龙鳞片",
   "item.saintsdragons.cindervane_scale": "烬翎龙鳞片",
+  "item.saintsdragons.searing_coal": "灼热煤炭",
+  "item.saintsdragons.ancient_dragonite_fragment": "远古龙岩碎片",
   "item.saintsdragons.ignivorus_scale": "噬焰龙鳞片",
   "item.saintsdragons.ignivorus_heart": "噬焰龙心脏",
   "item.saintsdragons.ignivorus_tooth": "噬焰龙牙齿",
@@ -753,8 +755,6 @@
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMinGroupSize.@Tooltip": "烬翎龙生成最小数量",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize": "烬翎龙最大群组规模",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize.@Tooltip": "烬翎龙生成最大数量",
-"text.autoconfig.saintsdragonsspawning.option.cindervaneEggBlockWorldgen": "生成烬翎龙蛋",
-"text.autoconfig.saintsdragonsspawning.option.cindervaneEggBlockWorldgen.@Tooltip": "启用或禁用烬翎龙蛋在世界中生成",
   
   "text.autoconfig.saintsdragonsspawning.option.varasuchusSpawnWeight": "蜷鳄龙生成权重",
   "text.autoconfig.saintsdragonsspawning.option.varasuchusSpawnWeight.@Tooltip": "蜷鳄龙生成频率（0 = 禁用，越高越常见）",
@@ -762,8 +762,6 @@
   "text.autoconfig.saintsdragonsspawning.option.varasuchusMinGroupSize.@Tooltip": "蜷鳄龙生成最小数量",
   "text.autoconfig.saintsdragonsspawning.option.varasuchusMaxGroupSize": "蜷鳄龙最大群组规模",
   "text.autoconfig.saintsdragonsspawning.option.varasuchusMaxGroupSize.@Tooltip": "蜷鳄龙生成最大数量",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusEggBlockWorldgen": "蜷鳄龙蛋世界生成",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusEggBlockWorldgen.@Tooltip": "启用或禁用蜷鳄龙蛋在世界中生成",
 
   "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight": "噬焰龙生成权重",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight.@Tooltip": "噬焰龙的生成频率（0 = 禁用，越高越常见）",
@@ -825,8 +823,6 @@
   "config.saintsdragons.spawn.min_group.tooltip": "生成成功时的最小数量。附近的龙密度检查仍然可能阻止自然生成。",
   "config.saintsdragons.spawn.max_group": "最大群组规模",
   "config.saintsdragons.spawn.max_group.tooltip": "生成成功时的最大数量。如果最小值高于最大值，则使用较小的安全值。",
-  "config.saintsdragons.spawn.egg_block_worldgen": "生成龙蛋",
-  "config.saintsdragons.spawn.egg_block_worldgen.tooltip": "是否能在世界里生成龙蛋",
   "config.saintsdragons.spawn.note.common": "权重只是一个层面，自然生成也共享的附近龙密度上限。",
 
   "config.saintsdragons.spawn.note.raevyx": "殷雷龙的自然生成需要活跃的雷暴天气",
@@ -1039,5 +1035,8 @@
   "container.saintsdragons.draconic_crucible": "龙铸坩埚",
   "gui.saintsdragons.draconic_crucible.button": "坩埚控制",
   "subtitles.saintsdragons.draconic_crucible_open": "龙铸坩埚打开",
-  "subtitles.saintsdragons.draconic_crucible_close": "龙铸坩埚关闭"
+  "subtitles.saintsdragons.draconic_crucible_close": "龙铸坩埚关闭",
+  "item.saintsdragons.raevyx_wing_hide": "雷维克斯翼皮",
+  "item.saintsdragons.raevyx_wingtalon": "雷维克斯翼爪",
+  "item.saintsdragons.ignivorus_wing_hide": "伊格尼沃鲁斯翼皮"
 }

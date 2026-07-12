@@ -202,8 +202,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "raevyxCustomSpawningEnabled" -> () -> spawnHolder().getConfig().raevyxCustomSpawningEnabled;
             case "stegonautCustomSpawningEnabled" -> () -> spawnHolder().getConfig().stegonautCustomSpawningEnabled;
             case "volitansCustomSpawningEnabled" -> () -> spawnHolder().getConfig().volitansCustomSpawningEnabled;
-            case "cindervaneEggBlockWorldgen" -> () -> spawnHolder().getConfig().cindervaneEggBlockWorldgen;
-            case "varasuchusEggBlockWorldgen" -> () -> spawnHolder().getConfig().varasuchusEggBlockWorldgen;
             case "dragonGriefingEnabled" -> () -> serverHolder().getConfig().dragonGriefingEnabled;
             case "screenShakeEnabled" -> () -> serverHolder().getConfig().screenShakeEnabled;
             case "barrelRollEnabled" -> () -> serverHolder().getConfig().barrelRollEnabled;
@@ -224,8 +222,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "raevyxCustomSpawningEnabled" -> value -> spawnHolder().getConfig().raevyxCustomSpawningEnabled = value;
             case "stegonautCustomSpawningEnabled" -> value -> spawnHolder().getConfig().stegonautCustomSpawningEnabled = value;
             case "volitansCustomSpawningEnabled" -> value -> spawnHolder().getConfig().volitansCustomSpawningEnabled = value;
-            case "cindervaneEggBlockWorldgen" -> value -> spawnHolder().getConfig().cindervaneEggBlockWorldgen = value;
-            case "varasuchusEggBlockWorldgen" -> value -> spawnHolder().getConfig().varasuchusEggBlockWorldgen = value;
             case "dragonGriefingEnabled" -> value -> serverHolder().getConfig().dragonGriefingEnabled = value;
             case "screenShakeEnabled" -> value -> serverHolder().getConfig().screenShakeEnabled = value;
             case "barrelRollEnabled" -> value -> serverHolder().getConfig().barrelRollEnabled = value;

@@ -358,7 +358,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.raevyxMaxGroupSize, value -> config.raevyxMaxGroupSize = value,
                 SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::set,
                 SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT,
-                null, null, true,
                 1, 1, 2);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.stegonaut"),
@@ -367,7 +366,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.stegonautMaxGroupSize, value -> config.stegonautMaxGroupSize = value,
                     SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::set,
                     SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT,
-                    null, null, true,
                     5, 1, 4);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.cindervane"),
@@ -375,7 +373,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.cindervaneMinGroupSize, value -> config.cindervaneMinGroupSize = value,
                     () -> config.cindervaneMaxGroupSize, value -> config.cindervaneMaxGroupSize = value,
                     null, null, true,
-                    () -> config.cindervaneEggBlockWorldgen, value -> config.cindervaneEggBlockWorldgen = value, true,
                     3, 1, 3);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.varasuchus"),
@@ -383,14 +380,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.varasuchusMinGroupSize, value -> config.varasuchusMinGroupSize = value,
                     () -> config.varasuchusMaxGroupSize, value -> config.varasuchusMaxGroupSize = value,
                     null, null, true,
-                    () -> config.varasuchusEggBlockWorldgen, value -> config.varasuchusEggBlockWorldgen = value, true,
                     2, 1, 2);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.ignivorus"),
                     () -> config.ignivorusSpawnWeight, value -> config.ignivorusSpawnWeight = value,
                     () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,
                     () -> config.ignivorusMaxGroupSize, value -> config.ignivorusMaxGroupSize = value,
-                    null, null, true,
                     null, null, true,
                     SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT,
                     SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT,
@@ -402,7 +397,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.volitansMaxGroupSize, value -> config.volitansMaxGroupSize = value,
                     SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::set,
                     SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT,
-                    null, null, false,
                     1, 1, 1);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.nulljaw"),
@@ -410,7 +404,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.nulljawMinGroupSize, value -> config.nulljawMinGroupSize = value,
                     () -> config.nulljawMaxGroupSize, value -> config.nulljawMaxGroupSize = value,
                     null, null, true,
-                    null, null, false,
                     4, 4, 4);
 
             ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
@@ -541,9 +534,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                  BooleanSupplier customSpawningGetter,
                                  Consumer<Boolean> customSpawningSetter,
                                  boolean defaultCustomSpawning,
-                                 BooleanSupplier eggBlockWorldgenGetter,
-                                 Consumer<Boolean> eggBlockWorldgenSetter,
-                                 boolean defaultEggBlockWorldgen,
                                  int defaultWeight,
                                  int defaultMin,
                                  int defaultMax) {
@@ -577,15 +567,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setTooltip(Component.translatable("config.saintsdragons.spawn.max_group.tooltip"))
                 .setSaveConsumer(maxSetter::accept)
                 .build());
-        if (eggBlockWorldgenGetter != null && eggBlockWorldgenSetter != null) {
-            entries.add(entryBuilder.startBooleanToggle(
-                            Component.translatable("config.saintsdragons.spawn.egg_block_worldgen"),
-                            eggBlockWorldgenGetter.getAsBoolean())
-                    .setDefaultValue(defaultEggBlockWorldgen)
-                    .setTooltip(Component.translatable("config.saintsdragons.spawn.egg_block_worldgen.tooltip"))
-                    .setSaveConsumer(eggBlockWorldgenSetter::accept)
-                    .build());
-        }
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(label, rawEntries).setExpanded(false).build());
