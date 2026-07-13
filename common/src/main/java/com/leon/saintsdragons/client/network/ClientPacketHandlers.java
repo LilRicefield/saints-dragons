@@ -14,6 +14,7 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
+import com.leon.saintsdragons.common.network.MessageBloodTempestDodgeEffect;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
 import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
@@ -91,6 +92,10 @@ public final class ClientPacketHandlers {
                 message.pitch(),
                 message.durationTicks()
         );
+    }
+
+    public static void handleBloodTempestDodgeEffect(MessageBloodTempestDodgeEffect message) {
+        com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail.start(message.entityId());
     }
 
     public static void handleSwarmBattleMusic(MessageSwarmBattleMusic message) {

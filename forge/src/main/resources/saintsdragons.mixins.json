@@ -17,6 +17,8 @@
     "client.CameraPositionMixin",
     "client.CameraRollMixin",
     "client.RiderMixin",
+    "client.BloodTempestAfterimagePlayerRendererMixin",
+    "client.BloodTempestAfterimageLivingRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.EntityRendererMixin"
   ],

@@ -10,6 +10,8 @@
     "EntityEyePositionMixin",
     "GameRendererMixin",
     "RiderMixin",
+    "BloodTempestAfterimagePlayerRendererMixin",
+    "BloodTempestAfterimageLivingRendererMixin",
     "LivingEntityRendererMixin",
     "EntityRendererMixin",
     "EntityRenderDispatcherMixin",

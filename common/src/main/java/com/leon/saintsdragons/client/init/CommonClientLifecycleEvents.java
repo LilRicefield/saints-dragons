@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.input.DragonlordDoubleJumpInput;
+import com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
@@ -34,5 +35,6 @@ public final class CommonClientLifecycleEvents {
         VolitansBurrowSoundController.tick(minecraft);
         IvyDialogueResumeQueue.tick(minecraft);
         DragonlordDoubleJumpInput.clientTick(minecraft);
+        BloodTempestAfterimageTrail.tick(minecraft);
     }
 }

@@ -146,6 +146,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageBloodTempestDodgeEffect.class,
+                id("blood_tempest_dodge_effect"),
+                MessageBloodTempestDodgeEffect::encode,
+                MessageBloodTempestDodgeEffect::decode,
+                MessageBloodTempestDodgeEffect::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDragonMovingSound.class,
                 id("dragon_moving_sound"),
                 MessageDragonMovingSound::encode,

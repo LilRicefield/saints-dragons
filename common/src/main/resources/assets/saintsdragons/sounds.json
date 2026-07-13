@@ -417,7 +417,7 @@
     "sounds": [
       {
         "name": "saintsdragons:armor/dragonlord_armor/dragonlord_armor_double_jump",
-        "volume": 1.0,
+        "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 24
       }
@@ -429,6 +429,17 @@
       {
         "name": "saintsdragons:armor/dragonlord_armor/dragonlord_armor_impact",
         "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
+  "blood_tempest_armor_dodge": {
+    "subtitle": "subtitles.saintsdragons.blood_tempest_armor_dodge",
+    "sounds": [
+      {
+        "name": "saintsdragons:armor/blood_tempest_armor/blood_tempest_armor_dodge",
+        "volume": 3.0,
         "pitch": 1.0,
         "attenuation_distance": 24
       }

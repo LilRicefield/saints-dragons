@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.network.BloodTempestDodgeDirection;
+import com.leon.saintsdragons.common.network.MessageBloodTempestDodgeEffect;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
@@ -77,13 +79,17 @@ public final class BloodTempestArmorSetBonus {
         player.hurtMarked = true;
         player.connection.send(new ClientboundSetEntityMotionPacket(player));
 
+        MessageBloodTempestDodgeEffect effect = new MessageBloodTempestDodgeEffect(player.getId());
+        NetworkHandler.sendToTracking(player, effect);
+        NetworkHandler.sendToPlayer(player, effect);
+
         UUID playerId = player.getUUID();
         DODGE_COOLDOWNS.put(playerId, DODGE_COOLDOWN_TICKS);
         DODGE_IFRAMES.put(playerId, DODGE_IFRAMES_TICKS);
         player.level().playSound(
                 null,
                 player.blockPosition(),
-                ModSounds.RAEVYX_DODGE.get(),
+                ModSounds.BLOOD_TEMPEST_ARMOR_DODGE.get(),
                 SoundSource.PLAYERS,
                 0.8F,
                 1.1F
