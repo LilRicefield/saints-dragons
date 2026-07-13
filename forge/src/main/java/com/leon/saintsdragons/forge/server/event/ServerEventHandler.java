@@ -2,6 +2,7 @@ package com.leon.saintsdragons.forge.server.event;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
+import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.event.TickEvent;
@@ -34,7 +35,8 @@ public class ServerEventHandler {
         if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
-        if (DragonlordArmorSetBonus.blocksDamage(player, event.getSource())) {
+        if (BloodTempestArmorSetBonus.blocksDamage(player, event.getSource())
+                || DragonlordArmorSetBonus.blocksDamage(player, event.getSource())) {
             event.setCanceled(true);
         }
     }

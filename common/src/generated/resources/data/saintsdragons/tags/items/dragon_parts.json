@@ -1,11 +1,16 @@
 {
   "values": [
-    "#saintsdragons:dragon_scales",
-    "#saintsdragons:dragon_teeth",
-    "#saintsdragons:dragon_hearts",
-    "#saintsdragons:dragon_spines",
+    "saintsdragons:cindervane_scale",
+    "saintsdragons:ignivorus_scale",
+    "saintsdragons:raevyx_scale",
+    "saintsdragons:stegonaut_scale",
+    "saintsdragons:varasuchus_scale",
+    "saintsdragons:volitans_scale",
+    "saintsdragons:ignivorus_tooth",
+    "saintsdragons:ignivorus_heart",
+    "saintsdragons:volitans_spine",
     "saintsdragons:raevyx_wing_hide",
-    "saintsdragons:raevyx_wingtalon",
-    "saintsdragons:ignivorus_wing_hide"
+    "saintsdragons:ignivorus_wing_hide",
+    "saintsdragons:raevyx_wingtalon"
   ]
 }

@@ -2,7 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -19,6 +19,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -56,7 +57,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private static final EntityDataAccessor<Boolean> DATA_SUBSIDING =
             SynchedEntityData.defineId(IgnivorusMagmaPillarEntity.class, EntityDataSerializers.BOOLEAN);
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
-    private Ignivorus owner;
+    private LivingEntity owner;
     private UUID ownerUUID;
     private float impactDamage = 16.0f;
     private double knockbackStrength = 1.0D;
@@ -73,7 +74,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         this.noPhysics = true;
     }
 
-    public IgnivorusMagmaPillarEntity(Level level, Vec3 pos, Ignivorus owner, int stageIndex,
+    public IgnivorusMagmaPillarEntity(Level level, Vec3 pos, LivingEntity owner, int stageIndex,
                                       float yaw,
                                       float impactDamage, double knockbackStrength,
                                       int warmupTicks, int lifetimeTicks) {
@@ -159,8 +160,8 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private void resolveOwner() {
         if (owner == null && ownerUUID != null && level() instanceof ServerLevel serverLevel) {
             Entity entity = serverLevel.getEntity(ownerUUID);
-            if (entity instanceof Ignivorus ignivorus) {
-                owner = ignivorus;
+            if (entity instanceof LivingEntity living) {
+                owner = living;
             }
         }
     }
@@ -187,12 +188,17 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             if (hitEntities.contains(target.getUUID())) {
                 return false;
             }
-            return owner == null || !owner.isAlly(target);
+            return owner == null || !isOwnerAlly(target);
         });
 
-        DamageSource source = owner != null
-                ? damageSources().mobAttack(owner)
-                : damageSources().hotFloor();
+        DamageSource source;
+        if (owner instanceof Player player) {
+            source = damageSources().playerAttack(player);
+        } else if (owner != null) {
+            source = damageSources().mobAttack(owner);
+        } else {
+            source = damageSources().hotFloor();
+        }
 
         boolean firstHit = hitEntities.isEmpty() && !hits.isEmpty();
 
@@ -223,6 +229,13 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             server.playSound(null, blockPosition(), ModSounds.IGNIVORUS_MAGMA_PILLAR.get(), SoundSource.HOSTILE,
                     1.4F, 0.8F + server.random.nextFloat() * 0.2F);
         }
+    }
+
+    private boolean isOwnerAlly(LivingEntity target) {
+        if (owner instanceof DragonEntity dragon) {
+            return dragon.isAlly(target);
+        }
+        return owner != null && (owner.isAlliedTo(target) || target.isAlliedTo(owner));
     }
 
     private void spawnClientEffects() {

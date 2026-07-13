@@ -1,0 +1,22 @@
+{
+  "type": "saintsdragons:draconic_crucible",
+  "pattern": [
+    "H H",
+    "T T",
+    "   "
+  ],
+  "key": {
+    "T": {
+      "item": "saintsdragons:ignivorus_tooth"
+    },
+    "H": {
+      "item": "saintsdragons:ignivorus_wing_hide"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:dragonlord_boots",
+    "count": 1
+  },
+  "required_heat_level": 3,
+  "processing_time": 1800
+}

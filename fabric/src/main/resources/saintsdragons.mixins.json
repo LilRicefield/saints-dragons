@@ -17,7 +17,8 @@
   ],
   "mixins": [
     "NameTagItemMixin",
-    "PathfinderMobMixin"
+    "PathfinderMobMixin",
+    "PlayerMixin"
   ],
   "injectors": {
     "defaultRequire": 1

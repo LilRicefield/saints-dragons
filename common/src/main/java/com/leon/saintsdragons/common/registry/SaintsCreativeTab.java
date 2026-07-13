@@ -40,15 +40,13 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAEVYX_WING_HIDE.get());
                                 output.accept(ModItems.RAEVYX_WINGTALON.get());
                                 output.accept(ModItems.CINDERVANE_SCALE.get());
-                                output.accept(ModItems.SEARING_COAL.get());
-                                output.accept(ModItems.ANCIENT_DRAGONITE_FRAGMENT.get());
                                 output.accept(ModItems.STEGONAUT_SCALE.get());
                                 output.accept(ModItems.VARASUCHUS_SCALE.get());
                                 output.accept(ModItems.IGNIVORUS_SCALE.get());
-                                output.accept(ModItems.IGNIVORUS_WING_HIDE.get());
-                                output.accept(ModItems.VOLITANS_SCALE.get());
-                                output.accept(ModItems.IGNIVORUS_HEART.get());
                                 output.accept(ModItems.IGNIVORUS_TOOTH.get());
+                                output.accept(ModItems.IGNIVORUS_WING_HIDE.get());
+                                output.accept(ModItems.IGNIVORUS_HEART.get());
+                                output.accept(ModItems.VOLITANS_SCALE.get());
                                 output.accept(ModItems.VOLITANS_SPINE.get());
                                 output.accept(ModItems.DRACONIAN_FLESH.get());
                                 output.accept(ModItems.RAEVYX_EGG.get());
@@ -57,9 +55,13 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.VARASUCHUS_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_EGG.get());
                                 output.accept(ModItems.VOLITANS_EGG.get());
+                                output.accept(ModItems.SEARING_COAL.get());
+                                output.accept(ModItems.ANCIENT_DRAGONITE_FRAGMENT.get());
                                 output.accept(ModItems.RAW_WORLDROOT.get());
                                 output.accept(ModItems.WORLDROOT_INGOT.get());
                                 output.accept(ModItems.WORLDROOT_SWORD.get());
+                                output.accept(ModItems.BLOOD_TEMPEST_KATANA.get());
+                                output.accept(ModItems.DRAGONLORD_SWORD.get());
                                 output.accept(ModItems.WORLDROOT_PICKAXE.get());
                                 output.accept(ModItems.WORLDROOT_AXE.get());
                                 output.accept(ModItems.WORLDROOT_SHOVEL.get());
@@ -78,6 +80,15 @@ public class SaintsCreativeTab {
                                 output.accept(ModPotionItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModPotionItems.POTION_OF_SEARING.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
+                                output.accept(ModItems.DRAGONHEART_ORE.get());
+                                output.accept(ModItems.DRAGONHEART_ALLOY_BLOCK.get());
+                                output.accept(ModItems.DRAGONHEART_BLOCK.get());
+                                output.accept(ModItems.DEEPSLATE_WORLDROOT_ORE.get());
+                                output.accept(ModItems.WORLDROOT_BLOCK.get());
+                                output.accept(ModItems.RAW_WORLDROOT_BLOCK.get());
+                                output.accept(ModItems.DRACONIAN_PELLUCIDA.get());
+                                output.accept(ModItems.DRACONIAN_NUCLEUS.get());
+                                output.accept(ModItems.DRACONIC_CRUCIBLE.get());
                                 output.accept(ModItems.RAEVYX_SPAWN_EGG.get());
                                 output.accept(ModItems.CINDERVANE_SPAWN_EGG.get());
                                 output.accept(ModItems.STEGONAUT_SPAWN_EGG.get());
@@ -93,15 +104,6 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.DRACONIAN_SWARM_SPAWN_EGG.get());
                                 output.accept(ModItems.MOOP_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());
-                                output.accept(ModItems.DRAGONHEART_ORE.get());
-                                output.accept(ModItems.DRAGONHEART_ALLOY_BLOCK.get());
-                                output.accept(ModItems.DRAGONHEART_BLOCK.get());
-                                output.accept(ModItems.DEEPSLATE_WORLDROOT_ORE.get());
-                                output.accept(ModItems.WORLDROOT_BLOCK.get());
-                                output.accept(ModItems.RAW_WORLDROOT_BLOCK.get());
-                                output.accept(ModItems.DRACONIAN_PELLUCIDA.get());
-                                output.accept(ModItems.DRACONIAN_NUCLEUS.get());
-                                output.accept(ModItems.DRACONIC_CRUCIBLE.get());
 
 
                                 })

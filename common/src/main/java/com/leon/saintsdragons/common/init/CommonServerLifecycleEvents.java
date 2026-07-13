@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.init;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.data.WikiReminderSavedData;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
@@ -25,6 +26,7 @@ public final class CommonServerLifecycleEvents {
 
     public static void onEndServerTick(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            BloodTempestArmorSetBonus.tick(player);
             DragonlordArmorSetBonus.tick(player);
         }
 
@@ -88,6 +90,7 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onPlayerDisconnect(ServerPlayer player) {
+        BloodTempestArmorSetBonus.clear(player);
         DragonlordArmorSetBonus.saveHealthForReload(player);
 
         RideableDragonBase dragon = findMountedDragon(player);

@@ -46,31 +46,19 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.DRAGON_BRUSH.get())
                 .add(ModItems.GOLDEN_DRAGON_BRUSH.get());
 
-        tag(ModTags.Items.DRAGON_SCALES)
+        tag(ModTags.Items.DRAGON_PARTS)
                 .add(ModItems.CINDERVANE_SCALE.get())
                 .add(ModItems.IGNIVORUS_SCALE.get())
                 .add(ModItems.RAEVYX_SCALE.get())
                 .add(ModItems.STEGONAUT_SCALE.get())
                 .add(ModItems.VARASUCHUS_SCALE.get())
-                .add(ModItems.VOLITANS_SCALE.get());
-
-        tag(ModTags.Items.DRAGON_TEETH)
-                .add(ModItems.IGNIVORUS_TOOTH.get());
-
-        tag(ModTags.Items.DRAGON_HEARTS)
-                .add(ModItems.IGNIVORUS_HEART.get());
-
-        tag(ModTags.Items.DRAGON_SPINES)
-                .add(ModItems.VOLITANS_SPINE.get());
-
-        tag(ModTags.Items.DRAGON_PARTS)
-                .addTag(ModTags.Items.DRAGON_SCALES)
-                .addTag(ModTags.Items.DRAGON_TEETH)
-                .addTag(ModTags.Items.DRAGON_HEARTS)
-                .addTag(ModTags.Items.DRAGON_SPINES)
+                .add(ModItems.VOLITANS_SCALE.get())
+                .add(ModItems.IGNIVORUS_TOOTH.get())
+                .add(ModItems.IGNIVORUS_HEART.get())
+                .add(ModItems.VOLITANS_SPINE.get())
                 .add(ModItems.RAEVYX_WING_HIDE.get())
-                .add(ModItems.RAEVYX_WINGTALON.get())
-                .add(ModItems.IGNIVORUS_WING_HIDE.get());
+                .add(ModItems.IGNIVORUS_WING_HIDE.get())
+                .add(ModItems.RAEVYX_WINGTALON.get());
 
         tag(ModTags.Items.DRAGON_DROPS)
                 .addTag(ModTags.Items.DRAGON_PARTS)

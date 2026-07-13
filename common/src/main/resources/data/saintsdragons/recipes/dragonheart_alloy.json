@@ -1,0 +1,22 @@
+{
+  "type": "saintsdragons:draconic_crucible",
+  "pattern": [
+    "CC",
+    "CC",
+    "WW"
+  ],
+  "key": {
+    "C": {
+      "item": "saintsdragons:dragonheart_chunk"
+    },
+    "W": {
+      "item": "saintsdragons:worldroot_ingot"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:dragonheart_alloy",
+    "count": 2
+  },
+  "required_heat_level": 3,
+  "processing_time": 1800
+}

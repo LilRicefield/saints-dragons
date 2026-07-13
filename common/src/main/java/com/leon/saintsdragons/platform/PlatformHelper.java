@@ -5,6 +5,7 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.material.Fluid;
 
 import java.nio.file.Path;
@@ -29,6 +30,12 @@ public interface PlatformHelper {
                                       int primaryColor,
                                       int secondaryColor,
                                       Item.Properties properties);
+    Item createDragonheartSword(Tier tier,
+                                int attackDamageModifier,
+                                float attackSpeedModifier,
+                                double entityReach,
+                                float criticalDamageBonus,
+                                Item.Properties properties);
     Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
                          Fluid fluid,
                          SoundEvent emptySound,

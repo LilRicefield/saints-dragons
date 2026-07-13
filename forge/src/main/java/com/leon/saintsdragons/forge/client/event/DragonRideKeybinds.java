@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client.event;
 
+import com.leon.saintsdragons.client.input.BloodTempestDodgeInput;
 import com.leon.saintsdragons.client.input.DragonRideInputHandler;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import net.minecraft.client.KeyMapping;
@@ -19,6 +20,7 @@ public final class DragonRideKeybinds {
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
+            BloodTempestDodgeInput.clientTick();
             DragonRideInputHandler.clientTick();
         }
     }

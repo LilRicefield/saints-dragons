@@ -10,6 +10,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.LootingEnchantFunction;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.predicates.LootItemRandomChanceCondition;
 import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
@@ -37,12 +38,16 @@ public final class SaintsDragonEntityLootProvider extends EntityLootSubProvider 
                         .setRolls(ConstantValue.exactly(1))
                         .setBonusRolls(ConstantValue.exactly(0))
                         .when(LootItemRandomChanceCondition.randomChance(0.35F))
-                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_TOOTH.get())))
+                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_TOOTH.get())
+                                .apply(LootingEnchantFunction.lootingMultiplier(
+                                        UniformGenerator.between(0.0F, 1.0F)))))
                 .withPool(LootPool.lootPool()
                         .setRolls(ConstantValue.exactly(1))
                         .setBonusRolls(ConstantValue.exactly(0))
                         .when(LootItemRandomChanceCondition.randomChance(0.90F))
-                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_HEART.get()))));
+                        .add(LootItem.lootTableItem(ModItems.IGNIVORUS_HEART.get())
+                                .apply(LootingEnchantFunction.lootingMultiplier(
+                                        UniformGenerator.between(0.0F, 1.0F))))));
 
         add(ModEntities.VOLITANS.get(), LootTable.lootTable()
                 .withPool(fishPool(Items.SALMON))
@@ -56,7 +61,9 @@ public final class SaintsDragonEntityLootProvider extends EntityLootSubProvider 
                 .setRolls(ConstantValue.exactly(1))
                 .setBonusRolls(ConstantValue.exactly(0))
                 .add(LootItem.lootTableItem(item)
-                        .apply(SetItemCountFunction.setCount(ConstantValue.exactly(count))));
+                        .apply(SetItemCountFunction.setCount(ConstantValue.exactly(count)))
+                        .apply(LootingEnchantFunction.lootingMultiplier(
+                                UniformGenerator.between(0.0F, 1.0F))));
     }
 
     private static LootPool.Builder uniformCountPool(ItemLike item, int min, int max) {
@@ -64,7 +71,9 @@ public final class SaintsDragonEntityLootProvider extends EntityLootSubProvider 
                 .setRolls(ConstantValue.exactly(1))
                 .setBonusRolls(ConstantValue.exactly(0))
                 .add(LootItem.lootTableItem(item)
-                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max))));
+                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)))
+                        .apply(LootingEnchantFunction.lootingMultiplier(
+                                UniformGenerator.between(0.0F, 1.0F))));
     }
 
     private static LootPool.Builder fishPool(ItemLike item) {
@@ -73,7 +82,9 @@ public final class SaintsDragonEntityLootProvider extends EntityLootSubProvider 
                 .setBonusRolls(ConstantValue.exactly(0))
                 .when(LootItemRandomChanceCondition.randomChance(0.40F))
                 .add(LootItem.lootTableItem(item)
-                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 3))));
+                        .apply(SetItemCountFunction.setCount(UniformGenerator.between(1, 3)))
+                        .apply(LootingEnchantFunction.lootingMultiplier(
+                                UniformGenerator.between(0.0F, 1.0F))));
     }
 
     @Override

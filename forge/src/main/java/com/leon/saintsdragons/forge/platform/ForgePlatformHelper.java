@@ -1,13 +1,20 @@
 package com.leon.saintsdragons.forge.platform;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.leon.saintsdragons.common.item.tools.DragonheartSwordItem;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
 import com.leon.saintsdragons.platform.PlatformHelper;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.MobBucketItem;
+import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.api.distmarker.Dist;
@@ -16,6 +23,7 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.common.ForgeSpawnEggItem;
+import net.minecraftforge.common.ForgeMod;
 
 import java.nio.file.Path;
 import java.util.function.Supplier;
@@ -111,6 +119,23 @@ public final class ForgePlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public Item createDragonheartSword(Tier tier,
+                                       int attackDamageModifier,
+                                       float attackSpeedModifier,
+                                       double entityReach,
+                                       float criticalDamageBonus,
+                                       Item.Properties properties) {
+        return new ForgeDragonheartSwordItem(
+                tier,
+                attackDamageModifier,
+                attackSpeedModifier,
+                entityReach,
+                criticalDamageBonus,
+                properties
+        );
+    }
+
+    @Override
     public Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
                                 Fluid fluid,
                                 SoundEvent emptySound,
@@ -126,5 +151,37 @@ public final class ForgePlatformHelper implements PlatformHelper {
     @Override
     public Path getConfigDirectory() {
         return FMLPaths.CONFIGDIR.get();
+    }
+
+    private static final class ForgeDragonheartSwordItem extends DragonheartSwordItem {
+        private ForgeDragonheartSwordItem(Tier tier,
+                                          int attackDamageModifier,
+                                          float attackSpeedModifier,
+                                          double entityReach,
+                                          float criticalDamageBonus,
+                                          Properties properties) {
+            super(tier, attackDamageModifier, attackSpeedModifier, entityReach, criticalDamageBonus, properties);
+        }
+
+        @Override
+        public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+            Multimap<Attribute, AttributeModifier> modifiers = super.getDefaultAttributeModifiers(slot);
+            if (slot != EquipmentSlot.MAINHAND) {
+                return modifiers;
+            }
+
+            ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+            builder.putAll(modifiers);
+            builder.put(
+                    ForgeMod.ENTITY_REACH.get(),
+                    new AttributeModifier(
+                            ENTITY_REACH_MODIFIER_UUID,
+                            "Dragonheart weapon reach",
+                            this.getEntityReachBonus(),
+                            AttributeModifier.Operation.ADDITION
+                    )
+            );
+            return builder.build();
+        }
     }
 }

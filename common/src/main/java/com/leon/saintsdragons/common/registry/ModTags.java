@@ -42,10 +42,6 @@ public final class ModTags {
         public static final TagKey<Item> DRAGON_EGGS = tag("dragon_eggs");
         public static final TagKey<Item> DRAGON_BINDERS = tag("dragon_binders");
         public static final TagKey<Item> DRAGON_BRUSHES = tag("dragon_brushes");
-        public static final TagKey<Item> DRAGON_SCALES = tag("dragon_scales");
-        public static final TagKey<Item> DRAGON_TEETH = tag("dragon_teeth");
-        public static final TagKey<Item> DRAGON_HEARTS = tag("dragon_hearts");
-        public static final TagKey<Item> DRAGON_SPINES = tag("dragon_spines");
         public static final TagKey<Item> DRAGON_PARTS = tag("dragon_parts");
         public static final TagKey<Item> DRAGON_DROPS = tag("dragon_drops");
         public static final TagKey<Item> DRAGON_SPAWN_EGGS = tag("dragon_spawn_eggs");

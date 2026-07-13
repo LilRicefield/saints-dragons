@@ -1,13 +1,15 @@
 package com.leon.saintsdragons.common.item.tools;
 
 import com.leon.saintsdragons.common.registry.ModItems;
-import java.util.function.Supplier;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.crafting.Ingredient;
 import org.jetbrains.annotations.NotNull;
 
-public enum WorldrootTier implements Tier {
-    INSTANCE(3, 1950, 8.8F, 3.8F, 14, () -> Ingredient.of(ModItems.WORLDROOT_INGOT.get()));
+import java.util.function.Supplier;
+
+public enum DragonheartWeaponTier implements Tier {
+    CHUNK(4, 2600, 5.0F, 5.0F, 18, () -> Ingredient.of(ModItems.DRAGONHEART_CHUNK.get())),
+    ALLOY(4, 3400, 10.0F, 7.0F, 20, () -> Ingredient.of(ModItems.DRAGONHEART_ALLOY.get()));
 
     private final int level;
     private final int uses;
@@ -16,8 +18,8 @@ public enum WorldrootTier implements Tier {
     private final int enchantmentValue;
     private final Supplier<Ingredient> repairIngredient;
 
-    WorldrootTier(int level, int uses, float speed, float attackDamageBonus, int enchantmentValue,
-                  Supplier<Ingredient> repairIngredient) {
+    DragonheartWeaponTier(int level, int uses, float speed, float attackDamageBonus,
+                          int enchantmentValue, Supplier<Ingredient> repairIngredient) {
         this.level = level;
         this.uses = uses;
         this.speed = speed;
@@ -28,31 +30,31 @@ public enum WorldrootTier implements Tier {
 
     @Override
     public int getUses() {
-        return uses;
+        return this.uses;
     }
 
     @Override
     public float getSpeed() {
-        return speed;
+        return this.speed;
     }
 
     @Override
     public float getAttackDamageBonus() {
-        return attackDamageBonus;
+        return this.attackDamageBonus;
     }
 
     @Override
     public int getLevel() {
-        return level;
+        return this.level;
     }
 
     @Override
     public int getEnchantmentValue() {
-        return enchantmentValue;
+        return this.enchantmentValue;
     }
 
     @Override
     public @NotNull Ingredient getRepairIngredient() {
-        return repairIngredient.get();
+        return this.repairIngredient.get();
     }
 }

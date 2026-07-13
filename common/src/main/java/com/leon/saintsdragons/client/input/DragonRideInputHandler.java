@@ -4,7 +4,9 @@ import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import com.leon.saintsdragons.common.network.MessageDragonlordSwordAbility;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
@@ -96,6 +98,7 @@ public final class DragonRideInputHandler {
     private static boolean wasToggleMeleeDown = false;
     private static boolean wasPitchLockDown = false;
     private static boolean wasFlexDown = false;
+    private static boolean wasDragonlordAbilityDown = false;
     private static int volitansTertiaryHoldTicks = 0;
     private static boolean volitansBreathActive = false;
     private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
@@ -137,16 +140,26 @@ public final class DragonRideInputHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) {
+            wasDragonlordAbilityDown = false;
             resetStateTracking();
             return;
         }
 
         Entity vehicle = player.getVehicle();
+        boolean dragonlordAbilityDown = DRAGON_PRIMARY_ABILITY.isDown();
         if (!(vehicle instanceof RideableDragonBase dragon) || !dragon.canBeControlledBy(player)) {
+            if (mc.screen == null
+                    && dragonlordAbilityDown
+                    && !wasDragonlordAbilityDown
+                    && player.getMainHandItem().is(ModItems.DRAGONLORD_SWORD.get())) {
+                NetworkHandler.sendToServer(MessageDragonlordSwordAbility.INSTANCE);
+            }
+            wasDragonlordAbilityDown = dragonlordAbilityDown;
             resetStateTracking();
             return;
         }
 
+        wasDragonlordAbilityDown = dragonlordAbilityDown;
         handleControls(mc, player, dragon);
     }
 

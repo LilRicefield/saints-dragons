@@ -21,6 +21,14 @@
                 "min": 1.0
               },
               "function": "minecraft:set_count"
+            },
+            {
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 0.0
+              },
+              "function": "minecraft:looting_enchant"
             }
           ],
           "name": "minecraft:salmon"
@@ -48,6 +56,14 @@
                 "min": 1.0
               },
               "function": "minecraft:set_count"
+            },
+            {
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 0.0
+              },
+              "function": "minecraft:looting_enchant"
             }
           ],
           "name": "minecraft:cod"
@@ -75,6 +91,14 @@
                 "min": 1.0
               },
               "function": "minecraft:set_count"
+            },
+            {
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 0.0
+              },
+              "function": "minecraft:looting_enchant"
             }
           ],
           "name": "minecraft:tropical_fish"
@@ -102,6 +126,14 @@
                 "min": 1.0
               },
               "function": "minecraft:set_count"
+            },
+            {
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 0.0
+              },
+              "function": "minecraft:looting_enchant"
             }
           ],
           "name": "minecraft:pufferfish"

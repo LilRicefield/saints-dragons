@@ -42,6 +42,10 @@ repositories {
         url = 'https://maven.terraformersmc.com/releases/'
     }
     maven {
+        name = 'JamiesWhiteShirt'
+        url = 'https://maven.jamieswhiteshirt.com/libs-release/'
+    }
+    maven {
         name = 'GeckoLib'
         url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
@@ -57,6 +61,7 @@ dependencies {
 
     modImplementation "net.fabricmc:fabric-loader:$rootProject.fabric_loader_version"
     modImplementation "net.fabricmc.fabric-api:fabric-api:$rootProject.fabric_api_version"
+    modImplementation include("com.jamieswhiteshirt:reach-entity-attributes:2.4.0")
     modImplementation("software.bernie.geckolib:geckolib-fabric-${minecraft_version}:${geckolib_version}")
     modApi include("me.shedaniel.cloth:cloth-config-fabric:${rootProject.cloth_config_version}") {
         exclude group: "net.fabricmc.fabric-api"

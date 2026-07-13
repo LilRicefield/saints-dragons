@@ -50,6 +50,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     private int processingTimeTotal;
     private boolean processingLocked;
     private boolean canStartProcessing;
+    private boolean continueProcessing;
     private int processingRequiredHeatLevel;
     private int processingFuelCost;
     private int processingFuelSpent;
@@ -128,7 +129,14 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             changed = true;
             if (crucible.processingProgress >= crucible.processingTimeTotal
                     && crucible.canAcceptResult(crucible.pendingResult)) {
-                crucible.finishProcessing(level);
+                crucible.finishProcessing();
+                changed = true;
+            }
+        }
+
+        if (crucible.continueProcessing && !crucible.processingLocked) {
+            crucible.continueProcessing = false;
+            if (crucible.startProcessing(level)) {
                 changed = true;
             }
         }
@@ -147,6 +155,10 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     }
 
     public boolean beginProcessing(Level level) {
+        return startProcessing(level);
+    }
+
+    private boolean startProcessing(Level level) {
         if (this.processingLocked) {
             return false;
         }
@@ -291,7 +303,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     private SimpleContainer createGridView() {
         SimpleContainer grid = new SimpleContainer(INPUT_SLOT_COUNT);
         for (int slot = 0; slot < INPUT_SLOT_COUNT; slot++) {
-            grid.setItem(slot, this.items.get(INPUT_SLOT_START + slot));
+            grid.setItem(slot, this.items.get(INPUT_SLOT_START + slot).copy());
         }
         return grid;
     }
@@ -341,19 +353,17 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
 
     private void consumeJobInputs(CrucibleJob job) {
         if (job.shapedRecipe() != null) {
-            NonNullList<net.minecraft.world.item.crafting.Ingredient> ingredients =
-                    job.shapedRecipe().getIngredients();
+            SimpleContainer consumedGrid = createGridView();
+            job.shapedRecipe().consumeInputs(consumedGrid);
             for (int gridSlot = 0; gridSlot < INPUT_SLOT_COUNT; gridSlot++) {
-                if (!ingredients.get(gridSlot).isEmpty()) {
-                    this.items.get(INPUT_SLOT_START + gridSlot).shrink(1);
-                }
+                this.items.set(INPUT_SLOT_START + gridSlot, consumedGrid.getItem(gridSlot));
             }
         } else {
             this.items.get(job.inputSlot()).shrink(1);
         }
     }
 
-    private void finishProcessing(Level level) {
+    private void finishProcessing() {
         ItemStack output = this.items.get(OUTPUT_SLOT);
         if (output.isEmpty()) {
             this.items.set(OUTPUT_SLOT, this.pendingResult.copy());
@@ -369,7 +379,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         this.processingFuelSpent = 0;
         this.pendingResult = ItemStack.EMPTY;
         this.processingLocked = false;
-        beginProcessing(level);
+        this.continueProcessing = true;
     }
 
     public ContainerData getData() {

@@ -11,6 +11,14 @@
               "add": false,
               "count": 2.0,
               "function": "minecraft:set_count"
+            },
+            {
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 0.0
+              },
+              "function": "minecraft:looting_enchant"
             }
           ],
           "name": "saintsdragons:raevyx_wingtalon"
@@ -32,6 +40,14 @@
                 "min": 1.0
               },
               "function": "minecraft:set_count"
+            },
+            {
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 1.0,
+                "min": 0.0
+              },
+              "function": "minecraft:looting_enchant"
             }
           ],
           "name": "saintsdragons:raevyx_wing_hide"

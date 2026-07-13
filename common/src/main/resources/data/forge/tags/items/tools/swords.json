@@ -1,6 +1,8 @@
 {
   "replace": false,
   "values": [
-    "saintsdragons:worldroot_sword"
+    "saintsdragons:worldroot_sword",
+    "saintsdragons:blood_tempest_katana",
+    "saintsdragons:dragonlord_sword"
   ]
 }

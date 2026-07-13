@@ -1,0 +1,25 @@
+{
+  "type": "saintsdragons:draconic_crucible",
+  "pattern": [
+    "WAW",
+    "S S",
+    "   "
+  ],
+  "key": {
+    "A": {
+      "item": "saintsdragons:dragonheart_alloy"
+    },
+    "S": {
+      "item": "saintsdragons:ignivorus_scale"
+    },
+    "W": {
+      "item": "saintsdragons:ignivorus_wing_hide"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:dragonlord_helmet",
+    "count": 1
+  },
+  "required_heat_level": 3,
+  "processing_time": 1800
+}

@@ -74,6 +74,22 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerServerbound(
+                MessageDragonlordSwordAbility.class,
+                id("dragonlord_sword_ability"),
+                MessageDragonlordSwordAbility::encode,
+                MessageDragonlordSwordAbility::decode,
+                MessageDragonlordSwordAbility::handle
+        );
+
+        NETWORK.registerServerbound(
+                MessageBloodTempestDodge.class,
+                id("blood_tempest_dodge"),
+                MessageBloodTempestDodge::encode,
+                MessageBloodTempestDodge::decode,
+                MessageBloodTempestDodge::handle
+        );
+
+        NETWORK.registerServerbound(
                 MessageDialogueChoice.class,
                 id("dialogue_choice"),
                 MessageDialogueChoice::encode,

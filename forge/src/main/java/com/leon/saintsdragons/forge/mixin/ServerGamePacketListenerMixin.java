@@ -26,10 +26,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(ServerGamePacketListenerImpl.class)
 public abstract class ServerGamePacketListenerMixin {
-
-    @Unique
-    private static final double ATTACK_REACH = 6.0; // Player attack reach
-
     @Shadow
     public ServerPlayer player;
 
@@ -110,7 +106,7 @@ public abstract class ServerGamePacketListenerMixin {
     private ForgeDragonPart saintsdragons$findHitPartEntity(ServerLevel level) {
         Vec3 eyePos = player.getEyePosition();
         Vec3 lookVec = player.getLookAngle();
-        Vec3 reachPos = eyePos.add(lookVec.scale(ATTACK_REACH));
+        Vec3 reachPos = eyePos.add(lookVec.scale(player.getEntityReach()));
 
         ForgeDragonPart closestPart = null;
         double closestDistance = Double.MAX_VALUE;

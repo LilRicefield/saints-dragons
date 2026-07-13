@@ -1,5 +1,9 @@
 package com.leon.saintsdragons.fabric.platform;
 
+import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.Multimap;
+import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
+import com.leon.saintsdragons.common.item.tools.DragonheartSwordItem;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
 import com.leon.saintsdragons.platform.PlatformHelper;
@@ -9,9 +13,13 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
+import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.sounds.SoundEvent;
 
@@ -110,6 +118,23 @@ public final class FabricPlatformHelper implements PlatformHelper {
     }
 
     @Override
+    public Item createDragonheartSword(Tier tier,
+                                       int attackDamageModifier,
+                                       float attackSpeedModifier,
+                                       double entityReach,
+                                       float criticalDamageBonus,
+                                       Item.Properties properties) {
+        return new FabricDragonheartSwordItem(
+                tier,
+                attackDamageModifier,
+                attackSpeedModifier,
+                entityReach,
+                criticalDamageBonus,
+                properties
+        );
+    }
+
+    @Override
     public Item createMobBucket(Supplier<? extends EntityType<? extends Mob>> entityType,
                                 Fluid fluid,
                                 SoundEvent emptySound,
@@ -125,6 +150,50 @@ public final class FabricPlatformHelper implements PlatformHelper {
     private static final class SimpleParticleTypeImpl extends net.minecraft.core.particles.SimpleParticleType {
         private SimpleParticleTypeImpl(boolean overrideLimiter) {
             super(overrideLimiter);
+        }
+    }
+
+    private static final class FabricDragonheartSwordItem extends DragonheartSwordItem {
+        // Align Reach Entity Attributes' in-game attack distance with Forge's hitbox-based reach.
+        private static final double REACH_ALIGNMENT = 2.0D;
+
+        private FabricDragonheartSwordItem(Tier tier,
+                                           int attackDamageModifier,
+                                           float attackSpeedModifier,
+                                           double entityReach,
+                                           float criticalDamageBonus,
+                                           Properties properties) {
+            super(tier, attackDamageModifier, attackSpeedModifier, entityReach, criticalDamageBonus, properties);
+        }
+
+        @Override
+        public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+            Multimap<Attribute, AttributeModifier> modifiers = super.getDefaultAttributeModifiers(slot);
+            if (slot != EquipmentSlot.MAINHAND) {
+                return modifiers;
+            }
+
+            ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
+            builder.putAll(modifiers);
+            builder.put(
+                    ReachEntityAttributes.REACH,
+                    new AttributeModifier(
+                            TARGETING_REACH_MODIFIER_UUID,
+                            "Dragonheart weapon targeting reach",
+                            this.getTargetingReachBonus() + REACH_ALIGNMENT,
+                            AttributeModifier.Operation.ADDITION
+                    )
+            );
+            builder.put(
+                    ReachEntityAttributes.ATTACK_RANGE,
+                    new AttributeModifier(
+                            ENTITY_REACH_MODIFIER_UUID,
+                            "Dragonheart weapon reach",
+                            this.getEntityReachBonus() + REACH_ALIGNMENT,
+                            AttributeModifier.Operation.ADDITION
+                    )
+            );
+            return builder.build();
         }
     }
 

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.item.*;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
+import com.leon.saintsdragons.common.item.tools.DragonheartWeaponTier;
 import com.leon.saintsdragons.common.item.tools.WorldrootTier;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
@@ -158,6 +159,18 @@ public class ModItems {
     public static final Supplier<Item> WORLDROOT_SWORD =
             REGISTER.register("worldroot_sword",
                     () -> new SwordItem(WorldrootTier.INSTANCE, 3, -2.4F, new Item.Properties()));
+
+    public static final Supplier<Item> BLOOD_TEMPEST_KATANA =
+            REGISTER.register("blood_tempest_katana",
+                    () -> Services.PLATFORM.createDragonheartSword(
+                            DragonheartWeaponTier.CHUNK, 3, -1.0F, 5.0D, 0.8F,
+                            new Item.Properties().rarity(Rarity.RARE)));
+
+    public static final Supplier<Item> DRAGONLORD_SWORD =
+            REGISTER.register("dragonlord_sword",
+                    () -> Services.PLATFORM.createDragonheartSword(
+                            DragonheartWeaponTier.ALLOY, 5, -2.6F, 7.0D, 0.0F,
+                            new Item.Properties().rarity(Rarity.EPIC).fireResistant()));
 
     public static final Supplier<Item> WORLDROOT_PICKAXE =
             REGISTER.register("worldroot_pickaxe",
