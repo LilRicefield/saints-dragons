@@ -60,6 +60,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_DOUBLE_JUMP = registerSound("dragonlord_armor_double_jump");
     public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_IMPACT = registerSound("dragonlord_armor_impact");
     public static final Supplier<SoundEvent> BLOOD_TEMPEST_ARMOR_DODGE = registerSound("blood_tempest_armor_dodge");
+    public static final Supplier<SoundEvent> BLOOD_TEMPEST_ARMOR_ABILITY = registerSound("blood_tempest_armor_ability");
 
     // Draconian Swarm
     public static final Supplier<SoundEvent> LATCHER_BITE = registerSound("latcher_bite");

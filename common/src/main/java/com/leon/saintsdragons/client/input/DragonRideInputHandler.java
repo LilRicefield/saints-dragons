@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import com.leon.saintsdragons.common.network.MessageBloodTempestKatanaAbility;
 import com.leon.saintsdragons.common.network.MessageDragonlordSwordAbility;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModItems;
@@ -98,7 +99,7 @@ public final class DragonRideInputHandler {
     private static boolean wasToggleMeleeDown = false;
     private static boolean wasPitchLockDown = false;
     private static boolean wasFlexDown = false;
-    private static boolean wasDragonlordAbilityDown = false;
+    private static boolean wasHeldAbilityDown = false;
     private static int volitansTertiaryHoldTicks = 0;
     private static boolean volitansBreathActive = false;
     private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
@@ -140,26 +141,29 @@ public final class DragonRideInputHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) {
-            wasDragonlordAbilityDown = false;
+            wasHeldAbilityDown = false;
             resetStateTracking();
             return;
         }
 
         Entity vehicle = player.getVehicle();
-        boolean dragonlordAbilityDown = DRAGON_PRIMARY_ABILITY.isDown();
+        boolean heldAbilityDown = DRAGON_PRIMARY_ABILITY.isDown();
         if (!(vehicle instanceof RideableDragonBase dragon) || !dragon.canBeControlledBy(player)) {
             if (mc.screen == null
-                    && dragonlordAbilityDown
-                    && !wasDragonlordAbilityDown
-                    && player.getMainHandItem().is(ModItems.DRAGONLORD_SWORD.get())) {
-                NetworkHandler.sendToServer(MessageDragonlordSwordAbility.INSTANCE);
+                    && heldAbilityDown
+                    && !wasHeldAbilityDown) {
+                if (player.getMainHandItem().is(ModItems.DRAGONLORD_SWORD.get())) {
+                    NetworkHandler.sendToServer(MessageDragonlordSwordAbility.INSTANCE);
+                } else if (player.getMainHandItem().is(ModItems.BLOOD_TEMPEST_KATANA.get())) {
+                    NetworkHandler.sendToServer(MessageBloodTempestKatanaAbility.INSTANCE);
+                }
             }
-            wasDragonlordAbilityDown = dragonlordAbilityDown;
+            wasHeldAbilityDown = heldAbilityDown;
             resetStateTracking();
             return;
         }
 
-        wasDragonlordAbilityDown = dragonlordAbilityDown;
+        wasHeldAbilityDown = heldAbilityDown;
         handleControls(mc, player, dragon);
     }
 

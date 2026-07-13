@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.entity.effect.raevyx;
+package com.leon.saintsdragons.server.entity.effect;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import net.minecraft.core.Rotations;
@@ -16,26 +16,33 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-public class RaevyxGroundRendTrailEntity extends Entity {
+public class LightningVisualEntity extends Entity {
     private static final EntityDataAccessor<Rotations> START_OFFSET =
-            SynchedEntityData.defineId(RaevyxGroundRendTrailEntity.class, EntityDataSerializers.ROTATIONS);
+            SynchedEntityData.defineId(LightningVisualEntity.class, EntityDataSerializers.ROTATIONS);
     private static final EntityDataAccessor<Rotations> END_OFFSET =
-            SynchedEntityData.defineId(RaevyxGroundRendTrailEntity.class, EntityDataSerializers.ROTATIONS);
+            SynchedEntityData.defineId(LightningVisualEntity.class, EntityDataSerializers.ROTATIONS);
     private static final EntityDataAccessor<Float> VISUAL_SCALE =
-            SynchedEntityData.defineId(RaevyxGroundRendTrailEntity.class, EntityDataSerializers.FLOAT);
+            SynchedEntityData.defineId(LightningVisualEntity.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> MAX_AGE =
-            SynchedEntityData.defineId(RaevyxGroundRendTrailEntity.class, EntityDataSerializers.INT);
+            SynchedEntityData.defineId(LightningVisualEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> RENDER_SEED =
-            SynchedEntityData.defineId(RaevyxGroundRendTrailEntity.class, EntityDataSerializers.INT);
+            SynchedEntityData.defineId(LightningVisualEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> VISUAL_STYLE =
+            SynchedEntityData.defineId(LightningVisualEntity.class, EntityDataSerializers.INT);
 
-    public RaevyxGroundRendTrailEntity(EntityType<? extends RaevyxGroundRendTrailEntity> type, Level level) {
+    public LightningVisualEntity(EntityType<? extends LightningVisualEntity> type, Level level) {
         super(type, level);
         this.blocksBuilding = false;
         this.noPhysics = true;
         this.noCulling = true;
     }
 
-    public RaevyxGroundRendTrailEntity(Level level, Vec3 start, Vec3 end, float visualScale, int maxAge, long seed) {
+    public LightningVisualEntity(Level level, Vec3 start, Vec3 end, float visualScale, int maxAge, long seed) {
+        this(level, start, end, visualScale, maxAge, seed, VisualStyle.RAEVYX);
+    }
+
+    public LightningVisualEntity(Level level, Vec3 start, Vec3 end, float visualScale,
+                                 int maxAge, long seed, VisualStyle visualStyle) {
         this(ModEntities.RAEVYX_GROUND_REND_TRAIL.get(), level);
         Vec3 midpoint = start.lerp(end, 0.5D);
         this.setPos(midpoint.x, midpoint.y, midpoint.z);
@@ -46,6 +53,7 @@ public class RaevyxGroundRendTrailEntity extends Entity {
         this.setVisualScale(visualScale);
         this.setMaxAge(maxAge);
         this.setRenderSeed((int)(seed ^ (seed >>> 32)));
+        this.setVisualStyle(visualStyle);
     }
 
     @Override
@@ -55,6 +63,7 @@ public class RaevyxGroundRendTrailEntity extends Entity {
         this.entityData.define(VISUAL_SCALE, 0.5F);
         this.entityData.define(MAX_AGE, 4);
         this.entityData.define(RENDER_SEED, 0);
+        this.entityData.define(VISUAL_STYLE, VisualStyle.RAEVYX.ordinal());
     }
 
     public void setSegment(Vec3 startOffset, Vec3 endOffset) {
@@ -92,6 +101,15 @@ public class RaevyxGroundRendTrailEntity extends Entity {
 
     public void setRenderSeed(int renderSeed) {
         this.entityData.set(RENDER_SEED, renderSeed);
+    }
+
+    public VisualStyle getVisualStyle() {
+        return VisualStyle.byId(this.entityData.get(VISUAL_STYLE));
+    }
+
+    public void setVisualStyle(VisualStyle visualStyle) {
+        this.entityData.set(VISUAL_STYLE,
+                visualStyle == null ? VisualStyle.RAEVYX.ordinal() : visualStyle.ordinal());
     }
 
     public float getRenderAlpha(float partialTick) {
@@ -139,6 +157,7 @@ public class RaevyxGroundRendTrailEntity extends Entity {
         tag.putFloat("Scale", this.getVisualScale());
         tag.putInt("MaxAge", this.getMaxAge());
         tag.putInt("Seed", this.getRenderSeed());
+        tag.putInt("VisualStyle", this.getVisualStyle().ordinal());
     }
 
     @Override
@@ -150,6 +169,7 @@ public class RaevyxGroundRendTrailEntity extends Entity {
         this.setVisualScale(tag.getFloat("Scale"));
         this.setMaxAge(tag.getInt("MaxAge"));
         this.setRenderSeed(tag.getInt("Seed"));
+        this.setVisualStyle(VisualStyle.byId(tag.getInt("VisualStyle")));
         this.noPhysics = true;
         this.noCulling = true;
     }
@@ -165,5 +185,17 @@ public class RaevyxGroundRendTrailEntity extends Entity {
 
     private static Vec3 fromRotations(Rotations rotations) {
         return new Vec3(rotations.getX(), rotations.getY(), rotations.getZ());
+    }
+
+    public enum VisualStyle {
+        RAEVYX,
+        BLOOD_TEMPEST,
+        BLOOD_TEMPEST_SLASH,
+        BLOOD_TEMPEST_STORM;
+
+        private static VisualStyle byId(int id) {
+            VisualStyle[] values = values();
+            return id >= 0 && id < values.length ? values[id] : RAEVYX;
+        }
     }
 }

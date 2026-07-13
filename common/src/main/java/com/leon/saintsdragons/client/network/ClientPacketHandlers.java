@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.client.network;
 
+import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
+import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
+import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSonicRingTrail;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
@@ -7,6 +10,7 @@ import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueScreen;
 import com.leon.saintsdragons.client.ui.dialogue.IvyDialogueResumeQueue;
 import com.leon.saintsdragons.client.ui.codex.CodexDragonEntry;
+import com.leon.saintsdragons.common.network.BloodTempestAfterimageProfile;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexList;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
@@ -14,7 +18,7 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
-import com.leon.saintsdragons.common.network.MessageBloodTempestDodgeEffect;
+import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
 import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
@@ -94,8 +98,21 @@ public final class ClientPacketHandlers {
         );
     }
 
-    public static void handleBloodTempestDodgeEffect(MessageBloodTempestDodgeEffect message) {
-        com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail.start(message.entityId());
+    public static void handleBloodTempestAfterimage(MessageBloodTempestAfterimage message) {
+        com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail.start(
+                message.entityId(), message.profile(), message.origin(), message.destination());
+
+        Minecraft minecraft = Minecraft.getInstance();
+        if (message.profile() == BloodTempestAfterimageProfile.KATANA_DASH
+                && message.destination() != null
+                && message.origin() != null) {
+            BloodTempestSonicRingTrail.start(
+                    message.entityId(), message.origin(), message.destination());
+            if (minecraft.player != null && minecraft.player.getId() == message.entityId()) {
+                BloodTempestKatanaVisuals.startZip();
+                ClientCameraImpulse.trigger(1.0F, 7);
+            }
+        }
     }
 
     public static void handleSwarmBattleMusic(MessageSwarmBattleMusic message) {

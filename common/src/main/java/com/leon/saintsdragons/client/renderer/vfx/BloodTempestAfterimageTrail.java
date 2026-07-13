@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
+import com.leon.saintsdragons.common.network.BloodTempestAfterimageProfile;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.CameraType;
@@ -18,12 +19,7 @@ import java.util.Map;
 
 @Environment(EnvType.CLIENT)
 public final class BloodTempestAfterimageTrail {
-    private static final int CAPTURE_TICKS = 6;
-    private static final int SETTLE_TICKS = 8;
-    private static final int ECHO_COUNT = 3;
-    private static final int HISTORY_LIMIT = ECHO_COUNT + 3;
     private static final double MIN_RENDER_DISTANCE_SQUARED = 0.35D * 0.35D;
-    private static final float[] ECHO_ALPHA = {0.42F, 0.27F, 0.14F};
 
     private static final Map<Integer, Trail> TRAILS = new HashMap<>();
     private static Level activeLevel;
@@ -31,9 +27,10 @@ public final class BloodTempestAfterimageTrail {
     private BloodTempestAfterimageTrail() {
     }
 
-    public static void start(int entityId) {
+    public static void start(int entityId, BloodTempestAfterimageProfile profile,
+                             Vec3 origin, Vec3 destination) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
+        if (minecraft.level == null || profile == null) {
             return;
         }
 
@@ -42,7 +39,11 @@ public final class BloodTempestAfterimageTrail {
             return;
         }
 
-        TRAILS.put(entityId, new Trail(player.position()));
+        ProfileSpec profileSpec = ProfileSpec.forProfile(profile);
+        Trail trail = origin != null && destination != null
+                ? Trail.fixedPath(origin, destination, profileSpec)
+                : new Trail(player.position(), profileSpec);
+        TRAILS.put(entityId, trail);
         activeLevel = minecraft.level;
     }
 
@@ -101,20 +102,38 @@ public final class BloodTempestAfterimageTrail {
 
     private static final class Trail {
         private final ArrayDeque<Vec3> history = new ArrayDeque<>();
-        private final List<SettledSnapshot> settled = new ArrayList<>(ECHO_COUNT);
-        private int captureTicks = CAPTURE_TICKS;
-        private int settleTicks = SETTLE_TICKS;
+        private final List<SettledSnapshot> settled;
+        private final ProfileSpec profile;
+        private int captureTicks;
+        private int settleTicks;
 
-        private Trail(Vec3 initialPosition) {
-            for (int i = 0; i < HISTORY_LIMIT; i++) {
+        private Trail(Vec3 initialPosition, ProfileSpec profile) {
+            this.profile = profile;
+            this.captureTicks = profile.captureTicks;
+            this.settleTicks = profile.settleTicks;
+            this.settled = new ArrayList<>(profile.echoAlpha.length);
+            for (int i = 0; i < profile.historyLimit(); i++) {
                 this.history.addLast(initialPosition);
             }
+        }
+
+        private static Trail fixedPath(Vec3 origin, Vec3 destination, ProfileSpec profile) {
+            Trail trail = new Trail(origin, profile);
+            trail.captureTicks = 0;
+            trail.settled.clear();
+            int echoCount = profile.echoAlpha.length;
+            for (int delay = 1; delay <= echoCount; delay++) {
+                double progress = 1.0D - delay / (double) (echoCount + 1);
+                trail.settled.add(new SettledSnapshot(
+                        origin.lerp(destination, progress), profile.echoAlpha[delay - 1]));
+            }
+            return trail;
         }
 
         private void tick(Vec3 position) {
             if (this.captureTicks > 0) {
                 this.history.addLast(position);
-                while (this.history.size() > HISTORY_LIMIT) {
+                while (this.history.size() > this.profile.historyLimit()) {
                     this.history.removeFirst();
                 }
 
@@ -139,7 +158,7 @@ public final class BloodTempestAfterimageTrail {
                 return List.of();
             }
 
-            float fade = this.settleTicks / (float) SETTLE_TICKS;
+            float fade = this.settleTicks / (float) this.profile.settleTicks;
             List<RenderedSnapshot> rendered = new ArrayList<>(this.settled.size());
             for (SettledSnapshot snapshot : this.settled) {
                 addIfVisible(rendered, snapshot.position, renderedPosition, snapshot.alpha * fade);
@@ -149,8 +168,8 @@ public final class BloodTempestAfterimageTrail {
 
         private List<RenderedSnapshot> renderMovingEchoes(Vec3 renderedPosition, float partialTick) {
             List<Vec3> positions = new ArrayList<>(this.history);
-            List<RenderedSnapshot> rendered = new ArrayList<>(ECHO_COUNT);
-            for (int delay = 1; delay <= ECHO_COUNT; delay++) {
+            List<RenderedSnapshot> rendered = new ArrayList<>(this.profile.echoAlpha.length);
+            for (int delay = 1; delay <= this.profile.echoAlpha.length; delay++) {
                 int toIndex = positions.size() - 1 - delay;
                 int fromIndex = toIndex - 1;
                 if (fromIndex < 0) {
@@ -158,7 +177,7 @@ public final class BloodTempestAfterimageTrail {
                 }
 
                 Vec3 ghostPosition = positions.get(fromIndex).lerp(positions.get(toIndex), partialTick);
-                addIfVisible(rendered, ghostPosition, renderedPosition, ECHO_ALPHA[delay - 1]);
+                addIfVisible(rendered, ghostPosition, renderedPosition, this.profile.echoAlpha[delay - 1]);
             }
             return rendered;
         }
@@ -166,12 +185,13 @@ public final class BloodTempestAfterimageTrail {
         private void settle() {
             List<Vec3> positions = new ArrayList<>(this.history);
             this.settled.clear();
-            for (int delay = 1; delay <= ECHO_COUNT; delay++) {
+            for (int delay = 1; delay <= this.profile.echoAlpha.length; delay++) {
                 int index = positions.size() - 1 - delay;
                 if (index < 0) {
                     break;
                 }
-                this.settled.add(new SettledSnapshot(positions.get(index), ECHO_ALPHA[delay - 1]));
+                this.settled.add(new SettledSnapshot(
+                        positions.get(index), this.profile.echoAlpha[delay - 1]));
             }
         }
 
@@ -185,6 +205,24 @@ public final class BloodTempestAfterimageTrail {
             if (offset.lengthSqr() >= MIN_RENDER_DISTANCE_SQUARED && alpha > 0.02F) {
                 rendered.add(new RenderedSnapshot(offset, alpha));
             }
+        }
+    }
+
+    private record ProfileSpec(int captureTicks, int settleTicks, float[] echoAlpha) {
+        private static final ProfileSpec ARMOR_DODGE = new ProfileSpec(
+                6, 8, new float[]{0.42F, 0.27F, 0.14F});
+        private static final ProfileSpec KATANA_DASH = new ProfileSpec(
+                0, 8, new float[]{0.58F, 0.43F, 0.30F, 0.18F, 0.10F});
+
+        private static ProfileSpec forProfile(BloodTempestAfterimageProfile profile) {
+            return switch (profile) {
+                case ARMOR_DODGE -> ARMOR_DODGE;
+                case KATANA_DASH -> KATANA_DASH;
+            };
+        }
+
+        private int historyLimit() {
+            return this.echoAlpha.length + 3;
         }
     }
 }

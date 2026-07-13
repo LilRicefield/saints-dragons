@@ -34,7 +34,7 @@ import com.leon.saintsdragons.server.entity.controller.raevyx.RaevyxRiderControl
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
-import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
+import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxDiveImpactAbility;
@@ -2451,7 +2451,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
         float size = 0.56F + this.random.nextFloat() * 0.14F;
         Vec3 midpoint = start.lerp(end, 0.5D);
-        server.addFreshEntity(new RaevyxGroundRendTrailEntity(server, start, end, size, GROUND_REND_BOLT_LIFETIME, this.random.nextLong()));
+        server.addFreshEntity(new LightningVisualEntity(server, start, end, size, GROUND_REND_BOLT_LIFETIME, this.random.nextLong()));
         server.sendParticles(
                 ParticleTypes.ELECTRIC_SPARK,
                 midpoint.x,

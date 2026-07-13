@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.client.camera.DragonDiveEffectIntensity;
+import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -15,7 +16,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public final class DragonDiveSpeedLineOverlay {
+public final class SpeedLineOverlay {
     private static final int MAX_LINES = 52;
     private static final float BASE_SPAWN_CHANCE = 0.38F;
     private static final float SPAWN_CHANCE_SCALE = 0.92F;
@@ -28,7 +29,9 @@ public final class DragonDiveSpeedLineOverlay {
     public void render(GuiGraphics graphics, int width, int height, float partialTicks) {
         Entity player = Minecraft.getInstance().player;
         Entity vehicle = player == null ? null : player.getVehicle();
-        float intensity = DragonDiveEffectIntensity.get(vehicle);
+        float intensity = Math.max(
+                DragonDiveEffectIntensity.get(vehicle),
+                BloodTempestKatanaVisuals.getSpeedLineIntensity(partialTicks));
         if (intensity <= 0.0F) {
             lines.clear();
             return;

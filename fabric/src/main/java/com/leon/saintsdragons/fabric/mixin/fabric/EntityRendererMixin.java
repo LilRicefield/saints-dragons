@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
+import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonFovHelper;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import net.minecraft.client.Camera;
@@ -35,33 +36,34 @@ public class EntityRendererMixin {
     @Inject(method = "getFov(Lnet/minecraft/client/Camera;FZ)D", at = @At("RETURN"), cancellable = true, require = 0)
     private void modifyFOV(Camera camera, float partialTicks, boolean useFOVSetting, CallbackInfoReturnable<Double> cir) {
         Minecraft mc = Minecraft.getInstance();
+        double resultFov = cir.getReturnValue();
         if (mc.player != null && mc.player.getVehicle() != null) {
             Entity vehicle = mc.player.getVehicle();
             if (!DragonFovHelper.shouldApply(vehicle)) {
                 saintsdragons$resetFovSmoothing();
-                return;
-            }
-
-            double targetFOVMultiplier = DragonFovHelper.getTargetMultiplier(vehicle);
-
-            double diff = targetFOVMultiplier - saint_sDragons$currentFOVMultiplier;
-            if (Math.abs(diff) > 0.001) {
-                double smoothing = saintsdragons$frameAdjustedSmoothing(FOV_TRANSITION_SPEED, saintsdragons$consumeFovFrameScale());
-                saint_sDragons$currentFOVMultiplier += diff * smoothing;
             } else {
-                saint_sDragons$currentFOVMultiplier = targetFOVMultiplier;
-            }
+                double targetFOVMultiplier = DragonFovHelper.getTargetMultiplier(vehicle);
 
-            double baseFOV = cir.getReturnValue();
-            if (!camera.isDetached()) {
-                baseFOV /= saintsdragons$getZoomifyDivisor(partialTicks);
+                double diff = targetFOVMultiplier - saint_sDragons$currentFOVMultiplier;
+                if (Math.abs(diff) > 0.001) {
+                    double smoothing = saintsdragons$frameAdjustedSmoothing(
+                            FOV_TRANSITION_SPEED, saintsdragons$consumeFovFrameScale());
+                    saint_sDragons$currentFOVMultiplier += diff * smoothing;
+                } else {
+                    saint_sDragons$currentFOVMultiplier = targetFOVMultiplier;
+                }
+
+                if (!camera.isDetached()) {
+                    resultFov /= saintsdragons$getZoomifyDivisor(partialTicks);
+                }
+                resultFov *= saint_sDragons$currentFOVMultiplier;
             }
-            double newFOV = baseFOV * saint_sDragons$currentFOVMultiplier;
-            
-            cir.setReturnValue(newFOV);
         } else {
             saintsdragons$resetFovSmoothing();
         }
+
+        resultFov *= BloodTempestKatanaVisuals.getFovMultiplier(partialTicks);
+        cir.setReturnValue(resultFov);
     }
 
     @Inject(method = "render", at = @At("HEAD"), require = 0)

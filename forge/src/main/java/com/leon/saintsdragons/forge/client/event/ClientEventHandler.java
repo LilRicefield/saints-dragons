@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.client.event;
 
+import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
@@ -91,6 +92,11 @@ public class ClientEventHandler {
             randomTremorOffsets[0] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[1] = (Math.random() - 0.5) * 2.0;
             randomTremorOffsets[2] = (Math.random() - 0.5) * 2.0;
+        }
+
+        ClientCameraImpulse.Offset impulse = ClientCameraImpulse.sample((float) event.getPartialTick());
+        if (impulse.active()) {
+            event.getCamera().move(impulse.forward(), impulse.vertical(), impulse.lateral());
         }
     }
 

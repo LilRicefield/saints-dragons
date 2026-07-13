@@ -82,6 +82,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerServerbound(
+                MessageBloodTempestKatanaAbility.class,
+                id("blood_tempest_katana_ability"),
+                MessageBloodTempestKatanaAbility::encode,
+                MessageBloodTempestKatanaAbility::decode,
+                MessageBloodTempestKatanaAbility::handle
+        );
+
+        NETWORK.registerServerbound(
                 MessageBloodTempestDodge.class,
                 id("blood_tempest_dodge"),
                 MessageBloodTempestDodge::encode,
@@ -146,11 +154,11 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
-                MessageBloodTempestDodgeEffect.class,
-                id("blood_tempest_dodge_effect"),
-                MessageBloodTempestDodgeEffect::encode,
-                MessageBloodTempestDodgeEffect::decode,
-                MessageBloodTempestDodgeEffect::handle
+                MessageBloodTempestAfterimage.class,
+                id("blood_tempest_afterimage"),
+                MessageBloodTempestAfterimage::encode,
+                MessageBloodTempestAfterimage::decode,
+                MessageBloodTempestAfterimage::handle
         );
 
         NETWORK.registerClientbound(

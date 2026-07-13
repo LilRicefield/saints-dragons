@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.client.event;
 
+import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
@@ -73,6 +74,12 @@ public class FabricClientEventHandler {
 
         // Screen shake detection and application
         applyScreenShake(camera, player, partialTicks);
+
+        ClientCameraImpulse.Offset impulse = ClientCameraImpulse.sample(partialTicks);
+        if (impulse.active()) {
+            ((CameraAccessor) camera).saintsdragons$invokeMove(
+                    impulse.forward(), impulse.vertical(), impulse.lateral());
+        }
     }
 
     private static void applyDiveCameraWobble(Camera camera, Entity vehicle, float partialTicks) {

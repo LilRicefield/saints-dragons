@@ -1,7 +1,8 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.network.BloodTempestDodgeDirection;
-import com.leon.saintsdragons.common.network.MessageBloodTempestDodgeEffect;
+import com.leon.saintsdragons.common.network.BloodTempestAfterimageProfile;
+import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
@@ -79,7 +80,8 @@ public final class BloodTempestArmorSetBonus {
         player.hurtMarked = true;
         player.connection.send(new ClientboundSetEntityMotionPacket(player));
 
-        MessageBloodTempestDodgeEffect effect = new MessageBloodTempestDodgeEffect(player.getId());
+        MessageBloodTempestAfterimage effect = new MessageBloodTempestAfterimage(
+                player.getId(), BloodTempestAfterimageProfile.ARMOR_DODGE);
         NetworkHandler.sendToTracking(player, effect);
         NetworkHandler.sendToPlayer(player, effect);
 

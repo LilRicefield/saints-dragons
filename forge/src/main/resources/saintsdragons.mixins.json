@@ -6,6 +6,7 @@
     "IgnivorusMultipartMixin",
     "NameTagItemMixin",
     "PathfinderMobMixin",
+    "PlayerMixin",
     "RangedAttributeAccessor",
     "ServerboundInteractPacketAccessor",
     "ServerGamePacketListenerMixin"

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.mixin.client;
 
+import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonFovHelper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -26,23 +27,23 @@ public class EntityRendererMixin {
             Entity vehicle = mc.player.getVehicle();
             if (!DragonFovHelper.shouldApply(vehicle)) {
                 saint_sDragons$currentFOVMultiplier = 1.0;
-                return;
-            }
-
-            double targetFOVMultiplier = DragonFovHelper.getTargetMultiplier(vehicle);
-
-            double diff = targetFOVMultiplier - saint_sDragons$currentFOVMultiplier;
-            if (Math.abs(diff) > 0.001) {
-                saint_sDragons$currentFOVMultiplier += diff * FOV_TRANSITION_SPEED;
             } else {
-                saint_sDragons$currentFOVMultiplier = targetFOVMultiplier;
-            }
+                double targetFOVMultiplier = DragonFovHelper.getTargetMultiplier(vehicle);
 
-            double baseFOV = cir.getReturnValue();
-            double newFOV = baseFOV * saint_sDragons$currentFOVMultiplier;
-            cir.setReturnValue(newFOV);
+                double diff = targetFOVMultiplier - saint_sDragons$currentFOVMultiplier;
+                if (Math.abs(diff) > 0.001) {
+                    saint_sDragons$currentFOVMultiplier += diff * FOV_TRANSITION_SPEED;
+                } else {
+                    saint_sDragons$currentFOVMultiplier = targetFOVMultiplier;
+                }
+
+                cir.setReturnValue(cir.getReturnValue() * saint_sDragons$currentFOVMultiplier);
+            }
         } else {
             saint_sDragons$currentFOVMultiplier = 1.0;
         }
+
+        cir.setReturnValue(cir.getReturnValue()
+                * BloodTempestKatanaVisuals.getFovMultiplier(partialTicks));
     }
 }

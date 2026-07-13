@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.fabric.client;
 
 import com.leon.saintsdragons.client.ui.DragonRideHealthBar;
-import com.leon.saintsdragons.client.ui.DragonDiveSpeedLineOverlay;
+import com.leon.saintsdragons.client.ui.SpeedLineOverlay;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.client.ui.FireballChargeIndicator;
 import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
@@ -31,7 +31,7 @@ public final class FabricDragonUI {
     private static final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
     private static final VolitansBreathMeterIndicator volitansBreathMeterIndicator = new VolitansBreathMeterIndicator();
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
-    private static final DragonDiveSpeedLineOverlay diveSpeedLineOverlay = new DragonDiveSpeedLineOverlay();
+    private static final SpeedLineOverlay diveSpeedLineOverlay = new SpeedLineOverlay();
 
     private static final KeyMapping TOGGLE_DRAGON_UI = new KeyMapping(
             "key.saintsdragons.toggle_dragon_ui",

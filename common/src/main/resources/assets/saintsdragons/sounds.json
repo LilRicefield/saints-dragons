@@ -441,7 +441,18 @@
         "name": "saintsdragons:armor/blood_tempest_armor/blood_tempest_armor_dodge",
         "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 24
+        "attenuation_distance": 48
+      }
+    ]
+  },
+  "blood_tempest_armor_ability": {
+    "subtitle": "subtitles.saintsdragons.blood_tempest_armor_ability",
+    "sounds": [
+      {
+        "name": "saintsdragons:armor/blood_tempest_armor/blood_tempest_armor_ability",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 62
       }
     ]
   },

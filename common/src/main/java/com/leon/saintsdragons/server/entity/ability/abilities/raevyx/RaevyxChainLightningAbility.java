@@ -4,9 +4,10 @@ import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
-import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
+import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.OwnableEntity;
@@ -39,6 +40,11 @@ public final class RaevyxChainLightningAbility {
                 BITE_CHAIN_FALLOFF, true);
     }
 
+    public static void chainFromKatana(ServerPlayer player, LivingEntity start) {
+        chainFromTarget(player, start, BITE_CHAIN_DAMAGE, BITE_CHAIN_RADIUS, BITE_CHAIN_JUMPS,
+                BITE_CHAIN_FALLOFF, true);
+    }
+
     public static void chainFromImpact(Raevyx wyvern, Vec3 origin, Collection<LivingEntity> impactTargets, double power) {
         LivingEntity start = nearestTarget(origin, impactTargets);
         if (start == null) {
@@ -50,9 +56,9 @@ public final class RaevyxChainLightningAbility {
                 IMPACT_CHAIN_FALLOFF, true);
     }
 
-    private static void chainFromTarget(Raevyx wyvern, LivingEntity start, float baseDamage, double radius,
+    private static void chainFromTarget(LivingEntity caster, LivingEntity start, float baseDamage, double radius,
                                         int maxJumps, float falloff, boolean dischargeIfBlocked) {
-        if (!(wyvern.level() instanceof ServerLevel)) {
+        if (!(caster.level() instanceof ServerLevel)) {
             return;
         }
 
@@ -64,17 +70,17 @@ public final class RaevyxChainLightningAbility {
         boolean jumped = false;
 
         for (int i = 0; i < maxJumps; i++) {
-            LivingEntity next = findNearestChainTarget(wyvern, centerOf(current), hit, radius);
+            LivingEntity next = findNearestChainTarget(caster, centerOf(current), hit, radius);
             if (next == null) {
                 if (!jumped && dischargeIfBlocked) {
-                    dischargeInto(wyvern, current, damage);
+                    dischargeInto(caster, current, damage);
                 }
                 return;
             }
 
-            hurtWithLightning(wyvern, next, damage);
-            wyvern.noteAggroFrom(next);
-            spawnArc(wyvern, centerOf(current), centerOf(next));
+            hurtWithLightning(caster, next, damage);
+            noteDragonAggro(caster, next);
+            spawnArc(caster, centerOf(current), centerOf(next));
 
             hit.add(next);
             current = next;
@@ -96,14 +102,14 @@ public final class RaevyxChainLightningAbility {
         return best;
     }
 
-    private static LivingEntity findNearestChainTarget(Raevyx wyvern, Vec3 origin, Set<LivingEntity> exclude,
+    private static LivingEntity findNearestChainTarget(LivingEntity caster, Vec3 origin, Set<LivingEntity> exclude,
                                                        double radius) {
         AABB area = new AABB(origin, origin).inflate(radius, radius, radius);
         LivingEntity best = null;
         double bestDistance = Double.MAX_VALUE;
-        for (LivingEntity target : wyvern.level().getEntitiesOfClass(LivingEntity.class, area,
+        for (LivingEntity target : caster.level().getEntitiesOfClass(LivingEntity.class, area,
                 entity -> distanceToSqr(entity.getBoundingBox(), origin) <= radius * radius)) {
-            if (!isValidChainTarget(wyvern, target, exclude)) {
+            if (!isValidChainTarget(caster, target, exclude)) {
                 continue;
             }
             double distance = distanceToSqr(target.getBoundingBox(), origin);
@@ -115,43 +121,61 @@ public final class RaevyxChainLightningAbility {
         return best;
     }
 
-    private static boolean isValidChainTarget(Raevyx wyvern, LivingEntity target, Set<LivingEntity> exclude) {
+    private static boolean isValidChainTarget(LivingEntity caster, LivingEntity target, Set<LivingEntity> exclude) {
         return target != null
-                && target != wyvern
+                && target != caster
                 && !exclude.contains(target)
                 && target.isAlive()
                 && target.attackable()
-                && !wyvern.isAlly(target)
+                && !isAllied(caster, target)
                 && !isProtectedTamedPet(target)
                 && !DragonElementalImmunity.isElectricityImmune(target);
     }
 
-    private static void dischargeInto(Raevyx wyvern, LivingEntity target, float damage) {
+    private static void dischargeInto(LivingEntity caster, LivingEntity target, float damage) {
         Vec3 center = centerOf(target);
-        if (isValidDischargeTarget(wyvern, target)) {
-            hurtWithLightning(wyvern, target, damage);
-            wyvern.noteAggroFrom(target);
+        if (isValidDischargeTarget(caster, target)) {
+            hurtWithLightning(caster, target, damage);
+            noteDragonAggro(caster, target);
         }
-        spawnArc(wyvern, center.add(0.0D, 0.35D, 0.0D), center);
-        spawnContainedBurst(wyvern, center);
+        spawnArc(caster, center.add(0.0D, 0.35D, 0.0D), center);
+        if (!(caster instanceof ServerPlayer)) {
+            spawnContainedBurst(caster, center);
+        }
     }
 
-    private static boolean isValidDischargeTarget(Raevyx wyvern, LivingEntity target) {
+    private static boolean isValidDischargeTarget(LivingEntity caster, LivingEntity target) {
         return target != null
-                && target != wyvern
+                && target != caster
                 && target.isAlive()
                 && target.attackable()
-                && !wyvern.isAlly(target)
+                && !isAllied(caster, target)
                 && !isProtectedTamedPet(target)
                 && !DragonElementalImmunity.isElectricityImmune(target);
     }
 
-    private static void hurtWithLightning(Raevyx wyvern, LivingEntity target, float damage) {
-        float scaledDamage = damage * wyvern.getDamageMultiplier();
-        DamageSource source = target instanceof DragonEntity
-                ? wyvern.level().damageSources().mobAttack(wyvern)
-                : wyvern.level().damageSources().lightningBolt();
+    private static void hurtWithLightning(LivingEntity caster, LivingEntity target, float damage) {
+        float scaledDamage = caster instanceof Raevyx wyvern
+                ? damage * wyvern.getDamageMultiplier()
+                : damage;
+        DamageSource source = caster instanceof ServerPlayer player
+                ? caster.level().damageSources().playerAttack(player)
+                : target instanceof DragonEntity
+                        ? caster.level().damageSources().mobAttack(caster)
+                        : caster.level().damageSources().lightningBolt();
         target.hurt(source, scaledDamage);
+    }
+
+    private static boolean isAllied(LivingEntity caster, LivingEntity target) {
+        return caster instanceof DragonEntity dragon
+                ? dragon.isAlly(target)
+                : caster.isAlliedTo(target);
+    }
+
+    private static void noteDragonAggro(LivingEntity caster, LivingEntity target) {
+        if (caster instanceof Raevyx wyvern) {
+            wyvern.noteAggroFrom(target);
+        }
     }
 
     private static boolean isProtectedTamedPet(LivingEntity entity) {
@@ -175,13 +199,16 @@ public final class RaevyxChainLightningAbility {
         return dx * dx + dy * dy + dz * dz;
     }
 
-    private static void spawnArc(Raevyx wyvern, Vec3 from, Vec3 to) {
-        if (!(wyvern.level() instanceof ServerLevel server)) {
+    private static void spawnArc(LivingEntity caster, Vec3 from, Vec3 to) {
+        if (!(caster.level() instanceof ServerLevel server)) {
             return;
         }
 
-        server.addFreshEntity(new RaevyxGroundRendTrailEntity(server, from, to,
-                1.0F, CHAIN_VISUAL_LIFETIME, server.random.nextLong()));
+        LightningVisualEntity.VisualStyle style = caster instanceof ServerPlayer
+                ? LightningVisualEntity.VisualStyle.BLOOD_TEMPEST
+                : LightningVisualEntity.VisualStyle.RAEVYX;
+        server.addFreshEntity(new LightningVisualEntity(server, from, to,
+                1.0F, CHAIN_VISUAL_LIFETIME, server.random.nextLong(), style));
 
         Vec3 midpoint = from.lerp(to, 0.5D);
         server.sendParticles(ParticleTypes.ELECTRIC_SPARK,
@@ -189,8 +216,8 @@ public final class RaevyxChainLightningAbility {
                 2, 0.06D, 0.06D, 0.06D, 0.0D);
     }
 
-    private static void spawnContainedBurst(Raevyx wyvern, Vec3 center) {
-        if (!(wyvern.level() instanceof ServerLevel server)) {
+    private static void spawnContainedBurst(LivingEntity caster, Vec3 center) {
+        if (!(caster.level() instanceof ServerLevel server)) {
             return;
         }
 

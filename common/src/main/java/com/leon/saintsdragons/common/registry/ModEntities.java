@@ -21,7 +21,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlock
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
-import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxGroundRendTrailEntity;
+import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
 import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
@@ -153,8 +153,8 @@ public final class ModEntities {
                     .updateInterval(1)
                     .build("raevyx_lightning_chain"));
 
-    public static final Supplier<EntityType<RaevyxGroundRendTrailEntity>> RAEVYX_GROUND_REND_TRAIL =
-            REGISTER.register("raevyx_ground_rend_trail", () -> EntityType.Builder.<RaevyxGroundRendTrailEntity>of(RaevyxGroundRendTrailEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<LightningVisualEntity>> RAEVYX_GROUND_REND_TRAIL =
+            REGISTER.register("raevyx_ground_rend_trail", () -> EntityType.Builder.<LightningVisualEntity>of(LightningVisualEntity::new, MobCategory.MISC)
                     .sized(0.25F, 0.25F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
