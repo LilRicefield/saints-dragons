@@ -93,6 +93,12 @@ dependencies {
 
     // Jade integration (optional)
     modCompileOnly "maven.modrinth:jade:${rootProject.jade_forge_version}"
+
+    // Optional JEI integration: API-only for production, full mod in local development.
+    modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-common-api:${rootProject.jei_version}"
+    modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-forge-api:${rootProject.jei_version}"
+    modLocalRuntime "mezz.jei:jei-${rootProject.minecraft_version}-forge:${rootProject.jei_version}"
+
 }
 
 processResources {
