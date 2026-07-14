@@ -110,6 +110,10 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         return swarmConfig().abilityDamage(abilityKey, fallback);
     }
 
+    protected static double swarmChaseSpeed(String creatureKey, double fallback) {
+        return Math.max(0.0D, swarmConfig().extraDouble(creatureKey + "_chase_speed", fallback));
+    }
+
     public void applyConfiguredAttributes() {
         applyConfiguredAttributes(false);
     }

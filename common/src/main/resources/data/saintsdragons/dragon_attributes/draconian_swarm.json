@@ -25,9 +25,12 @@
     "wave_3_count": 9.0,
     "latcher_max_health": 12.0,
     "latcher_armor": 0.0,
+    "latcher_chase_speed": 0.5,
     "winged_max_health": 8.0,
     "winged_armor": 0.0,
+    "winged_chase_speed": 0.76,
     "whettled_max_health": 16.0,
-    "whettled_armor": 0.0
+    "whettled_armor": 0.0,
+    "whettled_chase_speed": 0.6
   }
 }

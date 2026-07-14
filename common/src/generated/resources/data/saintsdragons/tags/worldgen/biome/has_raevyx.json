@@ -48,22 +48,6 @@
       "id": "#c:is_temperate/overworld",
       "required": false
     },
-    {
-      "id": "#terralith:skylands",
-      "required": false
-    },
-    {
-      "id": "#terralith:shrublands",
-      "required": false
-    },
-    {
-      "id": "#biomeswevegone:plains",
-      "required": false
-    },
-    {
-      "id": "#biomeswevegone:mountain",
-      "required": false
-    },
     "minecraft:plains",
     "minecraft:meadow",
     "minecraft:windswept_hills",

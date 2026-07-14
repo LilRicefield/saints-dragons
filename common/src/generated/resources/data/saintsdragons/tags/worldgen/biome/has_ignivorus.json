@@ -24,18 +24,6 @@
       "id": "#forge:is_hot/overworld",
       "required": false
     },
-    {
-      "id": "#terralith:volcanic",
-      "required": false
-    },
-    {
-      "id": "#terralith:shrublands",
-      "required": false
-    },
-    {
-      "id": "#biomeswevegone:plains",
-      "required": false
-    },
     "minecraft:plains",
     "minecraft:meadow",
     "minecraft:sunflower_plains"

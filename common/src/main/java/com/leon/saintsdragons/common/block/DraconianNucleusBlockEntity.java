@@ -13,8 +13,10 @@ import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwar
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -28,9 +30,14 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.WeakHashMap;
 
 public class DraconianNucleusBlockEntity extends BlockEntity {
     private static final int PLAYER_CHECK_INTERVAL = 20;
@@ -43,6 +50,8 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
     private static final int FIRST_WAVE_SPAWN_DELAY = 220;
     private static final int LATER_WAVE_SPAWN_DELAY = 40;
     private static final double ACTIVATION_RADIUS = 20.0D;
+    private static final double SUMMON_SOUND_MERGE_RADIUS = ACTIVATION_RADIUS * 2.0D;
+    private static final long SUMMON_SOUND_MERGE_WINDOW_TICKS = 10L;
     private static final double ADVANCEMENT_RADIUS = 64.0D;
     private static final int WAVE_COUNT = 3;
     private static final BlockPos[] SPAWN_OFFSETS = {
@@ -55,6 +64,8 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
             new BlockPos(-2, 4, -2),
             new BlockPos(0, 5, 0)
     };
+    private static final Map<ServerLevel, List<RecentSummonSound>> RECENT_SUMMON_SOUNDS =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     private long animationTicks;
     private EncounterState encounterState = EncounterState.DORMANT;
@@ -342,12 +353,38 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
         return (long) ((this.animationTicks + partialTick) * 50.0F);
     }
 
-    private void playSummonSound(net.minecraft.sounds.SoundEvent sound) {
-        if (this.level == null || this.level.isClientSide) {
+    private void playSummonSound(SoundEvent sound) {
+        if (!(this.level instanceof ServerLevel serverLevel)
+                || !claimSummonSound(serverLevel, this.worldPosition, sound)) {
             return;
         }
-        this.level.playSound(null, this.worldPosition.getX() + 0.5D, this.worldPosition.getY() + 0.5D,
+        serverLevel.playSound(null, this.worldPosition.getX() + 0.5D, this.worldPosition.getY() + 0.5D,
                 this.worldPosition.getZ() + 0.5D, sound, SoundSource.BLOCKS, 3.0F, 1.0F);
+    }
+
+    private static boolean claimSummonSound(ServerLevel level, BlockPos pos, SoundEvent sound) {
+        long gameTime = level.getGameTime();
+        ResourceLocation soundId = sound.getLocation();
+        double mergeRadiusSqr = SUMMON_SOUND_MERGE_RADIUS * SUMMON_SOUND_MERGE_RADIUS;
+
+        synchronized (RECENT_SUMMON_SOUNDS) {
+            List<RecentSummonSound> recentSounds = RECENT_SUMMON_SOUNDS.computeIfAbsent(
+                    level, ignored -> new ArrayList<>());
+            recentSounds.removeIf(recent -> gameTime < recent.gameTime()
+                    || gameTime - recent.gameTime() > SUMMON_SOUND_MERGE_WINDOW_TICKS);
+
+            for (RecentSummonSound recent : recentSounds) {
+                if (recent.soundId().equals(soundId) && recent.pos().distSqr(pos) <= mergeRadiusSqr) {
+                    return false;
+                }
+            }
+
+            recentSounds.add(new RecentSummonSound(soundId, pos.immutable(), gameTime));
+            return true;
+        }
+    }
+
+    private record RecentSummonSound(ResourceLocation soundId, BlockPos pos, long gameTime) {
     }
 
     private static void awardNearbyAdvancement(ServerLevel level, BlockPos pos, String advancementId, String criterion) {

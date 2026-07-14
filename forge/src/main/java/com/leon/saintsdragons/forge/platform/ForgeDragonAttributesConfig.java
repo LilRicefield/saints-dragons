@@ -168,13 +168,16 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.IntValue SWARM_WAVE_3_COUNT;
     public static ForgeConfigSpec.DoubleValue SWARM_LATCHER_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue SWARM_LATCHER_ARMOR;
+    public static ForgeConfigSpec.DoubleValue SWARM_LATCHER_CHASE_SPEED;
     public static ForgeConfigSpec.DoubleValue SWARM_LATCHER_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue SWARM_WINGED_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue SWARM_WINGED_ARMOR;
+    public static ForgeConfigSpec.DoubleValue SWARM_WINGED_CHASE_SPEED;
     public static ForgeConfigSpec.DoubleValue SWARM_WINGED_HOOK_AND_PULL_DAMAGE;
     public static ForgeConfigSpec.DoubleValue SWARM_WINGED_DIVE_BOMB_DAMAGE;
     public static ForgeConfigSpec.DoubleValue SWARM_WHETTLED_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue SWARM_WHETTLED_ARMOR;
+    public static ForgeConfigSpec.DoubleValue SWARM_WHETTLED_CHASE_SPEED;
     public static ForgeConfigSpec.DoubleValue SWARM_WHETTLED_CLAW_ATTACK_DAMAGE;
     public static ForgeConfigSpec.DoubleValue SWARM_WHETTLED_LUNGE_DAMAGE;
 
@@ -413,15 +416,18 @@ public final class ForgeDragonAttributesConfig {
         builder.comment("Latcher");
         SWARM_LATCHER_MAX_HEALTH = builder.defineInRange("latcher_max_health", 12.0, 1.0, 100000.0);
         SWARM_LATCHER_ARMOR = builder.defineInRange("latcher_armor", 0.0, 0.0, 100000.0);
+        SWARM_LATCHER_CHASE_SPEED = builder.defineInRange("latcher_chase_speed", 0.50, 0.0, 2.0);
         SWARM_LATCHER_BITE_DAMAGE = builder.defineInRange("latcher_bite_damage", 2.0, 0.0, 100000.0);
         builder.comment("Winged");
         SWARM_WINGED_MAX_HEALTH = builder.defineInRange("winged_max_health", 8.0, 1.0, 100000.0);
         SWARM_WINGED_ARMOR = builder.defineInRange("winged_armor", 0.0, 0.0, 100000.0);
+        SWARM_WINGED_CHASE_SPEED = builder.defineInRange("winged_chase_speed", 0.76, 0.0, 2.0);
         SWARM_WINGED_HOOK_AND_PULL_DAMAGE = builder.defineInRange("winged_hook_and_pull_damage", 1.5, 0.0, 100000.0);
         SWARM_WINGED_DIVE_BOMB_DAMAGE = builder.defineInRange("winged_dive_bomb_damage", 2.025, 0.0, 100000.0);
         builder.comment("Whettled");
         SWARM_WHETTLED_MAX_HEALTH = builder.defineInRange("whettled_max_health", 16.0, 1.0, 100000.0);
         SWARM_WHETTLED_ARMOR = builder.defineInRange("whettled_armor", 0.0, 0.0, 100000.0);
+        SWARM_WHETTLED_CHASE_SPEED = builder.defineInRange("whettled_chase_speed", 0.60, 0.0, 2.0);
         SWARM_WHETTLED_CLAW_ATTACK_DAMAGE = builder.defineInRange("whettled_claw_attack_damage", 4.0, 0.0, 100000.0);
         SWARM_WHETTLED_LUNGE_DAMAGE = builder.defineInRange("whettled_lunge_damage", 9.0, 0.0, 100000.0);
         builder.pop();

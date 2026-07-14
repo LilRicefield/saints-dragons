@@ -60,8 +60,6 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.RAW_WORLDROOT.get());
                                 output.accept(ModItems.WORLDROOT_INGOT.get());
                                 output.accept(ModItems.WORLDROOT_SWORD.get());
-                                output.accept(ModItems.BLOOD_TEMPEST_KATANA.get());
-                                output.accept(ModItems.DRAGONLORD_SWORD.get());
                                 output.accept(ModItems.WORLDROOT_PICKAXE.get());
                                 output.accept(ModItems.WORLDROOT_AXE.get());
                                 output.accept(ModItems.WORLDROOT_SHOVEL.get());
@@ -73,10 +71,12 @@ public class SaintsCreativeTab {
                                 output.accept(ModArmors.BLOOD_TEMPEST_CHESTPLATE.get());
                                 output.accept(ModArmors.BLOOD_TEMPEST_LEGGINGS.get());
                                 output.accept(ModArmors.BLOOD_TEMPEST_BOOTS.get());
+                                output.accept(ModItems.BLOOD_TEMPEST_KATANA.get());
                                 output.accept(ModArmors.DRAGONLORD_HELMET.get());
                                 output.accept(ModArmors.DRAGONLORD_CHESTPLATE.get());
                                 output.accept(ModArmors.DRAGONLORD_LEGGINGS.get());
                                 output.accept(ModArmors.DRAGONLORD_BOOTS.get());
+                                output.accept(ModItems.DRAGONLORD_SWORD.get());
                                 output.accept(ModPotionItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModPotionItems.POTION_OF_SEARING.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());

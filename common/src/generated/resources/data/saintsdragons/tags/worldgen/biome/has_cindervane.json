@@ -21,27 +21,7 @@
       "required": false
     },
     {
-      "id": "#forge:is_mountain",
-      "required": false
-    },
-    {
       "id": "#forge:is_peak",
-      "required": false
-    },
-    {
-      "id": "#forge:is_slope",
-      "required": false
-    },
-    {
-      "id": "#terralith:skylands",
-      "required": false
-    },
-    {
-      "id": "#terralith:volcanic",
-      "required": false
-    },
-    {
-      "id": "#biomeswevegone:mountain",
       "required": false
     },
     "minecraft:stony_peaks",
@@ -49,6 +29,7 @@
     "minecraft:frozen_peaks",
     "minecraft:snowy_slopes",
     "minecraft:grove",
+    "minecraft:cherry_grove",
     "minecraft:meadow"
   ]
 }

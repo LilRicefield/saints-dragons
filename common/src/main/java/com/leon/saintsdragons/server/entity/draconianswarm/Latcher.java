@@ -75,7 +75,7 @@ public class Latcher extends AbstractDraconianSwarmEntity {
 
     @Override
     protected double getChaseFlightSpeed() {
-        return 0.50D;
+        return swarmChaseSpeed("latcher", 0.50D);
     }
 
     @Override

@@ -644,6 +644,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR::get,
                 ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.chase_speed"),
+                ForgeDragonAttributesConfig.SWARM_LATCHER_CHASE_SPEED::get,
+                ForgeDragonAttributesConfig.SWARM_LATCHER_CHASE_SPEED::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.bite"),
                 ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE::get,
                 ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE::set,
@@ -656,6 +660,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.armor"),
                 ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR::get,
                 ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.chase_speed"),
+                ForgeDragonAttributesConfig.SWARM_WINGED_CHASE_SPEED::get,
+                ForgeDragonAttributesConfig.SWARM_WINGED_CHASE_SPEED::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.attack"),
                 ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE::get,
@@ -673,6 +681,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.armor"),
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR::get,
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.chase_speed"),
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_CHASE_SPEED::get,
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_CHASE_SPEED::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.clawattack"),
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE::get,
@@ -982,13 +994,16 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.SWARM_WAVE_3_COUNT.set(ForgeDragonAttributesConfig.SWARM_WAVE_3_COUNT.getDefault());
                 ForgeDragonAttributesConfig.SWARM_LATCHER_MAX_HEALTH.set(ForgeDragonAttributesConfig.SWARM_LATCHER_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR.set(ForgeDragonAttributesConfig.SWARM_LATCHER_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.SWARM_LATCHER_CHASE_SPEED.set(ForgeDragonAttributesConfig.SWARM_LATCHER_CHASE_SPEED.getDefault());
                 ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_LATCHER_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WINGED_MAX_HEALTH.set(ForgeDragonAttributesConfig.SWARM_WINGED_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR.set(ForgeDragonAttributesConfig.SWARM_WINGED_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WINGED_CHASE_SPEED.set(ForgeDragonAttributesConfig.SWARM_WINGED_CHASE_SPEED.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WINGED_HOOK_AND_PULL_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WINGED_DIVE_BOMB_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WINGED_DIVE_BOMB_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_MAX_HEALTH.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.SWARM_WHETTLED_CHASE_SPEED.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_CHASE_SPEED.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_CLAW_ATTACK_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.SWARM_WHETTLED_LUNGE_DAMAGE.set(ForgeDragonAttributesConfig.SWARM_WHETTLED_LUNGE_DAMAGE.getDefault());
             }

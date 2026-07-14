@@ -986,6 +986,9 @@
   "config.saintsdragons.attributes.nulljaw": "虚颚龙属性",
   "config.saintsdragons.attributes.nulljaw.max_health": "最大生命值",
   "config.saintsdragons.attributes.nulljaw.armor": "护甲值",
+  "config.saintsdragons.attributes.draconian_swarm.latcher.chase_speed": "追击速度",
+  "config.saintsdragons.attributes.draconian_swarm.winged.chase_speed": "追击速度",
+  "config.saintsdragons.attributes.draconian_swarm.whettled.chase_speed": "追击速度",
 
 
 

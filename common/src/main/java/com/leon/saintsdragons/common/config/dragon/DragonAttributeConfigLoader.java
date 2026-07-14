@@ -529,13 +529,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         int wave3Count = SWARM_WAVE_3_DEFAULT_COUNT;
         double latcherMaxHealth = 12.0D;
         double latcherArmor = 0.0D;
+        double latcherChaseSpeed = 0.50D;
         double latcherBiteDamage = 2.0D;
         double wingedMaxHealth = 8.0D;
         double wingedArmor = 0.0D;
+        double wingedChaseSpeed = 0.76D;
         double wingedHookAndPullDamage = 1.5D;
         double wingedDiveBombDamage = 2.025D;
         double whettledMaxHealth = 16.0D;
         double whettledArmor = 0.0D;
+        double whettledChaseSpeed = 0.60D;
         double whettledClawAttackDamage = 4.0D;
         double whettledLungeDamage = 9.0D;
 
@@ -547,13 +550,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 wave3Count = ((Number) configClass.getField("SWARM_WAVE_3_COUNT").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WAVE_3_COUNT").get(null))).intValue();
                 latcherMaxHealth = (double) configClass.getField("SWARM_LATCHER_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_MAX_HEALTH").get(null));
                 latcherArmor = (double) configClass.getField("SWARM_LATCHER_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_ARMOR").get(null));
+                latcherChaseSpeed = (double) configClass.getField("SWARM_LATCHER_CHASE_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_CHASE_SPEED").get(null));
                 latcherBiteDamage = (double) configClass.getField("SWARM_LATCHER_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_LATCHER_BITE_DAMAGE").get(null));
                 wingedMaxHealth = (double) configClass.getField("SWARM_WINGED_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_MAX_HEALTH").get(null));
                 wingedArmor = (double) configClass.getField("SWARM_WINGED_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_ARMOR").get(null));
+                wingedChaseSpeed = (double) configClass.getField("SWARM_WINGED_CHASE_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_CHASE_SPEED").get(null));
                 wingedHookAndPullDamage = (double) configClass.getField("SWARM_WINGED_HOOK_AND_PULL_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_HOOK_AND_PULL_DAMAGE").get(null));
                 wingedDiveBombDamage = (double) configClass.getField("SWARM_WINGED_DIVE_BOMB_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WINGED_DIVE_BOMB_DAMAGE").get(null));
                 whettledMaxHealth = (double) configClass.getField("SWARM_WHETTLED_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_MAX_HEALTH").get(null));
                 whettledArmor = (double) configClass.getField("SWARM_WHETTLED_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_ARMOR").get(null));
+                whettledChaseSpeed = (double) configClass.getField("SWARM_WHETTLED_CHASE_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_CHASE_SPEED").get(null));
                 whettledClawAttackDamage = (double) configClass.getField("SWARM_WHETTLED_CLAW_ATTACK_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_CLAW_ATTACK_DAMAGE").get(null));
                 whettledLungeDamage = (double) configClass.getField("SWARM_WHETTLED_LUNGE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("SWARM_WHETTLED_LUNGE_DAMAGE").get(null));
             } catch (Exception ignored) {
@@ -571,16 +577,19 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "whettled_clawattack", DragonAbilityOverride.ofDamage(whettledClawAttackDamage),
                         "whettled_movehornattack", DragonAbilityOverride.ofDamage(whettledLungeDamage)
                 ),
-                Map.of(
-                        "wave_1_count", (double) clampSwarmWaveCount(wave1Count),
-                        "wave_2_count", (double) clampSwarmWaveCount(wave2Count),
-                        "wave_3_count", (double) clampSwarmWaveCount(wave3Count),
-                        "latcher_max_health", latcherMaxHealth,
-                        "latcher_armor", latcherArmor,
-                        "winged_max_health", wingedMaxHealth,
-                        "winged_armor", wingedArmor,
-                        "whettled_max_health", whettledMaxHealth,
-                        "whettled_armor", whettledArmor
+                Map.ofEntries(
+                        Map.entry("wave_1_count", (double) clampSwarmWaveCount(wave1Count)),
+                        Map.entry("wave_2_count", (double) clampSwarmWaveCount(wave2Count)),
+                        Map.entry("wave_3_count", (double) clampSwarmWaveCount(wave3Count)),
+                        Map.entry("latcher_max_health", latcherMaxHealth),
+                        Map.entry("latcher_armor", latcherArmor),
+                        Map.entry("latcher_chase_speed", latcherChaseSpeed),
+                        Map.entry("winged_max_health", wingedMaxHealth),
+                        Map.entry("winged_armor", wingedArmor),
+                        Map.entry("winged_chase_speed", wingedChaseSpeed),
+                        Map.entry("whettled_max_health", whettledMaxHealth),
+                        Map.entry("whettled_armor", whettledArmor),
+                        Map.entry("whettled_chase_speed", whettledChaseSpeed)
                 ),
                 Map.of()
         );
@@ -1381,10 +1390,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             hints.addProperty("wave_3_count", "Exact swarm entities spawned in wave 3 (1 to 50)");
             hints.addProperty("latcher_max_health", "Latcher max health");
             hints.addProperty("latcher_armor", "Latcher armor");
+            hints.addProperty("latcher_chase_speed", "Latcher combat pursuit speed");
             hints.addProperty("winged_max_health", "Winged max health");
             hints.addProperty("winged_armor", "Winged armor");
+            hints.addProperty("winged_chase_speed", "Winged combat pursuit speed");
             hints.addProperty("whettled_max_health", "Whettled max health");
             hints.addProperty("whettled_armor", "Whettled armor");
+            hints.addProperty("whettled_chase_speed", "Whettled combat pursuit speed");
         }
         return hints;
     }

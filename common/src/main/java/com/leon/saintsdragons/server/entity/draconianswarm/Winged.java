@@ -78,7 +78,7 @@ public class Winged extends AbstractDraconianSwarmEntity {
 
     @Override
     protected double getChaseFlightSpeed() {
-        return 0.76D;
+        return swarmChaseSpeed("winged", 0.76D);
     }
 
     @Override
