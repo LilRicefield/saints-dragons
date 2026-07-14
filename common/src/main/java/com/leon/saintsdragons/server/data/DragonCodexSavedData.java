@@ -7,6 +7,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -65,6 +66,8 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setDragonType(resolveDragonType(dragon));
                 entry.setIsBaby(dragon.isBaby());
                 entry.setBoundInBinder(dragon.isBoundInBinder());
+                entry.setBrushingAvailable(dragon.isBrushingAvailable());
+                entry.setBrushingProgressPercent(dragon.getBrushingProgressPercent());
                 entry.setPosition(dragon.getX(), dragon.getY(), dragon.getZ());
                 entry.setBiomeId(resolveBiomeId(dragon));
                 setDirty();
@@ -86,6 +89,8 @@ public class DragonCodexSavedData extends SavedData {
                 resolveDragonType(dragon),
                 dragon.isBaby(),
                 dragon.isBoundInBinder(),
+                dragon.isBrushingAvailable(),
+                dragon.getBrushingProgressPercent(),
                 dragon.getX(),
                 dragon.getY(),
                 dragon.getZ(),
@@ -152,6 +157,8 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setDragonType(resolveDragonType(dragon));
                 entry.setIsBaby(dragon.isBaby());
                 entry.setBoundInBinder(dragon.isBoundInBinder());
+                entry.setBrushingAvailable(dragon.isBrushingAvailable());
+                entry.setBrushingProgressPercent(dragon.getBrushingProgressPercent());
                 entry.setPosition(dragon.getX(), dragon.getY(), dragon.getZ());
                 entry.setBiomeId(resolveBiomeId(dragon));
                 setDirty();
@@ -213,6 +220,8 @@ public class DragonCodexSavedData extends SavedData {
                 dragonTag.putString("DragonType", dragonEntry.dragonType());
                 dragonTag.putBoolean("IsBaby", dragonEntry.isBaby());
                 dragonTag.putBoolean("BoundInBinder", dragonEntry.boundInBinder());
+                dragonTag.putBoolean("BrushingAvailable", dragonEntry.brushingAvailable());
+                dragonTag.putInt("BrushingProgress", dragonEntry.brushingProgressPercent());
                 dragonTag.putDouble("PosX", dragonEntry.posX());
                 dragonTag.putDouble("PosY", dragonEntry.posY());
                 dragonTag.putDouble("PosZ", dragonEntry.posZ());
@@ -258,12 +267,17 @@ public class DragonCodexSavedData extends SavedData {
                         String dragonType = dragonTag.contains("DragonType") ? dragonTag.getString("DragonType") : "ignivorus";
                         boolean isBaby = dragonTag.contains("IsBaby") && dragonTag.getBoolean("IsBaby");
                         boolean boundInBinder = dragonTag.contains("BoundInBinder") && dragonTag.getBoolean("BoundInBinder");
+                        boolean brushingAvailable = !dragonTag.contains("BrushingAvailable") || dragonTag.getBoolean("BrushingAvailable");
+                        int brushingProgress = dragonTag.contains("BrushingProgress")
+                                ? Mth.clamp(dragonTag.getInt("BrushingProgress"), 0, 100)
+                                : brushingAvailable ? 100 : 0;
                         double posX = dragonTag.contains("PosX") ? dragonTag.getDouble("PosX") : 0.0D;
                         double posY = dragonTag.contains("PosY") ? dragonTag.getDouble("PosY") : 0.0D;
                         double posZ = dragonTag.contains("PosZ") ? dragonTag.getDouble("PosZ") : 0.0D;
                         String biomeId = dragonTag.contains("BiomeId") ? dragonTag.getString("BiomeId") : "minecraft:unknown";
                         entries.add(new DragonCodexEntry(dragonId, name, maxHealth, currentHealth, armor, hunger, happiness,
-                                variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, boundInBinder, posX, posY, posZ, biomeId));
+                                variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, boundInBinder,
+                                brushingAvailable, brushingProgress, posX, posY, posZ, biomeId));
                     }
                 }
                 data.entriesByOwner.put(ownerId, entries);
@@ -287,6 +301,8 @@ public class DragonCodexSavedData extends SavedData {
         private String dragonType;
         private boolean isBaby;
         private boolean boundInBinder;
+        private boolean brushingAvailable;
+        private int brushingProgressPercent;
         private double posX;
         private double posY;
         private double posZ;
@@ -295,6 +311,7 @@ public class DragonCodexSavedData extends SavedData {
         public DragonCodexEntry(UUID dragonId, String displayName, double maxHealth, double currentHealth, double armor,
                                 double hunger, double happiness, int variantId, String variantResourceId, byte genderId, boolean genderKnown,
                                 String dragonType, boolean isBaby, boolean boundInBinder,
+                                boolean brushingAvailable, int brushingProgressPercent,
                                 double posX, double posY, double posZ, String biomeId) {
             this.dragonId = dragonId;
             this.displayName = displayName;
@@ -310,6 +327,8 @@ public class DragonCodexSavedData extends SavedData {
             this.dragonType = dragonType;
             this.isBaby = isBaby;
             this.boundInBinder = boundInBinder;
+            this.brushingAvailable = brushingAvailable;
+            this.brushingProgressPercent = brushingProgressPercent;
             this.posX = posX;
             this.posY = posY;
             this.posZ = posZ;
@@ -422,6 +441,22 @@ public class DragonCodexSavedData extends SavedData {
 
         public void setBoundInBinder(boolean boundInBinder) {
             this.boundInBinder = boundInBinder;
+        }
+
+        public boolean brushingAvailable() {
+            return brushingAvailable;
+        }
+
+        public void setBrushingAvailable(boolean brushingAvailable) {
+            this.brushingAvailable = brushingAvailable;
+        }
+
+        public int brushingProgressPercent() {
+            return brushingProgressPercent;
+        }
+
+        public void setBrushingProgressPercent(int brushingProgressPercent) {
+            this.brushingProgressPercent = Mth.clamp(brushingProgressPercent, 0, 100);
         }
 
         public double posX() {

@@ -1,0 +1,25 @@
+{
+  "type": "saintsdragons:draconic_crucible",
+  "pattern": [
+    " W ",
+    "SCS",
+    "   "
+  ],
+  "key": {
+    "W": {
+      "item": "saintsdragons:raevyx_wingtalon"
+    },
+    "S": {
+      "item": "saintsdragons:raevyx_scale"
+    },
+    "C": {
+      "item": "saintsdragons:dragonheart_chunk"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:blood_tempest_helmet",
+    "count": 1
+  },
+  "required_heat_level": 3,
+  "processing_time": 1800
+}

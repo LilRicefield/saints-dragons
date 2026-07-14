@@ -18,6 +18,6 @@ public class MessageDragonlordDoubleJump {
     }
 
     public static void handle(MessageDragonlordDoubleJump message, ServerPlayer player) {
-        DragonlordArmorSetBonus.tryDoubleJump(player);
+        DragonlordArmorSetBonus.handleAirborneJump(player);
     }
 }

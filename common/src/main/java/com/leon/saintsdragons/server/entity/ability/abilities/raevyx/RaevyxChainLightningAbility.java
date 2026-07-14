@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -122,6 +123,11 @@ public final class RaevyxChainLightningAbility {
     }
 
     private static boolean isValidChainTarget(LivingEntity caster, LivingEntity target, Set<LivingEntity> exclude) {
+        if (caster instanceof ServerPlayer player) {
+            return !exclude.contains(target)
+                    && SwordAbilityTargeting.canDamage(player, target)
+                    && !DragonElementalImmunity.isElectricityImmune(target);
+        }
         return target != null
                 && target != caster
                 && !exclude.contains(target)
@@ -145,6 +151,10 @@ public final class RaevyxChainLightningAbility {
     }
 
     private static boolean isValidDischargeTarget(LivingEntity caster, LivingEntity target) {
+        if (caster instanceof ServerPlayer player) {
+            return SwordAbilityTargeting.canDamage(player, target)
+                    && !DragonElementalImmunity.isElectricityImmune(target);
+        }
         return target != null
                 && target != caster
                 && target.isAlive()

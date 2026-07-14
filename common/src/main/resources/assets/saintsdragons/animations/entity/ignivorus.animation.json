@@ -31628,6 +31628,16 @@
 						"vector": ["0.5+math.sin(query.anim_time * 300+ 100) * 5", "0+math.sin(query.anim_time * 225) * 2", 0]
 					}
 				},
+				"leftwingjoint": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightwingjoint": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"lowerjaw": {
 					"rotation": {
 						"vector": ["17.5+math.sin(query.anim_time *300-100)* 5", 0, 0]

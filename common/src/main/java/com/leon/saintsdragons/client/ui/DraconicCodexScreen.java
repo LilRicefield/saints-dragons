@@ -59,6 +59,12 @@ public class DraconicCodexScreen extends Screen {
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/happiness_icon.png");
     private static final ResourceLocation VARIANT_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/variant_icon.png");
+    private static final ResourceLocation BRUSHING_AVAILABLE_1 =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/brushing_available1.png");
+    private static final ResourceLocation BRUSHING_AVAILABLE_2 =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/brushing_available2.png");
+    private static final ResourceLocation BRUSHING_UNAVAILABLE =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/brushing_unavailable.png");
     private static final ResourceLocation CODEX_EDIT_BOX =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/codex_edit_box.png");
     private static final ResourceLocation ADD_ICON =
@@ -80,7 +86,8 @@ public class DraconicCodexScreen extends Screen {
     private final CodexEcologyPanel ecologyPanel = new CodexEcologyPanel();
     private final CodexAllyPanel allyPanel = new CodexAllyPanel(CODEX_EDIT_BOX, ADD_ICON, REMOVE_ICON);
     private final CodexPhysiologyPanel detailPanel = new CodexPhysiologyPanel(
-            HEALTH_ICON, ARMOR_ICON, GENDER_ICON, HUNGER_ICON, HAPPINESS_ICON, VARIANT_ICON
+            HEALTH_ICON, ARMOR_ICON, GENDER_ICON, HUNGER_ICON, HAPPINESS_ICON, VARIANT_ICON,
+            BRUSHING_AVAILABLE_1, BRUSHING_AVAILABLE_2, BRUSHING_UNAVAILABLE
     );
 
     private int leftPos;

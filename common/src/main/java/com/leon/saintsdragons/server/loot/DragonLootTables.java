@@ -61,7 +61,7 @@ public final class DragonLootTables {
         return !drops.isEmpty();
     }
 
-    public static void dropGroomingLoot(DragonEntity dragon, Player player, ResourceLocation tableId) {
+    public static void dropGroomingLoot(DragonEntity dragon, Player player, ResourceLocation tableId, int scaleCount) {
         if (!(dragon.level() instanceof ServerLevel serverLevel)) {
             return;
         }
@@ -72,7 +72,13 @@ public final class DragonLootTables {
                 .withOptionalParameter(LootContextParams.THIS_ENTITY, dragon)
                 .withLuck(player.getLuck())
                 .create(LootContextParamSets.CHEST);
-        table.getRandomItems(params, dragon::spawnAtLocation);
+        List<ItemStack> drops = table.getRandomItems(params);
+        for (ItemStack drop : drops) {
+            if (!drop.isEmpty()) {
+                drop.setCount(Math.max(1, scaleCount));
+                dragon.spawnAtLocation(drop);
+            }
+        }
     }
 
     private static ResourceLocation table(String path) {

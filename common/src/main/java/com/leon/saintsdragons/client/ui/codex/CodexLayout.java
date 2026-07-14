@@ -17,6 +17,9 @@ public final class CodexLayout {
     public static final int HUNGER_ICON_OFFSET_X = HEALTH_ICON_OFFSET_X + 67;
     public static final int HAPPINESS_ICON_OFFSET_X = HUNGER_ICON_OFFSET_X;
     public static final int VARIANT_ICON_OFFSET_X = HUNGER_ICON_OFFSET_X;
+    public static final int BRUSHING_ICON_OFFSET_X = 231;
+    public static final int BRUSHING_ICON_OFFSET_Y = 76;
+    public static final int BRUSHING_ICON_SIZE = 16;
     public static final int STAT_ICON_GAP_Y = 5;
     public static final int STAT_TEXT_OFFSET_Y = 1;
     public static final int NAME_BOX_X = 110;

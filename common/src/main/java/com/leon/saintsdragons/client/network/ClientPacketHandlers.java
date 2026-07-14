@@ -51,6 +51,8 @@ public final class ClientPacketHandlers {
                         entry.genderKnown(),
                         entry.dragonType(),
                         entry.isBaby(),
+                        entry.brushingAvailable(),
+                        entry.brushingProgressPercent(),
                         entry.posX(),
                         entry.posY(),
                         entry.posZ(),

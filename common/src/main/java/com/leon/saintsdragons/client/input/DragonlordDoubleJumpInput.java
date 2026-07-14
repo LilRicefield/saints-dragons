@@ -27,7 +27,7 @@ public final class DragonlordDoubleJumpInput {
 
         boolean onGround = player.onGround();
         if (jumpDown && !wasJumpDown && !onGround && !wasOnGround && !player.isPassenger()
-                && !player.getAbilities().flying && !player.isFallFlying()) {
+                && !player.getAbilities().flying) {
             NetworkHandler.sendToServer(MessageDragonlordDoubleJump.INSTANCE);
         }
         wasJumpDown = jumpDown;

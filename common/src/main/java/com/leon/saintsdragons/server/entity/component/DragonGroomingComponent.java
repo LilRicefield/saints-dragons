@@ -18,13 +18,17 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
 public final class DragonGroomingComponent {
-    private static final int BRUSHES_PER_HAPPINESS = 2;
-    private static final int NORMAL_BRUSH_HAPPINESS = 1;
-    private static final int GOLDEN_BRUSH_HAPPINESS = 5;
+    public static final int SCALE_REGROWTH_TICKS = 20 * 60;
+    private static final int NORMAL_BRUSH_HAPPINESS = 10;
+    private static final int GOLDEN_BRUSH_HAPPINESS = 20;
+    private static final int NORMAL_BRUSH_MIN_SCALES = 1;
+    private static final int NORMAL_BRUSH_MAX_SCALES = 5;
+    private static final int GOLDEN_BRUSH_MIN_SCALES = 6;
+    private static final int GOLDEN_BRUSH_MAX_SCALES = 10;
     private static final int BRUSH_COOLDOWN_TICKS = 10;
 
     private final DragonEntity dragon;
-    private int brushProgress = 0;
+    private int scaleRegrowthTicks;
     private long lastBrushTick = -BRUSH_COOLDOWN_TICKS;
 
     public DragonGroomingComponent(DragonEntity dragon) {
@@ -36,43 +40,81 @@ public final class DragonGroomingComponent {
             return false;
         }
 
-        boolean canDropRewards = dragon.getHappiness() < dragon.getMaxHappiness();
-
         long now = dragon.level().getGameTime();
         if (now - lastBrushTick < BRUSH_COOLDOWN_TICKS) {
             return false;
         }
-        lastBrushTick = now;
 
-        brushProgress++;
-        if (brushProgress >= BRUSHES_PER_HAPPINESS) {
-            brushProgress = 0;
-            int happinessGain = brushStack.is(ModItems.GOLDEN_DRAGON_BRUSH.get())
-                    ? GOLDEN_BRUSH_HAPPINESS
-                    : NORMAL_BRUSH_HAPPINESS;
-            int previousHappiness = dragon.getHappiness();
-            dragon.setHappiness(dragon.getHappiness() + happinessGain);
-            if (dragon.getHappiness() > previousHappiness) {
-                dragon.level().playSound(null, dragon.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS,
-                        0.45F, 1.25F + dragon.getRandom().nextFloat() * 0.15F);
+        boolean goldenBrush = brushStack.is(ModItems.GOLDEN_DRAGON_BRUSH.get());
+        boolean increasedHappiness = false;
+        if (dragon.getHappiness() < dragon.getMaxHappiness()) {
+            increaseHappiness(goldenBrush);
+            increasedHappiness = true;
+        }
+
+        boolean shedScales = false;
+        if (isBrushingAvailable()) {
+            ResourceLocation groomingLoot = getGroomingLoot(dragon);
+            if (groomingLoot != null) {
+                int minimum = goldenBrush ? GOLDEN_BRUSH_MIN_SCALES : NORMAL_BRUSH_MIN_SCALES;
+                int maximum = goldenBrush ? GOLDEN_BRUSH_MAX_SCALES : NORMAL_BRUSH_MAX_SCALES;
+                int scaleCount = Mth.nextInt(dragon.getRandom(), minimum, maximum);
+                DragonLootTables.dropGroomingLoot(dragon, player, groomingLoot, scaleCount);
+                scaleRegrowthTicks = SCALE_REGROWTH_TICKS;
+                dragon.level().playSound(null, dragon.blockPosition(), SoundEvents.SHEEP_SHEAR, SoundSource.PLAYERS,
+                        0.7F, 0.9F + dragon.getRandom().nextFloat() * 0.2F);
+                shedScales = true;
             }
         }
 
-        ResourceLocation groomingLoot = getGroomingLoot(dragon);
-        if (canDropRewards && groomingLoot != null) {
-            DragonLootTables.dropGroomingLoot(dragon, player, groomingLoot);
+        if (!increasedHappiness && !shedScales) {
+            return false;
         }
 
-        brushStack.hurtAndBreak(1, player, ignored -> {});
+        lastBrushTick = now;
+        damageBrush(player, brushStack);
         return true;
     }
 
+    public void tick() {
+        if (scaleRegrowthTicks > 0) {
+            scaleRegrowthTicks--;
+        }
+    }
+
+    public boolean isBrushingAvailable() {
+        return scaleRegrowthTicks <= 0;
+    }
+
+    public int getScaleRegrowthTicks() {
+        return Math.max(0, scaleRegrowthTicks);
+    }
+
+    public int getBrushingProgressPercent() {
+        int elapsedTicks = SCALE_REGROWTH_TICKS - getScaleRegrowthTicks();
+        return Mth.clamp(elapsedTicks * 100 / SCALE_REGROWTH_TICKS, 0, 100);
+    }
+
+    private void increaseHappiness(boolean goldenBrush) {
+        int previousHappiness = dragon.getHappiness();
+        dragon.setHappiness(previousHappiness
+                + (goldenBrush ? GOLDEN_BRUSH_HAPPINESS : NORMAL_BRUSH_HAPPINESS));
+        if (dragon.getHappiness() > previousHappiness) {
+            dragon.level().playSound(null, dragon.blockPosition(), SoundEvents.EXPERIENCE_ORB_PICKUP, SoundSource.PLAYERS,
+                    0.45F, 1.25F + dragon.getRandom().nextFloat() * 0.15F);
+        }
+    }
+
+    private static void damageBrush(Player player, ItemStack brushStack) {
+        brushStack.hurtAndBreak(1, player, ignored -> {});
+    }
+
     public void saveToNBT(CompoundTag tag) {
-        tag.putInt("BrushProgress", brushProgress);
+        tag.putInt("ScaleRegrowthTicks", getScaleRegrowthTicks());
     }
 
     public void loadFromNBT(CompoundTag tag) {
-        brushProgress = Mth.clamp(tag.getInt("BrushProgress"), 0, BRUSHES_PER_HAPPINESS - 1);
+        scaleRegrowthTicks = Math.max(0, tag.getInt("ScaleRegrowthTicks"));
     }
 
     private static ResourceLocation getGroomingLoot(DragonEntity dragon) {

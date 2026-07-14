@@ -3,15 +3,21 @@ package com.leon.saintsdragons.common.item;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.leon.saintsdragons.common.registry.ModAttributes;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
 import software.bernie.geckolib.animatable.GeoItem;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.lang.reflect.Proxy;
@@ -20,6 +26,12 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class DragonlordArmorItem extends ArmorItem implements GeoItem {
+    public static final String FLIGHT_CONTROLLER = "dragonlord_flight";
+    public static final String FLAP_TRIGGER = "flap";
+    private static final RawAnimation GLIDE =
+            RawAnimation.begin().thenLoop("animation.dragonlord_armor.glide");
+    private static final RawAnimation FLAP =
+            RawAnimation.begin().thenPlay("animation.dragonlord_armor.flap");
     private static final UUID HELMET_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("36dcf138-89cd-4ab1-8b92-a3b03f3de433");
     private static final UUID CHESTPLATE_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("7618ec80-ce4c-4a6e-94a1-d0b67ec0e914");
     private static final UUID LEGGINGS_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("27d56814-8a04-4a24-ab2e-c2d4922d687e");
@@ -42,6 +54,7 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
 
     public DragonlordArmorItem(ArmorMaterial material, Type type, Properties properties) {
         super(material, type, properties);
+        GeoItem.registerSyncedAnimatable(this);
     }
 
     @Override
@@ -146,6 +159,24 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        AnimationController<DragonlordArmorItem> flightController = new AnimationController<>(
+                this,
+                FLIGHT_CONTROLLER,
+                3,
+                state -> {
+                    Entity wearer = state.getData(DataTickets.ENTITY);
+                    if (!(wearer instanceof LivingEntity living)
+                            || !living.isFallFlying()
+                            || !DragonlordArmorSetBonus.isWearingFullSet(living)) {
+                        return PlayState.STOP;
+                    }
+
+                    state.setAndContinue(GLIDE);
+                    return PlayState.CONTINUE;
+                }
+        );
+        flightController.triggerableAnim(FLAP_TRIGGER, FLAP);
+        controllers.add(flightController);
     }
 
     @Override

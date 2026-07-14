@@ -9573,6 +9573,11 @@
 					"rotation": {
 						"vector": [0, 0, 0]
 					}
+				},
+				"rightinnerphalanges": {
+					"rotation": {
+						"vector": [0, "5-math.sin(query.anim_time * 200- 150) * 6", 0]
+					}
 				}
 			},
 			"sound_effects": {

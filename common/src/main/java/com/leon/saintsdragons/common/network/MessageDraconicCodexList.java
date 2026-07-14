@@ -32,6 +32,8 @@ public record MessageDraconicCodexList(List<Entry> entries) {
                     dragon.hasGender(),
                     dragonType,
                     dragon.isBaby(),
+                    dragon.isBrushingAvailable(),
+                    dragon.getBrushingProgressPercent(),
                     dragon.getX(),
                     dragon.getY(),
                     dragon.getZ(),
@@ -69,6 +71,8 @@ public record MessageDraconicCodexList(List<Entry> entries) {
                     entry.genderKnown(),
                     entry.dragonType(),
                     entry.isBaby(),
+                    entry.brushingAvailable(),
+                    entry.brushingProgressPercent(),
                     entry.posX(),
                     entry.posY(),
                     entry.posZ(),
@@ -94,6 +98,8 @@ public record MessageDraconicCodexList(List<Entry> entries) {
             buffer.writeBoolean(entry.genderKnown());
             buffer.writeUtf(entry.dragonType(), 32);
             buffer.writeBoolean(entry.isBaby());
+            buffer.writeBoolean(entry.brushingAvailable());
+            buffer.writeVarInt(entry.brushingProgressPercent());
             buffer.writeDouble(entry.posX());
             buffer.writeDouble(entry.posY());
             buffer.writeDouble(entry.posZ());
@@ -118,12 +124,15 @@ public record MessageDraconicCodexList(List<Entry> entries) {
             boolean genderKnown = buffer.readBoolean();
             String dragonType = buffer.readUtf(32);
             boolean isBaby = buffer.readBoolean();
+            boolean brushingAvailable = buffer.readBoolean();
+            int brushingProgressPercent = buffer.readVarInt();
             double posX = buffer.readDouble();
             double posY = buffer.readDouble();
             double posZ = buffer.readDouble();
             String biomeId = buffer.readUtf(128);
             entries.add(new Entry(id, name, currentHealth, maxHealth, armor, hunger, happiness,
-                    variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby, posX, posY, posZ, biomeId));
+                    variantId, variantResourceId, genderId, genderKnown, dragonType, isBaby,
+                    brushingAvailable, brushingProgressPercent, posX, posY, posZ, biomeId));
         }
         return new MessageDraconicCodexList(entries);
     }
@@ -135,6 +144,7 @@ public record MessageDraconicCodexList(List<Entry> entries) {
     public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth,
                         double armor, double hunger, double happiness, int variantId, String variantResourceId, byte genderId,
                         boolean genderKnown, String dragonType, boolean isBaby,
+                        boolean brushingAvailable, int brushingProgressPercent,
                         double posX, double posY, double posZ, String biomeId) {
     }
 }

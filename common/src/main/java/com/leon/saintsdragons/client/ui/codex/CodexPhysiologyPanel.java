@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.ui.codex;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -12,15 +13,23 @@ public class CodexPhysiologyPanel {
     private final ResourceLocation hungerIcon;
     private final ResourceLocation happinessIcon;
     private final ResourceLocation variantIcon;
+    private final ResourceLocation brushingAvailableIcon1;
+    private final ResourceLocation brushingAvailableIcon2;
+    private final ResourceLocation brushingUnavailableIcon;
 
     public CodexPhysiologyPanel(ResourceLocation healthIcon, ResourceLocation armorIcon, ResourceLocation genderIcon,
-                                ResourceLocation hungerIcon, ResourceLocation happinessIcon, ResourceLocation variantIcon) {
+                                ResourceLocation hungerIcon, ResourceLocation happinessIcon, ResourceLocation variantIcon,
+                                ResourceLocation brushingAvailableIcon1, ResourceLocation brushingAvailableIcon2,
+                                ResourceLocation brushingUnavailableIcon) {
         this.healthIcon = healthIcon;
         this.armorIcon = armorIcon;
         this.genderIcon = genderIcon;
         this.hungerIcon = hungerIcon;
         this.happinessIcon = happinessIcon;
         this.variantIcon = variantIcon;
+        this.brushingAvailableIcon1 = brushingAvailableIcon1;
+        this.brushingAvailableIcon2 = brushingAvailableIcon2;
+        this.brushingUnavailableIcon = brushingUnavailableIcon;
     }
 
     public void draw(GuiGraphics guiGraphics, Font font, CodexTab activeTab, CodexDragonEntry selected,
@@ -59,6 +68,7 @@ public class CodexPhysiologyPanel {
             drawGenderStat(guiGraphics, font, selected, leftPos, topPos);
             drawPositionStat(guiGraphics, font, selected, leftPos, topPos);
             drawBiomeStat(guiGraphics, font, selected, leftPos, topPos);
+            drawBrushingIndicator(guiGraphics, font, selected, leftPos, topPos);
         } else if (activeTab == CodexTab.ECOLOGY) {
             ecologyPanel.draw(guiGraphics, font, selected, ecologyPage, contentX, contentY, mouseX, mouseY);
         } else {
@@ -172,6 +182,37 @@ public class CodexPhysiologyPanel {
         int textY = topPos + 50;
         Component line = Component.translatable("saintsdragons.gui.draconic_codex.physiology.biome", selected.biomeId());
         drawWrappedLine(guiGraphics, font, line, textX, textY, 140, 10);
+    }
+
+    private void drawBrushingIndicator(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected,
+                                       int leftPos, int topPos) {
+        int iconX = leftPos + CodexLayout.BRUSHING_ICON_OFFSET_X;
+        int iconY = topPos + CodexLayout.BRUSHING_ICON_OFFSET_Y;
+        int size = CodexLayout.BRUSHING_ICON_SIZE;
+
+        if (!selected.brushingAvailable()) {
+            guiGraphics.blit(brushingUnavailableIcon, iconX, iconY, 0, 0,
+                    size, size, size, size);
+            drawBrushingProgress(guiGraphics, font, selected, iconX, iconY, size);
+            return;
+        }
+
+        Minecraft minecraft = Minecraft.getInstance();
+        long animationTick = minecraft.level != null
+                ? minecraft.level.getGameTime()
+                : System.currentTimeMillis() / 50L;
+        ResourceLocation frame = (animationTick / 3L) % 2L == 0L
+                ? brushingAvailableIcon1
+                : brushingAvailableIcon2;
+        guiGraphics.blit(frame, iconX, iconY, 0, 0,
+                size, size, size, size);
+        drawBrushingProgress(guiGraphics, font, selected, iconX, iconY, size);
+    }
+
+    private void drawBrushingProgress(GuiGraphics guiGraphics, Font font, CodexDragonEntry selected,
+                                      int iconX, int iconY, int iconSize) {
+        guiGraphics.drawString(font, selected.brushingProgressPercent() + "%",
+                iconX + iconSize + 2, iconY + 4, CodexLayout.TEXT_COLOR, false);
     }
 
     private String formatCoordinate(double value) {

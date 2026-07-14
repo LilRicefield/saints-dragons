@@ -15,7 +15,7 @@ import net.minecraft.world.phys.Vec3;
 public final class DragonlordSwordAbility {
     private static final int COOLDOWN_TICKS = 50;
     private static final int PILLAR_COUNT = 3;
-    private static final double BASE_FORWARD_OFFSET = 6.0D;
+    private static final double BASE_FORWARD_OFFSET = 3.0D;
     private static final double FORWARD_STEP = 6.0D;
     private static final float BASE_DAMAGE = 18.0F;
     private static final float DAMAGE_STEP = 4.0F;

@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.data.DragonlordPlayerSavedData;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.server.level.ServerPlayer;
@@ -18,6 +19,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animatable.GeoItem;
 
 import java.util.HashSet;
 import java.util.HashMap;
@@ -27,6 +29,10 @@ import java.util.UUID;
 
 public final class DragonlordArmorSetBonus {
     private static final double DOUBLE_JUMP_VELOCITY = 0.85D;
+    private static final double FLIGHT_BOOST_TARGET_SPEED = 1.5D;
+    private static final double FLIGHT_BOOST_DIRECT_ACCELERATION = 0.1D;
+    private static final double FLIGHT_BOOST_VELOCITY_BLEND = 0.5D;
+    private static final int FLIGHT_BOOST_FIREWORK_LEVEL = 3;
     private static final double LANDING_SHOCKWAVE_TOUCH_RADIUS = 7.5D;
     private static final double LANDING_SHOCKWAVE_FALLOFF_RADIUS = 4.0D;
     private static final double LANDING_SHOCKWAVE_Y_RADIUS = 5.0D;
@@ -46,6 +52,8 @@ public final class DragonlordArmorSetBonus {
             AttributeModifier.Operation.ADDITION
     );
     private static final Set<UUID> USED_MIDAIR_JUMP = new HashSet<>();
+    private static final Set<UUID> ACTIVE_FLIGHT = new HashSet<>();
+    private static final Map<UUID, Integer> FLIGHT_BOOST_TICKS = new HashMap<>();
     private static final Set<UUID> PENDING_LANDING_SHOCKWAVE = new HashSet<>();
     private static final Map<UUID, Double> DOUBLE_JUMP_PEAK_Y = new HashMap<>();
     private static final Set<UUID> PENDING_HEALTH_RESTORE = new HashSet<>();
@@ -70,7 +78,14 @@ public final class DragonlordArmorSetBonus {
             }
         }
 
-        if (!fullSet || player.onClimbable() || player.isInWaterOrBubble()) {
+        if (!player.isAlive()) {
+            clear(player);
+            return;
+        }
+
+        if (!fullSet || player.isPassenger() || player.getAbilities().flying
+                || player.onClimbable() || player.isInWaterOrBubble()) {
+            stopFlight(player);
             USED_MIDAIR_JUMP.remove(player.getUUID());
             PENDING_LANDING_SHOCKWAVE.remove(player.getUUID());
             DOUBLE_JUMP_PEAK_Y.remove(player.getUUID());
@@ -86,18 +101,39 @@ public final class DragonlordArmorSetBonus {
         }
 
         if (player.onGround()) {
+            stopFlight(player);
             if (PENDING_LANDING_SHOCKWAVE.remove(player.getUUID())) {
                 tryLandingShockwave(player);
             }
             USED_MIDAIR_JUMP.remove(player.getUUID());
             DOUBLE_JUMP_PEAK_Y.remove(player.getUUID());
+        } else if (ACTIVE_FLIGHT.contains(player.getUUID())) {
+            if (!player.isFallFlying()) {
+                player.startFallFlying();
+            }
+            tickFlightBoost(player);
         } else if (PENDING_LANDING_SHOCKWAVE.contains(player.getUUID())) {
             DOUBLE_JUMP_PEAK_Y.merge(player.getUUID(), player.getY(), Math::max);
         }
     }
 
+    public static boolean handleAirborneJump(ServerPlayer player) {
+        if (!canUseAirborneMovement(player) || !isWearingFullSet(player)) {
+            return false;
+        }
+
+        UUID playerId = player.getUUID();
+        if (ACTIVE_FLIGHT.contains(playerId)) {
+            return boostFlight(player);
+        }
+        if (USED_MIDAIR_JUMP.contains(playerId)) {
+            return startFlight(player);
+        }
+        return tryDoubleJump(player);
+    }
+
     public static boolean tryDoubleJump(ServerPlayer player) {
-        if (player == null || player.isPassenger() || player.onGround() || player.onClimbable() || player.isInWaterOrBubble()) {
+        if (!canUseAirborneMovement(player)) {
             return false;
         }
         if (player.getAbilities().flying || player.isFallFlying()) {
@@ -120,6 +156,10 @@ public final class DragonlordArmorSetBonus {
         DOUBLE_JUMP_PEAK_Y.put(player.getUUID(), player.getY());
         spawnDoubleJumpEffects(player);
         return true;
+    }
+
+    public static boolean isFlightActive(LivingEntity entity) {
+        return entity != null && ACTIVE_FLIGHT.contains(entity.getUUID());
     }
 
     public static boolean blocksDamage(ServerPlayer player, DamageSource source) {
@@ -157,7 +197,10 @@ public final class DragonlordArmorSetBonus {
         }
     }
 
-    public static boolean isWearingFullSet(ServerPlayer player) {
+    public static boolean isWearingFullSet(LivingEntity player) {
+        if (player == null) {
+            return false;
+        }
         return isDragonlord(player.getItemBySlot(EquipmentSlot.HEAD))
                 && isDragonlord(player.getItemBySlot(EquipmentSlot.CHEST))
                 && isDragonlord(player.getItemBySlot(EquipmentSlot.LEGS))
@@ -166,6 +209,114 @@ public final class DragonlordArmorSetBonus {
 
     private static boolean isDragonlord(ItemStack stack) {
         return stack.getItem() instanceof DragonlordArmorItem;
+    }
+
+    public static void clear(ServerPlayer player) {
+        if (player == null) {
+            return;
+        }
+        stopFlight(player);
+        UUID playerId = player.getUUID();
+        USED_MIDAIR_JUMP.remove(playerId);
+        PENDING_LANDING_SHOCKWAVE.remove(playerId);
+        DOUBLE_JUMP_PEAK_Y.remove(playerId);
+        PENDING_HEALTH_RESTORE.remove(playerId);
+    }
+
+    private static boolean startFlight(ServerPlayer player) {
+        UUID playerId = player.getUUID();
+        ACTIVE_FLIGHT.add(playerId);
+        PENDING_LANDING_SHOCKWAVE.remove(playerId);
+        DOUBLE_JUMP_PEAK_Y.remove(playerId);
+        player.startFallFlying();
+        player.resetFallDistance();
+        return boostFlight(player);
+    }
+
+    private static boolean boostFlight(ServerPlayer player) {
+        if (!canUseAirborneMovement(player) || !isWearingFullSet(player)) {
+            stopFlight(player);
+            return false;
+        }
+
+        if (!player.isFallFlying()) {
+            player.startFallFlying();
+        }
+        FLIGHT_BOOST_TICKS.put(player.getUUID(), fireworkBoostDuration(player) - 1);
+        applyFireworkBoost(player);
+        triggerFlapAnimation(player);
+        return true;
+    }
+
+    private static void tickFlightBoost(ServerPlayer player) {
+        Integer remainingTicks = FLIGHT_BOOST_TICKS.get(player.getUUID());
+        if (remainingTicks == null || remainingTicks <= 0) {
+            FLIGHT_BOOST_TICKS.remove(player.getUUID());
+            return;
+        }
+
+        applyFireworkBoost(player);
+        if (remainingTicks == 1) {
+            FLIGHT_BOOST_TICKS.remove(player.getUUID());
+        } else {
+            FLIGHT_BOOST_TICKS.put(player.getUUID(), remainingTicks - 1);
+        }
+    }
+
+    private static int fireworkBoostDuration(ServerPlayer player) {
+        return 10 * (1 + FLIGHT_BOOST_FIREWORK_LEVEL)
+                + player.getRandom().nextInt(6)
+                + player.getRandom().nextInt(7);
+    }
+
+    private static void applyFireworkBoost(ServerPlayer player) {
+        Vec3 look = player.getLookAngle().normalize();
+        Vec3 motion = player.getDeltaMovement();
+        Vec3 target = look.scale(FLIGHT_BOOST_TARGET_SPEED);
+        Vec3 boosted = motion.add(
+                look.x * FLIGHT_BOOST_DIRECT_ACCELERATION
+                        + (target.x - motion.x) * FLIGHT_BOOST_VELOCITY_BLEND,
+                look.y * FLIGHT_BOOST_DIRECT_ACCELERATION
+                        + (target.y - motion.y) * FLIGHT_BOOST_VELOCITY_BLEND,
+                look.z * FLIGHT_BOOST_DIRECT_ACCELERATION
+                        + (target.z - motion.z) * FLIGHT_BOOST_VELOCITY_BLEND
+        );
+        player.setDeltaMovement(boosted);
+        player.hasImpulse = true;
+        player.hurtMarked = true;
+        player.resetFallDistance();
+        player.connection.send(new ClientboundSetEntityMotionPacket(player));
+    }
+
+    private static void triggerFlapAnimation(ServerPlayer player) {
+        for (EquipmentSlot slot : new EquipmentSlot[]{
+                EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET
+        }) {
+            ItemStack stack = player.getItemBySlot(slot);
+            if (stack.getItem() instanceof DragonlordArmorItem armor) {
+                long instanceId = GeoItem.getOrAssignId(stack, player.serverLevel());
+                armor.triggerArmorAnim(player, instanceId,
+                        DragonlordArmorItem.FLIGHT_CONTROLLER, DragonlordArmorItem.FLAP_TRIGGER);
+            }
+        }
+    }
+
+    private static void stopFlight(ServerPlayer player) {
+        FLIGHT_BOOST_TICKS.remove(player.getUUID());
+        if (ACTIVE_FLIGHT.remove(player.getUUID()) && player.isFallFlying()) {
+            player.stopFallFlying();
+        }
+    }
+
+    private static boolean canUseAirborneMovement(ServerPlayer player) {
+        return player != null
+                && player.isAlive()
+                && !player.isSpectator()
+                && !player.isPassenger()
+                && !player.onGround()
+                && !player.onClimbable()
+                && !player.isInWaterOrBubble()
+                && !player.getAbilities().flying;
     }
 
     private static void tryLandingShockwave(ServerPlayer player) {

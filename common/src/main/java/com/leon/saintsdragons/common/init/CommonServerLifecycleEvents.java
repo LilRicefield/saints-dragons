@@ -92,6 +92,7 @@ public final class CommonServerLifecycleEvents {
     public static void onPlayerDisconnect(ServerPlayer player) {
         BloodTempestArmorSetBonus.clear(player);
         DragonlordArmorSetBonus.saveHealthForReload(player);
+        DragonlordArmorSetBonus.clear(player);
 
         RideableDragonBase dragon = findMountedDragon(player);
         if (dragon == null) {

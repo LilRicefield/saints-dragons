@@ -906,6 +906,18 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                 && groomingComponent.tryBrush(player, brushStack);
     }
 
+    public boolean isBrushingAvailable() {
+        return groomingComponent != null && groomingComponent.isBrushingAvailable();
+    }
+
+    public int getScaleRegrowthTicks() {
+        return groomingComponent != null ? groomingComponent.getScaleRegrowthTicks() : 0;
+    }
+
+    public int getBrushingProgressPercent() {
+        return groomingComponent != null ? groomingComponent.getBrushingProgressPercent() : 100;
+    }
+
     public boolean isBoundInBinder() {
         return this.boundInBinder;
     }
@@ -1906,6 +1918,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                 sleepComponent.tick();
             }
             if (this.isTame() && !this.isBoundInBinder()) {
+                if (groomingComponent != null) {
+                    groomingComponent.tick();
+                }
                 if (hungerComponent != null) {
                     hungerComponent.tick();
                 }

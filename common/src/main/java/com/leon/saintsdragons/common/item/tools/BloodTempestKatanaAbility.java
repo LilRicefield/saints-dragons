@@ -46,7 +46,8 @@ public final class BloodTempestKatanaAbility {
     }
 
     public static void onSuccessfulKatanaHit(ServerPlayer player, LivingEntity target) {
-        if (player.getMainHandItem().is(ModItems.BLOOD_TEMPEST_KATANA.get())) {
+        if (player.getMainHandItem().is(ModItems.BLOOD_TEMPEST_KATANA.get())
+                && SwordAbilityTargeting.canDamage(player, target)) {
             RaevyxChainLightningAbility.chainFromKatana(player, target);
         }
     }
@@ -303,10 +304,7 @@ public final class BloodTempestKatanaAbility {
     }
 
     private static boolean canHit(Player player, LivingEntity target) {
-        return target != player
-                && target.isAlive()
-                && target.isAttackable()
-                && player.hasLineOfSight(target)
-                && !player.isAlliedTo(target);
+        return SwordAbilityTargeting.canDamage(player, target)
+                && player.hasLineOfSight(target);
     }
 }

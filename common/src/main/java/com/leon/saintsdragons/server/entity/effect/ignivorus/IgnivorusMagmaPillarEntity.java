@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
+import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -43,7 +44,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.emerge");
     private static final RawAnimation SUBSIDE_ANIMATION =
             RawAnimation.begin().thenPlay("animation.ignivorus_magma_pillar.subside");
-    private static final int SUBSIDE_DURATION_TICKS = 9; // Matches 0.416s subside animation
+    private static final int SUBSIDE_DURATION_TICKS = 9;
     private static final EntityDimensions BASE_DIMENSIONS = EntityDimensions.scalable(5.5F, 5.5F);
     private static final double DAMAGE_RADIUS_BASE = 2.25D;
     private static final double DAMAGE_RADIUS_SCALE_MULTIPLIER = 0.65D;
@@ -187,6 +188,9 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             // Skip if already hit
             if (hitEntities.contains(target.getUUID())) {
                 return false;
+            }
+            if (owner instanceof Player player) {
+                return SwordAbilityTargeting.canDamage(player, target);
             }
             return owner == null || !isOwnerAlly(target);
         });

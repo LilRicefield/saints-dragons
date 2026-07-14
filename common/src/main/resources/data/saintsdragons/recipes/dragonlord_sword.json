@@ -1,23 +1,26 @@
 {
   "type": "saintsdragons:draconic_crucible",
   "pattern": [
-    "TTT",
-    "SAS",
-    "   "
+    "  T",
+    "AI ",
+    "SA "
   ],
   "key": {
-    "A": {
-      "item": "saintsdragons:dragonheart_alloy"
+    "I": {
+      "item": "saintsdragons:ignivorus_scale"
     },
     "T": {
       "item": "saintsdragons:ignivorus_tooth"
     },
+    "A": {
+      "item": "saintsdragons:dragonheart_alloy"
+    },
     "S": {
-      "item": "saintsdragons:ignivorus_scale"
+      "item": "minecraft:stick"
     }
   },
   "result": {
-    "item": "saintsdragons:dragonlord_helmet",
+    "item": "saintsdragons:dragonlord_sword",
     "count": 1
   },
   "required_heat_level": 3,
