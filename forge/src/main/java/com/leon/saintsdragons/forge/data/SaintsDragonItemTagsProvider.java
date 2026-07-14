@@ -6,6 +6,7 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.data.tags.TagsProvider;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -45,6 +46,19 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
         tag(ModTags.Items.DRAGON_BRUSHES)
                 .add(ModItems.DRAGON_BRUSH.get())
                 .add(ModItems.GOLDEN_DRAGON_BRUSH.get());
+
+        tag(ItemTags.SWORDS)
+                .add(ModItems.WORLDROOT_SWORD.get())
+                .add(ModItems.BLOOD_TEMPEST_KATANA.get())
+                .add(ModItems.DRAGONLORD_SWORD.get());
+        tag(ItemTags.PICKAXES)
+                .add(ModItems.WORLDROOT_PICKAXE.get());
+        tag(ItemTags.AXES)
+                .add(ModItems.WORLDROOT_AXE.get());
+        tag(ItemTags.SHOVELS)
+                .add(ModItems.WORLDROOT_SHOVEL.get());
+        tag(ItemTags.HOES)
+                .add(ModItems.WORLDROOT_HOE.get());
 
         tag(ModTags.Items.DRAGON_PARTS)
                 .add(ModItems.CINDERVANE_SCALE.get())

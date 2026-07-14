@@ -14,7 +14,7 @@
       "com.leon.saintsdragons.fabric.SaintsDragonsFabricClient"
     ],
     "emi": [
-      "com.leon.saintsdragons.fabric.compat.emi.SaintsDragonsEmi"
+      "com.leon.saintsdragons.client.compat.emi.SaintsDragonsEmiPlugin"
     ],
     "jade": [
       "com.leon.saintsdragons.fabric.integration.jade.JadeDragonPlugin"

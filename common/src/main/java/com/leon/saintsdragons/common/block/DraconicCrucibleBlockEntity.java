@@ -163,6 +163,14 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         return startProcessing(level);
     }
 
+    public boolean isProcessing() {
+        return this.processingLocked;
+    }
+
+    public int getRemainingProcessingTicks() {
+        return Math.max(0, this.processingTimeTotal - this.processingProgress);
+    }
+
     private boolean startProcessing(Level level) {
         if (this.processingLocked) {
             return false;

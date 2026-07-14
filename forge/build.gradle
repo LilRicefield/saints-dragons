@@ -94,6 +94,9 @@ dependencies {
     // Jade integration (optional)
     modCompileOnly "maven.modrinth:jade:${rootProject.jade_forge_version}"
 
+    // EMI integration (optional API only). JEI remains the local development runtime viewer.
+    modCompileOnly "dev.emi:emi-forge:${rootProject.emi_version}:api"
+
     // Optional JEI integration: API-only for production, full mod in local development.
     modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-common-api:${rootProject.jei_version}"
     modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-forge-api:${rootProject.jei_version}"

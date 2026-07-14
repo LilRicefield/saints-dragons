@@ -5,6 +5,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public enum DraconicCrucibleFuelTier {
     NONE(0, null),
@@ -22,6 +23,10 @@ public enum DraconicCrucibleFuelTier {
 
     public int heatLevel() {
         return this.heatLevel;
+    }
+
+    public @Nullable TagKey<Item> tag() {
+        return this.tag;
     }
 
     public int chargeCapacity() {

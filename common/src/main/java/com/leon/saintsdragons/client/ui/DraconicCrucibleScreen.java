@@ -12,44 +12,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import org.jetbrains.annotations.NotNull;
 
-public class DraconicCrucibleScreen extends AbstractContainerScreen<DraconicCrucibleMenu> {
-    private static final int BUTTON_X = 145;
-    private static final int BUTTON_Y = 99;
-    private static final int BUTTON_WIDTH = 24;
-    private static final int BUTTON_HEIGHT = 14;
-    private static final int BUTTON_U = 232;
-    private static final int BUTTON_DEFAULT_V = 0;
-    private static final int BUTTON_HIGHLIGHTED_V = 14;
-    private static final int BUTTON_CLICKED_V = 28;
-    private static final int PANEL_X = 58;
-    private static final int PANEL_Y = 56;
-    private static final int PANEL_U = 176;
-    private static final int PANEL_V = 87;
-    private static final int PANEL_WIDTH = 70;
-    private static final int PANEL_HEIGHT = 60;
-    private static final int BAR_U = 245;
-    private static final int BAR_V = 92;
-    private static final int BAR_WIDTH = 5;
-    private static final int BAR_HEIGHT = 40;
-    private static final int BAR_LEFT_SHIFT = 9;
-    private static final int BAR_X = BAR_U - PANEL_U - BAR_LEFT_SHIFT;
-    private static final int BAR_Y = BAR_V - PANEL_V;
-    private static final int ARROW_X = 80;
-    private static final int ARROW_Y = 46;
-    private static final int ARROW_U = 180;
-    private static final int ARROW_V = 3;
-    private static final int ARROW_WIDTH = 17;
-    private static final int ARROW_HEIGHT = 9;
-    private static final int GAUGE_X = 35;
-    private static final int GAUGE_Y = 28;
-    private static final int GAUGE_U = 182;
-    private static final int GAUGE_V = 25;
-    private static final int GAUGE_WIDTH = 7;
-    private static final int GAUGE_HEIGHT = 56;
-    private static final int GAUGE_LEVEL_1_HEIGHT = 21;
-    private static final int GAUGE_LEVEL_2_HEIGHT = 42;
-    private static final int GAUGE_LEVEL_3_HEIGHT = 56;
+import static com.leon.saintsdragons.common.block.crucible.DraconicCrucibleUiLayout.*;
 
+public class DraconicCrucibleScreen extends AbstractContainerScreen<DraconicCrucibleMenu> {
     private static final ResourceLocation TEXTURE =
             SaintsDragonsCommon.rl("textures/gui/draconic_crucible_gui.png");
 
@@ -57,8 +22,8 @@ public class DraconicCrucibleScreen extends AbstractContainerScreen<DraconicCruc
 
     public DraconicCrucibleScreen(DraconicCrucibleMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        this.imageWidth = 176;
-        this.imageHeight = 208;
+        this.imageWidth = WIDTH;
+        this.imageHeight = HEIGHT;
     }
 
     @Override
@@ -135,23 +100,7 @@ public class DraconicCrucibleScreen extends AbstractContainerScreen<DraconicCruc
         int level1Charge = this.menu.getTierChargeCapacity(1);
         int level2Charge = this.menu.getTierChargeCapacity(2);
         int level3Charge = this.menu.getTierChargeCapacity(3);
-        if (charge <= level1Charge) {
-            return scaleGaugeSegment(charge, 0, level1Charge, 0, GAUGE_LEVEL_1_HEIGHT);
-        }
-        if (charge <= level2Charge) {
-            return scaleGaugeSegment(charge, level1Charge, level2Charge,
-                    GAUGE_LEVEL_1_HEIGHT, GAUGE_LEVEL_2_HEIGHT);
-        }
-        return scaleGaugeSegment(Math.min(charge, level3Charge), level2Charge, level3Charge,
-                GAUGE_LEVEL_2_HEIGHT, GAUGE_LEVEL_3_HEIGHT);
-    }
-
-    private static int scaleGaugeSegment(int value, int valueStart, int valueEnd,
-                                         int pixelStart, int pixelEnd) {
-        int valueRange = Math.max(1, valueEnd - valueStart);
-        int pixelRange = pixelEnd - pixelStart;
-        int progress = Math.max(0, value - valueStart);
-        return Math.min(pixelEnd, pixelStart + (pixelRange * progress + valueRange - 1) / valueRange);
+        return gaugeFillHeight(charge, level1Charge, level2Charge, level3Charge);
     }
 
     private int getArrowFillHeight() {

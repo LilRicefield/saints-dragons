@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BooleanSupplier;
 
+import static com.leon.saintsdragons.common.block.crucible.DraconicCrucibleUiLayout.*;
+
 public class DraconicCrucibleMenu extends AbstractContainerMenu {
     private static final int CRUCIBLE_SLOT_COUNT = DraconicCrucibleBlockEntity.CONTAINER_SIZE;
     private static final int PLAYER_INVENTORY_START = CRUCIBLE_SLOT_COUNT;
@@ -52,25 +54,28 @@ public class DraconicCrucibleMenu extends AbstractContainerMenu {
 
         BooleanSupplier unlocked = () -> !isProcessing();
         this.addSlot(new OutputSlot(
-                crucible, DraconicCrucibleBlockEntity.OUTPUT_SLOT, 80, 21, unlocked));
+                crucible, DraconicCrucibleBlockEntity.OUTPUT_SLOT, OUTPUT_SLOT_X, OUTPUT_SLOT_Y, unlocked));
         this.addSlot(new FuelSlot(
-                crucible, DraconicCrucibleBlockEntity.FUEL_SLOT, 30, 91, unlocked));
+                crucible, DraconicCrucibleBlockEntity.FUEL_SLOT, FUEL_SLOT_X, FUEL_SLOT_Y, unlocked));
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 3; column++) {
                 this.addSlot(new LockableSlot(crucible,
                         DraconicCrucibleBlockEntity.INPUT_SLOT_START + column + row * 3,
-                        62 + column * 18, 60 + row * 18, unlocked));
+                        INPUT_GRID_X + column * SLOT_SPACING,
+                        INPUT_GRID_Y + row * SLOT_SPACING, unlocked));
             }
         }
 
         for (int row = 0; row < 3; row++) {
             for (int column = 0; column < 9; column++) {
                 this.addSlot(new Slot(playerInventory, column + row * 9 + 9,
-                        8 + column * 18, 126 + row * 18));
+                        PLAYER_INVENTORY_X + column * SLOT_SPACING,
+                        PLAYER_INVENTORY_Y + row * SLOT_SPACING));
             }
         }
         for (int column = 0; column < 9; column++) {
-            this.addSlot(new Slot(playerInventory, column, 8 + column * 18, 184));
+            this.addSlot(new Slot(playerInventory, column,
+                    PLAYER_INVENTORY_X + column * SLOT_SPACING, HOTBAR_Y));
         }
     }
 

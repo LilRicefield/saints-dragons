@@ -31,6 +31,9 @@ dependencies {
     // Optional JEI integration. The API is available to compile against but is never bundled.
     modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-common-api:${rootProject.jei_version}"
 
+    // Optional EMI integration. Architectury remaps the intermediary API for each target platform.
+    modCompileOnly "dev.emi:emi-xplat-intermediary:${rootProject.emi_version}:api"
+
     // JSR305 for @Nullable/@Nonnull annotations
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
 }

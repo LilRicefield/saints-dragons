@@ -112,6 +112,18 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
         return this.requiredHeatLevel;
     }
 
+    public int width() {
+        return this.width;
+    }
+
+    public int height() {
+        return this.height;
+    }
+
+    public ItemStack result() {
+        return this.result.copy();
+    }
+
     public int processingTime() {
         return this.processingTime;
     }
