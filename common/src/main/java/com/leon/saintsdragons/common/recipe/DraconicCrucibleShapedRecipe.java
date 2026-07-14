@@ -32,10 +32,12 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
     private final ItemStack result;
     private final int requiredHeatLevel;
     private final int processingTime;
+    private final int priority;
 
     public DraconicCrucibleShapedRecipe(ResourceLocation id, int width, int height,
                                         NonNullList<Ingredient> ingredients,
-                                        ItemStack result, int requiredHeatLevel, int processingTime) {
+                                        ItemStack result, int requiredHeatLevel, int processingTime,
+                                        int priority) {
         this.id = id;
         this.width = width;
         this.height = height;
@@ -43,6 +45,7 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
         this.result = result;
         this.requiredHeatLevel = requiredHeatLevel;
         this.processingTime = processingTime;
+        this.priority = priority;
     }
 
     @Override
@@ -113,6 +116,10 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
         return this.processingTime;
     }
 
+    public int priority() {
+        return this.priority;
+    }
+
     @Override
     public @NotNull NonNullList<Ingredient> getIngredients() {
         return this.ingredients;
@@ -178,8 +185,9 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
             ItemStack result = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "result"));
             int requiredHeatLevel = DraconicCrucibleSmeltingRecipe.readHeatLevel(json);
             int processingTime = DraconicCrucibleSmeltingRecipe.readProcessingTime(json);
+            int priority = DraconicCrucibleSmeltingRecipe.readPriority(json);
             return new DraconicCrucibleShapedRecipe(
-                    id, width, height, ingredients, result, requiredHeatLevel, processingTime);
+                    id, width, height, ingredients, result, requiredHeatLevel, processingTime, priority);
         }
 
         @Override
@@ -194,8 +202,9 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
             ItemStack result = buffer.readItem();
             int requiredHeatLevel = buffer.readVarInt();
             int processingTime = buffer.readVarInt();
+            int priority = buffer.readInt();
             return new DraconicCrucibleShapedRecipe(
-                    id, width, height, ingredients, result, requiredHeatLevel, processingTime);
+                    id, width, height, ingredients, result, requiredHeatLevel, processingTime, priority);
         }
 
         @Override
@@ -209,6 +218,7 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
             buffer.writeItem(recipe.result);
             buffer.writeVarInt(recipe.requiredHeatLevel);
             buffer.writeVarInt(recipe.processingTime);
+            buffer.writeInt(recipe.priority);
         }
 
         private static String[] readPattern(JsonObject json) {

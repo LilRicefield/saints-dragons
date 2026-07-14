@@ -3,6 +3,7 @@ package com.leon.saintsdragons.forge;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.block.crucible.DraconicCrucibleThermalReloadListener;
 import com.leon.saintsdragons.server.entity.variant.DragonVariantReloadListener;
 import com.leon.saintsdragons.server.entity.npc.chatter.IvyChatterReloadListener;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeReloadListener;
@@ -223,6 +224,7 @@ public final class SaintsDragonsForge {
         event.addListener(IvyTradeReloadListener.getInstance());
         event.addListener(DialogueReloadListener.getInstance());
         event.addListener(DragonChestLootReloadListener.getInstance());
+        event.addListener(DraconicCrucibleThermalReloadListener.getInstance());
     }
 
     private void onModConfigEvent(ModConfigEvent event) {

@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.recipe.DraconicCrucibleSmeltingRecipe;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModRecipes;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.menu.DraconicCrucibleMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -14,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.ContainerHelper;
+import net.minecraft.world.Containers;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -35,7 +37,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     public static final int INPUT_SLOT_START = 2;
     public static final int INPUT_SLOT_COUNT = 9;
     public static final int CONTAINER_SIZE = 11;
-    public static final int DATA_COUNT = 7;
+    public static final int DATA_COUNT = 10;
 
     private static final long ANIMATION_DURATION_TICKS = 20L;
     private static final int THERMAL_CHARGE_MODEL_VERSION = 2;
@@ -76,6 +78,9 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
                 case 4 -> activeHeatLevel;
                 case 5 -> processingLocked ? 1 : 0;
                 case 6 -> canStartProcessing ? 1 : 0;
+                case 7 -> DraconicCrucibleFuelTier.LEVEL_1.chargeCapacity();
+                case 8 -> DraconicCrucibleFuelTier.LEVEL_2.chargeCapacity();
+                case 9 -> DraconicCrucibleFuelTier.LEVEL_3.chargeCapacity();
                 default -> 0;
             };
         }
@@ -173,7 +178,9 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         int processingCost = DraconicCrucibleFuelTier.fromHeatLevel(job.requiredHeatLevel())
                 .processingCost(job.requiredHeatLevel());
 
-        consumeJobInputs(job);
+        if (!consumeJobInputs(job)) {
+            return false;
+        }
         this.activeRecipeId = job.recipeId();
         this.activeInputSlot = job.inputSlot();
         this.processingProgress = 0;
@@ -260,14 +267,18 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
     @Nullable
     private CrucibleJob findJob(Level level) {
         SimpleContainer grid = createGridView();
+        DraconicCrucibleShapedRecipe shapedMatch = null;
         for (DraconicCrucibleShapedRecipe recipe :
                 level.getRecipeManager().getAllRecipesFor(ModRecipes.DRACONIC_CRUCIBLE_SHAPED_TYPE.get())) {
-            if (recipe.matches(grid, level)) {
-                return new CrucibleJob(
-                        recipe.getId(), SHAPED_JOB_SLOT,
-                        recipe.getResultItem(level.registryAccess()).copy(),
-                        recipe.requiredHeatLevel(), recipe.processingTime(), recipe);
+            if (recipe.matches(grid, level) && isPreferred(recipe, shapedMatch)) {
+                shapedMatch = recipe;
             }
+        }
+        if (shapedMatch != null) {
+            return new CrucibleJob(
+                    shapedMatch.getId(), SHAPED_JOB_SLOT,
+                    shapedMatch.getResultItem(level.registryAccess()).copy(),
+                    shapedMatch.requiredHeatLevel(), shapedMatch.processingTime(), shapedMatch);
         }
 
         for (int gridSlot = 0; gridSlot < INPUT_SLOT_COUNT; gridSlot++) {
@@ -276,14 +287,21 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             if (input.isEmpty()) {
                 continue;
             }
-
+            DraconicCrucibleSmeltingRecipe smeltingMatch = null;
             for (DraconicCrucibleSmeltingRecipe recipe :
                     level.getRecipeManager().getAllRecipesFor(ModRecipes.DRACONIC_CRUCIBLE_SMELTING_TYPE.get())) {
-                if (recipe.ingredient().test(input)) {
-                    return new CrucibleJob(
-                            recipe.getId(), inventorySlot, recipe.result().copy(),
-                            recipe.requiredHeatLevel(), recipe.processingTime(), null);
+                if (recipe.ingredient().test(input) && isPreferred(recipe, smeltingMatch)) {
+                    smeltingMatch = recipe;
                 }
+            }
+            if (smeltingMatch != null) {
+                return new CrucibleJob(
+                        smeltingMatch.getId(), inventorySlot, smeltingMatch.result().copy(),
+                        smeltingMatch.requiredHeatLevel(), smeltingMatch.processingTime(), null);
+            }
+
+            if (input.is(ModTags.Items.DRACONIC_CRUCIBLE_VANILLA_SMELTING_BLACKLIST)) {
+                continue;
             }
 
             SimpleContainer singleInput = new SimpleContainer(input);
@@ -298,6 +316,22 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
             }
         }
         return null;
+    }
+
+    private static boolean isPreferred(DraconicCrucibleShapedRecipe candidate,
+                                       @Nullable DraconicCrucibleShapedRecipe current) {
+        return current == null
+                || candidate.priority() > current.priority()
+                || (candidate.priority() == current.priority()
+                && candidate.getId().toString().compareTo(current.getId().toString()) < 0);
+    }
+
+    private static boolean isPreferred(DraconicCrucibleSmeltingRecipe candidate,
+                                       @Nullable DraconicCrucibleSmeltingRecipe current) {
+        return current == null
+                || candidate.priority() > current.priority()
+                || (candidate.priority() == current.priority()
+                && candidate.getId().toString().compareTo(current.getId().toString()) < 0);
     }
 
     private SimpleContainer createGridView() {
@@ -351,15 +385,53 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         }
     }
 
-    private void consumeJobInputs(CrucibleJob job) {
+    private boolean consumeJobInputs(CrucibleJob job) {
         if (job.shapedRecipe() != null) {
             SimpleContainer consumedGrid = createGridView();
-            job.shapedRecipe().consumeInputs(consumedGrid);
+            NonNullList<ItemStack> remainders = job.shapedRecipe().getRemainingItems(consumedGrid);
+            if (!job.shapedRecipe().consumeInputs(consumedGrid)) {
+                return false;
+            }
+            for (int gridSlot = 0; gridSlot < INPUT_SLOT_COUNT; gridSlot++) {
+                restoreOrDropRemainder(consumedGrid, gridSlot, remainders.get(gridSlot));
+            }
             for (int gridSlot = 0; gridSlot < INPUT_SLOT_COUNT; gridSlot++) {
                 this.items.set(INPUT_SLOT_START + gridSlot, consumedGrid.getItem(gridSlot));
             }
         } else {
-            this.items.get(job.inputSlot()).shrink(1);
+            ItemStack input = this.items.get(job.inputSlot());
+            if (input.isEmpty()) {
+                return false;
+            }
+            input.shrink(1);
+        }
+        return true;
+    }
+
+    private void restoreOrDropRemainder(SimpleContainer grid, int slot, ItemStack remainder) {
+        if (remainder.isEmpty()) {
+            return;
+        }
+
+        ItemStack existing = grid.getItem(slot);
+        if (existing.isEmpty()) {
+            grid.setItem(slot, remainder);
+            return;
+        }
+        if (ItemStack.isSameItemSameTags(existing, remainder)) {
+            int transfer = Math.min(remainder.getCount(), existing.getMaxStackSize() - existing.getCount());
+            if (transfer > 0) {
+                existing.grow(transfer);
+                remainder.shrink(transfer);
+            }
+        }
+        if (!remainder.isEmpty() && this.level != null) {
+            Containers.dropItemStack(
+                    this.level,
+                    this.worldPosition.getX() + 0.5D,
+                    this.worldPosition.getY() + 1.0D,
+                    this.worldPosition.getZ() + 0.5D,
+                    remainder);
         }
     }
 

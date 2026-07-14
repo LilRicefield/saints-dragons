@@ -1,0 +1,14 @@
+{
+  "level_1": {
+    "charge_capacity": 5,
+    "processing_cost": 1
+  },
+  "level_2": {
+    "charge_capacity": 11,
+    "processing_cost": 2
+  },
+  "level_3": {
+    "charge_capacity": 17,
+    "processing_cost": 6
+  }
+}

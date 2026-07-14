@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.block.crucible.DraconicCrucibleFuelTier;
 import com.leon.saintsdragons.server.menu.DraconicCrucibleMenu;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.GuiGraphics;
@@ -133,9 +132,9 @@ public class DraconicCrucibleScreen extends AbstractContainerScreen<DraconicCruc
             return 0;
         }
 
-        int level1Charge = DraconicCrucibleFuelTier.LEVEL_1.chargeCapacity();
-        int level2Charge = DraconicCrucibleFuelTier.LEVEL_2.chargeCapacity();
-        int level3Charge = DraconicCrucibleFuelTier.LEVEL_3.chargeCapacity();
+        int level1Charge = this.menu.getTierChargeCapacity(1);
+        int level2Charge = this.menu.getTierChargeCapacity(2);
+        int level3Charge = this.menu.getTierChargeCapacity(3);
         if (charge <= level1Charge) {
             return scaleGaugeSegment(charge, 0, level1Charge, 0, GAUGE_LEVEL_1_HEIGHT);
         }

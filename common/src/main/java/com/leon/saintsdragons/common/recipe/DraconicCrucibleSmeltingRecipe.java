@@ -22,7 +22,8 @@ public record DraconicCrucibleSmeltingRecipe(
         Ingredient ingredient,
         ItemStack result,
         int requiredHeatLevel,
-        int processingTime
+        int processingTime,
+        int priority
 ) implements Recipe<Container> {
     @Override
     public boolean matches(@NotNull Container container, @NotNull Level level) {
@@ -67,8 +68,9 @@ public record DraconicCrucibleSmeltingRecipe(
             ItemStack result = ShapedRecipe.itemStackFromJson(GsonHelper.getAsJsonObject(json, "result"));
             int requiredHeatLevel = readHeatLevel(json);
             int processingTime = readProcessingTime(json);
+            int priority = readPriority(json);
             return new DraconicCrucibleSmeltingRecipe(
-                    id, ingredient, result, requiredHeatLevel, processingTime);
+                    id, ingredient, result, requiredHeatLevel, processingTime, priority);
         }
 
         @Override
@@ -78,8 +80,9 @@ public record DraconicCrucibleSmeltingRecipe(
             ItemStack result = buffer.readItem();
             int requiredHeatLevel = buffer.readVarInt();
             int processingTime = buffer.readVarInt();
+            int priority = buffer.readInt();
             return new DraconicCrucibleSmeltingRecipe(
-                    id, ingredient, result, requiredHeatLevel, processingTime);
+                    id, ingredient, result, requiredHeatLevel, processingTime, priority);
         }
 
         @Override
@@ -89,6 +92,7 @@ public record DraconicCrucibleSmeltingRecipe(
             buffer.writeItem(recipe.result);
             buffer.writeVarInt(recipe.requiredHeatLevel);
             buffer.writeVarInt(recipe.processingTime);
+            buffer.writeInt(recipe.priority);
         }
     }
 
@@ -106,5 +110,9 @@ public record DraconicCrucibleSmeltingRecipe(
             throw new IllegalArgumentException("processing_time must be greater than zero");
         }
         return processingTime;
+    }
+
+    static int readPriority(JsonObject json) {
+        return GsonHelper.getAsInt(json, "priority", 0);
     }
 }

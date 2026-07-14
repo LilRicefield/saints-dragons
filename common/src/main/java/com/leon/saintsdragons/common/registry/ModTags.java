@@ -58,6 +58,8 @@ public final class ModTags {
                 tag("draconic_crucible/fuels/level_2");
         public static final TagKey<Item> DRACONIC_CRUCIBLE_FUEL_LEVEL_3 =
                 tag("draconic_crucible/fuels/level_3");
+        public static final TagKey<Item> DRACONIC_CRUCIBLE_VANILLA_SMELTING_BLACKLIST =
+                tag("draconic_crucible/vanilla_smelting_blacklist");
 
         private Items() {
         }

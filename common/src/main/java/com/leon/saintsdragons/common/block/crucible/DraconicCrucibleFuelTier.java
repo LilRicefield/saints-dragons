@@ -7,18 +7,16 @@ import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public enum DraconicCrucibleFuelTier {
-    NONE(0, 0, null),
-    LEVEL_1(1, 5, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_1),
-    LEVEL_2(2, 11, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_2),
-    LEVEL_3(3, 17, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_3);
+    NONE(0, null),
+    LEVEL_1(1, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_1),
+    LEVEL_2(2, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_2),
+    LEVEL_3(3, ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_3);
 
     private final int heatLevel;
-    private final int chargeCapacity;
     private final TagKey<Item> tag;
 
-    DraconicCrucibleFuelTier(int heatLevel, int chargeCapacity, TagKey<Item> tag) {
+    DraconicCrucibleFuelTier(int heatLevel, TagKey<Item> tag) {
         this.heatLevel = heatLevel;
-        this.chargeCapacity = chargeCapacity;
         this.tag = tag;
     }
 
@@ -27,7 +25,7 @@ public enum DraconicCrucibleFuelTier {
     }
 
     public int chargeCapacity() {
-        return this.chargeCapacity;
+        return thermalData().chargeCapacity(this.heatLevel);
     }
 
     public boolean canProcess(int requiredHeatLevel) {
@@ -38,12 +36,7 @@ public enum DraconicCrucibleFuelTier {
         if (!canProcess(requiredHeatLevel)) {
             return Integer.MAX_VALUE;
         }
-        return switch (requiredHeatLevel) {
-            case 1 -> 1;
-            case 2 -> 2;
-            case 3 -> 6;
-            default -> Integer.MAX_VALUE;
-        };
+        return thermalData().processingCost(requiredHeatLevel);
     }
 
     public boolean canFund(int charge, int requiredHeatLevel) {
@@ -56,12 +49,7 @@ public enum DraconicCrucibleFuelTier {
     }
 
     public static int minimumRemainingCharge(int requiredHeatLevel) {
-        return switch (requiredHeatLevel) {
-            case 1 -> 0;
-            case 2 -> LEVEL_1.chargeCapacity;
-            case 3 -> LEVEL_2.chargeCapacity;
-            default -> Integer.MAX_VALUE;
-        };
+        return thermalData().minimumRemainingCharge(requiredHeatLevel);
     }
 
     public static @NotNull DraconicCrucibleFuelTier fromHeatLevel(int heatLevel) {
@@ -77,10 +65,10 @@ public enum DraconicCrucibleFuelTier {
         if (charge <= 0) {
             return NONE;
         }
-        if (charge <= LEVEL_1.chargeCapacity) {
+        if (charge <= LEVEL_1.chargeCapacity()) {
             return LEVEL_1;
         }
-        if (charge <= LEVEL_2.chargeCapacity) {
+        if (charge <= LEVEL_2.chargeCapacity()) {
             return LEVEL_2;
         }
         return LEVEL_3;
@@ -100,5 +88,9 @@ public enum DraconicCrucibleFuelTier {
             return LEVEL_1;
         }
         return NONE;
+    }
+
+    private static DraconicCrucibleThermalData thermalData() {
+        return DraconicCrucibleThermalReloadListener.current();
     }
 }

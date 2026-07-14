@@ -153,6 +153,10 @@ public class DraconicCrucibleMenu extends AbstractContainerMenu {
         return this.data.get(6) != 0;
     }
 
+    public int getTierChargeCapacity(int heatLevel) {
+        return heatLevel >= 1 && heatLevel <= 3 ? this.data.get(6 + heatLevel) : 0;
+    }
+
     @Override
     public boolean clickMenuButton(@NotNull Player player, int id) {
         return id == 0
