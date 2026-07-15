@@ -72,7 +72,7 @@ public class RaevyxCombatBrain implements DragonBrainOwner<Raevyx> {
                                 new SetWalkTargetToAttackTargetBehaviour<Raevyx>(
                                         0.8F,
                                         (dragon, target) -> (int)Math.floor(
-                                                RaevyxGroundCombatBehaviour.meleeStopRange(target)
+                                                RaevyxGroundCombatBehaviour.meleeStopRange(dragon, target)
                                                         + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
                                         ),
                                         (dragon, target) -> dragon.getActiveAbility() != null

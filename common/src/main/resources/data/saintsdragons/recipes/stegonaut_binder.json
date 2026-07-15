@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "pattern": [
     "ISI",
-    "SAS",
+    "ACA",
     "ISI"
   ],
   "key": {
@@ -14,6 +14,9 @@
     },
     "S": {
       "item": "saintsdragons:stegonaut_scale"
+    },
+    "C": {
+      "item": "saintsdragons:dragon_binder_core"
     }
   },
   "result": {

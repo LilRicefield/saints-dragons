@@ -177,12 +177,12 @@ public final class RaevyxDiveImpactAbility {
 
     private void spawnImpactVisuals(ServerLevel server, Vec3 origin, double power) {
         float ringScale = (float) Mth.lerp(power, 0.8D, 1.35D);
-        ImpactRingEntity ring = new ImpactRingEntity(server, origin.add(0.0D, 0.08D, 0.0D), ringScale);
+        double groundY = dragon.getBoundingBox().minY;
+        ImpactRingEntity ring = new ImpactRingEntity(server, new Vec3(origin.x, groundY, origin.z), ringScale);
         server.addFreshEntity(ring);
 
-        double crackY = dragon.getBoundingBox().minY + 0.02D;
         server.addFreshEntity(new GroundCrackEntity(server,
-                new Vec3(origin.x, crackY, origin.z), dragon.getYRot()));
+                new Vec3(origin.x, groundY, origin.z), dragon.getYRot()));
 
         spawnGroundDust(server, origin, power);
     }

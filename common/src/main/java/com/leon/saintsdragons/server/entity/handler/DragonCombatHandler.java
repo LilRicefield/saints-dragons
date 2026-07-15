@@ -235,7 +235,7 @@ public class DragonCombatHandler {
             return true;
         }
         LivingEntity target = dragon.getTarget();
-        if (!DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+        if (!DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
             return true;
         }
         return isBiteAbility(abilityType);
@@ -355,7 +355,7 @@ public class DragonCombatHandler {
 
         if (activeAbility != null) {
             if (!dragon.isVehicle()
-                    && DragonTargetingHelper.isBiteOnlyPreyTarget(dragon.getTarget())
+                    && DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, dragon.getTarget())
                     && !isBiteAbility(activeAbility.getAbilityType())
                     && !isInternalStateAbility(activeAbility.getAbilityType())) {
                 forceEndActiveAbility();

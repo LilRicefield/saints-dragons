@@ -1,14 +1,23 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.registry.ModAttributes;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
+import com.leon.saintsdragons.common.network.MessageCameraImpulse;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.data.DragonlordPlayerSavedData;
+import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
+import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.util.RandomSource;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -17,6 +26,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoItem;
@@ -39,8 +50,18 @@ public final class DragonlordArmorSetBonus {
     private static final double LANDING_SHOCKWAVE_STRENGTH = 2.15D;
     private static final double LANDING_SHOCKWAVE_LIFT = 0.75D;
     private static final double LANDING_SHOCKWAVE_MIN_DROP = 4.0D;
-    private static final float LANDING_IMPACT_RING_SCALE = 0.25F;
-    private static final int LANDING_IMPACT_DUST_COUNT = 18;
+    private static final float LANDING_IMPACT_RING_SCALE = 0.4F;
+    private static final int LANDING_IMPACT_DUST_COUNT = 64;
+    private static final double LANDING_IMPACT_DUST_RADIUS = 8.5D;
+    private static final int LANDING_FISSURE_DURATION = 7 * 20;
+    private static final float LANDING_FISSURE_VISUAL_RADIUS = 9.0F;
+    private static final float LANDING_FISSURE_DAMAGE_RADIUS = 9.0F;
+    private static final float LANDING_FISSURE_DAMAGE = 10.0F;
+    private static final int LANDING_DEBRIS_COUNT = 24;
+    private static final int LANDING_DEBRIS_LIFETIME = 50;
+    private static final float LANDING_SCREEN_SHAKE_INTENSITY = 2.25F;
+    private static final int LANDING_SCREEN_SHAKE_DURATION = 16;
+    private static final float LANDING_SCREEN_SHAKE_RADIUS = 36.0F;
     private static final int DOUBLE_JUMP_FLAME_COUNT = 20;
     private static final float FALL_DAMAGE_BLOCK_THRESHOLD = 16.0F;
     private static final float VANILLA_PLAYER_MAX_HEALTH = 20.0F;
@@ -334,10 +355,8 @@ public final class DragonlordArmorSetBonus {
                 LANDING_SHOCKWAVE_Y_RADIUS,
                 LANDING_SHOCKWAVE_TOUCH_RADIUS
         );
-        for (LivingEntity target : player.level().getEntitiesOfClass(LivingEntity.class, hitbox, DragonlordArmorSetBonus::canShockwaveTarget)) {
-            if (target == player) {
-                continue;
-            }
+        for (LivingEntity target : player.level().getEntitiesOfClass(LivingEntity.class, hitbox,
+                entity -> SwordAbilityTargeting.canDamage(player, entity))) {
 
             Vec3 offset = target.position().subtract(player.position());
             Vec3 horizontal = new Vec3(offset.x, 0.0D, offset.z);
@@ -366,19 +385,103 @@ public final class DragonlordArmorSetBonus {
         }
 
         Vec3 origin = player.position();
-        server.addFreshEntity(new ImpactRingEntity(server, origin.add(0.0D, 0.08D, 0.0D), LANDING_IMPACT_RING_SCALE));
+        Vec3 groundOrigin = new Vec3(origin.x, player.getBoundingBox().minY, origin.z);
+        server.addFreshEntity(new ImpactRingEntity(server, groundOrigin, LANDING_IMPACT_RING_SCALE));
+        server.addFreshEntity(new GroundCrackEntity(
+                server,
+                groundOrigin,
+                player.getYRot(),
+                player,
+                LANDING_FISSURE_VISUAL_RADIUS,
+                LANDING_FISSURE_DAMAGE_RADIUS,
+                LANDING_FISSURE_DAMAGE,
+                LANDING_FISSURE_DURATION
+        ));
 
+        RandomSource random = player.getRandom();
         double y = player.getBoundingBox().minY + 0.08D;
         for (int i = 0; i < LANDING_IMPACT_DUST_COUNT; i++) {
-            double angle = (Math.PI * 2.0D * i) / LANDING_IMPACT_DUST_COUNT;
+            double angle = (Math.PI * 2.0D * i) / LANDING_IMPACT_DUST_COUNT
+                    + (random.nextDouble() - 0.5D) * 0.16D;
+            double distance = LANDING_IMPACT_DUST_RADIUS * (0.25D + random.nextDouble() * 0.75D);
+            double speed = 0.22D + random.nextDouble() * 0.36D;
             server.sendParticles(ModParticles.DRAGON_DUST.get(),
-                    origin.x, y, origin.z,
-                    0, Math.cos(angle) * 0.18D, 0.08D,
-                    Math.sin(angle) * 0.18D, 1.0D);
+                    origin.x + Math.cos(angle) * distance,
+                    y + random.nextDouble() * 0.18D,
+                    origin.z + Math.sin(angle) * distance,
+                    0,
+                    Math.cos(angle) * speed,
+                    0.08D + random.nextDouble() * 0.18D,
+                    Math.sin(angle) * speed,
+                    1.0D);
         }
+        spawnLandingDebris(server, origin, random);
+        sendLandingScreenShake(player, origin);
 
         server.playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_IMPACT.get(),
-                SoundSource.PLAYERS, 0.9F, 0.95F + player.getRandom().nextFloat() * 0.1F);
+                SoundSource.PLAYERS, 1.35F, 0.88F + random.nextFloat() * 0.08F);
+    }
+
+    private static void spawnLandingDebris(ServerLevel server, Vec3 origin, RandomSource random) {
+        for (int i = 0; i < LANDING_DEBRIS_COUNT; i++) {
+            double angle = (Math.PI * 2.0D * i) / LANDING_DEBRIS_COUNT
+                    + (random.nextDouble() - 0.5D) * 0.3D;
+            double radius = 1.0D + random.nextDouble() * (LANDING_FISSURE_DAMAGE_RADIUS - 1.0D);
+            BlockPos groundPos = findLandingGround(
+                    server,
+                    origin.x + Math.cos(angle) * radius,
+                    origin.y,
+                    origin.z + Math.sin(angle) * radius
+            );
+            if (groundPos == null) {
+                continue;
+            }
+
+            BlockState state = server.getBlockState(groundPos);
+            VisualFallingBlockEntity debris = new VisualFallingBlockEntity(
+                    ModEntities.VISUAL_FALLING_BLOCK.get(),
+                    server,
+                    groundPos.getX() + 0.5D,
+                    groundPos.getY() + 1.05D,
+                    groundPos.getZ() + 0.5D,
+                    state,
+                    LANDING_DEBRIS_LIFETIME
+            );
+            double outwardSpeed = 0.16D + random.nextDouble() * 0.28D;
+            debris.setDeltaMovement(
+                    Math.cos(angle) * outwardSpeed,
+                    0.45D + random.nextDouble() * 0.5D,
+                    Math.sin(angle) * outwardSpeed
+            );
+            debris.hasImpulse = true;
+            server.addFreshEntity(debris);
+        }
+    }
+
+    private static BlockPos findLandingGround(ServerLevel server, double x, double y, double z) {
+        BlockPos.MutableBlockPos cursor = BlockPos.containing(x, y + 3.0D, z).mutable();
+        for (int i = 0; i < 10; i++) {
+            BlockState state = server.getBlockState(cursor);
+            if (!state.isAir()
+                    && !state.liquid()
+                    && !state.is(Blocks.BEDROCK)
+                    && state.isFaceSturdy(server, cursor, Direction.UP)) {
+                return cursor.immutable();
+            }
+            cursor.move(Direction.DOWN);
+        }
+        return null;
+    }
+
+    private static void sendLandingScreenShake(ServerPlayer player, Vec3 origin) {
+        MessageCameraImpulse impulse = new MessageCameraImpulse(
+                origin,
+                LANDING_SCREEN_SHAKE_RADIUS,
+                LANDING_SCREEN_SHAKE_INTENSITY,
+                LANDING_SCREEN_SHAKE_DURATION
+        );
+        NetworkHandler.sendToTracking(player, impulse);
+        NetworkHandler.sendToPlayer(player, impulse);
     }
 
     private static void spawnDoubleJumpEffects(ServerPlayer player) {
@@ -424,7 +527,4 @@ public final class DragonlordArmorSetBonus {
         player.setHealth(Math.min(health, maxHealth));
     }
 
-    private static boolean canShockwaveTarget(LivingEntity entity) {
-        return entity.isAlive() && !(entity instanceof ServerPlayer player && player.isSpectator());
-    }
 }

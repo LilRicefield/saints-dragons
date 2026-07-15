@@ -203,7 +203,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(target);
+        boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target);
 
         if (!biteOnlyPrey && !hasUsedUltimateTrigger && shouldTriggerLowHealthUltimate()) {
             if (canUseAiAbility(ModAbilities.IGNIVORUS_ULTIMATE, true)) {
@@ -285,7 +285,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
         double gap = getGapToTarget(target);
 
         if (gap <= MELEE_ENGAGE_RANGE) {
-            if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+            if (DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
                 if (!canUseAiAbility(ModAbilities.IGNIVORUS_BITE, false)) {
                     return;
                 }

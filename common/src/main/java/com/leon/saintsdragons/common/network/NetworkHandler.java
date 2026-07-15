@@ -162,6 +162,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageCameraImpulse.class,
+                id("camera_impulse"),
+                MessageCameraImpulse::encode,
+                MessageCameraImpulse::decode,
+                MessageCameraImpulse::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDragonMovingSound.class,
                 id("dragon_moving_sound"),
                 MessageDragonMovingSound::encode,

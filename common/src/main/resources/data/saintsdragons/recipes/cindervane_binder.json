@@ -1,16 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "S S",
+    "SSS",
     "SCS",
-    "S S"
+    "SSS"
   ],
   "key": {
-    "C": {
+    "S": {
       "item": "saintsdragons:cindervane_scale"
     },
-    "S": {
-      "item": "minecraft:stone_bricks"
+    "C": {
+      "item": "saintsdragons:dragon_binder_core"
     }
   },
   "result": {

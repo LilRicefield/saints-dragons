@@ -1,6 +1,18 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
+    "has_dragon_binder_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragon_binder_core"
+            ]
+          }
+        ]
+      }
+    },
     "has_raevyx_scale": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
@@ -13,25 +25,25 @@
         ]
       }
     },
-    "has_netherite_ingot": {
+    "has_raevyx_wing_hide": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "minecraft:netherite_ingot"
+              "saintsdragons:raevyx_wing_hide"
             ]
           }
         ]
       }
     },
-    "has_deepslate": {
+    "has_raevyx_wingtalon": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "minecraft:deepslate"
+              "saintsdragons:raevyx_wingtalon"
             ]
           }
         ]
@@ -40,9 +52,16 @@
   },
   "requirements": [
     [
-      "has_raevyx_scale",
-      "has_netherite_ingot",
-      "has_deepslate"
+      "has_dragon_binder_core"
+    ],
+    [
+      "has_raevyx_scale"
+    ],
+    [
+      "has_raevyx_wing_hide"
+    ],
+    [
+      "has_raevyx_wingtalon"
     ]
   ],
   "rewards": {

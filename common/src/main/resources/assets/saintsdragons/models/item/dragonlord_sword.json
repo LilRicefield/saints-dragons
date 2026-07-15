@@ -3,8 +3,8 @@
 	"gui_light": "front",
 	"textures": {
 		"parent": "item/generated",
-		"0": "saintsdragons:item/dragonlord_sword",
-		"particle": "saintsdragons:item/dragonlord_sword"
+		"0": "saintsdragons:item/tools/dragonlord_sword",
+		"particle": "saintsdragons:item/tools/dragonlord_sword"
 	},
 	"elements": [
 		{

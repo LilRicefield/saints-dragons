@@ -11,9 +11,17 @@ public final class SwordAbilityTargeting {
 
     public static boolean canDamage(Player player, LivingEntity target) {
         if (target == null
-                || target == player
                 || !target.isAlive()
-                || !target.attackable()
+                || !target.attackable()) {
+            return false;
+        }
+
+        return canChainFromSuccessfulHit(player, target);
+    }
+
+    public static boolean canChainFromSuccessfulHit(Player player, LivingEntity target) {
+        if (target == null
+                || target == player
                 || player.isAlliedTo(target)
                 || target.isAlliedTo(player)) {
             return false;

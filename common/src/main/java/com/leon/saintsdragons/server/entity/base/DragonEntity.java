@@ -176,6 +176,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private boolean growthStunted = false;
     @Nullable
     private UUID assignedParentUuid;
+    @Nullable
+    private UUID passiveHuntTargetUuid;
     private boolean familySpawnPending = false;
     private int pendingFamilyBabyCount = 0;
     private final GenericSwimSteeringController waterPathSteering;
@@ -577,6 +579,21 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public void setAssignedParentUuid(@Nullable UUID assignedParentUuid) {
         this.assignedParentUuid = assignedParentUuid;
+    }
+
+    public void markPassiveHuntTarget(@Nullable LivingEntity target) {
+        this.passiveHuntTargetUuid = target == null ? null : target.getUUID();
+    }
+
+    public void clearPassiveHuntTarget() {
+        this.passiveHuntTargetUuid = null;
+    }
+
+    public boolean isPassiveHuntTarget(@Nullable LivingEntity target) {
+        return target != null
+                && target == getTarget()
+                && passiveHuntTargetUuid != null
+                && passiveHuntTargetUuid.equals(target.getUUID());
     }
 
     public void clearAssignedParentUuid() {

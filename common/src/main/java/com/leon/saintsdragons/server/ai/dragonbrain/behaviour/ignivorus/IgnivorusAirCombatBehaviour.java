@@ -55,7 +55,7 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
 
     @Override
     protected boolean canUseRangedAttack(Ignivorus dragon, LivingEntity target) {
-        return !DragonTargetingHelper.isBiteOnlyPreyTarget(target);
+        return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target);
     }
 
     @Override

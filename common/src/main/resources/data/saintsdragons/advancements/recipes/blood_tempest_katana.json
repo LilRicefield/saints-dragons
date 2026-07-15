@@ -1,0 +1,42 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_dragonheart_chunk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonheart_chunk"
+            ]
+          }
+        ]
+      }
+    },
+    "has_raevyx_wingtalon": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:raevyx_wingtalon"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dragonheart_chunk"
+    ],
+    [
+      "has_raevyx_wingtalon"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:blood_tempest_katana"
+    ]
+  }
+}

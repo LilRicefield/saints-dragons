@@ -1,13 +1,13 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_varasuchus_scale": {
+    "has_dragon_binder_core": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "saintsdragons:varasuchus_scale"
+              "saintsdragons:dragon_binder_core"
             ]
           }
         ]
@@ -25,13 +25,13 @@
         ]
       }
     },
-    "has_lapis_lazuli": {
+    "has_varasuchus_scale": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "minecraft:lapis_lazuli"
+              "saintsdragons:varasuchus_scale"
             ]
           }
         ]
@@ -40,9 +40,13 @@
   },
   "requirements": [
     [
-      "has_varasuchus_scale",
-      "has_nautilus_shell",
-      "has_lapis_lazuli"
+      "has_dragon_binder_core"
+    ],
+    [
+      "has_nautilus_shell"
+    ],
+    [
+      "has_varasuchus_scale"
     ]
   ],
   "rewards": {

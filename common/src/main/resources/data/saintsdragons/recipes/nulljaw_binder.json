@@ -1,19 +1,19 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "ECE",
-    "CFC",
-    "ECE"
+    "EFE",
+    "FCF",
+    "EFE"
   ],
   "key": {
-    "C": {
+    "F": {
       "item": "minecraft:chorus_fruit"
     },
     "E": {
       "item": "minecraft:end_stone"
     },
-    "F": {
-      "item": "minecraft:ender_eye"
+    "C": {
+      "item": "saintsdragons:dragon_binder_core"
     }
   },
   "result": {

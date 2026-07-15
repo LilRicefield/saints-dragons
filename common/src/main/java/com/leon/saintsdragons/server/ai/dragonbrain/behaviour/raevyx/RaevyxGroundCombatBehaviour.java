@@ -86,13 +86,13 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
         double gap = gapToTarget(dragon, target);
         if (dragon.isInWaterOrBubble()) {
-            if (gap <= meleeStopRange(target) && hasLineOfSight && tryMeleeAttack(dragon, target)) {
+            if (gap <= meleeStopRange(dragon, target) && hasLineOfSight && tryMeleeAttack(dragon, target)) {
                 claimStationaryMovement(context, "water-melee");
             }
             return;
         }
 
-        boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(target);
+        boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target);
         boolean beamReady = beamCooldown <= 0;
         if (!biteOnlyPrey) {
             tickCombatPacing(dragon, target, gap, hasLineOfSight, beamReady);
@@ -121,7 +121,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
             return;
         }
 
-        if (gap <= meleeStopRange(target)
+        if (gap <= meleeStopRange(dragon, target)
                 && attackCooldown <= 0
                 && dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0
                 && tryMeleeAttack(dragon, target)) {
@@ -137,8 +137,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         resetCombatPacing();
     }
 
-    public static double meleeStopRange(LivingEntity target) {
-        return DragonTargetingHelper.isBiteOnlyPreyTarget(target) ? BITE_ONLY_PREY_RANGE : GORE_RANGE;
+    public static double meleeStopRange(Raevyx dragon, LivingEntity target) {
+        return DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target) ? BITE_ONLY_PREY_RANGE : GORE_RANGE;
     }
 
     private void tickCooldowns() {
@@ -162,7 +162,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         }
 
         double gap = gapToTarget(dragon, target);
-        if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
             if (gap <= BITE_ONLY_PREY_RANGE
                     && canUseAiAbility(dragon, ModAbilities.RAEVYX_BITE, false)
                     && startAiAbility(dragon, ModAbilities.RAEVYX_BITE, false, 20, 20, 0, 18)) {

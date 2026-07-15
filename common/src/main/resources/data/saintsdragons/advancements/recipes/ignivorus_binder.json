@@ -1,13 +1,13 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_ignivorus_heart": {
+    "has_dragon_binder_core": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "saintsdragons:ignivorus_heart"
+              "saintsdragons:dragon_binder_core"
             ]
           }
         ]
@@ -52,9 +52,15 @@
   },
   "requirements": [
     [
-      "has_ignivorus_heart",
-      "has_ignivorus_scale",
-      "has_ignivorus_tooth",
+      "has_dragon_binder_core"
+    ],
+    [
+      "has_ignivorus_scale"
+    ],
+    [
+      "has_ignivorus_tooth"
+    ],
+    [
       "has_netherite_ingot"
     ]
   ],

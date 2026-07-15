@@ -136,7 +136,7 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
     private DragonAbilityType<Varasuchus, ?> choosePrimaryAttack(LivingEntity target) {
         double gap = getGapToTarget(target);
         boolean phaseTwo = drake.isPhaseTwoActive();
-        if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(drake, target)) {
             double biteRange = getMeleeStopRange(target);
             if (gap <= biteRange) {
                 return phaseTwo ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
@@ -204,7 +204,7 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
     }
 
     private double getMeleeStopRange(LivingEntity target) {
-        return DragonTargetingHelper.isBiteOnlyPreyTarget(target) && !drake.isInWaterOrBubble()
+        return DragonTargetingHelper.isBiteOnlyPreyTarget(drake, target) && !drake.isInWaterOrBubble()
                 ? LAND_PREY_BITE_RANGE
                 : BITE_RANGE;
     }

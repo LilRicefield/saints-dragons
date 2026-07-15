@@ -241,15 +241,16 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
     private void spawnImpactRing() {
         Stegonaut dragon = getUser();
         if (dragon.level() instanceof ServerLevel server) {
-            server.addFreshEntity(new ImpactRingEntity(server, dragon.position().add(0.0D, 0.08D, 0.0D)));
+            server.addFreshEntity(new ImpactRingEntity(server,
+                    new Vec3(dragon.getX(), dragon.getBoundingBox().minY, dragon.getZ())));
         }
     }
 
     private void spawnGroundCrack() {
         Stegonaut dragon = getUser();
         if (dragon.level() instanceof ServerLevel server) {
-            double y = dragon.getBoundingBox().minY + 0.02D;
-            server.addFreshEntity(new GroundCrackEntity(server, new Vec3(dragon.getX(), y, dragon.getZ()), dragon.getYRot()));
+            server.addFreshEntity(new GroundCrackEntity(server,
+                    new Vec3(dragon.getX(), dragon.getBoundingBox().minY, dragon.getZ()), dragon.getYRot()));
         }
     }
 

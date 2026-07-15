@@ -1,0 +1,29 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_raw_moop": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:raw_moop"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_moop"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:cooked_moop_from_smelting",
+      "saintsdragons:cooked_moop_from_smoking",
+      "saintsdragons:cooked_moop_from_campfire_cooking"
+    ]
+  }
+}

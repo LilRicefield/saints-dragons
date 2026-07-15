@@ -57,6 +57,8 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.VOLITANS_EGG.get());
                                 output.accept(ModItems.SEARING_COAL.get());
                                 output.accept(ModItems.ANCIENT_DRAGONITE_FRAGMENT.get());
+                                output.accept(ModItems.DRAGON_SEAL_STONE.get());
+                                output.accept(ModItems.DRAGON_BINDER_CORE.get());
                                 output.accept(ModItems.RAW_WORLDROOT.get());
                                 output.accept(ModItems.WORLDROOT_INGOT.get());
                                 output.accept(ModItems.WORLDROOT_SWORD.get());

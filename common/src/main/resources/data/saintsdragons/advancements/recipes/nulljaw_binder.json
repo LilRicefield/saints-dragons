@@ -13,13 +13,25 @@
         ]
       }
     },
-    "has_ender_pearl": {
+    "has_dragon_binder_core": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "minecraft:ender_pearl"
+              "saintsdragons:dragon_binder_core"
+            ]
+          }
+        ]
+      }
+    },
+    "has_end_stone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:end_stone"
             ]
           }
         ]
@@ -28,8 +40,13 @@
   },
   "requirements": [
     [
-      "has_chorus_fruit",
-      "has_ender_pearl"
+      "has_chorus_fruit"
+    ],
+    [
+      "has_dragon_binder_core"
+    ],
+    [
+      "has_end_stone"
     ]
   ],
   "rewards": {

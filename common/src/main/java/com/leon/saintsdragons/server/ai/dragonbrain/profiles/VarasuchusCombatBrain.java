@@ -66,7 +66,7 @@ public class VarasuchusCombatBrain implements DragonBrainOwner<Varasuchus> {
                                 new SetWalkTargetToAttackTargetBehaviour<Varasuchus>(
                                         VarasuchusCombatBehaviour.CHASE_SPEED,
                                         (dragon, target) -> (int)Math.floor(
-                                                groundStopRange(target)
+                                                groundStopRange(dragon, target)
                                                         + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
                                         ),
                                         (dragon, target) -> combat.isMovementLocked()
@@ -105,8 +105,8 @@ public class VarasuchusCombatBrain implements DragonBrainOwner<Varasuchus> {
         return dragon.distanceToSqr(target) <= followRange * followRange;
     }
 
-    private static double groundStopRange(LivingEntity target) {
-        return DragonTargetingHelper.isBiteOnlyPreyTarget(target)
+    private static double groundStopRange(Varasuchus dragon, LivingEntity target) {
+        return DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
                 ? VarasuchusCombatBehaviour.LAND_PREY_BITE_RANGE
                 : VarasuchusCombatBehaviour.BITE_RANGE;
     }

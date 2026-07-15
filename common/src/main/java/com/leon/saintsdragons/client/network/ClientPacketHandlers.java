@@ -19,6 +19,7 @@ import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
+import com.leon.saintsdragons.common.network.MessageCameraImpulse;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
 import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
@@ -26,6 +27,7 @@ import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.util.Mth;
 
 @Environment(EnvType.CLIENT)
 public final class ClientPacketHandlers {
@@ -115,6 +117,20 @@ public final class ClientPacketHandlers {
                 ClientCameraImpulse.trigger(1.0F, 7);
             }
         }
+    }
+
+    public static void handleCameraImpulse(MessageCameraImpulse message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || message.radius() <= 0.0F) {
+            return;
+        }
+
+        double distance = minecraft.player.position().distanceTo(message.origin());
+        if (distance > message.radius()) {
+            return;
+        }
+        float proximity = 1.0F - Mth.clamp((float) (distance / message.radius()), 0.0F, 1.0F);
+        ClientCameraImpulse.trigger(message.intensity() * (0.35F + proximity * 0.65F), message.durationTicks());
     }
 
     public static void handleSwarmBattleMusic(MessageSwarmBattleMusic message) {

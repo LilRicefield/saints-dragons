@@ -1,0 +1,57 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_dragonheart_alloy": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonheart_alloy"
+            ]
+          }
+        ]
+      }
+    },
+    "has_ignivorus_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ignivorus_scale"
+            ]
+          }
+        ]
+      }
+    },
+    "has_ignivorus_tooth": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ignivorus_tooth"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dragonheart_alloy"
+    ],
+    [
+      "has_ignivorus_scale"
+    ],
+    [
+      "has_ignivorus_tooth"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:dragonlord_helmet"
+    ]
+  }
+}

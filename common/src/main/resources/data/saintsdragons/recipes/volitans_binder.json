@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "pattern": [
     " V ",
-    "VHV",
+    "VCV",
     "SSS"
   ],
   "key": {
@@ -12,8 +12,8 @@
     "S": {
       "item": "saintsdragons:volitans_spine"
     },
-    "H": {
-      "item": "minecraft:heart_of_the_sea"
+    "C": {
+      "item": "saintsdragons:dragon_binder_core"
     }
   },
     "result": {

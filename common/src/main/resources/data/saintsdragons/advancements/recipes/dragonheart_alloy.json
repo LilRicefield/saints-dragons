@@ -1,0 +1,40 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_dragonheart_chunk": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonheart_chunk"
+            ]
+          }
+        ]
+      }
+    },
+    "has_worldroot_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:worldroot_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dragonheart_chunk",
+      "has_worldroot_ingot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:dragonheart_alloy"
+    ]
+  }
+}

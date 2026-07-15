@@ -3,8 +3,8 @@
 	"gui_light": "front",
 	"textures": {
 		"parent": "item/generated",
-		"0": "saintsdragons:item/blood_tempest_katana",
-		"particle": "saintsdragons:item/blood_tempest_katana"
+		"0": "saintsdragons:item/tools/blood_tempest_katana",
+		"particle": "saintsdragons:item/tools/blood_tempest_katana"
 	},
 	"elements": [
 		{

@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_raw_worldroot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:raw_worldroot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_worldroot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:worldroot_ingot"
+    ]
+  }
+}

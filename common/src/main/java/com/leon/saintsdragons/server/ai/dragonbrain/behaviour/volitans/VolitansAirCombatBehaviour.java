@@ -135,7 +135,7 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
     }
 
     private void tryMelee(Volitans dragon, LivingEntity target) {
-        if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+        if (DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
             if (canUseAiAbility(dragon, ModAbilities.VOLITANS_BITE, false)) {
                 startAiAbility(
                         dragon,

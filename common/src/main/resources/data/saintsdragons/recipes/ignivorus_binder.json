@@ -2,15 +2,15 @@
   "type": "minecraft:crafting_shaped",
   "pattern": [
     "T T",
-    "NIN",
+    "NCN",
     "SNS"
   ],
   "key": {
     "N": {
       "item": "minecraft:netherite_ingot"
     },
-    "I": {
-      "item": "saintsdragons:ignivorus_heart"
+    "C": {
+      "item": "saintsdragons:dragon_binder_core"
     },
     "S": {
       "item": "saintsdragons:ignivorus_scale"

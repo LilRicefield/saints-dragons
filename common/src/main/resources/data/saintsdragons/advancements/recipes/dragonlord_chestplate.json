@@ -1,0 +1,72 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_dragonheart_alloy": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonheart_alloy"
+            ]
+          }
+        ]
+      }
+    },
+    "has_ignivorus_heart": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ignivorus_heart"
+            ]
+          }
+        ]
+      }
+    },
+    "has_ignivorus_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ignivorus_scale"
+            ]
+          }
+        ]
+      }
+    },
+    "has_ignivorus_wing_hide": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:ignivorus_wing_hide"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_dragonheart_alloy"
+    ],
+    [
+      "has_ignivorus_heart"
+    ],
+    [
+      "has_ignivorus_scale"
+    ],
+    [
+      "has_ignivorus_wing_hide"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:dragonlord_chestplate"
+    ]
+  }
+}

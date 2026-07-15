@@ -1,0 +1,57 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_echo_shard": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:echo_shard"
+            ]
+          }
+        ]
+      }
+    },
+    "has_dragon_seal_stone": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragon_seal_stone"
+            ]
+          }
+        ]
+      }
+    },
+    "has_worldroot_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:worldroot_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_echo_shard"
+    ],
+    [
+      "has_dragon_seal_stone"
+    ],
+    [
+      "has_worldroot_ingot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:dragon_binder_core"
+    ]
+  }
+}

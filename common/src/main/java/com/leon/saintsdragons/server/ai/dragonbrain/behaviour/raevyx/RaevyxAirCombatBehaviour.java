@@ -41,7 +41,7 @@ public class RaevyxAirCombatBehaviour extends RangedAirCombatBehaviour<Raevyx> {
 
     @Override
     protected boolean canUseRangedAttack(Raevyx dragon, LivingEntity target) {
-        return !DragonTargetingHelper.isBiteOnlyPreyTarget(target)
+        return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
                 && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target);
     }
 

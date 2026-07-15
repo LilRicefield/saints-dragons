@@ -17,7 +17,8 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 public class StegonautGroundCrackRenderer extends EntityRenderer<GroundCrackEntity> {
-    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/particle/ground_crack.png");
+    private static final ResourceLocation STEGONAUT_TEXTURE = SaintsDragonsCommon.rl("textures/particle/ground_crack.png");
+    private static final ResourceLocation DRAGONLORD_FISSURE_TEXTURE = SaintsDragonsCommon.rl("textures/particle/ground_crack_fissure.png");
 
     public StegonautGroundCrackRenderer(EntityRendererProvider.Context context) {
         super(context);
@@ -37,7 +38,7 @@ public class StegonautGroundCrackRenderer extends EntityRenderer<GroundCrackEnti
         PoseStack.Pose pose = poseStack.last();
         Matrix4f matrix = pose.pose();
         Matrix3f normalMatrix = pose.normal();
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(TEXTURE));
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(getTextureLocation(entity)));
         renderHorizontalSquare(consumer, matrix, normalMatrix, entity.getScale(partialTicks), opacity);
         poseStack.popPose();
         super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
@@ -47,7 +48,7 @@ public class StegonautGroundCrackRenderer extends EntityRenderer<GroundCrackEnti
                                         float size, float opacity) {
         Vector3f normal = new Vector3f(0.0F, 1.0F, 0.0F);
         normalMatrix.transform(normal);
-        float y = 0.04F;
+        float y = GroundCrackEntity.RENDER_PLANE_Y;
 
         consumer.vertex(matrix, -size, y, -size)
                 .color(1.0F, 1.0F, 1.0F, opacity)
@@ -81,6 +82,6 @@ public class StegonautGroundCrackRenderer extends EntityRenderer<GroundCrackEnti
 
     @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull GroundCrackEntity entity) {
-        return TEXTURE;
+        return entity.isDragonlordFissure() ? DRAGONLORD_FISSURE_TEXTURE : STEGONAUT_TEXTURE;
     }
 }

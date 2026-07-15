@@ -169,7 +169,7 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
 
     private void tryMelee(LivingEntity target, double gap) {
         if (gap <= BITE_RANGE) {
-            if (DragonTargetingHelper.isBiteOnlyPreyTarget(target)) {
+            if (DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
                 if (canUseAiAbility(ModAbilities.VOLITANS_BITE, false)) {
                     startAiAbility(ModAbilities.VOLITANS_BITE, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24);
                 }

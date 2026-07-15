@@ -416,7 +416,8 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
 
     private void spawnGroundRendImpactRing(Raevyx wyvern) {
         if (wyvern.level() instanceof ServerLevel server) {
-            server.addFreshEntity(new ImpactRingEntity(server, wyvern.position().add(0.0D, 0.08D, 0.0D), 0.35F));
+            server.addFreshEntity(new ImpactRingEntity(server,
+                    new Vec3(wyvern.getX(), wyvern.getBoundingBox().minY, wyvern.getZ()), 0.35F));
         }
     }
 

@@ -34,7 +34,16 @@ public final class DragonTargetingHelper {
         return target.getY() - groundY > minHeightAboveGround;
     }
 
-    public static boolean isBiteOnlyPreyTarget(LivingEntity target) {
+    public static boolean isBiteOnlyPreyTarget(DragonEntity dragon, LivingEntity target) {
+        if (dragon == null
+                || !dragon.isPassiveHuntTarget(target)
+                || dragon.getLastHurtByMob() == target) {
+            return false;
+        }
+        return isPassivePreyType(target);
+    }
+
+    public static boolean isPassivePreyType(LivingEntity target) {
         if (target == null || target instanceof Player || target instanceof DragonEntity) {
             return false;
         }

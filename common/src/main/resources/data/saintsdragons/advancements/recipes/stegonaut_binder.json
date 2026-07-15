@@ -1,18 +1,6 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_stegonaut_scale": {
-      "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "saintsdragons:stegonaut_scale"
-            ]
-          }
-        ]
-      }
-    },
     "has_amethyst_shard": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
@@ -20,6 +8,18 @@
           {
             "items": [
               "minecraft:amethyst_shard"
+            ]
+          }
+        ]
+      }
+    },
+    "has_dragon_binder_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragon_binder_core"
             ]
           }
         ]
@@ -36,13 +36,32 @@
           }
         ]
       }
+    },
+    "has_stegonaut_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:stegonaut_scale"
+            ]
+          }
+        ]
+      }
     }
   },
   "requirements": [
     [
-      "has_stegonaut_scale",
-      "has_amethyst_shard",
+      "has_amethyst_shard"
+    ],
+    [
+      "has_dragon_binder_core"
+    ],
+    [
       "has_iron_ingot"
+    ],
+    [
+      "has_stegonaut_scale"
     ]
   ],
   "rewards": {

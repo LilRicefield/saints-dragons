@@ -144,6 +144,12 @@ public class ModItems {
     public static final Supplier<Item> DRACONIAN_FLESH =
             REGISTER.register("draconian_flesh", () -> new Item(new Item.Properties()));
 
+    public static final Supplier<Item> DRAGON_SEAL_STONE =
+            REGISTER.register("dragon_seal_stone", () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> DRAGON_BINDER_CORE =
+            REGISTER.register("dragon_binder_core", () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> RAW_WORLDROOT =
             REGISTER.register("raw_worldroot", () -> new Item(new Item.Properties()));
 

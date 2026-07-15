@@ -55,7 +55,7 @@ public class ImpactRingRenderer extends EntityRenderer<ImpactRingEntity> {
                                         float size, float opacity) {
         Vector3f normal = new Vector3f(0.0F, 1.0F, 0.0F);
         normalMatrix.transform(normal);
-        float y = 0.12F;
+        float y = ImpactRingEntity.RENDER_PLANE_Y;
 
         consumer.vertex(matrix, -size, y, -size)
                 .color(1.0F, 1.0F, 1.0F, opacity)

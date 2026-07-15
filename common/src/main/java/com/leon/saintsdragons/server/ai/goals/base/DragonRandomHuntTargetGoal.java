@@ -47,4 +47,19 @@ public class DragonRandomHuntTargetGoal extends NearestAttackableTargetGoal<Livi
                 && huntEnabled.getAsBoolean()
                 && super.canContinueToUse();
     }
+
+    @Override
+    public void start() {
+        super.start();
+        LivingEntity target = dragon.getTarget();
+        if (DragonTargetingHelper.isPassivePreyType(target)) {
+            dragon.markPassiveHuntTarget(target);
+        }
+    }
+
+    @Override
+    public void stop() {
+        dragon.clearPassiveHuntTarget();
+        super.stop();
+    }
 }

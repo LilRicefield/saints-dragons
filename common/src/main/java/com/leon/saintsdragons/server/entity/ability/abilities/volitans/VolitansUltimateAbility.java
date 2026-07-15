@@ -253,10 +253,9 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         if (!(dragon.level() instanceof ServerLevel server)) {
             return;
         }
-        Vec3 ringPos = dragon.position().add(0.0D, 0.08D, 0.0D);
-        double crackY = dragon.getBoundingBox().minY + 0.02D;
-        server.addFreshEntity(new ImpactRingEntity(server, ringPos));
-        server.addFreshEntity(new GroundCrackEntity(server, new Vec3(dragon.getX(), crackY, dragon.getZ()), dragon.getYRot()));
+        Vec3 groundOrigin = new Vec3(dragon.getX(), dragon.getBoundingBox().minY, dragon.getZ());
+        server.addFreshEntity(new ImpactRingEntity(server, groundOrigin));
+        server.addFreshEntity(new GroundCrackEntity(server, groundOrigin, dragon.getYRot()));
     }
 
     private void spawnImpactSpines(Volitans dragon) {

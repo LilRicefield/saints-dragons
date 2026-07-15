@@ -15,6 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public class ImpactRingEntity extends Entity {
+    public static final float RENDER_PLANE_Y = 0.12F;
     private static final int DURATION = 16;
     private static final EntityDataAccessor<Float> DATA_VISUAL_SCALE =
             SynchedEntityData.defineId(ImpactRingEntity.class, EntityDataSerializers.FLOAT);
@@ -28,6 +29,7 @@ public class ImpactRingEntity extends Entity {
     public ImpactRingEntity(Level level, Vec3 position) {
         this(ModEntities.STEGONAUT_IMPACT_RING.get(), level);
         setPos(position);
+        GroundEffectSurfaceSnap.snap(this, RENDER_PLANE_Y);
     }
 
     public ImpactRingEntity(Level level, Vec3 position, float visualScale) {
@@ -66,6 +68,7 @@ public class ImpactRingEntity extends Entity {
     public void tick() {
         super.tick();
         age++;
+        GroundEffectSurfaceSnap.snap(this, RENDER_PLANE_Y);
         if (!level().isClientSide && age >= DURATION) {
             discard();
         }

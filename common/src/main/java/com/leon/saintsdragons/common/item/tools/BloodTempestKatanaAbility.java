@@ -47,7 +47,7 @@ public final class BloodTempestKatanaAbility {
 
     public static void onSuccessfulKatanaHit(ServerPlayer player, LivingEntity target) {
         if (player.getMainHandItem().is(ModItems.BLOOD_TEMPEST_KATANA.get())
-                && SwordAbilityTargeting.canDamage(player, target)) {
+                && SwordAbilityTargeting.canChainFromSuccessfulHit(player, target)) {
             RaevyxChainLightningAbility.chainFromKatana(player, target);
         }
     }
