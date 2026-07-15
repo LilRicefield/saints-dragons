@@ -13,11 +13,14 @@ import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.Future;
+
 public class DragonAIMovementController {
     private final RideableDragonBase dragon;
     private @Nullable QueuedWaypoint currentWaypoint;
     private GroundPathState groundPathState = GroundPathState.IDLE;
     private long groundPathRequestGeneration;
+    private @Nullable Future<?> groundPathRequest;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
         this.dragon = dragon;
@@ -93,12 +96,10 @@ public class DragonAIMovementController {
     }
 
     public boolean moveToGroundTarget(LivingEntity target, double speed, boolean running) {
-        setGroundMoveState(running);
         return target != null && setGroundWaypoint(target.position(), speed, running);
     }
 
     public boolean moveToGroundPosition(Vec3 target, double speed, boolean running) {
-        setGroundMoveState(running);
         return setGroundWaypoint(target, speed, running);
     }
 
@@ -395,10 +396,8 @@ public class DragonAIMovementController {
         if (waypoint.mode() != MovementMode.GROUND) {
             resetGroundPathState();
         }
-        if (waypoint.running()) {
+        if (waypoint.mode() != MovementMode.GROUND && waypoint.running()) {
             setGroundRun();
-        } else if (waypoint.mode() == MovementMode.GROUND) {
-            setGroundWalk();
         }
 
         if (waypoint.mode().usesAir() || (waypoint.mode() == MovementMode.AUTO && shouldUseAirMovement())) {
@@ -431,13 +430,14 @@ public class DragonAIMovementController {
         }
         long requestGeneration = ++groundPathRequestGeneration;
         groundPathState = GroundPathState.CALCULATING;
-        AsyncDragonPathfinder.calculateGroundPathAsync(dragon, waypoint.target(), path -> {
+        groundPathRequest = AsyncDragonPathfinder.calculateGroundPathAsync(dragon, waypoint.target(), path -> {
             if (requestGeneration != groundPathRequestGeneration
                     || currentWaypoint == null
                     || currentWaypoint.mode().usesAir()
                     || !canUseGroundNavigation()) {
                 return;
             }
+            groundPathRequest = null;
 
             if (path == null || path.getNodeCount() == 0) {
                 currentWaypoint = null;
@@ -452,6 +452,7 @@ public class DragonAIMovementController {
                 groundPathState = GroundPathState.FAILED;
                 return;
             }
+            setGroundMoveState(currentWaypoint.running());
             groundPathState = GroundPathState.FOLLOWING;
         });
     }
@@ -461,6 +462,10 @@ public class DragonAIMovementController {
     }
 
     private void resetGroundPathState() {
+        if (groundPathRequest != null) {
+            groundPathRequest.cancel(true);
+            groundPathRequest = null;
+        }
         invalidateGroundPathRequest();
         groundPathState = GroundPathState.IDLE;
     }

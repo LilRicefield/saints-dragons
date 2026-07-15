@@ -8,7 +8,6 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.controller.atroxiia.AtroxiiaRiderController;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaAnimationHandler;
@@ -50,7 +49,6 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     private static final EntityDataAccessor<Float> DATA_PRECISE_STRIKE_NUDGE_Z =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final int MOVEMENT_TRANSITION_TICKS = 4;
-    private static final int TRANSITION_TICKS = 4;
     private static final int SIT_DOWN_TICKS = 48;
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
@@ -66,7 +64,6 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     private final AtroxiiaRiderController riderController = new AtroxiiaRiderController(this);
     private final AtroxiiaAnimationHandler animationHandler = new AtroxiiaAnimationHandler(this);
     private final AtroxiiaInteractionHandler interactionHandler = new AtroxiiaInteractionHandler(this);
-    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private boolean nextMeleeRightSide = true;
 
     public Atroxiia(EntityType<? extends TamableAnimal> type, Level level) {
@@ -85,12 +82,9 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         var movementController = new AnimationController<>(this, AnimationHelper.MOVEMENT_CONTROLLER, MOVEMENT_TRANSITION_TICKS,
                 animationHandler::movementPredicate);
-        var transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, TRANSITION_TICKS,
-                AnimationHelper::transitionIdle);
         AnimationHelper.registerStepKeyframes(this, movementController);
         animationHandler.setupMovementController(movementController);
-        animationHandler.setupTransitionController(transitionController);
-        controllers.add(movementController, transitionController);
+        controllers.add(movementController);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -368,29 +362,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
         setGroundMoveStateFromAI(0);
     }
 
-    @Override
-    protected void clearSittingForMounting() {
-        setOrderedToSit(false);
-        sitTransitions.clear();
-    }
-
-    @Override
-    public boolean isInSitTransition() {
-        return sitTransitions.isInTransition() || super.isInSitTransition();
-    }
-
-    @Override
-    public boolean isSittingDownAnimation() {
-        return sitTransitions.isSittingDown();
-    }
-
-    @Override
-    public boolean isStandingUpAnimation() {
-        return sitTransitions.isStandingUp();
-    }
-
     private void tickAtroxiiaAnimationStates() {
-        sitTransitions.tick(SIT_DOWN_TICKS, SIT_UP_TICKS,
+        tickSitTransition(SIT_DOWN_TICKS, SIT_UP_TICKS,
                 animationHandler::triggerSitDownAnimation,
                 animationHandler::triggerSitUpAnimation);
     }

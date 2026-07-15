@@ -67,29 +67,17 @@ public abstract class AbstractDragonInteractionHandler<T extends RideableDragonB
         }
     }
 
-    protected InteractionResult handleCommandCycling(Player player, String messagePrefix) {
+    protected InteractionResult handleCommandCycling(Player player) {
         boolean client = dragon.level().isClientSide;
-        if (dragon.isInSitTransition()) {
-            if (!client) {
-                String key = dragon.isSittingDownAnimation()
-                        ? messagePrefix + ".sitting_down"
-                        : dragon.isStandingUpAnimation()
-                        ? messagePrefix + ".standing_up"
-                        : messagePrefix + ".transitioning";
-                player.displayClientMessage(Component.translatable(key, dragon.getName()), true);
-            }
-            return InteractionResult.sidedSuccess(client);
-        }
-
-        int nextCommand = dragon.getNextCommand();
-        dragon.setCommand(nextCommand);
         if (!client) {
+            int nextCommand = dragon.getNextCommand();
+            dragon.setCommand(nextCommand);
             player.displayClientMessage(
                     Component.translatable("entity.saintsdragons.all.command_" + nextCommand, dragon.getName()),
                     true
             );
         }
-        return InteractionResult.SUCCESS;
+        return InteractionResult.sidedSuccess(client);
     }
 
     protected InteractionResult handleStandardMounting(Player player) {

@@ -171,7 +171,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private Player killDataAttackingPlayer;
     private boolean isRespawning = false;
     public int skipRespawnTicks = 0;
-    private DragonBodyControl dragonBodyControl;
     private boolean boundInBinder = false;
     private boolean growthStunted = false;
     @Nullable
@@ -399,8 +398,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     protected @NotNull BodyRotationControl createBodyControl() {
-        this.dragonBodyControl = new DragonBodyControl(this, getBodyTurnSpeed());
-        return this.dragonBodyControl;
+        return new DragonBodyControl(this, getBodyTurnSpeed());
     }
 
     protected float getBodyTurnSpeed() {
@@ -423,6 +421,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
         this.entityData.define(DATA_TEXTURE_VARIANT_ID, SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID.toString());
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT_ID, "");
+    }
+
+    @Override
+    public void onSyncedDataUpdated(@NotNull EntityDataAccessor<?> key) {
+        super.onSyncedDataUpdated(key);
+        if (level().isClientSide && DATA_COMMAND.equals(key)) {
+            applyCommandState(this.entityData.get(DATA_COMMAND));
+        }
     }
 
     @Override
@@ -1955,9 +1961,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             tickDancing();
         }
 
-        if (!level().isClientSide && this.dragonBodyControl != null) {
-            this.dragonBodyControl.serverTick();
-        }
         if (level().isClientSide) {
             syncClientSitProgress();
             tickClientRotationAnimationState();

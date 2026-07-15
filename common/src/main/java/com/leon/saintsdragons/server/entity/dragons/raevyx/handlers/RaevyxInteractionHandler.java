@@ -263,10 +263,6 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
     }
 
-    private InteractionResult handleCommandCycling(Player player) {
-        return super.handleCommandCycling(player, "entity.saintsdragons.raevyx");
-    }
-
     private Float nextFailureHealTarget() {
         return dragon.getMaxHealth();
     }

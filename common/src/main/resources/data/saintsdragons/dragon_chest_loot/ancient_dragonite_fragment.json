@@ -8,6 +8,36 @@
       "chance": 0.50
     },
     {
+      "loot_table": "minecraft:chests/bastion_treasure",
+      "item": "saintsdragons:ancient_dragonite_fragment",
+      "count": 2,
+      "chance": 0.60
+    },
+    {
+      "loot_table": "minecraft:chests/bastion_other",
+      "item": "saintsdragons:ancient_dragonite_fragment",
+      "count": 1,
+      "chance": 0.20
+    },
+    {
+      "loot_table": "minecraft:chests/bastion_bridge",
+      "item": "saintsdragons:ancient_dragonite_fragment",
+      "count": 1,
+      "chance": 0.20
+    },
+    {
+      "loot_table": "minecraft:chests/bastion_hoglin_stable",
+      "item": "saintsdragons:ancient_dragonite_fragment",
+      "count": 1,
+      "chance": 0.20
+    },
+    {
+      "loot_table": "minecraft:chests/nether_bridge",
+      "item": "saintsdragons:ancient_dragonite_fragment",
+      "count": 1,
+      "chance": 0.15
+    },
+    {
       "loot_table": "minecraft:archaeology/desert_pyramid",
       "item": "saintsdragons:ancient_dragonite_fragment",
       "count": 1,
@@ -41,7 +71,7 @@
       "loot_table": "minecraft:archaeology/trail_ruins_rare",
       "item": "saintsdragons:ancient_dragonite_fragment",
       "count": 1,
-      "chance": 0.03
+      "chance": 0.10
     }
   ]
 }

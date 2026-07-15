@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -71,6 +72,7 @@ public abstract class RideableDragonBase extends DragonEntity {
     private int riderAirborneTicksForLanding = 0;
     private double riderFlightThrottle = 0.0D;
     private final DragonAIMovementController aiMovement = new DragonAIMovementController(this);
+    private final DragonSitTransitionController sitTransition = new DragonSitTransitionController(this);
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -545,18 +547,6 @@ public abstract class RideableDragonBase extends DragonEntity {
         return 0;
     }
 
-    public boolean isInSitTransition() {
-        return false;
-    }
-
-    public boolean isSittingDownAnimation() {
-        return false;
-    }
-
-    public boolean isStandingUpAnimation() {
-        return false;
-    }
-
     @Override
     public boolean isGoingUp() {
         return this.entityData.get(getGoingUpAccessor());
@@ -661,6 +651,10 @@ public abstract class RideableDragonBase extends DragonEntity {
         if (passenger == getControllingPassenger()) {
             clearRiderControlLock();
             setRiderPitchKeyMode(false);
+            resetRiderFlightThrottle();
+            setGoingUp(false);
+            setGoingDown(false);
+            forceEndActiveAbility();
         }
         super.removePassenger(passenger);
         if (!this.level().isClientSide) {
@@ -841,15 +835,7 @@ public abstract class RideableDragonBase extends DragonEntity {
             return;
         }
 
-        clearSittingForMounting();
-        if (getCommand() == 1) {
-            setCommand(0);
-        }
-        clearSitProgress();
-        setTarget(null);
-        if (getNavigation().getPath() != null) {
-            getNavigation().stop();
-        }
+        resetForRiderTransition();
         afterPrepareForMounting();
     }
 
@@ -969,43 +955,77 @@ public abstract class RideableDragonBase extends DragonEntity {
     }
 
     protected void onMountedStateStarted() {
-        clearStateForMountedRider();
-        clearLocalSitTransitionForMount();
-        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
-            wakeUpImmediately();
-            suppressSleep(300);
+        if (getCommand() == 1
+                || isOrderedToSit()
+                || isInSittingPose()
+                || getSitProgress() > 0.0F
+                || isInSitTransition()
+                || isSleeping()
+                || isSleepingEntering()
+                || isSleepingExiting()) {
+            resetForRiderTransition();
         }
     }
 
     protected void onMountedStateStopped() {
-        this.entityData.set(getRiderForwardAccessor(), 0f);
-        this.entityData.set(getRiderStrafeAccessor(), 0f);
-        this.entityData.set(getGroundMoveStateAccessor(), 0);
-        resetRiderFlightThrottle();
-        syncAnimState(0, getFlightMode());
-        clearLocalSitTransitionForMount();
     }
 
-    protected void clearLocalSitTransitionForMount() {
+    protected final void tickSitTransition(int sitDownTicks, int sitUpTicks,
+                                           Runnable sitDownAnimation, Runnable sitUpAnimation) {
+        sitTransition.tick(sitDownTicks, sitUpTicks, sitDownAnimation, sitUpAnimation);
     }
 
-    protected void clearStateForMountedRider() {
-        clearSittingForMounting();
+    protected final void clearSitTransitionState() {
+        sitTransition.clear();
+    }
+
+    protected final void clearSitTransitionFlags() {
+        sitTransition.clearTransitionOnly();
+    }
+
+    public final boolean isInSitTransition() {
+        return sitTransition.isInTransition();
+    }
+
+    public final boolean isSittingDownAnimation() {
+        return sitTransition.isSittingDown();
+    }
+
+    public final boolean isStandingUpAnimation() {
+        return sitTransition.isStandingUp();
+    }
+
+    protected void onSitStateHardReset() {
+    }
+
+    protected void resetForRiderTransition() {
         if (getCommand() == 1) {
             setCommand(0);
+        } else {
+            clearSittingForMounting();
         }
+        clearSitTransitionState();
+        onSitStateHardReset();
         clearSitProgress();
         setInSittingPose(false);
+        if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
+            wakeUpImmediately();
+            suppressSleep(300);
+        }
         clearRiderControlLock();
         setRunning(false);
         setAccelerating(false);
         resetRiderFlightThrottle();
         setGoingUp(false);
         setGoingDown(false);
+        setLastRiderForward(0f);
+        setLastRiderStrafe(0f);
+        setGroundMoveStateFromAI(0);
+        stopTriggeredAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        forceEndActiveAbility();
+        setAggressive(false);
         setTarget(null);
-        if (getNavigation().getPath() != null) {
-            getNavigation().stop();
-        }
+        getAIMovement().stopAndClearAllMovement();
     }
 
 

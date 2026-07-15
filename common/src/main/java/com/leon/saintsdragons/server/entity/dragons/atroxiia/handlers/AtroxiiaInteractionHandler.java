@@ -36,7 +36,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         }
 
         if (player.isCrouching() && dragon.canOwnerCommand(player) && hand == InteractionHand.MAIN_HAND) {
-            return handleCommandCycling(player, "entity.saintsdragons.atroxiia.command");
+            return handleCommandCycling(player);
         }
 
         if (!player.isCrouching() && hand == InteractionHand.MAIN_HAND && heldItem.isEmpty()) {

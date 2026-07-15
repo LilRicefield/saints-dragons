@@ -198,20 +198,6 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
     }
 
-    private InteractionResult handleCommandCycling(Player player) {
-        int nextCommand = dragon.getNextCommand();
-        dragon.setCommand(nextCommand);
-
-        if (!dragon.level().isClientSide) {
-            player.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.all.command_" + nextCommand, dragon.getName()),
-                    true
-            );
-        }
-
-        return InteractionResult.SUCCESS;
-    }
-
     private void awardTamingAdvancement(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             var advancement = serverPlayer.server.getAdvancements()

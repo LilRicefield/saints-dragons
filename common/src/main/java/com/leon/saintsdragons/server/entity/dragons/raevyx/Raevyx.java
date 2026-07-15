@@ -20,7 +20,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.profiles.RaevyxCombatBrain;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
-import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -253,7 +252,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     @Nullable
     private Vec3 groundRendRightTrailAnchor = null;
     private boolean allowGroundBeamDuringStorm = false;
-    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int postStandUnlockTicks = 0;
     private final RaevyxTamingHandler tamingController = new RaevyxTamingHandler(this);
     private final RaevyxInteractionHandler lightningInteractionHandler;
@@ -261,7 +259,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private final RaevyxRiderController riderController;
     private final RaevyxDiveImpactAbility diveImpactAbility;
     private final AnimationController<Raevyx> movementController;
-    private final AnimationController<Raevyx> transitionController;
     private final AnimationController<Raevyx> actionController;
     private final AnimationController<Raevyx> fastActionController;
     private final AnimationController<Raevyx> flightController;
@@ -539,7 +536,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         this.riderController = new RaevyxRiderController(this);
         this.diveImpactAbility = new RaevyxDiveImpactAbility(this);
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, RaevyxAnimationHandler.ACTION_CONTROLLER, 3, state -> {
             if (isTamingStunned()) {
                 return PlayState.STOP;
@@ -1571,8 +1567,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             if (this.isVehicle()) {
-                wakeUpImmediately();
-                clearLocalSitTransitionForMount();
+                resetForRiderTransition();
             } else if (this.getTarget() != null || this.isAggressive()) {
 
                 wakeUpImmediately();
@@ -1673,14 +1668,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
     
     @Override
-    protected void onMountedStateStopped() {
-        super.onMountedStateStopped();
-    }
-
-    @Override
-    protected void clearLocalSitTransitionForMount() {
-        sitTransitions.clear();
-        this.setInSittingPose(false);
+    protected void onSitStateHardReset() {
+        postStandUnlockTicks = 0;
     }
     
     private void tickBeamLook() {
@@ -1891,7 +1880,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (!level().isClientSide && super.isInSittingPose() && !isOrderedToSit()) {
             setInSittingPose(false);
         }
-        sitTransitions.tick(
+        tickSitTransition(
                 getSitDownAnimationTicks(),
                 getSitUpAnimationTicks(),
                 animationHandler::triggerSitDownAnimation,
@@ -2500,15 +2489,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return new Vec3(r * Math.cos(theta), z, r * Math.sin(theta));
     }
 
-    public boolean isInSitTransition() {
-        return sitTransitions.isInTransition();
-    }
-    public boolean isSittingDownAnimation() {
-        return sitTransitions.isSittingDown();
-    }
-    public boolean isStandingUpAnimation() {
-        return sitTransitions.isStandingUp();
-    }
     private int getSitDownAnimationTicks() {
         return 29;
     }
@@ -2794,7 +2774,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             this.setCommand(0);
             this.setOrderedToSit(false);
             this.setInSittingPose(false);
-            sitTransitions.clear();
+            clearSitTransitionState();
             clearSleepCooldowns();
         }
         applyConfiguredAttributes();
@@ -2802,15 +2782,14 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, interactionController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
                 fastActionController, flightController, vocalController, interactionController);
         AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupMovementController(movementController);
-        animationHandler.setupTransitionController(transitionController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);

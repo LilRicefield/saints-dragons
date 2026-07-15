@@ -67,14 +67,10 @@ public class CindervaneAnimationHandler {
     }
 
     public void setupMovementController(AnimationController<Cindervane> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         controller.triggerableAnim("slash_left",
                 RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
-    }
-
-    public void setupTransitionController(AnimationController<Cindervane> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
     }
 
     public void setupFastActionController(AnimationController<Cindervane> controller) {
@@ -94,19 +90,19 @@ public class CindervaneAnimationHandler {
     }
 
     public void triggerSitDownAnimation() {
-        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(amphithere, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(amphithere, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+        AnimationHelper.triggerRestAnimation(amphithere, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        amphithere.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+        AnimationHelper.triggerRestAnimation(amphithere, AnimationHelper.WAKE_UP);
     }
 
     public PlayState movementPredicate(AnimationState<Cindervane> state) {

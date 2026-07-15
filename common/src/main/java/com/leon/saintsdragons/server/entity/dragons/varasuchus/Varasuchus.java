@@ -29,7 +29,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
-import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
@@ -113,7 +112,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.lookControl = this.landLookControl;
         this.riderController = new VarasuchusRiderController(this);
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, VarasuchusAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, VarasuchusAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
@@ -205,7 +203,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final VarasuchusInteractionHandler interactionHandler = new VarasuchusInteractionHandler(this);
     private final VarasuchusRiderController riderController;
     private final AnimationController<Varasuchus> movementController;
-    private final AnimationController<Varasuchus> transitionController;
     private final AnimationController<Varasuchus> actionController;
     private final AnimationController<Varasuchus> fastActionController;
     private final AnimationController<Varasuchus> vocalController;
@@ -234,7 +231,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private boolean useLeftTailAttackNext = true;
     private static final float SHAKE_DECAY_PER_TICK = 0.02F;
     private final ScreenShakeComponent screenShakeComponent;
-    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int phaseTwoLingerTicks = 0;
     private final DragonForwardMovementComponent groundDash = new DragonForwardMovementComponent(
             this,
@@ -668,15 +664,14 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, interactionController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, interactionController);
 
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
                 fastActionController, vocalController, interactionController);
         animationHandler.setupMovementController(movementController);
-        animationHandler.setupTransitionController(transitionController);
         AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
@@ -1606,11 +1601,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
     }
 
-    @Override
-    protected void clearLocalSitTransitionForMount() {
-        sitTransitions.clear();
-    }
-
     private void startWildRideSequence() {
         wildRideActive = true;
         this.entityData.set(DATA_WILD_RIDE_ACTIVE, true);
@@ -1757,14 +1747,14 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         if (this.isInWaterOrBubble()) {
-            sitTransitions.clearTransitionOnly();
+            clearSitTransitionFlags();
             if (getSitProgress() != 0f || getPrevSitProgress() != 0f) {
                 clearSitProgress();
             }
             return;
         }
 
-        sitTransitions.tick(
+        tickSitTransition(
                 getSitDownAnimationTicks(),
                 getSitUpAnimationTicks(),
                 animationHandler::triggerSitDownAnimation,
@@ -1829,16 +1819,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
         double maxDistanceSq = followRange * followRange;
         return this.distanceToSqr(target) > maxDistanceSq;
-    }
-
-    public boolean isInSitTransition() {
-        return sitTransitions.isInTransition();
-    }
-    public boolean isSittingDownAnimation() {
-        return sitTransitions.isSittingDown();
-    }
-    public boolean isStandingUpAnimation() {
-        return sitTransitions.isStandingUp();
     }
 
     @Override

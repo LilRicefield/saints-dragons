@@ -59,7 +59,6 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
     @Override
     public void start() {
         resetPathTracking();
-        dragon.getAIMovement().setGroundWalk();
     }
 
     @Override
@@ -89,8 +88,8 @@ public class DragonGroundFollowOwnerGoal<T extends RideableDragonBase> extends D
         }
 
         boolean fast = distance > config.runDist;
-        dragon.getAIMovement().setGroundMoveState(fast);
         if (shouldUseWaterFollowing(owner)) {
+            dragon.getAIMovement().setGroundMoveState(fast);
             updateWaterFollow(owner, fast, distance);
             return;
         }

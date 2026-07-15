@@ -142,7 +142,9 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         return PlayState.STOP;
     }
     public void setupMovementController(AnimationController<Varasuchus> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
+        AnimationHelper.register(controller, "sit_down2", SIT_DOWN2);
+        AnimationHelper.register(controller, "sit_up2", SIT_UP2);
         AnimationHelper.register(controller, "tail_swipe_left", TAIL_SWIPE_LEFT);
         AnimationHelper.register(controller, "phase2_dash_left", PHASE2_DASH_LEFT);
         AnimationHelper.register(controller, "phase2_dash_right", PHASE2_DASH_RIGHT);
@@ -157,24 +159,19 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         AnimationHelper.register(controller, "tailguard_cancel", TAILGUARD_CANCEL);
         AnimationHelper.register(controller, "tailguard_parry", TAILGUARD_PARRY);
     }
-    public void setupTransitionController(AnimationController<Varasuchus> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
-        AnimationHelper.register(controller, "sit_down2", SIT_DOWN2);
-        AnimationHelper.register(controller, "sit_up2", SIT_UP2);
-    }
     public void triggerSitDownAnimation() {
         boolean isPhaseTwo = drake.isPhaseTwoActive();
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, isPhaseTwo ? "sit_down2" : AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(drake, isPhaseTwo ? "sit_down2" : AnimationHelper.SIT_DOWN);
     }
     public void triggerSitUpAnimation() {
         boolean isPhaseTwo = drake.isPhaseTwoActive();
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, isPhaseTwo ? "sit_up2" : AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(drake, isPhaseTwo ? "sit_up2" : AnimationHelper.SIT_UP);
     }
     public void triggerFallAsleepAnimation() {
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+        AnimationHelper.triggerRestAnimation(drake, AnimationHelper.FALL_ASLEEP);
     }
     public void triggerWakeUpAnimation() {
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+        AnimationHelper.triggerRestAnimation(drake, AnimationHelper.WAKE_UP);
     }
     public void triggerFlexAnimation() {
         drake.triggerAnim(MOVEMENT_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");

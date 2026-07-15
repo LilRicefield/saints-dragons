@@ -29,7 +29,6 @@ import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
-import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
@@ -249,7 +248,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
     private final VolitansRiderController riderController;
     private final AnimationController<Volitans> movementController;
-    private final AnimationController<Volitans> transitionController;
     private final AnimationController<Volitans> actionController;
     private final AnimationController<Volitans> fastActionController;
     private final AnimationController<Volitans> flightController;
@@ -267,7 +265,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private float smoothedPlayerPitchRad = 0f;
     private boolean verticalKeyPitchSmoothing = false;
     private final ScreenShakeComponent screenShakeComponent;
-    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     private int riderBackDashCooldownTicks = 0;
     private boolean riderForwardDashDamageApplied = false;
     private final DragonForwardMovementComponent riderGroundNudge = new DragonForwardMovementComponent(
@@ -334,7 +331,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
         this.movementController = new AnimationController<>(this, "movement",
                 VolitansAnimationHandler.MOVEMENT_TRIGGER_TRANSITION_TICKS, animationHandler::movementPredicate);
-        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, VolitansAnimationHandler.ACTION_CONTROLLER, 4, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, VolitansAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
@@ -1423,11 +1419,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, airActionController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
                 fastActionController, flightController, airActionController, vocalController, interactionController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
@@ -1436,7 +1432,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupMovementController(movementController);
-        animationHandler.setupTransitionController(transitionController);
     }
 
     @Override
@@ -3088,9 +3083,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void onSleepFallAsleepAnimation() {
         if (isInWaterOrBubble()) {
-            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, "fall_asleep_underwater");
+            AnimationHelper.triggerRestAnimation(this, "fall_asleep_underwater");
         } else {
-            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+            AnimationHelper.triggerRestAnimation(this, AnimationHelper.FALL_ASLEEP);
         }
     }
 
@@ -3104,10 +3099,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     protected void onSleepWakeUpAnimation() {
         if (isInWaterOrBubble()) {
-            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, "wake_up_underwater");
+            AnimationHelper.triggerRestAnimation(this, "wake_up_underwater");
             setOrderedToSit(false);
         } else {
-            triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+            AnimationHelper.triggerRestAnimation(this, AnimationHelper.WAKE_UP);
             setOrderedToSit(true);
         }
     }
@@ -3143,39 +3138,19 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
 
         if (this.isInWaterOrBubble()) {
-            sitTransitions.clearTransitionOnly();
+            clearSitTransitionFlags();
             if (getSitProgress() != 0f || getPrevSitProgress() != 0f) {
                 clearSitProgress();
             }
             return;
         }
 
-        sitTransitions.tick(
+        tickSitTransition(
                 getSitDownAnimationTicks(),
                 getSitUpAnimationTicks(),
                 animationHandler::triggerSitDownAnimation,
                 animationHandler::triggerSitUpAnimation
         );
-    }
-
-    @Override
-    public boolean isInSitTransition() {
-        return sitTransitions.isInTransition();
-    }
-
-    @Override
-    public boolean isSittingDownAnimation() {
-        return sitTransitions.isSittingDown();
-    }
-
-    @Override
-    public boolean isStandingUpAnimation() {
-        return sitTransitions.isStandingUp();
-    }
-
-    @Override
-    protected void clearLocalSitTransitionForMount() {
-        sitTransitions.clear();
     }
 
     @Override

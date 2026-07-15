@@ -20,7 +20,6 @@ import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
-import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -198,7 +197,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;
     private final AnimationController<Cindervane> movementController;
-    private final AnimationController<Cindervane> transitionController;
     private final AnimationController<Cindervane> actionController;
     private final AnimationController<Cindervane> fastActionController;
     private final AnimationController<Cindervane> flightController;
@@ -218,7 +216,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private UUID packLeaderUuid;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private final ScreenShakeComponent screenShakeComponent;
-    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
@@ -300,7 +297,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.setMaxUpStep(1.1F);
         this.riderController = new CindervaneRiderController(this);
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, CindervaneAnimationHandler.ACTION_CONTROLLER, 5, animationHandler::actionPredicate);
         this.fastActionController = new AnimationController<>(this, CindervaneAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationHandler::fastActionPredicate);
         this.flightController = AnimationHelper.createFlightController(this, getFlightAnimationTransitionTicks(), animationHandler::flightPredicate);
@@ -552,8 +548,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private void tickSittingState() {
         if (!this.level().isClientSide && this.isVehicle()
                 && (this.isOrderedToSit() || this.getCommand() == 1 || this.getSitProgress() != 0f || this.isInSittingPose())) {
-            clearStateForMountedRider();
-            clearLocalSitTransitionForMount();
+            resetForRiderTransition();
         }
     }
 
@@ -572,12 +567,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.syncAnimState(0, -1);
     }
 
-    @Override
-    protected void clearLocalSitTransitionForMount() {
-        sitTransitions.clear();
-        setInSittingPose(false);
-    }
-
     private static class CindervaneFamilyData extends AgeableMob.AgeableMobGroupData {
         public CindervaneFamilyData(boolean shouldSpawnBaby) {
             super(shouldSpawnBaby);
@@ -585,7 +574,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     private void updateSittingProgress() {
-        sitTransitions.tick(
+        tickSitTransition(
                 getSitDownAnimationTicks(),
                 getSitUpAnimationTicks(),
                 animationHandler::triggerSitDownAnimation,
@@ -1409,14 +1398,13 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, interactionController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
                 fastActionController, flightController, vocalController, interactionController);
         animationHandler.setupMovementController(movementController);
-        animationHandler.setupTransitionController(transitionController);
         animationHandler.setupActionController(actionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
@@ -1887,18 +1875,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return 18.0;
     }
 
-
-    public boolean isInSitTransition() {
-        return sitTransitions.isInTransition();
-    }
-
-    public boolean isSittingDownAnimation() {
-        return sitTransitions.isSittingDown();
-    }
-
-    public boolean isStandingUpAnimation() {
-        return sitTransitions.isStandingUp();
-    }
 
     @Override
     public boolean supportsSleep() {

@@ -56,7 +56,6 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
 
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private final AsyncSwarmFlightController swarmFlightController;
-    private DragonBodyControl bodyControl;
     private float prevFlightPitchRad;
     private float flightPitchRad;
     private float prevTailDragYawDeg;
@@ -183,17 +182,13 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         this.setNoGravity(true);
         if (!level().isClientSide) {
             tickNucleusLeash();
-            if (this.bodyControl != null) {
-                this.bodyControl.serverTick();
-            }
             this.swarmFlightController.serverTick();
         }
     }
 
     @Override
     protected @NotNull BodyRotationControl createBodyControl() {
-        this.bodyControl = new DragonBodyControl(this, getBodyTurnSpeed());
-        return this.bodyControl;
+        return new DragonBodyControl(this, getBodyTurnSpeed());
     }
 
     @Override

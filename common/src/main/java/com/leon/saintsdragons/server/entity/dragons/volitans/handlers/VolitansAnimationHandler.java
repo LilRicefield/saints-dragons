@@ -84,11 +84,11 @@ public final class VolitansAnimationHandler {
     }
 
     public void triggerSitDownAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_UP);
     }
 
     public void setupFlightController(AnimationController<Volitans> controller) {
@@ -98,20 +98,16 @@ public final class VolitansAnimationHandler {
     }
 
     public void setupMovementController(AnimationController<Volitans> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         AnimationHelper.register(controller, "sleep_underwater", SLEEP_UNDERWATER);
+        AnimationHelper.register(controller, "fall_asleep_underwater", FALL_ASLEEP_UNDERWATER);
+        AnimationHelper.register(controller, "wake_up_underwater", WAKE_UP_UNDERWATER);
         AnimationHelper.register(controller, "dash_backwards", DASH_BACKWARDS);
         AnimationHelper.register(controller, "dash_forward", DASH_FORWARD);
         AnimationHelper.register(controller, "dodge_left", DODGE_LEFT);
         AnimationHelper.register(controller, "dodge_right", DODGE_RIGHT);
         AnimationHelper.register(controller, "roar", ROAR);
-    }
-
-    public void setupTransitionController(AnimationController<Volitans> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
-        AnimationHelper.register(controller, "fall_asleep_underwater", FALL_ASLEEP_UNDERWATER);
-        AnimationHelper.register(controller, "wake_up_underwater", WAKE_UP_UNDERWATER);
     }
 
     public void setupActionController(AnimationController<Volitans> controller) {

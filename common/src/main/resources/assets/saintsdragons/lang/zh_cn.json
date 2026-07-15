@@ -639,9 +639,6 @@
   "entity.saintsdragons.raevyx.baby_grown": "%s已成年！",
   "entity.saintsdragons.raevyx.still_eating": "%s正在进食…",
   "entity.saintsdragons.raevyx.sleeping": "%s睡得正香…",
-  "entity.saintsdragons.raevyx.sitting_down": "%s正在坐下…",
-  "entity.saintsdragons.raevyx.standing_up": "%s正在起身…",
-  "entity.saintsdragons.raevyx.transitioning": "%s正在调整姿势…",
   "entity.saintsdragons.raevyx.taming_dazed": "%s因战斗感到有些恍惚…",
   "entity.saintsdragons.raevyx.taming_need_weakened": "%s过于强大！请先削减它的生命值。",
   "entity.saintsdragons.raevyx.taming_failed": "%s拒绝了你，但似乎愿意再试一次…",
@@ -655,9 +652,6 @@
   "entity.saintsdragons.ignivorus.taming_need_weakened": "%s烧的太旺！请先削减它的生命值。",
   "entity.saintsdragons.ignivorus.taming_failed": "%s因骄傲而不愿臣服……",
   "entity.saintsdragons.ignivorus.taming_timeout": "你犹豫太久，%s重燃战意，返回战斗！",
-  "entity.saintsdragons.ignivorus.sitting_down": "%s正在坐下…",
-  "entity.saintsdragons.ignivorus.standing_up": "%s正在起身…",
-  "entity.saintsdragons.ignivorus.transitioning": "%s正在调整姿态…",
 
 
   "entity.saintsdragons.stegonaut.tamed": "%s已被驯服！",
@@ -672,9 +666,6 @@
   "entity.saintsdragons.cindervane.still_eating": "%s正在进食…",
   "entity.saintsdragons.cindervane.baby_fed": "%s变的更强壮了！",
   "entity.saintsdragons.cindervane.baby_grown": "%s已成年！",
-  "entity.saintsdragons.cindervane.sitting_down": "%s正在蜷曲…",
-  "entity.saintsdragons.cindervane.standing_up": "%s正在舒展…",
-  "entity.saintsdragons.cindervane.transitioning": "%s正在调整姿势…",
 
   "entity.saintsdragons.varasuchus.fed": "%s完全恢复了！",
   "entity.saintsdragons.varasuchus.fed_partial": "正在治疗%s…",
@@ -683,9 +674,6 @@
   "entity.saintsdragons.varasuchus.baby_grown": "%s已成年！",
   "entity.saintsdragons.varasuchus.sleeping": "%s睡得正香，叫醒它才能开始驯服",
   "entity.saintsdragons.varasuchus.buck_cooldown": "哦不，%s拒绝了你，%s秒后再试一次吧",
-  "entity.saintsdragons.varasuchus.sitting_down": "%s正在坐下…",
-  "entity.saintsdragons.varasuchus.standing_up": "%s正在起身…",
-  "entity.saintsdragons.varasuchus.transitioning": "%s正在调整姿态…",
 
   "entity.saintsdragons.volitans.fed": "%s完全恢复了！",
   "entity.saintsdragons.volitans.fed_partial": "正在治疗%s…",
@@ -696,9 +684,6 @@
   "entity.saintsdragons.volitans.taming_need_weakened": "%s过于强大！请先削减它的生命值。",
   "entity.saintsdragons.volitans.taming_failed": "%s拒绝了你，但似乎愿意再试一次…",
   "entity.saintsdragons.volitans.taming_timeout": "你犹豫太久。%s已恢复并重返战斗。",
-  "entity.saintsdragons.volitans.sitting_down": "%s正在坐下…",
-  "entity.saintsdragons.volitans.standing_up": "%s正在起身…",
-  "entity.saintsdragons.volitans.transitioning": "%s正在调整姿势….",
 
   "entity.saintsdragons.nulljaw.fed": "%s完全恢复了！",
   "entity.saintsdragons.nulljaw.fed_partial": "正在治疗%s…",

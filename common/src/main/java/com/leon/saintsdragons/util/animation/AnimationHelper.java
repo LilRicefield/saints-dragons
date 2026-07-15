@@ -19,7 +19,6 @@ import java.util.function.Function;
 
 public final class AnimationHelper {
     public static final String MOVEMENT_CONTROLLER = "movement";
-    public static final String TRANSITION_CONTROLLER = "transition";
     public static final String FLIGHT_CONTROLLER = "flight";
     public static final String INTERACTION_CONTROLLER = "interaction";
     public static final String VOCAL_CONTROLLER = "vocal";
@@ -71,24 +70,20 @@ public final class AnimationHelper {
         }
     }
 
-    public static <T extends RideableDragonBase> void register(AnimationController<T> controller, Animations animations) {
+    public static <T extends RideableDragonBase> void registerRestAnimations(AnimationController<T> controller, Animations animations) {
         register(controller, SLEEP, animations.sleep());
-    }
-
-    public static <T extends RideableDragonBase> void registerTransitions(AnimationController<T> controller, Animations animations) {
         register(controller, SIT_DOWN, animations.sitDown());
         register(controller, SIT_UP, animations.sitUp());
         register(controller, FALL_ASLEEP, animations.fallAsleep());
         register(controller, WAKE_UP, animations.wakeUp());
     }
 
-    public static PlayState idle(AnimationState<?> state) {
-        state.getController().transitionLength(1);
-        return PlayState.STOP;
+    public static void triggerRestAnimation(RideableDragonBase dragon, String animation) {
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, animation);
     }
 
-    public static PlayState transitionIdle(AnimationState<?> state) {
-        state.getController().transitionLength(4);
+    public static PlayState idle(AnimationState<?> state) {
+        state.getController().transitionLength(1);
         return PlayState.STOP;
     }
 
@@ -137,14 +132,6 @@ public final class AnimationHelper {
             controller.transitionLength(transitions.sleep());
             setAndContinue(state, animations.sleep());
             return PlayState.CONTINUE;
-        }
-
-        if (specialStates.sittingDown(dragon)) {
-            return PlayState.STOP;
-        }
-
-        if (specialStates.standingUp(dragon)) {
-            return PlayState.STOP;
         }
 
         float sitProgress = dragon.getSitProgress();
@@ -520,14 +507,6 @@ public final class AnimationHelper {
 
         default boolean inWater(T dragon) {
             return dragon.isInWater() || dragon.isInWaterOrBubble();
-        }
-
-        default boolean sittingDown(T dragon) {
-            return false;
-        }
-
-        default boolean standingUp(T dragon) {
-            return false;
         }
 
         default boolean falling(T dragon) {

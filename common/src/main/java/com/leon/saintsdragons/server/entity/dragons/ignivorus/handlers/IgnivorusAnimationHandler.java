@@ -54,19 +54,19 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final int FAST_ACTION_TRANSITION_TICKS = 1;
 
     public void triggerSitDownAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.WAKE_UP);
     }
 
     public void triggerBulldozeEnterAnimation() {
@@ -105,7 +105,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void setupMovementController(AnimationController<Ignivorus> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         AnimationHelper.register(controller, AnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
         controller.triggerableAnim("wing_swipe_left",
@@ -131,10 +131,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
         controller.triggerableAnim("ignivorus_flex",
                 RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
-    }
-
-    public void setupTransitionController(AnimationController<Ignivorus> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
     }
 
     public void setupInteractionController(AnimationController<Ignivorus> controller) {

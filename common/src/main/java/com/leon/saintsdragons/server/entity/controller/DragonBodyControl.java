@@ -17,6 +17,7 @@ public class DragonBodyControl extends BodyRotationControl {
     private final float headLagSpeed;
     private final float bodyLagStillSpeed;
     private final float bodyMaxDelta;
+    private boolean trackingSuspended;
 
     public DragonBodyControl(Mob entity, float turnSpeed) {
         this(entity, turnSpeed, 50.0f, 0.3f, 0.10f, 45.0f);
@@ -36,12 +37,15 @@ public class DragonBodyControl extends BodyRotationControl {
     @Override
     public void clientTick() {
         if (this.entity.isVehicle()) {
+            this.trackingSuspended = true;
             return;
         }
         if (shouldLockForSitting()) {
             freezeSeatedRotation();
+            this.trackingSuspended = true;
             return;
         }
+        resumeTrackingIfNeeded();
         if (tickCombatFacingLock()) {
             return;
         }
@@ -67,40 +71,6 @@ public class DragonBodyControl extends BodyRotationControl {
             this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, this.bodyMaxDelta, this.bodyLagStillSpeed);
         }
 
-        clampHeadBodyDifference();
-    }
-
-    public void serverTick() {
-        if (this.entity.isVehicle()) {
-            return;
-        }
-        if (shouldLockForSitting()) {
-            freezeSeatedRotation();
-            return;
-        }
-        if (tickCombatFacingLock()) {
-            return;
-        }
-        for (int i = this.histPosX.length - 1; i > 0; --i) {
-            this.histPosX[i] = this.histPosX[i - 1];
-            this.histPosZ[i] = this.histPosZ[i - 1];
-        }
-        this.histPosX[0] = this.entity.getX();
-        this.histPosZ[0] = this.entity.getZ();
-        double dx = this.delta(this.histPosX);
-        double dz = this.delta(this.histPosZ);
-        double distSq = dx * dx + dz * dz;
-
-        if (distSq > MOVING_EPSILON_SQ) {
-            double moveAngle = Math.toDegrees(Mth.atan2(dz, dx)) - 90.0;
-            this.entity.yBodyRot = approach((float)moveAngle, this.entity.yBodyRot, this.bodyMaxDelta, this.turnSpeed);
-
-            this.targetYawHead = this.entity.yHeadRot;
-        }
-        else {
-            this.targetYawHead = smooth(this.targetYawHead, this.entity.yHeadRot, this.headLagSpeed);
-            this.entity.yBodyRot = approach(this.targetYawHead, this.entity.yBodyRot, this.bodyMaxDelta, this.bodyLagStillSpeed);
-        }
         clampHeadBodyDifference();
     }
 
@@ -156,10 +126,29 @@ public class DragonBodyControl extends BodyRotationControl {
 
     private void freezeSeatedRotation() {
         float yaw = this.entity.getYRot();
+        this.entity.yRotO = yaw;
         this.entity.yBodyRot = yaw;
         this.entity.yBodyRotO = yaw;
         this.entity.yHeadRot = yaw;
         this.entity.yHeadRotO = yaw;
         this.targetYawHead = yaw;
+    }
+
+    private void resumeTrackingIfNeeded() {
+        if (!this.trackingSuspended) {
+            return;
+        }
+
+        for (int i = 0; i < HISTORY_SIZE; i++) {
+            this.histPosX[i] = this.entity.getX();
+            this.histPosZ[i] = this.entity.getZ();
+        }
+        this.targetYawHead = this.entity.yHeadRot;
+        this.entity.yRotO = this.entity.getYRot();
+        this.entity.xRotO = this.entity.getXRot();
+        this.entity.yBodyRotO = this.entity.yBodyRot;
+        this.entity.yHeadRotO = this.entity.yHeadRot;
+        this.trackingSuspended = false;
+
     }
 }

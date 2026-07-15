@@ -229,35 +229,6 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);
     }
 
-    private InteractionResult handleCommandCycling(Player player) {
-        if (!dragon.isInWaterOrBubble() && dragon.isInSitTransition()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                String messageKey;
-                if (dragon.isSittingDownAnimation()) {
-                    messageKey = "entity.saintsdragons.volitans.sitting_down";
-                } else if (dragon.isStandingUpAnimation()) {
-                    messageKey = "entity.saintsdragons.volitans.standing_up";
-                } else {
-                    messageKey = "entity.saintsdragons.volitans.transitioning";
-                }
-                serverPlayer.displayClientMessage(Component.translatable(messageKey, dragon.getName()), true);
-            }
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
-        }
-
-        int nextCommand = dragon.getNextCommand();
-        dragon.setCommand(nextCommand);
-
-        if (!dragon.level().isClientSide) {
-            player.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.all.command_" + nextCommand, dragon.getName()),
-                    true
-            );
-        }
-
-        return InteractionResult.SUCCESS;
-    }
-
     private InteractionResult handleMounting(Player player) {
         if (dragon.isVehicle()) {
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
@@ -265,8 +236,6 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
 
         if (!dragon.level().isClientSide) {
             dragon.prepareForMounting();
-            dragon.combatManager.clearAllStates();
-            dragon.setAggressive(false);
             player.startRiding(dragon);
         }
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);

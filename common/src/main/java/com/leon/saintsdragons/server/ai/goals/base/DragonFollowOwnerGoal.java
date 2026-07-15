@@ -262,7 +262,6 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
             return;
         }
         boolean shouldRun = distance > config.runDist;
-        dragon.getAIMovement().setGroundMoveState(shouldRun);
         double baseSpeed = shouldRun ? config.runSpeed : config.walkSpeed;
         double speed = baseSpeed * (1.0 + (distance / 50.0));
         speed = Math.min(speed, shouldRun ? config.maxRunSpeed : config.maxWalkSpeed);

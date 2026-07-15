@@ -40,19 +40,19 @@ public class StegonautAnimationHandler {
     }
 
     public void triggerSitDownAnimation() {
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(drake, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(drake, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+        AnimationHelper.triggerRestAnimation(drake, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        drake.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+        AnimationHelper.triggerRestAnimation(drake, AnimationHelper.WAKE_UP);
     }
 
     public PlayState handleMovementAnimation(AnimationState<Stegonaut> state) {
@@ -97,13 +97,9 @@ public class StegonautAnimationHandler {
     }
 
     public void setupMovementController(AnimationController<Stegonaut> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "ground_slam", GROUND_SLAM);
         AnimationHelper.register(controller, "ground_slam2", GROUND_SLAM2);
-    }
-
-    public void setupTransitionController(AnimationController<Stegonaut> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
     }
 
     public PlayState fastActionPredicate(AnimationState<Stegonaut> state) {

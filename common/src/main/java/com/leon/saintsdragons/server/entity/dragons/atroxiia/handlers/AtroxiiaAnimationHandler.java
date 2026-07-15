@@ -51,7 +51,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     }
 
     public void setupMovementController(AnimationController<Atroxiia> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "slam_right", SLAM_RIGHT);
         AnimationHelper.register(controller, "slam_left", SLAM_LEFT);
         AnimationHelper.register(controller, "swipe_right", SWIPE_RIGHT);
@@ -60,23 +60,19 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         AnimationHelper.register(controller, "devastating_sweep", DEVASTATING_SWEEP);
     }
 
-    public void setupTransitionController(AnimationController<Atroxiia> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
-    }
-
     public void triggerSitDownAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        dragon.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.WAKE_UP);
     }
 }

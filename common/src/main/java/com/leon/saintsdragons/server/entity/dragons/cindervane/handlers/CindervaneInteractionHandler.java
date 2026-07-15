@@ -263,40 +263,6 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
         return InteractionResult.sidedSuccess(true);
     }
 
-    private InteractionResult handleCommandCycling(Player player) {
-        if (dragon.isInSitTransition()) {
-            if (!dragon.level().isClientSide && player instanceof ServerPlayer serverPlayer) {
-                String messageKey;
-                if (dragon.isSittingDownAnimation()) {
-                    messageKey = "entity.saintsdragons.cindervane.sitting_down";
-                } else if (dragon.isStandingUpAnimation()) {
-                    messageKey = "entity.saintsdragons.cindervane.standing_up";
-                } else {
-                    messageKey = "entity.saintsdragons.cindervane.transitioning";
-                }
-                serverPlayer.displayClientMessage(
-                        Component.translatable(messageKey, dragon.getName()),
-                        true
-                );
-            }
-            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
-        }
-
-        int nextCommand = dragon.getNextCommand();
-        dragon.setCommand(nextCommand);
-        if (!dragon.level().isClientSide) {
-            player.displayClientMessage(
-                Component.translatable(
-                    "entity.saintsdragons.all.command_" + nextCommand,
-                    dragon.getName()
-                ),
-                true
-            );
-        }
-
-        return InteractionResult.SUCCESS;
-    }
-
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());

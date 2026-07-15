@@ -25,7 +25,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
-import com.leon.saintsdragons.server.entity.base.DragonSitTransitionController;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -256,7 +255,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final IgnivorusRiderController riderController;
     private final AnimationController<Ignivorus> movementController;
-    private final AnimationController<Ignivorus> transitionController;
     private final AnimationController<Ignivorus> actionController;
     private final AnimationController<Ignivorus> fastActionController;
     private final AnimationController<Ignivorus> flightController;
@@ -298,7 +296,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 520;
     private int teethChipDropCooldownTicks = 0;
-    private final DragonSitTransitionController sitTransitions = new DragonSitTransitionController(this);
     public Ignivorus(EntityType<? extends Ignivorus> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
@@ -309,7 +306,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
         this.riderController = new IgnivorusRiderController(this);
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
-        this.transitionController = new AnimationController<>(this, AnimationHelper.TRANSITION_CONTROLLER, 4, AnimationHelper::transitionIdle);
         this.actionController = new AnimationController<>(this, IgnivorusAnimationHandler.ACTION_CONTROLLER, 4, state -> {
             if (isTamingStunned()) {
                 return PlayState.STOP;
@@ -569,12 +565,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         clearAerialStateForInterrupt();
         setNoGravity(false);
         setDeltaMovement(Vec3.ZERO);
-    }
-
-    @Override
-    protected void clearLocalSitTransitionForMount() {
-        sitTransitions.clear();
-        setInSittingPose(false);
     }
 
     @Override
@@ -2794,7 +2784,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     private void updateSittingProgress() {
-        sitTransitions.tick(
+        tickSitTransition(
                 getSitDownAnimationTicks(),
                 getSitUpAnimationTicks(),
                 animationHandler::triggerSitDownAnimation,
@@ -2823,18 +2813,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return 38;
     }
     @Override
-    public boolean isInSitTransition() {
-        return sitTransitions.isInTransition();
-    }
-    @Override
-    public boolean isSittingDownAnimation() {
-        return sitTransitions.isSittingDown();
-    }
-    @Override
-    public boolean isStandingUpAnimation() {
-        return sitTransitions.isStandingUp();
-    }
-    @Override
     protected float getBarrelRollInputSpeed() {
         return BARREL_ROLL_INPUT_SPEED;
     }
@@ -2855,15 +2833,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, transitionController, vocalController, actionController, fastActionController, flightController, interactionController);
+        controllers.add(movementController, vocalController, actionController, fastActionController, flightController, interactionController);
     }
 
     private void setupAnimationControllers() {
-        AnimationHelper.registerSoundKeyframes(this, movementController, transitionController, actionController,
+        AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
                 fastActionController, flightController, vocalController, interactionController);
         AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupMovementController(movementController);
-        animationHandler.setupTransitionController(transitionController);
         animationHandler.setupFastActionController(fastActionController);
         animationHandler.setupFlightController(flightController);
         animationHandler.setupInteractionController(interactionController);

@@ -65,19 +65,19 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final int FAST_ACTION_TRANSITION_TICKS = 1;
 
     public void triggerSitDownAnimation() {
-        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_DOWN);
+        AnimationHelper.triggerRestAnimation(wyvern, AnimationHelper.SIT_DOWN);
     }
 
     public void triggerSitUpAnimation() {
-        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.SIT_UP);
+        AnimationHelper.triggerRestAnimation(wyvern, AnimationHelper.SIT_UP);
     }
 
     public void triggerFallAsleepAnimation() {
-        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.FALL_ASLEEP);
+        AnimationHelper.triggerRestAnimation(wyvern, AnimationHelper.FALL_ASLEEP);
     }
 
     public void triggerWakeUpAnimation() {
-        wyvern.triggerAnim(AnimationHelper.TRANSITION_CONTROLLER, AnimationHelper.WAKE_UP);
+        AnimationHelper.triggerRestAnimation(wyvern, AnimationHelper.WAKE_UP);
     }
 
     public void triggerDodgeLeftAnimation() {
@@ -126,7 +126,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public void setupMovementController(AnimationController<Raevyx> controller) {
-        AnimationHelper.register(controller, GROUND_ANIMATIONS);
+        AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         controller.triggerableAnim("dodge_left",
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_left"));
@@ -177,16 +177,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
         @Override
         public boolean tamingStunned(Raevyx dragon) {
             return dragon.isTamingStunned();
-        }
-
-        @Override
-        public boolean sittingDown(Raevyx dragon) {
-            return dragon.isSittingDownAnimation();
-        }
-
-        @Override
-        public boolean standingUp(Raevyx dragon) {
-            return dragon.isStandingUpAnimation();
         }
 
         @Override
@@ -256,10 +246,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     public PlayState raevyxActionPredicate(AnimationState<Raevyx> state) {
         state.getController().transitionLength(ACTION_TRANSITION_TICKS);
         return PlayState.STOP;
-    }
-
-    public void setupTransitionController(AnimationController<Raevyx> controller) {
-        AnimationHelper.registerTransitions(controller, GROUND_ANIMATIONS);
     }
 
     public PlayState raevyxFastActionPredicate(AnimationState<Raevyx> state) {

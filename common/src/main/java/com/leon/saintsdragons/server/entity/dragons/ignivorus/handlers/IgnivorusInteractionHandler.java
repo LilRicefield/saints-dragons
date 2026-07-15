@@ -255,10 +255,6 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     }
 
 
-    private InteractionResult handleCommandCycling(Player player) {
-        return super.handleCommandCycling(player, "entity.saintsdragons.ignivorus");
-    }
-
     private void playEatSound() {
         if (!dragon.level().isClientSide) {
             float pitch = dragon.isBaby() ? 1.6f : 1.0f;
