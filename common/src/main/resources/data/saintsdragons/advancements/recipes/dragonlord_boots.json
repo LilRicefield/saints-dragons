@@ -28,9 +28,7 @@
   },
   "requirements": [
     [
-      "has_dragonheart_alloy"
-    ],
-    [
+      "has_dragonheart_alloy",
       "has_ignivorus_tooth"
     ]
   ],

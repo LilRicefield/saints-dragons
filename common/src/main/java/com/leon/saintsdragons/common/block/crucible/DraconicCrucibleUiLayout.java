@@ -3,7 +3,8 @@ package com.leon.saintsdragons.common.block.crucible;
 public final class DraconicCrucibleUiLayout {
     public static final int WIDTH = 176;
     public static final int HEIGHT = 208;
-    public static final int RECIPE_VIEW_HEIGHT = 125;
+    // The lowest preview widget ends at y=116. Avoid blank height that overflows at GUI scale 6.
+    public static final int RECIPE_VIEW_HEIGHT = 116;
 
     public static final int OUTPUT_SLOT_X = 80;
     public static final int OUTPUT_SLOT_Y = 21;

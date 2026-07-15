@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.recipe;
 
 import com.google.gson.JsonObject;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModRecipes;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.FriendlyByteBuf;
@@ -58,6 +59,11 @@ public record DraconicCrucibleSmeltingRecipe(
     @Override
     public @NotNull RecipeType<?> getType() {
         return ModRecipes.DRACONIC_CRUCIBLE_SMELTING_TYPE.get();
+    }
+
+    @Override
+    public @NotNull ItemStack getToastSymbol() {
+        return new ItemStack(ModItems.DRACONIC_CRUCIBLE.get());
     }
 
     public static final class Serializer implements RecipeSerializer<DraconicCrucibleSmeltingRecipe> {

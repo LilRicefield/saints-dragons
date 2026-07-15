@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.recipe;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModRecipes;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.RegistryAccess;
@@ -165,6 +166,11 @@ public final class DraconicCrucibleShapedRecipe implements Recipe<Container> {
     @Override
     public @NotNull RecipeType<?> getType() {
         return ModRecipes.DRACONIC_CRUCIBLE_SHAPED_TYPE.get();
+    }
+
+    @Override
+    public @NotNull ItemStack getToastSymbol() {
+        return new ItemStack(ModItems.DRACONIC_CRUCIBLE.get());
     }
 
     public static final class Serializer implements RecipeSerializer<DraconicCrucibleShapedRecipe> {

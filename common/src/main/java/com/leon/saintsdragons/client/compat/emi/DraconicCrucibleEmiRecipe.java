@@ -25,6 +25,10 @@ final class DraconicCrucibleEmiRecipe extends BasicEmiRecipe {
     private static final ResourceLocation TEXTURE =
             SaintsDragonsCommon.rl("textures/gui/draconic_crucible_jei.png");
 
+    // EMI places recipe contents lower inside its screen than JEI. Keep the full shared layout and
+    // move only EMI's rendering upward; retaining the full height also keeps one recipe per view.
+    private static final int EMI_VERTICAL_OFFSET = -16;
+
     private final List<PositionedIngredient> positionedInputs;
     private final EmiIngredient fuel;
     private final EmiStack output;
@@ -90,18 +94,20 @@ final class DraconicCrucibleEmiRecipe extends BasicEmiRecipe {
 
     @Override
     public void addWidgets(WidgetHolder widgets) {
-        widgets.addTexture(TEXTURE, 0, 0, WIDTH, RECIPE_VIEW_HEIGHT, 0, 0);
+        widgets.addTexture(TEXTURE,
+                0, EMI_VERTICAL_OFFSET, WIDTH, RECIPE_VIEW_HEIGHT, 0, 0);
 
         for (PositionedIngredient input : this.positionedInputs) {
-            widgets.addSlot(input.ingredient(), input.x() - 1, input.y() - 1)
+            widgets.addSlot(input.ingredient(),
+                            input.x() - 1, input.y() - 1 + EMI_VERTICAL_OFFSET)
                     .drawBack(false);
         }
-        widgets.addSlot(this.fuel, FUEL_SLOT_X - 1, FUEL_SLOT_Y - 1)
+        widgets.addSlot(this.fuel, FUEL_SLOT_X - 1, FUEL_SLOT_Y - 1 + EMI_VERTICAL_OFFSET)
                 .drawBack(false)
                 .catalyst(true)
                 .appendTooltip(Component.translatable(
                         "gui.saintsdragons.draconic_crucible.valid_fuel", this.requiredHeatLevel));
-        widgets.addSlot(this.output, OUTPUT_SLOT_X - 5, OUTPUT_SLOT_Y - 5)
+        widgets.addSlot(this.output, OUTPUT_SLOT_X - 5, OUTPUT_SLOT_Y - 5 + EMI_VERTICAL_OFFSET)
                 .drawBack(false)
                 .large(true)
                 .recipeContext(this);
@@ -111,33 +117,38 @@ final class DraconicCrucibleEmiRecipe extends BasicEmiRecipe {
         int finalGaugeOffset = GAUGE_HEIGHT - gauge.finalHeight();
         if (gauge.finalHeight() > 0) {
             widgets.addTexture(TEXTURE,
-                    GAUGE_X, GAUGE_Y + finalGaugeOffset, GAUGE_WIDTH, gauge.finalHeight(),
+                    GAUGE_X, GAUGE_Y + finalGaugeOffset + EMI_VERTICAL_OFFSET,
+                    GAUGE_WIDTH, gauge.finalHeight(),
                     GAUGE_U, GAUGE_V + finalGaugeOffset);
         }
         int consumedGaugeHeight = gauge.initialHeight() - gauge.finalHeight();
         if (consumedGaugeHeight > 0) {
             int initialGaugeOffset = GAUGE_HEIGHT - gauge.initialHeight();
             widgets.addAnimatedTexture(TEXTURE,
-                    GAUGE_X, GAUGE_Y + initialGaugeOffset, GAUGE_WIDTH, consumedGaugeHeight,
+                    GAUGE_X, GAUGE_Y + initialGaugeOffset + EMI_VERTICAL_OFFSET,
+                    GAUGE_WIDTH, consumedGaugeHeight,
                     GAUGE_U, GAUGE_V + initialGaugeOffset, animationMillis,
                     false, true, true);
         }
         widgets.addAnimatedTexture(TEXTURE,
-                ARROW_X, ARROW_Y, ARROW_WIDTH, ARROW_HEIGHT, ARROW_U, ARROW_V,
+                ARROW_X, ARROW_Y + EMI_VERTICAL_OFFSET,
+                ARROW_WIDTH, ARROW_HEIGHT, ARROW_U, ARROW_V,
                 animationMillis, false, true, false);
         widgets.addAnimatedTexture(TEXTURE,
-                PANEL_X + BAR_X, PANEL_Y + BAR_Y, BAR_WIDTH, BAR_HEIGHT, BAR_U, BAR_V,
+                PANEL_X + BAR_X, PANEL_Y + BAR_Y + EMI_VERTICAL_OFFSET,
+                BAR_WIDTH, BAR_HEIGHT, BAR_U, BAR_V,
                 animationMillis, false, true, false);
         widgets.addTexture(TEXTURE,
-                BUTTON_X, BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_U, BUTTON_DEFAULT_V);
+                BUTTON_X, BUTTON_Y + EMI_VERTICAL_OFFSET,
+                BUTTON_WIDTH, BUTTON_HEIGHT, BUTTON_U, BUTTON_DEFAULT_V);
 
         widgets.addTooltipText(List.of(Component.translatable(
                         "gui.saintsdragons.draconic_crucible.heat_level", this.requiredHeatLevel)),
-                GAUGE_X, GAUGE_Y, GAUGE_WIDTH, GAUGE_HEIGHT);
+                GAUGE_X, GAUGE_Y + EMI_VERTICAL_OFFSET, GAUGE_WIDTH, GAUGE_HEIGHT);
         widgets.addTooltipText(List.of(Component.translatable(
                         "gui.saintsdragons.draconic_crucible.processing_time",
                         formatSeconds(this.processingTime))),
-                ARROW_X, ARROW_Y, ARROW_WIDTH, ARROW_HEIGHT);
+                ARROW_X, ARROW_Y + EMI_VERTICAL_OFFSET, ARROW_WIDTH, ARROW_HEIGHT);
     }
 
     private int getAnimationMillis() {

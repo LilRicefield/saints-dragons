@@ -12,7 +12,8 @@
     "MultipartInteractionBridgeMixin"
   ],
   "client": [
-    "ClientLevelEntityMapAccessor"
+    "ClientLevelEntityMapAccessor",
+    "ClientRecipeBookMixin"
   ],
   "injectors": {
     "defaultRequire": 1

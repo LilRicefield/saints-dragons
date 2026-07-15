@@ -28,9 +28,7 @@
   },
   "requirements": [
     [
-      "has_dragonheart_chunk"
-    ],
-    [
+      "has_dragonheart_chunk",
       "has_raevyx_scale"
     ]
   ],

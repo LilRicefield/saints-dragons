@@ -40,12 +40,8 @@
   },
   "requirements": [
     [
-      "has_dragonheart_chunk"
-    ],
-    [
-      "has_raevyx_scale"
-    ],
-    [
+      "has_dragonheart_chunk",
+      "has_raevyx_scale",
       "has_raevyx_wing_hide"
     ]
   ],

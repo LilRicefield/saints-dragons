@@ -40,12 +40,8 @@
   },
   "requirements": [
     [
-      "has_dragonheart_alloy"
-    ],
-    [
-      "has_ignivorus_scale"
-    ],
-    [
+      "has_dragonheart_alloy",
+      "has_ignivorus_scale",
       "has_ignivorus_wing_hide"
     ]
   ],

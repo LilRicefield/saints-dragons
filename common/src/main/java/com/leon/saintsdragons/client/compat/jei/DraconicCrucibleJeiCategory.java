@@ -23,9 +23,6 @@ import static com.leon.saintsdragons.common.block.crucible.DraconicCrucibleUiLay
 abstract class DraconicCrucibleJeiCategory<T> implements IRecipeCategory<T> {
     private static final ResourceLocation TEXTURE =
             SaintsDragonsCommon.rl("textures/gui/draconic_crucible_jei.png");
-    // JEI vertically centers the declared category bounds. Bottom-only padding raises the preview.
-    private static final int JEI_BOTTOM_ALIGNMENT_PADDING = 16;
-
     private final RecipeType<T> recipeType;
     private final Component title;
     private final IDrawable icon;
@@ -59,7 +56,7 @@ abstract class DraconicCrucibleJeiCategory<T> implements IRecipeCategory<T> {
 
     @Override
     public final int getHeight() {
-        return RECIPE_VIEW_HEIGHT + JEI_BOTTOM_ALIGNMENT_PADDING;
+        return RECIPE_VIEW_HEIGHT;
     }
 
     @Override

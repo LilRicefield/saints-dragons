@@ -1,0 +1,47 @@
+{
+  "replace": false,
+  "entries": [
+    {
+      "loot_table": "minecraft:chests/ancient_city",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.50
+    },
+    {
+      "loot_table": "minecraft:chests/stronghold_library",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.40
+    },
+    {
+      "loot_table": "minecraft:chests/stronghold_corridor",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.18
+    },
+    {
+      "loot_table": "minecraft:chests/woodland_mansion",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.30
+    },
+    {
+      "loot_table": "minecraft:chests/jungle_temple",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.20
+    },
+    {
+      "loot_table": "minecraft:chests/desert_pyramid",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.15
+    },
+    {
+      "loot_table": "minecraft:archaeology/trail_ruins_rare",
+      "item": "saintsdragons:dragon_seal_stone",
+      "count": 1,
+      "chance": 0.08
+    }
+  ]
+}
