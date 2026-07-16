@@ -3,7 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.item.*;
 import com.leon.saintsdragons.common.item.dragonfood.HeartyDragonMealItem;
 import com.leon.saintsdragons.common.item.tools.DragonheartWeaponTier;
-import com.leon.saintsdragons.common.item.tools.WorldrootTier;
+import com.leon.saintsdragons.common.item.tools.ConfiguredWorldrootItems;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
@@ -15,11 +15,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
-import net.minecraft.world.item.AxeItem;
-import net.minecraft.world.item.HoeItem;
-import net.minecraft.world.item.PickaxeItem;
-import net.minecraft.world.item.ShovelItem;
-import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.sounds.SoundEvents;
 
@@ -164,7 +159,7 @@ public class ModItems {
 
     public static final Supplier<Item> WORLDROOT_SWORD =
             REGISTER.register("worldroot_sword",
-                    () -> new SwordItem(WorldrootTier.INSTANCE, 3, -2.4F, new Item.Properties()));
+                    () -> new ConfiguredWorldrootItems.Sword(new Item.Properties()));
 
     public static final Supplier<Item> BLOOD_TEMPEST_KATANA =
             REGISTER.register("blood_tempest_katana",
@@ -180,19 +175,19 @@ public class ModItems {
 
     public static final Supplier<Item> WORLDROOT_PICKAXE =
             REGISTER.register("worldroot_pickaxe",
-                    () -> new PickaxeItem(WorldrootTier.INSTANCE, 1, -2.8F, new Item.Properties()));
+                    () -> new ConfiguredWorldrootItems.Pickaxe(new Item.Properties()));
 
     public static final Supplier<Item> WORLDROOT_AXE =
             REGISTER.register("worldroot_axe",
-                    () -> new AxeItem(WorldrootTier.INSTANCE, 5.0F, -3.0F, new Item.Properties()));
+                    () -> new ConfiguredWorldrootItems.Axe(new Item.Properties()));
 
     public static final Supplier<Item> WORLDROOT_SHOVEL =
             REGISTER.register("worldroot_shovel",
-                    () -> new ShovelItem(WorldrootTier.INSTANCE, 1.5F, -3.0F, new Item.Properties()));
+                    () -> new ConfiguredWorldrootItems.Shovel(new Item.Properties()));
 
     public static final Supplier<Item> WORLDROOT_HOE =
             REGISTER.register("worldroot_hoe",
-                    () -> new HoeItem(WorldrootTier.INSTANCE, -4, 0.0F, new Item.Properties()));
+                    () -> new ConfiguredWorldrootItems.Hoe(new Item.Properties()));
 
     public static final Supplier<Item> IVY_THE_MERCHANT_SPAWN_EGG =
             REGISTER.register("ivy_the_merchant_spawn_egg",

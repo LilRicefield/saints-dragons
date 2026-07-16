@@ -1,5 +1,10 @@
 package com.leon.saintsdragons.common.item;
 
+import com.google.common.collect.Multimap;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -17,6 +22,36 @@ public class BloodTempestArmorItem extends ArmorItem implements GeoItem {
 
     public BloodTempestArmorItem(ArmorMaterial armorMaterial, Type type, Properties properties) {
         super(armorMaterial, type, properties);
+    }
+
+    @Override
+    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+        Multimap<Attribute, AttributeModifier> base = super.getDefaultAttributeModifiers(slot);
+        if (slot != getType().getSlot()) {
+            return base;
+        }
+        return ConfiguredItemAttributes.armor(base, configuredDefense(),
+                ToolsArmorConfig.BLOOD_TEMPEST_TOUGHNESS.get(),
+                ToolsArmorConfig.BLOOD_TEMPEST_KNOCKBACK_RESISTANCE.get());
+    }
+
+    @Override
+    public int getDefense() {
+        return (int) Math.round(configuredDefense());
+    }
+
+    @Override
+    public float getToughness() {
+        return (float) ToolsArmorConfig.BLOOD_TEMPEST_TOUGHNESS.get();
+    }
+
+    private double configuredDefense() {
+        return switch (getType()) {
+            case HELMET -> ToolsArmorConfig.BLOOD_TEMPEST_HELMET_ARMOR.get();
+            case CHESTPLATE -> ToolsArmorConfig.BLOOD_TEMPEST_CHESTPLATE_ARMOR.get();
+            case LEGGINGS -> ToolsArmorConfig.BLOOD_TEMPEST_LEGGINGS_ARMOR.get();
+            case BOOTS -> ToolsArmorConfig.BLOOD_TEMPEST_BOOTS_ARMOR.get();
+        };
     }
 
     @Override

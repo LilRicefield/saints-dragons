@@ -2,9 +2,11 @@ package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricClientConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricServerConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricToolsArmorConfig;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.ConfigHolder;
@@ -13,6 +15,8 @@ import me.shedaniel.autoconfig.serializer.Toml4jConfigSerializer;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.DoubleConsumer;
+import java.util.function.DoubleSupplier;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -23,6 +27,7 @@ import java.util.function.Supplier;
 final class FabricClothConfigHelper implements ConfigHelper {
     private static volatile ConfigHolder<SaintsDragonsFabricSpawnConfig> spawnHolder;
     private static volatile ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder;
+    private static volatile ConfigHolder<SaintsDragonsFabricToolsArmorConfig> toolsArmorHolder;
     private static volatile ConfigHolder<SaintsDragonsFabricClientConfig> clientHolder;
 
     static FabricClothConfigHelper create() {
@@ -75,18 +80,36 @@ final class FabricClothConfigHelper implements ConfigHelper {
         return current;
     }
 
+    private static ConfigHolder<SaintsDragonsFabricToolsArmorConfig> toolsArmorHolder() {
+        ConfigHolder<SaintsDragonsFabricToolsArmorConfig> current = toolsArmorHolder;
+        if (current == null) {
+            synchronized (FabricClothConfigHelper.class) {
+                current = toolsArmorHolder;
+                if (current == null) {
+                    AutoConfig.register(SaintsDragonsFabricToolsArmorConfig.class, Toml4jConfigSerializer::new);
+                    current = AutoConfig.getConfigHolder(SaintsDragonsFabricToolsArmorConfig.class);
+                    toolsArmorHolder = current;
+                }
+            }
+        }
+        return current;
+    }
+
     private static void ensureRegistered() {
         spawnHolder();
         serverHolder();
+        toolsArmorHolder();
         clientHolder();
     }
 
     @Override
     public ConfigBuilder commonBuilder(String fileName) {
         ensureRegistered();
-        Runnable saver = SaintsDragonsConfig.SERVER_CONFIG_FILE.equals(fileName)
-                ? serverHolder()::save
-                : spawnHolder()::save;
+        Runnable saver = ToolsArmorConfig.CONFIG_FILE.equals(fileName)
+                ? toolsArmorHolder()::save
+                : SaintsDragonsConfig.SERVER_CONFIG_FILE.equals(fileName)
+                        ? serverHolder()::save
+                        : spawnHolder()::save;
         return new ClothBuilder(saver);
     }
 
@@ -120,10 +143,21 @@ final class FabricClothConfigHelper implements ConfigHelper {
         }
 
         @Override
+        public DoubleValue defineDouble(String key, double defaultValue, double min, double max) {
+            return new ClothDoubleValue(
+                    doubleSupplierForKey(key, defaultValue),
+                    doubleSetterForKey(key),
+                    saver,
+                    min,
+                    max
+            );
+        }
+
+        @Override
         public BooleanValue defineBoolean(String key, boolean defaultValue) {
             BooleanSupplier supplier = booleanSupplierForKey(key, defaultValue);
             Consumer<Boolean> setter = booleanSetterForKey(key);
-            return new ClothBooleanValue(supplier, setter);
+            return new ClothBooleanValue(supplier, setter, saver);
         }
 
         @Override
@@ -159,6 +193,10 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "nulljawMinGroupSize" -> () -> spawnHolder().getConfig().nulljawMinGroupSize;
             case "nulljawMaxGroupSize" -> () -> spawnHolder().getConfig().nulljawMaxGroupSize;
             case "ivyRestockInterval" -> () -> serverHolder().getConfig().ivyRestockInterval;
+            case "bloodTempestDodgeCooldownTicks" -> () -> toolsArmorHolder().getConfig().bloodTempestDodgeCooldownTicks;
+            case "bloodTempestKatanaAbilityCooldownTicks" -> () -> toolsArmorHolder().getConfig().bloodTempestKatanaAbilityCooldownTicks;
+            case "dragonlordLavaFissureDurationTicks" -> () -> toolsArmorHolder().getConfig().dragonlordLavaFissureDurationTicks;
+            case "dragonlordSwordAbilityCooldownTicks" -> () -> toolsArmorHolder().getConfig().dragonlordSwordAbilityCooldownTicks;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -187,6 +225,10 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "nulljawMinGroupSize" -> value -> spawnHolder().getConfig().nulljawMinGroupSize = value;
             case "nulljawMaxGroupSize" -> value -> spawnHolder().getConfig().nulljawMaxGroupSize = value;
             case "ivyRestockInterval" -> value -> serverHolder().getConfig().ivyRestockInterval = value;
+            case "bloodTempestDodgeCooldownTicks" -> value -> toolsArmorHolder().getConfig().bloodTempestDodgeCooldownTicks = value;
+            case "bloodTempestKatanaAbilityCooldownTicks" -> value -> toolsArmorHolder().getConfig().bloodTempestKatanaAbilityCooldownTicks = value;
+            case "dragonlordLavaFissureDurationTicks" -> value -> toolsArmorHolder().getConfig().dragonlordLavaFissureDurationTicks = value;
+            case "dragonlordSwordAbilityCooldownTicks" -> value -> toolsArmorHolder().getConfig().dragonlordSwordAbilityCooldownTicks = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config int key '{}' for setter", key);
         };
     }
@@ -204,6 +246,11 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "hungerDecayEnabled" -> () -> serverHolder().getConfig().hungerDecayEnabled;
             case "happinessDecayEnabled" -> () -> serverHolder().getConfig().happinessDecayEnabled;
             case "wikiReminderEnabled" -> () -> serverHolder().getConfig().wikiReminderEnabled;
+            case "bloodTempestDodgeEnabled" -> () -> toolsArmorHolder().getConfig().bloodTempestDodgeEnabled;
+            case "bloodTempestKatanaAbilityEnabled" -> () -> toolsArmorHolder().getConfig().bloodTempestKatanaAbilityEnabled;
+            case "dragonlordSwordAbilityEnabled" -> () -> toolsArmorHolder().getConfig().dragonlordSwordAbilityEnabled;
+            case "dragonlordFlightEnabled" -> () -> toolsArmorHolder().getConfig().dragonlordFlightEnabled;
+            case "dragonlordLavaFissureEnabled" -> () -> toolsArmorHolder().getConfig().dragonlordLavaFissureEnabled;
             default -> {
                 SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}'; using default {}", key, defaultValue);
                 yield () -> defaultValue;
@@ -224,6 +271,11 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "hungerDecayEnabled" -> value -> serverHolder().getConfig().hungerDecayEnabled = value;
             case "happinessDecayEnabled" -> value -> serverHolder().getConfig().happinessDecayEnabled = value;
             case "wikiReminderEnabled" -> value -> serverHolder().getConfig().wikiReminderEnabled = value;
+            case "bloodTempestDodgeEnabled" -> value -> toolsArmorHolder().getConfig().bloodTempestDodgeEnabled = value;
+            case "bloodTempestKatanaAbilityEnabled" -> value -> toolsArmorHolder().getConfig().bloodTempestKatanaAbilityEnabled = value;
+            case "dragonlordSwordAbilityEnabled" -> value -> toolsArmorHolder().getConfig().dragonlordSwordAbilityEnabled = value;
+            case "dragonlordFlightEnabled" -> value -> toolsArmorHolder().getConfig().dragonlordFlightEnabled = value;
+            case "dragonlordLavaFissureEnabled" -> value -> toolsArmorHolder().getConfig().dragonlordLavaFissureEnabled = value;
             default -> value -> SaintsDragonsCommon.LOGGER.warn("Unknown Fabric config boolean key '{}' for setter", key);
         };
     }
@@ -233,13 +285,38 @@ final class FabricClothConfigHelper implements ConfigHelper {
         return () -> defaultValue;
     }
 
+    private static DoubleSupplier doubleSupplierForKey(String key, double defaultValue) {
+        return () -> {
+            try {
+                return SaintsDragonsFabricToolsArmorConfig.class.getField(key)
+                        .getDouble(toolsArmorHolder().getConfig());
+            } catch (ReflectiveOperationException exception) {
+                SaintsDragonsCommon.LOGGER.warn("Unknown Fabric tools and armor config key '{}'; using default {}", key, defaultValue);
+                return defaultValue;
+            }
+        };
+    }
+
+    private static DoubleConsumer doubleSetterForKey(String key) {
+        return value -> {
+            try {
+                SaintsDragonsFabricToolsArmorConfig.class.getField(key)
+                        .setDouble(toolsArmorHolder().getConfig(), value);
+            } catch (ReflectiveOperationException exception) {
+                SaintsDragonsCommon.LOGGER.warn("Unknown Fabric tools and armor config key '{}' for setter", key);
+            }
+        };
+    }
+
     private static final class ClothBooleanValue implements BooleanValue {
         private final BooleanSupplier supplier;
         private final Consumer<Boolean> setter;
+        private final Runnable saver;
 
-        private ClothBooleanValue(BooleanSupplier supplier, Consumer<Boolean> setter) {
+        private ClothBooleanValue(BooleanSupplier supplier, Consumer<Boolean> setter, Runnable saver) {
             this.supplier = supplier;
             this.setter = setter;
+            this.saver = saver;
         }
 
         @Override
@@ -254,8 +331,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
         @Override
         public void save() {
-            spawnHolder().save();
-            serverHolder().save();
+            saver.run();
         }
     }
 
@@ -288,6 +364,37 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
         @Override
         public void set(int value) {
+            setter.accept(Math.max(min, Math.min(max, value)));
+        }
+
+        @Override
+        public void save() {
+            saver.run();
+        }
+    }
+
+    private static final class ClothDoubleValue implements DoubleValue {
+        private final DoubleSupplier supplier;
+        private final DoubleConsumer setter;
+        private final Runnable saver;
+        private final double min;
+        private final double max;
+
+        private ClothDoubleValue(DoubleSupplier supplier, DoubleConsumer setter, Runnable saver, double min, double max) {
+            this.supplier = supplier;
+            this.setter = setter;
+            this.saver = saver;
+            this.min = min;
+            this.max = max;
+        }
+
+        @Override
+        public double get() {
+            return Math.max(min, Math.min(max, supplier.getAsDouble()));
+        }
+
+        @Override
+        public void set(double value) {
             setter.accept(Math.max(min, Math.min(max, value)));
         }
 

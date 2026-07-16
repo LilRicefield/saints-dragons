@@ -22,7 +22,7 @@ public final class ForgeConfigRootScreen extends Screen {
         int buttonWidth = 200;
         int buttonHeight = 20;
         int x = (width - buttonWidth) / 2;
-        int y = height / 2 - 36;
+        int y = height / 2 - 48;
         boolean remoteServer = minecraft != null && minecraft.level != null && minecraft.getSingleplayerServer() == null;
 
         Button attributesButton = addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.attributes"), button -> {
@@ -30,17 +30,22 @@ public final class ForgeConfigRootScreen extends Screen {
         }).bounds(x, y, buttonWidth, buttonHeight).build());
         attributesButton.active = !remoteServer;
 
+        Button toolsArmorButton = addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.tools_armor"), button -> {
+            minecraft.setScreen(new ForgeToolsArmorScreen(this));
+        }).bounds(x, y + 24, buttonWidth, buttonHeight).build());
+        toolsArmorButton.active = !remoteServer;
+
         Button spawningButton = addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.spawning"), button -> {
             minecraft.setScreen(new ForgeDragonSpawningScreen(this));
-        }).bounds(x, y + 24, buttonWidth, buttonHeight).build());
+        }).bounds(x, y + 48, buttonWidth, buttonHeight).build());
         spawningButton.active = !remoteServer;
 
         addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.others"), button -> {
             minecraft.setScreen(new ForgeOthersScreen(this));
-        }).bounds(x, y + 48, buttonWidth, buttonHeight).build());
+        }).bounds(x, y + 72, buttonWidth, buttonHeight).build());
 
         addRenderableWidget(Button.builder(CommonComponents.GUI_BACK, button -> minecraft.setScreen(parent))
-                .bounds(x, y + 76, buttonWidth, buttonHeight)
+                .bounds(x, y + 100, buttonWidth, buttonHeight)
                 .build());
     }
 

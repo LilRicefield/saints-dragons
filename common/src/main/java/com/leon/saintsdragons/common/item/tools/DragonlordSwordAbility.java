@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item.tools;
 
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
@@ -13,14 +14,9 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 public final class DragonlordSwordAbility {
-    private static final int COOLDOWN_TICKS = 50;
     private static final int PILLAR_COUNT = 3;
     private static final double BASE_FORWARD_OFFSET = 3.0D;
     private static final double FORWARD_STEP = 6.0D;
-    private static final float BASE_DAMAGE = 18.0F;
-    private static final float DAMAGE_STEP = 4.0F;
-    private static final double BASE_KNOCKBACK = 0.9D;
-    private static final double KNOCKBACK_STEP = 0.2D;
     private static final int PILLAR_WARMUP_TICKS = 5;
     private static final int PILLAR_LIFETIME_TICKS = 34;
 
@@ -28,7 +24,8 @@ public final class DragonlordSwordAbility {
     }
 
     public static void tryUse(ServerPlayer player) {
-        if (player == null || !player.isAlive() || player.isSpectator()) {
+        if (!ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_ENABLED.get()
+                || player == null || !player.isAlive() || player.isSpectator()) {
             return;
         }
 
@@ -61,8 +58,10 @@ public final class DragonlordSwordAbility {
                     player,
                     index,
                     pillarYaw,
-                    BASE_DAMAGE + index * DAMAGE_STEP,
-                    BASE_KNOCKBACK + index * KNOCKBACK_STEP,
+                    (float) (ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_DAMAGE.get()
+                            + index * ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_DAMAGE_PER_PILLAR.get()),
+                    ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_KNOCKBACK.get()
+                            + index * ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_KNOCKBACK_PER_PILLAR.get(),
                     PILLAR_WARMUP_TICKS,
                     PILLAR_LIFETIME_TICKS
             );
@@ -79,6 +78,6 @@ public final class DragonlordSwordAbility {
             );
         }
 
-        player.getCooldowns().addCooldown(sword, COOLDOWN_TICKS);
+        player.getCooldowns().addCooldown(sword, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_COOLDOWN_TICKS.get());
     }
 }

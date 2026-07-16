@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.network.BloodTempestDodgeDirection;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.network.BloodTempestAfterimageProfile;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -21,10 +22,7 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class BloodTempestArmorSetBonus {
-    private static final int DODGE_COOLDOWN_TICKS = 30;
     private static final int DODGE_IFRAMES_TICKS = 8;
-    private static final double FORWARD_DASH_SPEED = 4.0D;
-    private static final double DODGE_SPEED = 4.0D;
 
     private static final Map<UUID, Integer> DODGE_COOLDOWNS = new HashMap<>();
     private static final Map<UUID, Integer> DODGE_IFRAMES = new HashMap<>();
@@ -38,6 +36,10 @@ public final class BloodTempestArmorSetBonus {
         }
         UUID playerId = player.getUUID();
         if (!player.isAlive()) {
+            clear(player);
+            return;
+        }
+        if (!ToolsArmorConfig.BLOOD_TEMPEST_DODGE_ENABLED.get()) {
             clear(player);
             return;
         }
@@ -60,6 +62,7 @@ public final class BloodTempestArmorSetBonus {
                 || player.isFallFlying()
                 || player.onClimbable()
                 || player.isInWaterOrBubble()
+                || !ToolsArmorConfig.BLOOD_TEMPEST_DODGE_ENABLED.get()
                 || !isWearingFullSet(player)
                 || DODGE_COOLDOWNS.containsKey(player.getUUID())) {
             return false;
@@ -68,10 +71,10 @@ public final class BloodTempestArmorSetBonus {
         Vec3 forward = DragonMotionMath.horizontalForward(player.getYRot());
         Vec3 left = DragonMotionMath.horizontalRight(player.getYRot());
         Vec3 dodge = switch (direction) {
-            case FORWARD -> forward.scale(FORWARD_DASH_SPEED);
-            case LEFT -> left.scale(DODGE_SPEED);
-            case BACKWARD -> forward.scale(-DODGE_SPEED);
-            case RIGHT -> left.scale(-DODGE_SPEED);
+            case FORWARD -> forward.scale(ToolsArmorConfig.BLOOD_TEMPEST_FORWARD_DODGE_SPEED.get());
+            case LEFT -> left.scale(ToolsArmorConfig.BLOOD_TEMPEST_SIDE_BACK_DODGE_SPEED.get());
+            case BACKWARD -> forward.scale(-ToolsArmorConfig.BLOOD_TEMPEST_SIDE_BACK_DODGE_SPEED.get());
+            case RIGHT -> left.scale(-ToolsArmorConfig.BLOOD_TEMPEST_SIDE_BACK_DODGE_SPEED.get());
         };
 
         Vec3 current = player.getDeltaMovement();
@@ -86,7 +89,10 @@ public final class BloodTempestArmorSetBonus {
         NetworkHandler.sendToPlayer(player, effect);
 
         UUID playerId = player.getUUID();
-        DODGE_COOLDOWNS.put(playerId, DODGE_COOLDOWN_TICKS);
+        int cooldownTicks = ToolsArmorConfig.BLOOD_TEMPEST_DODGE_COOLDOWN_TICKS.get();
+        if (cooldownTicks > 0) {
+            DODGE_COOLDOWNS.put(playerId, cooldownTicks);
+        }
         DODGE_IFRAMES.put(playerId, DODGE_IFRAMES_TICKS);
         player.level().playSound(
                 null,
@@ -102,6 +108,7 @@ public final class BloodTempestArmorSetBonus {
     public static boolean blocksDamage(ServerPlayer player, DamageSource source) {
         return player != null
                 && source != null
+                && ToolsArmorConfig.BLOOD_TEMPEST_DODGE_ENABLED.get()
                 && isWearingFullSet(player)
                 && DODGE_IFRAMES.containsKey(player.getUUID())
                 && !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);

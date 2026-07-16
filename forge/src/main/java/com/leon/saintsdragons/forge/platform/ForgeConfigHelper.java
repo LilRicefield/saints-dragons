@@ -44,6 +44,12 @@ public final class ForgeConfigHelper implements ConfigHelper {
         }
 
         @Override
+        public DoubleValue defineDouble(String key, double defaultValue, double min, double max) {
+            ForgeConfigSpec.DoubleValue value = builder.defineInRange(key, defaultValue, min, max);
+            return new ForgeDoubleValue(value);
+        }
+
+        @Override
         public BooleanValue defineBoolean(String key, boolean defaultValue) {
             ForgeConfigSpec.BooleanValue value = builder.define(key, defaultValue);
             return new ForgeBooleanValue(value);
@@ -100,6 +106,29 @@ public final class ForgeConfigHelper implements ConfigHelper {
 
         @Override
         public void set(boolean newValue) {
+            value.set(newValue);
+        }
+
+        @Override
+        public void save() {
+            value.save();
+        }
+    }
+
+    private static final class ForgeDoubleValue implements DoubleValue {
+        private final ForgeConfigSpec.DoubleValue value;
+
+        private ForgeDoubleValue(ForgeConfigSpec.DoubleValue value) {
+            this.value = value;
+        }
+
+        @Override
+        public double get() {
+            return value.get();
+        }
+
+        @Override
+        public void set(double newValue) {
             value.set(newValue);
         }
 

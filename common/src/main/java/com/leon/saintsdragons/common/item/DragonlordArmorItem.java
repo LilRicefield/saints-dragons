@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.item;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.registry.ModAttributes;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -32,10 +33,6 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
             RawAnimation.begin().thenLoop("animation.dragonlord_armor.glide");
     private static final RawAnimation FLAP =
             RawAnimation.begin().thenPlay("animation.dragonlord_armor.flap");
-    private static final UUID HELMET_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("36dcf138-89cd-4ab1-8b92-a3b03f3de433");
-    private static final UUID CHESTPLATE_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("7618ec80-ce4c-4a6e-94a1-d0b67ec0e914");
-    private static final UUID LEGGINGS_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("27d56814-8a04-4a24-ab2e-c2d4922d687e");
-    private static final UUID BOOTS_KNOCKBACK_RESISTANCE_UUID = UUID.fromString("07e5a0bd-9c38-4cf4-9ac8-36ba5b77e526");
     private static final UUID HELMET_MAX_HEALTH_UUID = UUID.fromString("205f4c06-8e5f-46b5-a0d1-bd0a4b9786d3");
     private static final UUID CHESTPLATE_MAX_HEALTH_UUID = UUID.fromString("4784a314-73a3-4215-96b2-739f5ed31922");
     private static final UUID LEGGINGS_MAX_HEALTH_UUID = UUID.fromString("3fda6176-d876-401c-a1bd-46f754cda64a");
@@ -65,16 +62,12 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
         }
 
         ImmutableMultimap.Builder<Attribute, AttributeModifier> builder = ImmutableMultimap.builder();
-        builder.putAll(modifiers);
-        builder.put(
-                Attributes.KNOCKBACK_RESISTANCE,
-                new AttributeModifier(
-                        knockbackResistanceUuid(),
-                        "Dragonlord knockback resistance",
-                        knockbackResistanceAmount(),
-                        AttributeModifier.Operation.ADDITION
-                )
-        );
+        builder.putAll(ConfiguredItemAttributes.armor(
+                modifiers,
+                configuredDefense(),
+                ToolsArmorConfig.DRAGONLORD_TOUGHNESS.get(),
+                configuredKnockbackResistance()
+        ));
         builder.put(
                 Attributes.MAX_HEALTH,
                 new AttributeModifier(
@@ -89,7 +82,7 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
                 new AttributeModifier(
                         fireResistanceUuid(),
                         "Dragonlord fire resistance",
-                        25.0D,
+                        ToolsArmorConfig.DRAGONLORD_FIRE_RESISTANCE.get(),
                         AttributeModifier.Operation.ADDITION
                 )
         );
@@ -98,28 +91,19 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
                 new AttributeModifier(
                         blastResistanceUuid(),
                         "Dragonlord blast resistance",
-                        25.0D,
+                        ToolsArmorConfig.DRAGONLORD_BLAST_RESISTANCE.get(),
                         AttributeModifier.Operation.ADDITION
                 )
         );
         return builder.build();
     }
 
-    private UUID knockbackResistanceUuid() {
+    private double configuredKnockbackResistance() {
         return switch (this.getType()) {
-            case HELMET -> HELMET_KNOCKBACK_RESISTANCE_UUID;
-            case CHESTPLATE -> CHESTPLATE_KNOCKBACK_RESISTANCE_UUID;
-            case LEGGINGS -> LEGGINGS_KNOCKBACK_RESISTANCE_UUID;
-            case BOOTS -> BOOTS_KNOCKBACK_RESISTANCE_UUID;
-        };
-    }
-
-    private double knockbackResistanceAmount() {
-        return switch (this.getType()) {
-            case HELMET -> 0.15D;
-            case CHESTPLATE -> 0.5D;
-            case LEGGINGS -> 0.25D;
-            case BOOTS -> 0.1D;
+            case HELMET -> ToolsArmorConfig.DRAGONLORD_HELMET_KNOCKBACK_RESISTANCE.get();
+            case CHESTPLATE -> ToolsArmorConfig.DRAGONLORD_CHESTPLATE_KNOCKBACK_RESISTANCE.get();
+            case LEGGINGS -> ToolsArmorConfig.DRAGONLORD_LEGGINGS_KNOCKBACK_RESISTANCE.get();
+            case BOOTS -> ToolsArmorConfig.DRAGONLORD_BOOTS_KNOCKBACK_RESISTANCE.get();
         };
     }
 
@@ -134,8 +118,29 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
 
     private double maxHealthMultiplier() {
         return switch (this.getType()) {
-            case HELMET, BOOTS -> 0.1D;
-            case CHESTPLATE, LEGGINGS -> 0.15D;
+            case HELMET -> ToolsArmorConfig.DRAGONLORD_HELMET_MAX_HEALTH_BONUS.get() / 100.0D;
+            case CHESTPLATE -> ToolsArmorConfig.DRAGONLORD_CHESTPLATE_MAX_HEALTH_BONUS.get() / 100.0D;
+            case LEGGINGS -> ToolsArmorConfig.DRAGONLORD_LEGGINGS_MAX_HEALTH_BONUS.get() / 100.0D;
+            case BOOTS -> ToolsArmorConfig.DRAGONLORD_BOOTS_MAX_HEALTH_BONUS.get() / 100.0D;
+        };
+    }
+
+    @Override
+    public int getDefense() {
+        return (int) Math.round(configuredDefense());
+    }
+
+    @Override
+    public float getToughness() {
+        return (float) ToolsArmorConfig.DRAGONLORD_TOUGHNESS.get();
+    }
+
+    private double configuredDefense() {
+        return switch (this.getType()) {
+            case HELMET -> ToolsArmorConfig.DRAGONLORD_HELMET_ARMOR.get();
+            case CHESTPLATE -> ToolsArmorConfig.DRAGONLORD_CHESTPLATE_ARMOR.get();
+            case LEGGINGS -> ToolsArmorConfig.DRAGONLORD_LEGGINGS_ARMOR.get();
+            case BOOTS -> ToolsArmorConfig.DRAGONLORD_BOOTS_ARMOR.get();
         };
     }
 

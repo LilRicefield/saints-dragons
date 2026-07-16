@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.common;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.*;
@@ -23,6 +24,7 @@ public final class SaintsDragonsCommon {
 
     public static synchronized void init() {
         SaintsDragonsConfig.bootstrap();
+        ToolsArmorConfig.bootstrap();
         DragonAttributeConfigLoader.bootstrap();
         SaintsDragonVariantRegistry.bootstrap();
         ModAbilities.register();

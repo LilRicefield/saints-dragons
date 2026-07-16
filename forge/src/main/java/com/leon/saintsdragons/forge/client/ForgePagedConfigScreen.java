@@ -268,33 +268,65 @@ public abstract class ForgePagedConfigScreen extends Screen {
         private final DoubleSupplier getter;
         private final DoubleConsumer setter;
         private final Runnable saver;
+        private final DoubleSupplier defaultGetter;
         private String value;
         private EditBox editBox;
+        private Button resetButton;
 
         protected DoubleEntry(Component label, DoubleSupplier getter, DoubleConsumer setter, Runnable saver) {
+            this(label, getter, setter, saver, null);
+        }
+
+        protected DoubleEntry(Component label, DoubleSupplier getter, DoubleConsumer setter, Runnable saver,
+                              DoubleSupplier defaultGetter) {
             super(label);
             this.getter = getter;
             this.setter = setter;
             this.saver = saver;
+            this.defaultGetter = defaultGetter;
             this.value = formatDouble(getter.getAsDouble());
         }
 
         @Override
         protected void addWidgets(ForgePagedConfigScreen screen) {
-            editBox = new EditBox(screen.font, inputX, y, inputWidth, 18, label);
+            int resetWidth = defaultGetter == null ? 0 : 48;
+            int gap = defaultGetter == null ? 0 : 4;
+            editBox = new EditBox(screen.font, inputX + resetWidth + gap, y,
+                    Math.max(32, inputWidth - resetWidth - gap), 18, label);
             editBox.setValue(value);
             editBox.setFilter(text -> text.isEmpty() || text.matches("-?\\d*(\\.\\d*)?"));
             screen.addRenderableWidget(editBox);
+            if (defaultGetter != null) {
+                resetButton = Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
+                    value = formatDouble(defaultGetter.getAsDouble());
+                    editBox.setValue(value);
+                }).bounds(inputX, y, resetWidth, 18).build();
+                screen.addRenderableWidget(resetButton);
+                editBox.setResponder(text -> {
+                    value = text;
+                    updateResetButtonState();
+                });
+                updateResetButtonState();
+            }
         }
 
         @Override
         protected void updateWidgetPositions() {
-            editBox.setX(inputX);
+            int resetWidth = resetButton == null ? 0 : 48;
+            int gap = resetButton == null ? 0 : 4;
+            editBox.setX(inputX + resetWidth + gap);
             editBox.setY(y);
+            if (resetButton != null) {
+                resetButton.setX(inputX);
+                resetButton.setY(y);
+            }
         }
 
         @Override
         protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            if (resetButton != null) {
+                resetButton.render(graphics, mouseX, mouseY, partialTick);
+            }
             editBox.render(graphics, mouseX, mouseY, partialTick);
         }
 
@@ -302,6 +334,10 @@ public abstract class ForgePagedConfigScreen extends Screen {
         protected void setVisible(boolean visible) {
             editBox.setVisible(visible);
             editBox.active = visible;
+            if (resetButton != null) {
+                resetButton.visible = visible;
+                updateResetButtonState();
+            }
         }
 
         @Override
@@ -337,6 +373,25 @@ public abstract class ForgePagedConfigScreen extends Screen {
                 return String.format(Locale.ROOT, "%d", (long) value);
             }
             return String.format(Locale.ROOT, "%.4f", value);
+        }
+
+        private void updateResetButtonState() {
+            if (resetButton == null) {
+                return;
+            }
+            resetButton.active = resetButton.visible && !isDefaultValue();
+        }
+
+        private boolean isDefaultValue() {
+            String currentValue = editBox == null ? value : editBox.getValue();
+            if (currentValue == null || currentValue.isBlank()) {
+                return false;
+            }
+            try {
+                return Double.compare(Double.parseDouble(currentValue), defaultGetter.getAsDouble()) == 0;
+            } catch (NumberFormatException ignored) {
+                return false;
+            }
         }
     }
 
@@ -424,33 +479,65 @@ public abstract class ForgePagedConfigScreen extends Screen {
         private final IntSupplier getter;
         private final IntConsumer setter;
         private final Runnable saver;
+        private final IntSupplier defaultGetter;
         private String value;
         private EditBox editBox;
+        private Button resetButton;
 
         protected IntEntry(Component label, IntSupplier getter, IntConsumer setter, Runnable saver) {
+            this(label, getter, setter, saver, null);
+        }
+
+        protected IntEntry(Component label, IntSupplier getter, IntConsumer setter, Runnable saver,
+                           IntSupplier defaultGetter) {
             super(label);
             this.getter = getter;
             this.setter = setter;
             this.saver = saver;
+            this.defaultGetter = defaultGetter;
             this.value = Integer.toString(getter.getAsInt());
         }
 
         @Override
         protected void addWidgets(ForgePagedConfigScreen screen) {
-            editBox = new EditBox(screen.font, inputX, y, inputWidth, 18, label);
+            int resetWidth = defaultGetter == null ? 0 : 48;
+            int gap = defaultGetter == null ? 0 : 4;
+            editBox = new EditBox(screen.font, inputX + resetWidth + gap, y,
+                    Math.max(32, inputWidth - resetWidth - gap), 18, label);
             editBox.setValue(value);
             editBox.setFilter(text -> text.isEmpty() || text.matches("-?\\d*"));
             screen.addRenderableWidget(editBox);
+            if (defaultGetter != null) {
+                resetButton = Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
+                    value = Integer.toString(defaultGetter.getAsInt());
+                    editBox.setValue(value);
+                }).bounds(inputX, y, resetWidth, 18).build();
+                screen.addRenderableWidget(resetButton);
+                editBox.setResponder(text -> {
+                    value = text;
+                    updateResetButtonState();
+                });
+                updateResetButtonState();
+            }
         }
 
         @Override
         protected void updateWidgetPositions() {
-            editBox.setX(inputX);
+            int resetWidth = resetButton == null ? 0 : 48;
+            int gap = resetButton == null ? 0 : 4;
+            editBox.setX(inputX + resetWidth + gap);
             editBox.setY(y);
+            if (resetButton != null) {
+                resetButton.setX(inputX);
+                resetButton.setY(y);
+            }
         }
 
         @Override
         protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            if (resetButton != null) {
+                resetButton.render(graphics, mouseX, mouseY, partialTick);
+            }
             editBox.render(graphics, mouseX, mouseY, partialTick);
         }
 
@@ -458,6 +545,10 @@ public abstract class ForgePagedConfigScreen extends Screen {
         protected void setVisible(boolean visible) {
             editBox.setVisible(visible);
             editBox.active = visible;
+            if (resetButton != null) {
+                resetButton.visible = visible;
+                updateResetButtonState();
+            }
         }
 
         @Override
@@ -487,37 +578,91 @@ public abstract class ForgePagedConfigScreen extends Screen {
         protected int getHeight() {
             return 24;
         }
+
+        private void updateResetButtonState() {
+            if (resetButton == null) {
+                return;
+            }
+            resetButton.active = resetButton.visible && !isDefaultValue();
+        }
+
+        private boolean isDefaultValue() {
+            String currentValue = editBox == null ? value : editBox.getValue();
+            if (currentValue == null || currentValue.isBlank()) {
+                return false;
+            }
+            try {
+                return Integer.parseInt(currentValue) == defaultGetter.getAsInt();
+            } catch (NumberFormatException ignored) {
+                return false;
+            }
+        }
     }
 
     protected static final class BooleanEntry extends ConfigEntry {
         private final BooleanSupplier getter;
         private final Consumer<Boolean> setter;
         private final Runnable saver;
+        private final BooleanSupplier defaultGetter;
         private boolean value;
         private CycleButton<Boolean> button;
+        private Button resetButton;
 
         protected BooleanEntry(Component label, BooleanSupplier getter, Consumer<Boolean> setter, Runnable saver) {
+            this(label, getter, setter, saver, null);
+        }
+
+        protected BooleanEntry(Component label, BooleanSupplier getter, Consumer<Boolean> setter, Runnable saver,
+                               BooleanSupplier defaultGetter) {
             super(label);
             this.getter = getter;
             this.setter = setter;
             this.saver = saver;
+            this.defaultGetter = defaultGetter;
             this.value = getter.getAsBoolean();
         }
 
         @Override
         protected void addWidgets(ForgePagedConfigScreen screen) {
-            button = CycleButton.onOffBuilder(value).create(inputX, y, inputWidth, 18, label);
+            int resetWidth = defaultGetter == null ? 0 : 48;
+            int gap = defaultGetter == null ? 0 : 4;
+            button = CycleButton.booleanBuilder(
+                            Component.translatable("saintsdragons.config_screen.boolean.true"),
+                            Component.translatable("saintsdragons.config_screen.boolean.false"))
+                    .withInitialValue(value)
+                    .displayOnlyValue()
+                    .create(inputX + resetWidth + gap, y,
+                            Math.max(32, inputWidth - resetWidth - gap), 18, label);
             screen.addRenderableWidget(button);
+            if (defaultGetter != null) {
+                resetButton = Button.builder(Component.translatable("saintsdragons.config_screen.reset"), reset -> {
+                    value = defaultGetter.getAsBoolean();
+                    button.setValue(value);
+                    updateResetButtonState();
+                }).bounds(inputX, y, resetWidth, 18).build();
+                screen.addRenderableWidget(resetButton);
+                updateResetButtonState();
+            }
         }
 
         @Override
         protected void updateWidgetPositions() {
-            button.setX(inputX);
+            int resetWidth = resetButton == null ? 0 : 48;
+            int gap = resetButton == null ? 0 : 4;
+            button.setX(inputX + resetWidth + gap);
             button.setY(y);
+            if (resetButton != null) {
+                resetButton.setX(inputX);
+                resetButton.setY(y);
+            }
         }
 
         @Override
         protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+            if (resetButton != null) {
+                updateResetButtonState();
+                resetButton.render(graphics, mouseX, mouseY, partialTick);
+            }
             button.render(graphics, mouseX, mouseY, partialTick);
         }
 
@@ -525,6 +670,10 @@ public abstract class ForgePagedConfigScreen extends Screen {
         protected void setVisible(boolean visible) {
             button.visible = visible;
             button.active = visible;
+            if (resetButton != null) {
+                resetButton.visible = visible;
+                updateResetButtonState();
+            }
         }
 
         @Override
@@ -545,6 +694,13 @@ public abstract class ForgePagedConfigScreen extends Screen {
         @Override
         protected int getHeight() {
             return 24;
+        }
+
+        private void updateResetButtonState() {
+            if (resetButton == null) {
+                return;
+            }
+            resetButton.active = resetButton.visible && button.getValue() != defaultGetter.getAsBoolean();
         }
     }
 

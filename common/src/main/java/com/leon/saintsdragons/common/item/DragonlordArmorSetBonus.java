@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item;
 
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.registry.ModAttributes;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -39,24 +40,14 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class DragonlordArmorSetBonus {
-    private static final double DOUBLE_JUMP_VELOCITY = 0.85D;
     private static final double FLIGHT_BOOST_TARGET_SPEED = 1.5D;
     private static final double FLIGHT_BOOST_DIRECT_ACCELERATION = 0.1D;
     private static final double FLIGHT_BOOST_VELOCITY_BLEND = 0.5D;
     private static final int FLIGHT_BOOST_FIREWORK_LEVEL = 3;
-    private static final double LANDING_SHOCKWAVE_TOUCH_RADIUS = 7.5D;
-    private static final double LANDING_SHOCKWAVE_FALLOFF_RADIUS = 4.0D;
     private static final double LANDING_SHOCKWAVE_Y_RADIUS = 5.0D;
-    private static final double LANDING_SHOCKWAVE_STRENGTH = 2.15D;
-    private static final double LANDING_SHOCKWAVE_LIFT = 0.75D;
-    private static final double LANDING_SHOCKWAVE_MIN_DROP = 4.0D;
     private static final float LANDING_IMPACT_RING_SCALE = 0.4F;
     private static final int LANDING_IMPACT_DUST_COUNT = 64;
     private static final double LANDING_IMPACT_DUST_RADIUS = 8.5D;
-    private static final int LANDING_FISSURE_DURATION = 7 * 20;
-    private static final float LANDING_FISSURE_VISUAL_RADIUS = 9.0F;
-    private static final float LANDING_FISSURE_DAMAGE_RADIUS = 9.0F;
-    private static final float LANDING_FISSURE_DAMAGE = 10.0F;
     private static final int LANDING_DEBRIS_COUNT = 24;
     private static final int LANDING_DEBRIS_LIFETIME = 50;
     private static final float LANDING_SCREEN_SHAKE_INTENSITY = 2.25F;
@@ -117,6 +108,9 @@ public final class DragonlordArmorSetBonus {
         }
 
         restoreSavedHealthIfNeeded(player);
+        if (!ToolsArmorConfig.DRAGONLORD_FLIGHT_ENABLED.get() && ACTIVE_FLIGHT.contains(player.getUUID())) {
+            stopFlight(player);
+        }
         if (!PENDING_HEALTH_RESTORE.contains(player.getUUID()) && player.tickCount % 100 == 0) {
             saveHealthForReload(player);
         }
@@ -145,10 +139,14 @@ public final class DragonlordArmorSetBonus {
 
         UUID playerId = player.getUUID();
         if (ACTIVE_FLIGHT.contains(playerId)) {
+            if (!ToolsArmorConfig.DRAGONLORD_FLIGHT_ENABLED.get()) {
+                stopFlight(player);
+                return false;
+            }
             return boostFlight(player);
         }
         if (USED_MIDAIR_JUMP.contains(playerId)) {
-            return startFlight(player);
+            return ToolsArmorConfig.DRAGONLORD_FLIGHT_ENABLED.get() && startFlight(player);
         }
         return tryDoubleJump(player);
     }
@@ -169,7 +167,8 @@ public final class DragonlordArmorSetBonus {
         }
 
         Vec3 motion = player.getDeltaMovement();
-        player.setDeltaMovement(motion.x, Math.max(DOUBLE_JUMP_VELOCITY, motion.y + DOUBLE_JUMP_VELOCITY), motion.z);
+        double jumpVelocity = ToolsArmorConfig.DRAGONLORD_DOUBLE_JUMP_VERTICAL_VELOCITY.get();
+        player.setDeltaMovement(motion.x, Math.max(jumpVelocity, motion.y + jumpVelocity), motion.z);
         player.hurtMarked = true;
         player.resetFallDistance();
         USED_MIDAIR_JUMP.add(player.getUUID());
@@ -245,6 +244,9 @@ public final class DragonlordArmorSetBonus {
     }
 
     private static boolean startFlight(ServerPlayer player) {
+        if (!ToolsArmorConfig.DRAGONLORD_FLIGHT_ENABLED.get()) {
+            return false;
+        }
         UUID playerId = player.getUUID();
         ACTIVE_FLIGHT.add(playerId);
         PENDING_LANDING_SHOCKWAVE.remove(playerId);
@@ -342,39 +344,30 @@ public final class DragonlordArmorSetBonus {
 
     private static void tryLandingShockwave(ServerPlayer player) {
         double peakY = DOUBLE_JUMP_PEAK_Y.getOrDefault(player.getUUID(), player.getY());
-        if (peakY - player.getY() < LANDING_SHOCKWAVE_MIN_DROP) {
+        if (peakY - player.getY() < ToolsArmorConfig.DRAGONLORD_LANDING_MINIMUM_DROP.get()) {
             return;
         }
-        knockBackNearbyEntities(player);
+        damageAndLaunchNearbyEntities(player);
         spawnLandingImpactEffects(player);
     }
 
-    private static void knockBackNearbyEntities(ServerPlayer player) {
+    private static void damageAndLaunchNearbyEntities(ServerPlayer player) {
+        double radius = ToolsArmorConfig.DRAGONLORD_LANDING_SHOCKWAVE_RADIUS.get();
         AABB hitbox = player.getBoundingBox().inflate(
-                LANDING_SHOCKWAVE_TOUCH_RADIUS,
+                radius,
                 LANDING_SHOCKWAVE_Y_RADIUS,
-                LANDING_SHOCKWAVE_TOUCH_RADIUS
+                radius
         );
         for (LivingEntity target : player.level().getEntitiesOfClass(LivingEntity.class, hitbox,
                 entity -> SwordAbilityTargeting.canDamage(player, entity))) {
-
             Vec3 offset = target.position().subtract(player.position());
-            Vec3 horizontal = new Vec3(offset.x, 0.0D, offset.z);
-            double distance = horizontal.length();
-            if (distance > LANDING_SHOCKWAVE_TOUCH_RADIUS) {
+            double horizontalDistanceSqr = offset.x * offset.x + offset.z * offset.z;
+            if (horizontalDistanceSqr > radius * radius) {
                 continue;
             }
-
-            Vec3 direction = distance > 1.0E-4D
-                    ? horizontal.scale(1.0D / distance)
-                    : new Vec3(player.getLookAngle().x, 0.0D, player.getLookAngle().z).normalize();
-            if (direction.lengthSqr() < 1.0E-4D) {
-                direction = new Vec3(0.0D, 0.0D, 1.0D);
-            }
-
-            double falloff = 1.0D - Math.min(distance / LANDING_SHOCKWAVE_FALLOFF_RADIUS, 0.75D);
-            double strength = LANDING_SHOCKWAVE_STRENGTH * falloff;
-            target.push(direction.x * strength, LANDING_SHOCKWAVE_LIFT, direction.z * strength);
+            target.hurt(player.damageSources().playerAttack(player),
+                    (float) ToolsArmorConfig.DRAGONLORD_LANDING_IMPACT_DAMAGE.get());
+            target.push(0.0D, ToolsArmorConfig.DRAGONLORD_LANDING_KNOCK_UP_STRENGTH.get(), 0.0D);
             target.hurtMarked = true;
         }
     }
@@ -387,16 +380,19 @@ public final class DragonlordArmorSetBonus {
         Vec3 origin = player.position();
         Vec3 groundOrigin = new Vec3(origin.x, player.getBoundingBox().minY, origin.z);
         server.addFreshEntity(new ImpactRingEntity(server, groundOrigin, LANDING_IMPACT_RING_SCALE));
-        server.addFreshEntity(new GroundCrackEntity(
-                server,
-                groundOrigin,
-                player.getYRot(),
-                player,
-                LANDING_FISSURE_VISUAL_RADIUS,
-                LANDING_FISSURE_DAMAGE_RADIUS,
-                LANDING_FISSURE_DAMAGE,
-                LANDING_FISSURE_DURATION
-        ));
+        float fissureRadius = (float) ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_RADIUS.get();
+        if (ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_ENABLED.get()) {
+            server.addFreshEntity(new GroundCrackEntity(
+                    server,
+                    groundOrigin,
+                    player.getYRot(),
+                    player,
+                    fissureRadius,
+                    fissureRadius,
+                    (float) ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DAMAGE.get(),
+                    ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS.get()
+            ));
+        }
 
         RandomSource random = player.getRandom();
         double y = player.getBoundingBox().minY + 0.08D;
@@ -415,18 +411,19 @@ public final class DragonlordArmorSetBonus {
                     Math.sin(angle) * speed,
                     1.0D);
         }
-        spawnLandingDebris(server, origin, random);
+        spawnLandingDebris(server, origin, random, fissureRadius);
         sendLandingScreenShake(player, origin);
 
         server.playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_IMPACT.get(),
                 SoundSource.PLAYERS, 1.35F, 0.88F + random.nextFloat() * 0.08F);
     }
 
-    private static void spawnLandingDebris(ServerLevel server, Vec3 origin, RandomSource random) {
+    private static void spawnLandingDebris(ServerLevel server, Vec3 origin, RandomSource random,
+                                           double effectRadius) {
         for (int i = 0; i < LANDING_DEBRIS_COUNT; i++) {
             double angle = (Math.PI * 2.0D * i) / LANDING_DEBRIS_COUNT
                     + (random.nextDouble() - 0.5D) * 0.3D;
-            double radius = 1.0D + random.nextDouble() * (LANDING_FISSURE_DAMAGE_RADIUS - 1.0D);
+            double radius = 1.0D + random.nextDouble() * Math.max(0.0D, effectRadius - 1.0D);
             BlockPos groundPos = findLandingGround(
                     server,
                     origin.x + Math.cos(angle) * radius,

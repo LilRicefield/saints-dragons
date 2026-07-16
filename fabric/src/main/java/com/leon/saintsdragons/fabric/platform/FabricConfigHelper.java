@@ -59,6 +59,11 @@ public final class FabricConfigHelper implements ConfigHelper {
             }
 
             @Override
+            public DoubleValue defineDouble(String key, double defaultValue, double min, double max) {
+                return () -> Math.max(min, Math.min(max, defaultValue));
+            }
+
+            @Override
             public BooleanValue defineBoolean(String key, boolean defaultValue) {
                 return () -> defaultValue;
             }

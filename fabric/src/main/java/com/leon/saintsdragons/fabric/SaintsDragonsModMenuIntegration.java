@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -15,6 +16,8 @@ import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwar
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricClientConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricServerConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricSpawnConfig;
+import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricToolsArmorConfig;
+import com.leon.saintsdragons.platform.ConfigHelper;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.shedaniel.autoconfig.AutoConfig;
@@ -47,6 +50,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final Component TITLE = Component.translatable("config.saintsdragons.title");
     private static final Component SPAWN_CATEGORY = Component.translatable("config.saintsdragons.category.spawning");
     private static final Component ATTRIBUTES_CATEGORY = Component.translatable("config.saintsdragons.category.attributes");
+    private static final Component TOOLS_ARMOR_CATEGORY = Component.translatable("config.saintsdragons.category.tools_armor");
     private static final Component OTHERS_CATEGORY = Component.translatable("config.saintsdragons.category.others");
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
@@ -56,6 +60,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ConfigHolder<SaintsDragonsFabricSpawnConfig> holder = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
         ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricServerConfig.class);
         ConfigHolder<SaintsDragonsFabricClientConfig> clientHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class);
+        ConfigHolder<SaintsDragonsFabricToolsArmorConfig> toolsArmorHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricToolsArmorConfig.class);
         SaintsDragonsFabricSpawnConfig config = holder.getConfig();
         SaintsDragonsFabricClientConfig clientConfig = clientHolder.getConfig();
         boolean remoteServer = isRemoteServerSession();
@@ -334,6 +339,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             if (!remoteServer) {
                 holder.save();
                 serverHolder.save();
+                toolsArmorHolder.save();
                 SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.save();
@@ -411,6 +417,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             addVolitansAttributes(attributes, entryBuilder, volitansBuffer, volitansDefaults);
             addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
             addDraconianSwarmAttributes(attributes, entryBuilder, swarmBuffer, swarmDefaults);
+
+            ConfigCategory toolsArmor = builder.getOrCreateCategory(TOOLS_ARMOR_CATEGORY);
+            addToolsArmorEntries(toolsArmor, entryBuilder);
         }
 
         ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
@@ -516,6 +525,182 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         }
 
         return builder.build();
+    }
+
+    private void addToolsArmorEntries(ConfigCategory category, ConfigEntryBuilder entryBuilder) {
+        addToolsArmorGroup(category, entryBuilder, "worldroot",
+                toolField("worldroot.sword_damage", ToolsArmorConfig.WORLDROOT_SWORD_DAMAGE, ToolsArmorConfig.WORLDROOT_SWORD_DAMAGE_DEFAULT, 100000.0D),
+                toolField("worldroot.sword_speed", ToolsArmorConfig.WORLDROOT_SWORD_SPEED, ToolsArmorConfig.WORLDROOT_SWORD_SPEED_DEFAULT, 100.0D),
+                toolField("worldroot.pickaxe_damage", ToolsArmorConfig.WORLDROOT_PICKAXE_DAMAGE, ToolsArmorConfig.WORLDROOT_PICKAXE_DAMAGE_DEFAULT, 100000.0D),
+                toolField("worldroot.pickaxe_speed", ToolsArmorConfig.WORLDROOT_PICKAXE_SPEED, ToolsArmorConfig.WORLDROOT_PICKAXE_SPEED_DEFAULT, 100.0D),
+                toolField("worldroot.axe_damage", ToolsArmorConfig.WORLDROOT_AXE_DAMAGE, ToolsArmorConfig.WORLDROOT_AXE_DAMAGE_DEFAULT, 100000.0D),
+                toolField("worldroot.axe_speed", ToolsArmorConfig.WORLDROOT_AXE_SPEED, ToolsArmorConfig.WORLDROOT_AXE_SPEED_DEFAULT, 100.0D),
+                toolField("worldroot.shovel_damage", ToolsArmorConfig.WORLDROOT_SHOVEL_DAMAGE, ToolsArmorConfig.WORLDROOT_SHOVEL_DAMAGE_DEFAULT, 100000.0D),
+                toolField("worldroot.shovel_speed", ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED, ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED_DEFAULT, 100.0D),
+                toolField("worldroot.hoe_damage", ToolsArmorConfig.WORLDROOT_HOE_DAMAGE, ToolsArmorConfig.WORLDROOT_HOE_DAMAGE_DEFAULT, 100000.0D),
+                toolField("worldroot.hoe_speed", ToolsArmorConfig.WORLDROOT_HOE_SPEED, ToolsArmorConfig.WORLDROOT_HOE_SPEED_DEFAULT, 100.0D));
+
+        addToolsArmorGroup(category, entryBuilder, "blood_tempest", entries -> {
+                    entries.add(entryBuilder.startBooleanToggle(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.katana_ability_enabled"),
+                                    ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_ENABLED.get())
+                            .setYesNoTextSupplier(SaintsDragonsModMenuIntegration::booleanText)
+                            .setSaveConsumer(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_ENABLED::set)
+                            .build());
+                    entries.add(entryBuilder.startDoubleField(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.katana_ability_damage_multiplier"),
+                                    ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER.get())
+                            .setDefaultValue(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER_DEFAULT)
+                            .setMin(0.0D)
+                            .setMax(1000.0D)
+                            .setSaveConsumer(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER::set)
+                            .build());
+                    entries.add(entryBuilder.startIntField(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.katana_ability_cooldown"),
+                                    ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS.get())
+                            .setDefaultValue(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS_DEFAULT)
+                            .setMin(0)
+                            .setMax(72000)
+                            .setSaveConsumer(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS::set)
+                            .build());
+                    entries.add(entryBuilder.startDoubleField(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.katana_ability_distance"),
+                                    ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE.get())
+                            .setDefaultValue(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE_DEFAULT)
+                            .setMin(0.75D)
+                            .setMax(100.0D)
+                            .setSaveConsumer(ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE::set)
+                            .build());
+                    entries.add(entryBuilder.startBooleanToggle(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.dodge_enabled"),
+                                    ToolsArmorConfig.BLOOD_TEMPEST_DODGE_ENABLED.get())
+                            .setYesNoTextSupplier(SaintsDragonsModMenuIntegration::booleanText)
+                            .setSaveConsumer(ToolsArmorConfig.BLOOD_TEMPEST_DODGE_ENABLED::set)
+                            .build());
+                    entries.add(entryBuilder.startIntField(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.dodge_cooldown"),
+                                    ToolsArmorConfig.BLOOD_TEMPEST_DODGE_COOLDOWN_TICKS.get())
+                            .setDefaultValue(ToolsArmorConfig.BLOOD_TEMPEST_DODGE_COOLDOWN_TICKS_DEFAULT)
+                            .setMin(0)
+                            .setMax(72000)
+                            .setSaveConsumer(ToolsArmorConfig.BLOOD_TEMPEST_DODGE_COOLDOWN_TICKS::set)
+                            .build());
+                },
+                toolField("blood_tempest.katana_damage", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE_DEFAULT, 100000.0D),
+                toolField("blood_tempest.katana_speed", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED_DEFAULT, 100.0D),
+                toolField("blood_tempest.katana_reach", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH_DEFAULT, 100.0D),
+                toolField("blood_tempest.katana_critical_bonus", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS_DEFAULT, 1000.0D),
+                toolField("blood_tempest.helmet_armor", ToolsArmorConfig.BLOOD_TEMPEST_HELMET_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_HELMET_ARMOR_DEFAULT, 100000.0D),
+                toolField("blood_tempest.chestplate_armor", ToolsArmorConfig.BLOOD_TEMPEST_CHESTPLATE_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_CHESTPLATE_ARMOR_DEFAULT, 100000.0D),
+                toolField("blood_tempest.leggings_armor", ToolsArmorConfig.BLOOD_TEMPEST_LEGGINGS_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_LEGGINGS_ARMOR_DEFAULT, 100000.0D),
+                toolField("blood_tempest.boots_armor", ToolsArmorConfig.BLOOD_TEMPEST_BOOTS_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_BOOTS_ARMOR_DEFAULT, 100000.0D),
+                toolField("blood_tempest.toughness", ToolsArmorConfig.BLOOD_TEMPEST_TOUGHNESS, ToolsArmorConfig.BLOOD_TEMPEST_TOUGHNESS_DEFAULT, 100000.0D),
+                toolField("blood_tempest.knockback_resistance", ToolsArmorConfig.BLOOD_TEMPEST_KNOCKBACK_RESISTANCE, ToolsArmorConfig.BLOOD_TEMPEST_KNOCKBACK_RESISTANCE_DEFAULT, 1.0D),
+                toolField("blood_tempest.forward_dodge_speed", ToolsArmorConfig.BLOOD_TEMPEST_FORWARD_DODGE_SPEED, ToolsArmorConfig.BLOOD_TEMPEST_FORWARD_DODGE_SPEED_DEFAULT, 100.0D),
+                toolField("blood_tempest.side_back_dodge_speed", ToolsArmorConfig.BLOOD_TEMPEST_SIDE_BACK_DODGE_SPEED, ToolsArmorConfig.BLOOD_TEMPEST_SIDE_BACK_DODGE_SPEED_DEFAULT, 100.0D));
+
+        addToolsArmorGroup(category, entryBuilder, "dragonlord", entries -> {
+                    entries.add(entryBuilder.startBooleanToggle(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.dragonlord.sword_ability_enabled"),
+                                    ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_ENABLED.get())
+                            .setYesNoTextSupplier(SaintsDragonsModMenuIntegration::booleanText)
+                            .setSaveConsumer(ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_ENABLED::set)
+                            .build());
+                    entries.add(entryBuilder.startIntField(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.dragonlord.sword_ability_cooldown"),
+                                    ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_COOLDOWN_TICKS.get())
+                            .setDefaultValue(ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_COOLDOWN_TICKS_DEFAULT)
+                            .setMin(0)
+                            .setMax(72000)
+                            .setSaveConsumer(ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_COOLDOWN_TICKS::set)
+                            .build());
+                    entries.add(entryBuilder.startBooleanToggle(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.dragonlord.flight_enabled"),
+                                    ToolsArmorConfig.DRAGONLORD_FLIGHT_ENABLED.get())
+                            .setYesNoTextSupplier(SaintsDragonsModMenuIntegration::booleanText)
+                            .setSaveConsumer(ToolsArmorConfig.DRAGONLORD_FLIGHT_ENABLED::set)
+                            .build());
+                    entries.add(entryBuilder.startBooleanToggle(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.dragonlord.lava_fissure_enabled"),
+                                    ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_ENABLED.get())
+                            .setYesNoTextSupplier(SaintsDragonsModMenuIntegration::booleanText)
+                            .setSaveConsumer(ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_ENABLED::set)
+                            .build());
+                    entries.add(entryBuilder.startIntField(
+                                    Component.translatable("saintsdragons.config_screen.tools_armor.dragonlord.lava_fissure_duration"),
+                                    ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS.get())
+                            .setDefaultValue(ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS_DEFAULT)
+                            .setMin(1)
+                            .setMax(72000)
+                            .setSaveConsumer(ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS::set)
+                            .build());
+                },
+                toolField("dragonlord.sword_damage", ToolsArmorConfig.DRAGONLORD_SWORD_DAMAGE, ToolsArmorConfig.DRAGONLORD_SWORD_DAMAGE_DEFAULT, 100000.0D),
+                toolField("dragonlord.sword_speed", ToolsArmorConfig.DRAGONLORD_SWORD_SPEED, ToolsArmorConfig.DRAGONLORD_SWORD_SPEED_DEFAULT, 100.0D),
+                toolField("dragonlord.sword_reach", ToolsArmorConfig.DRAGONLORD_SWORD_REACH, ToolsArmorConfig.DRAGONLORD_SWORD_REACH_DEFAULT, 100.0D),
+                toolField("dragonlord.sword_critical_bonus", ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS, ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS_DEFAULT, 1000.0D),
+                toolField("dragonlord.sword_ability_base_damage", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_DAMAGE, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_DAMAGE_DEFAULT, 100000.0D),
+                toolField("dragonlord.sword_ability_damage_per_pillar", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_DAMAGE_PER_PILLAR, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_DAMAGE_PER_PILLAR_DEFAULT, 100000.0D),
+                toolField("dragonlord.sword_ability_base_knockback", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_KNOCKBACK, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_KNOCKBACK_DEFAULT, 100.0D),
+                toolField("dragonlord.sword_ability_knockback_per_pillar", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_KNOCKBACK_PER_PILLAR, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_KNOCKBACK_PER_PILLAR_DEFAULT, 100.0D),
+                toolField("dragonlord.helmet_armor", ToolsArmorConfig.DRAGONLORD_HELMET_ARMOR, ToolsArmorConfig.DRAGONLORD_HELMET_ARMOR_DEFAULT, 100000.0D),
+                toolField("dragonlord.chestplate_armor", ToolsArmorConfig.DRAGONLORD_CHESTPLATE_ARMOR, ToolsArmorConfig.DRAGONLORD_CHESTPLATE_ARMOR_DEFAULT, 100000.0D),
+                toolField("dragonlord.leggings_armor", ToolsArmorConfig.DRAGONLORD_LEGGINGS_ARMOR, ToolsArmorConfig.DRAGONLORD_LEGGINGS_ARMOR_DEFAULT, 100000.0D),
+                toolField("dragonlord.boots_armor", ToolsArmorConfig.DRAGONLORD_BOOTS_ARMOR, ToolsArmorConfig.DRAGONLORD_BOOTS_ARMOR_DEFAULT, 100000.0D),
+                toolField("dragonlord.toughness", ToolsArmorConfig.DRAGONLORD_TOUGHNESS, ToolsArmorConfig.DRAGONLORD_TOUGHNESS_DEFAULT, 100000.0D),
+                toolField("dragonlord.helmet_knockback", ToolsArmorConfig.DRAGONLORD_HELMET_KNOCKBACK_RESISTANCE, ToolsArmorConfig.DRAGONLORD_HELMET_KNOCKBACK_RESISTANCE_DEFAULT, 1.0D),
+                toolField("dragonlord.chestplate_knockback", ToolsArmorConfig.DRAGONLORD_CHESTPLATE_KNOCKBACK_RESISTANCE, ToolsArmorConfig.DRAGONLORD_CHESTPLATE_KNOCKBACK_RESISTANCE_DEFAULT, 1.0D),
+                toolField("dragonlord.leggings_knockback", ToolsArmorConfig.DRAGONLORD_LEGGINGS_KNOCKBACK_RESISTANCE, ToolsArmorConfig.DRAGONLORD_LEGGINGS_KNOCKBACK_RESISTANCE_DEFAULT, 1.0D),
+                toolField("dragonlord.boots_knockback", ToolsArmorConfig.DRAGONLORD_BOOTS_KNOCKBACK_RESISTANCE, ToolsArmorConfig.DRAGONLORD_BOOTS_KNOCKBACK_RESISTANCE_DEFAULT, 1.0D),
+                toolField("dragonlord.helmet_health", ToolsArmorConfig.DRAGONLORD_HELMET_MAX_HEALTH_BONUS, ToolsArmorConfig.DRAGONLORD_HELMET_MAX_HEALTH_BONUS_DEFAULT, 10000.0D),
+                toolField("dragonlord.chestplate_health", ToolsArmorConfig.DRAGONLORD_CHESTPLATE_MAX_HEALTH_BONUS, ToolsArmorConfig.DRAGONLORD_CHESTPLATE_MAX_HEALTH_BONUS_DEFAULT, 10000.0D),
+                toolField("dragonlord.leggings_health", ToolsArmorConfig.DRAGONLORD_LEGGINGS_MAX_HEALTH_BONUS, ToolsArmorConfig.DRAGONLORD_LEGGINGS_MAX_HEALTH_BONUS_DEFAULT, 10000.0D),
+                toolField("dragonlord.boots_health", ToolsArmorConfig.DRAGONLORD_BOOTS_MAX_HEALTH_BONUS, ToolsArmorConfig.DRAGONLORD_BOOTS_MAX_HEALTH_BONUS_DEFAULT, 10000.0D),
+                toolField("dragonlord.fire_resistance", ToolsArmorConfig.DRAGONLORD_FIRE_RESISTANCE, ToolsArmorConfig.DRAGONLORD_FIRE_RESISTANCE_DEFAULT, 100000.0D),
+                toolField("dragonlord.blast_resistance", ToolsArmorConfig.DRAGONLORD_BLAST_RESISTANCE, ToolsArmorConfig.DRAGONLORD_BLAST_RESISTANCE_DEFAULT, 100000.0D),
+                toolField("dragonlord.double_jump_velocity", ToolsArmorConfig.DRAGONLORD_DOUBLE_JUMP_VERTICAL_VELOCITY, ToolsArmorConfig.DRAGONLORD_DOUBLE_JUMP_VERTICAL_VELOCITY_DEFAULT, 10.0D),
+                toolField("dragonlord.landing_minimum_drop", ToolsArmorConfig.DRAGONLORD_LANDING_MINIMUM_DROP, ToolsArmorConfig.DRAGONLORD_LANDING_MINIMUM_DROP_DEFAULT, 1000.0D),
+                toolField("dragonlord.landing_shockwave_radius", ToolsArmorConfig.DRAGONLORD_LANDING_SHOCKWAVE_RADIUS, ToolsArmorConfig.DRAGONLORD_LANDING_SHOCKWAVE_RADIUS_DEFAULT, 100.0D),
+                toolField("dragonlord.landing_knock_up_strength", ToolsArmorConfig.DRAGONLORD_LANDING_KNOCK_UP_STRENGTH, ToolsArmorConfig.DRAGONLORD_LANDING_KNOCK_UP_STRENGTH_DEFAULT, 100.0D),
+                toolField("dragonlord.landing_impact_damage", ToolsArmorConfig.DRAGONLORD_LANDING_IMPACT_DAMAGE, ToolsArmorConfig.DRAGONLORD_LANDING_IMPACT_DAMAGE_DEFAULT, 100000.0D),
+                toolField("dragonlord.lava_fissure_damage", ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DAMAGE, ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DAMAGE_DEFAULT, 100000.0D),
+                toolField("dragonlord.lava_fissure_radius", ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_RADIUS, ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_RADIUS_DEFAULT, 100.0D));
+    }
+
+    private static ToolsArmorField toolField(String key, ConfigHelper.DoubleValue value, double defaultValue, double max) {
+        return new ToolsArmorField(Component.translatable("saintsdragons.config_screen.tools_armor." + key), value, defaultValue, max);
+    }
+
+    private static Component booleanText(boolean value) {
+        return Component.translatable("saintsdragons.config_screen.boolean." + value);
+    }
+
+    private static void addToolsArmorGroup(ConfigCategory category, ConfigEntryBuilder entryBuilder,
+                                           String key, ToolsArmorField... fields) {
+        addToolsArmorGroup(category, entryBuilder, key, entries -> {
+        }, fields);
+    }
+
+    private static void addToolsArmorGroup(ConfigCategory category, ConfigEntryBuilder entryBuilder,
+                                           String key, Consumer<List<AbstractConfigListEntry>> extraEntries,
+                                           ToolsArmorField... fields) {
+        List<AbstractConfigListEntry> entries = new ArrayList<>();
+        for (ToolsArmorField field : fields) {
+            entries.add(entryBuilder.startDoubleField(field.label(), field.value().get())
+                    .setDefaultValue(field.defaultValue())
+                    .setMin(0.0D)
+                    .setMax(field.max())
+                    .setSaveConsumer(field.value()::set)
+                    .build());
+        }
+        extraEntries.accept(entries);
+        category.addEntry(entryBuilder.startSubCategory(
+                Component.translatable("saintsdragons.config_screen.tools_armor." + key), entries)
+                .setExpanded(false)
+                .build());
+    }
+
+    private record ToolsArmorField(Component label, ConfigHelper.DoubleValue value, double defaultValue, double max) {
     }
 
     private void addSpawnEntries(ConfigCategory category,

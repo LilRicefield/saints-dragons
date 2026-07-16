@@ -1,5 +1,11 @@
 package com.leon.saintsdragons.common.item.tools;
 
+import com.google.common.collect.Multimap;
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
+import com.leon.saintsdragons.common.item.ConfiguredItemAttributes;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
 
@@ -13,6 +19,7 @@ public class DragonheartSwordItem extends SwordItem {
 
     private final double entityReach;
     private final float criticalDamageBonus;
+    private final Tier tier;
 
     public DragonheartSwordItem(Tier tier,
                                 int attackDamageModifier,
@@ -23,21 +30,66 @@ public class DragonheartSwordItem extends SwordItem {
         super(tier, attackDamageModifier, attackSpeedModifier, properties);
         this.entityReach = entityReach;
         this.criticalDamageBonus = criticalDamageBonus;
+        this.tier = tier;
+    }
+
+    @Override
+    public Multimap<Attribute, AttributeModifier> getDefaultAttributeModifiers(EquipmentSlot slot) {
+        return ConfiguredItemAttributes.weapon(super.getDefaultAttributeModifiers(slot), slot,
+                isBloodTempest() ? bloodTempestDamage() : dragonlordDamage(),
+                isBloodTempest() ? bloodTempestSpeed() : dragonlordSpeed());
     }
 
     public double getEntityReach() {
-        return this.entityReach;
+        if (ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH == null || ToolsArmorConfig.DRAGONLORD_SWORD_REACH == null) {
+            return this.entityReach;
+        }
+        return isBloodTempest() ? ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH.get() : ToolsArmorConfig.DRAGONLORD_SWORD_REACH.get();
     }
 
     public double getEntityReachBonus() {
-        return this.entityReach - VANILLA_ENTITY_REACH;
+        return getEntityReach() - VANILLA_ENTITY_REACH;
     }
 
     public double getTargetingReachBonus() {
-        return this.entityReach - VANILLA_BLOCK_REACH;
+        return getEntityReach() - VANILLA_BLOCK_REACH;
     }
 
     public float getCriticalDamageBonus() {
-        return this.criticalDamageBonus;
+        if (ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS == null
+                || ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS == null) {
+            return this.criticalDamageBonus;
+        }
+        return (float) (isBloodTempest()
+                ? ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS.get()
+                : ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS.get());
+    }
+
+    private boolean isBloodTempest() {
+        return this.tier == DragonheartWeaponTier.CHUNK;
+    }
+
+    private double bloodTempestDamage() {
+        return ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE == null
+                ? 1.0D + this.tier.getAttackDamageBonus() + 3.0D
+                : ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE.get();
+    }
+
+    private double bloodTempestSpeed() {
+        return ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED == null
+                ? 3.0D
+                : ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED.get();
+    }
+
+    private double dragonlordDamage() {
+        return ToolsArmorConfig.DRAGONLORD_SWORD_DAMAGE == null
+                ? 1.0D + this.tier.getAttackDamageBonus() + 5.0D
+                : ToolsArmorConfig.DRAGONLORD_SWORD_DAMAGE.get();
+    }
+
+    private double dragonlordSpeed() {
+        return ToolsArmorConfig.DRAGONLORD_SWORD_SPEED == null
+                ? 1.4D
+                : ToolsArmorConfig.DRAGONLORD_SWORD_SPEED.get();
     }
 }

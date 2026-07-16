@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.item.tools;
 
+import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.network.BloodTempestAfterimageProfile;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -25,12 +26,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public final class BloodTempestKatanaAbility {
-    private static final int COOLDOWN_TICKS = 60;
-    private static final double MAX_DISTANCE = 20.0D;
     private static final double COLLISION_STEP = 0.25D;
     private static final double MIN_DISTANCE = 0.75D;
     private static final double SWEEP_INFLATION = 1.0D;
-    private static final float DAMAGE_MULTIPLIER = 2.65F;
     private static final int RESIDUE_ARC_COUNT = 9;
     private static final int RESIDUE_LIFETIME_TICKS = 13;
     private static final int SLASH_LINE_LIFETIME_TICKS = 14;
@@ -70,11 +68,12 @@ public final class BloodTempestKatanaAbility {
             return false;
         }
 
-        float damage = (float) player.getAttributeValue(Attributes.ATTACK_DAMAGE) * DAMAGE_MULTIPLIER;
+        float damage = (float) (player.getAttributeValue(Attributes.ATTACK_DAMAGE)
+                * ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER.get());
         List<LivingEntity> targets = collectTargets(player, origin, destination);
 
         Item sword = ModItems.BLOOD_TEMPEST_KATANA.get();
-        player.getCooldowns().addCooldown(sword, COOLDOWN_TICKS);
+        player.getCooldowns().addCooldown(sword, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS.get());
         player.resetAttackStrengthTicker();
         player.teleportTo(destination.x, destination.y, destination.z);
         player.setDeltaMovement(Vec3.ZERO);
@@ -240,7 +239,8 @@ public final class BloodTempestKatanaAbility {
     }
 
     private static boolean canStart(ServerPlayer player) {
-        if (player == null
+        if (!ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_ENABLED.get()
+                || player == null
                 || !player.isAlive()
                 || player.isSpectator()
                 || player.isPassenger()
@@ -261,7 +261,8 @@ public final class BloodTempestKatanaAbility {
         Vec3 origin = player.position();
         Vec3 destination = origin;
 
-        for (double distance = COLLISION_STEP; distance <= MAX_DISTANCE; distance += COLLISION_STEP) {
+        double maxDistance = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE.get();
+        for (double distance = COLLISION_STEP; distance <= maxDistance; distance += COLLISION_STEP) {
             Vec3 offset = direction.scale(distance);
             AABB candidateBounds = originBounds.move(offset);
             if (!level.noCollision(player, candidateBounds)

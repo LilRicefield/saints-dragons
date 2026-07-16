@@ -14,6 +14,8 @@ public interface ConfigHelper {
 
         IntValue defineInt(String key, int defaultValue, int min, int max);
 
+        DoubleValue defineDouble(String key, double defaultValue, double min, double max);
+
         BooleanValue defineBoolean(String key, boolean defaultValue);
 
         ListValue defineList(String key, List<String> defaultValue);
@@ -25,6 +27,18 @@ public interface ConfigHelper {
         int get();
 
         default void set(int value) {
+            // Optional for platforms that support writable configs.
+        }
+
+        default void save() {
+            // Optional for platforms that support writable configs.
+        }
+    }
+
+    interface DoubleValue {
+        double get();
+
+        default void set(double value) {
             // Optional for platforms that support writable configs.
         }
 
