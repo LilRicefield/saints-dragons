@@ -805,6 +805,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             ensureLegacyTamingFlag(entry.getKey(), source);
 
             if (Files.exists(path)) {
+                removeHints(path, entry.getKey());
                 // Backfill important changes when migrating older configs
                 backfillIgnivorusFireBreathDamage(path, entry.getKey(), entry.getValue());
                 backfillLegacyTaming(path, entry.getKey());
@@ -818,12 +819,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
                 continue;
-            }
-            if (!source.has("hints")) {
-                JsonObject hints = defaultHints(entry.getKey());
-                if (hints != null && !hints.entrySet().isEmpty()) {
-                    source.add("hints", hints);
-                }
             }
             writeConfigFile(path, source);
         }
@@ -893,14 +888,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             json.add("extra", extraJson);
         }
 
-        // Friendly hints for players editing the Forge JSON files
-        if (!json.has("hints")) {
-            JsonObject hints = defaultHints(id);
-            if (hints != null && !hints.entrySet().isEmpty()) {
-                json.add("hints", hints);
-            }
-        }
-
         return json;
     }
 
@@ -925,24 +912,29 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         if (!requiresLegacyTamingFlag(id)) {
             return;
         }
-        boolean changed = false;
         JsonObject extraJson;
         if (json.has("extra")) {
             extraJson = GsonHelper.getAsJsonObject(json, "extra");
         } else {
             extraJson = new JsonObject();
             json.add("extra", extraJson);
-            changed = true;
         }
         if (!extraJson.has("legacy_taming")) {
             extraJson.addProperty("legacy_taming", false);
-            changed = true;
         }
-        if (changed && !json.has("hints")) {
-            JsonObject hints = defaultHints(id);
-            if (hints != null && !hints.entrySet().isEmpty()) {
-                json.add("hints", hints);
-            }
+    }
+
+    private void removeHints(Path path, ResourceLocation id) {
+        JsonObject json;
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonElement element = JsonParser.parseReader(reader);
+            json = GsonHelper.convertToJsonObject(element, id.toString());
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to remove hints from dragon attribute config {} at {}", id, path, e);
+            return;
+        }
+        if (json.remove("hints") != null) {
+            writeConfigFile(path, json);
         }
     }
 
@@ -1330,74 +1322,4 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         return base;
     }
 
-    private static JsonObject defaultHints(ResourceLocation id) {
-        JsonObject hints = new JsonObject();
-        // Shared taming guidance
-        hints.addProperty("taming_chance_base", "Percent chance per feed, from 0 to 100");
-        hints.addProperty("taming_chance_chicken", "Percent chance per feed, from 0 to 100");
-        hints.addProperty("taming_chance_beef", "Percent chance per feed, from 0 to 100");
-        hints.addProperty("taming_chance_hearty", "Percent chance per feed, from 0 to 100");
-        hints.addProperty("taming_chance", "Percent chance base used by Varasuchus taming. Legacy food taming rolls it directly; rodeo taming converts it into a smaller per-tick chance");
-        hints.addProperty("taming_chance_tropical", "Percent chance per feed for Varasuchus tropical fish taming, from 0 to 100");
-        hints.addProperty("legacy_taming", "true = simple food taming, false = special mechanics (rodeo/low-health)");
-        hints.addProperty("egg_hatch_chance_normal", "Legacy random-tick hatch roll. Kept only for older egg configs");
-        hints.addProperty("egg_hatch_chance_thunder", "Legacy thunder random-tick hatch roll. Kept only for older egg configs");
-        hints.addProperty("egg_hatch_time_ticks_normal", "How long the egg takes to hatch in normal weather (20 ticks = 1 second)");
-        hints.addProperty("egg_hatch_time_ticks_thunder", "How long the egg takes to hatch during thunderstorms (20 ticks = 1 second)");
-        hints.addProperty("aggressive_wild", "true = wild dragons aggro on sight, false = only retaliate");
-        hints.addProperty("taming_stun_health", "Health threshold for taming stun (0 = disable stun)");
-        hints.addProperty("flying_speed", "Base rider flying speed. Wild flight uses this too before any wild-only multiplier is applied");
-        hints.addProperty("wild_flying_speed_multiplier", "Multiplier for wild flying speed only (1 = default, ridden flight unchanged)");
-        hints.addProperty("summon_storm_cooldown_ticks", "Cooldown for Summon Storm (20 ticks = 1 second)");
-        hints.addProperty("summon_storm_supercharge_ticks", "How long Summon Storm supercharge lasts (20 ticks = 1 second)");
-        hints.addProperty("summon_storm_supercharge_damage_multiplier", "Damage multiplier applied while supercharged (1 = normal damage)");
-        hints.addProperty("summon_storm_duration_ticks", "How long thunderstorm weather is enforced (20 ticks = 1 second)");
-
-        if (id.equals(VARASUCHUS_ID)) {
-            hints.addProperty("swim_speed", "Min 0.1, Max 5.0");
-        } else if (id.equals(CINDERVANE_ID)) {
-            hints.addProperty("fire_body_explosion_damage", "Direct blast damage on Fire Body crash impact");
-            hints.addProperty("fire_body_self_damage_on_crash", "Self-damage applied to Cindervane after Fire Body crash impact");
-        } else if (id.equals(VOLITANS_ID)) {
-            hints.addProperty("breath_active_ticks_max", "Maximum active breath duration in ticks before auto-stop (20 ticks = 1 second)");
-            hints.addProperty("breath_drain_per_tick", "Breath energy drained per active tick");
-            hints.addProperty("breath_regen_per_tick", "Breath energy regenerated per tick while not breathing");
-            hints.addProperty("breath_projectile_spread", "Random spread applied to each breath projectile");
-            hints.addProperty("breath_projectile_speed", "Base speed multiplier for breath projectiles");
-            hints.addProperty("breath_projectile_lifetime", "Lifetime in ticks for each breath projectile");
-            hints.addProperty("poison_breath_poison_duration_ticks", "Poison duration from poison breath in ticks (0 = disable)");
-            hints.addProperty("poison_breath_poison_level", "Poison level from 0 to 4 applied by poison breath (0 = disable)");
-            hints.addProperty("poison_ball_poison_duration_ticks", "Poison duration from poison ball in ticks (0 = disable)");
-            hints.addProperty("poison_ball_poison_level", "Poison level from 0 to 4 applied by poison ball (0 = disable)");
-            hints.addProperty("roar_ground_poison_duration_ticks", "Poison duration from grounded roar in ticks (0 = disable)");
-            hints.addProperty("roar_ground_poison_level", "Poison level from 0 to 4 applied by grounded roar (0 = disable)");
-            hints.addProperty("roar_air_water_poison_duration_ticks", "Poison duration from air/water roar in ticks (0 = disable)");
-            hints.addProperty("roar_air_water_poison_level", "Poison level from 0 to 4 applied by air/water roar (0 = disable)");
-        } else if (id.equals(IGNIVORUS_ID)) {
-            hints.addProperty("ultimate_penalty_health", "Typical 1-10000");
-            hints.addProperty("ultimate_trigger_health_fraction", "Health fraction from 0 to 1. Example: 0.5 = trigger at 50% max health");
-            hints.addProperty("fire_breath_flame_spawn_multiplier", "Multiplier for flame entity count (0 = disable, 1 = default)");
-            hints.addProperty("fire_breath_flame_speed_multiplier", "Multiplier for flame projectile speed (1 = default)");
-            hints.addProperty("fire_breath_flame_lifetime_multiplier", "Multiplier for flame lifetime ticks (1 = default)");
-            hints.addProperty("fire_breath_ignite_block_chance", "Chance from 0 to 1 for igniting blocks");
-            hints.addProperty("phase2_toggle_on_chance", "Chance from 0 to 1 to switch from phase 1 to phase 2 when grounded");
-            hints.addProperty("phase2_toggle_off_chance", "Chance from 0 to 1 to switch from phase 2 back to phase 1 when grounded");
-            hints.addProperty("phase2_decision_min_ticks", "Minimum ticks between phase switch checks (20 ticks = 1 second)");
-            hints.addProperty("phase2_decision_max_ticks", "Maximum ticks between phase switch checks (20 ticks = 1 second)");
-        } else if (id.equals(DRACONIAN_SWARM_ID)) {
-            hints.addProperty("wave_1_count", "Exact swarm entities spawned in wave 1 (1 to 50)");
-            hints.addProperty("wave_2_count", "Exact swarm entities spawned in wave 2 (1 to 50)");
-            hints.addProperty("wave_3_count", "Exact swarm entities spawned in wave 3 (1 to 50)");
-            hints.addProperty("latcher_max_health", "Latcher max health");
-            hints.addProperty("latcher_armor", "Latcher armor");
-            hints.addProperty("latcher_chase_speed", "Latcher combat pursuit speed");
-            hints.addProperty("winged_max_health", "Winged max health");
-            hints.addProperty("winged_armor", "Winged armor");
-            hints.addProperty("winged_chase_speed", "Winged combat pursuit speed");
-            hints.addProperty("whettled_max_health", "Whettled max health");
-            hints.addProperty("whettled_armor", "Whettled armor");
-            hints.addProperty("whettled_chase_speed", "Whettled combat pursuit speed");
-        }
-        return hints;
-    }
 }
