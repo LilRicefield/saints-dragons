@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController
 import com.leon.saintsdragons.server.ai.pathfinding.AsyncDragonPathfinder;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -137,6 +138,37 @@ public class AsyncSwimController {
 
     public boolean isMoving() {
         return steering.isMoving();
+    }
+
+    public boolean hasReachedPathEnd() {
+        return !calculating && !pathNodes.isEmpty() && currentPathIndex >= pathNodes.size();
+    }
+
+    public boolean isNearPathEnd(double distance) {
+        Vec3 endpoint = getPathEndpoint();
+        return endpoint != null && host.position().distanceToSqr(endpoint) <= distance * distance;
+    }
+
+    @Nullable
+    public Vec3 getPathEndpoint() {
+        return pathNodes.isEmpty() ? null : pathNodes.get(pathNodes.size() - 1);
+    }
+
+    public DebugSnapshot getDebugSnapshot() {
+        return new DebugSnapshot(
+                target,
+                getPathEndpoint(),
+                currentPathIndex,
+                pathNodes.size(),
+                calculating,
+                steering.isMoving(),
+                liveTracking,
+                recalcCooldown,
+                stuckTicks,
+                pathRetries,
+                rejectedTarget,
+                rejectedTargetCooldown
+        );
     }
 
     private boolean shouldRepath(Vec3 newTarget) {
@@ -279,5 +311,19 @@ public class AsyncSwimController {
         this.currentPathIndex = 0;
         this.calculating = false;
         this.steering.slow(0.6D);
+    }
+
+    public record DebugSnapshot(@Nullable Vec3 target,
+                                @Nullable Vec3 endpoint,
+                                int pathIndex,
+                                int pathSize,
+                                boolean calculating,
+                                boolean moving,
+                                boolean liveTracking,
+                                int recalcCooldown,
+                                int stuckTicks,
+                                int retries,
+                                @Nullable Vec3 rejectedTarget,
+                                int rejectedCooldown) {
     }
 }

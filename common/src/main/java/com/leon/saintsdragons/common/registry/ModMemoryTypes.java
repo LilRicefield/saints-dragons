@@ -5,6 +5,7 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -29,6 +30,10 @@ public final class ModMemoryTypes {
     public static final Supplier<MemoryModuleType<DragonMovementIntent>> MOVEMENT_INTENT = register("movement_intent");
     public static final Supplier<MemoryModuleType<Boolean>> GROUND_ROUTE_ABANDONED = register("ground_route_abandoned");
     public static final Supplier<MemoryModuleType<Vec3>> TACTICAL_LANDING_POSITION = register("tactical_landing_position");
+    public static final Supplier<MemoryModuleType<GlobalPos>> ROOST_SLEEP_POSITION = REGISTER.register(
+            "roost_sleep_position",
+            () -> new MemoryModuleType<>(Optional.of(GlobalPos.CODEC))
+    );
 
     private ModMemoryTypes() {
     }

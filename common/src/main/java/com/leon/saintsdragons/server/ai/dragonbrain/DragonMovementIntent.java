@@ -10,6 +10,7 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         DragonMovementIntent.AutoPosition,
         DragonMovementIntent.AutoTarget,
         DragonMovementIntent.GroundPosition,
+        DragonMovementIntent.ProgressiveGroundPosition,
         DragonMovementIntent.GroundTarget,
         DragonMovementIntent.LandingPosition,
         DragonMovementIntent.LandingTarget {
@@ -42,6 +43,10 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
 
     static DragonMovementIntent ground(Vec3 target, double speed, boolean running) {
         return new GroundPosition(target, speed, running);
+    }
+
+    static DragonMovementIntent progressiveGround(Vec3 target, double speed, boolean running) {
+        return new ProgressiveGroundPosition(target, speed, running);
     }
 
     static DragonMovementIntent ground(LivingEntity target, double speed, boolean running) {
@@ -102,6 +107,13 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         @Override
         public void apply(RideableDragonBase dragon) {
             dragon.getAIMovement().moveToGroundPosition(target, speed, running);
+        }
+    }
+
+    record ProgressiveGroundPosition(Vec3 target, double speed, boolean running) implements DragonMovementIntent {
+        @Override
+        public void apply(RideableDragonBase dragon) {
+            dragon.getAIMovement().moveToProgressiveGroundPosition(target, speed, running);
         }
     }
 

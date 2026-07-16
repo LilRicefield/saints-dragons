@@ -16,6 +16,7 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VarasuchusCombatBrain;
 import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
@@ -47,6 +48,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -96,6 +99,11 @@ import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen {
     private static final VarasuchusCombatBrain DRAGON_BRAIN = new VarasuchusCombatBrain();
+    public static final double ROOST_SLEEP_RADIUS = 3.0D;
+    public static final double ROOST_TERRITORY_RADIUS = 48.0D;
+    public static final double ROOST_TERRITORY_RETURN_RADIUS = 32.0D;
+    private static final int ROOST_SLEEP_SETTLE_TICKS = 60;
+    private int roostSleepSettleTicks;
     public Varasuchus(EntityType<? extends Varasuchus> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
@@ -150,6 +158,48 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             return VOID_KISSED_VARIANT_ID;
         }
         return super.chooseSpawnTextureVariantId(levelAccessor, difficulty, reason, spawnData, spawnTag);
+    }
+
+    @Override
+    public @NotNull SpawnGroupData finalizeSpawn(@NotNull ServerLevelAccessor levelAccessor,
+                                                 @NotNull DifficultyInstance difficulty,
+                                                 @NotNull MobSpawnType reason,
+                                                 @Nullable SpawnGroupData spawnData,
+                                                 @Nullable CompoundTag spawnTag) {
+        SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
+        if (reason == MobSpawnType.STRUCTURE) {
+            this.setPersistenceRequired();
+            GlobalPos home = GlobalPos.of(levelAccessor.getLevel().dimension(), this.blockPosition());
+            this.getBrain().setMemory(
+                    DragonMemories.HOME,
+                    home
+            );
+            ensureRoostSleepPosition(home);
+        }
+        return data;
+    }
+
+    private void ensureRoostSleepPosition(GlobalPos home) {
+        Direction inwardDirection = this.getDirection().getClockWise();
+        GlobalPos existingPosition = getBrain().getMemory(DragonMemories.ROOST_SLEEP_POSITION)
+                .filter(position -> position.dimension().equals(home.dimension()))
+                .orElse(null);
+        if (existingPosition != null) {
+            int offsetX = existingPosition.pos().getX() - home.pos().getX();
+            int offsetZ = existingPosition.pos().getZ() - home.pos().getZ();
+            if (Math.abs(offsetX) >= Math.abs(offsetZ) && offsetX != 0) {
+                inwardDirection = offsetX > 0 ? Direction.EAST : Direction.WEST;
+            } else if (offsetZ != 0) {
+                inwardDirection = offsetZ > 0 ? Direction.SOUTH : Direction.NORTH;
+            }
+        }
+        getBrain().setMemory(
+                DragonMemories.ROOST_SLEEP_POSITION,
+                GlobalPos.of(
+                        home.dimension(),
+                        home.pos().relative(inwardDirection, 0)
+                )
+        );
     }
 
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
@@ -596,21 +646,52 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             }
         });
         this.goalSelector.addGoal(8, new DragonSwimToTargetGoal(this, this::getAiSwimController, 8.0F, 0.25D, false, 20.0D, 16.0D));
-        this.goalSelector.addGoal(10, new DragonSwimWanderGoal(this, this::getAiSwimController, 6.0F, 0.20D, 30));
+        this.goalSelector.addGoal(10, new DragonSwimWanderGoal(
+                this,
+                this::getAiSwimController,
+                6.0F,
+                0.20D,
+                30,
+                this::isWithinRoostTerritory
+        ) {
+            @Override
+            public boolean canUse() {
+                return !Varasuchus.this.shouldSuspendRoostWandering() && super.canUse();
+            }
+
+            @Override
+            public boolean canContinueToUse() {
+                return !Varasuchus.this.shouldSuspendRoostWandering() && super.canContinueToUse();
+            }
+        });
         this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100) {
             @Override
             protected boolean canUseAdditional() {
-                if (Varasuchus.this.isInWaterOrBubble()) {
+                if (Varasuchus.this.isInWaterOrBubble()
+                        || Varasuchus.this.shouldSuspendRoostWandering()) {
                     return false;
                 }
                 return super.canUseAdditional();
             }
+
             @Override
             protected boolean canContinueAdditional() {
-                if (Varasuchus.this.isInWaterOrBubble()) {
+                if (Varasuchus.this.isInWaterOrBubble()
+                        || Varasuchus.this.shouldSuspendRoostWandering()) {
                     return false;
                 }
                 return super.canContinueAdditional();
+            }
+
+            @Override
+            protected Vec3 getWanderPosition() {
+                for (int attempt = 0; attempt < 10; attempt++) {
+                    Vec3 candidate = super.getWanderPosition();
+                    if (candidate != null && Varasuchus.this.isWithinRoostTerritory(candidate)) {
+                        return candidate;
+                    }
+                }
+                return null;
             }
         };
         this.goalSelector.addGoal(11, groundWanderGoal);
@@ -741,6 +822,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         if (!level().isClientSide) {
+            tickRoostSleepReadiness();
             tickLeapState();
             handleAmbientSounds();
             tickRiderControlLock();
@@ -1960,7 +2042,89 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public boolean canSleepNow() {
-        return !isVehicle() && !this.isInWaterOrBubble() && getActiveAbility() == null && !isPhaseTwoActive();
+        return !isVehicle()
+                && !this.isInWaterOrBubble()
+                && getActiveAbility() == null
+                && !isPhaseTwoActive()
+                && canSleepAtRoost();
+    }
+
+    private boolean canSleepAtRoost() {
+        if (isTame()) {
+            return true;
+        }
+        GlobalPos sleepPosition = getRoostSleepPosition();
+        if (sleepPosition == null) {
+            return true;
+        }
+        boolean insideRoost = sleepPosition.dimension().equals(level().dimension())
+                && sleepPosition.pos().distSqr(blockPosition()) <= ROOST_SLEEP_RADIUS * ROOST_SLEEP_RADIUS;
+        return insideRoost
+                && (isSleeping() || isSleepTransitioning()
+                || roostSleepSettleTicks >= ROOST_SLEEP_SETTLE_TICKS);
+    }
+
+    private void tickRoostSleepReadiness() {
+        if (isTame()) {
+            roostSleepSettleTicks = 0;
+            return;
+        }
+
+        GlobalPos sleepPosition = getRoostSleepPosition();
+        boolean insideRoost = sleepPosition != null
+                && sleepPosition.dimension().equals(level().dimension())
+                && sleepPosition.pos().distSqr(blockPosition()) <= ROOST_SLEEP_RADIUS * ROOST_SLEEP_RADIUS;
+        if (insideRoost && (isSleeping() || isSleepTransitioning())) {
+            roostSleepSettleTicks = ROOST_SLEEP_SETTLE_TICKS;
+            return;
+        }
+
+        boolean settled = insideRoost
+                && getSleepPreferences().canSleepDuringConditions(level())
+                && onGround()
+                && !isInWaterOrBubble()
+                && getTarget() == null
+                && getActiveAbility() == null;
+        roostSleepSettleTicks = settled
+                ? Math.min(ROOST_SLEEP_SETTLE_TICKS, roostSleepSettleTicks + 1)
+                : 0;
+    }
+
+    public int getRoostSleepSettleTicks() {
+        return roostSleepSettleTicks;
+    }
+
+    @Nullable
+    private GlobalPos getRoostSleepPosition() {
+        return getBrain().getMemory(DragonMemories.ROOST_SLEEP_POSITION)
+                .orElseGet(() -> getBrain().getMemory(DragonMemories.HOME).orElse(null));
+    }
+
+    public boolean hasRoostTerritory() {
+        GlobalPos home = getBrain().getMemory(DragonMemories.HOME).orElse(null);
+        return !isTame()
+                && home != null
+                && home.dimension().equals(level().dimension());
+    }
+
+    public boolean isWithinRoostTerritory(Vec3 position) {
+        GlobalPos home = getBrain().getMemory(DragonMemories.HOME).orElse(null);
+        if (isTame() || home == null || !home.dimension().equals(level().dimension())) {
+            return true;
+        }
+        double dx = position.x - (home.pos().getX() + 0.5D);
+        double dz = position.z - (home.pos().getZ() + 0.5D);
+        return dx * dx + dz * dz <= ROOST_TERRITORY_RADIUS * ROOST_TERRITORY_RADIUS;
+    }
+
+    public boolean isOutsideRoostTerritory() {
+        return hasRoostTerritory() && !isWithinRoostTerritory(position());
+    }
+
+    private boolean shouldSuspendRoostWandering() {
+        return hasRoostTerritory()
+                && (isOutsideRoostTerritory()
+                || getSleepPreferences().canSleepDuringConditions(level()));
     }
 
     private void tickScreenShake() {
@@ -2017,6 +2181,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (!level().isClientSide) {
+            getBrain().getMemory(DragonMemories.HOME).ifPresent(this::ensureRoostSleepPosition);
+        }
         loadRideableData(tag);
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));

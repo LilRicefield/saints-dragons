@@ -15,6 +15,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.EnumSet;
+import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 public class DragonSwimWanderGoal extends Goal {
@@ -25,6 +27,7 @@ public class DragonSwimWanderGoal extends Goal {
     private final float turnSpeed;
     private final double swimSpeed;
     private final int interval;
+    private final Predicate<Vec3> targetFilter;
 
     private Vec3 targetPos;
     private int recalcTimer;
@@ -32,11 +35,21 @@ public class DragonSwimWanderGoal extends Goal {
     private boolean cachedObstructionResult;
 
     public DragonSwimWanderGoal(Mob mob, Supplier<AsyncSwimController> swimController, float turnSpeedDegrees, double swimSpeed, int interval) {
+        this(mob, swimController, turnSpeedDegrees, swimSpeed, interval, target -> true);
+    }
+
+    public DragonSwimWanderGoal(Mob mob,
+                                Supplier<AsyncSwimController> swimController,
+                                float turnSpeedDegrees,
+                                double swimSpeed,
+                                int interval,
+                                Predicate<Vec3> targetFilter) {
         this.mob = mob;
         this.swimController = swimController;
         this.turnSpeed = turnSpeedDegrees;
         this.swimSpeed = swimSpeed;
         this.interval = interval;
+        this.targetFilter = Objects.requireNonNull(targetFilter);
         this.setFlags(EnumSet.of(Flag.MOVE, Flag.LOOK));
     }
 
@@ -182,7 +195,10 @@ public class DragonSwimWanderGoal extends Goal {
                 continue;
             }
 
-            return new Vec3(targetBlockX + 0.5D, targetY, targetBlockZ + 0.5D);
+            Vec3 target = new Vec3(targetBlockX + 0.5D, targetY, targetBlockZ + 0.5D);
+            if (targetFilter.test(target)) {
+                return target;
+            }
         }
         return null;
     }

@@ -1,0 +1,15 @@
+{
+  "name": "saintsdragons:varasuchus_roost",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "saintsdragons:varasuchus_roost",
+        "projection": "rigid",
+        "processors": "minecraft:empty"
+      }
+    }
+  ]
+}

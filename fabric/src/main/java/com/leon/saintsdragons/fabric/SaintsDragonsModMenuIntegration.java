@@ -378,13 +378,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     null, null, true,
                     3, 1, 3);
 
-            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.varasuchus"),
-                    () -> config.varasuchusSpawnWeight, value -> config.varasuchusSpawnWeight = value,
-                    () -> config.varasuchusMinGroupSize, value -> config.varasuchusMinGroupSize = value,
-                    () -> config.varasuchusMaxGroupSize, value -> config.varasuchusMaxGroupSize = value,
-                    null, null, true,
-                    2, 1, 2);
-
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.ignivorus"),
                     () -> config.ignivorusSpawnWeight, value -> config.ignivorusSpawnWeight = value,
                     () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,

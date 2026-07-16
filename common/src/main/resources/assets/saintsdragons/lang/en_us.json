@@ -757,13 +757,6 @@
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize": "Cindervane Max Group Size",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize.@Tooltip": "Maximum number of Cindervane that spawn together",
   
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusSpawnWeight": "Varasuchus Spawn Weight",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusSpawnWeight.@Tooltip": "How often Varasuchus spawns (0 = disabled, higher = more common)",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMinGroupSize": "Varasuchus Min Group Size",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMinGroupSize.@Tooltip": "Minimum number of Varasuchus that spawn together",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMaxGroupSize": "Varasuchus Max Group Size",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMaxGroupSize.@Tooltip": "Maximum number of Varasuchus that spawn together",
-
   "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight": "Ignivorus Spawn Weight",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight.@Tooltip": "How often Ignivorus spawns (0 = disabled, higher = more common)",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusMinGroupSize": "Ignivorus Min Group Size",
@@ -814,7 +807,6 @@
   "config.saintsdragons.spawn.raevyx": "Raevyx",
   "config.saintsdragons.spawn.stegonaut": "Stegonaut",
   "config.saintsdragons.spawn.cindervane": "Cindervane",
-  "config.saintsdragons.spawn.varasuchus": "Varasuchus",
   "config.saintsdragons.spawn.ignivorus": "Ignivorus",
   "config.saintsdragons.spawn.volitans": "Volitans",
   "config.saintsdragons.spawn.custom_spawning": "Enable Custom Spawning",

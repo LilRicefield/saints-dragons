@@ -743,13 +743,6 @@
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize": "烬翎龙最大群组规模",
   "text.autoconfig.saintsdragonsspawning.option.cindervaneMaxGroupSize.@Tooltip": "烬翎龙生成最大数量",
   
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusSpawnWeight": "蜷鳄龙生成权重",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusSpawnWeight.@Tooltip": "蜷鳄龙生成频率（0 = 禁用，越高越常见）",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMinGroupSize": "蜷鳄龙最小群组规模",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMinGroupSize.@Tooltip": "蜷鳄龙生成最小数量",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMaxGroupSize": "蜷鳄龙最大群组规模",
-  "text.autoconfig.saintsdragonsspawning.option.varasuchusMaxGroupSize.@Tooltip": "蜷鳄龙生成最大数量",
-
   "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight": "噬焰龙生成权重",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusSpawnWeight.@Tooltip": "噬焰龙的生成频率（0 = 禁用，越高越常见）",
   "text.autoconfig.saintsdragonsspawning.option.ignivorusMinGroupSize": "噬焰龙最小群组规模",
@@ -800,7 +793,6 @@
   "config.saintsdragons.spawn.raevyx": "殷雷龙",
   "config.saintsdragons.spawn.stegonaut": "坚甲龙",
   "config.saintsdragons.spawn.cindervane": "烬翎龙",
-  "config.saintsdragons.spawn.varasuchus": "蜷鳄龙",
   "config.saintsdragons.spawn.ignivorus": "噬焰龙",
   "config.saintsdragons.spawn.volitans": "蓑鲉龙",
   "config.saintsdragons.spawn.custom_spawning": "启用自定义生成",

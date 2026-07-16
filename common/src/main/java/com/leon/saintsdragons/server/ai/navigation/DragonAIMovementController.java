@@ -16,11 +16,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.Future;
 
 public class DragonAIMovementController {
+    private static final int GROUND_PATH_FAILURE_RETRY_TICKS = 20;
+
     private final RideableDragonBase dragon;
     private @Nullable QueuedWaypoint currentWaypoint;
     private GroundPathState groundPathState = GroundPathState.IDLE;
     private long groundPathRequestGeneration;
     private @Nullable Future<?> groundPathRequest;
+    private int groundPathFailureRetryTicks;
+    private @Nullable Vec3 lastFailedGroundTarget;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
         this.dragon = dragon;
@@ -34,12 +38,19 @@ public class DragonAIMovementController {
             clearAllWaypoints();
             return;
         }
+        if (groundPathFailureRetryTicks > 0) {
+            groundPathFailureRetryTicks--;
+        }
         if (groundPathState == GroundPathState.FOLLOWING && dragon.getNavigation().isDone()) {
             double arrivalDistance = Math.max(1.5D, dragon.getBbWidth() * 0.75D);
             boolean reached = currentWaypoint != null
                     && dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
-            groundPathState = reached ? GroundPathState.ARRIVED : GroundPathState.FAILED;
-            currentWaypoint = null;
+            if (reached) {
+                groundPathState = GroundPathState.ARRIVED;
+                currentWaypoint = null;
+            } else {
+                recordGroundPathFailure(currentWaypoint != null ? currentWaypoint.target() : null);
+            }
         } else if (currentWaypoint != null && hasArrived()) {
             currentWaypoint = null;
         }
@@ -101,6 +112,15 @@ public class DragonAIMovementController {
 
     public boolean moveToGroundPosition(Vec3 target, double speed, boolean running) {
         return setGroundWaypoint(target, speed, running);
+    }
+
+    public boolean moveToProgressiveGroundPosition(Vec3 target, double speed, boolean running) {
+        if (target == null || !canUseGroundNavigation()) {
+            clearGroundPath();
+            return false;
+        }
+        ensureGroundNavigation();
+        return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.PROGRESSIVE_GROUND));
     }
 
     public void setLandingWaypoint(@Nullable LivingEntity target, double speed) {
@@ -358,6 +378,11 @@ public class DragonAIMovementController {
                 && dragon.getNavigation().isStuck());
     }
 
+    public void clearGroundPathFailureRetry() {
+        groundPathFailureRetryTicks = 0;
+        lastFailedGroundTarget = null;
+    }
+
     public String getDebugMovementMode() {
         return currentWaypoint == null ? "NONE" : currentWaypoint.mode().name();
     }
@@ -383,6 +408,12 @@ public class DragonAIMovementController {
 
     private boolean startWaypoint(QueuedWaypoint waypoint) {
         if (!waypoint.mode().usesAir()
+                && groundPathFailureRetryTicks > 0
+                && lastFailedGroundTarget != null
+                && lastFailedGroundTarget.distanceToSqr(waypoint.target()) < 1.0D) {
+            return false;
+        }
+        if (!waypoint.mode().usesAir()
                 && currentWaypoint != null
                 && !currentWaypoint.mode().usesAir()
                 && currentWaypoint.target().distanceToSqr(waypoint.target()) < 1.0D
@@ -393,10 +424,10 @@ public class DragonAIMovementController {
         }
 
         currentWaypoint = waypoint;
-        if (waypoint.mode() != MovementMode.GROUND) {
+        if (!waypoint.mode().usesGroundPath()) {
             resetGroundPathState();
         }
-        if (waypoint.mode() != MovementMode.GROUND && waypoint.running()) {
+        if (waypoint.running()) {
             setGroundRun();
         }
 
@@ -412,7 +443,7 @@ public class DragonAIMovementController {
         if (!canUseGroundNavigation()) {
             clearGroundPath();
             currentWaypoint = null;
-            groundPathState = waypoint.mode() == MovementMode.GROUND
+            groundPathState = waypoint.mode().usesGroundPath()
                     ? GroundPathState.FAILED
                     : GroundPathState.IDLE;
             return false;
@@ -438,23 +469,36 @@ public class DragonAIMovementController {
                 return;
             }
             groundPathRequest = null;
-
             if (path == null || path.getNodeCount() == 0) {
-                currentWaypoint = null;
-                groundPathState = GroundPathState.FAILED;
+                recordGroundPathFailure(currentWaypoint.target());
+                return;
+            }
+
+            if (!path.canReach() && currentWaypoint.mode().requiresCompletePath()) {
+                recordGroundPathFailure(currentWaypoint.target());
                 return;
             }
 
             Path resolvedPath = path;
             boolean started = dragon.getNavigation().moveTo(resolvedPath, currentWaypoint.speed());
             if (!started) {
-                currentWaypoint = null;
-                groundPathState = GroundPathState.FAILED;
+                recordGroundPathFailure(currentWaypoint.target());
                 return;
             }
+            groundPathFailureRetryTicks = 0;
+            lastFailedGroundTarget = null;
             setGroundMoveState(currentWaypoint.running());
             groundPathState = GroundPathState.FOLLOWING;
         });
+    }
+
+    private void recordGroundPathFailure(@Nullable Vec3 target) {
+        currentWaypoint = null;
+        groundPathState = GroundPathState.FAILED;
+        groundPathFailureRetryTicks = GROUND_PATH_FAILURE_RETRY_TICKS;
+        lastFailedGroundTarget = target;
+        dragon.getNavigation().stop();
+        setGroundIdle();
     }
 
     private void invalidateGroundPathRequest() {
@@ -567,10 +611,19 @@ public class DragonAIMovementController {
     private enum MovementMode {
         AUTO,
         GROUND,
+        PROGRESSIVE_GROUND,
         LANDING;
 
         private boolean usesAir() {
             return this == LANDING;
+        }
+
+        private boolean usesGroundPath() {
+            return this == GROUND || this == PROGRESSIVE_GROUND;
+        }
+
+        private boolean requiresCompletePath() {
+            return this == GROUND;
         }
     }
 

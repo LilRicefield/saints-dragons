@@ -23,10 +23,6 @@ public final class SaintsDragonsConfig {
     public static final int CINDERVANE_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int CINDERVANE_MAX_GROUP_SIZE_DEFAULT = 3;
 
-    public static final int VARASUCHUS_SPAWN_WEIGHT_DEFAULT = 2;
-    public static final int VARASUCHUS_MIN_GROUP_SIZE_DEFAULT = 1;
-    public static final int VARASUCHUS_MAX_GROUP_SIZE_DEFAULT = 2;
-
     public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 1;
@@ -62,10 +58,6 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue CINDERVANE_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
-
-    public static ConfigHelper.IntValue VARASUCHUS_SPAWN_WEIGHT;
-    public static ConfigHelper.IntValue VARASUCHUS_MIN_GROUP_SIZE;
-    public static ConfigHelper.IntValue VARASUCHUS_MAX_GROUP_SIZE;
 
     public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
@@ -132,11 +124,6 @@ public final class SaintsDragonsConfig {
         CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", CINDERVANE_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         CINDERVANE_MIN_GROUP_SIZE = builder.defineInt("cindervaneMinGroupSize", CINDERVANE_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", CINDERVANE_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-
-        builder.comment("Varasuchus spawn settings");
-        VARASUCHUS_SPAWN_WEIGHT = builder.defineInt("varasuchusSpawnWeight", VARASUCHUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
-        VARASUCHUS_MIN_GROUP_SIZE = builder.defineInt("varasuchusMinGroupSize", VARASUCHUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
-        VARASUCHUS_MAX_GROUP_SIZE = builder.defineInt("varasuchusMaxGroupSize", VARASUCHUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Ignivorus spawn settings");
         IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);

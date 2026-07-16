@@ -55,14 +55,7 @@ public final class DragonSpawnRegistry {
                 () -> SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
 
-        add(entries,
-                SaintsDragonsCommon.rl("varasuchus"),
-                ModEntities.VARASUCHUS,
-                ModTags.Biomes.HAS_VARASUCHUS,
-                MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.get(),
-                () -> SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.get(),
-                () -> SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.get());
+        // Varasuchus populations are supplied by the data-driven roost structure.
 
         add(entries,
                 SaintsDragonsCommon.rl("ignivorus"),

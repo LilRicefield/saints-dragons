@@ -11770,10 +11770,13 @@
 						}
 					},
 					"scale": {
-						"1.6667": {
-							"pre": {
+						"0.0": {
+							"post": {
 								"vector": [1, 1, 1]
 							},
+							"lerp_mode": "catmullrom"
+						},
+						"1.6667": {
 							"post": {
 								"vector": [1, 1, 1]
 							},
@@ -12402,6 +12405,9 @@
 			"animation_length": 5.0417,
 			"bones": {
 				"heightController": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					},
 					"position": {
 						"0.0": {
 							"post": {

@@ -15,7 +15,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         STEGONAUT,
         CINDERVANE,
         NULLJAW,
-        VARASUCHUS,
         IGNIVORUS,
         VOLITANS
     }
@@ -34,7 +33,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             case STEGONAUT -> addStegonautEntries(entries);
             case CINDERVANE -> addCindervaneEntries(entries);
             case NULLJAW -> addNulljawEntries(entries);
-            case VARASUCHUS -> addVarasuchusEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
         }
@@ -76,30 +74,23 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startTopX + (buttonWidth + spacing) * 3, yTop, buttonWidth, 20).build());
 
-        int totalBottomWidth = buttonWidth * 3 + spacing * 2;
+        int totalBottomWidth = buttonWidth * 2 + spacing;
         int startBottomX = (width - totalBottomWidth) / 2;
         int yBottom = yTop + 24;
-
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.varasuchus"), button -> {
-            if (section != Section.VARASUCHUS) {
-                section = Section.VARASUCHUS;
-                rebuildWidgets();
-            }
-        }).bounds(startBottomX, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.ignivorus"), button -> {
             if (section != Section.IGNIVORUS) {
                 section = Section.IGNIVORUS;
                 rebuildWidgets();
             }
-        }).bounds(startBottomX + (buttonWidth + spacing), yBottom, buttonWidth, 20).build());
+        }).bounds(startBottomX, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.volitans"), button -> {
             if (section != Section.VOLITANS) {
                 section = Section.VOLITANS;
                 rebuildWidgets();
             }
-        }).bounds(startBottomX + (buttonWidth + spacing) * 2, yBottom, buttonWidth, 20).build());
+        }).bounds(startBottomX + (buttonWidth + spacing), yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
@@ -175,23 +166,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::get,
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::set,
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::save));
-    }
-
-    private void addVarasuchusEntries(List<ConfigEntry> entries) {
-        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.varasuchus")));
-        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
-        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
-                SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT::get,
-                SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT::set,
-                SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT::save));
-        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
-                SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE::get,
-                SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE::set,
-                SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE::save));
-        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
-                SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE::get,
-                SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE::set,
-                SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE::save));
     }
 
     private void addIgnivorusEntries(List<ConfigEntry> entries) {
@@ -286,14 +260,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.save();
-            }
-            case VARASUCHUS -> {
-                SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT_DEFAULT);
-                SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.set(SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE_DEFAULT);
-                SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.set(SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE_DEFAULT);
-                SaintsDragonsConfig.VARASUCHUS_SPAWN_WEIGHT.save();
-                SaintsDragonsConfig.VARASUCHUS_MIN_GROUP_SIZE.save();
-                SaintsDragonsConfig.VARASUCHUS_MAX_GROUP_SIZE.save();
             }
             case IGNIVORUS -> {
                 SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT);

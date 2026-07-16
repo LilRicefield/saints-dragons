@@ -149,9 +149,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "cindervaneSpawnWeight" -> () -> spawnHolder().getConfig().cindervaneSpawnWeight;
             case "cindervaneMinGroupSize" -> () -> spawnHolder().getConfig().cindervaneMinGroupSize;
             case "cindervaneMaxGroupSize" -> () -> spawnHolder().getConfig().cindervaneMaxGroupSize;
-            case "varasuchusSpawnWeight" -> () -> spawnHolder().getConfig().varasuchusSpawnWeight;
-            case "varasuchusMinGroupSize" -> () -> spawnHolder().getConfig().varasuchusMinGroupSize;
-            case "varasuchusMaxGroupSize" -> () -> spawnHolder().getConfig().varasuchusMaxGroupSize;
             case "ignivorusSpawnWeight" -> () -> spawnHolder().getConfig().ignivorusSpawnWeight;
             case "ignivorusMinGroupSize" -> () -> spawnHolder().getConfig().ignivorusMinGroupSize;
             case "ignivorusMaxGroupSize" -> () -> spawnHolder().getConfig().ignivorusMaxGroupSize;
@@ -180,9 +177,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "cindervaneSpawnWeight" -> value -> spawnHolder().getConfig().cindervaneSpawnWeight = value;
             case "cindervaneMinGroupSize" -> value -> spawnHolder().getConfig().cindervaneMinGroupSize = value;
             case "cindervaneMaxGroupSize" -> value -> spawnHolder().getConfig().cindervaneMaxGroupSize = value;
-            case "varasuchusSpawnWeight" -> value -> spawnHolder().getConfig().varasuchusSpawnWeight = value;
-            case "varasuchusMinGroupSize" -> value -> spawnHolder().getConfig().varasuchusMinGroupSize = value;
-            case "varasuchusMaxGroupSize" -> value -> spawnHolder().getConfig().varasuchusMaxGroupSize = value;
             case "ignivorusSpawnWeight" -> value -> spawnHolder().getConfig().ignivorusSpawnWeight = value;
             case "ignivorusMinGroupSize" -> value -> spawnHolder().getConfig().ignivorusMinGroupSize = value;
             case "ignivorusMaxGroupSize" -> value -> spawnHolder().getConfig().ignivorusMaxGroupSize = value;

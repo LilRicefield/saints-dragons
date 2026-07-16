@@ -53,6 +53,9 @@ public final class DragonRecoveryComponent {
             return false;
         }
         int recentCombatTick = Math.max(dragon.getLastDamagerTimestamp(), dragon.getLastHurtByMobTimestamp());
-        return dragon.tickCount - recentCombatTick >= RECOVERY_DELAY_AFTER_COMBAT_TICKS;
+        int ticksSinceCombat = dragon.tickCount - recentCombatTick;
+        return recentCombatTick <= 0
+                || ticksSinceCombat < 0
+                || ticksSinceCombat >= RECOVERY_DELAY_AFTER_COMBAT_TICKS;
     }
 }

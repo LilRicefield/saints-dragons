@@ -2,13 +2,13 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.common.registry.ModMemoryTypes;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
-
 import java.util.List;
 
 public final class DragonMemories {
@@ -17,6 +17,7 @@ public final class DragonMemories {
     public static final MemoryModuleType<Path> PATH = MemoryModuleType.PATH;
     public static final MemoryModuleType<Long> CANT_REACH_WALK_TARGET_SINCE = MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE;
     public static final MemoryModuleType<PositionTracker> LOOK_TARGET = MemoryModuleType.LOOK_TARGET;
+    public static final MemoryModuleType<GlobalPos> HOME = MemoryModuleType.HOME;
     public static final MemoryModuleType<Boolean> TARGET_AIRBORNE = ModMemoryTypes.TARGET_AIRBORNE.get();
     public static final MemoryModuleType<Boolean> IS_AERIAL = ModMemoryTypes.IS_AERIAL.get();
     public static final MemoryModuleType<Boolean> IS_GROUNDED = ModMemoryTypes.IS_GROUNDED.get();
@@ -27,6 +28,7 @@ public final class DragonMemories {
     public static final MemoryModuleType<DragonMovementIntent> MOVEMENT_INTENT = ModMemoryTypes.MOVEMENT_INTENT.get();
     public static final MemoryModuleType<Boolean> GROUND_ROUTE_ABANDONED = ModMemoryTypes.GROUND_ROUTE_ABANDONED.get();
     public static final MemoryModuleType<Vec3> TACTICAL_LANDING_POSITION = ModMemoryTypes.TACTICAL_LANDING_POSITION.get();
+    public static final MemoryModuleType<GlobalPos> ROOST_SLEEP_POSITION = ModMemoryTypes.ROOST_SLEEP_POSITION.get();
 
     private DragonMemories() {
     }
@@ -38,6 +40,7 @@ public final class DragonMemories {
                 PATH,
                 CANT_REACH_WALK_TARGET_SINCE,
                 LOOK_TARGET,
+                HOME,
                 TARGET_AIRBORNE,
                 IS_AERIAL,
                 IS_GROUNDED,
@@ -47,7 +50,8 @@ public final class DragonMemories {
                 IN_LAVA,
                 MOVEMENT_INTENT,
                 GROUND_ROUTE_ABANDONED,
-                TACTICAL_LANDING_POSITION
+                TACTICAL_LANDING_POSITION,
+                ROOST_SLEEP_POSITION
         );
     }
 }

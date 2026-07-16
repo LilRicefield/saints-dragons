@@ -1,0 +1,19 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:beach",
+    "minecraft:stony_shore",
+    {
+      "id": "c:beach",
+      "required": false
+    },
+    {
+      "id": "c:stony_shores",
+      "required": false
+    },
+    {
+      "id": "forge:is_beach",
+      "required": false
+    }
+  ]
+}

@@ -97,8 +97,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.SPARSE_JUNGLE)
                 .add(Biomes.FLOWER_FOREST);
 
-        addVarasuchusBiomes(ModTags.Biomes.HAS_VARASUCHUS);
-
         tag(ModTags.Biomes.HAS_VOLITANS)
                 .addOptionalTag(rl("c", "ocean"))
                 .addOptionalTag(rl("c", "is_ocean"))
@@ -149,18 +147,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.JUNGLE)
                 .add(Biomes.SPARSE_JUNGLE)
                 .add(Biomes.BAMBOO_JUNGLE);
-    }
-
-    private void addVarasuchusBiomes(net.minecraft.tags.TagKey<Biome> tag) {
-        tag(tag)
-                .addOptionalTag(rl("c", "beach"))
-                .addOptionalTag(rl("c", "stony_shores"))
-                .addOptionalTag(rl("c", "is_beach"))
-                .addOptionalTag(rl("c", "is_stony_shores"))
-                .addOptionalTag(rl("forge", "is_beach"))
-                .add(Biomes.BEACH)
-                .add(Biomes.SNOWY_BEACH)
-                .add(Biomes.STONY_SHORE);
     }
 
     private static ResourceLocation rl(String namespace, String path) {
