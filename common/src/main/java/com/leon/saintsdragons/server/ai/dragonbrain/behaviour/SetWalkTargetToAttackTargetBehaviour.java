@@ -27,11 +27,11 @@ import java.util.function.BiPredicate;
  */
 public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private final BiFunction<T, LivingEntity, Float> speedModifier;
-    private final BiFunction<T, LivingEntity, Integer> closeEnoughDistance;
+    private final BiFunction<T, LivingEntity, Double> closeEnoughDistance;
     private final BiPredicate<T, LivingEntity> movementLocked;
 
     public SetWalkTargetToAttackTargetBehaviour(float speedModifier,
-                                                BiFunction<T, LivingEntity, Integer> closeEnoughDistance,
+                                                BiFunction<T, LivingEntity, Double> closeEnoughDistance,
                                                 BiPredicate<T, LivingEntity> movementLocked) {
         super(Map.of(
                 DragonMemories.WALK_TARGET, MemoryStatus.REGISTERED,
@@ -69,10 +69,10 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
             return;
         }
 
-        int closeEnough = Math.max(0, closeEnoughDistance.apply(dragon, target));
+        double closeEnough = Math.max(0.0D, closeEnoughDistance.apply(dragon, target));
         if (movementLocked.test(dragon, target)
                 || dragon.getSensing().hasLineOfSight(target)
-                && target.blockPosition().distManhattan(dragon.blockPosition()) <= closeEnough) {
+                && dragon.distanceToSqr(target) <= closeEnough * closeEnough) {
             context.memories().erase(DragonMemories.WALK_TARGET);
             return;
         }
@@ -81,7 +81,7 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
         context.memories().set(DragonMemories.WALK_TARGET, new WalkTarget(
                 new EntityTracker(target, false),
                 speedModifier.apply(dragon, target),
-                closeEnough
+                (int)Math.floor(closeEnough)
         ));
     }
 }

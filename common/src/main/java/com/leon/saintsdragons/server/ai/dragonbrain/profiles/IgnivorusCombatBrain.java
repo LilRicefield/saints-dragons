@@ -72,10 +72,9 @@ public class IgnivorusCombatBrain implements DragonBrainOwner<Ignivorus> {
                                 new IgnivorusAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<Ignivorus>(
                                         IgnivorusGroundCombatBehaviour.CHASE_SPEED,
-                                        (dragon, target) -> (int)Math.floor(
+                                        (dragon, target) ->
                                                 IgnivorusGroundCombatBehaviour.MELEE_ENGAGE_RANGE
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
-                                        ),
+                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> groundCombat.isGroundMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),

@@ -153,8 +153,9 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
     }
 
     private boolean hasReachedTarget(T dragon, WalkTarget walkTarget) {
-        return walkTarget.getTarget().currentBlockPosition().distManhattan(dragon.blockPosition())
-                <= walkTarget.getCloseEnoughDist();
+        double closeEnough = Math.max(0.0D, walkTarget.getCloseEnoughDist());
+        return dragon.position().distanceToSqr(walkTarget.getTarget().currentPosition())
+                <= closeEnough * closeEnough;
     }
 
     private boolean isGroundMovementContext(DragonBrainContext<T> context) {

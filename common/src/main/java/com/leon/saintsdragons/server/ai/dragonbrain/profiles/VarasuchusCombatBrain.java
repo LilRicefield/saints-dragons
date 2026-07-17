@@ -94,10 +94,9 @@ public class VarasuchusCombatBrain implements DragonBrainOwner<Varasuchus> {
                         .behaviours(
                                 new SetWalkTargetToAttackTargetBehaviour<Varasuchus>(
                                         VarasuchusCombatBehaviour.CHASE_SPEED,
-                                        (dragon, target) -> (int)Math.floor(
+                                        (dragon, target) ->
                                                 groundStopRange(dragon, target)
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
-                                        ),
+                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> combat.isMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<Varasuchus>(

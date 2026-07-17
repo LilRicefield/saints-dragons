@@ -71,10 +71,9 @@ public class StegonautCombatBrain implements DragonBrainOwner<Stegonaut> {
                         .behaviours(
                                 new SetWalkTargetToAttackTargetBehaviour<Stegonaut>(
                                         GROUND_CHASE_SPEED,
-                                        (dragon, target) -> (int)Math.floor(
+                                        (dragon, target) ->
                                                 StegonautGroundCombatBehaviour.GROUND_ATTACK_RANGE
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
-                                        ),
+                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> StegonautGroundCombatBehaviour.isAttacking(dragon)
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),

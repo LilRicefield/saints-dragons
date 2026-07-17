@@ -73,10 +73,9 @@ public class VolitansCombatBrain implements DragonBrainOwner<Volitans> {
                                 new VolitansAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<Volitans>(
                                         VolitansGroundCombatBehaviour.CHASE_SPEED,
-                                        (dragon, target) -> (int)Math.floor(
+                                        (dragon, target) ->
                                                 VolitansGroundCombatBehaviour.BITE_RANGE
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
-                                        ),
+                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> groundCombat.isGroundMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(0.28D, 8.0F),

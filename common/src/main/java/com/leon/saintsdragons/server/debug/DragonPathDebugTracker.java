@@ -137,7 +137,8 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} navigationDone={} navigationStuck={} "
+                        + "rejectedTarget={} combatTarget={} onGround={} verticalCollision={} velocity={} "
+                        + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
                         + "activity={} behaviours={}",
                 player.getGameProfile().getName(),
@@ -160,6 +161,9 @@ public final class DragonPathDebugTracker {
                 blockPosition(snapshot.swimEndpoint()),
                 blockPosition(snapshot.rejectedTarget()),
                 blockPosition(snapshot.combatTarget()),
+                dragon.onGround(),
+                dragon.verticalCollision,
+                dragon.getDeltaMovement(),
                 dragon.getNavigation().isDone(),
                 dragon.getNavigation().isStuck(),
                 snapshot.searchType(),
@@ -323,6 +327,8 @@ public final class DragonPathDebugTracker {
                             @Nullable BlockPos swimEndpoint,
                             @Nullable BlockPos rejectedTarget,
                             int combatTargetId,
+                            boolean onGround,
+                            boolean verticalCollision,
                             boolean navigationDone,
                             boolean navigationStuck,
                             String activity,
@@ -351,6 +357,8 @@ public final class DragonPathDebugTracker {
                     blockPosition(snapshot.swimEndpoint()),
                     blockPosition(snapshot.rejectedTarget()),
                     combatTarget == null ? -1 : combatTarget.getId(),
+                    dragon.onGround(),
+                    dragon.verticalCollision,
                     dragon.getNavigation().isDone(),
                     dragon.getNavigation().isStuck(),
                     activity,

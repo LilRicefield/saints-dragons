@@ -12,8 +12,14 @@ class AsyncFlightMovementExecutor {
     private static final double VERTICAL_VELOCITY_LERP = 0.10D;
     private static final double LANDING_HORIZONTAL_VELOCITY_LERP = 0.28D;
     private static final double LANDING_VERTICAL_VELOCITY_LERP = 0.36D;
-    private static final double LANDING_MIN_DESCENT_SPEED = 0.75D;
-    private static final double LANDING_VERTICAL_SPEED_SCALE = 1.35D;
+    private static final double LANDING_APPROACH_MIN_DISTANCE = 8.0D;
+    private static final double LANDING_APPROACH_WIDTH_SCALE = 2.0D;
+    private static final double LANDING_FLARE_MIN_DISTANCE = 3.0D;
+    private static final double LANDING_FLARE_WIDTH_SCALE = 0.75D;
+    private static final double LANDING_APPROACH_SPEED_FLOOR = 0.35D;
+    private static final double LANDING_MIN_DESCENT_SPEED = 0.75;
+    private static final double LANDING_MAX_FORCED_DESCENT_SPEED = 1.50D;
+    private static final double LANDING_FLARE_MAX_DESCENT_SPEED = 0.20D;
     private static final float MAX_YAW_STEP = 5.0f;
     private static final float MAX_PITCH_STEP = 2.5f;
     private static final float PITCH_DEADZONE_DEGREES = 3.5f;
@@ -32,6 +38,11 @@ class AsyncFlightMovementExecutor {
                                 boolean queueEmpty, boolean landingTarget) {
         Vec3 dragonPos = this.dragon.position();
         Vec3 currentVelocity = this.dragon.getDeltaMovement();
+        if (landingTarget && this.hasLandingContact()) {
+            this.zeroVelocity();
+            return;
+        }
+
         Vec3 target = lookAheadTarget != null ? lookAheadTarget : currentWaypoint;
         Vec3 toTarget = target.subtract(dragonPos);
         Vec3 toWaypoint = currentWaypoint.subtract(dragonPos);
@@ -42,8 +53,26 @@ class AsyncFlightMovementExecutor {
 
         double desiredSpeed = Math.max(0.0, this.flightCapable.getFlightSpeed()) * speedModifier;
         double distToFinalWaypoint = dragonPos.distanceTo(currentWaypoint);
+        double horizontalDistToWaypoint = Math.sqrt(toWaypoint.x * toWaypoint.x + toWaypoint.z * toWaypoint.z);
+        double landingApproachDistance = Math.max(
+                LANDING_APPROACH_MIN_DISTANCE,
+                this.dragon.getBbWidth() * LANDING_APPROACH_WIDTH_SCALE
+        );
+        double landingFlareDistance = Math.max(
+                LANDING_FLARE_MIN_DISTANCE,
+                this.dragon.getBbWidth() * LANDING_FLARE_WIDTH_SCALE
+        );
+        double altitudeToLanding = Math.max(0.0D, dragonPos.y - currentWaypoint.y);
+        double landingFlareAltitude = Math.max(2.0D, this.dragon.getBbHeight() * 0.5D);
+        boolean insideLandingApproach = landingTarget && horizontalDistToWaypoint <= landingApproachDistance;
+        boolean insideLandingFlare = landingTarget
+                && horizontalDistToWaypoint <= landingFlareDistance
+                && altitudeToLanding <= landingFlareAltitude;
         double decelStartDist = arrivalDist * 2.0;
-        if (distToFinalWaypoint < decelStartDist && queueEmpty) {
+        if (insideLandingApproach) {
+            double approachProgress = Mth.clamp(horizontalDistToWaypoint / landingApproachDistance, 0.0D, 1.0D);
+            desiredSpeed *= Mth.lerp(approachProgress, LANDING_APPROACH_SPEED_FLOOR, 1.0D);
+        } else if (distToFinalWaypoint < decelStartDist && queueEmpty) {
             desiredSpeed *= Math.max(0.3, distToFinalWaypoint / decelStartDist);
         }
 
@@ -59,18 +88,27 @@ class AsyncFlightMovementExecutor {
                 desiredVertical = Math.min(0.35D, Math.max(0.12D, toWaypoint.y * 0.08D));
             }
         }
-        if (landingTarget && currentWaypoint.y <= dragonPos.y) {
-            double altitudeToLanding = Math.max(0.0D, dragonPos.y - currentWaypoint.y);
-            double minLandingDescent = Math.min(1.0D, Math.max(0.25D, altitudeToLanding * 0.06D));
-            desiredVertical = Math.min(desiredVertical, -minLandingDescent);
+        boolean atOrAboveLandingHeight = currentWaypoint.y <= dragonPos.y + VERTICAL_TARGET_DEADZONE;
+        // The path owns the descent while distant; forcing it early makes large dragons meet terrain before the target.
+        if (insideLandingApproach && atOrAboveLandingHeight) {
+            double minimumDescentDirection = Math.min(0.35D, Math.max(0.08D, altitudeToLanding * 0.04D));
+            desiredVertical = Math.min(desiredVertical, -minimumDescentDirection);
         }
         Vec3 targetVelocity = new Vec3(
                 desiredDirection.x * desiredSpeed,
-                desiredVertical * desiredSpeed * (landingTarget && desiredVertical < 0.0D ? LANDING_VERTICAL_SPEED_SCALE : 1.0D),
+                desiredVertical * desiredSpeed,
                 desiredDirection.z * desiredSpeed
         );
-        if (landingTarget && currentWaypoint.y <= dragonPos.y && targetVelocity.y > -LANDING_MIN_DESCENT_SPEED) {
-            targetVelocity = new Vec3(targetVelocity.x, -LANDING_MIN_DESCENT_SPEED, targetVelocity.z);
+        if (insideLandingApproach && atOrAboveLandingHeight) {
+            double minimumDescentSpeed = Math.min(
+                    LANDING_MAX_FORCED_DESCENT_SPEED,
+                    Math.max(LANDING_MIN_DESCENT_SPEED, altitudeToLanding * 0.04D)
+            );
+            double landingVertical = Math.min(targetVelocity.y, -minimumDescentSpeed);
+            if (insideLandingFlare) {
+                landingVertical = Math.max(landingVertical, -LANDING_FLARE_MAX_DESCENT_SPEED);
+            }
+            targetVelocity = new Vec3(targetVelocity.x, landingVertical, targetVelocity.z);
         }
         Vec3 velocityBaseline = this.smoothedVelocity;
         if (velocityBaseline.lengthSqr() < 1.0E-4 && currentVelocity.lengthSqr() > 1.0E-4) {
@@ -145,6 +183,12 @@ class AsyncFlightMovementExecutor {
     public void zeroVelocity() {
         this.smoothedVelocity = Vec3.ZERO;
         this.dragon.setDeltaMovement(Vec3.ZERO);
+    }
+
+    boolean hasLandingContact() {
+        Vec3 currentVelocity = this.dragon.getDeltaMovement();
+        return this.dragon.onGround()
+                || (this.dragon.verticalCollision && currentVelocity.y <= 0.0D);
     }
 
     private static Vec3 lerpVec3(Vec3 from, Vec3 to, double t) {

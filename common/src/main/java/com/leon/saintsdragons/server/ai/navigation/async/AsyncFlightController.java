@@ -14,6 +14,7 @@ public class AsyncFlightController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncFlightController.class);
 
     private final Mob host;
+    private final DragonFlightCapable flightCapable;
     private final AsyncFlightWaypointQueue waypointQueue = new AsyncFlightWaypointQueue();
     private final AsyncFlightPathResolver pathResolver;
     private final AsyncFlightMovementExecutor movementExecutor;
@@ -37,8 +38,9 @@ public class AsyncFlightController {
 
     public AsyncFlightController(Mob host) {
         this.host = host;
+        this.flightCapable = (DragonFlightCapable) host;
         this.pathResolver = new AsyncFlightPathResolver(host, this);
-        this.movementExecutor = new AsyncFlightMovementExecutor(host, (DragonFlightCapable) host);
+        this.movementExecutor = new AsyncFlightMovementExecutor(host, this.flightCapable);
         this.stuckDetector = new AsyncFlightStuckDetector(host);
     }
 
@@ -65,6 +67,11 @@ public class AsyncFlightController {
         }
 
         boolean landingTarget = this.isLandingTarget(this.currentWaypoint);
+        if (landingTarget && this.flightCapable.isLanding() && this.movementExecutor.hasLandingContact()) {
+            this.clearAllWaypoints();
+            this.flightCapable.markLandedNow();
+            return;
+        }
         double arrivalDist = this.calculateArrivalDistance(landingTarget);
         double distSq = this.host.position().distanceToSqr(this.currentWaypoint);
         if (this.hasReachedWaypoint(distSq, arrivalDist, landingTarget)) {

@@ -77,10 +77,9 @@ public class CindervaneCombatBrain implements DragonBrainOwner<Cindervane> {
                                 new CindervaneAirCombatMovementBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<Cindervane>(
                                         (float)GROUND_CHASE_SPEED,
-                                        (dragon, target) -> (int)Math.floor(
+                                        (dragon, target) ->
                                                 CindervaneMeleeAttackBehaviour.groundStopRange(target)
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D
-                                        ),
+                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> dragon.isAbilityActive(ModAbilities.CINDERVANE_BITE)
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(WATER_CHASE_SPEED, WATER_TURN_SPEED),
