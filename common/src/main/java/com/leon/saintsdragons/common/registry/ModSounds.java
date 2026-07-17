@@ -254,6 +254,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> NULLJAW_HURT = registerSound("nulljaw_hurt");
     public static final Supplier<SoundEvent> NULLJAW_DIE = registerSound("nulljaw_die");
     public static final Supplier<SoundEvent> NULLJAW_EAT = registerSound("nulljaw_eat");
+    public static final Supplier<SoundEvent> NULLJAW_BITE = registerSound("nulljaw_bite");
 
     private static Supplier<SoundEvent> registerSound(String name) {
         return REGISTER.register(name, () -> SoundEvent.createVariableRangeEvent(SaintsDragonsCommon.rl(name)));

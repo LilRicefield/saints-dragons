@@ -2170,6 +2170,17 @@
       }
     ]
   },
+  "nulljaw_bite": {
+    "subtitle": "subtitles.saintsdragons.nulljaw_bite",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/nulljaw/nulljaw_bite",
+        "volume": 1.2,
+        "pitch": 1.0,
+        "attenuation_distance": 20
+      }
+    ]
+  },
   "mossback_step": {
     "sounds": [
       {

@@ -34,7 +34,8 @@ public final class NulljawBreedGoal extends DragonBreedGoal<Nulljaw> {
         if (closeEnough) {
             stopBreedingMovement(this.dragon);
         } else {
-            this.dragon.flyToward(this.partner.position(), BREED_FLIGHT_SPEED);
+            this.dragon.beginAiFlight();
+            this.dragon.getAIMovement().setWaypoint(this.partner, BREED_FLIGHT_SPEED);
         }
 
         ++this.loveTime;

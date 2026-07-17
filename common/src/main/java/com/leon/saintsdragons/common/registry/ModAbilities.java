@@ -21,6 +21,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.Ignivoru
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusStompAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusUltimateAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusWingSwipeAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.nulljaw.NulljawBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxGroundRendAbility;
@@ -120,6 +121,7 @@ public final class ModAbilities {
     public static final DragonAbilityType<Stegonaut, HurtAbility<Stegonaut>> STEGONAUT_HURT = register("stegonaut_hurt", HurtAbility::new);
     public static final DragonAbilityType<Stegonaut, DieAbility<Stegonaut>> STEGONAUT_DIE = register("stegonaut_die", DieAbility::new);
 
+    public static final DragonAbilityType<Nulljaw, NulljawBiteAbility> NULLJAW_BITE = register("nulljaw_bite", NulljawBiteAbility::new);
     public static final DragonAbilityType<Nulljaw, HurtAbility<Nulljaw>> NULLJAW_HURT = register("nulljaw_hurt", HurtAbility::new);
 
     private ModAbilities() {

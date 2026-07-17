@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
@@ -140,7 +141,7 @@ public final class DragonPathDebugTracker {
                         + "rejectedTarget={} combatTarget={} onGround={} verticalCollision={} velocity={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
-                        + "activity={} behaviours={}",
+                        + "coordination={} activity={} behaviours={}",
                 player.getGameProfile().getName(),
                 dragon.getId(),
                 dragon.blockPosition(),
@@ -173,6 +174,7 @@ public final class DragonPathDebugTracker {
                 snapshot.searchOpenNodeCount(),
                 snapshot.searchCandidateNodeCount(),
                 snapshot.searchDurationMicros(),
+                logState.coordination,
                 logState.activity,
                 logState.behaviours
         );
@@ -331,6 +333,7 @@ public final class DragonPathDebugTracker {
                             boolean verticalCollision,
                             boolean navigationDone,
                             boolean navigationStuck,
+                            String coordination,
                             String activity,
                             List<String> behaviours) {
         private static LogState capture(DragonEntity dragon, MessageDragonPathDebug snapshot) {
@@ -338,6 +341,9 @@ public final class DragonPathDebugTracker {
             String activity = dragon.getBrain().getActiveNonCoreActivity()
                     .map(Object::toString)
                     .orElse("none");
+            String coordination = dragon instanceof Nulljaw nulljaw
+                    ? nulljaw.getCombatFormationDebugSummary()
+                    : "none";
             return new LogState(
                     snapshot.locomotionMode(),
                     snapshot.movementMode(),
@@ -361,6 +367,7 @@ public final class DragonPathDebugTracker {
                     dragon.verticalCollision,
                     dragon.getNavigation().isDone(),
                     dragon.getNavigation().isStuck(),
+                    coordination,
                     activity,
                     runningBehaviours(dragon)
             );

@@ -57,7 +57,7 @@ public final class NulljawModel extends DragonGeoModel<Nulljaw> {
             return;
         }
 
-        float pitchRad = Mth.clamp(-entity.getFlightPitchRadians(partialTick) * 1.75F, -0.70F, 0.70F);
+        float pitchRad = Mth.clamp(entity.getFlightPitchRadians(partialTick), -Mth.HALF_PI, Mth.HALF_PI);
         GeoBone body = bodyOpt.get();
         body.setRotX(body.getRotX() + pitchRad);
     }

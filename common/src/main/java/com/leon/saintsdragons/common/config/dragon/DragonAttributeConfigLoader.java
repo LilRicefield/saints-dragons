@@ -496,7 +496,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 maxHealth,
                 armor,
                 0.42D,
-                Map.of(),
+                Map.of("bite", DragonAbilityOverride.ofDamage(8.0D)),
                 Map.of(
                         "taming_chance_base", 20.0D,
                         "wild_flying_speed_multiplier", 1.0D

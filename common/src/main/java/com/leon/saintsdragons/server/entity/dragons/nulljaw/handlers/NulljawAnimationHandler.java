@@ -9,12 +9,16 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 public final class NulljawAnimationHandler {
+    public static final String ACTION_CONTROLLER = "actions";
+    public static final String BITE_TRIGGER = "bite";
+
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.nulljaw.idle");
     private static final RawAnimation HOVER = RawAnimation.begin().thenLoop("animation.nulljaw.hover");
     private static final RawAnimation HAND_HOLDING = RawAnimation.begin().thenLoop("animation.nulljaw.hand_holding");
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.nulljaw.eat");
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.nulljaw.hurt");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.nulljaw.die");
+    private static final RawAnimation BITE = RawAnimation.begin().thenPlay("animation.nulljaw.bite");
     private static final int MOVEMENT_TRANSITION_TICKS = 2;
     private static final int ACTION_TRANSITION_TICKS = 2;
     private static final int INSTANT_TRANSITION_TICKS = 1;
@@ -37,7 +41,7 @@ public final class NulljawAnimationHandler {
         }
 
         state.getController().transitionLength(MOVEMENT_TRANSITION_TICKS);
-        if (dragon.shouldUseHoverAnimation()) {
+        if (dragon.isMovingForAnimation()) {
             AnimationHelper.setAndContinue(state, HOVER);
         } else {
             AnimationHelper.setAndContinue(state, IDLE);
@@ -66,6 +70,7 @@ public final class NulljawAnimationHandler {
     }
 
     public void setupActionController(AnimationController<Nulljaw> controller) {
+        controller.triggerableAnim(BITE_TRIGGER, BITE);
     }
 
     public void setupInstantController(AnimationController<Nulljaw> controller) {

@@ -6,7 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCombatMovementGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCoordinator;
-import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmFloatWanderGoal;
+import com.leon.saintsdragons.server.ai.goals.base.SuspendedFloatWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlyingPathNavigation;
@@ -146,7 +146,28 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(3, createCombatMovementGoal());
-        this.goalSelector.addGoal(7, new DraconianSwarmFloatWanderGoal(this, getWanderFlightSpeed()));
+        this.goalSelector.addGoal(7, new SuspendedFloatWanderGoal(
+                this,
+                new SuspendedFloatWanderGoal.Movement() {
+                    @Override
+                    public boolean isIdle() {
+                        return AbstractDraconianSwarmEntity.this.swarmFlightController.isIdle();
+                    }
+
+                    @Override
+                    public void moveTo(Vec3 target, double speed) {
+                        AbstractDraconianSwarmEntity.this.swarmFlightController.setWaypoint(target, speed);
+                    }
+
+                    @Override
+                    public void stop() {
+                        AbstractDraconianSwarmEntity.this.swarmFlightController.clearWaypoint();
+                    }
+                },
+                () -> this.isAlive() && this.getTarget() == null,
+                getWanderFlightSpeed(),
+                32
+        ));
         this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
 

@@ -8,21 +8,22 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModTags;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
-import com.leon.saintsdragons.server.ai.goals.base.DragonDirectAirCombatMovementHelper;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
+import com.leon.saintsdragons.server.ai.goals.base.SuspendedFloatWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawBreedGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawFloatGoal;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawCombatGoal;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.handlers.NulljawSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
@@ -59,7 +60,6 @@ import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
-import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
@@ -84,6 +84,9 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -107,18 +110,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private static final double RIDER_FLIGHT_SPEED = 0.32D;
     private static final double RIDER_ASCEND_SPEED = 0.16D;
     private static final double RIDER_DESCEND_SPEED = 0.18D;
-    private static final double AI_CRUISE_SPEED = 0.24D;
-    private static final double FLOAT_ACCEL = 0.10D;
-    private static final double FLOAT_DRAG = 0.96D;
+    private static final double GROUND_CLEARANCE_LIFT = 0.08D;
     private static final double BABY_MAX_HEALTH = 70.0D;
     private static final double BABY_ARMOR = 4.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
-    private static final int HOVER_VISUAL_GRACE_TICKS = 8;
-    private static final double MOUNTED_HOVER_VISUAL_THRESHOLD_SQ = 0.010D;
     private static final int MAX_PACK_SIZE = 4;
     private static final double PACK_SEARCH_RADIUS = 28.0D;
-    private static final EntityDataAccessor<Boolean> DATA_HOVER_VISUAL_ACTIVE =
-            SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
@@ -142,25 +139,19 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private final AnimationController<Nulljaw> vocalController;
     private final AnimationController<Nulljaw> interactionController;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
-    private final AsyncFlightController asyncAirController;
-    private final AsyncFlightMoveControl asyncAirMoveControl;
-    private final FlyingPathNavigation airNavigation;
 
     @Nullable
     private UUID packLeaderUuid;
-    private int hoverVisualTicks;
+    @Nullable
+    private UUID combatFormationLeaderUuid;
+    private String combatFormationPhase = "NONE";
+    private int combatFormationSlot = -1;
+    private int combatFormationSize;
+    private boolean combatAttackReserved;
     private boolean running;
     private boolean deathSoundQueued;
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
-        this.asyncAirController = new AsyncFlightController(this);
-        this.asyncAirMoveControl = new AsyncFlightMoveControl(this, this.asyncAirController);
-        this.airNavigation = new AsyncFlyingPathNavigation(this, level, this.asyncAirController);
-        this.airNavigation.setCanOpenDoors(false);
-        this.airNavigation.setCanPassDoors(false);
-        this.airNavigation.setCanFloat(false);
-        this.navigation = this.airNavigation;
-        this.moveControl = this.asyncAirMoveControl;
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
         this.actionController = new AnimationController<>(this, "actions", 2, animationHandler::actionPredicate);
         this.mountedController = new AnimationController<>(this, "mounted", 2, animationHandler::mountedPredicate);
@@ -173,7 +164,13 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         this.setTakeoff(false);
         this.setLanding(false);
         this.setNoGravity(true);
+        this.switchToAirNavigation();
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
+    }
+
+    @Override
+    public EnumSet<DragonMovementCapability> movementCapabilities() {
+        return EnumSet.of(DragonMovementCapability.FLY);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -275,6 +272,23 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
+    public float getWalkTargetValue(@NotNull BlockPos pos, @NotNull LevelReader level) {
+        return level.getBlockState(pos).isAir() && level.getFluidState(pos).isEmpty() ? 10.0F : 0.0F;
+    }
+
+    @Override
+    protected FlyingPathNavigation createAirNavigation(Level level, AsyncFlightController controller) {
+        return new AsyncFlyingPathNavigation(this, level, controller) {
+            @Override
+            public boolean isStableDestination(@NotNull BlockPos pos) {
+                return this.level.hasChunkAt(pos)
+                        && this.level.getBlockState(pos).isAir()
+                        && this.level.getFluidState(pos).isEmpty();
+            }
+        };
+    }
+
+    @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         applyConfiguredAttributes();
@@ -287,7 +301,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     protected void defineRideableDragonData() {
-        this.entityData.define(DATA_HOVER_VISUAL_ACTIVE, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
@@ -295,7 +308,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(1, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
+        this.goalSelector.addGoal(1, new NulljawCombatGoal(this));
+        this.goalSelector.addGoal(2, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
             @Override
             protected void updateFlightState(LivingEntity owner, boolean shouldFly, boolean ownerAirborne, double distance) {
                 Nulljaw.this.setFlying(true);
@@ -313,23 +327,39 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             }
 
             @Override
-            protected void handleFlightFollowing(LivingEntity owner, boolean ownerAirborne) {
-                Nulljaw.this.setFlying(true);
-                Nulljaw.this.setTakeoff(false);
-                Nulljaw.this.setHovering(false);
-                Nulljaw.this.setLanding(false);
-                Vec3 targetPos = getFlightFollowTarget(owner, true);
-                boolean catchUp = shouldUseFlightCatchUp(targetPos);
-                Nulljaw.this.setAccelerating(catchUp);
-                Nulljaw.this.flyToward(targetPos, getFlightFollowSpeed(catchUp));
+            protected Vec3 getFlightFollowTarget(LivingEntity owner, boolean ownerAirborne) {
+                return super.getFlightFollowTarget(owner, true);
             }
+
         });
-        this.goalSelector.addGoal(2, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
-        this.goalSelector.addGoal(3, new NulljawBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        this.goalSelector.addGoal(4, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
-        this.goalSelector.addGoal(5, new NulljawFloatGoal(this));
-        this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 12.0F));
-        this.goalSelector.addGoal(7, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(3, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
+        this.goalSelector.addGoal(4, new NulljawBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+        this.goalSelector.addGoal(5, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
+        this.goalSelector.addGoal(6, new SuspendedFloatWanderGoal(
+                this,
+                new SuspendedFloatWanderGoal.Movement() {
+                    @Override
+                    public boolean isIdle() {
+                        return Nulljaw.this.isAiFlightDone();
+                    }
+
+                    @Override
+                    public void moveTo(Vec3 target, double speed) {
+                        Nulljaw.this.beginAiFlight();
+                        Nulljaw.this.getAIMovement().setWaypoint(target, speed);
+                    }
+
+                    @Override
+                    public void stop() {
+                        Nulljaw.this.getAIMovement().stop();
+                    }
+                },
+                this::canFloatWander,
+                1.0D,
+                32
+        ));
+        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 12.0F));
+        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
     }
 
     @Override
@@ -363,40 +393,44 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return this.getDeltaMovement().lengthSqr() > 0.0015D;
     }
 
-    public boolean shouldUseHoverAnimation() {
-        return this.entityData.get(DATA_HOVER_VISUAL_ACTIVE) || this.isActuallyHovering();
+    public boolean isMovingForAnimation() {
+        return this.getDeltaMovement().lengthSqr() > 0.003D;
     }
 
-    public float getBankAngleDegrees(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevBankAngle, this.flightVisualState.bankAngle);
-    }
-
-    public float getFlightPitchRadians(float partialTick) {
-        return Mth.lerp(partialTick, this.flightVisualState.prevFlightPitchRad, this.flightVisualState.flightPitchRad);
-    }
-
-    public float getSmoothedRoll(float partialTick) {
-        return 0.0F;
+    private boolean canFloatWander() {
+        if (!this.isAlive()
+                || this.isOrderedToSit()
+                || this.isSittingDownAnimation()
+                || this.isVehicle()
+                || this.isPassenger()
+                || (this.getTarget() != null && this.getTarget().isAlive())) {
+            return false;
+        }
+        if (this.isTame() && this.getCommand() == 1) {
+            return false;
+        }
+        LivingEntity owner = this.getOwner();
+        return owner == null || this.getCommand() != 0 || this.distanceToSqr(owner) <= 64.0D;
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
-        tickBankingLogic();
-        tickPitchingLogic();
+        tickStandardPitchingLogic();
         nudgeUpIfCarriedRiderInWall();
         if (!this.level().isClientSide) {
             this.setFlying(true);
             this.setTakeoff(false);
             this.setLanding(false);
             this.setNoGravity(true);
+            if (!this.isUsingAirNavigation()) {
+                this.switchToAirNavigation();
+            }
             if (this.entityData.get(DATA_FEEDING_COOLDOWN) > 0) {
                 this.entityData.set(DATA_FEEDING_COOLDOWN, this.entityData.get(DATA_FEEDING_COOLDOWN) - 1);
             }
-            if (!this.isVehicle()) {
-                this.asyncAirController.serverTick();
-            }
-            tickHoverVisualState();
+            this.tickAsyncFlightNavigation();
+            this.maintainGroundClearance();
             this.tickAmbientVocals();
         }
         if (!this.level().isClientSide) {
@@ -404,79 +438,19 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         }
     }
 
-    public void flyToward(Vec3 destination, double speedScale) {
-        this.beginAiFlight();
-        markHoverVisualActive();
-        DragonDirectAirCombatMovementHelper.flyToward(this, destination, speedScale, FLOAT_ACCEL, FLOAT_DRAG);
+    @Override
+    protected DragonFlightVisuals.State getFlightVisualState() {
+        return this.flightVisualState;
     }
 
-    private void markHoverVisualActive() {
-        this.hoverVisualTicks = HOVER_VISUAL_GRACE_TICKS;
-        if (!this.level().isClientSide) {
-            this.entityData.set(DATA_HOVER_VISUAL_ACTIVE, true);
-        }
-    }
-
-    private void tickHoverVisualState() {
-        if (this.isVehicle()) {
-            boolean active = this.getDeltaMovement().lengthSqr() > MOUNTED_HOVER_VISUAL_THRESHOLD_SQ;
-            this.hoverVisualTicks = 0;
-            if (this.entityData.get(DATA_HOVER_VISUAL_ACTIVE) != active) {
-                this.entityData.set(DATA_HOVER_VISUAL_ACTIVE, active);
-            }
-            return;
-        }
-
-        if (this.isActuallyHovering()) {
-            this.hoverVisualTicks = HOVER_VISUAL_GRACE_TICKS;
-        } else if (this.hoverVisualTicks > 0) {
-            this.hoverVisualTicks--;
-        }
-
-        boolean active = this.hoverVisualTicks > 0;
-        if (this.entityData.get(DATA_HOVER_VISUAL_ACTIVE) != active) {
-            this.entityData.set(DATA_HOVER_VISUAL_ACTIVE, active);
-        }
-    }
-
-    private void tickBankingLogic() {
-        DragonFlightVisuals.tickBanking(
-                this.flightVisualState,
-                true,
-                this.horizontalCollision,
-                this.verticalCollision,
-                this.getYRot(),
-                this.yRotO
-        );
+    @Override
+    protected EntityDataAccessor<Float> getFlightPitchAccessor() {
+        return DATA_FLIGHT_PITCH;
     }
 
     @Override
     protected boolean shouldSpawnFlightDustEffects() {
         return false;
-    }
-
-    private void tickPitchingLogic() {
-        DragonFlightVisuals.beginPitchTick(this.flightVisualState);
-
-        if (this.level().isClientSide) {
-            this.flightVisualState.flightPitchRad = this.entityData.get(DATA_FLIGHT_PITCH);
-            return;
-        }
-
-        float targetPitchRad;
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
-            float rawPlayerPitchRad = (float) Math.toRadians(player.getXRot());
-            targetPitchRad = DragonFlightVisuals.smoothRiderPitchInput(this.flightVisualState, rawPlayerPitchRad);
-        } else {
-            DragonFlightVisuals.clearRiderPitchInput(this.flightVisualState);
-            targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(this.getDeltaMovement());
-        }
-
-        this.flightVisualState.flightPitchRad =
-                this.isVehicle()
-                        ? DragonFlightVisuals.approachRiderPitch(this.flightVisualState.flightPitchRad, targetPitchRad)
-                        : DragonFlightVisuals.approachAiPitch(this.flightVisualState.flightPitchRad, targetPitchRad);
-        this.entityData.set(DATA_FLIGHT_PITCH, this.flightVisualState.flightPitchRad);
     }
 
     private void tickAmbientVocals() {
@@ -485,6 +459,18 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         }
         tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY,
                 () -> selectWeightedAmbientVocal("grumble1", 0.34f, "grumble2", 0.67f, "grumble3"));
+    }
+
+    private void maintainGroundClearance() {
+        if (!this.isAlive() || !this.onGround() || this.isInWaterOrBubble() || this.isInLava()) {
+            return;
+        }
+
+        Vec3 velocity = this.getDeltaMovement();
+        if (velocity.y < GROUND_CLEARANCE_LIFT) {
+            this.setDeltaMovement(velocity.x, GROUND_CLEARANCE_LIFT, velocity.z);
+            this.hasImpulse = true;
+        }
     }
 
     @Override
@@ -583,7 +569,10 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return this.getFirstPassenger() instanceof LivingEntity living ? living : null;
     }
 
-
+    @Override
+    public double getPassengersRidingOffset() {
+        return -CARRIED_HITBOX_DOWNWARD_EXTENSION;
+    }
 
     @Override
     protected void positionRider(@NotNull Entity passenger, @NotNull Entity.MoveFunction moveFunction) {
@@ -776,7 +765,102 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
-        return super.hurt(source, amount);
+        boolean hurt = super.hurt(source, amount);
+        if (hurt && !this.level().isClientSide && source.getEntity() instanceof LivingEntity attacker) {
+            alertNearbyNulljaws(attacker);
+        }
+        return hurt;
+    }
+
+    private void alertNearbyNulljaws(LivingEntity attacker) {
+        if (!isValidRetaliationTarget(attacker)) {
+            return;
+        }
+
+        if (this.isTame()) {
+            assignRetaliationTarget(this, attacker, this.getUUID());
+            return;
+        }
+
+        AABB alertBounds = this.getBoundingBox().inflate(PACK_SEARCH_RADIUS);
+        List<Nulljaw> responders = new ArrayList<>();
+        responders.add(this);
+        responders.addAll(this.level().getEntitiesOfClass(
+                Nulljaw.class,
+                alertBounds,
+                nulljaw -> nulljaw != this && !nulljaw.isBaby() && !nulljaw.isTame() && nulljaw.isAlive()
+        ));
+        responders.removeIf(nulljaw -> !nulljaw.isValidRetaliationTarget(attacker));
+        responders.sort((first, second) -> compareUuid(first.getUUID(), second.getUUID()));
+
+        int squadSize = Math.max(1, this.getMaxPackSize());
+        for (int start = 0; start < responders.size(); start += squadSize) {
+            List<Nulljaw> squad = responders.subList(start, Math.min(start + squadSize, responders.size()));
+            UUID leaderUuid = chooseCombatFormationLeader(squad).getUUID();
+            for (Nulljaw responder : squad) {
+                assignRetaliationTarget(responder, attacker, leaderUuid);
+            }
+        }
+    }
+
+    private static Nulljaw chooseCombatFormationLeader(List<Nulljaw> squad) {
+        return squad.stream()
+                .min((first, second) -> {
+                    int firstFollowers = referencedFollowerCount(squad, first.getUUID());
+                    int secondFollowers = referencedFollowerCount(squad, second.getUUID());
+                    if (firstFollowers != secondFollowers) {
+                        return Integer.compare(secondFollowers, firstFollowers);
+                    }
+                    if (first.canLeadPack() != second.canLeadPack()) {
+                        return first.canLeadPack() ? -1 : 1;
+                    }
+                    int priority = Integer.compare(
+                            second.getPackLeadershipPriority(),
+                            first.getPackLeadershipPriority()
+                    );
+                    return priority != 0 ? priority : compareUuid(first.getUUID(), second.getUUID());
+                })
+                .orElseThrow();
+    }
+
+    private static int referencedFollowerCount(List<Nulljaw> squad, UUID candidateUuid) {
+        int followers = 0;
+        for (Nulljaw member : squad) {
+            if (candidateUuid.equals(member.getPackLeaderUuid())) {
+                followers++;
+            }
+        }
+        return followers;
+    }
+
+    private static int compareUuid(UUID first, UUID second) {
+        int most = Long.compareUnsigned(first.getMostSignificantBits(), second.getMostSignificantBits());
+        return most != 0
+                ? most
+                : Long.compareUnsigned(first.getLeastSignificantBits(), second.getLeastSignificantBits());
+    }
+
+    private boolean isValidRetaliationTarget(LivingEntity attacker) {
+        if (this.isBaby()
+                || attacker == this
+                || attacker instanceof Nulljaw
+                || !attacker.isAlive()
+                || this.isAlly(attacker)) {
+            return false;
+        }
+        if (attacker instanceof Player player && (player.isCreative() || player.isSpectator())) {
+            return false;
+        }
+        return !this.isTame() || attacker != this.getOwner();
+    }
+
+    private static void assignRetaliationTarget(Nulljaw nulljaw,
+                                                LivingEntity attacker,
+                                                UUID combatLeaderUuid) {
+        nulljaw.setCombatFormationLeaderUuid(combatLeaderUuid);
+        nulljaw.setLastHurtByMob(attacker);
+        nulljaw.setTarget(attacker);
+        nulljaw.beginAiFlight();
     }
 
     @Override
@@ -807,16 +891,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         this.setTakeoff(false);
         this.setHovering(false);
         this.setLanding(false);
-    }
-
-    @Override
-    public void removePassenger(@NotNull Entity passenger) {
-        super.removePassenger(passenger);
-    }
-
-    @Override
-    protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
-        return new FlyingPathNavigation(this, level);
     }
 
     @Override
@@ -955,10 +1029,39 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return PACK_SEARCH_RADIUS;
     }
 
-    @Override
-    public boolean handleDirectAirPackFollow(Vec3 target, double speed) {
-        this.flyToward(target, speed);
-        return true;
+    public @Nullable UUID getCombatFormationLeaderUuid() {
+        return this.combatFormationLeaderUuid;
+    }
+
+    public void setCombatFormationLeaderUuid(@Nullable UUID leaderUuid) {
+        this.combatFormationLeaderUuid = leaderUuid;
+    }
+
+    public void setCombatFormationDebug(String phase, int slot, int size, boolean attackReserved) {
+        this.combatFormationPhase = phase;
+        this.combatFormationSlot = slot;
+        this.combatFormationSize = size;
+        this.combatAttackReserved = attackReserved;
+    }
+
+    public void clearCombatFormationDebug() {
+        this.combatFormationPhase = "NONE";
+        this.combatFormationSlot = -1;
+        this.combatFormationSize = 0;
+        this.combatAttackReserved = false;
+    }
+
+    public String getCombatFormationDebugSummary() {
+        String leader = this.combatFormationLeaderUuid == null
+                ? "none"
+                : this.combatFormationLeaderUuid.toString().substring(0, 8);
+        String slot = this.combatFormationSlot < 0
+                ? "none"
+                : (this.combatFormationSlot + 1) + "/" + Math.max(1, this.combatFormationSize);
+        return "leader=" + leader
+                + ",phase=" + this.combatFormationPhase
+                + ",slot=" + slot
+                + ",reserved=" + this.combatAttackReserved;
     }
 
     @Override
@@ -1007,12 +1110,13 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
-    protected void onFlyingStateChanged(boolean wasFlying, boolean flying) {
+    protected boolean canApplyFlyingState(boolean flying) {
+        return flying;
     }
 
     @Override
     protected boolean canApplyLandingState(boolean landing) {
-        return true;
+        return !landing;
     }
 
     @Override
@@ -1021,7 +1125,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public float getFlightSpeed() {
-        return (float) AI_CRUISE_SPEED;
+        return (float) this.getAttributeValue(Attributes.FLYING_SPEED);
     }
 
     @Override
@@ -1073,6 +1177,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         this.setHovering(false);
         this.setLanding(false);
         this.setNoGravity(true);
+        this.switchToAirNavigation();
     }
 
     @Override
@@ -1082,15 +1187,37 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public void markLandedNow() {
-        this.setFlying(true);
-        this.setTakeoff(false);
-        this.setLanding(false);
-        this.setHovering(false);
+        this.beginAiFlight();
     }
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        return null;
+        return this.isBaby() ? null : ModAbilities.NULLJAW_BITE;
+    }
+
+    @Override
+    public RiderAbilityBinding getAttackRiderAbility() {
+        return this.isBaby()
+                ? null
+                : new RiderAbilityBinding(ModAbilities.NULLJAW_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    protected boolean supportsRiderAction(DragonRiderAction action) {
+        return switch (action) {
+            case ABILITY_USE, ABILITY_STOP -> true;
+            default -> super.supportsRiderAction(action);
+        };
+    }
+
+    @Override
+    protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
+        return abilityType == ModAbilities.NULLJAW_BITE;
+    }
+
+    @Override
+    protected boolean canUseBarrelRoll() {
+        return false;
     }
 
 }
