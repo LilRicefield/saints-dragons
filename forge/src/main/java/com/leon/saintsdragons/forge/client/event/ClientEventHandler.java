@@ -7,13 +7,11 @@ import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
-import com.leon.saintsdragons.forge.client.camera.NulljawFirstPersonCamera;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
@@ -55,8 +53,6 @@ public class ClientEventHandler {
             if (!applyDetachedDragonCamera(event, vehicle)) {
                 DragonRideCameraController.reset();
             }
-        } else if (vehicle instanceof Nulljaw) {
-            event.getCamera().move(0.0D, NulljawFirstPersonCamera.Y_OFFSET, 0.0D);
         } else if (!player.isPassenger() || !DragonRideCameraController.supports(vehicle)) {
             DragonRideCameraController.reset();
         }

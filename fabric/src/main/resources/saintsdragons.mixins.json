@@ -7,7 +7,6 @@
     "AirDismountInputMixin",
     "CameraMixin",
     "CameraRollMixin",
-    "EntityEyePositionMixin",
     "GameRendererMixin",
     "RiderMixin",
     "BloodTempestAfterimagePlayerRendererMixin",

@@ -581,7 +581,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 passenger,
                 moveFunction,
                 getPassengersRidingOffset(),
-                this.level().isClientSide ? this.getClientLocatorPosition("passengerLocator") : null
+                this.level().isClientSide ? this.getClientLocatorPosition("passengerLocator") : null,
+                getPassengersRidingOffset()
         );
     }
 

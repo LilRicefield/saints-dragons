@@ -15,7 +15,6 @@
   "client": [
     "client.AirDismountInputMixin",
     "client.CameraMixin",
-    "client.EntityEyePositionMixin",
     "client.CameraPositionMixin",
     "client.CameraRollMixin",
     "client.RiderMixin",

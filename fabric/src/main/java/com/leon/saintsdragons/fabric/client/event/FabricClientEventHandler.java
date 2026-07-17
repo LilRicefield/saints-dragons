@@ -5,12 +5,10 @@ import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
-import com.leon.saintsdragons.fabric.client.camera.NulljawFirstPersonCamera;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
@@ -64,8 +62,6 @@ public class FabricClientEventHandler {
             if (!applyDetachedDragonCamera(camera, vehicle, partialTicks)) {
                 DragonRideCameraController.reset();
             }
-        } else if (vehicle instanceof Nulljaw) {
-            ((CameraAccessor) camera).saintsdragons$invokeMove(0.0D, NulljawFirstPersonCamera.Y_OFFSET, 0.0D);
         } else if (!player.isPassenger() || !(vehicle instanceof RideableDragonBase)) {
             DragonRideCameraController.reset();
         }
