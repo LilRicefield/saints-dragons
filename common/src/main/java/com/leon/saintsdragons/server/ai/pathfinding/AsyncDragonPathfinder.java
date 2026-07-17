@@ -4,10 +4,13 @@ import com.leon.saintsdragons.server.ai.navigation.PathFinderGround;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -20,6 +23,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.PathNavigationRegion;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -55,6 +59,7 @@ public final class AsyncDragonPathfinder {
         int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
         double routeDistance = Math.sqrt(startPos.distSqr(targetPos));
         int searchRange = Mth.clamp(Mth.ceil(routeDistance) + 24, 32, followRange);
+        int goalAccuracy = Math.max(1, Mth.floor(Math.max(1.5D, dragon.getBbWidth() * 0.75D)));
         int horizontalMargin = Math.max(16, Mth.ceil(dragon.getBbWidth()) + 8);
         int verticalMargin = Math.max(12, Mth.ceil(dragon.getBbHeight()) + 6);
         BlockPos minPos = new BlockPos(
@@ -87,7 +92,7 @@ public final class AsyncDragonPathfinder {
                         dragon,
                         Set.of(targetPos),
                         (float) searchRange,
-                        0,
+                        goalAccuracy,
                         1.0F
                 );
             } catch (Exception exception) {
@@ -143,18 +148,36 @@ public final class AsyncDragonPathfinder {
 
         CompletableFuture
                 .supplyAsync(() -> {
+                    NodeEvaluator nodeEvaluator = useSwarmClearance
+                            ? new AsyncSwarmFlyNodeEvaluator()
+                            : new AsyncDragonFlyNodeEvaluator();
+                    DragonPathSearchDebug.NodeCollector debugCollector = DragonPathSearchDebug.beginNodeSearch(
+                            dragon,
+                            DragonPathSearchDebug.SearchType.AIR,
+                            target
+                    );
+                    if (nodeEvaluator instanceof DragonPathSearchDebuggable debuggable) {
+                        debuggable.setPathSearchDebugCollector(debugCollector);
+                    }
+
+                    Path path;
                     try {
-                        NodeEvaluator nodeEvaluator = useSwarmClearance
-                                ? new AsyncSwarmFlyNodeEvaluator()
-                                : new AsyncDragonFlyNodeEvaluator();
                         nodeEvaluator.setCanPassDoors(true);
                         nodeEvaluator.setCanOpenDoors(true);
                         nodeEvaluator.setCanFloat(true);
                         PathFinder pathFinder = new PathFinder(nodeEvaluator, 5000);
-                        return pathFinder.findPath(snapshot, dragon, Set.of(targetPos), (float) followRange, 1, 1.0f);
+                        path = pathFinder.findPath(snapshot, dragon, Set.of(targetPos), (float) followRange, 1, 1.0f);
                     } catch (Exception exception) {
-                        return null;
+                        path = null;
                     }
+
+                    if (debugCollector != null) {
+                        debugCollector.complete(path);
+                    }
+                    if (nodeEvaluator instanceof DragonPathSearchDebuggable debuggable) {
+                        debuggable.setPathSearchDebugCollector(null);
+                    }
+                    return path;
                 }, EXECUTOR)
                 .thenAccept(path -> {
                     if (server.isStopped() || dragon.isRemoved()) {
@@ -186,8 +209,9 @@ public final class AsyncDragonPathfinder {
             return;
         }
 
+        UUID debugDragonId = DragonPathSearchDebug.isActive(dragon.getUUID()) ? dragon.getUUID() : null;
         CompletableFuture
-                .supplyAsync(() -> findSwimPath(snapshot), EXECUTOR)
+                .supplyAsync(() -> findSwimPath(snapshot, debugDragonId), EXECUTOR)
                 .thenAccept(path -> {
                     if (server.isStopped() || dragon.isRemoved()) {
                         return;
@@ -201,28 +225,52 @@ public final class AsyncDragonPathfinder {
                 });
     }
 
-    private static List<Vec3> findSwimPath(SwimPathSnapshot snapshot) {
+    private static List<Vec3> findSwimPath(SwimPathSnapshot snapshot, UUID debugDragonId) {
+        long startedNanos = System.nanoTime();
         int start = snapshot.index(snapshot.startX, snapshot.startY, snapshot.startZ);
         int goal = snapshot.index(snapshot.goalX, snapshot.goalY, snapshot.goalZ);
         if (!snapshot.isWaterIndex(start) || !snapshot.isWaterIndex(goal)) {
+            if (debugDragonId != null) {
+                DragonPathSearchDebug.publishGridSearch(
+                        debugDragonId,
+                        DragonPathSearchDebug.SearchType.SWIM,
+                        snapshot.toWorld(start),
+                        snapshot.toWorld(goal),
+                        List.of(),
+                        List.of(),
+                        List.of(),
+                        false,
+                        startedNanos
+                );
+            }
             return null;
         }
 
         PriorityQueue<SwimNode> open = new PriorityQueue<>(Comparator.comparingDouble(SwimNode::fScore));
         Map<Integer, Integer> cameFrom = new HashMap<>();
         Map<Integer, Double> gScore = new HashMap<>();
+        Set<Integer> closed = debugDragonId == null ? new HashSet<>() : new LinkedHashSet<>();
         gScore.put(start, 0.0D);
-        open.add(new SwimNode(start, snapshot.heuristic(start, goal)));
+        open.add(new SwimNode(start, 0.0D, snapshot.heuristic(start, goal)));
 
+        List<Vec3> path = null;
         int visited = 0;
-        while (!open.isEmpty() && visited++ < MAX_SWIM_ASTAR_VISITS) {
+        while (!open.isEmpty() && visited < MAX_SWIM_ASTAR_VISITS) {
             SwimNode current = open.poll();
+            double currentScore = gScore.getOrDefault(current.index(), Double.POSITIVE_INFINITY);
+            if (current.gScore() > currentScore || !closed.add(current.index())) {
+                continue;
+            }
+            visited++;
             if (current.index() == goal) {
-                return snapshot.reconstructPath(cameFrom, current.index());
+                path = snapshot.reconstructPath(cameFrom, current.index());
+                break;
             }
 
-            double currentScore = gScore.getOrDefault(current.index(), Double.POSITIVE_INFINITY);
             for (int neighbor : snapshot.neighbors(current.index())) {
+                if (closed.contains(neighbor)) {
+                    continue;
+                }
                 double tentativeScore = currentScore + snapshot.stepCost(current.index(), neighbor);
                 if (tentativeScore >= gScore.getOrDefault(neighbor, Double.POSITIVE_INFINITY)) {
                     continue;
@@ -230,13 +278,36 @@ public final class AsyncDragonPathfinder {
 
                 cameFrom.put(neighbor, current.index());
                 gScore.put(neighbor, tentativeScore);
-                open.add(new SwimNode(neighbor, tentativeScore + snapshot.heuristic(neighbor, goal)));
+                open.add(new SwimNode(
+                        neighbor,
+                        tentativeScore,
+                        tentativeScore + snapshot.heuristic(neighbor, goal)
+                ));
             }
         }
-        return null;
+
+        if (debugDragonId != null) {
+            List<Vec3> closedPositions = closed.stream().map(snapshot::toWorld).toList();
+            List<Vec3> openPositions = gScore.keySet().stream()
+                    .filter(index -> !closed.contains(index))
+                    .map(snapshot::toWorld)
+                    .toList();
+            DragonPathSearchDebug.publishGridSearch(
+                    debugDragonId,
+                    DragonPathSearchDebug.SearchType.SWIM,
+                    snapshot.toWorld(start),
+                    snapshot.toWorld(goal),
+                    closedPositions,
+                    openPositions,
+                    List.of(),
+                    path != null,
+                    startedNanos
+            );
+        }
+        return path;
     }
 
-    private record SwimNode(int index, double fScore) {
+    private record SwimNode(int index, double gScore, double fScore) {
     }
 
     private static final class SwimPathSnapshot {
@@ -309,6 +380,7 @@ public final class AsyncDragonPathfinder {
             int sizeY = maxY - minY + 1;
             int sizeZ = maxZ - minZ + 1;
             boolean[] rawWater = new boolean[sizeX * sizeY * sizeZ];
+            boolean[] rawClear = new boolean[rawWater.length];
             BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
             for (int x = 0; x < sizeX; x++) {
                 for (int z = 0; z < sizeZ; z++) {
@@ -319,13 +391,25 @@ public final class AsyncDragonPathfinder {
                     }
                     for (int y = 0; y < sizeY; y++) {
                         cursor.set(worldX, minY + y, worldZ);
-                        rawWater[index(x, y, z, sizeX, sizeY)] = dragon.level().getFluidState(cursor).is(FluidTags.WATER);
+                        int index = index(x, y, z, sizeX, sizeY);
+                        BlockState state = dragon.level().getBlockState(cursor);
+                        rawWater[index] = state.getFluidState().is(FluidTags.WATER);
+                        rawClear[index] = state.getCollisionShape(dragon.level(), cursor).isEmpty();
                     }
                 }
             }
 
-            int horizontalClearance = Math.max(0, Mth.ceil(dragon.getBbWidth() * 0.5F - 0.25F));
-            boolean[] water = buildClearanceMap(rawWater, sizeX, sizeY, sizeZ, horizontalClearance);
+            int horizontalClearance = Math.max(0, Mth.ceil(dragon.getBbWidth() * 0.5F - 0.5F));
+            int verticalClearance = Math.max(1, Mth.ceil(dragon.getBbHeight() + 0.5F));
+            boolean[] water = buildClearanceMap(
+                    rawWater,
+                    rawClear,
+                    sizeX,
+                    sizeY,
+                    sizeZ,
+                    horizontalClearance,
+                    verticalClearance
+            );
 
             int startX = Mth.clamp(startPos.getX() - minX, 0, sizeX - 1);
             int startY = Mth.clamp(startPos.getY() - minY, 0, sizeY - 1);
@@ -352,13 +436,19 @@ public final class AsyncDragonPathfinder {
                     startX, startY, startZ, goalX, goalY, goalZ);
         }
 
-        private static boolean[] buildClearanceMap(boolean[] rawWater, int sizeX, int sizeY, int sizeZ, int horizontalClearance) {
-            if (horizontalClearance <= 0) {
-                return rawWater;
-            }
-
+        private static boolean[] buildClearanceMap(boolean[] rawWater,
+                                                   boolean[] rawClear,
+                                                   int sizeX,
+                                                   int sizeY,
+                                                   int sizeZ,
+                                                   int horizontalClearance,
+                                                   int verticalClearance) {
             boolean[] passable = new boolean[rawWater.length];
-            int clearanceSqr = horizontalClearance * horizontalClearance;
+            int[] waterPrefix = buildVolumePrefix(rawWater, sizeX, sizeY, sizeZ);
+            int[] clearPrefix = buildVolumePrefix(rawClear, sizeX, sizeY, sizeZ);
+            int footprintWidth = horizontalClearance * 2 + 1;
+            int footprintArea = footprintWidth * footprintWidth;
+            int requiredClearVolume = footprintArea * verticalClearance;
             for (int x = 0; x < sizeX; x++) {
                 for (int y = 0; y < sizeY; y++) {
                     for (int z = 0; z < sizeZ; z++) {
@@ -367,26 +457,94 @@ public final class AsyncDragonPathfinder {
                             continue;
                         }
 
-                        boolean clear = true;
-                        for (int dx = -horizontalClearance; dx <= horizontalClearance && clear; dx++) {
-                            for (int dz = -horizontalClearance; dz <= horizontalClearance; dz++) {
-                                if (dx * dx + dz * dz > clearanceSqr) {
-                                    continue;
-                                }
-                                int nx = x + dx;
-                                int nz = z + dz;
-                                if (nx < 0 || nz < 0 || nx >= sizeX || nz >= sizeZ
-                                        || !rawWater[index(nx, y, nz, sizeX, sizeY)]) {
-                                    clear = false;
-                                    break;
-                                }
-                            }
+                        int minClearX = x - horizontalClearance;
+                        int maxClearX = x + horizontalClearance + 1;
+                        int maxClearY = y + verticalClearance;
+                        int minClearZ = z - horizontalClearance;
+                        int maxClearZ = z + horizontalClearance + 1;
+                        if (minClearX < 0 || minClearZ < 0
+                                || maxClearX > sizeX || maxClearY > sizeY || maxClearZ > sizeZ) {
+                            continue;
                         }
-                        passable[center] = clear;
+
+                        int waterCount = volumeCount(
+                                waterPrefix,
+                                sizeX,
+                                sizeY,
+                                minClearX,
+                                y,
+                                minClearZ,
+                                maxClearX,
+                                y + 1,
+                                maxClearZ
+                        );
+                        if (waterCount != footprintArea) {
+                            continue;
+                        }
+                        int clearCount = volumeCount(
+                                clearPrefix,
+                                sizeX,
+                                sizeY,
+                                minClearX,
+                                y,
+                                minClearZ,
+                                maxClearX,
+                                maxClearY,
+                                maxClearZ
+                        );
+                        passable[center] = clearCount == requiredClearVolume;
                     }
                 }
             }
             return passable;
+        }
+
+        private static int[] buildVolumePrefix(boolean[] values, int sizeX, int sizeY, int sizeZ) {
+            int prefixSizeX = sizeX + 1;
+            int prefixSizeY = sizeY + 1;
+            int[] prefix = new int[prefixSizeX * prefixSizeY * (sizeZ + 1)];
+            for (int z = 1; z <= sizeZ; z++) {
+                for (int y = 1; y <= sizeY; y++) {
+                    for (int x = 1; x <= sizeX; x++) {
+                        int cellPrefixIndex = prefixIndex(x, y, z, prefixSizeX, prefixSizeY);
+                        int valueIndex = index(x - 1, y - 1, z - 1, sizeX, sizeY);
+                        prefix[cellPrefixIndex] = (values[valueIndex] ? 1 : 0)
+                                + prefix[prefixIndex(x - 1, y, z, prefixSizeX, prefixSizeY)]
+                                + prefix[prefixIndex(x, y - 1, z, prefixSizeX, prefixSizeY)]
+                                + prefix[prefixIndex(x, y, z - 1, prefixSizeX, prefixSizeY)]
+                                - prefix[prefixIndex(x - 1, y - 1, z, prefixSizeX, prefixSizeY)]
+                                - prefix[prefixIndex(x - 1, y, z - 1, prefixSizeX, prefixSizeY)]
+                                - prefix[prefixIndex(x, y - 1, z - 1, prefixSizeX, prefixSizeY)]
+                                + prefix[prefixIndex(x - 1, y - 1, z - 1, prefixSizeX, prefixSizeY)];
+                    }
+                }
+            }
+            return prefix;
+        }
+
+        private static int volumeCount(int[] prefix,
+                                       int sizeX,
+                                       int sizeY,
+                                       int minX,
+                                       int minY,
+                                       int minZ,
+                                       int maxX,
+                                       int maxY,
+                                       int maxZ) {
+            int prefixSizeX = sizeX + 1;
+            int prefixSizeY = sizeY + 1;
+            return prefix[prefixIndex(maxX, maxY, maxZ, prefixSizeX, prefixSizeY)]
+                    - prefix[prefixIndex(minX, maxY, maxZ, prefixSizeX, prefixSizeY)]
+                    - prefix[prefixIndex(maxX, minY, maxZ, prefixSizeX, prefixSizeY)]
+                    - prefix[prefixIndex(maxX, maxY, minZ, prefixSizeX, prefixSizeY)]
+                    + prefix[prefixIndex(minX, minY, maxZ, prefixSizeX, prefixSizeY)]
+                    + prefix[prefixIndex(minX, maxY, minZ, prefixSizeX, prefixSizeY)]
+                    + prefix[prefixIndex(maxX, minY, minZ, prefixSizeX, prefixSizeY)]
+                    - prefix[prefixIndex(minX, minY, minZ, prefixSizeX, prefixSizeY)];
+        }
+
+        private static int prefixIndex(int x, int y, int z, int sizeX, int sizeY) {
+            return x + y * sizeX + z * sizeX * sizeY;
         }
 
         private static int nearestWaterIndex(boolean[] water, int sizeX, int sizeY, int sizeZ, int x, int y, int z, int maxRadius) {
@@ -394,25 +552,48 @@ public final class AsyncDragonPathfinder {
             if (water[center]) {
                 return center;
             }
-            for (int radius = 1; radius <= maxRadius; radius++) {
-                int minX = Math.max(0, x - radius);
-                int maxX = Math.min(sizeX - 1, x + radius);
-                int minY = Math.max(0, y - radius);
-                int maxY = Math.min(sizeY - 1, y + radius);
-                int minZ = Math.max(0, z - radius);
-                int maxZ = Math.min(sizeZ - 1, z + radius);
-                for (int ix = minX; ix <= maxX; ix++) {
-                    for (int iy = minY; iy <= maxY; iy++) {
-                        for (int iz = minZ; iz <= maxZ; iz++) {
-                            int idx = index(ix, iy, iz, sizeX, sizeY);
-                            if (water[idx]) {
-                                return idx;
-                            }
+
+            int bestIndex = -1;
+            int bestDistanceSqr = Integer.MAX_VALUE;
+            int bestVerticalDistance = Integer.MAX_VALUE;
+            int bestY = Integer.MIN_VALUE;
+            int maxDistanceSqr = maxRadius * maxRadius;
+            int minX = Math.max(0, x - maxRadius);
+            int maxX = Math.min(sizeX - 1, x + maxRadius);
+            int minY = Math.max(0, y - maxRadius);
+            int maxY = Math.min(sizeY - 1, y + maxRadius);
+            int minZ = Math.max(0, z - maxRadius);
+            int maxZ = Math.min(sizeZ - 1, z + maxRadius);
+            for (int ix = minX; ix <= maxX; ix++) {
+                for (int iy = minY; iy <= maxY; iy++) {
+                    for (int iz = minZ; iz <= maxZ; iz++) {
+                        int idx = index(ix, iy, iz, sizeX, sizeY);
+                        if (!water[idx]) {
+                            continue;
+                        }
+
+                        int dx = ix - x;
+                        int dy = iy - y;
+                        int dz = iz - z;
+                        int distanceSqr = dx * dx + dy * dy + dz * dz;
+                        if (distanceSqr > maxDistanceSqr) {
+                            continue;
+                        }
+                        int verticalDistance = Math.abs(dy);
+                        if (distanceSqr < bestDistanceSqr
+                                || (distanceSqr == bestDistanceSqr && verticalDistance < bestVerticalDistance)
+                                || (distanceSqr == bestDistanceSqr
+                                && verticalDistance == bestVerticalDistance
+                                && iy > bestY)) {
+                            bestIndex = idx;
+                            bestDistanceSqr = distanceSqr;
+                            bestVerticalDistance = verticalDistance;
+                            bestY = iy;
                         }
                     }
                 }
             }
-            return -1;
+            return bestIndex;
         }
 
         int index(int x, int y, int z) {
@@ -448,13 +629,22 @@ public final class AsyncDragonPathfinder {
                             continue;
                         }
                         int neighbor = index(nx, ny, nz);
-                        if (isWaterIndex(neighbor)) {
+                        if (isWaterIndex(neighbor) && canTraverseDiagonal(x, y, z, dx, dy, dz)) {
                             neighbors.add(neighbor);
                         }
                     }
                 }
             }
             return neighbors;
+        }
+
+        private boolean canTraverseDiagonal(int x, int y, int z, int dx, int dy, int dz) {
+            if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= 1) {
+                return true;
+            }
+            return (dx == 0 || isWaterIndex(index(x + dx, y, z)))
+                    && (dy == 0 || isWaterIndex(index(x, y + dy, z)))
+                    && (dz == 0 || isWaterIndex(index(x, y, z + dz)));
         }
 
         double stepCost(int from, int to) {

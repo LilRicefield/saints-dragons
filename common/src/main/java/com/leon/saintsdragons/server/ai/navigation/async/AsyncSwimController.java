@@ -17,11 +17,14 @@ public class AsyncSwimController {
     private static final int MAX_PATH_RETRIES = 4;
     private static final int REJECTED_TARGET_COOLDOWN_TICKS = 100;
     private static final double REJECTED_TARGET_DISTANCE_SQR = 4.0D * 4.0D;
+    private static final double RETRY_TARGET_DISTANCE_SQR = 8.0D * 8.0D;
+    private static final double RETRY_PROGRESS_DISTANCE_SQR = 8.0D * 8.0D;
 
     private final Mob host;
     private final GenericSwimSteeringController steering;
     private final List<Vec3> pathNodes = new ArrayList<>();
     private Vec3 target;
+    private Vec3 pathTarget;
     private double speed;
     private float turnSpeed = 8.0F;
     private boolean liveTracking;
@@ -34,6 +37,8 @@ public class AsyncSwimController {
     private int stuckCheckTimer;
     private int stuckTicks;
     private int pathRetries;
+    private Vec3 retryTarget;
+    private Vec3 retryProgressOrigin;
     private int rejectedTargetCooldown;
     private Vec3 rejectedTarget;
 
@@ -41,12 +46,14 @@ public class AsyncSwimController {
         this.host = host;
         this.steering = steering;
         this.lastStuckCheckPosition = host.position();
+        this.retryProgressOrigin = host.position();
     }
 
     public boolean trackTarget(Vec3 target, double speed, float turnSpeed) {
         if (isRejectedTarget(target)) {
             return false;
         }
+        prepareRetryBudget(target);
         this.liveTracking = false;
         this.target = target;
         this.speed = speed;
@@ -67,6 +74,7 @@ public class AsyncSwimController {
         this.turnSpeed = turnSpeed;
         this.liveArrivalDistance = Math.max(0.5D, arrivalDistance);
         this.pathNodes.clear();
+        this.pathTarget = null;
         this.currentPathIndex = 0;
         this.calculating = false;
         this.pathRequestGeneration++;
@@ -79,6 +87,7 @@ public class AsyncSwimController {
             steering.slow(0.86D);
             return;
         }
+        resetRetryBudgetAfterProgress();
         if (liveTracking) {
             tickLiveTracking();
             return;
@@ -90,6 +99,11 @@ public class AsyncSwimController {
 
         Vec3 waypoint = getCurrentLookAhead();
         if (waypoint == null) {
+            if (hasReachedPathEnd()) {
+                resetRetryBudget(target);
+                steering.slow(0.90D);
+                return;
+            }
             if (!calculating && recalcCooldown <= 0) {
                 requestPath(target);
             }
@@ -102,6 +116,7 @@ public class AsyncSwimController {
             currentPathIndex++;
             waypoint = getCurrentLookAhead();
             if (waypoint == null) {
+                resetRetryBudget(target);
                 steering.slow(0.90D);
                 return;
             }
@@ -114,6 +129,7 @@ public class AsyncSwimController {
         this.target = null;
         this.liveTracking = false;
         this.pathNodes.clear();
+        this.pathTarget = null;
         this.currentPathIndex = 0;
         this.calculating = false;
         this.pathRequestGeneration++;
@@ -125,11 +141,14 @@ public class AsyncSwimController {
         this.target = null;
         this.liveTracking = false;
         this.pathNodes.clear();
+        this.pathTarget = null;
         this.currentPathIndex = 0;
         this.calculating = false;
         this.pathRequestGeneration++;
         this.recalcCooldown = 0;
         this.pathRetries = 0;
+        this.retryTarget = null;
+        this.retryProgressOrigin = this.host.position();
         this.rejectedTargetCooldown = 0;
         this.rejectedTarget = null;
         resetStuckDetector();
@@ -179,8 +198,7 @@ public class AsyncSwimController {
         if (pathNodes.isEmpty()) {
             return true;
         }
-        Vec3 end = pathNodes.get(pathNodes.size() - 1);
-        return end.distanceToSqr(newTarget) > 9.0D;
+        return pathTarget == null || pathTarget.distanceToSqr(newTarget) > 9.0D;
     }
 
     private void tickLiveTracking() {
@@ -210,16 +228,13 @@ public class AsyncSwimController {
                 this.pathNodes.clear();
                 this.currentPathIndex = 0;
                 this.pathNodes.addAll(path);
-                this.pathRetries = 0;
+                this.pathTarget = requestedTarget;
                 resetStuckDetector();
             } else {
-                this.pathRetries++;
                 if (!this.pathNodes.isEmpty()) {
                     return;
                 }
-                if (this.pathRetries > MAX_PATH_RETRIES) {
-                    rejectCurrentTarget(requestedTarget);
-                }
+                recordPathFailure(requestedTarget);
             }
         });
     }
@@ -228,25 +243,11 @@ public class AsyncSwimController {
         if (pathNodes.isEmpty() || currentPathIndex >= pathNodes.size()) {
             return null;
         }
-
-        Vec3 hostPos = host.position();
-        int bestIndex = currentPathIndex;
-        double bestDist = Double.MAX_VALUE;
-        int searchEnd = Math.min(pathNodes.size(), currentPathIndex + 5);
-        for (int i = currentPathIndex; i < searchEnd; i++) {
-            double dist = hostPos.distanceToSqr(pathNodes.get(i));
-            if (dist < bestDist) {
-                bestDist = dist;
-                bestIndex = i;
-            }
-        }
-        currentPathIndex = bestIndex;
-        int lookAheadIndex = Math.min(pathNodes.size() - 1, currentPathIndex + 2);
-        return pathNodes.get(lookAheadIndex);
+        return pathNodes.get(currentPathIndex);
     }
 
     private double arrivalDistanceSqr() {
-        double arrival = Math.max(1.2D, host.getBbWidth() * 0.6D);
+        double arrival = Math.max(0.9D, Math.min(1.5D, host.getBbWidth() * 0.25D));
         return arrival * arrival;
     }
 
@@ -269,10 +270,9 @@ public class AsyncSwimController {
 
         stuckTicks = 0;
         pathNodes.clear();
+        pathTarget = null;
         currentPathIndex = 0;
-        pathRetries++;
-        if (pathRetries > MAX_PATH_RETRIES) {
-            rejectCurrentTarget(target);
+        if (recordPathFailure(target)) {
             return;
         }
         if (!calculating && target != null) {
@@ -285,6 +285,41 @@ public class AsyncSwimController {
         this.stuckCheckTimer = 0;
         this.stuckTicks = 0;
         this.lastStuckCheckPosition = this.host.position();
+    }
+
+    private void prepareRetryBudget(Vec3 candidate) {
+        if (this.retryTarget != null
+                && this.retryTarget.distanceToSqr(candidate) <= RETRY_TARGET_DISTANCE_SQR) {
+            return;
+        }
+        resetRetryBudget(candidate);
+    }
+
+    private void resetRetryBudget(@Nullable Vec3 currentTarget) {
+        this.pathRetries = 0;
+        this.retryTarget = currentTarget;
+        this.retryProgressOrigin = this.host.position();
+    }
+
+    private void resetRetryBudgetAfterProgress() {
+        if (this.retryProgressOrigin == null
+                || this.host.position().distanceToSqr(this.retryProgressOrigin) < RETRY_PROGRESS_DISTANCE_SQR) {
+            return;
+        }
+        resetRetryBudget(this.target);
+    }
+
+    private boolean recordPathFailure(@Nullable Vec3 failedTarget) {
+        if (failedTarget == null) {
+            return false;
+        }
+        prepareRetryBudget(failedTarget);
+        this.pathRetries++;
+        if (this.pathRetries <= MAX_PATH_RETRIES) {
+            return false;
+        }
+        rejectCurrentTarget(failedTarget);
+        return true;
     }
 
     private boolean isRejectedTarget(Vec3 candidate) {
@@ -308,7 +343,10 @@ public class AsyncSwimController {
         this.rejectedTargetCooldown = REJECTED_TARGET_COOLDOWN_TICKS;
         this.target = null;
         this.pathRetries = 0;
+        this.retryTarget = null;
+        this.retryProgressOrigin = this.host.position();
         this.pathNodes.clear();
+        this.pathTarget = null;
         this.currentPathIndex = 0;
         this.calculating = false;
         this.steering.slow(0.6D);

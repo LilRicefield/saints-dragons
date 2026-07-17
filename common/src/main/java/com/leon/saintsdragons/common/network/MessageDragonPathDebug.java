@@ -21,6 +21,18 @@ public record MessageDragonPathDebug(
         int swimFirstIndex,
         int swimNextIndex,
         int swimNodeCount,
+        String searchType,
+        long searchId,
+        List<Vec3> searchClosedNodes,
+        int searchClosedNodeCount,
+        List<Vec3> searchOpenNodes,
+        int searchOpenNodeCount,
+        List<Vec3> searchCandidateNodes,
+        int searchCandidateNodeCount,
+        @Nullable Vec3 searchStart,
+        @Nullable Vec3 searchTarget,
+        boolean searchReached,
+        long searchDurationMicros,
         @Nullable Vec3 movementTarget,
         @Nullable Vec3 swimTarget,
         @Nullable Vec3 swimEndpoint,
@@ -36,8 +48,12 @@ public record MessageDragonPathDebug(
     public MessageDragonPathDebug {
         locomotionMode = locomotionMode == null ? "NONE" : locomotionMode;
         movementMode = movementMode == null ? "NONE" : movementMode;
+        searchType = searchType == null ? "NONE" : searchType;
         navigationNodes = navigationNodes == null ? List.of() : List.copyOf(navigationNodes);
         swimNodes = swimNodes == null ? List.of() : List.copyOf(swimNodes);
+        searchClosedNodes = searchClosedNodes == null ? List.of() : List.copyOf(searchClosedNodes);
+        searchOpenNodes = searchOpenNodes == null ? List.of() : List.copyOf(searchOpenNodes);
+        searchCandidateNodes = searchCandidateNodes == null ? List.of() : List.copyOf(searchCandidateNodes);
     }
 
     public static MessageDragonPathDebug clear() {
@@ -54,6 +70,18 @@ public record MessageDragonPathDebug(
                 0,
                 0,
                 0,
+                "NONE",
+                0L,
+                List.of(),
+                0,
+                List.of(),
+                0,
+                List.of(),
+                0,
+                null,
+                null,
+                false,
+                0L,
                 null,
                 null,
                 null,
@@ -83,6 +111,18 @@ public record MessageDragonPathDebug(
         buffer.writeVarInt(message.swimFirstIndex());
         buffer.writeVarInt(message.swimNextIndex());
         buffer.writeVarInt(message.swimNodeCount());
+        buffer.writeUtf(message.searchType());
+        buffer.writeVarLong(message.searchId());
+        writeVecList(buffer, message.searchClosedNodes());
+        buffer.writeVarInt(message.searchClosedNodeCount());
+        writeVecList(buffer, message.searchOpenNodes());
+        buffer.writeVarInt(message.searchOpenNodeCount());
+        writeVecList(buffer, message.searchCandidateNodes());
+        buffer.writeVarInt(message.searchCandidateNodeCount());
+        writeNullableVec(buffer, message.searchStart());
+        writeNullableVec(buffer, message.searchTarget());
+        buffer.writeBoolean(message.searchReached());
+        buffer.writeVarLong(message.searchDurationMicros());
         writeNullableVec(buffer, message.movementTarget());
         writeNullableVec(buffer, message.swimTarget());
         writeNullableVec(buffer, message.swimEndpoint());
@@ -112,6 +152,18 @@ public record MessageDragonPathDebug(
                 buffer.readVarInt(),
                 buffer.readVarInt(),
                 buffer.readVarInt(),
+                buffer.readUtf(),
+                buffer.readVarLong(),
+                readVecList(buffer),
+                buffer.readVarInt(),
+                readVecList(buffer),
+                buffer.readVarInt(),
+                readVecList(buffer),
+                buffer.readVarInt(),
+                readNullableVec(buffer),
+                readNullableVec(buffer),
+                buffer.readBoolean(),
+                buffer.readVarLong(),
                 readNullableVec(buffer),
                 readNullableVec(buffer),
                 readNullableVec(buffer),

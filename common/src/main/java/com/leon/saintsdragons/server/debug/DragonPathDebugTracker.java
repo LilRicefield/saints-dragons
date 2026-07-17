@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
+import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ public final class DragonPathDebugTracker {
         TrackingEntry current = TRACKED_DRAGONS.get(player.getUUID());
         if (current != null && current.dragonId.equals(dragon.getUUID())) {
             TRACKED_DRAGONS.remove(player.getUUID());
+            refreshActiveSearchDebug();
             NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
             player.displayClientMessage(Component.literal("Dragon path debug: OFF"), true);
             SaintsDragonsCommon.LOGGER.info(
@@ -57,6 +60,7 @@ public final class DragonPathDebugTracker {
         }
 
         TRACKED_DRAGONS.put(player.getUUID(), new TrackingEntry(dragon.getUUID()));
+        refreshActiveSearchDebug();
         player.displayClientMessage(
                 Component.literal("Dragon path debug: ").append(dragon.getDisplayName()),
                 true
@@ -77,12 +81,14 @@ public final class DragonPathDebugTracker {
             return;
         }
 
+        boolean trackingChanged = false;
         Iterator<Map.Entry<UUID, TrackingEntry>> iterator = TRACKED_DRAGONS.entrySet().iterator();
         while (iterator.hasNext()) {
             Map.Entry<UUID, TrackingEntry> tracked = iterator.next();
             ServerPlayer player = server.getPlayerList().getPlayer(tracked.getKey());
             if (player == null) {
                 iterator.remove();
+                trackingChanged = true;
                 continue;
             }
 
@@ -91,21 +97,27 @@ public final class DragonPathDebugTracker {
                 NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
                 player.displayClientMessage(Component.literal("Dragon path debug: target unavailable"), true);
                 iterator.remove();
+                trackingChanged = true;
                 continue;
             }
 
             sendSnapshot(player, dragon, tracked.getValue(), false);
+        }
+        if (trackingChanged) {
+            refreshActiveSearchDebug();
         }
     }
 
     public static void clear(ServerPlayer player) {
         if (player != null) {
             TRACKED_DRAGONS.remove(player.getUUID());
+            refreshActiveSearchDebug();
         }
     }
 
     public static void clearAll() {
         TRACKED_DRAGONS.clear();
+        DragonPathSearchDebug.setActiveDragons(List.of());
     }
 
     private static void sendSnapshot(ServerPlayer player,
@@ -126,6 +138,7 @@ public final class DragonPathDebugTracker {
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
                         + "rejectedTarget={} combatTarget={} navigationDone={} navigationStuck={} "
+                        + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
                         + "activity={} behaviours={}",
                 player.getGameProfile().getName(),
                 dragon.getId(),
@@ -149,6 +162,13 @@ public final class DragonPathDebugTracker {
                 blockPosition(snapshot.combatTarget()),
                 dragon.getNavigation().isDone(),
                 dragon.getNavigation().isStuck(),
+                snapshot.searchType(),
+                snapshot.searchId(),
+                snapshot.searchReached(),
+                snapshot.searchClosedNodeCount(),
+                snapshot.searchOpenNodeCount(),
+                snapshot.searchCandidateNodeCount(),
+                snapshot.searchDurationMicros(),
                 logState.activity,
                 logState.behaviours
         );
@@ -168,6 +188,7 @@ public final class DragonPathDebugTracker {
 
         AsyncSwimController.DebugSnapshot swim = dragon.getAiSwimController().getDebugSnapshot();
         PathSlice swimPath = slicePositions(swim.pathNodes(), swim.pathIndex());
+        @Nullable DragonPathSearchDebug.Snapshot search = DragonPathSearchDebug.getSnapshot(dragon.getUUID());
 
         String movementMode = "NONE";
         @Nullable Vec3 movementTarget = null;
@@ -200,6 +221,18 @@ public final class DragonPathDebugTracker {
                 swimPath.firstIndex,
                 swimPath.nextIndex,
                 swimPath.totalNodes,
+                search == null ? "NONE" : search.type().name(),
+                search == null ? 0L : search.searchId(),
+                search == null ? List.of() : search.closedNodes(),
+                search == null ? 0 : search.closedNodeCount(),
+                search == null ? List.of() : search.openNodes(),
+                search == null ? 0 : search.openNodeCount(),
+                search == null ? List.of() : search.candidateNodes(),
+                search == null ? 0 : search.candidateNodeCount(),
+                search == null ? null : search.start(),
+                search == null ? null : search.target(),
+                search != null && search.reached(),
+                search == null ? 0L : search.durationMicros(),
                 movementTarget,
                 swim.target(),
                 swim.endpoint(),
@@ -251,6 +284,14 @@ public final class DragonPathDebugTracker {
                 .toList();
     }
 
+    private static void refreshActiveSearchDebug() {
+        HashSet<UUID> dragonIds = new HashSet<>();
+        for (TrackingEntry entry : TRACKED_DRAGONS.values()) {
+            dragonIds.add(entry.dragonId);
+        }
+        DragonPathSearchDebug.setActiveDragons(dragonIds);
+    }
+
     private static final class TrackingEntry {
         private final UUID dragonId;
         private @Nullable LogState lastLogState;
@@ -272,6 +313,7 @@ public final class DragonPathDebugTracker {
                             int swimNextIndex,
                             int swimNodeCount,
                             int swimHash,
+                            long searchId,
                             boolean swimCalculating,
                             boolean swimMoving,
                             int swimStuckTicks,
@@ -299,6 +341,7 @@ public final class DragonPathDebugTracker {
                     snapshot.swimNextIndex(),
                     snapshot.swimNodeCount(),
                     snapshot.swimNodes().hashCode(),
+                    snapshot.searchId(),
                     snapshot.swimCalculating(),
                     snapshot.swimMoving(),
                     snapshot.swimStuckTicks(),

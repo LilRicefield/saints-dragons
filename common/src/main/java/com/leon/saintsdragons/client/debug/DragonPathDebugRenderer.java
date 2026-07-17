@@ -28,6 +28,12 @@ public final class DragonPathDebugRenderer {
     private static final Color SWIM_ENDPOINT = new Color(0.85F, 1.0F, 1.0F);
     private static final Color REJECTED_TARGET = new Color(1.0F, 0.05F, 0.05F);
     private static final Color COMBAT_TARGET = new Color(1.0F, 0.2F, 0.1F);
+    private static final Color SEARCH_CANDIDATE = new Color(0.48F, 0.48F, 0.52F);
+    private static final Color SEARCH_CLOSED = new Color(0.1F, 0.5F, 0.75F);
+    private static final Color SEARCH_OPEN = new Color(0.45F, 1.0F, 0.15F);
+    private static final Color SEARCH_START = new Color(0.1F, 1.0F, 0.65F);
+    private static final Color SEARCH_GOAL = new Color(1.0F, 0.45F, 0.9F);
+    private static final Color SEARCH_FAILED_GOAL = new Color(1.0F, 0.05F, 0.05F);
 
     private DragonPathDebugRenderer() {
     }
@@ -51,6 +57,18 @@ public final class DragonPathDebugRenderer {
         if (selected != null) {
             renderBox(poseStack, consumer, selected.getBoundingBox().inflate(0.05D), SELECTED);
         }
+
+        renderSearchNodes(poseStack, consumer, snapshot.searchCandidateNodes(), 0.055D, SEARCH_CANDIDATE);
+        renderSearchNodes(poseStack, consumer, snapshot.searchClosedNodes(), 0.075D, SEARCH_CLOSED);
+        renderSearchNodes(poseStack, consumer, snapshot.searchOpenNodes(), 0.105D, SEARCH_OPEN);
+        renderMarker(poseStack, consumer, snapshot.searchStart(), 0.24D, SEARCH_START);
+        renderMarker(
+                poseStack,
+                consumer,
+                snapshot.searchTarget(),
+                0.30D,
+                snapshot.searchReached() ? SEARCH_GOAL : SEARCH_FAILED_GOAL
+        );
 
         Color navigationColor = "AIR".equals(snapshot.locomotionMode()) ? AIR_PATH : GROUND_PATH;
         renderPath(
@@ -109,6 +127,16 @@ public final class DragonPathDebugRenderer {
             return CURRENT;
         }
         return pathColor;
+    }
+
+    private static void renderSearchNodes(PoseStack poseStack,
+                                          VertexConsumer consumer,
+                                          List<Vec3> nodes,
+                                          double radius,
+                                          Color color) {
+        for (Vec3 node : nodes) {
+            renderMarker(poseStack, consumer, node, radius, color);
+        }
     }
 
     private static void renderMarker(PoseStack poseStack,

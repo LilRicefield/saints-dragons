@@ -10,8 +10,25 @@ import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Target;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class DragonWalkNodeEvaluator extends WalkNodeEvaluator {
+public class DragonWalkNodeEvaluator extends WalkNodeEvaluator implements DragonPathSearchDebuggable {
+    private @Nullable DragonPathSearchDebug.NodeCollector pathSearchDebugCollector;
+
+    @Override
+    public void setPathSearchDebugCollector(@Nullable DragonPathSearchDebug.NodeCollector collector) {
+        this.pathSearchDebugCollector = collector;
+    }
+
+    @Override
+    public int getNeighbors(Node[] neighbors, Node current) {
+        int count = super.getNeighbors(neighbors, current);
+        if (this.pathSearchDebugCollector != null) {
+            this.pathSearchDebugCollector.recordExpansion(current, neighbors, count);
+        }
+        return count;
+    }
+
     @Override
     public @NotNull Node getStart() {
         Node vanillaStart = super.getStart();

@@ -7,8 +7,25 @@ import net.minecraft.world.level.pathfinder.FlyNodeEvaluator;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class AsyncSwarmFlyNodeEvaluator extends FlyNodeEvaluator {
+public class AsyncSwarmFlyNodeEvaluator extends FlyNodeEvaluator implements DragonPathSearchDebuggable {
+    private @Nullable DragonPathSearchDebug.NodeCollector pathSearchDebugCollector;
+
+    @Override
+    public void setPathSearchDebugCollector(@Nullable DragonPathSearchDebug.NodeCollector collector) {
+        this.pathSearchDebugCollector = collector;
+    }
+
+    @Override
+    public int getNeighbors(Node[] neighbors, Node current) {
+        int count = super.getNeighbors(neighbors, current);
+        if (this.pathSearchDebugCollector != null) {
+            this.pathSearchDebugCollector.recordExpansion(current, neighbors, count);
+        }
+        return count;
+    }
+
     @Override
     public void prepare(@NotNull PathNavigationRegion level, @NotNull Mob mob) {
         super.prepare(level, mob);
