@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.util;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -38,13 +39,20 @@ public final class DragonDestructionManager {
     private static final int MAX_TREE_LEAVES = 768;
     private static final int MAX_LEAF_DISTANCE = 6;
 
-    public static void applyPassiveTreeDestruction(ServerLevel level, DragonEntity dragon) {
-        if (level == null || dragon == null) {
-            return;
-        }
+    public static boolean canApplyPassiveTreeDestruction(ServerLevel level, DragonEntity dragon) {
+        return level != null
+                && dragon instanceof PassiveTreeDestroyer
+                && !dragon.isBaby()
+                && dragon.isAlive()
+                && DragonGriefingRules.canDestroyBlocks(level);
+    }
 
-        boolean griefingAllowed = DragonGriefingRules.canDestroyBlocks(level);
-        if (dragon.isBaby() || !dragon.isAlive() || !griefingAllowed
+    public static boolean isPassivelyBreakableTreeBlock(BlockState state) {
+        return state.is(BlockTags.LOGS) || isNaturalTreeLeaf(state, 0);
+    }
+
+    public static void applyPassiveTreeDestruction(ServerLevel level, DragonEntity dragon) {
+        if (!canApplyPassiveTreeDestruction(level, dragon)
                 || (dragon.tickCount + dragon.getId()) % PASSIVE_TREE_CHECK_INTERVAL != 0) {
             return;
         }

@@ -97,7 +97,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen {
+public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen, PassiveTreeDestroyer {
     private static final VarasuchusCombatBrain DRAGON_BRAIN = new VarasuchusCombatBrain();
     public static final double ROOST_SLEEP_RADIUS = 3.0D;
     public static final double ROOST_TERRITORY_RADIUS = 48.0D;

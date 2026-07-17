@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
 import com.leon.saintsdragons.server.ai.pathfinding.DragonWalkNodeEvaluator;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
@@ -24,7 +27,10 @@ public class PathNavigateGround extends GroundPathNavigation {
 
     @Override
     protected @NotNull PathFinder createPathFinder(int maxVisitedNodes) {
-        this.nodeEvaluator = new DragonWalkNodeEvaluator();
+        this.nodeEvaluator = new DragonWalkNodeEvaluator(() ->
+                this.mob instanceof DragonEntity dragon
+                        && this.level instanceof ServerLevel serverLevel
+                        && DragonDestructionManager.canApplyPassiveTreeDestruction(serverLevel, dragon));
         this.nodeEvaluator.setCanPassDoors(true);
         return new PathFinderGround(this.nodeEvaluator, maxVisitedNodes);
     }

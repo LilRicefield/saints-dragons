@@ -46,6 +46,7 @@ import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
@@ -100,7 +101,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider {
+public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
     private static final VolitansCombatBrain DRAGON_BRAIN = new VolitansCombatBrain();
     @Override
     public EnumSet<DragonMovementCapability> movementCapabilities() {

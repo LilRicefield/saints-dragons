@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.ai.pathfinding;
 
 import com.leon.saintsdragons.server.ai.navigation.PathFinderGround;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -18,6 +20,7 @@ import java.util.concurrent.Future;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -56,6 +59,9 @@ public final class AsyncDragonPathfinder {
 
         BlockPos startPos = dragon.blockPosition();
         BlockPos targetPos = BlockPos.containing(target);
+        boolean canPassThroughTrees = dragon instanceof DragonEntity dragonEntity
+                && dragon.level() instanceof ServerLevel serverLevel
+                && DragonDestructionManager.canApplyPassiveTreeDestruction(serverLevel, dragonEntity);
         int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
         double routeDistance = Math.sqrt(startPos.distSqr(targetPos));
         int searchRange = Mth.clamp(Mth.ceil(routeDistance) + 24, 32, followRange);
@@ -84,7 +90,7 @@ public final class AsyncDragonPathfinder {
         return EXECUTOR.submit(() -> {
             Path path;
             try {
-                NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator();
+                NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator(canPassThroughTrees);
                 nodeEvaluator.setCanPassDoors(true);
                 PathFinder pathFinder = new PathFinderGround(nodeEvaluator, 5000);
                 path = pathFinder.findPath(

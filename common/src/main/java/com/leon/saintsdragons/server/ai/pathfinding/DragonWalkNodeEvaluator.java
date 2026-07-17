@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.pathfinding;
 
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.BlockGetter;
@@ -12,8 +13,23 @@ import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BooleanSupplier;
+
 public class DragonWalkNodeEvaluator extends WalkNodeEvaluator implements DragonPathSearchDebuggable {
+    private final BooleanSupplier canPassThroughTrees;
     private @Nullable DragonPathSearchDebug.NodeCollector pathSearchDebugCollector;
+
+    public DragonWalkNodeEvaluator() {
+        this(false);
+    }
+
+    public DragonWalkNodeEvaluator(boolean canPassThroughTrees) {
+        this(() -> canPassThroughTrees);
+    }
+
+    public DragonWalkNodeEvaluator(BooleanSupplier canPassThroughTrees) {
+        this.canPassThroughTrees = canPassThroughTrees;
+    }
 
     @Override
     public void setPathSearchDebugCollector(@Nullable DragonPathSearchDebug.NodeCollector collector) {
@@ -64,6 +80,10 @@ public class DragonWalkNodeEvaluator extends WalkNodeEvaluator implements Dragon
         BlockState state = level.getBlockState(pos);
         if (state.is(Blocks.LADDER)) {
             return BlockPathTypes.WALKABLE;
+        }
+        if (this.canPassThroughTrees.getAsBoolean()
+                && DragonDestructionManager.isPassivelyBreakableTreeBlock(state)) {
+            return BlockPathTypes.OPEN;
         }
         return super.getBlockPathType(level, x, y, z);
     }

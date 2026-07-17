@@ -42,6 +42,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
@@ -102,7 +103,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider {
+public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
     private static final IgnivorusCombatBrain DRAGON_BRAIN = new IgnivorusCombatBrain();
 
     @Override

@@ -97,7 +97,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider {
+public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
     private static final RaevyxCombatBrain DRAGON_BRAIN = new RaevyxCombatBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
