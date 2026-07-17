@@ -1,0 +1,50 @@
+{
+  "parent": "saintsdragons:acquire_dragon_scale",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:dragonlord_armor_set_icon"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.dragonlord_armor_set.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.dragonlord_armor_set.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_full_set": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragonlord_helmet"
+            ]
+          },
+          {
+            "items": [
+              "saintsdragons:dragonlord_chestplate"
+            ]
+          },
+          {
+            "items": [
+              "saintsdragons:dragonlord_leggings"
+            ]
+          },
+          {
+            "items": [
+              "saintsdragons:dragonlord_boots"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "rewards": {
+    "experience": 100
+  }
+}

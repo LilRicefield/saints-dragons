@@ -18304,6 +18304,11 @@
 						}
 					}
 				},
+				"leftwingarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
 				"leftouterphalanges": {
 					"rotation": {
 						"0.0": {
@@ -18937,6 +18942,11 @@
 						"1.6667": {
 							"vector": [40.89, -48.59, 40.89]
 						}
+					}
+				},
+				"rightwingarm": {
+					"rotation": {
+						"vector": [0, 0, 0]
 					}
 				},
 				"rightinnerphalanges": {
@@ -132637,16 +132647,6 @@
 						"1.4167": {
 							"vector": [0, 0, 0]
 						}
-					}
-				}
-			}
-		},
-		"animation.raevyx.new": {
-			"loop": true,
-			"bones": {
-				"neck2Controller": {
-					"rotation": {
-						"vector": [-10, 0, 0]
 					}
 				}
 			}

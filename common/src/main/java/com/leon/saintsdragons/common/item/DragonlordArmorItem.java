@@ -4,6 +4,8 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.registry.ModAttributes;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -12,6 +14,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.ArmorMaterial;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
@@ -21,7 +26,9 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -142,6 +149,19 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
             case LEGGINGS -> ToolsArmorConfig.DRAGONLORD_LEGGINGS_ARMOR.get();
             case BOOTS -> ToolsArmorConfig.DRAGONLORD_BOOTS_ARMOR.get();
         };
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.double_jump")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.impact")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.fissure")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.glide")
+                .withStyle(ChatFormatting.GRAY));
     }
 
     private UUID fireResistanceUuid() {

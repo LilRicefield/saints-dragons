@@ -3,12 +3,19 @@ package com.leon.saintsdragons.common.item.tools;
 import com.google.common.collect.Multimap;
 import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.item.ConfiguredItemAttributes;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.SwordItem;
 import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
+import javax.annotation.Nullable;
+import java.util.List;
 import java.util.UUID;
 
 public class DragonheartSwordItem extends SwordItem {
@@ -63,6 +70,15 @@ public class DragonheartSwordItem extends SwordItem {
         return (float) (isBloodTempest()
                 ? ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS.get()
                 : ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS.get());
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        String key = isBloodTempest()
+                ? "item.saintsdragons.blood_tempest_katana.tooltip"
+                : "item.saintsdragons.dragonlord_sword.tooltip";
+        tooltip.add(Component.translatable(key).withStyle(ChatFormatting.GRAY));
     }
 
     private boolean isBloodTempest() {

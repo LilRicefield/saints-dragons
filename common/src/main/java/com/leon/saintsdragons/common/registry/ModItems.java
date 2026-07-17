@@ -293,6 +293,14 @@ public class ModItems {
             REGISTER.register("water_splash_icon",
                     () -> new Item(new Item.Properties()));
 
+    public static final Supplier<Item> BLOOD_TEMPEST_ARMOR_SET_ICON =
+            REGISTER.register("blood_tempest_armor_set_icon",
+                    () -> new Item(new Item.Properties()));
+
+    public static final Supplier<Item> DRAGONLORD_ARMOR_SET_ICON =
+            REGISTER.register("dragonlord_armor_set_icon",
+                    () -> new Item(new Item.Properties()));
+
     public static final Supplier<Item> DRAGON_BRUSH =
             REGISTER.register("dragon_brush",
                     () -> new DragonBrushItem(
