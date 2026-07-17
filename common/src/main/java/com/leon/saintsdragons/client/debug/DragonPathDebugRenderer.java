@@ -22,8 +22,10 @@ public final class DragonPathDebugRenderer {
     private static final Color TRAVERSED = new Color(1.0F, 0.45F, 0.05F);
     private static final Color GROUND_PATH = new Color(0.2F, 1.0F, 0.25F);
     private static final Color AIR_PATH = new Color(0.75F, 0.35F, 1.0F);
+    private static final Color LANDING_PATH = new Color(1.0F, 0.68F, 0.12F);
     private static final Color SWIM_PATH = new Color(0.1F, 0.85F, 1.0F);
     private static final Color MOVEMENT_TARGET = new Color(1.0F, 0.2F, 0.9F);
+    private static final Color LANDING_TARGET = new Color(1.0F, 0.92F, 0.25F);
     private static final Color SWIM_TARGET = new Color(0.15F, 0.35F, 1.0F);
     private static final Color SWIM_ENDPOINT = new Color(0.85F, 1.0F, 1.0F);
     private static final Color REJECTED_TARGET = new Color(1.0F, 0.05F, 0.05F);
@@ -70,7 +72,10 @@ public final class DragonPathDebugRenderer {
                 snapshot.searchReached() ? SEARCH_GOAL : SEARCH_FAILED_GOAL
         );
 
-        Color navigationColor = "AIR".equals(snapshot.locomotionMode()) ? AIR_PATH : GROUND_PATH;
+        boolean landing = snapshot.movementMode().startsWith("LANDING/");
+        Color navigationColor = landing
+                ? LANDING_PATH
+                : "AIR".equals(snapshot.locomotionMode()) ? AIR_PATH : GROUND_PATH;
         renderPath(
                 poseStack,
                 consumer,
@@ -88,7 +93,13 @@ public final class DragonPathDebugRenderer {
                 SWIM_PATH
         );
 
-        renderMarker(poseStack, consumer, snapshot.movementTarget(), 0.42D, MOVEMENT_TARGET);
+        renderMarker(
+                poseStack,
+                consumer,
+                snapshot.movementTarget(),
+                landing ? 0.52D : 0.42D,
+                landing ? LANDING_TARGET : MOVEMENT_TARGET
+        );
         renderMarker(poseStack, consumer, snapshot.swimTarget(), 0.36D, SWIM_TARGET);
         renderMarker(poseStack, consumer, snapshot.swimEndpoint(), 0.30D, SWIM_ENDPOINT);
         renderMarker(poseStack, consumer, snapshot.rejectedTarget(), 0.48D, REJECTED_TARGET);
