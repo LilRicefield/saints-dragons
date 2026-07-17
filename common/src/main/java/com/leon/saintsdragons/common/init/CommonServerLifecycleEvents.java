@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.data.WikiReminderSavedData;
+import com.leon.saintsdragons.server.debug.DragonPathDebugTracker;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.world.RaevyxStormSpawner;
@@ -25,6 +26,8 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onEndServerTick(MinecraftServer server) {
+        DragonPathDebugTracker.tick(server);
+
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             BloodTempestArmorSetBonus.tick(player);
             DragonlordArmorSetBonus.tick(player);
@@ -58,6 +61,7 @@ public final class CommonServerLifecycleEvents {
         RaevyxStormSpawner.clearTracking();
         StegonautLushCaveSpawner.clearTracking();
         VolitansUnderwaterSpawner.clearTracking();
+        DragonPathDebugTracker.clearAll();
     }
 
     public static void onPlayerJoin(ServerPlayer player) {
@@ -90,6 +94,7 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onPlayerDisconnect(ServerPlayer player) {
+        DragonPathDebugTracker.clear(player);
         BloodTempestArmorSetBonus.clear(player);
         DragonlordArmorSetBonus.saveHealthForReload(player);
         DragonlordArmorSetBonus.clear(player);

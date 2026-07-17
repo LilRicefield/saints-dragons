@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -307,6 +308,15 @@ public class AsyncFlightController {
         return this.waypointQueue.stream().toList();
     }
 
+    public DebugSnapshot getDebugSnapshot() {
+        return new DebugSnapshot(
+                this.state,
+                this.currentWaypoint,
+                this.pathResolver.getDebugPathNodes(),
+                this.pathResolver.getDebugCurrentPathIndex()
+        );
+    }
+
     private boolean shouldForceRecalculateForRetarget(Vec3 previousTarget, Vec3 newTarget) {
         if (previousTarget == null) {
             return false;
@@ -364,6 +374,12 @@ public class AsyncFlightController {
 
     public interface WaypointArrivalCallback {
         void onArrival(Mob dragon);
+    }
+
+    public record DebugSnapshot(PathState state,
+                                @Nullable Vec3 waypoint,
+                                List<Vec3> pathNodes,
+                                int pathIndex) {
     }
 
     public enum PathState {

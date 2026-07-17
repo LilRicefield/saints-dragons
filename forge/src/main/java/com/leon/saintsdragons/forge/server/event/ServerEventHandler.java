@@ -4,10 +4,16 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
+import com.leon.saintsdragons.server.debug.DragonPathDebugTracker;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.forge.entity.part.ForgeDragonPart;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -39,6 +45,30 @@ public class ServerEventHandler {
                 || DragonlordArmorSetBonus.blocksDamage(player, event.getSource())) {
             event.setCanceled(true);
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)
+                || !event.getItemStack().is(Items.DEBUG_STICK)
+                || !player.canUseGameMasterBlocks()) {
+            return;
+        }
+
+        DragonEntity dragon = null;
+        if (event.getTarget() instanceof DragonEntity directDragon) {
+            dragon = directDragon;
+        } else if (event.getTarget() instanceof ForgeDragonPart part
+                && part.getParent() instanceof DragonEntity parentDragon) {
+            dragon = parentDragon;
+        }
+        if (dragon == null) {
+            return;
+        }
+
+        DragonPathDebugTracker.toggle(player, dragon);
+        event.setCancellationResult(InteractionResult.SUCCESS);
+        event.setCanceled(true);
     }
 
     @SubscribeEvent

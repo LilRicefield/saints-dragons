@@ -16,6 +16,7 @@ import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
+import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
@@ -23,6 +24,7 @@ import com.leon.saintsdragons.common.network.MessageCameraImpulse;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
 import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
+import com.leon.saintsdragons.client.debug.DragonPathDebugClient;
 import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -143,6 +145,10 @@ public final class ClientPacketHandlers {
 
     public static void handleAbilityDebugBox(MessageDragonAbilityDebugBox message) {
         DragonAbilityDebugClient.addBox(message.box(), message.colorRgb(), message.lifetimeTicks());
+    }
+
+    public static void handleDragonPathDebug(MessageDragonPathDebug message) {
+        DragonPathDebugClient.apply(message);
     }
 
     public static void handleDialogueOpen(MessageDialogueOpen message) {

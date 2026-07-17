@@ -158,6 +158,7 @@ public class AsyncSwimController {
         return new DebugSnapshot(
                 target,
                 getPathEndpoint(),
+                List.copyOf(pathNodes),
                 currentPathIndex,
                 pathNodes.size(),
                 calculating,
@@ -315,6 +316,7 @@ public class AsyncSwimController {
 
     public record DebugSnapshot(@Nullable Vec3 target,
                                 @Nullable Vec3 endpoint,
+                                List<Vec3> pathNodes,
                                 int pathIndex,
                                 int pathSize,
                                 boolean calculating,

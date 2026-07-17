@@ -1668,6 +1668,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return this.asyncAirController.isIdle();
     }
 
+    public AsyncFlightController.DebugSnapshot getAiFlightDebugSnapshot() {
+        return this.asyncAirController.getDebugSnapshot();
+    }
+
     public @Nullable Vec3 findStandardAiFlightTarget(double maxTurnDegrees, double minRange, double extraRange,
                                                      double maxHeightAboveGround, boolean widerSearch) {
         Vec3 dragonPos = position();

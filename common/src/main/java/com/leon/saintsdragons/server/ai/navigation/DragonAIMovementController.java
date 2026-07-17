@@ -387,6 +387,10 @@ public class DragonAIMovementController {
         return currentWaypoint == null ? "NONE" : currentWaypoint.mode().name();
     }
 
+    public String getDebugGroundPathState() {
+        return groundPathState.name();
+    }
+
     public @Nullable Vec3 getDebugMovementTarget() {
         return currentWaypoint == null ? null : currentWaypoint.target();
     }

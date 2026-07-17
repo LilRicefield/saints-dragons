@@ -1,0 +1,318 @@
+package com.leon.saintsdragons.server.debug;
+
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
+import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+public final class DragonPathDebugTracker {
+    private static final int SNAPSHOT_INTERVAL_TICKS = 4;
+    private static final int MAX_SYNC_NODES = 512;
+    private static final int HISTORY_NODES = 32;
+
+    private static final Map<UUID, TrackingEntry> TRACKED_DRAGONS = new HashMap<>();
+
+    private DragonPathDebugTracker() {
+    }
+
+    public static void toggle(ServerPlayer player, DragonEntity dragon) {
+        if (!player.canUseGameMasterBlocks()) {
+            return;
+        }
+
+        TrackingEntry current = TRACKED_DRAGONS.get(player.getUUID());
+        if (current != null && current.dragonId.equals(dragon.getUUID())) {
+            TRACKED_DRAGONS.remove(player.getUUID());
+            NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
+            player.displayClientMessage(Component.literal("Dragon path debug: OFF"), true);
+            SaintsDragonsCommon.LOGGER.info(
+                    "[Dragon Path Debug] event=unselected player={} id={} uuid={}",
+                    player.getGameProfile().getName(),
+                    dragon.getId(),
+                    dragon.getUUID()
+            );
+            return;
+        }
+
+        TRACKED_DRAGONS.put(player.getUUID(), new TrackingEntry(dragon.getUUID()));
+        player.displayClientMessage(
+                Component.literal("Dragon path debug: ").append(dragon.getDisplayName()),
+                true
+        );
+        SaintsDragonsCommon.LOGGER.info(
+                "[Dragon Path Debug] event=selected player={} id={} uuid={} type={} pos={}",
+                player.getGameProfile().getName(),
+                dragon.getId(),
+                dragon.getUUID(),
+                dragon.getType(),
+                dragon.blockPosition()
+        );
+        sendSnapshot(player, dragon, TRACKED_DRAGONS.get(player.getUUID()), true);
+    }
+
+    public static void tick(MinecraftServer server) {
+        if (TRACKED_DRAGONS.isEmpty() || server.getTickCount() % SNAPSHOT_INTERVAL_TICKS != 0) {
+            return;
+        }
+
+        Iterator<Map.Entry<UUID, TrackingEntry>> iterator = TRACKED_DRAGONS.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, TrackingEntry> tracked = iterator.next();
+            ServerPlayer player = server.getPlayerList().getPlayer(tracked.getKey());
+            if (player == null) {
+                iterator.remove();
+                continue;
+            }
+
+            Entity entity = player.serverLevel().getEntity(tracked.getValue().dragonId);
+            if (!(entity instanceof DragonEntity dragon) || dragon.isRemoved() || !dragon.isAlive()) {
+                NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
+                player.displayClientMessage(Component.literal("Dragon path debug: target unavailable"), true);
+                iterator.remove();
+                continue;
+            }
+
+            sendSnapshot(player, dragon, tracked.getValue(), false);
+        }
+    }
+
+    public static void clear(ServerPlayer player) {
+        if (player != null) {
+            TRACKED_DRAGONS.remove(player.getUUID());
+        }
+    }
+
+    public static void clearAll() {
+        TRACKED_DRAGONS.clear();
+    }
+
+    private static void sendSnapshot(ServerPlayer player,
+                                     DragonEntity dragon,
+                                     TrackingEntry tracking,
+                                     boolean forceLog) {
+        MessageDragonPathDebug snapshot = capture(dragon);
+        NetworkHandler.sendToPlayer(player, snapshot);
+
+        LogState logState = LogState.capture(dragon, snapshot);
+        if (!forceLog && logState.equals(tracking.lastLogState)) {
+            return;
+        }
+        tracking.lastLogState = logState;
+
+        SaintsDragonsCommon.LOGGER.info(
+                "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
+                        + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
+                        + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
+                        + "rejectedTarget={} combatTarget={} navigationDone={} navigationStuck={} "
+                        + "activity={} behaviours={}",
+                player.getGameProfile().getName(),
+                dragon.getId(),
+                dragon.blockPosition(),
+                snapshot.locomotionMode(),
+                snapshot.movementMode(),
+                snapshot.navigationNextIndex(),
+                snapshot.navigationNodeCount(),
+                snapshot.navigationNodes().size(),
+                snapshot.swimNextIndex(),
+                snapshot.swimNodeCount(),
+                snapshot.swimNodes().size(),
+                snapshot.swimCalculating(),
+                snapshot.swimMoving(),
+                snapshot.swimStuckTicks(),
+                snapshot.swimRetries(),
+                blockPosition(snapshot.movementTarget()),
+                blockPosition(snapshot.swimTarget()),
+                blockPosition(snapshot.swimEndpoint()),
+                blockPosition(snapshot.rejectedTarget()),
+                blockPosition(snapshot.combatTarget()),
+                dragon.getNavigation().isDone(),
+                dragon.getNavigation().isStuck(),
+                logState.activity,
+                logState.behaviours
+        );
+    }
+
+    private static MessageDragonPathDebug capture(DragonEntity dragon) {
+        Path navigationPath = dragon.getNavigation().getPath();
+        PathSlice navigation = sliceNavigationPath(dragon, navigationPath);
+
+        @Nullable AsyncFlightController.DebugSnapshot flight = null;
+        if (dragon instanceof RideableFlyingDragon flyingDragon) {
+            flight = flyingDragon.getAiFlightDebugSnapshot();
+            if (!flight.pathNodes().isEmpty()) {
+                navigation = slicePositions(flight.pathNodes(), flight.pathIndex());
+            }
+        }
+
+        AsyncSwimController.DebugSnapshot swim = dragon.getAiSwimController().getDebugSnapshot();
+        PathSlice swimPath = slicePositions(swim.pathNodes(), swim.pathIndex());
+
+        String movementMode = "NONE";
+        @Nullable Vec3 movementTarget = null;
+        if (dragon instanceof RideableDragonBase rideable) {
+            DragonAIMovementController movement = rideable.getAIMovement();
+            movementMode = movement.getDebugMovementMode() + "/" + movement.getDebugGroundPathState();
+            movementTarget = movement.getDebugMovementTarget();
+        }
+        if (flight != null) {
+            movementMode = movementMode + "/AIR_" + flight.state().name();
+            if (movementTarget == null) {
+                movementTarget = flight.waypoint();
+            }
+        }
+        if (movementTarget == null && navigationPath != null && navigationPath.getTarget() != null) {
+            movementTarget = Vec3.atCenterOf(navigationPath.getTarget());
+        }
+
+        LivingEntity combatTarget = dragon.getTarget();
+        return new MessageDragonPathDebug(
+                true,
+                dragon.getId(),
+                dragon.getLocomotionMode().name(),
+                movementMode,
+                navigation.nodes,
+                navigation.firstIndex,
+                navigation.nextIndex,
+                navigation.totalNodes,
+                swimPath.nodes,
+                swimPath.firstIndex,
+                swimPath.nextIndex,
+                swimPath.totalNodes,
+                movementTarget,
+                swim.target(),
+                swim.endpoint(),
+                swim.rejectedTarget(),
+                combatTarget == null ? null : combatTarget.getBoundingBox().getCenter(),
+                swim.calculating(),
+                swim.moving(),
+                swim.stuckTicks(),
+                swim.retries()
+        );
+    }
+
+    private static PathSlice sliceNavigationPath(DragonEntity dragon, @Nullable Path path) {
+        if (path == null || path.getNodeCount() == 0) {
+            return PathSlice.EMPTY;
+        }
+
+        int total = path.getNodeCount();
+        int next = Mth.clamp(path.getNextNodeIndex(), 0, total);
+        int first = Math.max(0, next - HISTORY_NODES);
+        int end = Math.min(total, first + MAX_SYNC_NODES);
+        List<Vec3> positions = new ArrayList<>(end - first);
+        for (int i = first; i < end; i++) {
+            positions.add(path.getEntityPosAtNode(dragon, i));
+        }
+        return new PathSlice(positions, first, next, total);
+    }
+
+    private static PathSlice slicePositions(List<Vec3> positions, int requestedNextIndex) {
+        if (positions.isEmpty()) {
+            return PathSlice.EMPTY;
+        }
+
+        int total = positions.size();
+        int next = Mth.clamp(requestedNextIndex, 0, total);
+        int first = Math.max(0, next - HISTORY_NODES);
+        int end = Math.min(total, first + MAX_SYNC_NODES);
+        return new PathSlice(List.copyOf(positions.subList(first, end)), first, next, total);
+    }
+
+    private static @Nullable BlockPos blockPosition(@Nullable Vec3 position) {
+        return position == null ? null : BlockPos.containing(position);
+    }
+
+    private static List<String> runningBehaviours(DragonEntity dragon) {
+        return dragon.getBrain().getRunningBehaviors().stream()
+                .map(behaviour -> behaviour.getClass().getSimpleName())
+                .sorted()
+                .toList();
+    }
+
+    private static final class TrackingEntry {
+        private final UUID dragonId;
+        private @Nullable LogState lastLogState;
+
+        private TrackingEntry(UUID dragonId) {
+            this.dragonId = dragonId;
+        }
+    }
+
+    private record PathSlice(List<Vec3> nodes, int firstIndex, int nextIndex, int totalNodes) {
+        private static final PathSlice EMPTY = new PathSlice(List.of(), 0, 0, 0);
+    }
+
+    private record LogState(String locomotionMode,
+                            String movementMode,
+                            int navigationNextIndex,
+                            int navigationNodeCount,
+                            int navigationHash,
+                            int swimNextIndex,
+                            int swimNodeCount,
+                            int swimHash,
+                            boolean swimCalculating,
+                            boolean swimMoving,
+                            int swimStuckTicks,
+                            int swimRetries,
+                            @Nullable BlockPos movementTarget,
+                            @Nullable BlockPos swimTarget,
+                            @Nullable BlockPos swimEndpoint,
+                            @Nullable BlockPos rejectedTarget,
+                            int combatTargetId,
+                            boolean navigationDone,
+                            boolean navigationStuck,
+                            String activity,
+                            List<String> behaviours) {
+        private static LogState capture(DragonEntity dragon, MessageDragonPathDebug snapshot) {
+            LivingEntity combatTarget = dragon.getTarget();
+            String activity = dragon.getBrain().getActiveNonCoreActivity()
+                    .map(Object::toString)
+                    .orElse("none");
+            return new LogState(
+                    snapshot.locomotionMode(),
+                    snapshot.movementMode(),
+                    snapshot.navigationNextIndex(),
+                    snapshot.navigationNodeCount(),
+                    snapshot.navigationNodes().hashCode(),
+                    snapshot.swimNextIndex(),
+                    snapshot.swimNodeCount(),
+                    snapshot.swimNodes().hashCode(),
+                    snapshot.swimCalculating(),
+                    snapshot.swimMoving(),
+                    snapshot.swimStuckTicks(),
+                    snapshot.swimRetries(),
+                    blockPosition(snapshot.movementTarget()),
+                    blockPosition(snapshot.swimTarget()),
+                    blockPosition(snapshot.swimEndpoint()),
+                    blockPosition(snapshot.rejectedTarget()),
+                    combatTarget == null ? -1 : combatTarget.getId(),
+                    dragon.getNavigation().isDone(),
+                    dragon.getNavigation().isStuck(),
+                    activity,
+                    runningBehaviours(dragon)
+            );
+        }
+    }
+}

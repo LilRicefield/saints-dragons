@@ -196,4 +196,12 @@ class AsyncFlightPathResolver {
     public int getTicksSinceRecalc() {
         return this.ticksSinceRecalc;
     }
+
+    List<Vec3> getDebugPathNodes() {
+        return List.copyOf(this.pathNodes);
+    }
+
+    int getDebugCurrentPathIndex() {
+        return this.currentPathIndex;
+    }
 }

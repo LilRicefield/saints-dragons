@@ -202,6 +202,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageDragonPathDebug.class,
+                id("dragon_path_debug"),
+                MessageDragonPathDebug::encode,
+                MessageDragonPathDebug::decode,
+                MessageDragonPathDebug::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDialogueOpen.class,
                 id("dialogue_open"),
                 MessageDialogueOpen::encode,
