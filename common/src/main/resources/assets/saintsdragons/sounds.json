@@ -423,6 +423,17 @@
       }
     ]
   },
+  "dragonlord_armor_flap": {
+    "subtitle": "subtitles.saintsdragons.dragonlord_armor_flap",
+    "sounds": [
+      {
+        "name": "saintsdragons:armor/dragonlord_armor/dragonlord_armor_flap",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "dragonlord_armor_impact": {
     "subtitle": "subtitles.saintsdragons.dragonlord_armor_impact",
     "sounds": [
@@ -2362,6 +2373,15 @@
     "subtitle": "subtitles.saintsdragons.draconic_crucible_close",
     "sounds": [
       "saintsdragons:draconic_crucible_close"
+    ]
+  },
+  "draconic_crucible_smelting": {
+    "subtitle": "subtitles.saintsdragons.draconic_crucible_smelting",
+    "sounds": [
+      {
+        "name": "saintsdragons:draconic_crucible_smelting",
+        "stream": true
+      }
     ]
   }
 }

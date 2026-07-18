@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.network.MessageCameraImpulse;
+import com.leon.saintsdragons.common.network.MessageDragonlordFlightBoost;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.data.DragonlordPlayerSavedData;
 import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
@@ -15,7 +16,6 @@ import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.network.protocol.game.ClientboundSetEntityMotionPacket;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
@@ -40,10 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 
 public final class DragonlordArmorSetBonus {
-    private static final double FLIGHT_BOOST_TARGET_SPEED = 1.5D;
-    private static final double FLIGHT_BOOST_DIRECT_ACCELERATION = 0.1D;
-    private static final double FLIGHT_BOOST_VELOCITY_BLEND = 0.5D;
     private static final int FLIGHT_BOOST_FIREWORK_LEVEL = 3;
+    private static final int FLIGHT_BOOST_COOLDOWN_TICKS = 80;
     private static final double LANDING_SHOCKWAVE_Y_RADIUS = 5.0D;
     private static final float LANDING_IMPACT_RING_SCALE = 0.4F;
     private static final int LANDING_IMPACT_DUST_COUNT = 64;
@@ -54,6 +52,7 @@ public final class DragonlordArmorSetBonus {
     private static final int LANDING_SCREEN_SHAKE_DURATION = 16;
     private static final float LANDING_SCREEN_SHAKE_RADIUS = 36.0F;
     private static final int DOUBLE_JUMP_FLAME_COUNT = 20;
+    private static final int DOUBLE_JUMP_DUST_COUNT = 14;
     private static final float FALL_DAMAGE_BLOCK_THRESHOLD = 16.0F;
     private static final float VANILLA_PLAYER_MAX_HEALTH = 20.0F;
     private static final UUID DOUBLE_JUMP_MODIFIER_UUID = UUID.fromString("8e8d7d4f-14b7-4df2-aeaf-4b47e6c4f617");
@@ -65,7 +64,7 @@ public final class DragonlordArmorSetBonus {
     );
     private static final Set<UUID> USED_MIDAIR_JUMP = new HashSet<>();
     private static final Set<UUID> ACTIVE_FLIGHT = new HashSet<>();
-    private static final Map<UUID, Integer> FLIGHT_BOOST_TICKS = new HashMap<>();
+    private static final Map<UUID, Long> FLIGHT_BOOST_COOLDOWN_UNTIL = new HashMap<>();
     private static final Set<UUID> PENDING_LANDING_SHOCKWAVE = new HashSet<>();
     private static final Map<UUID, Double> DOUBLE_JUMP_PEAK_Y = new HashMap<>();
     private static final Set<UUID> PENDING_HEALTH_RESTORE = new HashSet<>();
@@ -126,7 +125,6 @@ public final class DragonlordArmorSetBonus {
             if (!player.isFallFlying()) {
                 player.startFallFlying();
             }
-            tickFlightBoost(player);
         } else if (PENDING_LANDING_SHOCKWAVE.contains(player.getUUID())) {
             DOUBLE_JUMP_PEAK_Y.merge(player.getUUID(), player.getY(), Math::max);
         }
@@ -241,6 +239,7 @@ public final class DragonlordArmorSetBonus {
         PENDING_LANDING_SHOCKWAVE.remove(playerId);
         DOUBLE_JUMP_PEAK_Y.remove(playerId);
         PENDING_HEALTH_RESTORE.remove(playerId);
+        FLIGHT_BOOST_COOLDOWN_UNTIL.remove(playerId);
     }
 
     private static boolean startFlight(ServerPlayer player) {
@@ -253,7 +252,8 @@ public final class DragonlordArmorSetBonus {
         DOUBLE_JUMP_PEAK_Y.remove(playerId);
         player.startFallFlying();
         player.resetFallDistance();
-        return boostFlight(player);
+        boostFlight(player);
+        return true;
     }
 
     private static boolean boostFlight(ServerPlayer player) {
@@ -265,50 +265,27 @@ public final class DragonlordArmorSetBonus {
         if (!player.isFallFlying()) {
             player.startFallFlying();
         }
-        FLIGHT_BOOST_TICKS.put(player.getUUID(), fireworkBoostDuration(player) - 1);
-        applyFireworkBoost(player);
+        long gameTime = player.level().getGameTime();
+        long cooldownUntil = FLIGHT_BOOST_COOLDOWN_UNTIL.getOrDefault(player.getUUID(), 0L);
+        if (gameTime < cooldownUntil) {
+            return false;
+        }
+        FLIGHT_BOOST_COOLDOWN_UNTIL.put(
+                player.getUUID(),
+                gameTime + FLIGHT_BOOST_COOLDOWN_TICKS
+        );
+        int boostDuration = fireworkBoostDuration(player);
         triggerFlapAnimation(player);
+        NetworkHandler.sendToPlayer(player, new MessageDragonlordFlightBoost(boostDuration));
+        player.level().playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_FLAP.get(),
+                SoundSource.PLAYERS, 0.9F, 0.96F + player.getRandom().nextFloat() * 0.08F);
         return true;
-    }
-
-    private static void tickFlightBoost(ServerPlayer player) {
-        Integer remainingTicks = FLIGHT_BOOST_TICKS.get(player.getUUID());
-        if (remainingTicks == null || remainingTicks <= 0) {
-            FLIGHT_BOOST_TICKS.remove(player.getUUID());
-            return;
-        }
-
-        applyFireworkBoost(player);
-        if (remainingTicks == 1) {
-            FLIGHT_BOOST_TICKS.remove(player.getUUID());
-        } else {
-            FLIGHT_BOOST_TICKS.put(player.getUUID(), remainingTicks - 1);
-        }
     }
 
     private static int fireworkBoostDuration(ServerPlayer player) {
         return 10 * (1 + FLIGHT_BOOST_FIREWORK_LEVEL)
                 + player.getRandom().nextInt(6)
                 + player.getRandom().nextInt(7);
-    }
-
-    private static void applyFireworkBoost(ServerPlayer player) {
-        Vec3 look = player.getLookAngle().normalize();
-        Vec3 motion = player.getDeltaMovement();
-        Vec3 target = look.scale(FLIGHT_BOOST_TARGET_SPEED);
-        Vec3 boosted = motion.add(
-                look.x * FLIGHT_BOOST_DIRECT_ACCELERATION
-                        + (target.x - motion.x) * FLIGHT_BOOST_VELOCITY_BLEND,
-                look.y * FLIGHT_BOOST_DIRECT_ACCELERATION
-                        + (target.y - motion.y) * FLIGHT_BOOST_VELOCITY_BLEND,
-                look.z * FLIGHT_BOOST_DIRECT_ACCELERATION
-                        + (target.z - motion.z) * FLIGHT_BOOST_VELOCITY_BLEND
-        );
-        player.setDeltaMovement(boosted);
-        player.hasImpulse = true;
-        player.hurtMarked = true;
-        player.resetFallDistance();
-        player.connection.send(new ClientboundSetEntityMotionPacket(player));
     }
 
     private static void triggerFlapAnimation(ServerPlayer player) {
@@ -325,7 +302,6 @@ public final class DragonlordArmorSetBonus {
     }
 
     private static void stopFlight(ServerPlayer player) {
-        FLIGHT_BOOST_TICKS.remove(player.getUUID());
         if (ACTIVE_FLIGHT.remove(player.getUUID()) && player.isFallFlying()) {
             player.stopFallFlying();
         }
@@ -495,6 +471,9 @@ public final class DragonlordArmorSetBonus {
                     0, Math.cos(angle) * 0.18D, 0.02D,
                     Math.sin(angle) * 0.18D, 1.0D);
         }
+        server.sendParticles(ParticleTypes.POOF,
+                origin.x, player.getBoundingBox().minY - 0.05D, origin.z,
+                DOUBLE_JUMP_DUST_COUNT, 0.35D, 0.04D, 0.35D, 0.04D);
 
         server.playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_DOUBLE_JUMP.get(),
                 SoundSource.PLAYERS, 0.75F, 0.95F + player.getRandom().nextFloat() * 0.1F);

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonFovHelper;
+import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -63,6 +64,7 @@ public class EntityRendererMixin {
         }
 
         resultFov *= BloodTempestKatanaVisuals.getFovMultiplier(partialTicks);
+        resultFov *= DragonlordFlightVisuals.getFovMultiplier(partialTicks);
         cir.setReturnValue(resultFov);
     }
 

@@ -21,7 +21,8 @@
     "client.BloodTempestAfterimagePlayerRendererMixin",
     "client.BloodTempestAfterimageLivingRendererMixin",
     "client.LivingEntityRendererMixin",
-    "client.EntityRendererMixin"
+    "client.EntityRendererMixin",
+    "client.EntityTurnMixin"
   ],
   "server": [
   ],

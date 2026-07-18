@@ -170,6 +170,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageDragonlordFlightBoost.class,
+                id("dragonlord_flight_boost"),
+                MessageDragonlordFlightBoost::encode,
+                MessageDragonlordFlightBoost::decode,
+                MessageDragonlordFlightBoost::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageMountedTeleport.class,
                 id("mounted_teleport"),
                 MessageMountedTeleport::encode,

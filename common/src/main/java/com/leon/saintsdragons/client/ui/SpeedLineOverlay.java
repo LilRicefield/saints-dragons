@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.client.camera.DragonDiveEffectIntensity;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
+import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -31,7 +32,8 @@ public final class SpeedLineOverlay {
         Entity vehicle = player == null ? null : player.getVehicle();
         float intensity = Math.max(
                 DragonDiveEffectIntensity.get(vehicle),
-                BloodTempestKatanaVisuals.getSpeedLineIntensity(partialTicks));
+                Math.max(BloodTempestKatanaVisuals.getSpeedLineIntensity(partialTicks),
+                        DragonlordFlightVisuals.getSpeedLineIntensity(partialTicks)));
         if (intensity <= 0.0F) {
             lines.clear();
             return;

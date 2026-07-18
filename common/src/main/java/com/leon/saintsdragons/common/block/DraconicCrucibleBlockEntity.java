@@ -199,6 +199,10 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         this.pendingResult = job.result().copy();
         this.processingLocked = true;
         this.canStartProcessing = false;
+        if (!level.isClientSide) {
+            level.playSound(null, this.worldPosition, ModSounds.DRACONIC_CRUCIBLE_SMELTING.get(),
+                    SoundSource.BLOCKS, 0.65F, 1.0F);
+        }
         syncProcessingState();
         setChanged();
         return true;

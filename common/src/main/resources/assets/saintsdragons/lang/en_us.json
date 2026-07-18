@@ -244,6 +244,7 @@
   "subtitles.saintsdragons.draconic_codex_flip": "Book pages flip",
   "subtitles.saintsdragons.dragon_dive_loop": "Wind rushes past",
   "subtitles.saintsdragons.dragonlord_armor_double_jump": "Dragonlord armor ignites",
+  "subtitles.saintsdragons.dragonlord_armor_flap": "Dragonlord armor flaps",
   "subtitles.saintsdragons.dragonlord_armor_impact": "Dragonlord armor impacts",
   "subtitles.saintsdragons.blood_tempest_armor_dodge": "Blood Tempest armor dodges",
   "subtitles.saintsdragons.blood_tempest_armor_ability": "Blood Tempest cuts through the air",
@@ -623,7 +624,7 @@
   "advancement.saintsdragons.tame_ignivorus.description": "Earn the trust of an Ignivorus, the living calamity",
 
   "advancement.saintsdragons.dragonlord_armor_set.title": "Dragonborn",
-  "advancement.saintsdragons.dragonlord_armor_set.description": "FUS RO-- Nah, I'm just kdding",
+  "advancement.saintsdragons.dragonlord_armor_set.description": "FUS RO-- Nah, I'm just kidding",
 
   "advancement.saintsdragons.tame_volitans.title": "Mors per Venenum",
   "advancement.saintsdragons.tame_volitans.description": "Tame a Volitans. Every direction hurts",
@@ -1063,6 +1064,7 @@
   "jade.saintsdragons.draconic_crucible.processing": "Processing: %s remaining",
   "subtitles.saintsdragons.draconic_crucible_open": "Draconic Crucible opens",
   "subtitles.saintsdragons.draconic_crucible_close": "Draconic Crucible closes",
+  "subtitles.saintsdragons.draconic_crucible_smelting": "Draconic Crucible smelts",
   "item.saintsdragons.raevyx_wing_hide": "Raevyx Wing Hide",
   "item.saintsdragons.raevyx_wingtalon": "Raevyx Wingtalon",
   "item.saintsdragons.ignivorus_wing_hide": "Ignivorus Wing Hide",

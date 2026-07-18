@@ -3,6 +3,8 @@ package com.leon.saintsdragons.client.init;
 import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
+import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
+import com.leon.saintsdragons.client.camera.DragonlordFlightBoostController;
 import com.leon.saintsdragons.client.input.DragonlordDoubleJumpInput;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSonicRingTrail;
@@ -41,6 +43,8 @@ public final class CommonClientLifecycleEvents {
         BloodTempestAfterimageTrail.tick(minecraft);
         BloodTempestSonicRingTrail.tick(minecraft);
         BloodTempestKatanaVisuals.tick(minecraft);
+        DragonlordFlightBoostController.tick(minecraft);
+        DragonlordFlightVisuals.tick(minecraft);
         ClientCameraImpulse.tick(minecraft);
     }
 }

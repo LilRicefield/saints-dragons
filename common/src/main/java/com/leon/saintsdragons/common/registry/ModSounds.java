@@ -16,6 +16,7 @@ public final class ModSounds {
 
     public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_OPEN = registerSound("draconic_crucible_open");
     public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_CLOSE = registerSound("draconic_crucible_close");
+    public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_SMELTING = registerSound("draconic_crucible_smelting");
 
     public static final Supplier<SoundEvent> IVY_TRADE_START = registerSound("ivy_trade_start");
     public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");
@@ -58,6 +59,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> DRACONIC_CODEX_FLIP = registerSound("draconic_codex_flip");
     public static final Supplier<SoundEvent> DRAGON_DIVE_LOOP = registerSound("dragon_dive_loop");
     public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_DOUBLE_JUMP = registerSound("dragonlord_armor_double_jump");
+    public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_FLAP = registerSound("dragonlord_armor_flap");
     public static final Supplier<SoundEvent> DRAGONLORD_ARMOR_IMPACT = registerSound("dragonlord_armor_impact");
     public static final Supplier<SoundEvent> BLOOD_TEMPEST_ARMOR_DODGE = registerSound("blood_tempest_armor_dodge");
     public static final Supplier<SoundEvent> BLOOD_TEMPEST_ARMOR_ABILITY = registerSound("blood_tempest_armor_ability");

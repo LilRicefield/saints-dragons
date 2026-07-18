@@ -2,6 +2,8 @@ package com.leon.saintsdragons.client.network;
 
 import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
+import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
+import com.leon.saintsdragons.client.camera.DragonlordFlightBoostController;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSonicRingTrail;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
@@ -19,6 +21,7 @@ import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
+import com.leon.saintsdragons.common.network.MessageDragonlordFlightBoost;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.MessageCameraImpulse;
@@ -138,6 +141,11 @@ public final class ClientPacketHandlers {
         }
         float proximity = 1.0F - Mth.clamp((float) (distance / message.radius()), 0.0F, 1.0F);
         ClientCameraImpulse.trigger(message.intensity() * (0.35F + proximity * 0.65F), message.durationTicks());
+    }
+
+    public static void handleDragonlordFlightBoost(MessageDragonlordFlightBoost message) {
+        DragonlordFlightBoostController.startBoost(message.durationTicks());
+        DragonlordFlightVisuals.startBoost();
     }
 
     public static void handleMountedTeleport(MessageMountedTeleport message) {
