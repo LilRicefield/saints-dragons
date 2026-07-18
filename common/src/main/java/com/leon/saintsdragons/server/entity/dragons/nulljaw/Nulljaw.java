@@ -574,6 +574,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
         awardDragonEncounterAdvancement(player);
         ItemStack heldItem = player.getItemInHand(hand);
+        if (ModItems.isDragonBrush(heldItem)) {
+            if (!this.level().isClientSide) {
+                this.tryBrush(player, heldItem);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
         if (player.getVehicle() == this) {
             return InteractionResult.PASS;
         }
@@ -734,11 +740,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     public boolean isFood(@NotNull ItemStack stack) {
         return stack.is(ModTags.Items.NULLJAW_FOODS);
-    }
-
-    @Override
-    public boolean tryBrush(Player player, ItemStack brushStack) {
-        return false;
     }
 
     @Override
