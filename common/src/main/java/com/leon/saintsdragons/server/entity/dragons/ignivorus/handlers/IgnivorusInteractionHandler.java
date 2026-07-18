@@ -82,11 +82,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 dragon.enterTamingStun();
             }
 
-            double tameChance = hearty
-                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
-                : beef
-                    ? config.extraDoubles().getOrDefault("taming_chance_beef", 5.0)
-                    : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
+            double tameChance = getTamingChance(itemstack, config);
             boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
 
             if (success) {
@@ -169,19 +165,12 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
         boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-        boolean cod = itemstack.is(net.minecraft.world.item.Items.COD);
-        boolean salmon = itemstack.is(net.minecraft.world.item.Items.SALMON);
-        boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
         boolean validFood = dragon.isFood(itemstack);
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        double tameChance = hearty
-            ? config.extraDoubles().getOrDefault("taming_chance_hearty", 4.0)
-            : beef
-                ? config.extraDoubles().getOrDefault("taming_chance_beef", 5.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 7.0);
+        double tameChance = getTamingChance(itemstack, config);
         return baby.tryHandleBabyFoodTaming(
                 player,
                 itemstack,
@@ -287,5 +276,21 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
     private boolean isIgnivorusFood(ItemStack itemstack) {
         return dragon.isFood(itemstack);
+    }
+
+    private double getTamingChance(ItemStack food, DragonAttributeConfig config) {
+        if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
+            return config.extraDouble("taming_chance_hearty", 25.0D);
+        }
+        if (food.is(net.minecraft.world.item.Items.BEEF)) {
+            return config.extraDouble("taming_chance_beef", 20.0D);
+        }
+        if (food.is(net.minecraft.world.item.Items.MUTTON)) {
+            return config.extraDouble("taming_chance_mutton", 14.2857D);
+        }
+        if (food.is(net.minecraft.world.item.Items.PORKCHOP)) {
+            return config.extraDouble("taming_chance_porkchop", 14.2857D);
+        }
+        return config.extraDouble("taming_chance_base", 14.2857D);
     }
 }

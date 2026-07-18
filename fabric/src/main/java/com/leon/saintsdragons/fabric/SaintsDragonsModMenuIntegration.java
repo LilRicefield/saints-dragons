@@ -107,6 +107,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         raevyxBuffer.dashDamage = raevyxCurrent.abilityDamage("dash",
                 raevyxDefaults.abilityDamage("dash", 10.0D));
         raevyxBuffer.tamingChanceBase = raevyxCurrent.extraDouble("taming_chance_base", 20.0);
+        raevyxBuffer.tamingChanceMutton = raevyxCurrent.extraDouble("taming_chance_mutton", 20.0D);
+        raevyxBuffer.tamingChancePorkchop = raevyxCurrent.extraDouble("taming_chance_porkchop", 20.0D);
         raevyxBuffer.tamingChanceHearty = raevyxCurrent.extraDouble("taming_chance_hearty", 33.3333D);
         raevyxBuffer.tamingStunHealth = raevyxCurrent.extraDouble("taming_stun_health",
                 raevyxDefaults.extraDouble("taming_stun_health", 60.0D));
@@ -147,6 +149,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         varasuchusBuffer.hornPhase1 = varasuchusCurrent.abilityDamage("horn_gore_phase1", 8.0D);
         varasuchusBuffer.hornPhase2 = varasuchusCurrent.abilityDamage("horn_gore_phase2", 15.8D);
         varasuchusBuffer.tamingChance = varasuchusCurrent.extraDouble("taming_chance", 16.6667D);
+        varasuchusBuffer.tamingChanceBeef = varasuchusCurrent.extraDouble("taming_chance_beef", 16.6667D);
         varasuchusBuffer.tamingChanceTropical = varasuchusCurrent.extraDouble("taming_chance_tropical", 25.0D);
         varasuchusBuffer.legacyTaming = varasuchusCurrent.extraBoolean("legacy_taming", false);
         varasuchusBuffer.eggHatchChanceNormal = varasuchusCurrent.extraDouble("egg_hatch_time_ticks_normal", 24000.0D);
@@ -210,6 +213,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.extraDouble("ultimate_penalty_health", 50.0D));
         ignivorusBuffer.tamingChanceBase = ignivorusCurrent.extraDouble("taming_chance_base", 14.2857D);
         ignivorusBuffer.tamingChanceBeef = ignivorusCurrent.extraDouble("taming_chance_beef", 20.0D);
+        ignivorusBuffer.tamingChanceMutton = ignivorusCurrent.extraDouble("taming_chance_mutton", 14.2857D);
+        ignivorusBuffer.tamingChancePorkchop = ignivorusCurrent.extraDouble("taming_chance_porkchop", 14.2857D);
         ignivorusBuffer.tamingChanceHearty = ignivorusCurrent.extraDouble("taming_chance_hearty", 25.0);
         ignivorusBuffer.tamingStunHealth = ignivorusCurrent.extraDouble("taming_stun_health",
                 ignivorusDefaults.extraDouble("taming_stun_health", 100.0D));
@@ -1059,6 +1064,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceBase = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_mutton"), buffer.tamingChanceMutton)
+                .setDefaultValue(defaults.extraDouble("taming_chance_mutton", 20.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceMutton = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_porkchop"), buffer.tamingChancePorkchop)
+                .setDefaultValue(defaults.extraDouble("taming_chance_porkchop", 20.0D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChancePorkchop = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.taming_hearty"), buffer.tamingChanceHearty)
                 .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 33.3333D))
                 .setMin(0.0D)
@@ -1218,6 +1235,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChance = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_beef"), buffer.tamingChanceBeef)
+                .setDefaultValue(defaults.extraDouble("taming_chance_beef", 16.6667D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceBeef = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_tropical"), buffer.tamingChanceTropical)
                 .setDefaultValue(defaults.extraDouble("taming_chance_tropical", 25.0D))
                 .setMin(0.0D)
@@ -1353,6 +1376,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(100.0D)
                 .setSaveConsumer(value -> buffer.tamingChanceBeef = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_mutton"), buffer.tamingChanceMutton)
+                .setDefaultValue(defaults.extraDouble("taming_chance_mutton", 14.2857D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChanceMutton = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_porkchop"), buffer.tamingChancePorkchop)
+                .setDefaultValue(defaults.extraDouble("taming_chance_porkchop", 14.2857D))
+                .setMin(0.0D)
+                .setMax(100.0D)
+                .setSaveConsumer(value -> buffer.tamingChancePorkchop = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_hearty"), buffer.tamingChanceHearty)
                 .setDefaultValue(defaults.extraDouble("taming_chance_hearty", 25.0D))
@@ -1894,6 +1929,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 Map.of(
                         "swim_speed", varasuchusBuffer.swimSpeed,
                         "taming_chance", varasuchusBuffer.tamingChance,
+                        "taming_chance_beef", varasuchusBuffer.tamingChanceBeef,
                         "taming_chance_tropical", varasuchusBuffer.tamingChanceTropical,
                         "egg_hatch_time_ticks_normal", varasuchusBuffer.eggHatchChanceNormal
                 ),
@@ -2040,6 +2076,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double hornDamage;
         double dashDamage;
         double tamingChanceBase;
+        double tamingChanceMutton;
+        double tamingChancePorkchop;
         double tamingChanceHearty;
         double tamingStunHealth;
         double wildFlyingSpeedMultiplier;
@@ -2070,6 +2108,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double hornPhase1;
         double hornPhase2;
         double tamingChance;
+        double tamingChanceBeef;
         double tamingChanceTropical;
         boolean legacyTaming;
         double eggHatchChanceNormal;
@@ -2093,6 +2132,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double ultimatePenalty;
         double tamingChanceBase;
         double tamingChanceBeef;
+        double tamingChanceMutton;
+        double tamingChancePorkchop;
         double tamingChanceHearty;
         double tamingStunHealth;
         double wildFlyingSpeedMultiplier;
@@ -2175,6 +2216,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static Map<String, Double> buildRaevyxExtras(RaevyxAttributeBuffer buffer) {
         Map<String, Double> extras = new HashMap<>();
         extras.put("taming_chance_base", buffer.tamingChanceBase);
+        extras.put("taming_chance_mutton", buffer.tamingChanceMutton);
+        extras.put("taming_chance_porkchop", buffer.tamingChancePorkchop);
         extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
         extras.put("taming_stun_health", buffer.tamingStunHealth);
         extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
@@ -2194,6 +2237,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("ultimate_penalty_health", buffer.ultimatePenalty);
         extras.put("taming_chance_base", buffer.tamingChanceBase);
         extras.put("taming_chance_beef", buffer.tamingChanceBeef);
+        extras.put("taming_chance_mutton", buffer.tamingChanceMutton);
+        extras.put("taming_chance_porkchop", buffer.tamingChancePorkchop);
         extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
         extras.put("taming_stun_health", buffer.tamingStunHealth);
         extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);

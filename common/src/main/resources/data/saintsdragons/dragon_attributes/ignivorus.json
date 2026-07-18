@@ -49,6 +49,8 @@
     "phase2_decision_max_ticks": 120.0,
     "taming_chance_base": 14.2857,
     "taming_chance_beef": 20.0,
+    "taming_chance_mutton": 14.2857,
+    "taming_chance_porkchop": 14.2857,
     "taming_chance_hearty": 25.0,
     "egg_hatch_time_ticks_normal": 36000.0,
     "wild_flying_speed_multiplier": 1.0,

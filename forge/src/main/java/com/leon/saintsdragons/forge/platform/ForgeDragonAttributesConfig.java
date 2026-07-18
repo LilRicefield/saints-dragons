@@ -45,6 +45,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue RAEVYX_SUMMON_STORM_DURATION_TICKS;
     public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_CHANCE_BASE;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_CHANCE_MUTTON;
+    public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_CHANCE_PORKCHOP;
     public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue RAEVYX_TAMING_STUN_HEALTH;
     public static ForgeConfigSpec.BooleanValue RAEVYX_LEGACY_TAMING;
@@ -66,6 +68,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_HORN_GORE_PHASE2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_SWIM_SPEED;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAMING_CHANCE;
+    public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAMING_CHANCE_BEEF;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_TAMING_CHANCE_TROPICAL;
     public static ForgeConfigSpec.BooleanValue VARASUCHUS_LEGACY_TAMING;
     public static ForgeConfigSpec.DoubleValue VARASUCHUS_EGG_HATCH_CHANCE_NORMAL;
@@ -100,6 +103,8 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_PHASE2_DECISION_MAX_TICKS;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_BASE;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_BEEF;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_MUTTON;
+    public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_PORKCHOP;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_CHANCE_HEARTY;
     public static ForgeConfigSpec.DoubleValue IGNIVORUS_TAMING_STUN_HEALTH;
     public static ForgeConfigSpec.BooleanValue IGNIVORUS_LEGACY_TAMING;
@@ -220,6 +225,8 @@ public final class ForgeDragonAttributesConfig {
         RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER = builder.defineInRange("summon_storm_supercharge_damage_multiplier", 2.0, 0.0, 100.0);
         RAEVYX_SUMMON_STORM_DURATION_TICKS = builder.defineInRange("summon_storm_duration_ticks", 1200.0, 20.0, 120000.0);
         RAEVYX_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 20.0, 0.0, 100.0);
+        RAEVYX_TAMING_CHANCE_MUTTON = builder.defineInRange("taming_chance_mutton", 20.0, 0.0, 100.0);
+        RAEVYX_TAMING_CHANCE_PORKCHOP = builder.defineInRange("taming_chance_porkchop", 20.0, 0.0, 100.0);
         RAEVYX_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 33.3333, 0.0, 100.0);
         RAEVYX_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 60.0, 0.0, 1000.0);
         RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 18000.0, 20.0, 72000.0);
@@ -242,6 +249,7 @@ public final class ForgeDragonAttributesConfig {
         VARASUCHUS_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", 8.0, 0.0, 100000.0);
         VARASUCHUS_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", 15.8, 0.0, 100000.0);
         VARASUCHUS_TAMING_CHANCE = builder.defineInRange("taming_chance", 16.6667, 0.0, 100.0);
+        VARASUCHUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 16.6667, 0.0, 100.0);
         VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", 25.0, 0.0, 100.0);
         VARASUCHUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 24000.0, 20.0, 72000.0);
         VARASUCHUS_LEGACY_TAMING = builder.define("legacy_taming", false);
@@ -277,6 +285,8 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_PHASE2_DECISION_MAX_TICKS = builder.defineInRange("phase2_decision_max_ticks", 120.0, 1.0, 1200.0);
         IGNIVORUS_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 14.2857, 0.0, 100.0);
         IGNIVORUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 20.0, 0.0, 100.0);
+        IGNIVORUS_TAMING_CHANCE_MUTTON = builder.defineInRange("taming_chance_mutton", 14.2857, 0.0, 100.0);
+        IGNIVORUS_TAMING_CHANCE_PORKCHOP = builder.defineInRange("taming_chance_porkchop", 14.2857, 0.0, 100.0);
         IGNIVORUS_TAMING_CHANCE_HEARTY = builder.defineInRange("taming_chance_hearty", 25.0, 0.0, 100.0);
         IGNIVORUS_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 100.0, 0.0, 1000.0);
         IGNIVORUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", 36000.0, 20.0, 72000.0);

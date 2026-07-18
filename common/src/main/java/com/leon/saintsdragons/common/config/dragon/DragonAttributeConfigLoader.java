@@ -134,6 +134,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double hornGoreDamage = 15.0D;
         double dashDamage = 10.0D;
         double tamingChanceBase = 20.0D;
+        double tamingChanceMutton = 20.0D;
+        double tamingChancePorkchop = 20.0D;
         double tamingChanceHearty = 33.3333D;
         double beamDrainPerTick = 0.014D;
         double beamRegenPerTick = 0.0025D;
@@ -160,6 +162,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 hornGoreDamage = (double) configClass.getField("RAEVYX_HORN_GORE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_HORN_GORE_DAMAGE").get(null));
                 dashDamage = (double) configClass.getField("RAEVYX_DASH_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_DASH_DAMAGE").get(null));
                 tamingChanceBase = (double) configClass.getField("RAEVYX_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_BASE").get(null));
+                tamingChanceMutton = (double) configClass.getField("RAEVYX_TAMING_CHANCE_MUTTON").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_MUTTON").get(null));
+                tamingChancePorkchop = (double) configClass.getField("RAEVYX_TAMING_CHANCE_PORKCHOP").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_PORKCHOP").get(null));
                 tamingChanceHearty = (double) configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_TAMING_CHANCE_HEARTY").get(null));
                 beamDrainPerTick = (double) configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_DRAIN_PER_TICK").get(null));
                 beamRegenPerTick = (double) configClass.getField("RAEVYX_BEAM_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("RAEVYX_BEAM_REGEN_PER_TICK").get(null));
@@ -180,6 +184,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
         Map<String, Double> extras = new HashMap<>();
         extras.put("taming_chance_base", tamingChanceBase);
+        extras.put("taming_chance_mutton", tamingChanceMutton);
+        extras.put("taming_chance_porkchop", tamingChancePorkchop);
         extras.put("taming_chance_hearty", tamingChanceHearty);
         extras.put("beam_drain_per_tick", beamDrainPerTick);
         extras.put("beam_regen_per_tick", beamRegenPerTick);
@@ -225,6 +231,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double hornPhase2Damage = 15.8D;
         double swimSpeed = 1.45D;
         double tamingChance = 16.6667D;
+        double tamingChanceBeef = 16.6667D;
         double tamingChanceTropical = 25.0D;
         boolean legacyTaming = false;
         double eggHatchTimeTicksNormal = 24000.0D;
@@ -246,6 +253,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 hornPhase2Damage = (double) configClass.getField("VARASUCHUS_HORN_GORE_PHASE2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_HORN_GORE_PHASE2_DAMAGE").get(null));
                 swimSpeed = (double) configClass.getField("VARASUCHUS_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_SWIM_SPEED").get(null));
                 tamingChance = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE").get(null));
+                tamingChanceBeef = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE_BEEF").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE_BEEF").get(null));
                 tamingChanceTropical = (double) configClass.getField("VARASUCHUS_TAMING_CHANCE_TROPICAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_TAMING_CHANCE_TROPICAL").get(null));
                 legacyTaming = (boolean) configClass.getField("VARASUCHUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_LEGACY_TAMING").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("VARASUCHUS_EGG_HATCH_CHANCE_NORMAL").get(null));
@@ -272,6 +280,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "swim_speed", swimSpeed,
                         "taming_chance", tamingChance,
+                        "taming_chance_beef", tamingChanceBeef,
                         "taming_chance_tropical", tamingChanceTropical,
                         "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal
                 ),
@@ -300,6 +309,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double ultimateTriggerHealthFraction = 0.5D;
         double tamingChanceBase = 14.2857D;
         double tamingChanceBeef = 20.0D;
+        double tamingChanceMutton = 14.2857D;
+        double tamingChancePorkchop = 14.2857D;
         double tamingChanceHearty = 25.0D;
         boolean legacyTaming = false;
         double fireBreathDrainPerTick = 0.00625D;
@@ -337,6 +348,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ultimateTriggerHealthFraction = (double) configClass.getField("IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION").get(null));
                 tamingChanceBase = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_BASE").get(null));
                 tamingChanceBeef = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_BEEF").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_BEEF").get(null));
+                tamingChanceMutton = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_MUTTON").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_MUTTON").get(null));
+                tamingChancePorkchop = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_PORKCHOP").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_PORKCHOP").get(null));
                 tamingChanceHearty = (double) configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_CHANCE_HEARTY").get(null));
                 legacyTaming = (boolean) configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null));
                 fireBreathDrainPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null));
@@ -372,6 +385,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("phase2_decision_max_ticks", phase2DecisionMaxTicks);
         extras.put("taming_chance_base", tamingChanceBase);
         extras.put("taming_chance_beef", tamingChanceBeef);
+        extras.put("taming_chance_mutton", tamingChanceMutton);
+        extras.put("taming_chance_porkchop", tamingChancePorkchop);
         extras.put("taming_chance_hearty", tamingChanceHearty);
         extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
         extras.put("taming_stun_health", tamingStunHealth);
@@ -816,6 +831,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillNormalEggTimerTuning(path, entry.getKey(), entry.getValue());
                 backfillRaevyxEggTimerTuning(path, entry.getKey(), entry.getValue());
                 backfillTamingStunHealth(path, entry.getKey(), entry.getValue());
+                backfillPreyTamingChances(path, entry.getKey(), entry.getValue());
                 backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
                 continue;
@@ -1320,6 +1336,42 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         base.put(ATROXIIA_ID, atroxiiaDefaults());
         base.put(DRACONIAN_SWARM_ID, draconianSwarmDefaults());
         return base;
+    }
+
+    private void backfillPreyTamingChances(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+        if (!id.equals(IGNIVORUS_ID) && !id.equals(RAEVYX_ID) && !id.equals(VARASUCHUS_ID)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonObject json = GsonHelper.convertToJsonObject(JsonParser.parseReader(reader), id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean updated = false;
+
+            if (id.equals(IGNIVORUS_ID) || id.equals(RAEVYX_ID)) {
+                if (!extra.has("taming_chance_mutton")) {
+                    extra.addProperty("taming_chance_mutton",
+                            mergedConfig.extraDouble("taming_chance_mutton", id.equals(RAEVYX_ID) ? 20.0D : 14.2857D));
+                    updated = true;
+                }
+                if (!extra.has("taming_chance_porkchop")) {
+                    extra.addProperty("taming_chance_porkchop",
+                            mergedConfig.extraDouble("taming_chance_porkchop", id.equals(RAEVYX_ID) ? 20.0D : 14.2857D));
+                    updated = true;
+                }
+            }
+            if (id.equals(VARASUCHUS_ID) && !extra.has("taming_chance_beef")) {
+                extra.addProperty("taming_chance_beef",
+                        mergedConfig.extraDouble("taming_chance_beef", 16.6667D));
+                updated = true;
+            }
+
+            if (updated) {
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill prey taming chances at {}", path, e);
+        }
     }
 
 }

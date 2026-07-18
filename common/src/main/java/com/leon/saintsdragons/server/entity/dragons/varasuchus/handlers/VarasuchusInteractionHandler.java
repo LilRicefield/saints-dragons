@@ -78,7 +78,6 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             dragon.setFeedingCooldown(40);
 
             boolean heartyMeal = food.is(ModItems.HEARTY_DRAGON_MEAL.get());
-            boolean tropicalFish = food.is(Items.TROPICAL_FISH);
             float healAmount = heartyMeal ? 35.0F : 5.0F;
             float newHealth = Math.min(dragon.getHealth() + healAmount, dragon.getMaxHealth());
             dragon.setHealth(newHealth);
@@ -91,11 +90,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             // Taming chance logic
             DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
-            double tameChance = heartyMeal
-                    ? Math.min(100.0D, config.extraDoubles().getOrDefault("taming_chance", 16.6667D) * 2.0D)
-                    : tropicalFish
-                        ? config.extraDoubles().getOrDefault("taming_chance_tropical", 25.0D)
-                        : config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
+            double tameChance = getTamingChance(food, config);
             boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
 
             if (success) {
@@ -237,17 +232,12 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
     private InteractionResult handleBabyTaming(Player player, ItemStack food, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
         boolean heartyMeal = food.is(ModItems.HEARTY_DRAGON_MEAL.get());
-        boolean tropicalFish = food.is(Items.TROPICAL_FISH);
         boolean validFood = isVarasuchusFood(food);
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        double tameChance = heartyMeal
-                ? Math.min(100.0D, config.extraDoubles().getOrDefault("taming_chance", 16.6667D) * 2.0D)
-                : tropicalFish
-                    ? config.extraDoubles().getOrDefault("taming_chance_tropical", 25.0D)
-                    : config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
+        double tameChance = getTamingChance(food, config);
         return baby.tryHandleBabyFoodTaming(
                 player,
                 food,
@@ -283,6 +273,19 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private boolean isVarasuchusFood(ItemStack itemstack) {
         return dragon.isFood(itemstack);
+    }
+
+    private double getTamingChance(ItemStack food, DragonAttributeConfig config) {
+        if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
+            return Math.min(100.0D, config.extraDouble("taming_chance", 16.6667D) * 2.0D);
+        }
+        if (food.is(Items.TROPICAL_FISH)) {
+            return config.extraDouble("taming_chance_tropical", 25.0D);
+        }
+        if (food.is(Items.BEEF)) {
+            return config.extraDouble("taming_chance_beef", 16.6667D);
+        }
+        return config.extraDouble("taming_chance", 16.6667D);
     }
 
 

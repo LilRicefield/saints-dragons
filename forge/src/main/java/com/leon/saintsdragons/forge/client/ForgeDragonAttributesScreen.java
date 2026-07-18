@@ -379,6 +379,14 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE::get,
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.taming_mutton"),
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_MUTTON::get,
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_MUTTON::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.taming_porkchop"),
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_PORKCHOP::get,
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_PORKCHOP::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.taming_hearty"),
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY::get,
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY::set,
@@ -458,6 +466,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_chance"),
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE::get,
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_beef"),
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_BEEF::get,
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_BEEF::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.varasuchus.taming_tropical"),
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL::get,
@@ -586,6 +598,14 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_beef"),
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_mutton"),
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_MUTTON::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_MUTTON::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_porkchop"),
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_PORKCHOP::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_PORKCHOP::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_hearty"),
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY::get,
@@ -890,6 +910,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_DURATION_TICKS.set(ForgeDragonAttributesConfig.RAEVYX_SUMMON_STORM_DURATION_TICKS.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_BASE.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_MUTTON.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_MUTTON.getDefault());
+                ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_PORKCHOP.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_PORKCHOP.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.RAEVYX_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.set(ForgeDragonAttributesConfig.RAEVYX_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL.set(ForgeDragonAttributesConfig.RAEVYX_EGG_HATCH_TIME_TICKS_NORMAL.getDefault());
@@ -910,6 +932,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE.set(ForgeDragonAttributesConfig.VARASUCHUS_HORN_GORE_PHASE2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE.getDefault());
+                ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_BEEF.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_BEEF.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL.set(ForgeDragonAttributesConfig.VARASUCHUS_TAMING_CHANCE_TROPICAL.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.VARASUCHUS_LEGACY_TAMING.getDefault());
                 ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.set(ForgeDragonAttributesConfig.VARASUCHUS_EGG_HATCH_CHANCE_NORMAL.getDefault());
@@ -943,6 +966,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_MUTTON.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_MUTTON.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_PORKCHOP.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_PORKCHOP.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_HEARTY.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_STUN_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.set(ForgeDragonAttributesConfig.IGNIVORUS_LEGACY_TAMING.getDefault());

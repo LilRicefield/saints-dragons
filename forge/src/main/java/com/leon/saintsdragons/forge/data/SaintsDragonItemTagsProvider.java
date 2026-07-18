@@ -98,6 +98,8 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
         tag(ModTags.Items.IGNIVORUS_FOODS)
                 .add(Items.BEEF)
                 .add(Items.COD)
+                .add(Items.MUTTON)
+                .add(Items.PORKCHOP)
                 .add(Items.SALMON)
                 .add(ModItems.HEARTY_DRAGON_MEAL.get());
 
@@ -106,6 +108,8 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
 
         tag(ModTags.Items.RAEVYX_FOODS)
                 .add(Items.COD)
+                .add(Items.MUTTON)
+                .add(Items.PORKCHOP)
                 .add(Items.SALMON)
                 .add(ModItems.HEARTY_DRAGON_MEAL.get());
 
@@ -119,6 +123,7 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.HEARTY_DRAGON_MEAL.get());
 
         tag(ModTags.Items.VARASUCHUS_FOODS)
+                .add(Items.BEEF)
                 .add(Items.COD)
                 .add(Items.SALMON)
                 .add(Items.TROPICAL_FISH)

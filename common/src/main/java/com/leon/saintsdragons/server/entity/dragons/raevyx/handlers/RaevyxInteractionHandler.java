@@ -88,9 +88,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             } else {
                 dragon.enterTamingStun();
             }
-            double tameChance = hearty
-                ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
-                : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
+            double tameChance = getTamingChance(itemstack, config);
             boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
 
             if (success) {
@@ -126,9 +124,7 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
         }
 
-        double tameChance = hearty
-            ? config.extraDoubles().getOrDefault("taming_chance_hearty", 3.0)
-            : config.extraDoubles().getOrDefault("taming_chance_base", 5.0);
+        double tameChance = getTamingChance(itemstack, config);
         return baby.tryHandleBabyFoodTaming(
                 player,
                 itemstack,
@@ -307,5 +303,18 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
     @Override
     protected Item getBinderItem() {
         return ModItems.RAEVYX_BINDER.get();
+    }
+
+    private double getTamingChance(ItemStack food, DragonAttributeConfig config) {
+        if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
+            return config.extraDouble("taming_chance_hearty", 33.3333D);
+        }
+        if (food.is(Items.MUTTON)) {
+            return config.extraDouble("taming_chance_mutton", 20.0D);
+        }
+        if (food.is(Items.PORKCHOP)) {
+            return config.extraDouble("taming_chance_porkchop", 20.0D);
+        }
+        return config.extraDouble("taming_chance_base", 20.0D);
     }
 }
