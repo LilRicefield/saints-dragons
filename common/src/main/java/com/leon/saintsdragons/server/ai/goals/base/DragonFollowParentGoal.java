@@ -117,11 +117,7 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         if (--timeToRecalcPath <= 0) {
             timeToRecalcPath = this.adjustedTickDelay(8);
             if (distToParent >= comfortableDistSq) {
-                if (baby instanceof RideableDragonBase rideable) {
-                    rideable.getAIMovement().moveToGroundTarget(parent, speedModifier, false);
-                } else {
-                    baby.getNavigation().moveTo(parent, speedModifier);
-                }
+                moveToParent(parent);
             } else {
                 stopMovement();
                 wanderCooldown = 20 + baby.getRandom().nextInt(20);
@@ -129,7 +125,15 @@ public class DragonFollowParentGoal<T extends DragonEntity> extends Goal {
         }
     }
 
-    private void stopMovement() {
+    protected void moveToParent(T parent) {
+        if (baby instanceof RideableDragonBase rideable) {
+            rideable.getAIMovement().moveToGroundTarget(parent, speedModifier, false);
+        } else {
+            baby.getNavigation().moveTo(parent, speedModifier);
+        }
+    }
+
+    protected void stopMovement() {
         if (baby instanceof RideableDragonBase rideable) {
             rideable.getAIMovement().stop();
         } else {

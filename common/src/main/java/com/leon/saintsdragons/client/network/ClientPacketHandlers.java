@@ -17,19 +17,24 @@ import com.leon.saintsdragons.common.network.MessageGlobalAllyDelta;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyList;
 import com.leon.saintsdragons.common.network.MessageDragonAbilityDebugBox;
 import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
+import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.MessageDragonMovingSound;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.MessageCameraImpulse;
+import com.leon.saintsdragons.common.network.MessageMountedTeleport;
 import com.leon.saintsdragons.common.network.MessageSwarmBattleMusic;
 import com.leon.saintsdragons.common.network.MessageSwarmWaveBar;
 import com.leon.saintsdragons.client.debug.DragonAbilityDebugClient;
 import com.leon.saintsdragons.client.debug.DragonPathDebugClient;
+import com.leon.saintsdragons.client.debug.DragonBrainDebugClient;
 import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 
 @Environment(EnvType.CLIENT)
 public final class ClientPacketHandlers {
@@ -135,6 +140,40 @@ public final class ClientPacketHandlers {
         ClientCameraImpulse.trigger(message.intensity() * (0.35F + proximity * 0.65F), message.durationTicks());
     }
 
+    public static void handleMountedTeleport(MessageMountedTeleport message) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.level == null) {
+            return;
+        }
+
+        net.minecraft.world.entity.Entity vehicle = minecraft.level.getEntity(message.entityId());
+        if (vehicle == null) {
+            return;
+        }
+
+        RandomSource random = minecraft.level.random;
+        for (int i = 0; i < 128; ++i) {
+            double progress = (double) i / 127.0D;
+            double x = Mth.lerp(progress, message.originX(), message.x())
+                    + (random.nextDouble() - 0.5D) * vehicle.getBbWidth() * 2.0D;
+            double y = Mth.lerp(progress, message.originY(), message.y())
+                    + random.nextDouble() * vehicle.getBbHeight();
+            double z = Mth.lerp(progress, message.originZ(), message.z())
+                    + (random.nextDouble() - 0.5D) * vehicle.getBbWidth() * 2.0D;
+            minecraft.level.addParticle(
+                    ParticleTypes.PORTAL,
+                    x,
+                    y,
+                    z,
+                    (random.nextDouble() - 0.5D) * 0.2D,
+                    (random.nextDouble() - 0.5D) * 0.2D,
+                    (random.nextDouble() - 0.5D) * 0.2D
+            );
+        }
+
+        vehicle.moveTo(message.x(), message.y(), message.z(), message.yRot(), message.xRot());
+    }
+
     public static void handleSwarmBattleMusic(MessageSwarmBattleMusic message) {
         SwarmBattleMusicController.signal(message.active(), message.durationTicks());
     }
@@ -149,6 +188,10 @@ public final class ClientPacketHandlers {
 
     public static void handleDragonPathDebug(MessageDragonPathDebug message) {
         DragonPathDebugClient.apply(message);
+    }
+
+    public static void handleDragonBrainDebug(MessageDragonBrainDebug message) {
+        DragonBrainDebugClient.apply(message);
     }
 
     public static void handleDialogueOpen(MessageDialogueOpen message) {

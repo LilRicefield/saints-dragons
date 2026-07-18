@@ -2,6 +2,8 @@ package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.debug.DragonPathDebugClient;
 import com.leon.saintsdragons.client.debug.DragonPathDebugRenderer;
+import com.leon.saintsdragons.client.debug.DragonBrainDebugClient;
+import com.leon.saintsdragons.client.debug.DragonBrainDebugRenderer;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.api.distmarker.Dist;
@@ -24,18 +26,26 @@ public final class DragonPathDebugForgeHandler {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.player == null || minecraft.level == null) {
             DragonPathDebugClient.clear();
+            DragonBrainDebugClient.clear();
             return;
         }
         DragonPathDebugClient.tick();
+        DragonBrainDebugClient.tick();
     }
 
     @SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_PARTICLES
-                || DragonPathDebugClient.getSnapshot() == null) {
+                || (DragonPathDebugClient.getSnapshot() == null
+                && DragonBrainDebugClient.getSnapshot() == null)) {
             return;
         }
 
-        DragonPathDebugRenderer.render(event.getPoseStack(), event.getCamera().getPosition());
+        if (DragonPathDebugClient.getSnapshot() != null) {
+            DragonPathDebugRenderer.render(event.getPoseStack(), event.getCamera().getPosition());
+        }
+        if (DragonBrainDebugClient.getSnapshot() != null) {
+            DragonBrainDebugRenderer.render(event.getPoseStack(), event.getCamera().getPosition());
+        }
     }
 }

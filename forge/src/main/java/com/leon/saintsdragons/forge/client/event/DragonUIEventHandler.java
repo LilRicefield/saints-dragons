@@ -8,6 +8,7 @@ import com.leon.saintsdragons.client.ui.IgnivorusFireBreathMeterIndicator;
 import com.leon.saintsdragons.client.ui.MeleeModeNotification;
 import com.leon.saintsdragons.client.ui.RaevyxBeamMeterIndicator;
 import com.leon.saintsdragons.client.ui.SwarmWaveBarOverlay;
+import com.leon.saintsdragons.client.debug.DragonBrainDebugHud;
 import com.leon.saintsdragons.client.ui.VolitansBreathMeterIndicator;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -85,6 +86,7 @@ public class DragonUIEventHandler {
 
         if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()) {
             SwarmWaveBarOverlay.render(event.getGuiGraphics(), screenWidth, event.getPartialTick());
+            DragonBrainDebugHud.render(event.getGuiGraphics(), screenWidth, screenHeight);
         }
 
         if (event.getOverlay() == VanillaGuiOverlay.HOTBAR.type()

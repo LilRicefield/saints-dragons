@@ -9,13 +9,17 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.network.MessageMountedTeleport;
+import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
+import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
 import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
 import com.leon.saintsdragons.server.ai.goals.base.SuspendedFloatWanderGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawBreedGoal;
 import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawCombatGoal;
+import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawInterceptShulkerBulletGoal;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -37,6 +41,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
@@ -63,12 +68,16 @@ import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.Shulker;
+import net.minecraft.world.entity.projectile.ShulkerBullet;
+import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -110,6 +119,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private static final double RIDER_FLIGHT_SPEED = 0.32D;
     private static final double RIDER_ASCEND_SPEED = 0.16D;
     private static final double RIDER_DESCEND_SPEED = 0.18D;
+    private static final double FORWARD_TELEPORT_DISTANCE = 16.0D;
+    private static final double FORWARD_TELEPORT_SAMPLE_STEP = 0.5D;
+    private static final double MIN_FORWARD_TELEPORT_DISTANCE = 1.0D;
     private static final double GROUND_CLEARANCE_LIFT = 0.08D;
     private static final double BABY_MAX_HEALTH = 70.0D;
     private static final double BABY_ARMOR = 4.0D;
@@ -185,7 +197,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
-        applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
+        applyConfiguredFlyingHealthAndArmor(
+                config,
+                BABY_MAX_HEALTH,
+                BABY_ARMOR,
+                config.flyingSpeed()
+        );
 
         clampHealthToMax();
     }
@@ -308,8 +325,17 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(1, new NulljawCombatGoal(this));
-        this.goalSelector.addGoal(2, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
+        this.goalSelector.addGoal(1, new NulljawInterceptShulkerBulletGoal(this));
+        this.goalSelector.addGoal(2, new NulljawCombatGoal(this));
+        this.goalSelector.addGoal(3, new DragonFollowParentGoal<>(this, Nulljaw.class, 0.9D) {
+            @Override
+            protected void moveToParent(Nulljaw parent) {
+                Nulljaw.this.beginAiFlight();
+                Vec3 target = parent.position().add(0.0D, parent.getBbHeight() * 0.5D, 0.0D);
+                Nulljaw.this.getAIMovement().setAsyncAirWaypoint(target, 0.9D);
+            }
+        });
+        this.goalSelector.addGoal(3, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
             @Override
             protected void updateFlightState(LivingEntity owner, boolean shouldFly, boolean ownerAirborne, double distance) {
                 Nulljaw.this.setFlying(true);
@@ -331,11 +357,17 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 return super.getFlightFollowTarget(owner, true);
             }
 
+            @Override
+            protected void submitAirMove(Vec3 target, double speed) {
+                Nulljaw.this.beginAiFlight();
+                Nulljaw.this.getAIMovement().setAsyncAirWaypoint(target, speed);
+            }
+
         });
-        this.goalSelector.addGoal(3, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
-        this.goalSelector.addGoal(4, new NulljawBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        this.goalSelector.addGoal(5, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
-        this.goalSelector.addGoal(6, new SuspendedFloatWanderGoal(
+        this.goalSelector.addGoal(4, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
+        this.goalSelector.addGoal(5, new NulljawBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
+        this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
+        this.goalSelector.addGoal(7, new SuspendedFloatWanderGoal(
                 this,
                 new SuspendedFloatWanderGoal.Movement() {
                     @Override
@@ -346,7 +378,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                     @Override
                     public void moveTo(Vec3 target, double speed) {
                         Nulljaw.this.beginAiFlight();
-                        Nulljaw.this.getAIMovement().setWaypoint(target, speed);
+                        Nulljaw.this.getAIMovement().setAsyncAirWaypoint(target, speed);
                     }
 
                     @Override
@@ -358,8 +390,24 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 1.0D,
                 32
         ));
-        this.goalSelector.addGoal(7, new LookAtPlayerGoal(this, Player.class, 12.0F));
-        this.goalSelector.addGoal(8, new RandomLookAroundGoal(this));
+        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 12.0F));
+        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
+        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(
+                this,
+                Shulker.class,
+                10,
+                true,
+                false,
+                shulker -> !this.isBaby()
+                        && !this.isVehicle()
+                        && !this.isPassenger()
+                        && !this.isOrderedToSit()
+        ) {
+            @Override
+            public boolean canUse() {
+                return Nulljaw.this.getTarget() == null && super.canUse();
+            }
+        });
     }
 
     @Override
@@ -766,6 +814,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        if (source.getDirectEntity() instanceof ShulkerBullet) {
+            return false;
+        }
         boolean hurt = super.hurt(source, amount);
         if (hurt && !this.level().isClientSide && source.getEntity() instanceof LivingEntity attacker) {
             alertNearbyNulljaws(attacker);
@@ -986,6 +1037,99 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         );
     }
 
+    @Nullable
+    public Vec3 findForwardTeleportDestination(ServerPlayer rider) {
+        if (this.level().isClientSide || rider == null || rider.getVehicle() != this) {
+            return null;
+        }
+
+        Vec3 direction = rider.getLookAngle();
+        if (direction.lengthSqr() < 1.0E-6D) {
+            return null;
+        }
+        direction = direction.normalize();
+
+        Vec3 origin = this.position();
+        Vec3 lastSafe = null;
+        for (double distance = FORWARD_TELEPORT_SAMPLE_STEP;
+             distance <= FORWARD_TELEPORT_DISTANCE + 1.0E-6D;
+             distance += FORWARD_TELEPORT_SAMPLE_STEP) {
+            Vec3 candidate = origin.add(direction.scale(distance));
+            AABB collisionShell = createMountedCollisionShell(candidate).deflate(1.0E-4D);
+            if (!this.level().hasChunkAt(BlockPos.containing(candidate))
+                    || !this.level().getWorldBorder().isWithinBounds(collisionShell)
+                    || !this.level().noCollision(this, collisionShell)) {
+                break;
+            }
+            if (distance >= MIN_FORWARD_TELEPORT_DISTANCE) {
+                lastSafe = candidate;
+            }
+        }
+        return lastSafe;
+    }
+
+    public boolean teleportMountedTo(Vec3 destination) {
+        if (this.level().isClientSide || destination == null || !this.isVehicle()) {
+            return false;
+        }
+
+        AABB collisionShell = createMountedCollisionShell(destination).deflate(1.0E-4D);
+        if (!this.level().hasChunkAt(BlockPos.containing(destination))
+                || !this.level().getWorldBorder().isWithinBounds(collisionShell)
+                || !this.level().noCollision(this, collisionShell)) {
+            return false;
+        }
+
+        List<Entity> passengers = List.copyOf(this.getPassengers());
+        Vec3 origin = this.position();
+        this.getNavigation().stop();
+        this.getAIMovement().stop();
+        this.teleportTo(destination.x, destination.y, destination.z);
+        this.hasImpulse = true;
+        this.hurtMarked = true;
+
+        MessageMountedTeleport teleportMessage = new MessageMountedTeleport(
+                this.getId(),
+                origin.x,
+                origin.y,
+                origin.z,
+                destination.x,
+                destination.y,
+                destination.z,
+                this.getYRot(),
+                this.getXRot()
+        );
+        NetworkHandler.sendToTracking(this, teleportMessage);
+
+        this.level().gameEvent(GameEvent.TELEPORT, origin, GameEvent.Context.of(this));
+        if (!this.isSilent()) {
+            this.level().playSound(
+                    null,
+                    origin.x,
+                    origin.y,
+                    origin.z,
+                    SoundEvents.ENDERMAN_TELEPORT,
+                    this.getSoundSource(),
+                    1.0F,
+                    1.0F
+            );
+            this.playSound(SoundEvents.ENDERMAN_TELEPORT, 1.0F, 1.0F);
+        }
+
+        for (Entity passenger : passengers) {
+            this.positionRider(passenger, (entity, x, y, z) -> {
+                if (entity instanceof ServerPlayer player) {
+                    player.connection.teleport(x, y, z, player.getYRot(), player.getXRot());
+                } else {
+                    entity.teleportTo(x, y, z);
+                }
+                entity.hasImpulse = true;
+                entity.hurtMarked = true;
+            });
+        }
+        return true;
+    }
+
     @Override
     public boolean canMate(@NotNull Animal otherAnimal) {
         return otherAnimal instanceof Nulljaw && super.canMate(otherAnimal);
@@ -1003,6 +1147,15 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         if (!this.level().isClientSide) {
             this.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_EAT.get(), 1.0f, 1.0f, 22);
         }
+    }
+
+    public void consumeShulkerBullet(ShulkerBullet bullet) {
+        if (this.level().isClientSide || bullet == null || !bullet.isAlive()) {
+            return;
+        }
+        this.triggerAnim("interaction", "eat");
+        this.playEatMovingSound();
+        bullet.discard();
     }
 
     @Override
@@ -1136,7 +1289,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public boolean canTakeoff() {
-        return !this.isBaby();
+        return true;
     }
 
     @Override
@@ -1204,6 +1357,13 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
+    public RiderAbilityBinding getPrimaryRiderAbility() {
+        return this.isBaby()
+                ? null
+                : new RiderAbilityBinding(ModAbilities.NULLJAW_FORWARD_TELEPORT.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case ABILITY_USE, ABILITY_STOP -> true;
@@ -1213,7 +1373,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     protected boolean isRidingAbilityAllowed(DragonAbilityType<?, ?> abilityType) {
-        return abilityType == ModAbilities.NULLJAW_BITE;
+        return abilityType == ModAbilities.NULLJAW_BITE
+                || abilityType == ModAbilities.NULLJAW_FORWARD_TELEPORT;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDebugDetails;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -11,10 +12,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.Map;
 
-public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T> {
+public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T> implements DragonBrainDebugDetails {
     private long cooldownEndsAtTick;
     private final boolean claimsControl;
     private Activity activity;
+    private int priority = -1;
 
     protected DragonBehaviour() {
         this(Map.of(), true);
@@ -37,11 +39,24 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
         return claimsControl;
     }
 
-    final void bindActivity(Activity activity) {
+    public final Activity activity() {
+        return activity;
+    }
+
+    public final int priority() {
+        return priority;
+    }
+
+    public final long cooldownRemaining(long gameTime) {
+        return Math.max(0L, cooldownEndsAtTick - gameTime);
+    }
+
+    final void bindActivity(Activity activity, int priority) {
         if (this.activity != null && this.activity != activity) {
             throw new IllegalStateException("A DragonBehaviour instance cannot belong to multiple activities");
         }
         this.activity = activity;
+        this.priority = priority;
     }
 
     @Override

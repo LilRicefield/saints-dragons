@@ -156,6 +156,8 @@ public class AsyncFlightController {
             if (forceRecalculate) {
                 this.resetPathingState();
                 this.pathResolver.forceRecalculatePath(target);
+            } else if (this.state == PathState.FOLLOWING) {
+                this.pathResolver.retargetPathEndpoint(target);
             }
             return;
         }

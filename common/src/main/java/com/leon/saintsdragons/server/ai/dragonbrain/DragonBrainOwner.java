@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
@@ -13,6 +14,7 @@ import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.schedule.Activity;
 
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -42,12 +44,18 @@ public interface DragonBrainOwner<T extends DragonEntity> {
     }
 
     default Brain<T> makeBrain(Brain<T> brain) {
+        List<DragonBrainDiagnostics.RegisteredBehaviour> registeredBehaviours = new ArrayList<>();
         for (DragonBehaviourGroup<T> group : getDragonBrainBehaviourGroups()) {
             ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super T>>> behaviours = ImmutableList.builder();
             int priority = group.activity() == Activity.CORE ? 0 : 10;
             for (DragonBehaviour<T> behaviour : group.behaviours()) {
-                behaviour.bindActivity(group.activity());
+                behaviour.bindActivity(group.activity(), priority);
                 behaviours.add(Pair.of(priority++, behaviour));
+                @SuppressWarnings("unchecked")
+                BehaviorControl<? super net.minecraft.world.entity.LivingEntity> debugBehaviour =
+                        (BehaviorControl<? super net.minecraft.world.entity.LivingEntity>)(BehaviorControl<?>)behaviour;
+                registeredBehaviours.add(new DragonBrainDiagnostics.RegisteredBehaviour(
+                        group.activity(), priority - 1, debugBehaviour));
             }
 
             Set<Pair<MemoryModuleType<?>, MemoryStatus>> requirements = new HashSet<>();
@@ -63,6 +71,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         brain.setCoreActivities(Set.of(Activity.CORE));
         brain.setDefaultActivity(getDragonBrainFallbackActivity());
         brain.useDefaultActivity();
+        DragonBrainDiagnostics.attach(brain, registeredBehaviours);
         return brain;
     }
 

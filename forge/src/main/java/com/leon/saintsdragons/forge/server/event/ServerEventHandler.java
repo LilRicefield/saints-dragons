@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.debug.DragonPathDebugTracker;
+import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.forge.entity.part.ForgeDragonPart;
 import net.minecraft.server.level.ServerPlayer;
@@ -12,6 +13,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
+import net.minecraftforge.event.entity.living.LivingMakeBrainEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
@@ -20,6 +22,25 @@ import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = SaintsDragonsCommon.MOD_ID)
 public class ServerEventHandler {
+
+    @SubscribeEvent
+    public static void onLivingMakeBrain(LivingMakeBrainEvent event) {
+        if (!(event.getEntity() instanceof DragonEntity dragon)) {
+            return;
+        }
+
+        java.util.List<DragonBrainDiagnostics.RegisteredBehaviour> behaviours = new java.util.ArrayList<>();
+        event.getTypedBrainBuilder(dragon).getAvailableBehaviorsByPriority().forEach((priority, activities) ->
+                activities.forEach((activity, controls) -> controls.forEach(control -> {
+                    @SuppressWarnings("unchecked")
+                    net.minecraft.world.entity.ai.behavior.BehaviorControl<? super net.minecraft.world.entity.LivingEntity>
+                            debugControl = (net.minecraft.world.entity.ai.behavior.BehaviorControl<? super net.minecraft.world.entity.LivingEntity>)
+                            (net.minecraft.world.entity.ai.behavior.BehaviorControl<?>)control;
+                    behaviours.add(new DragonBrainDiagnostics.RegisteredBehaviour(
+                            activity, priority, debugControl));
+                })));
+        DragonBrainDiagnostics.attach(dragon, behaviours);
+    }
 
     @SubscribeEvent
     public static void onServerTick(TickEvent.ServerTickEvent event) {

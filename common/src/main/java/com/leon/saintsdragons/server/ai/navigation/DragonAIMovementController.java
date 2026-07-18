@@ -72,6 +72,15 @@ public class DragonAIMovementController {
         return startWaypoint(new QueuedWaypoint(target, speed, false, MovementMode.AUTO));
     }
 
+    public boolean setAsyncAirWaypoint(Vec3 target, double speed) {
+        if (target == null
+                || dragon.level().isClientSide
+                || !(dragon instanceof RideableFlyingDragon)) {
+            return false;
+        }
+        return startWaypoint(new QueuedWaypoint(target, speed, false, MovementMode.AIR));
+    }
+
     public boolean setWaypoint(LivingEntity target, double speed, boolean running) {
         setGroundMoveState(running);
         return setWaypoint(target, speed);
@@ -438,7 +447,11 @@ public class DragonAIMovementController {
         if (waypoint.mode().usesAir() || (waypoint.mode() == MovementMode.AUTO && shouldUseAirMovement())) {
             resetGroundPathState();
             if (dragon instanceof RideableFlyingDragon flyingDragon) {
-                flyingDragon.trackAiFlightTarget(waypoint.target(), waypoint.speed());
+                if (waypoint.mode() == MovementMode.AIR) {
+                    flyingDragon.pathAiFlightTo(waypoint.target(), waypoint.speed());
+                } else {
+                    flyingDragon.trackAiFlightTarget(waypoint.target(), waypoint.speed());
+                }
                 return true;
             }
             return dragon.getNavigation().moveTo(waypoint.target().x, waypoint.target().y, waypoint.target().z, waypoint.speed());
@@ -614,12 +627,13 @@ public class DragonAIMovementController {
 
     private enum MovementMode {
         AUTO,
+        AIR,
         GROUND,
         PROGRESSIVE_GROUND,
         LANDING;
 
         private boolean usesAir() {
-            return this == LANDING;
+            return this == AIR || this == LANDING;
         }
 
         private boolean usesGroundPath() {

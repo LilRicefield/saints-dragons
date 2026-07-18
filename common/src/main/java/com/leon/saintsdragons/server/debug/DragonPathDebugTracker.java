@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.debug;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
+import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -50,7 +51,8 @@ public final class DragonPathDebugTracker {
             TRACKED_DRAGONS.remove(player.getUUID());
             refreshActiveSearchDebug();
             NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
-            player.displayClientMessage(Component.literal("Dragon path debug: OFF"), true);
+            NetworkHandler.sendToPlayer(player, MessageDragonBrainDebug.clear());
+            player.displayClientMessage(Component.literal("Dragon debug: OFF"), true);
             SaintsDragonsCommon.LOGGER.info(
                     "[Dragon Path Debug] event=unselected player={} id={} uuid={}",
                     player.getGameProfile().getName(),
@@ -63,7 +65,7 @@ public final class DragonPathDebugTracker {
         TRACKED_DRAGONS.put(player.getUUID(), new TrackingEntry(dragon.getUUID()));
         refreshActiveSearchDebug();
         player.displayClientMessage(
-                Component.literal("Dragon path debug: ").append(dragon.getDisplayName()),
+                Component.literal("Dragon debug: ").append(dragon.getDisplayName()),
                 true
         );
         SaintsDragonsCommon.LOGGER.info(
@@ -96,7 +98,8 @@ public final class DragonPathDebugTracker {
             Entity entity = player.serverLevel().getEntity(tracked.getValue().dragonId);
             if (!(entity instanceof DragonEntity dragon) || dragon.isRemoved() || !dragon.isAlive()) {
                 NetworkHandler.sendToPlayer(player, MessageDragonPathDebug.clear());
-                player.displayClientMessage(Component.literal("Dragon path debug: target unavailable"), true);
+                NetworkHandler.sendToPlayer(player, MessageDragonBrainDebug.clear());
+                player.displayClientMessage(Component.literal("Dragon debug: target unavailable"), true);
                 iterator.remove();
                 trackingChanged = true;
                 continue;
@@ -127,6 +130,7 @@ public final class DragonPathDebugTracker {
                                      boolean forceLog) {
         MessageDragonPathDebug snapshot = capture(dragon);
         NetworkHandler.sendToPlayer(player, snapshot);
+        NetworkHandler.sendToPlayer(player, DragonBrainDebugTracker.capture(dragon));
 
         LogState logState = LogState.capture(dragon, snapshot);
         if (!forceLog && logState.equals(tracking.lastLogState)) {

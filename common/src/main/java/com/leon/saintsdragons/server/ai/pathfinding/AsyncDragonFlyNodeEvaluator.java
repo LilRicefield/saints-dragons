@@ -30,7 +30,7 @@ public class AsyncDragonFlyNodeEvaluator extends FlyNodeEvaluator implements Dra
     public void prepare(@NotNull PathNavigationRegion level, @NotNull Mob mob) {
         super.prepare(level, mob);
         this.entityWidth = Mth.floor(mob.getBbWidth()) + 1;
-        this.entityHeight = Mth.floor(mob.getBbHeight());
+        this.entityHeight = Math.max(1, Mth.floor(mob.getBbHeight()));
         this.entityDepth = Mth.floor(mob.getBbWidth()) + 1;
     }
 }

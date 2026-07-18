@@ -42,7 +42,7 @@ public final class NulljawBiteAbility extends DragonAbility<Nulljaw> {
             Nulljaw dragon = getUser();
             dragon.triggerAnim(NulljawAnimationHandler.ACTION_CONTROLLER, NulljawAnimationHandler.BITE_TRIGGER);
             if (!dragon.level().isClientSide) {
-                dragon.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_BITE.get(), 1.0F, 1.0F, 18);
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_BITE.get(), 1.0F, 1.0F, 40);
             }
             this.appliedHit = false;
         }

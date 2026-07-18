@@ -35,8 +35,12 @@ class AsyncFlightPathResolver {
                 return;
             }
 
-            double distToTarget = this.dragon.position().distanceTo(currentWaypoint);
-            boolean landingTarget = this.component.isLandingTarget(currentWaypoint);
+            Vec3 activeWaypoint = this.component.getCurrentWaypoint();
+            if (activeWaypoint == null) {
+                return;
+            }
+            double distToTarget = this.dragon.position().distanceTo(activeWaypoint);
+            boolean landingTarget = this.component.isLandingTarget(activeWaypoint);
             double arrivalDistance = this.component.calculateArrivalDistance(landingTarget);
             if (path != null && path.getNodeCount() == 0) {
                 if (this.component.hasReachedWaypoint(distToTarget * distToTarget, arrivalDistance, landingTarget)) {
@@ -52,20 +56,20 @@ class AsyncFlightPathResolver {
 
             if (path != null && path.getNodeCount() > 0) {
                 Vec3 endNodePos = Vec3.atBottomCenterOf(path.getEndNode().asBlockPos());
-                double pathDistToTarget = endNodePos.distanceTo(currentWaypoint);
+                double pathDistToTarget = endNodePos.distanceTo(activeWaypoint);
                 double arrivalThreshold = this.dragon.getBbWidth() + 4.0;
                 if (pathDistToTarget > arrivalThreshold) {
-                    this.handlePathCalculationFailure(currentWaypoint);
+                    this.handlePathCalculationFailure(activeWaypoint);
                     return;
                 }
 
-                this.cachePathNodes(path, currentWaypoint);
+                this.cachePathNodes(path, activeWaypoint);
                 this.component.setState(AsyncFlightController.PathState.FOLLOWING);
             } else if (landingTarget) {
                 this.clearPathNodes();
                 this.component.setState(AsyncFlightController.PathState.FOLLOWING);
             } else {
-                this.handlePathCalculationFailure(currentWaypoint);
+                this.handlePathCalculationFailure(activeWaypoint);
             }
         });
     }
@@ -91,6 +95,13 @@ class AsyncFlightPathResolver {
     public void clearPathNodes() {
         this.pathNodes.clear();
         this.currentPathIndex = 0;
+    }
+
+    public void retargetPathEndpoint(Vec3 target) {
+        if (target == null || this.pathNodes.isEmpty()) {
+            return;
+        }
+        this.pathNodes.set(this.pathNodes.size() - 1, target);
     }
 
     public Vec3 calculateLookAheadPoint(double flyingLookAhead) {

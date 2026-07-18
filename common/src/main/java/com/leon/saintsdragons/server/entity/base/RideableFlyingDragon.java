@@ -1642,6 +1642,16 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         }
     }
 
+    public void pathAiFlightTo(@Nullable Vec3 target, double speed) {
+        if (target == null) {
+            return;
+        }
+        if (!isUsingAirNavigation()) {
+            switchToAirNavigation();
+        }
+        this.asyncAirController.setWaypoint(target, speed);
+    }
+
     public void trackAiFlightTarget(@Nullable Vec3 target, double speed) {
         if (target == null) {
             return;

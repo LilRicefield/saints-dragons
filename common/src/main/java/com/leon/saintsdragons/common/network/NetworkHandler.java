@@ -170,6 +170,14 @@ public final class NetworkHandler {
         );
 
         NETWORK.registerClientbound(
+                MessageMountedTeleport.class,
+                id("mounted_teleport"),
+                MessageMountedTeleport::encode,
+                MessageMountedTeleport::decode,
+                MessageMountedTeleport::handle
+        );
+
+        NETWORK.registerClientbound(
                 MessageDragonMovingSound.class,
                 id("dragon_moving_sound"),
                 MessageDragonMovingSound::encode,
@@ -207,6 +215,14 @@ public final class NetworkHandler {
                 MessageDragonPathDebug::encode,
                 MessageDragonPathDebug::decode,
                 MessageDragonPathDebug::handle
+        );
+
+        NETWORK.registerClientbound(
+                MessageDragonBrainDebug.class,
+                id("dragon_brain_debug"),
+                MessageDragonBrainDebug::encode,
+                MessageDragonBrainDebug::decode,
+                MessageDragonBrainDebug::handle
         );
 
         NETWORK.registerClientbound(

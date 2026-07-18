@@ -477,11 +477,15 @@ public class DragonFollowOwnerGoal<T extends RideableDragonBase & DragonFlightCa
 
     private void requestAirMove(Vec3 target, double speed) {
         if (shouldRefreshAirMoveTarget(target, speed)) {
-            dragon.getAIMovement().setWaypoint(target, speed);
+            submitAirMove(target, speed);
             lastAirMoveTarget = target;
             lastAirMoveSpeed = speed;
             airMoveRefreshCooldown = airMoveRefreshInterval(speed);
         }
+    }
+
+    protected void submitAirMove(Vec3 target, double speed) {
+        dragon.getAIMovement().setWaypoint(target, speed);
     }
 
     private boolean shouldRefreshAirMoveTarget(Vec3 target, double speed) {
