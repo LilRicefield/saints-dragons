@@ -114,7 +114,7 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
                         LivingEntity.class,
                         candidate -> DragonTargetingHelper.isTaggedHuntTarget(
                                 candidate,
-                                ModTags.EntityTypes.CINDERVANE_TARGETS
+                                ModTags.EntityTypes.CARNIVORE_HUNT_PREY
                         )
                 );
                 if (prey != null) return choice(prey, Source.HUNT);

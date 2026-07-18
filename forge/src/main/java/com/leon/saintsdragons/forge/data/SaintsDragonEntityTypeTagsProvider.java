@@ -50,31 +50,19 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
                 .add(ModEntities.VARASUCHUS.get())
                 .add(ModEntities.VOLITANS.get());
 
-        tag(ModTags.EntityTypes.CINDERVANE_TARGETS)
-                .add(EntityType.CHICKEN);
-
-        tag(ModTags.EntityTypes.IGNIVORUS_TARGETS)
-                .add(EntityType.SHEEP)
+        tag(ModTags.EntityTypes.CARNIVORE_HUNT_PREY)
+                .add(EntityType.CHICKEN)
                 .add(EntityType.COW)
-                .add(EntityType.PIG);
+                .add(EntityType.PIG)
+                .add(EntityType.SHEEP);
 
-        tag(ModTags.EntityTypes.RAEVYX_TARGETS)
-                .add(EntityType.SHEEP)
-                .add(EntityType.PIG);
-
-        tag(ModTags.EntityTypes.STEGONAUT_TARGETS);
-
-        tag(ModTags.EntityTypes.VARASUCHUS_TARGETS)
-                .add(EntityType.SALMON)
+        tag(ModTags.EntityTypes.PISCIVORE_HUNT_PREY)
                 .add(EntityType.COD)
-                .add(EntityType.COW);
-
-        tag(ModTags.EntityTypes.VOLITANS_TARGETS)
-                .add(EntityType.DOLPHIN)
-                .add(EntityType.SQUID)
-                .add(EntityType.GLOW_SQUID)
+                .add(EntityType.SALMON)
                 .add(EntityType.TROPICAL_FISH)
                 .add(EntityType.PUFFERFISH);
+
+        tag(ModTags.EntityTypes.STEGONAUT_TARGETS);
 
         tag(ModTags.EntityTypes.IMMUNE_TO_ELECTRICITY);
         tag(ModTags.EntityTypes.IMMUNE_TO_FIRE);

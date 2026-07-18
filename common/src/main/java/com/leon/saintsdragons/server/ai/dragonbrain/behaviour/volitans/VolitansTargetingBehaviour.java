@@ -105,7 +105,7 @@ public final class VolitansTargetingBehaviour extends DragonTargetingBehaviour<V
                         LivingEntity.class,
                         candidate -> DragonTargetingHelper.isTaggedHuntTarget(
                                 candidate,
-                                ModTags.EntityTypes.VOLITANS_TARGETS
+                                ModTags.EntityTypes.PISCIVORE_HUNT_PREY
                         )
                 );
                 if (prey != null) {

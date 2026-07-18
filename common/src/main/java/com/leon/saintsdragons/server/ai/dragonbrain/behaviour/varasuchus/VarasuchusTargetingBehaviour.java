@@ -109,7 +109,9 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
             if (DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
                 LivingEntity prey = nearest(context.level(), dragon, LivingEntity.class,
                         candidate -> DragonTargetingHelper.isTaggedHuntTarget(
-                                candidate, ModTags.EntityTypes.VARASUCHUS_TARGETS));
+                                candidate, ModTags.EntityTypes.CARNIVORE_HUNT_PREY)
+                                || DragonTargetingHelper.isTaggedHuntTarget(
+                                candidate, ModTags.EntityTypes.PISCIVORE_HUNT_PREY));
                 if (prey != null) {
                     return choice(prey, Source.HUNT);
                 }
