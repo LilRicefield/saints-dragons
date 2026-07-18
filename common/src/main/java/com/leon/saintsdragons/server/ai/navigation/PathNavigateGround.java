@@ -20,9 +20,22 @@ import javax.annotation.Nonnull;
 public class PathNavigateGround extends GroundPathNavigation {
     private static final double MAX_SHORTCUT_DISTANCE = 10.0D;
     private static final int MAX_SWEEP_STEPS = 12;
+    private boolean waterEntryAllowed;
 
     public PathNavigateGround(Mob mob, Level world) {
         super(mob, world);
+    }
+
+    public void setWaterEntryAllowed(boolean allowed) {
+        if (waterEntryAllowed == allowed) {
+            return;
+        }
+        waterEntryAllowed = allowed;
+        setCanFloat(allowed);
+    }
+
+    public boolean isWaterEntryAllowed() {
+        return waterEntryAllowed;
     }
 
     @Override
@@ -133,7 +146,7 @@ public class PathNavigateGround extends GroundPathNavigation {
         }
 
         if (pathType == BlockPathTypes.WATER) {
-            return this.mob.isInWaterOrBubble();
+            return waterEntryAllowed || this.mob.isInWaterOrBubble();
         }
 
         return pathType != BlockPathTypes.OPEN;

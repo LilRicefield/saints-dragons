@@ -3,10 +3,8 @@ package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
-import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.StegonautCombatBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.StegonautBrain;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautGroundEatingAbility;
@@ -39,12 +37,6 @@ import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.FloatGoal;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.player.Player;
@@ -83,7 +75,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen, DragonChestCarrier {
-    private static final StegonautCombatBrain DRAGON_BRAIN = new StegonautCombatBrain();
+    private static final StegonautBrain DRAGON_BRAIN = new StegonautBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.STEGONAUT_ID;
@@ -97,8 +89,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.FLOAT);
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
-    private static final double BREED_PARTNER_RANGE = 20.0D;
-    private static final double BREED_DISTANCE_SQR = 2500.0D;
     private static final double BABY_MAX_HEALTH = 50.0D;
     private static final double BABY_ARMOR = 5.0D;
     private static final float BABY_HITBOX_SCALE = 0.65F;
@@ -169,30 +159,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
-    protected void registerGoals() {
-        this.goalSelector.addGoal(0, new FloatGoal(this));
-        this.goalSelector.addGoal(2, new DragonFollowParentGoal<>(this, Stegonaut.class, 0.70D));
-        this.goalSelector.addGoal(3, new DragonBreedGoal<>(this, 1.0D, Stegonaut.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        this.goalSelector.addGoal(4, new DragonBrainGoal<>(
-                this,
-                DRAGON_BRAIN,
-                java.util.EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK)
-        ));
-        this.goalSelector.addGoal(5, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forStegonaut()));
-        this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Stegonaut.class, 0.75D, 16.0D, 8.0D));
-        this.goalSelector.addGoal(7, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
-        this.goalSelector.addGoal(7, new DragonGroundWanderGoal<>(this, 0.35D, 120));
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new DragonProtectBabiesGoal<>(this, Stegonaut.class));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(3, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Stegonaut.class, 36.0D));
-        this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, target -> isAggressiveWild()));
-        this.targetSelector.addGoal(7, new DragonRaidDefenseTargetGoal(this));
-        this.targetSelector.addGoal(8, new DragonRandomHuntTargetGoal(this, 80, () -> true,
-                target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.STEGONAUT_TARGETS)));
+    protected final void registerGoals() {
     }
 
     @Override
@@ -905,7 +872,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         return super.canTarget(entity);
     }
 
-    private boolean isAggressiveWild() {
+    public boolean isAggressiveWild() {
         return DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID)
                 .extraBoolean("aggressive_wild", false);

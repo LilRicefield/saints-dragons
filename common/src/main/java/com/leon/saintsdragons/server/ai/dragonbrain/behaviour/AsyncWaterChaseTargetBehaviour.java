@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
@@ -79,6 +80,7 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
         if (controller.trackTarget(targetPosition, speed, turnSpeed)) {
             controller.serverTick();
         }
+        applyCombatShoreExit(dragon, target, controller);
     }
 
     @Override
@@ -93,5 +95,43 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
                 && !dragon.isVehicle()
                 && target != null
                 && dragon.isTargetValid(target);
+    }
+
+    private void applyCombatShoreExit(T dragon,
+                                      LivingEntity target,
+                                      AsyncSwimController controller) {
+        if (!dragon.isInWaterOrBubble() || target.isInWaterOrBubble()) {
+            return;
+        }
+
+        double bodyScale = Math.max(dragon.getBbWidth(), dragon.getBbHeight());
+        double terminalRange = Math.max(12.0D, bodyScale * 3.0D);
+        boolean atTerminalWaterNode = controller.hasReachedPathEnd()
+                || (!controller.isMoving()
+                && dragon.distanceToSqr(target) <= terminalRange * terminalRange);
+        if (!dragon.horizontalCollision && !atTerminalWaterNode) {
+            return;
+        }
+
+        Vec3 towardTarget = new Vec3(
+                target.getX() - dragon.getX(), 0.0D,
+                target.getZ() - dragon.getZ());
+        if (towardTarget.lengthSqr() < 1.0E-4D) {
+            return;
+        }
+
+        Vec3 direction = towardTarget.normalize();
+        Vec3 velocity = dragon.getDeltaMovement();
+        double minimumForward = Mth.clamp(0.08D + bodyScale * 0.015D, 0.12D, 0.24D);
+        double currentForward = velocity.x * direction.x + velocity.z * direction.z;
+        double correction = Math.max(0.0D, minimumForward - currentForward);
+        double minimumLift = Mth.clamp(0.10D + bodyScale * 0.025D, 0.14D, 0.36D);
+
+        dragon.setDeltaMovement(
+                velocity.x + direction.x * correction,
+                Math.max(velocity.y, minimumLift),
+                velocity.z + direction.z * correction
+        );
+        dragon.hasImpulse = true;
     }
 }

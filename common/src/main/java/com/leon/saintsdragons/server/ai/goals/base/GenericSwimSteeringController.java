@@ -75,10 +75,12 @@ public class GenericSwimSteeringController {
 
         double yawRad = currentYaw * Mth.DEG_TO_RAD;
         double pitchRad = currentPitch * Mth.DEG_TO_RAD;
+        double headingAlignment = (Math.cos(yawDelta * Mth.DEG_TO_RAD) + 1.0D) * 0.5D;
+        double alignedSpeed = speed * Mth.clamp(0.18D + headingAlignment * 0.82D, 0.18D, 1.0D);
         Vec3 targetVelocity = new Vec3(
-                -Math.sin(yawRad) * Math.cos(pitchRad) * speed,
-                -Math.sin(pitchRad) * speed,
-                Math.cos(yawRad) * Math.cos(pitchRad) * speed
+                -Math.sin(yawRad) * Math.cos(pitchRad) * alignedSpeed,
+                -Math.sin(pitchRad) * alignedSpeed,
+                Math.cos(yawRad) * Math.cos(pitchRad) * alignedSpeed
         );
 
         this.smoothedVelocity = new Vec3(

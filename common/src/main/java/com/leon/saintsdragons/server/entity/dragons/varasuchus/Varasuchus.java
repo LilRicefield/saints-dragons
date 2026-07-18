@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 
+import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
@@ -13,16 +14,11 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
-import com.leon.saintsdragons.server.ai.goals.base.*;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VarasuchusCombatBrain;
-import com.leon.saintsdragons.server.ai.goals.base.DragonBreedGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VarasuchusBrain;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.controller.varasuchus.VarasuchusRiderController;
-import com.leon.saintsdragons.server.ai.goals.base.DragonProtectBabiesGoal;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -62,12 +58,6 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
-import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.entity.ai.goal.BreathAirGoal;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.control.LookControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
@@ -98,7 +88,7 @@ import java.util.UUID;
 import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen, PassiveTreeDestroyer {
-    private static final VarasuchusCombatBrain DRAGON_BRAIN = new VarasuchusCombatBrain();
+    private static final VarasuchusBrain DRAGON_BRAIN = new VarasuchusBrain();
     public static final double ROOST_SLEEP_RADIUS = 3.0D;
     public static final double ROOST_TERRITORY_RADIUS = 48.0D;
     public static final double ROOST_TERRITORY_RETURN_RADIUS = 32.0D;
@@ -242,8 +232,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final int MAX_TAMING_PROGRESS = 400;
     private static final int WILD_RIDE_BUCK_DURATION_TICKS = 90;
     private static final double WILD_RIDE_WALK_SPEED = 0.9D;
-    private static final double BREED_PARTNER_RANGE = 30.0D;
-    private static final double BREED_DISTANCE_SQR = 16.0D;
+    public static final double BREED_PARTNER_RANGE = 30.0D;
+    public static final double BREED_DISTANCE_SQR = 16.0D;
     private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
     private static final int FLEX_CONTROL_LOCK_TICKS = 70;
     private static final int FLEX2_CONTROL_LOCK_TICKS = 140;
@@ -262,7 +252,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final RiftDrakeLookController landLookControl;
     private final GenericSwimSteeringController swimSteering;
     private final AsyncSwimController asyncSwimController;
-    private DragonGroundWanderGoal<Varasuchus> groundWanderGoal;
     private boolean swimming;
     private int swimTicks;
     private int ticksInWater;
@@ -617,130 +606,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
     
     @Override
-    protected void registerGoals() {
-        super.registerGoals();
-        this.goalSelector.addGoal(1, new BreathAirGoal(this));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(2, new DragonBrainGoal<>(
-                    this,
-                    DRAGON_BRAIN,
-                    EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK)
-            ));
-        }
-        this.goalSelector.addGoal(5, new DragonLeaveWaterGoal<>(this));
-        this.goalSelector.addGoal(6, new DragonFindWaterGoal<>(this));
-        this.goalSelector.addGoal(7, new DragonGroundFollowOwnerGoal<>(this, DragonGroundFollowOwnerGoal.FollowConfig.forVarasuchus()) {
-            @Override
-            protected boolean canUseAdditional() {
-                return !Varasuchus.this.isInWaterOrBubble() && super.canUseAdditional();
-            }
-
-            @Override
-            protected boolean canContinueAdditional() {
-                return !Varasuchus.this.isInWaterOrBubble() && super.canContinueAdditional();
-            }
-
-            @Override
-            protected void setFastFollowing(boolean fast) {
-                Varasuchus.this.setAccelerating(fast);
-            }
-        });
-        this.goalSelector.addGoal(8, new DragonSwimToTargetGoal(this, this::getAiSwimController, 8.0F, 0.25D, false, 20.0D, 16.0D));
-        this.goalSelector.addGoal(10, new DragonSwimWanderGoal(
-                this,
-                this::getAiSwimController,
-                6.0F,
-                0.20D,
-                30,
-                this::isWithinRoostTerritory
-        ) {
-            @Override
-            public boolean canUse() {
-                return !Varasuchus.this.shouldSuspendRoostWandering() && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return !Varasuchus.this.shouldSuspendRoostWandering() && super.canContinueToUse();
-            }
-        });
-        this.groundWanderGoal = new DragonGroundWanderGoal<>(this, 1.0D, 100) {
-            @Override
-            protected boolean canUseAdditional() {
-                if (Varasuchus.this.isInWaterOrBubble()
-                        || Varasuchus.this.shouldSuspendRoostWandering()) {
-                    return false;
-                }
-                return super.canUseAdditional();
-            }
-
-            @Override
-            protected boolean canContinueAdditional() {
-                if (Varasuchus.this.isInWaterOrBubble()
-                        || Varasuchus.this.shouldSuspendRoostWandering()) {
-                    return false;
-                }
-                return super.canContinueAdditional();
-            }
-
-            @Override
-            protected Vec3 getWanderPosition() {
-                for (int attempt = 0; attempt < 10; attempt++) {
-                    Vec3 candidate = super.getWanderPosition();
-                    if (candidate != null && Varasuchus.this.isWithinRoostTerritory(candidate)) {
-                        return candidate;
-                    }
-                }
-                return null;
-            }
-        };
-        this.goalSelector.addGoal(11, groundWanderGoal);
-        this.goalSelector.addGoal(11, new DragonFollowParentGoal<>(this, Varasuchus.class, 1.1D));
-        this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(12, new DragonBreedGoal<>(
-                    this, 1.0D, Varasuchus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR
-            ));
-        }
-        if (!this.isBaby()) {
-            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Varasuchus.class) {
-                @Override
-                public boolean canUse() {
-                    return isWildAggressionEnabled() && super.canUse();
-                }
-
-                @Override
-                public boolean canContinueToUse() {
-                    return isWildAggressionEnabled() && super.canContinueToUse();
-                }
-            });
-            this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
-            this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                    this::shouldAggroNearBabies) {
-                @Override
-                public void start() {
-                    super.start();
-                    markBabyProtectionAggroTarget(Varasuchus.this.getTarget());
-                }
-
-                @Override
-                public void stop() {
-                    super.stop();
-                    clearBabyProtectionAggroTarget();
-                }
-            });
-            this.targetSelector.addGoal(6, new DragonRaidDefenseTargetGoal(this));
-            this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
-                    this,
-                    80,
-                    () -> true,
-                    target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.VARASUCHUS_TARGETS)
-            ));
-
-        }
+    protected final void registerGoals() {
     }
 
     @Override
@@ -1141,14 +1007,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return true;
     }
 
-    private boolean shouldAggroNearBabies(@Nullable LivingEntity target) {
-        if (!isWildAggressionEnabled() || target == null || !target.isAlive()) {
-            return false;
-        }
-        return hasNearbyWildBaby();
-    }
-
-    private boolean isWildAggressionEnabled() {
+    public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
         }
@@ -1157,7 +1016,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return config.extraBoolean("aggressive_wild", true);
     }
 
-    private boolean hasNearbyWildBaby() {
+    public boolean hasNearbyWildBaby() {
         return !this.level().getEntitiesOfClass(
                 Varasuchus.class,
                 this.getBoundingBox().inflate(16.0D),
@@ -1178,10 +1037,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             return;
         }
         clearBabyProtectionAggroTarget();
+        this.getBrain().setMemory(DragonMemories.ATTACK_TARGET, rider);
         this.setTarget(rider);
     }
 
-    private void markBabyProtectionAggroTarget(@Nullable LivingEntity target) {
+    public void markBabyProtectionAggroTarget(@Nullable LivingEntity target) {
         if (target instanceof Player player) {
             this.babyProtectionAggroTargetUuid = player.getUUID();
         } else {
@@ -1189,7 +1049,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
     }
 
-    private void clearBabyProtectionAggroTarget() {
+    public void clearBabyProtectionAggroTarget() {
         this.babyProtectionAggroTargetUuid = null;
     }
 
@@ -1267,9 +1127,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.lookControl = this.landLookControl;
         Vec3 delta = this.getDeltaMovement();
         this.setDeltaMovement(new Vec3(delta.x, 0.0D, delta.z));
-        if (groundWanderGoal != null) {
-            groundWanderGoal.forceTrigger();
-        }
         this.entityData.set(DATA_SWIMMING, false);
         this.entityData.set(DATA_SWIM_TURN, 0);
         this.entityData.set(DATA_SWIM_PITCH, 0);
@@ -2121,7 +1978,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return hasRoostTerritory() && !isWithinRoostTerritory(position());
     }
 
-    private boolean shouldSuspendRoostWandering() {
+    public boolean shouldSuspendRoostWandering() {
         return hasRoostTerritory()
                 && (isOutsideRoostTerritory()
                 || getSleepPreferences().canSleepDuringConditions(level()));

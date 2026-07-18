@@ -1035,6 +1035,18 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
                                 boolean force) {
     }
 
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of(
+                "phase", returnPhase.name().toLowerCase(),
+                "reason", returnPhaseReason,
+                "exiting_water", Boolean.toString(exitingWater),
+                "approaching_shore", Boolean.toString(approachingShore),
+                "shore_target", shoreTarget == null ? "none" : shoreTarget.waterApproach().toString(),
+                "route_retry", Boolean.toString(routeRetryRequested)
+        );
+    }
+
     private enum ReturnPhase {
         INACTIVE,
         WATER_ROUTE,

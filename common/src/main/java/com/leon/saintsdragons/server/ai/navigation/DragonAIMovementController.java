@@ -381,10 +381,16 @@ public class DragonAIMovementController {
     }
 
     public boolean hasFailed() {
-        return groundPathState == GroundPathState.FAILED
-                || (!shouldUseAirMovement()
+        if (groundPathState == GroundPathState.FAILED) {
+            return true;
+        }
+        if (groundPathState == GroundPathState.CALCULATING
+                || groundPathState == GroundPathState.FOLLOWING) {
+            return false;
+        }
+        return !shouldUseAirMovement()
                 && canUseGroundNavigation()
-                && dragon.getNavigation().isStuck());
+                && dragon.getNavigation().isStuck();
     }
 
     public void clearGroundPathFailureRetry() {
