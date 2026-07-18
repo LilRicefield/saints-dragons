@@ -6,7 +6,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCombatMovementGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCoordinator;
-import com.leon.saintsdragons.server.ai.goals.base.SuspendedFloatWanderGoal;
+import com.leon.saintsdragons.server.ai.goals.SuspendedFloatWanderGoal;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwarmFlyingPathNavigation;

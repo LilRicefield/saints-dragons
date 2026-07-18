@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public final class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
+public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
     private static final double MAX_DISTANCE_SQ = 576.0D;
     private final Class<T> dragonClass;
     private final double speedModifier;
@@ -135,7 +135,7 @@ public final class DragonFollowParentBehaviour<T extends DragonEntity> extends D
         return minimum * minimum;
     }
 
-    private void moveTo(T baby, T adult) {
+    protected void moveTo(T baby, T adult) {
         if (baby instanceof RideableDragonBase rideable) {
             rideable.getAIMovement().moveToGroundTarget(adult, speedModifier, false);
         } else {
@@ -143,7 +143,7 @@ public final class DragonFollowParentBehaviour<T extends DragonEntity> extends D
         }
     }
 
-    private void stopMovement(T baby) {
+    protected void stopMovement(T baby) {
         if (baby instanceof RideableDragonBase rideable) {
             rideable.getAIMovement().stop();
         } else {

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 import com.leon.saintsdragons.common.registry.ModMemoryTypes;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
@@ -26,6 +27,7 @@ public final class DragonMemories {
     public static final MemoryModuleType<Boolean> IN_WATER = ModMemoryTypes.IN_WATER.get();
     public static final MemoryModuleType<Boolean> IN_LAVA = ModMemoryTypes.IN_LAVA.get();
     public static final MemoryModuleType<DragonMovementIntent> MOVEMENT_INTENT = ModMemoryTypes.MOVEMENT_INTENT.get();
+    public static final MemoryModuleType<Entity> INTERCEPT_PROJECTILE = ModMemoryTypes.INTERCEPT_PROJECTILE.get();
     public static final MemoryModuleType<Boolean> GROUND_ROUTE_ABANDONED = ModMemoryTypes.GROUND_ROUTE_ABANDONED.get();
     public static final MemoryModuleType<Vec3> TACTICAL_LANDING_POSITION = ModMemoryTypes.TACTICAL_LANDING_POSITION.get();
     public static final MemoryModuleType<GlobalPos> ROOST_SLEEP_POSITION = ModMemoryTypes.ROOST_SLEEP_POSITION.get();
@@ -49,6 +51,7 @@ public final class DragonMemories {
                 IN_WATER,
                 IN_LAVA,
                 MOVEMENT_INTENT,
+                INTERCEPT_PROJECTILE,
                 GROUND_ROUTE_ABANDONED,
                 TACTICAL_LANDING_POSITION,
                 ROOST_SLEEP_POSITION

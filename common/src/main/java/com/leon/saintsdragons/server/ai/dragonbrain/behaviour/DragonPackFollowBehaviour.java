@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public final class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMember<T>>
+public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMember<T>>
         extends DragonBehaviour<T> {
     private static final double AIR_TARGET_EPSILON_SQR = 9.0D;
     private static final double AIR_SPEED_EPSILON = 0.15D;
@@ -68,7 +68,10 @@ public final class DragonPackFollowBehaviour<T extends RideableFlyingDragon & Pa
     protected boolean canContinue(DragonBrainContext<T> context) {
         T member = context.dragon();
         if (!canFollow(member)) {
-            if (member.canFly() && member.isAerial() && !member.isLanding()) {
+            if (shouldLandWhenFollowEnds(member)
+                    && member.canFly()
+                    && member.isAerial()
+                    && !member.isLanding()) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
                         DragonMovementIntent.landing(member, airSpeed(member, false))
@@ -82,6 +85,10 @@ public final class DragonPackFollowBehaviour<T extends RideableFlyingDragon & Pa
             leader = resolveLeader(context.level(), member);
         }
         return leader != null && member.distanceToSqr(leader) > stopDistanceSq;
+    }
+
+    protected boolean shouldLandWhenFollowEnds(T member) {
+        return true;
     }
 
     @Override

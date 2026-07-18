@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.ai.goals.nulljaw;
+package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.server.level.ServerLevel;
@@ -14,9 +14,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
 
-/**
- * Server-side formation and attack scheduling for wild Nulljaw combat groups.
- */
 public final class NulljawPackCombatCoordinator {
     private static final double ORBIT_RADIUS = 8.5D;
     private static final double STAGE_RADIUS = 10.0D;

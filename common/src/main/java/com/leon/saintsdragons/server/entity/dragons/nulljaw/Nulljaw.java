@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
@@ -13,13 +14,8 @@ import com.leon.saintsdragons.common.network.MessageMountedTeleport;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFollowOwnerGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFollowParentGoal;
-import com.leon.saintsdragons.server.ai.goals.base.DragonPackFollowLeaderGoal;
-import com.leon.saintsdragons.server.ai.goals.base.SuspendedFloatWanderGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawBreedGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawCombatGoal;
-import com.leon.saintsdragons.server.ai.goals.nulljaw.NulljawInterceptShulkerBulletGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.NulljawBrain;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -58,21 +54,15 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
-import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.entity.projectile.ShulkerBullet;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
@@ -100,6 +90,8 @@ import java.util.Map;
 import java.util.UUID;
 
 public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw> {
+    private static final NulljawBrain DRAGON_BRAIN = new NulljawBrain();
+
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.NULLJAW_ID;
@@ -107,8 +99,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     private static final double NATURAL_SPAWN_NULLJAW_RADIUS = 96.0D;
     private static final int MAX_NEARBY_WILD_NULLJAWS = 4;
-    private static final double BREED_PARTNER_RANGE = 24.0D;
-    private static final double BREED_DISTANCE_SQR = 9.0D;
+    public static final double BREED_PARTNER_RANGE = 24.0D;
+    public static final double BREED_DISTANCE_SQR = 9.0D;
     private static final double CARRIED_HITBOX_DOWNWARD_EXTENSION = 1.65D;
     private static final double CARRIED_COLLISION_ESCAPE_LIFT = 0.20D;
     private static final int MAX_CARRIED_RIDER_ESCAPE_LIFTS = 8;
@@ -324,90 +316,22 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(1, new NulljawInterceptShulkerBulletGoal(this));
-        this.goalSelector.addGoal(2, new NulljawCombatGoal(this));
-        this.goalSelector.addGoal(3, new DragonFollowParentGoal<>(this, Nulljaw.class, 0.9D) {
-            @Override
-            protected void moveToParent(Nulljaw parent) {
-                Nulljaw.this.beginAiFlight();
-                Vec3 target = parent.position().add(0.0D, parent.getBbHeight() * 0.5D, 0.0D);
-                Nulljaw.this.getAIMovement().setAsyncAirWaypoint(target, 0.9D);
-            }
-        });
-        this.goalSelector.addGoal(3, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
-            @Override
-            protected void updateFlightState(LivingEntity owner, boolean shouldFly, boolean ownerAirborne, double distance) {
-                Nulljaw.this.setFlying(true);
-                Nulljaw.this.setTakeoff(false);
-                Nulljaw.this.setHovering(false);
-                Nulljaw.this.setLanding(false);
-            }
+    }
 
-            @Override
-            protected void startFollowTakeoff() {
-                Nulljaw.this.setFlying(true);
-                Nulljaw.this.setTakeoff(false);
-                Nulljaw.this.setHovering(false);
-                Nulljaw.this.setLanding(false);
-            }
+    @Override
+    protected Brain.Provider<Nulljaw> brainProvider() {
+        return DRAGON_BRAIN.brainProvider();
+    }
 
-            @Override
-            protected Vec3 getFlightFollowTarget(LivingEntity owner, boolean ownerAirborne) {
-                return super.getFlightFollowTarget(owner, true);
-            }
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return DragonBrain.makeBrain(DRAGON_BRAIN, dynamic);
+    }
 
-            @Override
-            protected void submitAirMove(Vec3 target, double speed) {
-                Nulljaw.this.beginAiFlight();
-                Nulljaw.this.getAIMovement().setAsyncAirWaypoint(target, speed);
-            }
-
-        });
-        this.goalSelector.addGoal(4, new TemptGoal(this, 1.0D, Ingredient.of(ModTags.Items.NULLJAW_FOODS), false));
-        this.goalSelector.addGoal(5, new NulljawBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        this.goalSelector.addGoal(6, new DragonPackFollowLeaderGoal<>(this, Nulljaw.class, 0.9D, 18.0D, 9.0D));
-        this.goalSelector.addGoal(7, new SuspendedFloatWanderGoal(
-                this,
-                new SuspendedFloatWanderGoal.Movement() {
-                    @Override
-                    public boolean isIdle() {
-                        return Nulljaw.this.isAiFlightDone();
-                    }
-
-                    @Override
-                    public void moveTo(Vec3 target, double speed) {
-                        Nulljaw.this.beginAiFlight();
-                        Nulljaw.this.getAIMovement().setAsyncAirWaypoint(target, speed);
-                    }
-
-                    @Override
-                    public void stop() {
-                        Nulljaw.this.getAIMovement().stop();
-                    }
-                },
-                this::canFloatWander,
-                1.0D,
-                32
-        ));
-        this.goalSelector.addGoal(8, new LookAtPlayerGoal(this, Player.class, 12.0F));
-        this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
-        this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(
-                this,
-                Shulker.class,
-                10,
-                true,
-                false,
-                shulker -> !this.isBaby()
-                        && !this.isVehicle()
-                        && !this.isPassenger()
-                        && !this.isOrderedToSit()
-        ) {
-            @Override
-            public boolean canUse() {
-                return Nulljaw.this.getTarget() == null && super.canUse();
-            }
-        });
+    @Override
+    protected void customServerAiStep() {
+        DragonBrain.tick(DRAGON_BRAIN, this);
+        super.customServerAiStep();
     }
 
     @Override
@@ -445,7 +369,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return this.getDeltaMovement().lengthSqr() > 0.003D;
     }
 
-    private boolean canFloatWander() {
+    public boolean canFloatWander() {
         if (!this.isAlive()
                 || this.isOrderedToSit()
                 || this.isSittingDownAnimation()
@@ -1181,6 +1105,16 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     public double getPackSearchRadius() {
         return PACK_SEARCH_RADIUS;
+    }
+
+    @Override
+    public boolean handleDirectAirPackFollow(Vec3 target, double speed) {
+        if (this.level().isClientSide || !this.isAerial() || this.isLanding()) {
+            return false;
+        }
+        this.beginAiFlight();
+        this.getAIMovement().setAsyncAirWaypoint(target, speed);
+        return true;
     }
 
     public @Nullable UUID getCombatFormationLeaderUuid() {

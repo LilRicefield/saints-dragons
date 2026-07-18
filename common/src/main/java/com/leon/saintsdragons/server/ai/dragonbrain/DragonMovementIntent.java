@@ -8,6 +8,7 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         DragonMovementIntent.Stop,
         DragonMovementIntent.HoldPosition,
         DragonMovementIntent.AutoPosition,
+        DragonMovementIntent.StrictAirPosition,
         DragonMovementIntent.AutoTarget,
         DragonMovementIntent.GroundPosition,
         DragonMovementIntent.ProgressiveGroundPosition,
@@ -35,6 +36,10 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
 
     static DragonMovementIntent auto(Vec3 target, double speed) {
         return new AutoPosition(target, speed);
+    }
+
+    static DragonMovementIntent strictAir(Vec3 target, double speed) {
+        return new StrictAirPosition(target, speed);
     }
 
     static DragonMovementIntent auto(LivingEntity target, double speed) {
@@ -93,6 +98,13 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         @Override
         public void apply(RideableDragonBase dragon) {
             dragon.getAIMovement().setWaypoint(target, speed);
+        }
+    }
+
+    record StrictAirPosition(Vec3 target, double speed) implements DragonMovementIntent {
+        @Override
+        public void apply(RideableDragonBase dragon) {
+            dragon.getAIMovement().setAsyncAirWaypoint(target, speed);
         }
     }
 
