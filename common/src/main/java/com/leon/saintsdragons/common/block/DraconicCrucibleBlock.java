@@ -108,7 +108,9 @@ public class DraconicCrucibleBlock extends BaseEntityBlock {
     public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(
             @NotNull Level level, @NotNull BlockState state, @NotNull BlockEntityType<T> type) {
         if (level.isClientSide) {
-            return null;
+            return createTickerHelper(
+                    type, ModBlockEntities.DRACONIC_CRUCIBLE.get(),
+                    DraconicCrucibleBlockEntity::clientTick);
         }
         return createTickerHelper(
                 type, ModBlockEntities.DRACONIC_CRUCIBLE.get(), DraconicCrucibleBlockEntity::serverTick);

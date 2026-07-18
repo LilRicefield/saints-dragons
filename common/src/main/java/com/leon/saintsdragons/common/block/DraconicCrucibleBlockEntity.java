@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModRecipes;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModTags;
+import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.menu.DraconicCrucibleMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
@@ -159,6 +160,15 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         }
     }
 
+    public static void clientTick(Level level, BlockPos pos, BlockState state,
+                                  DraconicCrucibleBlockEntity crucible) {
+        boolean smelting = state.hasProperty(DraconicCrucibleBlock.LIT)
+                && state.getValue(DraconicCrucibleBlock.LIT);
+        Services.PLATFORM.runOnClient(() ->
+                com.leon.saintsdragons.client.sound.DraconicCrucibleSmeltingSoundController
+                        .update(level, pos, smelting));
+    }
+
     public boolean beginProcessing(Level level) {
         return startProcessing(level);
     }
@@ -199,10 +209,6 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         this.pendingResult = job.result().copy();
         this.processingLocked = true;
         this.canStartProcessing = false;
-        if (!level.isClientSide) {
-            level.playSound(null, this.worldPosition, ModSounds.DRACONIC_CRUCIBLE_SMELTING.get(),
-                    SoundSource.BLOCKS, 0.65F, 1.0F);
-        }
         syncProcessingState();
         setChanged();
         return true;

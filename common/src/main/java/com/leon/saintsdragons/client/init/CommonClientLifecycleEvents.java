@@ -9,6 +9,7 @@ import com.leon.saintsdragons.client.input.DragonlordDoubleJumpInput;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSonicRingTrail;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
+import com.leon.saintsdragons.client.sound.DraconicCrucibleSmeltingSoundController;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxDiveSoundController;
@@ -33,6 +34,7 @@ public final class CommonClientLifecycleEvents {
         SwarmBattleMusicController.tick(minecraft);
         SwarmWaveBarOverlay.tick();
         DragonDiveSoundController.tick(minecraft);
+        DraconicCrucibleSmeltingSoundController.tick(minecraft);
         RaevyxDiveSoundController.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
