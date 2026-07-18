@@ -427,12 +427,14 @@ public class DragonAIMovementController {
 
     private boolean startWaypoint(QueuedWaypoint waypoint) {
         if (!waypoint.mode().usesAir()
+                && !shouldUseAirMovement()
                 && groundPathFailureRetryTicks > 0
                 && lastFailedGroundTarget != null
                 && lastFailedGroundTarget.distanceToSqr(waypoint.target()) < 1.0D) {
             return false;
         }
         if (!waypoint.mode().usesAir()
+                && !shouldUseAirMovement()
                 && currentWaypoint != null
                 && !currentWaypoint.mode().usesAir()
                 && currentWaypoint.target().distanceToSqr(waypoint.target()) < 1.0D

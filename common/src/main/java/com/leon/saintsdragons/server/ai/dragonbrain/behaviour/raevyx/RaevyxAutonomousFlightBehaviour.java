@@ -25,12 +25,14 @@ public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<R
 
     @Override
     protected boolean canContinueAutonomousFlight(Raevyx dragon) {
-        return !dragon.isTame() && super.canContinueAutonomousFlight(dragon);
+        return !dragon.isTame()
+                && (!dragon.hasNearbyAssignedBabies(Raevyx.class) || dragon.isOverStandardFlightDanger())
+                && super.canContinueAutonomousFlight(dragon);
     }
 
     @Override
     protected boolean shouldLandWhenAutonomousFlightBlocked(Raevyx dragon) {
-        return dragon.isTame();
+        return dragon.isTame() || dragon.hasNearbyAssignedBabies(Raevyx.class);
     }
 
     @Override

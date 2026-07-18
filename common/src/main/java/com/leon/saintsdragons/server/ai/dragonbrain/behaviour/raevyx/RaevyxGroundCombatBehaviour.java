@@ -131,7 +131,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
 
     @Override
     protected void stop(DragonBrainContext<Raevyx> context) {
-        if (!context.dragon().shouldUseCombatBrain()) {
+        if (!context.memories().has(DragonMemories.ATTACK_TARGET)) {
             context.dragon().setAggressive(false);
         }
         resetCombatPacing();

@@ -15,9 +15,7 @@ import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.RaevyxCombatBrain;
-import com.leon.saintsdragons.server.ai.goals.base.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.RaevyxBrain;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
@@ -71,9 +69,6 @@ import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
-import net.minecraft.world.entity.ai.goal.*;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.server.level.ServerPlayer;
@@ -98,7 +93,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
-    private static final RaevyxCombatBrain DRAGON_BRAIN = new RaevyxCombatBrain();
+    private static final RaevyxBrain DRAGON_BRAIN = new RaevyxBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.RAEVYX_ID;
@@ -279,55 +274,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DragonFloatGoal(this));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(3, new DragonBrainGoal<>(
-                    this,
-                    DRAGON_BRAIN,
-                    EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK)
-            ));
-        }
-        this.goalSelector.addGoal(5, new SitWhenOrderedToGoal(this));
-        this.goalSelector.addGoal(7, new DragonFollowParentGoal<>(this, Raevyx.class, 1.15D));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Raevyx.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        }
-        this.goalSelector.addGoal(8, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forRaevyx()) {
-            @Override
-            protected void startFollowTakeoff() {
-                if (Raevyx.this.isFlying() || Raevyx.this.isTakeoff()) {
-                    return;
-                }
-                Raevyx.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            }
-        });
-        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 60));
-        this.goalSelector.addGoal(10, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {
-            @Override
-            public boolean canUse() {
-                return !Raevyx.this.isVehicle() && super.canUse();
-            }
-        });
-        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {
-            @Override
-            public boolean canUse() {
-                return !Raevyx.this.isVehicle() && super.canUse();
-            }
-        });
-        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Raevyx.class));  // Protect nearby babies
-        this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                target -> shouldAggroOnSight()));
-        this.targetSelector.addGoal(6, new DragonRaidDefenseTargetGoal(this));
-        this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
-                this,
-                80,
-                () -> true,
-                target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.RAEVYX_TARGETS)
-        ));
     }
 
     @Override
@@ -481,31 +427,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     protected void customServerAiStep() {
         DragonBrain.tick(DRAGON_BRAIN, this);
         super.customServerAiStep();
-    }
-
-    public boolean shouldUseCombatBrain() {
-        if (isAerial() && isLanding() && !isVehicle() && !isPassenger() && !isOrderedToSit()) {
-            return true;
-        }
-        LivingEntity target = getTarget();
-        if (!isTargetValid(target) || isBaby() || isVehicle() || isPassenger() || isOrderedToSit()) {
-            return false;
-        }
-        if (target.isInWaterOrBubble()) {
-            return isAerial()
-                    || distanceToSqr(target) <= DragonAirCombatHelper.maxAggroDistanceSqr(this, 32.0D);
-        }
-        if (DragonAirCombatHelper.isTargetAirborne(
-                this,
-                target,
-                AI_AIR_COMBAT_SETTINGS.targetAirborneHeight()
-        )) {
-            return DragonAirCombatHelper.canEngageAirborneTarget(this, target, AI_AIR_COMBAT_SETTINGS);
-        }
-        if (isAerial()) {
-            return true;
-        }
-        return distanceToSqr(target) <= DragonAirCombatHelper.maxAggroDistanceSqr(this, 32.0D);
     }
 
     @Override
@@ -2955,7 +2876,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         super.setTarget(target);
     }
 
-    private boolean shouldAggroOnSight() {
+    public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
         }

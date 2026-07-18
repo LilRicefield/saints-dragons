@@ -1756,6 +1756,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (followRange <= 0.0D) {
             followRange = 16.0D;
         }
+        if (this.isInWaterOrBubble() && target.isInWaterOrBubble()) {
+            followRange *= 2.0D;
+        }
         double maxDistanceSq = followRange * followRange;
         return this.distanceToSqr(target) > maxDistanceSq;
     }

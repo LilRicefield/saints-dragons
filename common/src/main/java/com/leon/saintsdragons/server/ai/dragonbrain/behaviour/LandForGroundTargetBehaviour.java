@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -14,10 +15,17 @@ import java.util.Map;
 
 public class LandForGroundTargetBehaviour<T extends RideableFlyingDragon> extends DragonBehaviour<T> {
     private final double landingSpeed;
+    private final GroundPursuitFlightSettings pursuitSettings;
 
     public LandForGroundTargetBehaviour(double landingSpeed) {
+        this(landingSpeed, GroundPursuitFlightSettings.standard());
+    }
+
+    public LandForGroundTargetBehaviour(double landingSpeed,
+                                        GroundPursuitFlightSettings pursuitSettings) {
         super(Map.of(DragonMemories.LOCOMOTION_MODE, MemoryStatus.REGISTERED));
         this.landingSpeed = landingSpeed;
+        this.pursuitSettings = pursuitSettings;
     }
 
     @Override
@@ -66,8 +74,17 @@ public class LandForGroundTargetBehaviour<T extends RideableFlyingDragon> extend
         }
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (target != null) {
-            context.memories().set(DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.landing(target, landingSpeed));
+            Vec3 landingTarget = context.dragon().getAIMovement().findTacticalLandingTarget(
+                    target,
+                    pursuitSettings.landingSearchRadius(),
+                    pursuitSettings.landingMaxVerticalDelta()
+            );
+            if (landingTarget != null) {
+                context.memories().set(DragonMemories.MOVEMENT_INTENT,
+                        DragonMovementIntent.landing(landingTarget, landingSpeed));
+            } else {
+                context.memories().set(DragonMemories.GROUND_ROUTE_ABANDONED, true);
+            }
         } else if (context.dragon().isLanding()) {
             context.memories().set(DragonMemories.MOVEMENT_INTENT,
                     DragonMovementIntent.landing(landingSpeed));

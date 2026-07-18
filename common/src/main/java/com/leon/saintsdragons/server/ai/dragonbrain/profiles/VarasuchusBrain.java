@@ -26,7 +26,6 @@ import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
-import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
 import net.minecraft.world.entity.schedule.Activity;
@@ -169,11 +168,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                         && !dragon.isWithinRoostTerritory(target.position()))) {
             return false;
         }
-        double followRange = dragon.getAttributeValue(Attributes.FOLLOW_RANGE);
-        if (followRange <= 0.0D) {
-            followRange = 16.0D;
-        }
-        return dragon.distanceToSqr(target) <= followRange * followRange;
+        return true;
     }
 
     private boolean wantsRoostSleep(Varasuchus dragon) {
