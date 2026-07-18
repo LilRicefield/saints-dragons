@@ -231,6 +231,7 @@ public final class DragonSleepComponent {
 
     private boolean canSleepInCurrentEnvironment() {
         if (dragon.isDying() || !dragon.isAlive() || dragon.isDeadOrDying()) return false;
+        if (dragon.isHuntFoodPursuitActive()) return false;
         if (dragon.isVehicle()) return false;
         if (dragon.getTarget() != null) return false;
         int recentCombatTick = Math.max(dragon.getLastDamagerTimestamp(), dragon.getLastHurtByMobTimestamp());

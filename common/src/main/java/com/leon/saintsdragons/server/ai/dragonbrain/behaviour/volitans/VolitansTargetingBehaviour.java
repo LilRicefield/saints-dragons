@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -97,7 +98,7 @@ public final class VolitansTargetingBehaviour extends DragonTargetingBehaviour<V
 
         if (huntPollCooldown-- <= 0) {
             huntPollCooldown = 80;
-            if (!dragon.isTame()) {
+            if (DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
                 LivingEntity prey = nearest(
                         context.level(),
                         dragon,
@@ -137,6 +138,10 @@ public final class VolitansTargetingBehaviour extends DragonTargetingBehaviour<V
 
     @Override
     protected boolean canRetainTarget(Volitans dragon, LivingEntity target, String source) {
+        if (Source.HUNT.debugName.equals(source)
+                && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
+            return false;
+        }
         double range = Source.PROTECT_BABY.debugName.equals(source)
                 ? BABY_PROTECTION_RANGE
                 : Math.max(32.0D, dragon.getAttributeValue(Attributes.FOLLOW_RANGE));

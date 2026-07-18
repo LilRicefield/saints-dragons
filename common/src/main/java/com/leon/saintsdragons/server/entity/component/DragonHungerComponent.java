@@ -9,9 +9,7 @@ import net.minecraft.world.entity.player.Player;
 
 public final class DragonHungerComponent {
     public static final int HUNGER_MAX = 100;
-    // 20 ticks = 1 second, so 7200 ticks = 6 minutes per hunger point.
-    private static final int HUNGER_DECAY_INTERVAL_TICKS = 7200;
-    // While a player is actively controlling the dragon, hunger decays this many times faster.
+    private static final int HUNGER_DECAY_INTERVAL_TICKS = 4800;
     private static final int HUNGER_DECAY_RIDDEN_TICK_MULT = 2;
     private static final int HUNGER_FEED_AMOUNT = 10;
     private static final int HUNGER_FEED_AMOUNT_HEARTY = 20;
@@ -71,14 +69,11 @@ public final class DragonHungerComponent {
         if (hunger <= 30) {
             return 0.25f;
         }
-        float ratio = (hunger - 30) / 30.0f; // 30..60 => 0..1
+        float ratio = (hunger - 30) / 30.0f;
         return 0.25f + (0.75f * ratio);
     }
 
     public void tick() {
-        if (!dragon.isTame()) {
-            return;
-        }
         if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
             hungerDecayTicks = 0;
             return;

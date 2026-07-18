@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.varasuchus;
 
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
@@ -105,7 +106,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
 
         if (huntPollCooldown-- <= 0) {
             huntPollCooldown = 80;
-            if (!dragon.isTame()) {
+            if (DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
                 LivingEntity prey = nearest(context.level(), dragon, LivingEntity.class,
                         candidate -> DragonTargetingHelper.isTaggedHuntTarget(
                                 candidate, ModTags.EntityTypes.VARASUCHUS_TARGETS));
@@ -139,6 +140,10 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
 
     @Override
     protected boolean canRetainTarget(Varasuchus dragon, LivingEntity target, String source) {
+        if (Source.HUNT.debugName.equals(source)
+                && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
+            return false;
+        }
         if (dragon.shouldSuspendRoostWandering()
                 && (!Source.RETALIATION.debugName.equals(source)
                 || !isRecentAttacker(dragon, target, dragon.getLastHurtByMobTimestamp()))) {

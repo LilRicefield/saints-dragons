@@ -13,6 +13,9 @@ public record MessageDragonBrainDebug(
         int entityId,
         String dragonName,
         long gameTime,
+        int hunger,
+        int maxHunger,
+        boolean huntFoodPursuit,
         String activeActivity,
         List<String> activeActivities,
         List<BehaviourState> behaviours,
@@ -37,7 +40,8 @@ public record MessageDragonBrainDebug(
 
     public static MessageDragonBrainDebug clear() {
         return new MessageDragonBrainDebug(
-                false, -1, "", 0L, "none", List.of(), List.of(), List.of(), List.of());
+                false, -1, "", 0L, 0, 0, false,
+                "none", List.of(), List.of(), List.of(), List.of());
     }
 
     public static void encode(MessageDragonBrainDebug message, FriendlyByteBuf buffer) {
@@ -49,6 +53,9 @@ public record MessageDragonBrainDebug(
         buffer.writeVarInt(message.entityId());
         writeString(buffer, message.dragonName());
         buffer.writeVarLong(message.gameTime());
+        buffer.writeVarInt(message.hunger());
+        buffer.writeVarInt(message.maxHunger());
+        buffer.writeBoolean(message.huntFoodPursuit());
         writeString(buffer, message.activeActivity());
         writeList(buffer, message.activeActivities(), MessageDragonBrainDebug::writeString);
         writeList(buffer, message.behaviours(), BehaviourState::encode);
@@ -66,6 +73,9 @@ public record MessageDragonBrainDebug(
                 buffer.readVarInt(),
                 readString(buffer),
                 buffer.readVarLong(),
+                buffer.readVarInt(),
+                buffer.readVarInt(),
+                buffer.readBoolean(),
                 readString(buffer),
                 readList(buffer, MAX_ACTIVITIES, MessageDragonBrainDebug::readString),
                 readList(buffer, MAX_BEHAVIOURS, BehaviourState::decode),

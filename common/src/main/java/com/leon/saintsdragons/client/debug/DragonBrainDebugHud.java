@@ -50,6 +50,10 @@ public final class DragonBrainDebugHud {
         List<Line> lines = new ArrayList<>();
         lines.add(new Line(snapshot.dragonName() + " #" + snapshot.entityId()
                 + "  brain@" + snapshot.gameTime(), 0xFFFFFFFF));
+        lines.add(new Line("Hunger: " + snapshot.hunger() + "/" + snapshot.maxHunger()
+                + " " + hungerMeter(snapshot.hunger(), snapshot.maxHunger())
+                + "  hunt-food=" + (snapshot.huntFoodPursuit() ? "active" : "idle"),
+                snapshot.huntFoodPursuit() ? 0xFFFFB454 : 0xFF65F58A));
         lines.add(new Line("Activity: " + snapshot.activeActivity()
                 + "  active=" + String.join(",", snapshot.activeActivities()), 0xFF62D9FF));
 
@@ -107,6 +111,12 @@ public final class DragonBrainDebugHud {
             lines.set(lines.size() - 1, new Line("...", 0xFF9AA1AD));
         }
         return lines;
+    }
+
+    private static String hungerMeter(int hunger, int maximum) {
+        int filled = maximum <= 0 ? 0 : Math.max(0, Math.min(10,
+                hunger * 10 / maximum));
+        return "[" + "#".repeat(filled) + "-".repeat(10 - filled) + "]";
     }
 
     private record Line(String text, int color) {

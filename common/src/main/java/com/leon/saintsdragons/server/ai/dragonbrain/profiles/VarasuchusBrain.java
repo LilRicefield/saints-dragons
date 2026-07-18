@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFindWaterBehaviour;
@@ -77,9 +78,10 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
         return List.of(
                 DragonBehaviourGroup.<Varasuchus>activity(Activity.CORE)
                         .behaviours(
-                                new ApplyMovementIntentBehaviour<>(),
                                 new VarasuchusTargetingBehaviour(),
                                 new DragonIdleLookBehaviour<>(8.0D),
+                                new DragonHuntAndEatBehaviour<>(),
+                                new ApplyMovementIntentBehaviour<>(),
                                 new MoveToGroundWalkTargetBehaviour<>(),
                                 new LookAtAttackTargetBehaviour<>(30.0F, 30.0F)
                         )

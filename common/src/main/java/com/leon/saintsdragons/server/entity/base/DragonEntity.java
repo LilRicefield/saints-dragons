@@ -177,6 +177,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private UUID assignedParentUuid;
     @Nullable
     private UUID passiveHuntTargetUuid;
+    private boolean huntFoodPursuitActive;
     private boolean familySpawnPending = false;
     private int pendingFamilyBabyCount = 0;
     private final GenericSwimSteeringController waterPathSteering;
@@ -600,6 +601,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                 && target == getTarget()
                 && passiveHuntTargetUuid != null
                 && passiveHuntTargetUuid.equals(target.getUUID());
+    }
+
+    public boolean isHuntFoodPursuitActive() {
+        return huntFoodPursuitActive;
+    }
+
+    public void setHuntFoodPursuitActive(boolean active) {
+        this.huntFoodPursuitActive = active;
     }
 
     public void clearAssignedParentUuid() {
@@ -1942,12 +1951,13 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             if (sleepComponent != null) {
                 sleepComponent.tick();
             }
-            if (this.isTame() && !this.isBoundInBinder()) {
+            boolean careComponentsActive = !this.isBoundInBinder();
+            if (careComponentsActive && hungerComponent != null) {
+                hungerComponent.tick();
+            }
+            if (this.isTame() && careComponentsActive) {
                 if (groomingComponent != null) {
                     groomingComponent.tick();
-                }
-                if (hungerComponent != null) {
-                    hungerComponent.tick();
                 }
                 if (happinessComponent != null) {
                     int currentHunger = hungerComponent != null ? hungerComponent.getHunger() : HUNGER_MAX;

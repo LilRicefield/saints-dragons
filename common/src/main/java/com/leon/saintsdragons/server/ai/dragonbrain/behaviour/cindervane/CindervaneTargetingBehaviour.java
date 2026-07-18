@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -106,7 +107,7 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
 
         if (huntPollCooldown-- <= 0) {
             huntPollCooldown = 80;
-            if (!dragon.isTame()) {
+            if (DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
                 LivingEntity prey = nearest(
                         context.level(),
                         dragon,
@@ -143,6 +144,10 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
 
     @Override
     protected boolean canRetainTarget(Cindervane dragon, LivingEntity target, String source) {
+        if (Source.HUNT.debugName.equals(source)
+                && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
+            return false;
+        }
         double range = Source.PROTECT_BABY.debugName.equals(source)
                 ? BABY_PROTECTION_RANGE
                 : Source.PACK_DEFENSE.debugName.equals(source)
