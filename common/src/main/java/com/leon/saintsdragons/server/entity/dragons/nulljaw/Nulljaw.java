@@ -737,6 +737,16 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
+    public boolean tryBrush(Player player, ItemStack brushStack) {
+        return false;
+    }
+
+    @Override
+    public boolean isBrushingAvailable() {
+        return false;
+    }
+
+    @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
         if (source.getDirectEntity() instanceof ShulkerBullet) {
             return false;

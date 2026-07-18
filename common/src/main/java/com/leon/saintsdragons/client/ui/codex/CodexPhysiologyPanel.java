@@ -68,7 +68,9 @@ public class CodexPhysiologyPanel {
             drawGenderStat(guiGraphics, font, selected, leftPos, topPos);
             drawPositionStat(guiGraphics, font, selected, leftPos, topPos);
             drawBiomeStat(guiGraphics, font, selected, leftPos, topPos);
-            drawBrushingIndicator(guiGraphics, font, selected, leftPos, topPos);
+            if (selected.supportsBrushing()) {
+                drawBrushingIndicator(guiGraphics, font, selected, leftPos, topPos);
+            }
         } else if (activeTab == CodexTab.ECOLOGY) {
             ecologyPanel.draw(guiGraphics, font, selected, ecologyPage, contentX, contentY, mouseX, mouseY);
         } else {

@@ -5,4 +5,7 @@ public record CodexDragonEntry(java.util.UUID entityId, String displayName, doub
                                boolean genderKnown, String dragonType, boolean isBaby,
                                boolean brushingAvailable, int brushingProgressPercent,
                                double posX, double posY, double posZ, String biomeId) {
+    public boolean supportsBrushing() {
+        return !"nulljaw".equals(dragonType);
+    }
 }
