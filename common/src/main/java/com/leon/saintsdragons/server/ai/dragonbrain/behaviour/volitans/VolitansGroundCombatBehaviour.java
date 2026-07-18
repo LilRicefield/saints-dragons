@@ -5,7 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
-import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -196,6 +196,9 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
             return false;
         }
         if (dragon.isInWaterOrBubble() || dragon.isUnderWater()) {
+            return false;
+        }
+        if (target.isInWaterOrBubble()) {
             return false;
         }
         return !isTargetAirborne(target);

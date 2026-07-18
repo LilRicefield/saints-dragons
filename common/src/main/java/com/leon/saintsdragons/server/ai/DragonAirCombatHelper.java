@@ -1,6 +1,6 @@
-package com.leon.saintsdragons.server.ai.goals.base;
+package com.leon.saintsdragons.server.ai;
 
-import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonAsyncAirMovementHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;

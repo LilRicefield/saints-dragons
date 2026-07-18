@@ -1,9 +1,11 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
-import com.leon.saintsdragons.server.ai.pathfinding.AsyncDragonPathfinder;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncDragonPathfinder;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,6 +19,7 @@ import java.util.concurrent.Future;
 
 public class DragonAIMovementController {
     private static final int GROUND_PATH_FAILURE_RETRY_TICKS = 20;
+    private static final float WATER_TURN_SPEED = 8.0F;
 
     private final RideableDragonBase dragon;
     private @Nullable QueuedWaypoint currentWaypoint;
@@ -25,6 +28,7 @@ public class DragonAIMovementController {
     private @Nullable Future<?> groundPathRequest;
     private int groundPathFailureRetryTicks;
     private @Nullable Vec3 lastFailedGroundTarget;
+    private int lastWaterControllerTick = Integer.MIN_VALUE;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
         this.dragon = dragon;
@@ -40,6 +44,20 @@ public class DragonAIMovementController {
         }
         if (groundPathFailureRetryTicks > 0) {
             groundPathFailureRetryTicks--;
+        }
+        if (currentWaypoint != null && currentWaypoint.mode().usesWater()) {
+            if (!shouldUseWaterMovement()) {
+                dragon.getAiSwimController().stop();
+                currentWaypoint = null;
+                return;
+            }
+            if (hasArrived()) {
+                dragon.getAiSwimController().stop();
+                currentWaypoint = null;
+                return;
+            }
+            tickWaterController();
+            return;
         }
         if (groundPathState == GroundPathState.FOLLOWING && dragon.getNavigation().isDone()) {
             double arrivalDistance = Math.max(1.5D, dragon.getBbWidth() * 0.75D);
@@ -62,7 +80,7 @@ public class DragonAIMovementController {
     }
 
     public boolean setWaypoint(LivingEntity target, double speed) {
-        return target != null && setWaypoint(target.position(), speed);
+        return target != null && setWaypoint(resolveTargetPosition(target), speed);
     }
 
     public boolean setWaypoint(Vec3 target, double speed) {
@@ -82,12 +100,13 @@ public class DragonAIMovementController {
     }
 
     public boolean setWaypoint(LivingEntity target, double speed, boolean running) {
-        setGroundMoveState(running);
-        return setWaypoint(target, speed);
+        if (target == null || dragon.level().isClientSide) {
+            return false;
+        }
+        return startWaypoint(new QueuedWaypoint(resolveTargetPosition(target), speed, running, MovementMode.AUTO));
     }
 
     public boolean setWaypoint(Vec3 target, double speed, boolean running) {
-        setGroundMoveState(running);
         if (target == null || dragon.level().isClientSide) {
             return false;
         }
@@ -277,14 +296,19 @@ public class DragonAIMovementController {
         currentWaypoint = null;
         resetGroundPathState();
         dragon.getNavigation().stop();
+        dragon.getAiSwimController().clear();
         if (dragon instanceof RideableFlyingDragon flyingDragon) {
             flyingDragon.clearAiFlightTarget();
         }
     }
 
     public void stop() {
+        boolean wasUsingWater = currentWaypoint != null && currentWaypoint.mode().usesWater();
         currentWaypoint = null;
         resetGroundPathState();
+        if (wasUsingWater) {
+            dragon.getAiSwimController().stop();
+        }
         if (shouldUseAirMovement()) {
             clearGroundPath();
             if (!(dragon instanceof RideableFlyingDragon)) {
@@ -303,6 +327,7 @@ public class DragonAIMovementController {
         currentWaypoint = null;
         resetGroundPathState();
         dragon.getNavigation().stop();
+        dragon.getAiSwimController().clear();
         if (dragon instanceof RideableFlyingDragon flyingDragon) {
             flyingDragon.clearAiFlightTarget();
         }
@@ -339,6 +364,9 @@ public class DragonAIMovementController {
     }
 
     public boolean isPathing() {
+        if (currentWaypoint != null && currentWaypoint.mode().usesWater()) {
+            return !hasArrived();
+        }
         if (groundPathState == GroundPathState.CALCULATING
                 || groundPathState == GroundPathState.FOLLOWING) {
             return true;
@@ -356,6 +384,10 @@ public class DragonAIMovementController {
     }
 
     public boolean hasArrived() {
+        if (currentWaypoint != null && currentWaypoint.mode().usesWater()) {
+            double arrivalDistance = waterArrivalDistance();
+            return dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
+        }
         if (groundPathState == GroundPathState.ARRIVED) {
             return true;
         }
@@ -421,12 +453,49 @@ public class DragonAIMovementController {
         return dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering() || dragon.isLanding();
     }
 
+    private boolean shouldUseWaterMovement() {
+        return dragon instanceof SemiAquaticDragon
+                && dragon.canSwim()
+                && dragon.isInWaterOrBubble()
+                && !dragon.isVehicle()
+                && !dragon.isPassenger()
+                && dragon.isAlive();
+    }
+
+    private void tickWaterController() {
+        if (lastWaterControllerTick == dragon.tickCount) {
+            return;
+        }
+        lastWaterControllerTick = dragon.tickCount;
+        dragon.getAiSwimController().serverTick();
+    }
+
+    private double waterArrivalDistance() {
+        return Math.max(2.0D, dragon.getBbWidth() * 0.75D);
+    }
+
+    private Vec3 resolveTargetPosition(LivingEntity target) {
+        if (shouldUseWaterMovement() && target.isInWaterOrBubble()) {
+            return target.position().add(0.0D, target.getBbHeight() * 0.35D, 0.0D);
+        }
+        return target.position();
+    }
+
     private void clearGroundPath() {
         dragon.getNavigation().stop();
     }
 
     private boolean startWaypoint(QueuedWaypoint waypoint) {
+        if (waypoint.mode() == MovementMode.AUTO && shouldUseWaterMovement()) {
+            waypoint = new QueuedWaypoint(
+                    waypoint.target(),
+                    waypoint.speed(),
+                    waypoint.running(),
+                    MovementMode.WATER
+            );
+        }
         if (!waypoint.mode().usesAir()
+                && !waypoint.mode().usesWater()
                 && !shouldUseAirMovement()
                 && groundPathFailureRetryTicks > 0
                 && lastFailedGroundTarget != null
@@ -434,6 +503,7 @@ public class DragonAIMovementController {
             return false;
         }
         if (!waypoint.mode().usesAir()
+                && !waypoint.mode().usesWater()
                 && !shouldUseAirMovement()
                 && currentWaypoint != null
                 && !currentWaypoint.mode().usesAir()
@@ -450,6 +520,24 @@ public class DragonAIMovementController {
         }
         if (waypoint.running()) {
             setGroundRun();
+        }
+
+        if (waypoint.mode().usesWater()) {
+            resetGroundPathState();
+            dragon.getNavigation().stop();
+            if (dragon instanceof RideableFlyingDragon flyingDragon) {
+                flyingDragon.clearAiFlightTarget();
+            }
+            AsyncSwimController controller = dragon.getAiSwimController();
+            boolean accepted = controller.trackTarget(
+                    waypoint.target(),
+                    waypoint.speed(),
+                    WATER_TURN_SPEED
+            );
+            if (accepted) {
+                tickWaterController();
+            }
+            return accepted;
         }
 
         if (waypoint.mode().usesAir() || (waypoint.mode() == MovementMode.AUTO && shouldUseAirMovement())) {
@@ -636,12 +724,17 @@ public class DragonAIMovementController {
     private enum MovementMode {
         AUTO,
         AIR,
+        WATER,
         GROUND,
         PROGRESSIVE_GROUND,
         LANDING;
 
         private boolean usesAir() {
             return this == AIR || this == LANDING;
+        }
+
+        private boolean usesWater() {
+            return this == WATER;
         }
 
         private boolean usesGroundPath() {

@@ -74,13 +74,14 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
 
         ensureGroundNavigation(context.dragon());
         configureWaterHandoff(context);
-        if (!hasReachedTarget(context.dragon(), walkTarget)
+        boolean requiresWaterEntry = requiresWaterEntry(context);
+        if ((requiresWaterEntry || !hasReachedTarget(context.dragon(), walkTarget))
                 && requestPath(context, walkTarget)) {
             lastTargetPos = walkTarget.getTarget().currentBlockPosition();
             return true;
         }
 
-        if (hasReachedTarget(context.dragon(), walkTarget)) {
+        if (!requiresWaterEntry && hasReachedTarget(context.dragon(), walkTarget)) {
             releaseWaterHandoff(context.dragon());
             context.memories().erase(DragonMemories.WALK_TARGET);
             context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
@@ -122,7 +123,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         }
         return context.dragon().getAIMovement().isPathing()
                 && walkTarget != null
-                && !hasReachedTarget(context.dragon(), walkTarget);
+                && (targetingWaterEntry || !hasReachedTarget(context.dragon(), walkTarget));
     }
 
     @Override
@@ -253,6 +254,13 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
     private boolean hasSubmergedAttackTarget(DragonBrainContext<T> context) {
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         return target != null && target.isAlive() && target.isInWaterOrBubble();
+    }
+
+    private boolean requiresWaterEntry(DragonBrainContext<T> context) {
+        return context.dragon() instanceof SemiAquaticDragon
+                && context.dragon().canSwim()
+                && !context.dragon().isInWaterOrBubble()
+                && hasSubmergedAttackTarget(context);
     }
 
     private void beginWaterEntry(DragonBrainContext<T> context) {

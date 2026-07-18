@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 
-import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
+import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 

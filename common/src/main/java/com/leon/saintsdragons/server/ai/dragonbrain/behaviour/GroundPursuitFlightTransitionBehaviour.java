@@ -5,7 +5,7 @@ import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
-import com.leon.saintsdragons.server.ai.goals.base.DragonAirCombatHelper;
+import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.LivingEntity;
@@ -19,20 +19,28 @@ public class GroundPursuitFlightTransitionBehaviour<
         T extends RideableFlyingDragon & DragonAirCombatSettingsProvider> extends DragonBehaviour<T> {
     private final GroundPursuitFlightSettings settings;
     private final Predicate<T> transitionLocked;
+    private final Predicate<T> groundFallbackFlightAllowed;
 
     private int airPursuitTicks;
     private int landingSearchCooldown;
     private int landingFailureTicks;
 
     public GroundPursuitFlightTransitionBehaviour(GroundPursuitFlightSettings settings) {
-        this(settings, dragon -> dragon.getActiveAbility() != null);
+        this(settings, dragon -> dragon.getActiveAbility() != null, dragon -> true);
     }
 
     public GroundPursuitFlightTransitionBehaviour(GroundPursuitFlightSettings settings,
                                                    Predicate<T> transitionLocked) {
+        this(settings, transitionLocked, dragon -> true);
+    }
+
+    public GroundPursuitFlightTransitionBehaviour(GroundPursuitFlightSettings settings,
+                                                   Predicate<T> transitionLocked,
+                                                   Predicate<T> groundFallbackFlightAllowed) {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT), false);
         this.settings = settings;
         this.transitionLocked = transitionLocked;
+        this.groundFallbackFlightAllowed = groundFallbackFlightAllowed;
     }
 
     @Override
@@ -80,6 +88,7 @@ public class GroundPursuitFlightTransitionBehaviour<
             return;
         }
         if (transitionLocked.test(dragon)) {
+            context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
             resetProgressTracking();
             return;
         }
@@ -92,6 +101,7 @@ public class GroundPursuitFlightTransitionBehaviour<
             return;
         }
         if (distance <= settings.minPursuitDistance()) {
+            context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
             resetProgressTracking();
             return;
         }
@@ -107,7 +117,10 @@ public class GroundPursuitFlightTransitionBehaviour<
 
     private void abandonGroundRoute(DragonBrainContext<T> context) {
         T dragon = context.dragon();
-        if (!DragonAirCombatHelper.canTriggerAiFlight(dragon)) {
+        if (!groundFallbackFlightAllowed.test(dragon)
+                || !DragonAirCombatHelper.canTriggerAiFlight(dragon)) {
+            context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
+            resetProgressTracking();
             return;
         }
         context.memories().set(DragonMemories.GROUND_ROUTE_ABANDONED, true);
@@ -129,6 +142,13 @@ public class GroundPursuitFlightTransitionBehaviour<
         Vec3 landingPosition = context.memories()
                 .get(DragonMemories.TACTICAL_LANDING_POSITION)
                 .orElse(null);
+
+        if (!dragon.isAerial()
+                && !dragon.isTakeoff()
+                && !groundFallbackFlightAllowed.test(dragon)) {
+            clearTransition(context);
+            return;
+        }
 
         if (targetAirborne) {
             if (landingPosition != null || dragon.isLanding()) {

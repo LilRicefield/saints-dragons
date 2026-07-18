@@ -22,7 +22,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ReturnToRoostBehav
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.varasuchus.VarasuchusCombatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.varasuchus.VarasuchusTargetingBehaviour;
-import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
@@ -110,6 +110,12 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                 DragonBehaviourGroup.<Varasuchus>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
+                                        new DragonBreedBehaviour<>(
+                                                1.0D,
+                                                Varasuchus.class,
+                                                Varasuchus.BREED_PARTNER_RANGE,
+                                                Varasuchus.BREED_DISTANCE_SQR
+                                        ),
                                         new ReturnToRoostBehaviour<>(
                                                 Varasuchus.ROOST_SLEEP_RADIUS,
                                                 Varasuchus.ROOST_TERRITORY_RADIUS,
@@ -144,12 +150,6 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                                                 dragon -> !dragon.isInWaterOrBubble()
                                                         && !dragon.shouldSuspendRoostWandering(),
                                                 Varasuchus::isWithinRoostTerritory
-                                        ),
-                                        new DragonBreedBehaviour<>(
-                                                1.0D,
-                                                Varasuchus.class,
-                                                Varasuchus.BREED_PARTNER_RANGE,
-                                                Varasuchus.BREED_DISTANCE_SQR
                                         )
                                 )
                         )

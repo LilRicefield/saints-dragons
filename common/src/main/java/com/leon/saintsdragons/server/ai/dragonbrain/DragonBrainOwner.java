@@ -86,9 +86,4 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         brain.setActiveActivityToFirstValid(getDragonBrainActivityPriority());
     }
 
-    default boolean shouldTakeControl(T dragon) {
-        return dragon.getBrain().getRunningBehaviors().stream()
-                .anyMatch(behaviour -> behaviour instanceof DragonBehaviour<?> dragonBehaviour
-                        && dragonBehaviour.claimsControl());
-    }
 }

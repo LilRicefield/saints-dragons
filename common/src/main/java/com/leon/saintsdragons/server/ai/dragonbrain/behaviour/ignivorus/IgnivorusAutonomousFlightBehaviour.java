@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBehaviour;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
+import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -15,6 +15,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
         if (!super.canUseAutonomousFlight(dragon)
                 || dragon.isTame()
                 || dragon.isAiSpecialCombatActive()
+                || dragon.isPhase2Active()
                 || dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava()) {
@@ -29,6 +30,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
         if (!super.canContinueAutonomousFlight(dragon)
                 || dragon.isTame()
                 || dragon.isAiSpecialCombatActive()
+                || dragon.isPhase2Active()
                 || dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava()) {
@@ -41,6 +43,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
     @Override
     protected boolean shouldLandWhenAutonomousFlightBlocked(Ignivorus dragon) {
         return dragon.isTame()
+                || dragon.isPhase2Active()
                 || dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava();

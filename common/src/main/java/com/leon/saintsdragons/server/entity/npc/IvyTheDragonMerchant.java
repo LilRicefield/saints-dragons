@@ -15,7 +15,7 @@ import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry
 import com.leon.saintsdragons.server.entity.npc.chatter.IvyChatterRegistry;
 import com.leon.saintsdragons.server.entity.npc.handlers.IvySoundProfile;
 import com.leon.saintsdragons.server.entity.npc.trade.IvyTradeRegistry;
-import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
+import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.menu.IvyInventoryMenu;

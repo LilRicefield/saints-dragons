@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.RangedAirCombatBehaviour;
-import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
 

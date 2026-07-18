@@ -6,8 +6,8 @@ import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
-import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
-import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -634,6 +634,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
         return !this.isBaby()
                 && !otherDragon.isBaby()
+                && this.isTame()
+                && otherDragon.isTame()
                 && this.getAge() == 0
                 && otherDragon.getAge() == 0
                 && this.isInLove()

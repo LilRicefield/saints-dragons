@@ -18,9 +18,7 @@ import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusCombatBrain;
-import com.leon.saintsdragons.server.ai.goals.base.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -59,9 +57,6 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.Entity;
@@ -104,7 +99,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
-    private static final IgnivorusCombatBrain DRAGON_BRAIN = new IgnivorusCombatBrain();
+    private static final IgnivorusBrain DRAGON_BRAIN = new IgnivorusBrain();
 
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -386,50 +381,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DragonFloatGoal(this));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(2, new DragonBrainGoal<>(
-                    this,
-                    DRAGON_BRAIN,
-                    java.util.EnumSet.of(
-                            net.minecraft.world.entity.ai.goal.Goal.Flag.MOVE,
-                            net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK
-                    )
-            ));
-        }
-        this.goalSelector.addGoal(5, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forIgnivorus()) {
-            @Override
-            protected void startFollowTakeoff() {
-                if (Ignivorus.this.isFlying() || Ignivorus.this.isTakeoff()) {
-                    return;
-                }
-                Ignivorus.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            }
-        });
-        this.goalSelector.addGoal(6, new DragonFollowParentGoal<>(this, Ignivorus.class, 1.1D));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Ignivorus.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        }
-        this.goalSelector.addGoal(8, new DragonGroundWanderGoal<>(this, 1.0, 120));
-        this.goalSelector.addGoal(9, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
-        this.goalSelector.addGoal(10, new RandomLookAroundGoal(this));
-
-        if (!this.isBaby()) {
-            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Ignivorus.class));
-            this.targetSelector.addGoal(4, new HurtByTargetGoal(this));
-            this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                    target -> shouldAggroOnSight()));
-            this.targetSelector.addGoal(6, new DragonRaidDefenseTargetGoal(this));
-            this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
-                    this,
-                    80,
-                    () -> true,
-                    target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.IGNIVORUS_TARGETS)
-            ));
-        }
-
     }
 
     @Override
@@ -1970,60 +1921,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         super.customServerAiStep();
     }
 
-    public boolean shouldUseAirCombatBrain() {
-        if (isAerial() && isLanding() && !isVehicle() && !isPassenger() && !isOrderedToSit()) {
-            return true;
-        }
-        LivingEntity target = getTarget();
-        if (!isTargetValid(target)
-                || isBaby()
-                || isVehicle()
-                || isPassenger()
-                || isOrderedToSit()
-                || isAiSpecialCombatActive()
-                || areRiderControlsLocked()
-                || isLeaping()
-                || isLeapImpactRecovering()) {
-            return false;
-        }
-        if (target.isInWaterOrBubble()) {
-            return isAerial();
-        }
-        double targetAirborneHeight = getAiTargetAirborneHeight(target);
-        if (DragonAirCombatHelper.isTargetAirborne(this, target, targetAirborneHeight)) {
-            return DragonAirCombatHelper.canEngageAirborneTarget(
-                    this,
-                    target,
-                    AI_AIR_COMBAT_SETTINGS,
-                    targetAirborneHeight
-            );
-        }
-        return isAerial();
-    }
-
-    public boolean shouldUseCombatBrain() {
-        if (shouldUseAirCombatBrain()) {
-            return true;
-        }
-        LivingEntity target = getTarget();
-        if (!isTargetValid(target)
-                || isBaby()
-                || isVehicle()
-                || isPassenger()
-                || isOrderedToSit()
-                || isAiSpecialCombatActive()
-                || areRiderControlsLocked()
-                || isLeaping()
-                || isLeapImpactRecovering()) {
-            return false;
-        }
-        double followRange = getAttributeValue(Attributes.FOLLOW_RANGE);
-        if (followRange <= 0.0D) {
-            followRange = 32.0D;
-        }
-        return distanceToSqr(target) <= followRange * followRange;
-    }
-
     @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
@@ -2076,6 +1973,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     public boolean canTakeoff() {
         return !isBaby()
+                && !isPhase2Active()
                 && !isFlying()
                 && onGround()
                 && !isInWaterOrBubble();
@@ -2988,7 +2886,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         super.setTarget(target);
     }
 
-    private boolean shouldAggroOnSight() {
+    public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
         }

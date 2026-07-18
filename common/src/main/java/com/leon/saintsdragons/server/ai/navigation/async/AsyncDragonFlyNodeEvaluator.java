@@ -1,5 +1,7 @@
-package com.leon.saintsdragons.server.ai.pathfinding;
+package com.leon.saintsdragons.server.ai.navigation.async;
 
+import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
+import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebuggable;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.PathNavigationRegion;

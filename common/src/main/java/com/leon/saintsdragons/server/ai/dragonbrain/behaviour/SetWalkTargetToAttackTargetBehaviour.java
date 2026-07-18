@@ -70,8 +70,12 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
         }
 
         double closeEnough = Math.max(0.0D, closeEnoughDistance.apply(dragon, target));
+        boolean requiresWaterEntry = dragon.canSwim()
+                && target.isInWaterOrBubble()
+                && !dragon.isInWaterOrBubble();
         if (movementLocked.test(dragon, target)
-                || dragon.getSensing().hasLineOfSight(target)
+                || !requiresWaterEntry
+                && dragon.getSensing().hasLineOfSight(target)
                 && dragon.distanceToSqr(target) <= closeEnough * closeEnough) {
             context.memories().erase(DragonMemories.WALK_TARGET);
             return;

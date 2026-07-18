@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
@@ -15,11 +16,7 @@ import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VolitansCombatBrain;
-import com.leon.saintsdragons.server.ai.goals.base.*;
-import com.leon.saintsdragons.server.ai.goals.volitans.VolitansUnderwaterBreedGoal;
-import com.leon.saintsdragons.server.ai.goals.volitans.VolitansFindSleepDepthGoal;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.VolitansBrain;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.volitans.VolitansBurrowAbility;
@@ -75,11 +72,6 @@ import net.minecraft.world.entity.animal.Pufferfish;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.entity.projectile.Projectile;
@@ -102,7 +94,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
-    private static final VolitansCombatBrain DRAGON_BRAIN = new VolitansCombatBrain();
+    private static final VolitansBrain DRAGON_BRAIN = new VolitansBrain();
     @Override
     public EnumSet<DragonMovementCapability> movementCapabilities() {
         return EnumSet.of(
@@ -453,141 +445,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new SitWhenOrderedToGoal(this));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(3, new DragonBrainGoal<>(
-                    this,
-                    DRAGON_BRAIN,
-                    java.util.EnumSet.of(
-                            net.minecraft.world.entity.ai.goal.Goal.Flag.MOVE,
-                            net.minecraft.world.entity.ai.goal.Goal.Flag.LOOK
-                    ),
-                    Volitans::shouldUseCombatBrain
-            ));
-            this.goalSelector.addGoal(5, new VolitansUnderwaterBreedGoal(this, 1.0D, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        }
-        this.goalSelector.addGoal(6, new VolitansFindSleepDepthGoal(this, this::getAiSwimController, 6.0F, 0.16D));
-        this.goalSelector.addGoal(7, new DragonLeaveWaterGoal<>(this));
-        this.goalSelector.addGoal(8, new DragonFindWaterGoal<>(this));
-        this.goalSelector.addGoal(9, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forVolitans()) {
-            @Override
-            protected void startFollowTakeoff() {
-                if (Volitans.this.isFlying() || Volitans.this.isTakeoff()) {
-                    return;
-                }
-                Volitans.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            }
-
-            @Override
-            public boolean canUse() {
-                return !Volitans.this.isVehicle()
-                        && !Volitans.this.isInWaterOrBubble()
-                        && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return !Volitans.this.isVehicle()
-                        && !Volitans.this.isInWaterOrBubble()
-                        && super.canContinueToUse();
-            }
-        });
-        this.goalSelector.addGoal(10, new DragonSwimToTargetGoal(this, this::getAiSwimController, 8.0F, 0.24D, false, 20.0D, 8.0D) {
-            @Override
-            public boolean canUse() {
-                return !Volitans.this.isSleepLocked() && !Volitans.this.isAerial() && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return !Volitans.this.isSleepLocked() && !Volitans.this.isAerial() && super.canContinueToUse();
-            }
-        });
-        this.goalSelector.addGoal(11, new DragonBrainGoal<>(
-                this,
-                DRAGON_BRAIN,
-                java.util.EnumSet.of(net.minecraft.world.entity.ai.goal.Goal.Flag.MOVE),
-                dragon -> !dragon.shouldUseCombatBrain()
-        ));
-        this.goalSelector.addGoal(12, new DragonGroundWanderGoal<>(this, 0.9D, 70));
-        this.goalSelector.addGoal(14, new DragonSwimWanderGoal(this, this::getAiSwimController, 6.0F, 0.20D, 30) {
-            @Override
-            public boolean canUse() {
-                return !Volitans.this.isSleepLocked() && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return !Volitans.this.isSleepLocked() && super.canContinueToUse();
-            }
-        });
-        this.goalSelector.addGoal(15, new LookAtPlayerGoal(this, Player.class, 8.0F) {
-            @Override
-            public boolean canUse() {
-                return !Volitans.this.isVehicle() && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return !Volitans.this.isVehicle() && super.canContinueToUse();
-            }
-        });
-        this.goalSelector.addGoal(16, new RandomLookAroundGoal(this) {
-            @Override
-            public boolean canUse() {
-                return !Volitans.this.isVehicle() && super.canUse();
-            }
-
-            @Override
-            public boolean canContinueToUse() {
-                return !Volitans.this.isVehicle() && super.canContinueToUse();
-            }
-        });
-        if (!this.isBaby()) {
-            this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this) {
-                @Override
-                public boolean canUse() {
-                    return !Volitans.this.isVehicle() && super.canUse();
-                }
-            });
-            this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this) {
-                @Override
-                public boolean canUse() {
-                    return !Volitans.this.isVehicle() && super.canUse();
-                }
-            });
-            this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Volitans.class));
-            this.targetSelector.addGoal(4, new HurtByTargetGoal(this) {
-                @Override
-                public boolean canUse() {
-                    return !Volitans.this.isVehicle() && super.canUse();
-                }
-
-                @Override
-                public boolean canContinueToUse() {
-                    return !Volitans.this.isVehicle() && super.canContinueToUse();
-                }
-            });
-            this.targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false,
-                    target -> shouldAggroOnSight()) {
-                @Override
-                public boolean canUse() {
-                    return !Volitans.this.isVehicle() && super.canUse();
-                }
-
-                @Override
-                public boolean canContinueToUse() {
-                    return !Volitans.this.isVehicle() && super.canContinueToUse();
-                }
-            });
-            this.targetSelector.addGoal(6, new DragonRaidDefenseTargetGoal(this));
-            this.targetSelector.addGoal(7, new DragonRandomHuntTargetGoal(
-                    this,
-                    80,
-                    () -> true,
-                    target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.VOLITANS_TARGETS)
-            ));
-        }
     }
 
     @Override
@@ -1194,59 +1051,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     protected void customServerAiStep() {
         DragonBrain.tick(DRAGON_BRAIN, this);
         super.customServerAiStep();
-    }
-
-    public boolean shouldUseAirCombatBrain() {
-        if (isAerial() && isLanding() && !isVehicle() && !isPassenger() && !isOrderedToSit()) {
-            return true;
-        }
-        LivingEntity target = getTarget();
-        if (!isTargetValid(target)
-                || isBaby()
-                || isVehicle()
-                || isPassenger()
-                || isOrderedToSit()
-                || isInWater()
-                || isInWaterOrBubble()
-                || isInLava()
-                || isAiSpecialCombatActive()
-                || isAiSpecialCombatReserved()) {
-            return false;
-        }
-        if (target.isInWaterOrBubble()) {
-            return isAerial();
-        }
-        double targetAirborneHeight = getAiTargetAirborneHeight(target);
-        if (DragonAirCombatHelper.isTargetAirborne(this, target, targetAirborneHeight)) {
-            return DragonAirCombatHelper.canEngageAirborneTarget(
-                    this,
-                    target,
-                    AI_AIR_COMBAT_SETTINGS,
-                    targetAirborneHeight
-            );
-        }
-        return isAerial();
-    }
-
-    public boolean shouldUseCombatBrain() {
-        if (shouldUseAirCombatBrain()) {
-            return true;
-        }
-        LivingEntity target = getTarget();
-        if (!isTargetValid(target)
-                || isBaby()
-                || isVehicle()
-                || isPassenger()
-                || isOrderedToSit()
-                || isAiSpecialCombatActive()
-                || isAiSpecialCombatReserved()) {
-            return false;
-        }
-        double followRange = getAttributeValue(Attributes.FOLLOW_RANGE);
-        if (followRange <= 0.0D) {
-            followRange = 32.0D;
-        }
-        return distanceToSqr(target) <= followRange * followRange;
     }
 
     @Override
@@ -2738,7 +2542,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 || activeAbilityBlocksTakeoff;
     }
 
-    private boolean shouldAggroOnSight() {
+    public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
         }

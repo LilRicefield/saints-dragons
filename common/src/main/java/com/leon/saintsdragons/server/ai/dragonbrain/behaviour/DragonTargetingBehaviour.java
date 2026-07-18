@@ -1,0 +1,170 @@
+package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
+
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
+    private String source = "none";
+    private int sourcePriority = Integer.MAX_VALUE;
+
+    protected DragonTargetingBehaviour() {
+        super(false);
+    }
+
+    @Override
+    protected final boolean canStart(DragonBrainContext<T> context) {
+        return true;
+    }
+
+    @Override
+    protected final boolean canContinue(DragonBrainContext<T> context) {
+        return true;
+    }
+
+    @Override
+    protected final void tick(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        if (!canAcquireTargets(dragon)) {
+            clearTarget(context);
+            return;
+        }
+
+        TargetChoice choice = findPriorityTarget(context);
+        if (choice != null) {
+            LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+            if (isUsableTarget(dragon, current)
+                    && canRetainTarget(dragon, current, source)
+                    && choice.priority() > sourcePriority) {
+                syncTarget(context, current);
+                return;
+            }
+            setTarget(context, choice.target(), choice.source(), choice.priority());
+            return;
+        }
+        if (suppressesTargetRetention(context)) {
+            clearTarget(context);
+            return;
+        }
+
+        LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        if (isUsableTarget(dragon, current) && canRetainTarget(dragon, current, source)) {
+            syncTarget(context, current);
+            return;
+        }
+        clearTarget(context);
+    }
+
+    protected abstract boolean canAcquireTargets(T dragon);
+
+    @Nullable
+    protected abstract TargetChoice findPriorityTarget(DragonBrainContext<T> context);
+
+    protected abstract boolean isUsableTarget(T dragon, @Nullable LivingEntity target);
+
+    protected abstract boolean canRetainTarget(T dragon, LivingEntity target, String source);
+
+    protected boolean suppressesTargetRetention(DragonBrainContext<T> context) {
+        return false;
+    }
+
+    protected void prepareTargetChange(T dragon,
+                                       @Nullable LivingEntity oldTarget,
+                                       LivingEntity newTarget,
+                                       String oldSource,
+                                       String newSource) {
+    }
+
+    protected void targetChanged(T dragon,
+                                 @Nullable LivingEntity oldTarget,
+                                 LivingEntity newTarget,
+                                 String oldSource,
+                                 String newSource) {
+    }
+
+    protected void targetCleared(T dragon, @Nullable LivingEntity oldTarget, String oldSource) {
+    }
+
+    protected Map<String, String> additionalDebugDetails() {
+        return Map.of();
+    }
+
+    protected final TargetChoice targetChoice(LivingEntity target, String source) {
+        return targetChoice(target, source, 0);
+    }
+
+    protected final TargetChoice targetChoice(LivingEntity target, String source, int priority) {
+        return new TargetChoice(target, source, priority);
+    }
+
+    private void setTarget(DragonBrainContext<T> context,
+                           LivingEntity target,
+                           String newSource,
+                           int newPriority) {
+        T dragon = context.dragon();
+        LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        String oldSource = source;
+        prepareTargetChange(dragon, oldTarget, target, oldSource, newSource);
+        source = newSource;
+        sourcePriority = newPriority;
+        context.memories().set(DragonMemories.ATTACK_TARGET, target);
+        syncTarget(context, target);
+        if (oldTarget != target || !oldSource.equals(newSource)) {
+            targetChanged(dragon, oldTarget, target, oldSource, newSource);
+        }
+    }
+
+    private void syncTarget(DragonBrainContext<T> context, LivingEntity target) {
+        T dragon = context.dragon();
+        if (dragon.getTarget() != target) {
+            dragon.setTarget(target);
+        }
+        if (dragon instanceof DragonAirCombatSettingsProvider provider) {
+            context.memories().set(
+                    DragonMemories.TARGET_AIRBORNE,
+                    DragonTargetingHelper.isTargetAirborne(
+                            target,
+                            provider.getAiTargetAirborneHeight(target)
+                    ) && !target.isInWaterOrBubble()
+            );
+        } else {
+            context.memories().erase(DragonMemories.TARGET_AIRBORNE);
+        }
+    }
+
+    private void clearTarget(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        String oldSource = source;
+        source = "none";
+        sourcePriority = Integer.MAX_VALUE;
+        context.memories().erase(DragonMemories.ATTACK_TARGET);
+        context.memories().erase(DragonMemories.TARGET_AIRBORNE);
+        if (dragon.getTarget() != null) {
+            dragon.setTarget(null);
+        }
+        if (oldTarget != null || !"none".equals(oldSource)) {
+            targetCleared(dragon, oldTarget, oldSource);
+        }
+    }
+
+    @Override
+    public final Map<String, String> getDragonBrainDebugDetails() {
+        Map<String, String> details = new LinkedHashMap<>();
+        details.put("source", source);
+        details.put("priority", sourcePriority == Integer.MAX_VALUE ? "none" : Integer.toString(sourcePriority));
+        details.putAll(additionalDebugDetails());
+        return Map.copyOf(details);
+    }
+
+    protected record TargetChoice(LivingEntity target, String source, int priority) {
+    }
+}

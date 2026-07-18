@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
-import com.leon.saintsdragons.server.ai.pathfinding.AsyncDragonPathfinder;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.entity.Mob;

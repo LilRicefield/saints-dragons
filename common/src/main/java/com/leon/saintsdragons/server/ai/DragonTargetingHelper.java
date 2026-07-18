@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.ai.goals.base;
+package com.leon.saintsdragons.server.ai;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.tags.TagKey;

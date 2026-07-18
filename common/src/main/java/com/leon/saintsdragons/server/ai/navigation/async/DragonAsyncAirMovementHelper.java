@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.ai.goals.base;
+package com.leon.saintsdragons.server.ai.navigation.async;
 
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.LivingEntity;

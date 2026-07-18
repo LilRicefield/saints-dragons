@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.ai.goals.base;
+package com.leon.saintsdragons.server.ai.navigation;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;

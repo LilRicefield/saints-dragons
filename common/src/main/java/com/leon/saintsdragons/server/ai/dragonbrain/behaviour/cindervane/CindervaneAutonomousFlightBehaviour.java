@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBehaviour;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
+import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;

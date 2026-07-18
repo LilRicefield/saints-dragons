@@ -85,6 +85,9 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
+        if (context.dragon().isInLove()) {
+            return false;
+        }
         boolean returningForSleep = shouldReturnForSleep(context);
         return (returningForSleep && needsSleepReturnMovement(context))
                 || isOutsideTerritory(context, territoryRadiusSqr);
@@ -92,7 +95,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
 
     @Override
     protected boolean canContinue(DragonBrainContext<T> context) {
-        if (routeRetryRequested) {
+        if (routeRetryRequested || context.dragon().isInLove()) {
             return false;
         }
         boolean returningForSleep = shouldReturnForSleep(context);

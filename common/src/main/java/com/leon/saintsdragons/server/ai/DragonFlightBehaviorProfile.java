@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.ai.goals.base;
+package com.leon.saintsdragons.server.ai;
 
 public record DragonFlightBehaviorProfile(
         int landingCooldownTicks,

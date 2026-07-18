@@ -3,7 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.RangedAirCombatBehaviour;
-import com.leon.saintsdragons.server.ai.goals.base.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;

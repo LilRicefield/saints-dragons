@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBehaviour;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
+import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
 public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Raevyx> {

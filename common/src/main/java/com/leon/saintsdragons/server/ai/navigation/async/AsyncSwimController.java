@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
-import com.leon.saintsdragons.server.ai.goals.base.GenericSwimSteeringController;
-import com.leon.saintsdragons.server.ai.pathfinding.AsyncDragonPathfinder;
+import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Mob;

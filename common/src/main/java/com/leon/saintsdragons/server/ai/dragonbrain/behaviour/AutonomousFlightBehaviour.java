@@ -4,7 +4,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
-import com.leon.saintsdragons.server.ai.goals.base.DragonFlightBehaviorProfile;
+import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
@@ -144,6 +144,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     protected boolean canUseAutonomousFlight(T dragon) {
         LivingEntity target = dragon.getTarget();
         return !dragon.isBaby()
+                && !dragon.isInLove()
                 && !dragon.isLanding()
                 && !dragon.isVehicle()
                 && !dragon.isPassenger()
@@ -155,7 +156,8 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
 
     protected boolean canContinueAutonomousFlight(T dragon) {
         LivingEntity target = dragon.getTarget();
-        return !dragon.isOrderedToSit()
+        return !dragon.isInLove()
+                && !dragon.isOrderedToSit()
                 && !dragon.isVehicle()
                 && !dragon.isPassenger()
                 && !dragon.isSleeping()
