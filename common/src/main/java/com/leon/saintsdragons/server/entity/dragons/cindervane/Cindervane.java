@@ -13,10 +13,8 @@ import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainGoal;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervanePackFlightCoordinator;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.CindervaneCombatBrain;
-import com.leon.saintsdragons.server.ai.goals.base.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.CindervaneBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -49,9 +47,6 @@ import java.util.Map;
 import java.util.HashMap;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
-import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -64,7 +59,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.EnumSet;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -95,9 +89,6 @@ import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.SitWhenOrderedToGoal;
-import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
-import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -122,7 +113,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
 public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>, DragonChestCarrier, DragonAirCombatSettingsProvider {
-    private static final CindervaneCombatBrain DRAGON_BRAIN = new CindervaneCombatBrain();
+    private static final CindervaneBrain DRAGON_BRAIN = new CindervaneBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.CINDERVANE_ID;
@@ -172,8 +163,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
     private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
     private static final float FIRE_BODY_SELF_DAMAGE_ON_CRASH = 40.0F;
-    private static final double BREED_PARTNER_RANGE = 20.0D;
-    private static final double BREED_DISTANCE_SQR = 2500.0D;
+    public static final double BREED_PARTNER_RANGE = 20.0D;
+    public static final double BREED_DISTANCE_SQR = 2500.0D;
     private static final int MAX_PACK_SIZE = 4;
     private static final double PACK_SEARCH_RADIUS = 48.0D;
     private static final int MIN_AMBIENT_DELAY = 180;
@@ -417,47 +408,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void registerGoals() {
-        this.goalSelector.addGoal(0, new DragonFloatGoal(this));
-        this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(3, new DragonPackFollowLeaderGoal<>(this, Cindervane.class, 1.0D, 20.0D, 10.0D));
-            this.goalSelector.addGoal(4, new DragonBrainGoal<>(
-                    this,
-                    DRAGON_BRAIN,
-                    EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK),
-                    Cindervane::canUseBrain
-            ));
-        }
-        this.goalSelector.addGoal(5, new DragonFollowParentGoal<>(this, Cindervane.class, 1.15D));
-        this.goalSelector.addGoal(6, new DragonFollowOwnerGoal<>(this, DragonFollowOwnerGoal.FollowConfig.forCindervane()) {
-            @Override
-            protected void startFollowTakeoff() {
-                if (Cindervane.this.isFlying() || Cindervane.this.isTakeoff()) {
-                    return;
-                }
-                Cindervane.this.startTakeoffSequence(0.12D, TAKEOFF_ANIMATION_TICKS);
-            }
-
-        });
-        if (!this.isBaby()) {
-            this.goalSelector.addGoal(7, new DragonBreedGoal<>(this, 1.0D, Cindervane.class, BREED_PARTNER_RANGE, BREED_DISTANCE_SQR));
-        }
-        this.goalSelector.addGoal(9, new DragonGroundWanderGoal<>(this, 0.6D, 160));
-        this.goalSelector.addGoal(10, new DragonWaterEscapeGoal<>(this, 8.0F, 0.12D));
-        this.targetSelector.addGoal(1, new DragonOwnerHurtByTargetGoal(this));
-        this.targetSelector.addGoal(2, new DragonOwnerHurtTargetGoal(this));
-        this.targetSelector.addGoal(3, new DragonProtectBabiesGoal<>(this, Cindervane.class));
-        this.targetSelector.addGoal(4, new DragonPackDefendPackGoal<>(this, Cindervane.class, 36.0D));
-        this.targetSelector.addGoal(5, new HurtByTargetGoal(this));
-        this.targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Player.class, 10, true, false, target -> shouldAggroOnSight()));
-        this.targetSelector.addGoal(7, new DragonRaidDefenseTargetGoal(this));
-        this.targetSelector.addGoal(8, new DragonRandomHuntTargetGoal(this, 80, () -> true,
-                target -> DragonTargetingHelper.isTaggedHuntTarget(target, ModTags.EntityTypes.CINDERVANE_TARGETS)));
-        this.goalSelector.addGoal(12, new RandomLookAroundGoal(this) {@Override public boolean canUse() {return !Cindervane.this.isVehicle() && super.canUse();}});
-        this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 8.0F) {@Override public boolean canUse() {
-                return !Cindervane.this.isVehicle() && super.canUse();
-            }
-        });
     }
 
     private void tickFlightLifecycle() {
@@ -768,13 +718,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         airTicks = 0;
     }
 
-    private boolean canUseBrain() {
-        if (canUseAutonomousFlightActivity()) {
-            return true;
-        }
-        return shouldUseCombatBrain();
-    }
-
     @Override
     protected Brain.Provider<Cindervane> brainProvider() {
         return DRAGON_BRAIN.brainProvider();
@@ -789,59 +732,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     protected void customServerAiStep() {
         DragonBrain.tick(DRAGON_BRAIN, this);
         super.customServerAiStep();
-    }
-
-    private boolean canUseAutonomousFlightActivity() {
-        if (isBaby() || isVehicle() || isPassenger() || isOrderedToSit() || isSleeping() || isSleepingExiting()) {
-            return false;
-        }
-        LivingEntity target = getTarget();
-        if (target != null && target.isAlive()) {
-            return false;
-        }
-        if (isLanding()) {
-            return isAerial();
-        }
-        if (isTame() || isInWater() || isInWaterOrBubble() || isInLava()) {
-            return false;
-        }
-        if (canParticipateInPack()) {
-            UUID leaderUuid = getPackLeaderUuid();
-            if (leaderUuid != null && !leaderUuid.equals(getUUID()) && !isAerial()) {
-                return false;
-            }
-        }
-        if (hasNearbyAssignedBabies(Cindervane.class) && !isOverStandardFlightDanger()) {
-            return false;
-        }
-        return isFlying() || isOverStandardFlightDanger() || hasStandardTakeoffClearance(10);
-    }
-
-    public boolean shouldUseCombatBrain() {
-        if (isAerial() && isLanding() && !isVehicle() && !isPassenger() && !isOrderedToSit()) {
-            return true;
-        }
-        LivingEntity target = getTarget();
-        if (!isTargetValid(target) || isBaby() || isVehicle() || isOrderedToSit() || isPassenger()) {
-            return false;
-        }
-        if (isInLava()) {
-            return false;
-        }
-        if (DragonAirCombatHelper.isTargetAirborne(this, target, AI_AIR_COMBAT_SETTINGS.targetAirborneHeight())) {
-            return DragonAirCombatHelper.canEngageAirborneTarget(
-                    this,
-                    target,
-                    AI_AIR_COMBAT_SETTINGS
-            );
-        }
-        if (isAerial()) {
-            return true;
-        }
-        return !isFlying()
-                && !isHovering()
-                && !isTakeoff()
-                && !isLanding();
     }
 
     @Override
@@ -970,7 +860,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         super.setTarget(target);
     }
 
-    private boolean shouldAggroOnSight() {
+    public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
         }
