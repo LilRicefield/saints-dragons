@@ -35,15 +35,9 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.MEADOW);
 
         tag(ModTags.Biomes.HAS_IGNIVORUS)
-                .addOptionalTag(rl("c", "climate_hot"))
-                .addOptionalTag(rl("c", "is_hot/overworld"))
-                .addOptionalTag(rl("c", "is_plains"))
-                .addOptionalTag(rl("c", "plains"))
-                .addOptionalTag(rl("forge", "is_plains"))
-                .addOptionalTag(rl("forge", "is_hot/overworld"))
-                .add(Biomes.PLAINS)
-                .add(Biomes.MEADOW)
-                .add(Biomes.SUNFLOWER_PLAINS);
+                .add(Biomes.SAVANNA)
+                .add(Biomes.SAVANNA_PLATEAU)
+                .add(Biomes.WINDSWEPT_SAVANNA);
 
         tag(ModTags.Biomes.HAS_IVY_HOUSE)
                 .addOptionalTag(rl("c", "forest"))

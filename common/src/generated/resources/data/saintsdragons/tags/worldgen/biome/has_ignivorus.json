@@ -1,31 +1,7 @@
 {
   "values": [
-    {
-      "id": "#c:climate_hot",
-      "required": false
-    },
-    {
-      "id": "#c:is_hot/overworld",
-      "required": false
-    },
-    {
-      "id": "#c:is_plains",
-      "required": false
-    },
-    {
-      "id": "#c:plains",
-      "required": false
-    },
-    {
-      "id": "#forge:is_plains",
-      "required": false
-    },
-    {
-      "id": "#forge:is_hot/overworld",
-      "required": false
-    },
-    "minecraft:plains",
-    "minecraft:meadow",
-    "minecraft:sunflower_plains"
+    "minecraft:savanna",
+    "minecraft:savanna_plateau",
+    "minecraft:windswept_savanna"
   ]
 }
