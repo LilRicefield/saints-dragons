@@ -42,6 +42,6 @@ public final class DragonBrainDiagnostics {
 
     public record RegisteredBehaviour(Activity activity,
                                       int priority,
-                                      BehaviorControl<? super LivingEntity> behaviour) {
+                                      BehaviorControl<?> behaviour) {
     }
 }

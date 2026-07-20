@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
+    private final DragonPursuitSafety pursuitSafety = new DragonPursuitSafety();
     private String source = "none";
     private int sourcePriority = Integer.MAX_VALUE;
 
@@ -36,6 +37,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     @Override
     protected final void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        pursuitSafety.beginTick(context.gameTime());
         LivingEntity wakeTarget = context.memories().get(DragonMemories.WAKE_TARGET).orElse(null);
         if (wakeTarget != null && !isUsableTarget(dragon, wakeTarget)) {
             context.memories().erase(DragonMemories.WAKE_TARGET);
@@ -47,20 +49,46 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
                 return;
             }
             clearTarget(context);
+            pursuitSafety.resetTracking();
             return;
         }
 
         if (wakeTarget != null
                 && dragon.isWildAggressionEnabled()
-                && dragon.getSensing().hasLineOfSight(wakeTarget)) {
+                && dragon.getSensing().hasLineOfSight(wakeTarget)
+                && pursuitSafety.canReacquire(dragon, wakeTarget, context.gameTime())) {
             setTarget(context, wakeTarget, "heard_intruder", 3);
             context.memories().erase(DragonMemories.WAKE_TARGET);
             return;
         }
 
+        LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        if (isUsableTarget(dragon, current)) {
+            String abandonmentReason = pursuitSafety.abandonmentReason(context, current);
+            if (abandonmentReason != null) {
+                abandonTarget(context, current, abandonmentReason);
+                return;
+            }
+        } else {
+            pursuitSafety.resetTracking();
+        }
+
+        LivingEntity assignedTarget = dragon.getTarget();
+        if (current == null
+                && assignedTarget != null
+                && !pursuitSafety.canReacquire(dragon, assignedTarget, context.gameTime())) {
+            dragon.setTarget(null);
+        }
+        if (current == null && pursuitSafety.shouldThrottleAcquisition(dragon, context.gameTime())) {
+            return;
+        }
+
         TargetChoice choice = findPriorityTarget(context);
+        if (choice != null
+                && !pursuitSafety.canReacquire(dragon, choice.target(), context.gameTime())) {
+            choice = null;
+        }
         if (choice != null) {
-            LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
             if (isUsableTarget(dragon, current)
                     && canRetainTarget(dragon, current, source)
                     && choice.priority() > sourcePriority) {
@@ -75,7 +103,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             return;
         }
 
-        LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (isUsableTarget(dragon, current) && canRetainTarget(dragon, current, source)) {
             syncTarget(context, current);
             return;
@@ -190,12 +218,16 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     }
 
     private void clearTarget(DragonBrainContext<T> context) {
+        clearTarget(context, true);
+    }
+
+    private void clearTarget(DragonBrainContext<T> context, boolean rememberEvidence) {
         T dragon = context.dragon();
         LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         LivingEntity entityTarget = dragon.getTarget();
         String oldSource = source;
         LivingEntity clearedTarget = oldTarget != null ? oldTarget : entityTarget;
-        if (isUsableTarget(dragon, clearedTarget)) {
+        if (rememberEvidence && isUsableTarget(dragon, clearedTarget)) {
             rememberTargetEvidence(context, clearedTarget);
         }
         source = "none";
@@ -211,6 +243,26 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         if (oldTarget != null || !"none".equals(oldSource)) {
             targetCleared(dragon, oldTarget, oldSource);
         }
+    }
+
+    private void abandonTarget(DragonBrainContext<T> context,
+                               LivingEntity target,
+                               String reason) {
+        pursuitSafety.recordAbandonment(context.gameTime(), target, reason);
+        clearTarget(context, false);
+        context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+        context.memories().erase(DragonMemories.WALK_TARGET);
+        context.memories().erase(DragonMemories.PATH);
+        context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
+        context.memories().erase(DragonMemories.MOVEMENT_INTENT);
+        context.memories().erase(DragonMemories.GROUND_ROUTE_ABANDONED);
+        context.memories().erase(DragonMemories.TACTICAL_LANDING_POSITION);
+        context.memories().erase(DragonMemories.TACTICAL_COMMITMENT);
+        context.dragon().getAIMovement().stopAndClearAllMovement();
+    }
+
+    public final String getPursuitDebugSummary() {
+        return pursuitSafety.debugSummary();
     }
 
     private void rememberTargetEvidence(DragonBrainContext<T> context, LivingEntity target) {
@@ -236,6 +288,8 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         Map<String, String> details = new LinkedHashMap<>();
         details.put("source", source);
         details.put("priority", sourcePriority == Integer.MAX_VALUE ? "none" : Integer.toString(sourcePriority));
+        details.put("pursuit", pursuitSafety.stateDebugSummary());
+        details.put("abandoned", pursuitSafety.abandonedDebugSummary());
         details.putAll(additionalDebugDetails());
         return Map.copyOf(details);
     }

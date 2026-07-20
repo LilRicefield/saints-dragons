@@ -3,10 +3,14 @@ package com.leon.saintsdragons.forge.client.event;
 import com.leon.saintsdragons.client.debug.DragonPathDebugClient;
 import com.leon.saintsdragons.client.debug.DragonPathDebugRenderer;
 import com.leon.saintsdragons.client.debug.DragonBrainDebugClient;
+import com.leon.saintsdragons.client.debug.DragonBrainDebugHud;
 import com.leon.saintsdragons.client.debug.DragonBrainDebugRenderer;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -31,6 +35,24 @@ public final class DragonPathDebugForgeHandler {
         }
         DragonPathDebugClient.tick();
         DragonBrainDebugClient.tick();
+    }
+
+    @SubscribeEvent
+    public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (event.getScrollDelta() == 0.0D
+                || minecraft.player == null
+                || minecraft.screen != null
+                || !Screen.hasShiftDown()
+                || (!minecraft.player.getMainHandItem().is(Items.DEBUG_STICK)
+                && !minecraft.player.getOffhandItem().is(Items.DEBUG_STICK))) {
+            return;
+        }
+
+        int direction = event.getScrollDelta() < 0.0D ? 1 : -1;
+        if (DragonBrainDebugHud.cyclePage(direction)) {
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent

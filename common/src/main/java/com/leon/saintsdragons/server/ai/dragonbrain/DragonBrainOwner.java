@@ -11,7 +11,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSleepBehavio
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTacticalPlannerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -71,11 +70,8 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             for (DragonBehaviour<T> behaviour : configuredBehaviours) {
                 behaviour.bindActivity(group.activity(), priority);
                 behaviours.add(Pair.of(priority++, behaviour));
-                @SuppressWarnings("unchecked")
-                BehaviorControl<? super LivingEntity> debugBehaviour =
-                        (BehaviorControl<? super LivingEntity>)(BehaviorControl<?>)behaviour;
                 registeredBehaviours.add(new DragonBrainDiagnostics.RegisteredBehaviour(
-                        group.activity(), priority - 1, debugBehaviour));
+                        group.activity(), priority - 1, behaviour));
             }
 
             Set<Pair<MemoryModuleType<?>, MemoryStatus>> requirements = new HashSet<>();

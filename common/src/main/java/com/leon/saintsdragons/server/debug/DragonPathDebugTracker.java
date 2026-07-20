@@ -6,6 +6,8 @@ import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -150,7 +152,7 @@ public final class DragonPathDebugTracker {
                         + "onGround={} verticalCollision={} velocity={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
-                        + "perception={} tactical={} coordination={} activity={} behaviours={}",
+                        + "perception={} tactical={} pursuit={} coordination={} activity={} behaviours={}",
                 player.getGameProfile().getName(),
                 dragon.getId(),
                 dragon.blockPosition(),
@@ -190,6 +192,7 @@ public final class DragonPathDebugTracker {
                 snapshot.searchDurationMicros(),
                 logState.perception,
                 logState.tactical,
+                logState.pursuit,
                 logState.coordination,
                 logState.activity,
                 logState.behaviours
@@ -390,6 +393,7 @@ public final class DragonPathDebugTracker {
                             String sleep,
                             String perception,
                             String tactical,
+                            String pursuit,
                             String coordination,
                             String activity,
                             List<String> behaviours) {
@@ -429,6 +433,7 @@ public final class DragonPathDebugTracker {
                     sleepSummary(dragon),
                     perceptionSummary(dragon),
                     tacticalSummary(dragon),
+                    pursuitSummary(dragon),
                     coordination,
                     activity,
                     runningBehaviours(dragon)
@@ -458,5 +463,15 @@ public final class DragonPathDebugTracker {
                 .getMemory(DragonMemories.TACTICAL_COMMITMENT)
                 .orElse(null);
         return commitment == null ? "none" : commitment.summary();
+    }
+
+    private static String pursuitSummary(DragonEntity dragon) {
+        for (DragonBrainDiagnostics.RegisteredBehaviour registered :
+                DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (registered.behaviour() instanceof DragonTargetingBehaviour<?> targeting) {
+                return targeting.getPursuitDebugSummary();
+            }
+        }
+        return "disabled";
     }
 }
