@@ -16,11 +16,13 @@ public final class SaintsDragonsFabricToolsArmorConfig implements ConfigData {
     public double worldrootShovelAttackSpeed = ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED_DEFAULT;
     public double worldrootHoeAttackDamage = ToolsArmorConfig.WORLDROOT_HOE_DAMAGE_DEFAULT;
     public double worldrootHoeAttackSpeed = ToolsArmorConfig.WORLDROOT_HOE_SPEED_DEFAULT;
+    public double worldrootDragonDamageMultiplier = ToolsArmorConfig.WORLDROOT_DRAGON_DAMAGE_MULTIPLIER_DEFAULT;
 
     public double bloodTempestKatanaAttackDamage = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE_DEFAULT;
     public double bloodTempestKatanaAttackSpeed = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED_DEFAULT;
     public double bloodTempestKatanaEntityReach = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH_DEFAULT;
     public double bloodTempestKatanaCriticalDamageBonus = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS_DEFAULT;
+    public double bloodTempestRaevyxDamageMultiplier = ToolsArmorConfig.BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER_DEFAULT;
     public double bloodTempestKatanaAbilityDamageMultiplier = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER_DEFAULT;
     public int bloodTempestKatanaAbilityCooldownTicks = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS_DEFAULT;
     public double bloodTempestKatanaAbilityMaxDistance = ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE_DEFAULT;
@@ -40,6 +42,7 @@ public final class SaintsDragonsFabricToolsArmorConfig implements ConfigData {
     public double dragonlordSwordAttackSpeed = ToolsArmorConfig.DRAGONLORD_SWORD_SPEED_DEFAULT;
     public double dragonlordSwordEntityReach = ToolsArmorConfig.DRAGONLORD_SWORD_REACH_DEFAULT;
     public double dragonlordSwordCriticalDamageBonus = ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS_DEFAULT;
+    public double dragonlordIgnivorusDamageMultiplier = ToolsArmorConfig.DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER_DEFAULT;
     public double dragonlordHelmetArmor = ToolsArmorConfig.DRAGONLORD_HELMET_ARMOR_DEFAULT;
     public double dragonlordChestplateArmor = ToolsArmorConfig.DRAGONLORD_CHESTPLATE_ARMOR_DEFAULT;
     public double dragonlordLeggingsArmor = ToolsArmorConfig.DRAGONLORD_LEGGINGS_ARMOR_DEFAULT;

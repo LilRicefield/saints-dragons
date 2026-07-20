@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.entity.part;
 
+import com.leon.saintsdragons.server.entity.base.DragonPartEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * Since Fabric doesn't have PartEntity, we create a custom Entity that acts as a hitbox-only entity.
  * Supports both standard centered boxes and elongated boxes that stretch toward a target point.
  */
-public class FabricDragonPart extends Entity {
+public class FabricDragonPart extends Entity implements DragonPartEntity {
     public final @Nullable Entity parent;
     public final String partName;
     private EntityDimensions size;
@@ -58,6 +59,11 @@ public class FabricDragonPart extends Entity {
 
     public float getDamageMultiplier() {
         return damageMultiplier;
+    }
+
+    @Override
+    public @Nullable Entity getDragonParent() {
+        return parent;
     }
 
     public void updatePosition(double x, double y, double z) {

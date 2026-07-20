@@ -30,12 +30,14 @@ public final class ForgeToolsArmorScreen extends ForgePagedConfigScreen {
         field(entries, "worldroot.shovel_speed", ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED, ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED_DEFAULT);
         field(entries, "worldroot.hoe_damage", ToolsArmorConfig.WORLDROOT_HOE_DAMAGE, ToolsArmorConfig.WORLDROOT_HOE_DAMAGE_DEFAULT);
         field(entries, "worldroot.hoe_speed", ToolsArmorConfig.WORLDROOT_HOE_SPEED, ToolsArmorConfig.WORLDROOT_HOE_SPEED_DEFAULT);
+        field(entries, "worldroot.dragon_damage_multiplier", ToolsArmorConfig.WORLDROOT_DRAGON_DAMAGE_MULTIPLIER, ToolsArmorConfig.WORLDROOT_DRAGON_DAMAGE_MULTIPLIER_DEFAULT);
 
         section(entries, "blood_tempest");
         field(entries, "blood_tempest.katana_damage", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_DAMAGE_DEFAULT);
         field(entries, "blood_tempest.katana_speed", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED_DEFAULT);
         field(entries, "blood_tempest.katana_reach", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH_DEFAULT);
         field(entries, "blood_tempest.katana_critical_bonus", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS_DEFAULT);
+        field(entries, "blood_tempest.raevyx_damage_multiplier", ToolsArmorConfig.BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER, ToolsArmorConfig.BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER_DEFAULT);
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.tools_armor.blood_tempest.katana_ability_enabled"),
                 ToolsArmorConfig.BLOOD_TEMPEST_KATANA_ABILITY_ENABLED::get,
@@ -78,6 +80,7 @@ public final class ForgeToolsArmorScreen extends ForgePagedConfigScreen {
         field(entries, "dragonlord.sword_speed", ToolsArmorConfig.DRAGONLORD_SWORD_SPEED, ToolsArmorConfig.DRAGONLORD_SWORD_SPEED_DEFAULT);
         field(entries, "dragonlord.sword_reach", ToolsArmorConfig.DRAGONLORD_SWORD_REACH, ToolsArmorConfig.DRAGONLORD_SWORD_REACH_DEFAULT);
         field(entries, "dragonlord.sword_critical_bonus", ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS, ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS_DEFAULT);
+        field(entries, "dragonlord.ignivorus_damage_multiplier", ToolsArmorConfig.DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER, ToolsArmorConfig.DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER_DEFAULT);
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.tools_armor.dragonlord.sword_ability_enabled"),
                 ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_ENABLED::get,

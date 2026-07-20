@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.entity.part;
 
+import com.leon.saintsdragons.server.entity.base.DragonPartEntity;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -14,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * Forge-specific implementation of dragon hitbox parts using Forge's PartEntity system.
  * Supports both standard centered boxes and elongated boxes that stretch toward a target point.
  */
-public class ForgeDragonPart extends PartEntity<Entity> {
+public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEntity {
     public final String partName;
     private EntityDimensions size;
     private float damageMultiplier = 1.0f;
@@ -37,6 +38,11 @@ public class ForgeDragonPart extends PartEntity<Entity> {
 
     public float getDamageMultiplier() {
         return damageMultiplier;
+    }
+
+    @Override
+    public Entity getDragonParent() {
+        return getParent();
     }
 
     public void updatePosition(double x, double y, double z) {

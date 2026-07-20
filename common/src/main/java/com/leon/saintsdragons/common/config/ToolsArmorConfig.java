@@ -16,11 +16,13 @@ public final class ToolsArmorConfig {
     public static final double WORLDROOT_SHOVEL_SPEED_DEFAULT = 1.0D;
     public static final double WORLDROOT_HOE_DAMAGE_DEFAULT = 0.8D;
     public static final double WORLDROOT_HOE_SPEED_DEFAULT = 4.0D;
+    public static final double WORLDROOT_DRAGON_DAMAGE_MULTIPLIER_DEFAULT = 1.5D;
 
     public static final double BLOOD_TEMPEST_KATANA_DAMAGE_DEFAULT = 9.0D;
     public static final double BLOOD_TEMPEST_KATANA_SPEED_DEFAULT = 3.0D;
     public static final double BLOOD_TEMPEST_KATANA_REACH_DEFAULT = 5.0D;
     public static final double BLOOD_TEMPEST_KATANA_CRITICAL_BONUS_DEFAULT = 0.8D;
+    public static final double BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER_DEFAULT = 3.0D;
     public static final double BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER_DEFAULT = 2.65D;
     public static final int BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS_DEFAULT = 60;
     public static final double BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE_DEFAULT = 20.0D;
@@ -40,6 +42,7 @@ public final class ToolsArmorConfig {
     public static final double DRAGONLORD_SWORD_SPEED_DEFAULT = 1.4D;
     public static final double DRAGONLORD_SWORD_REACH_DEFAULT = 7.0D;
     public static final double DRAGONLORD_SWORD_CRITICAL_BONUS_DEFAULT = 0.0D;
+    public static final double DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER_DEFAULT = 5.0D;
     public static final double DRAGONLORD_HELMET_ARMOR_DEFAULT = 5.0D;
     public static final double DRAGONLORD_CHESTPLATE_ARMOR_DEFAULT = 10.0D;
     public static final double DRAGONLORD_LEGGINGS_ARMOR_DEFAULT = 8.0D;
@@ -82,11 +85,13 @@ public final class ToolsArmorConfig {
     public static ConfigHelper.DoubleValue WORLDROOT_SHOVEL_SPEED;
     public static ConfigHelper.DoubleValue WORLDROOT_HOE_DAMAGE;
     public static ConfigHelper.DoubleValue WORLDROOT_HOE_SPEED;
+    public static ConfigHelper.DoubleValue WORLDROOT_DRAGON_DAMAGE_MULTIPLIER;
 
     public static ConfigHelper.DoubleValue BLOOD_TEMPEST_KATANA_DAMAGE;
     public static ConfigHelper.DoubleValue BLOOD_TEMPEST_KATANA_SPEED;
     public static ConfigHelper.DoubleValue BLOOD_TEMPEST_KATANA_REACH;
     public static ConfigHelper.DoubleValue BLOOD_TEMPEST_KATANA_CRITICAL_BONUS;
+    public static ConfigHelper.DoubleValue BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER;
     public static ConfigHelper.DoubleValue BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER;
     public static ConfigHelper.IntValue BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS;
     public static ConfigHelper.DoubleValue BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE;
@@ -106,6 +111,7 @@ public final class ToolsArmorConfig {
     public static ConfigHelper.DoubleValue DRAGONLORD_SWORD_SPEED;
     public static ConfigHelper.DoubleValue DRAGONLORD_SWORD_REACH;
     public static ConfigHelper.DoubleValue DRAGONLORD_SWORD_CRITICAL_BONUS;
+    public static ConfigHelper.DoubleValue DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER;
     public static ConfigHelper.DoubleValue DRAGONLORD_HELMET_ARMOR;
     public static ConfigHelper.DoubleValue DRAGONLORD_CHESTPLATE_ARMOR;
     public static ConfigHelper.DoubleValue DRAGONLORD_LEGGINGS_ARMOR;
@@ -166,6 +172,7 @@ public final class ToolsArmorConfig {
         WORLDROOT_SHOVEL_SPEED = value(builder, "worldrootShovelAttackSpeed", WORLDROOT_SHOVEL_SPEED_DEFAULT, 0.0D, 100.0D);
         WORLDROOT_HOE_DAMAGE = value(builder, "worldrootHoeAttackDamage", WORLDROOT_HOE_DAMAGE_DEFAULT, 0.0D, 100000.0D);
         WORLDROOT_HOE_SPEED = value(builder, "worldrootHoeAttackSpeed", WORLDROOT_HOE_SPEED_DEFAULT, 0.0D, 100.0D);
+        WORLDROOT_DRAGON_DAMAGE_MULTIPLIER = value(builder, "worldrootDragonDamageMultiplier", WORLDROOT_DRAGON_DAMAGE_MULTIPLIER_DEFAULT, 0.0D, 1000.0D);
         builder.pop();
 
         builder.push("blood_tempest");
@@ -173,6 +180,7 @@ public final class ToolsArmorConfig {
         BLOOD_TEMPEST_KATANA_SPEED = value(builder, "bloodTempestKatanaAttackSpeed", BLOOD_TEMPEST_KATANA_SPEED_DEFAULT, 0.0D, 100.0D);
         BLOOD_TEMPEST_KATANA_REACH = value(builder, "bloodTempestKatanaEntityReach", BLOOD_TEMPEST_KATANA_REACH_DEFAULT, 0.0D, 100.0D);
         BLOOD_TEMPEST_KATANA_CRITICAL_BONUS = value(builder, "bloodTempestKatanaCriticalDamageBonus", BLOOD_TEMPEST_KATANA_CRITICAL_BONUS_DEFAULT, 0.0D, 1000.0D);
+        BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER = value(builder, "bloodTempestRaevyxDamageMultiplier", BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER_DEFAULT, 0.0D, 1000.0D);
         BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER = value(builder, "bloodTempestKatanaAbilityDamageMultiplier", BLOOD_TEMPEST_KATANA_ABILITY_DAMAGE_MULTIPLIER_DEFAULT, 0.0D, 1000.0D);
         BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS = builder.defineInt("bloodTempestKatanaAbilityCooldownTicks", BLOOD_TEMPEST_KATANA_ABILITY_COOLDOWN_TICKS_DEFAULT, 0, 72000);
         BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE = value(builder, "bloodTempestKatanaAbilityMaxDistance", BLOOD_TEMPEST_KATANA_ABILITY_MAX_DISTANCE_DEFAULT, 0.75D, 100.0D);
@@ -194,6 +202,7 @@ public final class ToolsArmorConfig {
         DRAGONLORD_SWORD_SPEED = value(builder, "dragonlordSwordAttackSpeed", DRAGONLORD_SWORD_SPEED_DEFAULT, 0.0D, 100.0D);
         DRAGONLORD_SWORD_REACH = value(builder, "dragonlordSwordEntityReach", DRAGONLORD_SWORD_REACH_DEFAULT, 0.0D, 100.0D);
         DRAGONLORD_SWORD_CRITICAL_BONUS = value(builder, "dragonlordSwordCriticalDamageBonus", DRAGONLORD_SWORD_CRITICAL_BONUS_DEFAULT, 0.0D, 1000.0D);
+        DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER = value(builder, "dragonlordIgnivorusDamageMultiplier", DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER_DEFAULT, 0.0D, 1000.0D);
         DRAGONLORD_HELMET_ARMOR = value(builder, "dragonlordHelmetArmor", DRAGONLORD_HELMET_ARMOR_DEFAULT, 0.0D, 100000.0D);
         DRAGONLORD_CHESTPLATE_ARMOR = value(builder, "dragonlordChestplateArmor", DRAGONLORD_CHESTPLATE_ARMOR_DEFAULT, 0.0D, 100000.0D);
         DRAGONLORD_LEGGINGS_ARMOR = value(builder, "dragonlordLeggingsArmor", DRAGONLORD_LEGGINGS_ARMOR_DEFAULT, 0.0D, 100000.0D);

@@ -60,6 +60,13 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
         tag(ItemTags.HOES)
                 .add(ModItems.WORLDROOT_HOE.get());
 
+        tag(ModTags.Items.WORLDROOT_TOOLS)
+                .add(ModItems.WORLDROOT_SWORD.get())
+                .add(ModItems.WORLDROOT_PICKAXE.get())
+                .add(ModItems.WORLDROOT_AXE.get())
+                .add(ModItems.WORLDROOT_SHOVEL.get())
+                .add(ModItems.WORLDROOT_HOE.get());
+
         tag(ModTags.Items.DRAGON_PARTS)
                 .add(ModItems.CINDERVANE_SCALE.get())
                 .add(ModItems.IGNIVORUS_SCALE.get())

@@ -543,7 +543,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 toolField("worldroot.shovel_damage", ToolsArmorConfig.WORLDROOT_SHOVEL_DAMAGE, ToolsArmorConfig.WORLDROOT_SHOVEL_DAMAGE_DEFAULT, 100000.0D),
                 toolField("worldroot.shovel_speed", ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED, ToolsArmorConfig.WORLDROOT_SHOVEL_SPEED_DEFAULT, 100.0D),
                 toolField("worldroot.hoe_damage", ToolsArmorConfig.WORLDROOT_HOE_DAMAGE, ToolsArmorConfig.WORLDROOT_HOE_DAMAGE_DEFAULT, 100000.0D),
-                toolField("worldroot.hoe_speed", ToolsArmorConfig.WORLDROOT_HOE_SPEED, ToolsArmorConfig.WORLDROOT_HOE_SPEED_DEFAULT, 100.0D));
+                toolField("worldroot.hoe_speed", ToolsArmorConfig.WORLDROOT_HOE_SPEED, ToolsArmorConfig.WORLDROOT_HOE_SPEED_DEFAULT, 100.0D),
+                toolField("worldroot.dragon_damage_multiplier", ToolsArmorConfig.WORLDROOT_DRAGON_DAMAGE_MULTIPLIER, ToolsArmorConfig.WORLDROOT_DRAGON_DAMAGE_MULTIPLIER_DEFAULT, 1000.0D));
 
         addToolsArmorGroup(category, entryBuilder, "blood_tempest", entries -> {
                     entries.add(entryBuilder.startBooleanToggle(
@@ -595,6 +596,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 toolField("blood_tempest.katana_speed", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_SPEED_DEFAULT, 100.0D),
                 toolField("blood_tempest.katana_reach", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_REACH_DEFAULT, 100.0D),
                 toolField("blood_tempest.katana_critical_bonus", ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS, ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS_DEFAULT, 1000.0D),
+                toolField("blood_tempest.raevyx_damage_multiplier", ToolsArmorConfig.BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER, ToolsArmorConfig.BLOOD_TEMPEST_RAEVYX_DAMAGE_MULTIPLIER_DEFAULT, 1000.0D),
                 toolField("blood_tempest.helmet_armor", ToolsArmorConfig.BLOOD_TEMPEST_HELMET_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_HELMET_ARMOR_DEFAULT, 100000.0D),
                 toolField("blood_tempest.chestplate_armor", ToolsArmorConfig.BLOOD_TEMPEST_CHESTPLATE_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_CHESTPLATE_ARMOR_DEFAULT, 100000.0D),
                 toolField("blood_tempest.leggings_armor", ToolsArmorConfig.BLOOD_TEMPEST_LEGGINGS_ARMOR, ToolsArmorConfig.BLOOD_TEMPEST_LEGGINGS_ARMOR_DEFAULT, 100000.0D),
@@ -644,6 +646,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 toolField("dragonlord.sword_speed", ToolsArmorConfig.DRAGONLORD_SWORD_SPEED, ToolsArmorConfig.DRAGONLORD_SWORD_SPEED_DEFAULT, 100.0D),
                 toolField("dragonlord.sword_reach", ToolsArmorConfig.DRAGONLORD_SWORD_REACH, ToolsArmorConfig.DRAGONLORD_SWORD_REACH_DEFAULT, 100.0D),
                 toolField("dragonlord.sword_critical_bonus", ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS, ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS_DEFAULT, 1000.0D),
+                toolField("dragonlord.ignivorus_damage_multiplier", ToolsArmorConfig.DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER, ToolsArmorConfig.DRAGONLORD_IGNIVORUS_DAMAGE_MULTIPLIER_DEFAULT, 1000.0D),
                 toolField("dragonlord.sword_ability_base_damage", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_DAMAGE, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_DAMAGE_DEFAULT, 100000.0D),
                 toolField("dragonlord.sword_ability_damage_per_pillar", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_DAMAGE_PER_PILLAR, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_DAMAGE_PER_PILLAR_DEFAULT, 100000.0D),
                 toolField("dragonlord.sword_ability_base_knockback", ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_KNOCKBACK, ToolsArmorConfig.DRAGONLORD_SWORD_ABILITY_BASE_KNOCKBACK_DEFAULT, 100.0D),
