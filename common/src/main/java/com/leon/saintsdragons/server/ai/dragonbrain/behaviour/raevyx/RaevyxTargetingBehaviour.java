@@ -109,7 +109,7 @@ public final class RaevyxTargetingBehaviour extends DragonTargetingBehaviour<Rae
                         LivingEntity.class,
                         candidate -> DragonTargetingHelper.isTaggedHuntTarget(
                                 candidate,
-                                ModTags.EntityTypes.CARNIVORE_HUNT_PREY
+                                ModTags.EntityTypes.RAEVYX_HUNT_PREY
                         )
                 );
                 if (prey != null) {

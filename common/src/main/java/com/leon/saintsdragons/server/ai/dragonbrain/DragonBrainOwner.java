@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirToGroundTransit
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPerceptionBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSleepBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTacticalPlannerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -65,6 +66,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             if (group.activity() == Activity.CORE) {
                 configuredBehaviours.add(new DragonPerceptionBehaviour<>());
                 configuredBehaviours.add(new DragonSleepBehaviour<>());
+                configuredBehaviours.add(new DragonTacticalPlannerBehaviour<>());
             }
             for (DragonBehaviour<T> behaviour : configuredBehaviours) {
                 behaviour.bindActivity(group.activity(), priority);

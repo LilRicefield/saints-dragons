@@ -103,7 +103,7 @@ public final class IgnivorusTargetingBehaviour extends DragonTargetingBehaviour<
                         LivingEntity.class,
                         candidate -> DragonTargetingHelper.isTaggedHuntTarget(
                                 candidate,
-                                ModTags.EntityTypes.CARNIVORE_HUNT_PREY
+                                ModTags.EntityTypes.IGNIVORUS_HUNT_PREY
                         )
                 );
                 if (prey != null) return choice(prey, Source.HUNT);

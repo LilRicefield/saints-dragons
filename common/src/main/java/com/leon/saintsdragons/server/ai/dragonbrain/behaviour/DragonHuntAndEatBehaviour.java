@@ -23,6 +23,7 @@ import java.util.Comparator;
 import java.util.Map;
 
 public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
+    private static final int HUNT_START_HUNGER = 60;
     private static final int DROP_SEARCH_TICKS = 60;
     private static final int DROP_RESCAN_INTERVAL = 5;
     private static final int MOVE_REFRESH_INTERVAL = 10;
@@ -51,7 +52,9 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
     }
 
     public static boolean shouldAcquirePrey(DragonEntity dragon) {
-        return !dragon.isHuntFoodPursuitActive() && wantsHuntFood(dragon);
+        return !dragon.isHuntFoodPursuitActive()
+                && SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()
+                && dragon.getHunger() <= HUNT_START_HUNGER;
     }
 
     private static boolean wantsHuntFood(DragonEntity dragon) {

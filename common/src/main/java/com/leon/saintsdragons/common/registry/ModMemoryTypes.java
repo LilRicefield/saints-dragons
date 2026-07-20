@@ -5,6 +5,7 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -48,6 +49,8 @@ public final class ModMemoryTypes {
     public static final Supplier<MemoryModuleType<LivingEntity>> WAKE_TARGET = register("wake_target");
     public static final Supplier<MemoryModuleType<Float>> SLEEP_PRESSURE = register("sleep_pressure");
     public static final Supplier<MemoryModuleType<Boolean>> SLEEP_INTENT = register("sleep_intent");
+    public static final Supplier<MemoryModuleType<DragonTacticalCommitment>> TACTICAL_COMMITMENT =
+            register("tactical_commitment");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> INVESTIGATION_TARGET =
             register("investigation_target");
 

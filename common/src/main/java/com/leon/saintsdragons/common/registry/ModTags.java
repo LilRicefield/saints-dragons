@@ -21,6 +21,11 @@ public final class ModTags {
         public static final TagKey<EntityType<?>> SWIMMING_DRAGONS = tag("swimming_dragons");
         public static final TagKey<EntityType<?>> CARNIVORE_HUNT_PREY = tag("hunt_prey/carnivore");
         public static final TagKey<EntityType<?>> PISCIVORE_HUNT_PREY = tag("hunt_prey/piscivore");
+        public static final TagKey<EntityType<?>> CINDERVANE_HUNT_PREY = tag("hunt_prey/cindervane");
+        public static final TagKey<EntityType<?>> IGNIVORUS_HUNT_PREY = tag("hunt_prey/ignivorus");
+        public static final TagKey<EntityType<?>> RAEVYX_HUNT_PREY = tag("hunt_prey/raevyx");
+        public static final TagKey<EntityType<?>> VARASUCHUS_HUNT_PREY = tag("hunt_prey/varasuchus");
+        public static final TagKey<EntityType<?>> VOLITANS_HUNT_PREY = tag("hunt_prey/volitans");
         public static final TagKey<EntityType<?>> STEGONAUT_TARGETS = tag("targets/stegonaut");
         public static final TagKey<EntityType<?>> IMMUNE_TO_ELECTRICITY = tag("immune_to/electricity");
         public static final TagKey<EntityType<?>> IMMUNE_TO_FIRE = tag("immune_to/fire");

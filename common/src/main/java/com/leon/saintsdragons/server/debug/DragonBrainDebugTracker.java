@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDebugDetails;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -75,6 +76,8 @@ public final class DragonBrainDebugTracker {
                 "SLEEP_PRESSURE", memories, markers);
         captureMemory(dragon, brain, DragonMemories.SLEEP_INTENT,
                 "SLEEP_INTENT", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.TACTICAL_COMMITMENT,
+                "TACTICAL_COMMITMENT", memories, markers);
 
         LivingEntity mobTarget = dragon.getTarget();
         LivingEntity brainTarget = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
@@ -221,6 +224,9 @@ public final class DragonBrainDebugTracker {
                     + " age=" + Math.max(0L, dragon.level().getGameTime() - observation.observedAt())
                     + "t";
         }
+        if (value instanceof DragonTacticalCommitment commitment) {
+            return commitment.summary();
+        }
         return String.valueOf(value);
     }
 
@@ -296,6 +302,8 @@ public final class DragonBrainDebugTracker {
             entityId = move.target().getId();
         } else if (value instanceof DragonSensoryObservation observation) {
             position = observation.position();
+        } else if (value instanceof DragonTacticalCommitment commitment) {
+            position = commitment.focus();
         }
         if (position != null) {
             markers.add(new MessageDragonBrainDebug.Marker(memoryName, position, entityId, memoryName));

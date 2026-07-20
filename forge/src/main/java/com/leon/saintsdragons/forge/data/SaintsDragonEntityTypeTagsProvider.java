@@ -62,6 +62,34 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
                 .add(EntityType.TROPICAL_FISH)
                 .add(EntityType.PUFFERFISH);
 
+        tag(ModTags.EntityTypes.CINDERVANE_HUNT_PREY)
+                .add(EntityType.CHICKEN)
+                .add(EntityType.COD)
+                .add(EntityType.SALMON);
+
+        tag(ModTags.EntityTypes.IGNIVORUS_HUNT_PREY)
+                .add(EntityType.COD)
+                .add(EntityType.COW)
+                .add(EntityType.PIG)
+                .add(EntityType.SALMON)
+                .add(EntityType.SHEEP);
+
+        tag(ModTags.EntityTypes.RAEVYX_HUNT_PREY)
+                .add(EntityType.PIG)
+                .add(EntityType.SHEEP);
+
+        tag(ModTags.EntityTypes.VARASUCHUS_HUNT_PREY)
+                .add(EntityType.COD)
+                .add(EntityType.COW)
+                .add(EntityType.SALMON)
+                .add(EntityType.TROPICAL_FISH);
+
+        tag(ModTags.EntityTypes.VOLITANS_HUNT_PREY)
+                .add(EntityType.COD)
+                .add(EntityType.PUFFERFISH)
+                .add(EntityType.SALMON)
+                .add(EntityType.TROPICAL_FISH);
+
         tag(ModTags.EntityTypes.STEGONAUT_TARGETS);
 
         tag(ModTags.EntityTypes.IMMUNE_TO_ELECTRICITY);
