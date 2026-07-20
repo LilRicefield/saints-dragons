@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.forge.entity.part;
 
 import com.leon.saintsdragons.server.entity.base.DragonPartEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -125,18 +128,18 @@ public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEnt
     }
 
     @Override
-    public net.minecraft.world.InteractionResult interact(@NotNull Player player,
-                                                           @NotNull net.minecraft.world.InteractionHand hand) {
+    public InteractionResult interact(@NotNull Player player,
+                                                           @NotNull InteractionHand hand) {
         // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
-        return net.minecraft.world.InteractionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     @Override
-    public net.minecraft.world.InteractionResult interactAt(@NotNull Player player,
-                                                             @NotNull Vec3 vec,
-                                                             @NotNull net.minecraft.world.InteractionHand hand) {
+    public InteractionResult interactAt(@NotNull Player player,
+                                        @NotNull Vec3 vec,
+                                        @NotNull InteractionHand hand) {
         // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
-        return net.minecraft.world.InteractionResult.PASS;
+        return InteractionResult.PASS;
     }
 
     @Override
@@ -170,11 +173,11 @@ public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEnt
     }
 
     @Override
-    protected void readAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+    protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
     }
 
     @Override
-    protected void addAdditionalSaveData(@NotNull net.minecraft.nbt.CompoundTag tag) {
+    protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
     }
 
     @Override
