@@ -151,11 +151,7 @@ public class DragonAIMovementController {
         return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.PROGRESSIVE_GROUND));
     }
 
-    public void setLandingWaypoint(@Nullable LivingEntity target, double speed) {
-        trySetLandingWaypoint(target, speed);
-    }
-
-    public boolean trySetLandingWaypoint(@Nullable LivingEntity target, double speed) {
+    public boolean requestGroundTransition(@Nullable LivingEntity target, double speed) {
         if (!dragon.canFly() || !(dragon instanceof DragonFlightCapable flightCapable)) {
             return false;
         }
@@ -168,14 +164,14 @@ public class DragonAIMovementController {
             return false;
         }
 
-        Vec3 landingTarget = findLandingTarget(target);
+        Vec3 landingTarget = findGroundTransitionTarget(target);
         if (landingTarget == null) {
             return false;
         }
-        return trySetLandingWaypoint(landingTarget, speed, flightCapable);
+        return beginGroundTransition(landingTarget, speed, flightCapable);
     }
 
-    public boolean trySetLandingWaypoint(@Nullable Vec3 landingTarget, double speed) {
+    public boolean requestGroundTransition(@Nullable Vec3 landingTarget, double speed) {
         if (!dragon.canFly() || !(dragon instanceof DragonFlightCapable flightCapable)) {
             return false;
         }
@@ -187,10 +183,12 @@ public class DragonAIMovementController {
             }
             return false;
         }
-        return trySetLandingWaypoint(landingTarget, speed, flightCapable);
+        return beginGroundTransition(landingTarget, speed, flightCapable);
     }
 
-    private boolean trySetLandingWaypoint(@Nullable Vec3 landingTarget, double speed, DragonFlightCapable flightCapable) {
+    private boolean beginGroundTransition(@Nullable Vec3 landingTarget,
+                                          double speed,
+                                          DragonFlightCapable flightCapable) {
         if (landingTarget == null) {
             return false;
         }
@@ -199,7 +197,7 @@ public class DragonAIMovementController {
         return startWaypoint(new QueuedWaypoint(landingTarget, speed, false, MovementMode.LANDING));
     }
 
-    public @Nullable Vec3 findLandingTarget(@Nullable LivingEntity target) {
+    public @Nullable Vec3 findGroundTransitionTarget(@Nullable LivingEntity target) {
         BlockPos origin = target != null && target.isAlive() ? target.blockPosition() : dragon.blockPosition();
         double currentAltitude = Math.max(0.0D, dragon.getY()
                 - dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, dragon.getBlockX(), dragon.getBlockZ()));
@@ -229,9 +227,9 @@ public class DragonAIMovementController {
         return null;
     }
 
-    public @Nullable Vec3 findTacticalLandingTarget(LivingEntity target,
-                                                     int maxSearchRadius,
-                                                     double maxVerticalDelta) {
+    public @Nullable Vec3 findTacticalGroundTransitionTarget(LivingEntity target,
+                                                              int maxSearchRadius,
+                                                              double maxVerticalDelta) {
         if (target == null || !target.isAlive()) {
             return null;
         }
@@ -256,7 +254,7 @@ public class DragonAIMovementController {
                         ground.getY() + 1.0D,
                         column.getZ() + 0.5D
                 );
-                if (isTacticalLandingTargetValid(
+                if (isTacticalGroundTransitionTargetValid(
                         landingTarget,
                         target,
                         maxSearchRadius,
@@ -269,10 +267,10 @@ public class DragonAIMovementController {
         return null;
     }
 
-    public boolean isTacticalLandingTargetValid(Vec3 landingTarget,
-                                                 LivingEntity target,
-                                                 double maxHorizontalDistance,
-                                                 double maxVerticalDelta) {
+    public boolean isTacticalGroundTransitionTargetValid(Vec3 landingTarget,
+                                                          LivingEntity target,
+                                                          double maxHorizontalDistance,
+                                                          double maxVerticalDelta) {
         if (landingTarget == null
                 || target == null
                 || !target.isAlive()) {
@@ -543,7 +541,9 @@ public class DragonAIMovementController {
         if (waypoint.mode().usesAir() || (waypoint.mode() == MovementMode.AUTO && shouldUseAirMovement())) {
             resetGroundPathState();
             if (dragon instanceof RideableFlyingDragon flyingDragon) {
-                if (waypoint.mode() == MovementMode.AIR) {
+                if (waypoint.mode() == MovementMode.LANDING) {
+                    flyingDragon.pathAiGroundTransitionTo(waypoint.target(), waypoint.speed());
+                } else if (waypoint.mode() == MovementMode.AIR) {
                     flyingDragon.pathAiFlightTo(waypoint.target(), waypoint.speed());
                 } else {
                     flyingDragon.trackAiFlightTarget(waypoint.target(), waypoint.speed());

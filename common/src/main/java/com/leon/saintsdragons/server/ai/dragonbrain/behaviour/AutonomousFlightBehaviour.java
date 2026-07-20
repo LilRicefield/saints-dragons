@@ -115,7 +115,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
                 beginLandingApproach(context);
             } else if (!dragon.getAIMovement().isPathing()) {
                 context.memories().set(DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(targetPosition, landingSpeed));
+                        DragonMovementIntent.transitionToGround(targetPosition, landingSpeed));
             }
             return;
         }
@@ -214,13 +214,13 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     }
 
     protected void beginLandingApproach(DragonBrainContext<T> context) {
-        Vec3 landingTarget = context.dragon().getAIMovement().findLandingTarget(null);
+        Vec3 landingTarget = context.dragon().getAIMovement().findGroundTransitionTarget(null);
         if (landingTarget == null) {
             return;
         }
         targetPosition = landingTarget;
         context.memories().set(DragonMemories.MOVEMENT_INTENT,
-                DragonMovementIntent.landing(landingTarget, landingSpeed));
+                DragonMovementIntent.transitionToGround(landingTarget, landingSpeed));
     }
 
     protected boolean isCurrentCruiseDive() {

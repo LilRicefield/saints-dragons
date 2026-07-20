@@ -129,14 +129,14 @@ public final class DragonAirCombatHelper {
                 && !targetAirborneCheck.isTargetAirborne(target)
                 && dragon.isAerial()
                 && !dragon.isLanding()) {
-            dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed);
+            dragon.getAIMovement().requestGroundTransition(target, landingSpeed);
             return;
         }
 
         if (clearInvalidOrMissingTarget && (target == null || !dragon.isTargetValid(target))) {
             dragon.setTarget(null);
             if (dragon.isAerial() && !dragon.isLanding()) {
-                dragon.getAIMovement().trySetLandingWaypoint((LivingEntity) null, landingSpeed);
+                dragon.getAIMovement().requestGroundTransition((LivingEntity) null, landingSpeed);
             }
         }
     }
@@ -152,13 +152,13 @@ public final class DragonAirCombatHelper {
             dragon.setAggressive(false);
             dragon.setTarget(null);
             if (dragon.isAerial() && !dragon.isLanding()) {
-                dragon.getAIMovement().trySetLandingWaypoint((LivingEntity) null, landingSpeed);
+                dragon.getAIMovement().requestGroundTransition((LivingEntity) null, landingSpeed);
             }
             return;
         }
 
         if (!targetAirborneCheck.isTargetAirborne(target) && dragon.isAerial() && !dragon.isLanding()) {
-            dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed);
+            dragon.getAIMovement().requestGroundTransition(target, landingSpeed);
         }
     }
 
@@ -179,7 +179,7 @@ public final class DragonAirCombatHelper {
             if (target != null
                     && dragon.isTargetValid(target)
                     && !isTargetAirborne(dragon, target)
-                    && dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed)) {
+                    && dragon.getAIMovement().requestGroundTransition(target, landingSpeed)) {
                 return true;
             }
             if (dragon instanceof DragonFlightCapable flightCapable) {
@@ -194,7 +194,7 @@ public final class DragonAirCombatHelper {
             return false;
         }
         if (dragon.isAerial()) {
-            dragon.getAIMovement().trySetLandingWaypoint(target, landingSpeed);
+            dragon.getAIMovement().requestGroundTransition(target, landingSpeed);
             return true;
         }
         return false;

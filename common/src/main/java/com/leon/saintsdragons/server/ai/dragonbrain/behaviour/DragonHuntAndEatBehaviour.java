@@ -210,7 +210,7 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
         if (dragon.isAerial() && !food.isInWaterOrBubble()) {
             context.memories().set(
                     DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.landing(food.position(), LANDING_SPEED)
+                    DragonMovementIntent.transitionToGround(food.position(), LANDING_SPEED)
             );
             return;
         }

@@ -29,6 +29,9 @@ class AsyncFlightWaypointQueue {
         return this.waypointQueue.stream();
     }
 
-    record QueuedWaypoint(Vec3 position, double speed, @Nullable AsyncFlightController.WaypointArrivalCallback onArrival) {
+    record QueuedWaypoint(Vec3 position,
+                          double speed,
+                          @Nullable AsyncFlightController.WaypointArrivalCallback onArrival,
+                          boolean groundTransition) {
     }
 }

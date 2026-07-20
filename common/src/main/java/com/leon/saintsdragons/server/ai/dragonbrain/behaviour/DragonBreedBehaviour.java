@@ -102,7 +102,7 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
                 landingRetryTicks--;
             }
             if (!rideable.getAIMovement().isPathing() && landingRetryTicks <= 0) {
-                rideable.getAIMovement().trySetLandingWaypoint(partner, speedModifier);
+                rideable.getAIMovement().requestGroundTransition(partner, speedModifier);
                 landingRetryTicks = 20;
             }
         } else if (close) {

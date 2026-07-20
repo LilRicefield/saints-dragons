@@ -172,7 +172,10 @@ public abstract class RangedAirCombatBehaviour<
                     && ++shotFromBelowCounter >= SHOT_FROM_BELOW_THRESHOLD) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(target, dragon.getAiAirCombatSettings().landingSpeed())
+                        DragonMovementIntent.transitionToGround(
+                                target,
+                                dragon.getAiAirCombatSettings().landingSpeed()
+                        )
                 );
                 shotFromBelowCounter = 0;
                 return true;

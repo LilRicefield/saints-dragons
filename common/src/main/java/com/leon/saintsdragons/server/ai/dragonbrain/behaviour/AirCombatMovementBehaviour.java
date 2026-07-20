@@ -72,7 +72,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             if (lostSightTicks >= lostSightLandingTicks) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(target, settings.landingSpeed())
+                        DragonMovementIntent.transitionToGround(target, settings.landingSpeed())
                 );
                 return;
             }
@@ -91,7 +91,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             context.memories().get(DragonMemories.TACTICAL_LANDING_POSITION)
                     .filter(position -> dragon.isAerial())
                     .ifPresent(position -> dragon.getAIMovement()
-                            .trySetLandingWaypoint(position, settings.landingSpeed()));
+                            .requestGroundTransition(position, settings.landingSpeed()));
             return;
         }
         DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(

@@ -1,10 +1,8 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
-import net.minecraft.core.BlockPos;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import java.util.List;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -22,6 +20,7 @@ public class AsyncFlightController {
 
     private Vec3 currentWaypoint;
     private WaypointArrivalCallback currentArrivalCallback;
+    private boolean currentGroundTransition;
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
     private long pathRequestGeneration = 0L;
@@ -66,15 +65,15 @@ public class AsyncFlightController {
             return;
         }
 
-        boolean landingTarget = this.isLandingTarget(this.currentWaypoint);
-        if (landingTarget && this.flightCapable.isLanding() && this.movementExecutor.hasLandingContact()) {
+        boolean groundTransition = this.currentGroundTransition;
+        if (groundTransition && this.flightCapable.isLanding() && this.movementExecutor.hasLandingContact()) {
             this.clearAllWaypoints();
             this.flightCapable.markLandedNow();
             return;
         }
-        double arrivalDist = this.calculateArrivalDistance(landingTarget);
+        double arrivalDist = this.calculateArrivalDistance(groundTransition);
         double distSq = this.host.position().distanceToSqr(this.currentWaypoint);
-        if (this.hasReachedWaypoint(distSq, arrivalDist, landingTarget)) {
+        if (this.hasReachedWaypoint(distSq, arrivalDist, groundTransition)) {
             this.onArrived();
             return;
         }
@@ -88,7 +87,7 @@ public class AsyncFlightController {
                     this.speedModifier,
                     arrivalDist,
                     this.waypointQueue.isEmpty(),
-                    landingTarget
+                    groundTransition
             );
         }
 
@@ -113,12 +112,16 @@ public class AsyncFlightController {
         this.setWaypoint(target, speed, null);
     }
 
+    public void setGroundTransitionWaypoint(Vec3 target, double speed) {
+        this.setWaypoint(target, speed, null, true);
+    }
+
     public void trackMovingWaypoint(Vec3 target, double speed) {
         if (this.currentWaypoint == null
                 || this.state == PathState.IDLE
                 || this.state == PathState.ARRIVED
                 || this.state == PathState.FAILED
-                || this.isLandingTarget(target)) {
+                || this.currentGroundTransition) {
             this.setWaypoint(target, speed, null);
             return;
         }
@@ -126,6 +129,7 @@ public class AsyncFlightController {
         this.waypointQueue.clear();
         this.currentWaypoint = target;
         this.currentArrivalCallback = null;
+        this.currentGroundTransition = false;
         this.speedModifier = speed;
         this.state = PathState.FOLLOWING;
         this.invalidatePathRequests();
@@ -134,12 +138,20 @@ public class AsyncFlightController {
     }
 
     public void setWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
+        this.setWaypoint(target, speed, onArrival, false);
+    }
+
+    private void setWaypoint(Vec3 target,
+                             double speed,
+                             WaypointArrivalCallback onArrival,
+                             boolean groundTransition) {
         if (this.currentWaypoint != null
                 && target.distanceToSqr(this.currentWaypoint) < 1.0
                 && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
             this.currentWaypoint = target;
             this.speedModifier = speed;
             this.currentArrivalCallback = onArrival;
+            this.currentGroundTransition = groundTransition;
             return;
         }
 
@@ -149,10 +161,16 @@ public class AsyncFlightController {
                 && retargetDistSq < this.liveRetargetRefreshDistanceSq
                 && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
             Vec3 previousWaypoint = this.currentWaypoint;
-            boolean forceRecalculate = this.shouldForceRecalculateForRetarget(previousWaypoint, target);
+            boolean forceRecalculate = this.shouldForceRecalculateForRetarget(
+                    previousWaypoint,
+                    this.currentGroundTransition,
+                    target,
+                    groundTransition
+            );
             this.currentWaypoint = target;
             this.speedModifier = speed;
             this.currentArrivalCallback = onArrival;
+            this.currentGroundTransition = groundTransition;
             if (forceRecalculate) {
                 this.resetPathingState();
                 this.pathResolver.forceRecalculatePath(target);
@@ -168,6 +186,7 @@ public class AsyncFlightController {
             this.resetPathingState();
             this.state = PathState.IDLE;
             this.currentWaypoint = null;
+            this.currentGroundTransition = false;
             this.pathResolver.clearPathNodes();
 
             Vec3 startPos = this.host.position();
@@ -175,21 +194,34 @@ public class AsyncFlightController {
             int segments = (int) (distToTarget / this.maxSegmentDistance);
             for (int i = 1; i <= segments; ++i) {
                 Vec3 segmentPos = startPos.add(direction.scale(i * this.maxSegmentDistance));
-                this.addWaypoint(segmentPos, speed, null);
+                this.addWaypoint(segmentPos, speed, null, false);
             }
-            this.addWaypoint(target, speed, onArrival);
+            this.addWaypoint(target, speed, onArrival, groundTransition);
             return;
         }
 
         this.currentWaypoint = target;
         this.currentArrivalCallback = onArrival;
+        this.currentGroundTransition = groundTransition;
         this.speedModifier = speed;
         this.resetPathingState();
         this.pathResolver.startPathing(this.currentWaypoint);
     }
 
     public void addWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
-        this.waypointQueue.add(new AsyncFlightWaypointQueue.QueuedWaypoint(target, speed, onArrival));
+        this.addWaypoint(target, speed, onArrival, false);
+    }
+
+    private void addWaypoint(Vec3 target,
+                             double speed,
+                             WaypointArrivalCallback onArrival,
+                             boolean groundTransition) {
+        this.waypointQueue.add(new AsyncFlightWaypointQueue.QueuedWaypoint(
+                target,
+                speed,
+                onArrival,
+                groundTransition
+        ));
         if (this.state == PathState.IDLE || this.state == PathState.ARRIVED) {
             this.advanceToNextWaypoint();
         }
@@ -199,6 +231,7 @@ public class AsyncFlightController {
         this.waypointQueue.clear();
         this.currentWaypoint = null;
         this.currentArrivalCallback = null;
+        this.currentGroundTransition = false;
         this.state = PathState.IDLE;
         this.invalidatePathRequests();
         this.pathResolver.clearPathNodes();
@@ -219,6 +252,7 @@ public class AsyncFlightController {
         }
 
         this.currentWaypoint = null;
+        this.currentGroundTransition = false;
         if (!this.waypointQueue.isEmpty()) {
             this.advanceToNextWaypoint();
         }
@@ -233,6 +267,7 @@ public class AsyncFlightController {
         AsyncFlightWaypointQueue.QueuedWaypoint next = this.waypointQueue.poll();
         this.currentWaypoint = next.position();
         this.currentArrivalCallback = next.onArrival();
+        this.currentGroundTransition = next.groundTransition();
         this.speedModifier = next.speed();
         this.resetPathingState();
         this.pathResolver.startPathing(this.currentWaypoint);
@@ -244,6 +279,7 @@ public class AsyncFlightController {
             this.state = PathState.FAILED;
             this.currentWaypoint = null;
             this.currentArrivalCallback = null;
+            this.currentGroundTransition = false;
             this.waypointQueue.clear();
             this.invalidatePathRequests();
             this.pathResolver.clearPathNodes();
@@ -260,7 +296,7 @@ public class AsyncFlightController {
     }
 
     public double calculateArrivalDistance() {
-        return this.calculateArrivalDistance(this.isLandingTarget(this.currentWaypoint));
+        return this.calculateArrivalDistance(this.currentGroundTransition);
     }
 
     public double calculateArrivalDistance(boolean landingTarget) {
@@ -313,6 +349,10 @@ public class AsyncFlightController {
         return this.currentWaypoint;
     }
 
+    boolean isGroundTransition() {
+        return this.currentGroundTransition;
+    }
+
     public List<AsyncFlightWaypointQueue.QueuedWaypoint> getQueuedWaypoints() {
         return this.waypointQueue.stream().toList();
     }
@@ -326,12 +366,15 @@ public class AsyncFlightController {
         );
     }
 
-    private boolean shouldForceRecalculateForRetarget(Vec3 previousTarget, Vec3 newTarget) {
+    private boolean shouldForceRecalculateForRetarget(Vec3 previousTarget,
+                                                      boolean previousGroundTransition,
+                                                      Vec3 newTarget,
+                                                      boolean newGroundTransition) {
         if (previousTarget == null) {
             return false;
         }
 
-        if (this.isLandingTarget(previousTarget) != this.isLandingTarget(newTarget)) {
+        if (previousGroundTransition != newGroundTransition) {
             return true;
         }
 
@@ -355,30 +398,6 @@ public class AsyncFlightController {
             return null;
         }
         return horizontal.normalize();
-    }
-
-    boolean isLandingTarget(Vec3 waypoint) {
-        if (waypoint == null) {
-            return false;
-        }
-
-        BlockPos groundCheck = BlockPos.containing(waypoint.x, waypoint.y, waypoint.z);
-        for (int depth = 0; depth < 3; depth++) {
-            BlockPos checkPos = groundCheck.below(depth);
-            if (!this.host.level().hasChunkAt(checkPos)) {
-                continue;
-            }
-
-            var state = this.host.level().getBlockState(checkPos);
-            if (state.isAir() || !state.getFluidState().isEmpty()) {
-                continue;
-            }
-            if (!state.getCollisionShape((BlockGetter) this.host.level(), checkPos).isEmpty()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     public interface WaypointArrivalCallback {

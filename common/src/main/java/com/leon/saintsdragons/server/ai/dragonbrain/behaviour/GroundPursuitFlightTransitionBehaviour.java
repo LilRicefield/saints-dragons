@@ -179,7 +179,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         }
 
         if (landingPosition != null) {
-            if (!dragon.getAIMovement().isTacticalLandingTargetValid(
+            if (!dragon.getAIMovement().isTacticalGroundTransitionTargetValid(
                     landingPosition,
                     target,
                     settings.landingSearchRadius(),
@@ -224,7 +224,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         }
         landingSearchCooldown = settings.landingSearchIntervalTicks();
 
-        Vec3 candidate = dragon.getAIMovement().findTacticalLandingTarget(
+        Vec3 candidate = dragon.getAIMovement().findTacticalGroundTransitionTarget(
                 target,
                 settings.landingSearchRadius(),
                 settings.landingMaxVerticalDelta()

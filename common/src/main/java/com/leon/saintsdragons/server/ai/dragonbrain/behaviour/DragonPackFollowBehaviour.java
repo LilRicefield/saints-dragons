@@ -74,7 +74,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
                     && !member.isLanding()) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(member, airSpeed(member, false))
+                        DragonMovementIntent.transitionToGround(member, airSpeed(member, false))
                 );
                 return true;
             }
@@ -159,7 +159,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
             if (!member.getAIMovement().isPathing()) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(currentLeader, airSpeed(member, false))
+                        DragonMovementIntent.transitionToGround(currentLeader, airSpeed(member, false))
                 );
             }
             return true;
@@ -180,7 +180,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
             if (member.isFlying() || member.isHovering()) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(currentLeader, airSpeed(member, false))
+                        DragonMovementIntent.transitionToGround(currentLeader, airSpeed(member, false))
                 );
             }
             groundRepathCooldown = 0;

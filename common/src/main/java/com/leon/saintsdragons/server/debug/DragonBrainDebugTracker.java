@@ -247,11 +247,12 @@ public final class DragonBrainDebugTracker {
             return "GROUND_TARGET " + describeEntity(dragon, move.target())
                     + " speed=" + decimal(move.speed()) + " running=" + move.running();
         }
-        if (intent instanceof DragonMovementIntent.LandingPosition move) {
-            return "LANDING " + format(move.target()) + " speed=" + decimal(move.speed());
+        if (intent instanceof DragonMovementIntent.GroundTransitionPosition move) {
+            return "GROUND_TRANSITION " + format(move.target()) + " speed=" + decimal(move.speed());
         }
-        if (intent instanceof DragonMovementIntent.LandingTarget move) {
-            return "LANDING_TARGET " + (move.target() == null ? "auto" : describeEntity(dragon, move.target()))
+        if (intent instanceof DragonMovementIntent.GroundTransitionTarget move) {
+            return "GROUND_TRANSITION_TARGET "
+                    + (move.target() == null ? "auto" : describeEntity(dragon, move.target()))
                     + " speed=" + decimal(move.speed());
         }
         return intent.getClass().getSimpleName().toUpperCase();
@@ -288,9 +289,9 @@ public final class DragonBrainDebugTracker {
         } else if (value instanceof DragonMovementIntent.GroundTarget move) {
             position = move.target().getBoundingBox().getCenter();
             entityId = move.target().getId();
-        } else if (value instanceof DragonMovementIntent.LandingPosition move) {
+        } else if (value instanceof DragonMovementIntent.GroundTransitionPosition move) {
             position = move.target();
-        } else if (value instanceof DragonMovementIntent.LandingTarget move && move.target() != null) {
+        } else if (value instanceof DragonMovementIntent.GroundTransitionTarget move && move.target() != null) {
             position = move.target().getBoundingBox().getCenter();
             entityId = move.target().getId();
         } else if (value instanceof DragonSensoryObservation observation) {

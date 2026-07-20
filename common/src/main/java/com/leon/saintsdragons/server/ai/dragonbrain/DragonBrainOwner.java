@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirToGroundTransitionBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPerceptionBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSleepBehaviour;
@@ -56,6 +57,9 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             List<DragonBehaviour<T>> configuredBehaviours = new ArrayList<>();
             if (group.activity() == Activity.IDLE) {
                 configuredBehaviours.add(new DragonInvestigateTargetBehaviour<>());
+            }
+            if (group.activity() == Activity.FIGHT) {
+                configuredBehaviours.add(new AirToGroundTransitionBehaviour<>());
             }
             configuredBehaviours.addAll(group.behaviours());
             if (group.activity() == Activity.CORE) {

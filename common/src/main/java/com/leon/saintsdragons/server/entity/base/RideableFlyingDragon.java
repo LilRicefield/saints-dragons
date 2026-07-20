@@ -63,7 +63,6 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     protected static final double RIDER_WATER_SURFACE_TOLERANCE = 2.0D;
     protected static final int RIDER_WATER_SCAN_RADIUS = 2;
     protected static final int RIDER_WATER_SCAN_DEPTH = 8;
-    protected static final double MIN_AIRBORNE_LANDING_HORIZONTAL = 6.0D;
     protected static final int DEFAULT_GROUNDED_AERIAL_RECOVERY_TICKS = 8;
     protected static final double DEFAULT_GROUNDED_AERIAL_RECOVERY_UPWARD_TOLERANCE = 0.05D;
     protected static final float DEFAULT_BARREL_ROLL_INPUT_SPEED = 0.275F;
@@ -1535,107 +1534,6 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         this.riderTakeoffTicks = Math.max(0, ticks);
     }
 
-    public @Nullable Vec3 findStandardAiLandingTarget(@Nullable LivingEntity target) {
-        BlockPos origin = target != null && target.isAlive() ? target.blockPosition() : blockPosition();
-        double currentAltitude = Math.max(0.0D, getY()
-                - level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, getBlockX(), getBlockZ()));
-        double minHorizontalDistance = currentAltitude > 6.0D ? MIN_AIRBORNE_LANDING_HORIZONTAL : 0.0D;
-
-        for (int radius = 8; radius <= 40; radius += 8) {
-            Vec3 landing = findRandomLandingTargetAround(origin, radius, minHorizontalDistance, 16);
-            if (landing != null) {
-                return landing;
-            }
-        }
-
-        if (minHorizontalDistance > 0.0D) {
-            double relaxedMinHorizontal = Math.max(3.0D, minHorizontalDistance * 0.5D);
-            for (int radius = 8; radius <= 40; radius += 8) {
-                Vec3 landing = findRandomLandingTargetAround(origin, radius, relaxedMinHorizontal, 16);
-                if (landing != null) {
-                    return landing;
-                }
-            }
-        }
-
-        for (int radius = 8; radius <= 40; radius += 8) {
-            Vec3 landing = findRandomLandingTargetAround(origin, radius, 0.0D, 12);
-            if (landing != null) {
-                return landing;
-            }
-        }
-
-        return null;
-    }
-
-    private @Nullable Vec3 findRandomLandingTargetAround(BlockPos origin, int radius, double minHorizontalDistance, int attempts) {
-        double minHorizontalDistanceSqr = minHorizontalDistance * minHorizontalDistance;
-        for (int attempt = 0; attempt < attempts; attempt++) {
-            int dx = radius == 0 ? 0 : getRandom().nextInt(radius * 2 + 1) - radius;
-            int dz = radius == 0 ? 0 : getRandom().nextInt(radius * 2 + 1) - radius;
-            if (dx * dx + dz * dz < minHorizontalDistanceSqr) {
-                continue;
-            }
-
-            Vec3 landing = landingTargetAt(origin.offset(dx, 0, dz), origin.getY());
-            if (landing != null) {
-                return landing;
-            }
-        }
-        return null;
-    }
-
-    private @Nullable Vec3 landingTargetAt(BlockPos column, int originY) {
-        if (!level().hasChunkAt(column)) {
-            return null;
-        }
-
-        BlockPos ground = findStandardLandingGround(column, originY);
-        boolean valid = ground != null && isValidStandardLandingSurface(ground);
-        if (!valid) {
-            return null;
-        }
-        return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
-    }
-
-    private @Nullable BlockPos findStandardLandingGround(BlockPos column, int originY) {
-        if (!level().dimensionType().hasCeiling()) {
-            int surfaceY = level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column.getX(), column.getZ());
-            return new BlockPos(column.getX(), surfaceY - 1, column.getZ());
-        }
-
-        int minY = level().getMinBuildHeight();
-        int maxY = level().getMaxBuildHeight() - 1;
-        int startY = Math.min(maxY, Math.max(minY, originY + 8));
-        for (int y = startY; y >= minY; y--) {
-            BlockPos ground = new BlockPos(column.getX(), y, column.getZ());
-            if (isValidStandardLandingSurface(ground)) {
-                return ground;
-            }
-        }
-        return null;
-    }
-
-    protected boolean isValidStandardLandingSurface(BlockPos ground) {
-        if (!level().hasChunkAt(ground)) {
-            return false;
-        }
-
-        BlockState state = level().getBlockState(ground);
-        if (state.isAir() || !state.getFluidState().isEmpty() || !state.isFaceSturdy(level(), ground, net.minecraft.core.Direction.UP)) {
-            return false;
-        }
-
-        BlockPos above = ground.above();
-        BlockPos aboveTwo = above.above();
-        BlockState aboveState = level().getBlockState(above);
-        BlockState aboveTwoState = level().getBlockState(aboveTwo);
-        return aboveState.getCollisionShape(level(), above).isEmpty()
-                && aboveState.getFluidState().isEmpty()
-                && aboveTwoState.getCollisionShape(level(), aboveTwo).isEmpty()
-                && aboveTwoState.getFluidState().isEmpty();
-    }
-
     public void moveAiFlightTo(@Nullable Vec3 target, double speed) {
         if (target != null) {
             getNavigation().moveTo(target.x, target.y, target.z, speed);
@@ -1650,6 +1548,16 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             switchToAirNavigation();
         }
         this.asyncAirController.setWaypoint(target, speed);
+    }
+
+    public void pathAiGroundTransitionTo(@Nullable Vec3 target, double speed) {
+        if (target == null) {
+            return;
+        }
+        if (!isUsingAirNavigation()) {
+            switchToAirNavigation();
+        }
+        this.asyncAirController.setGroundTransitionWaypoint(target, speed);
     }
 
     public void trackAiFlightTarget(@Nullable Vec3 target, double speed) {

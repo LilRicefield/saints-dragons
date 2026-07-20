@@ -13,8 +13,8 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         DragonMovementIntent.GroundPosition,
         DragonMovementIntent.ProgressiveGroundPosition,
         DragonMovementIntent.GroundTarget,
-        DragonMovementIntent.LandingPosition,
-        DragonMovementIntent.LandingTarget {
+        DragonMovementIntent.GroundTransitionPosition,
+        DragonMovementIntent.GroundTransitionTarget {
 
     void apply(RideableDragonBase dragon);
 
@@ -58,16 +58,16 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         return new GroundTarget(target, speed, running);
     }
 
-    static DragonMovementIntent landing(Vec3 target, double speed) {
-        return new LandingPosition(target, speed);
+    static DragonMovementIntent transitionToGround(Vec3 target, double speed) {
+        return new GroundTransitionPosition(target, speed);
     }
 
-    static DragonMovementIntent landing(LivingEntity target, double speed) {
-        return new LandingTarget(target, speed);
+    static DragonMovementIntent transitionToGround(LivingEntity target, double speed) {
+        return new GroundTransitionTarget(target, speed);
     }
 
-    static DragonMovementIntent landing(double speed) {
-        return new LandingTarget(null, speed);
+    static DragonMovementIntent transitionToGround(double speed) {
+        return new GroundTransitionTarget(null, speed);
     }
 
     enum None implements DragonMovementIntent {
@@ -136,17 +136,17 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         }
     }
 
-    record LandingPosition(Vec3 target, double speed) implements DragonMovementIntent {
+    record GroundTransitionPosition(Vec3 target, double speed) implements DragonMovementIntent {
         @Override
         public void apply(RideableDragonBase dragon) {
-            dragon.getAIMovement().trySetLandingWaypoint(target, speed);
+            dragon.getAIMovement().requestGroundTransition(target, speed);
         }
     }
 
-    record LandingTarget(LivingEntity target, double speed) implements DragonMovementIntent {
+    record GroundTransitionTarget(LivingEntity target, double speed) implements DragonMovementIntent {
         @Override
         public void apply(RideableDragonBase dragon) {
-            dragon.getAIMovement().trySetLandingWaypoint(target, speed);
+            dragon.getAIMovement().requestGroundTransition(target, speed);
         }
     }
 }

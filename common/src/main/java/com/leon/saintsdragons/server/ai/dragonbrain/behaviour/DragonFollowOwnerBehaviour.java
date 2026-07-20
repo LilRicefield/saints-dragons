@@ -111,7 +111,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             if (!dragon.getAIMovement().isPathing()) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.landing(owner, config.flightSpeed)
+                        DragonMovementIntent.transitionToGround(owner, config.flightSpeed)
                 );
             }
         } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
@@ -167,7 +167,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 && !dragon.isLanding()) {
             context.memories().set(
                     DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.landing(owner, config.flightSpeed)
+                    DragonMovementIntent.transitionToGround(owner, config.flightSpeed)
             );
             groundRepathCooldown = 0;
             return true;

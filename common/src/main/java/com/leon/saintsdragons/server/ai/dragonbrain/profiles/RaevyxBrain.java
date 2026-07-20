@@ -16,7 +16,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBeha
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.LandForGroundTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.LookAtAttackTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.MoveToGroundWalkTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
@@ -74,7 +73,6 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                 new GroundPursuitFlightTransitionBehaviour<>(
                                         GroundPursuitFlightSettings.standard()
                                 ),
-                                new LandForGroundTargetBehaviour<>(Raevyx.AI_AIR_COMBAT_SETTINGS.landingSpeed()),
                                 new RaevyxAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<Raevyx>(
                                         0.8F,
