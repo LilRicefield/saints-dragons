@@ -124,7 +124,7 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
         }
 
         phase = "approaching_food";
-        if (moveRefreshCooldown <= 0) {
+        if (moveRefreshCooldown <= 0 || !dragon.getAIMovement().isPathing()) {
             requestExistingMovement(context, foodTarget);
             moveRefreshCooldown = MOVE_REFRESH_INTERVAL;
         }

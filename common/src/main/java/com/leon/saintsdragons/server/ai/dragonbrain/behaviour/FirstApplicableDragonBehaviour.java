@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import org.jetbrains.annotations.Nullable;
@@ -23,8 +24,7 @@ public final class FirstApplicableDragonBehaviour<T extends DragonEntity> extend
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
-        if (context.memories().has(DragonMemories.INVESTIGATION_TARGET)
-                && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
+        if (controlReserved(context)) {
             return false;
         }
         long gameTime = context.gameTime();
@@ -39,12 +39,18 @@ public final class FirstApplicableDragonBehaviour<T extends DragonEntity> extend
 
     @Override
     protected boolean canContinue(DragonBrainContext<T> context) {
-        return running != null && running.getStatus() == Behavior.Status.RUNNING;
+        return !controlReserved(context)
+                && running != null
+                && running.getStatus() == Behavior.Status.RUNNING;
     }
 
     @Override
     protected void tick(DragonBrainContext<T> context) {
         if (running == null) {
+            return;
+        }
+        if (controlReserved(context)) {
+            relinquishControl(context);
             return;
         }
         running.tickOrStop(context.level(), context.dragon(), context.gameTime());
@@ -56,9 +62,26 @@ public final class FirstApplicableDragonBehaviour<T extends DragonEntity> extend
 
     @Override
     protected void stop(DragonBrainContext<T> context) {
-        if (running != null) {
-            running.doStop(context.level(), context.dragon(), context.gameTime());
-            running = null;
+        relinquishControl(context);
+    }
+
+    private boolean controlReserved(DragonBrainContext<T> context) {
+        return context.dragon().isHuntFoodPursuitActive()
+                || context.memories().has(DragonMemories.INVESTIGATION_TARGET)
+                && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
+    }
+
+    private void relinquishControl(DragonBrainContext<T> context) {
+        if (running == null) {
+            return;
+        }
+        DragonMovementIntent reservedIntent = context.dragon().isHuntFoodPursuitActive()
+                ? context.memories().get(DragonMemories.MOVEMENT_INTENT).orElse(null)
+                : null;
+        running.doStop(context.level(), context.dragon(), context.gameTime());
+        running = null;
+        if (reservedIntent != null) {
+            context.memories().set(DragonMemories.MOVEMENT_INTENT, reservedIntent);
         }
     }
 
