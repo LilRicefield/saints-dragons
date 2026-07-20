@@ -83,7 +83,8 @@ public final class DragonDestructionManager {
     private static int destroyTreeBlocks(ServerLevel level, DragonEntity dragon, Set<BlockPos> blocks) {
         int destroyed = 0;
         for (BlockPos pos : blocks) {
-            if (level.destroyBlock(pos, false, dragon)) {
+            if (!DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, pos)
+                    && level.destroyBlock(pos, false, dragon)) {
                 destroyed++;
             }
         }
@@ -100,9 +101,14 @@ public final class DragonDestructionManager {
             }
             BlockState state = level.getBlockState(pos);
             if (state.is(BlockTags.LOGS)) {
-                return pos.immutable();
+                if (!DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, pos)) {
+                    return pos.immutable();
+                }
+                continue;
             }
-            if (contactedLeaf == null && isNaturalTreeLeaf(state, 0)) {
+            if (contactedLeaf == null
+                    && isNaturalTreeLeaf(state, 0)
+                    && !DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, pos)) {
                 contactedLeaf = pos.immutable();
             }
         }
@@ -120,12 +126,17 @@ public final class DragonDestructionManager {
                     || !level.isLoaded(search.pos())) {
                 continue;
             }
-
             BlockState state = level.getBlockState(search.pos());
             if (state.is(BlockTags.LOGS)) {
-                return search.pos();
+                if (!DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, search.pos())) {
+                    return search.pos();
+                }
+                continue;
             }
             if (!state.is(BlockTags.LEAVES)) {
+                continue;
+            }
+            if (DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, search.pos())) {
                 continue;
             }
             for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
@@ -146,7 +157,12 @@ public final class DragonDestructionManager {
 
         while (!open.isEmpty() && logs.size() < MAX_TREE_LOGS) {
             BlockPos current = open.removeFirst();
-            if (!level.isLoaded(current) || !level.getBlockState(current).is(BlockTags.LOGS)) {
+            if (!level.isLoaded(current)) {
+                continue;
+            }
+            BlockState state = level.getBlockState(current);
+            if (!state.is(BlockTags.LOGS)
+                    || DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, current)) {
                 continue;
             }
             logs.add(current);
@@ -186,9 +202,11 @@ public final class DragonDestructionManager {
                     || !level.isLoaded(search.pos())) {
                 continue;
             }
-
             BlockState state = level.getBlockState(search.pos());
             if (!isNaturalTreeLeaf(state, search.distance())) {
+                continue;
+            }
+            if (DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, search.pos())) {
                 continue;
             }
             leaves.add(search.pos());
