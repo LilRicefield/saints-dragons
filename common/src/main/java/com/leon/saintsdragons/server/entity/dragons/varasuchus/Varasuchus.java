@@ -1918,6 +1918,14 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                 && canSleepAtRoost();
     }
 
+    @Override
+    public boolean wantsToReturnToSleepSite() {
+        return wantsToSleep()
+                || (!isTame()
+                        && hasRoostTerritory()
+                        && getSleepPreferences().canSleepDuringConditions(level()));
+    }
+
     private boolean canSleepAtRoost() {
         if (isTame()) {
             return true;

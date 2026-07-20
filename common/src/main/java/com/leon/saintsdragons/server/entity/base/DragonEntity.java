@@ -1511,6 +1511,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return sleepComponent != null && sleepComponent.wantsToSleep();
     }
 
+    public boolean wantsToReturnToSleepSite() {
+        return wantsToSleep();
+    }
+
     public String getSleepDecision() {
         return sleepComponent == null ? "unsupported" : sleepComponent.getLastDecision();
     }

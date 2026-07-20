@@ -25,6 +25,7 @@ import java.util.Set;
 
 public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private static final int SHORE_SEARCH_RADIUS = 32;
+    private static final int SHORE_SURFACE_ANCHOR_RADIUS = 8;
     private static final int SHORE_VERTICAL_SEARCH = 10;
     private static final int SHORE_SURFACE_SEARCH_UP = 32;
     private static final int MAX_SHORE_STEP = 2;
@@ -168,7 +169,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         return home != null
                 && home.dimension().equals(context.level().dimension())
                 && !dragon.isTame()
-                && dragon.wantsToSleep()
+                && dragon.wantsToReturnToSleepSite()
                 && dragon.isAlive()
                 && !dragon.isDying()
                 && !dragon.isVehicle()
@@ -240,11 +241,11 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
             double endpointRadius = Math.max(3.5D, dragon.getBbWidth() + 2.0D);
             if (!approachingShore
                     && (controller.hasReachedPathEnd()
-                            || (dragon.horizontalCollision && controller.isNearPathEnd(endpointRadius)))) {
+                            || controller.isNearPathEnd(endpointRadius))) {
                 approachingShore = true;
                 String reason = controller.hasReachedPathEnd()
                         ? "swim-path-end"
-                        : "collision-near-swim-end";
+                        : "near-swim-path-end";
                 controller.clear();
                 shoreTarget = null;
                 shoreRescanTicks = 0;
@@ -738,7 +739,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
     private ShoreTarget findShoreTarget(DragonBrainContext<T> context, BlockPos homePos) {
         T dragon = context.dragon();
         BlockPos searchOrigin = dragon.blockPosition();
-        BlockPos currentSurface = findSurfaceWater(context, searchOrigin, searchOrigin.getY());
+        BlockPos currentSurface = findNearbySurfaceWater(context, searchOrigin);
         if (currentSurface == null) {
             return null;
         }
@@ -786,6 +787,54 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
             }
             if (best != null) {
                 return best;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private BlockPos findNearbySurfaceWater(DragonBrainContext<T> context, BlockPos origin) {
+        BlockPos directSurface = findSurfaceWater(context, origin, origin.getY());
+        if (directSurface != null) {
+            return directSurface;
+        }
+
+        for (int radius = 1; radius <= SHORE_SURFACE_ANCHOR_RADIUS; radius++) {
+            for (int offset = -radius; offset <= radius; offset++) {
+                BlockPos north = findSurfaceWater(
+                        context,
+                        origin.offset(offset, 0, -radius),
+                        origin.getY()
+                );
+                if (north != null) {
+                    return north;
+                }
+                BlockPos south = findSurfaceWater(
+                        context,
+                        origin.offset(offset, 0, radius),
+                        origin.getY()
+                );
+                if (south != null) {
+                    return south;
+                }
+            }
+            for (int offset = -radius + 1; offset <= radius - 1; offset++) {
+                BlockPos west = findSurfaceWater(
+                        context,
+                        origin.offset(-radius, 0, offset),
+                        origin.getY()
+                );
+                if (west != null) {
+                    return west;
+                }
+                BlockPos east = findSurfaceWater(
+                        context,
+                        origin.offset(radius, 0, offset),
+                        origin.getY()
+                );
+                if (east != null) {
+                    return east;
+                }
             }
         }
         return null;
