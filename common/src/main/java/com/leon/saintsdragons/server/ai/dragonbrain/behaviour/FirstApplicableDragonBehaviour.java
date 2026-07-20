@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,10 @@ public final class FirstApplicableDragonBehaviour<T extends DragonEntity> extend
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
+        if (context.memories().has(DragonMemories.INVESTIGATION_TARGET)
+                && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
+            return false;
+        }
         long gameTime = context.gameTime();
         for (DragonBehaviour<T> behaviour : behaviours) {
             if (behaviour.tryStart(context.level(), context.dragon(), gameTime)) {

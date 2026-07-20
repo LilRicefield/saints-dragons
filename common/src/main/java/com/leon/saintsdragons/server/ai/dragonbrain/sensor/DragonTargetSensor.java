@@ -28,11 +28,18 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
     protected void scan(DragonBrainContext<T> context) {
         LivingEntity target = context.dragon().getTarget();
         if (!isValidTarget(context.dragon(), target)) {
+            boolean hadTarget = target != null || context.memories().has(DragonMemories.ATTACK_TARGET);
             if (target != null) {
                 context.dragon().setTarget(null);
             }
+            if (hadTarget) {
+                context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+            }
             context.memories().erase(DragonMemories.ATTACK_TARGET);
             context.memories().erase(DragonMemories.TARGET_AIRBORNE);
+            context.memories().erase(DragonMemories.TARGET_VISIBLE);
+            context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
+            context.memories().erase(DragonMemories.HEARD_TARGET);
             return;
         }
 
@@ -58,6 +65,13 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
 
     @Override
     protected Set<MemoryModuleType<?>> memoriesUsed() {
-        return Set.of(DragonMemories.ATTACK_TARGET, DragonMemories.TARGET_AIRBORNE);
+        return Set.of(
+                DragonMemories.ATTACK_TARGET,
+                DragonMemories.TARGET_AIRBORNE,
+                DragonMemories.TARGET_VISIBLE,
+                DragonMemories.LAST_SEEN_TARGET,
+                DragonMemories.INVESTIGATION_TARGET,
+                DragonMemories.HEARD_TARGET
+        );
     }
 }

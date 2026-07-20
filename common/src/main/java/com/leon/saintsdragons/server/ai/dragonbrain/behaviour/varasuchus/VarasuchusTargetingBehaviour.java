@@ -27,10 +27,12 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
     private int lastOwnerHurtTimestamp;
     private int lastOwnerAttackTimestamp;
     private int lastSelfHurtTimestamp;
+    private int roostPollCooldown;
     private int playerPollCooldown;
     private int raidPollCooldown;
     private int huntPollCooldown;
     private boolean protectingBabies;
+    private boolean defendingRoost;
 
     @Nullable
     @Override
@@ -46,6 +48,10 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
                     && isUsableTarget(dragon, attacker)) {
                 lastSelfHurtTimestamp = hurtTimestamp;
                 return choice(attacker, Source.RETALIATION);
+            }
+            Player intruder = pollRoostIntruder(context.level(), dragon);
+            if (intruder != null) {
+                return choice(intruder, Source.ROOST_DEFENSE);
             }
             return null;
         }
@@ -74,7 +80,6 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
             if (threat != null) {
                 return choice(threat, Source.PROTECT_BABY);
             }
-            return null;
         }
 
         LivingEntity attacker = dragon.getLastHurtByMob();
@@ -82,6 +87,14 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
         if (hurtTimestamp != lastSelfHurtTimestamp && isUsableTarget(dragon, attacker)) {
             lastSelfHurtTimestamp = hurtTimestamp;
             return choice(attacker, Source.RETALIATION);
+        }
+
+        Player intruder = pollRoostIntruder(context.level(), dragon);
+        if (intruder != null) {
+            return choice(intruder, Source.ROOST_DEFENSE);
+        }
+        if (protectingBabies) {
+            return null;
         }
 
         if (playerPollCooldown-- <= 0) {
@@ -146,7 +159,16 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
                 && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {
             return false;
         }
+        if (Source.ROOST_DEFENSE.debugName.equals(source)
+                && (!dragon.isWildAggressionEnabled()
+                || !(target instanceof Player player)
+                || player.isCreative()
+                || player.isSpectator()
+                || !dragon.isInsideRoostStructure(target.position()))) {
+            return false;
+        }
         if (dragon.shouldSuspendRoostWandering()
+                && !Source.ROOST_DEFENSE.debugName.equals(source)
                 && (!Source.RETALIATION.debugName.equals(source)
                 || !isRecentAttacker(dragon, target, dragon.getLastHurtByMobTimestamp()))) {
             return false;
@@ -163,7 +185,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
 
     @Override
     protected boolean suppressesTargetRetention(DragonBrainContext<Varasuchus> context) {
-        return protectingBabies;
+        return protectingBabies && !defendingRoost;
     }
 
     @Override
@@ -185,6 +207,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
                                  LivingEntity newTarget,
                                  String oldSource,
                                  String newSource) {
+        defendingRoost = Source.ROOST_DEFENSE.debugName.equals(newSource);
         if (Source.HUNT.debugName.equals(oldSource)
                 && (oldTarget != newTarget || !Source.HUNT.debugName.equals(newSource))) {
             dragon.clearPassiveHuntTarget();
@@ -199,6 +222,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
     protected void targetCleared(Varasuchus dragon,
                                  @Nullable LivingEntity oldTarget,
                                  String oldSource) {
+        defendingRoost = false;
         if (Source.HUNT.debugName.equals(oldSource)) {
             dragon.clearPassiveHuntTarget();
         }
@@ -207,7 +231,10 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
 
     @Override
     protected Map<String, String> additionalDebugDetails() {
-        return Map.of("protecting_babies", Boolean.toString(protectingBabies));
+        return Map.of(
+                "protecting_babies", Boolean.toString(protectingBabies),
+                "defending_roost", Boolean.toString(defendingRoost)
+        );
     }
 
     private List<Varasuchus> protectableBabies(Varasuchus dragon) {
@@ -274,6 +301,20 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
     }
 
     @Nullable
+    private Player pollRoostIntruder(ServerLevel level, Varasuchus dragon) {
+        if (roostPollCooldown-- > 0
+                || !dragon.isWildAggressionEnabled()
+                || !dragon.hasRoostTerritory()) {
+            return null;
+        }
+        roostPollCooldown = 10;
+        return nearest(level, dragon, Player.class,
+                candidate -> !candidate.isCreative()
+                        && !candidate.isSpectator()
+                        && dragon.isInsideRoostStructure(candidate.position()));
+    }
+
+    @Nullable
     private <E extends LivingEntity> E nearest(ServerLevel level,
                                                 Varasuchus dragon,
                                                 Class<E> type,
@@ -295,9 +336,10 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
         OWNER_ATTACKED("owner_attacked", 1),
         PROTECT_BABY("protect_baby", 2),
         RETALIATION("retaliation", 3),
-        NEARBY_BABY_PLAYER("nearby_baby_player", 4),
-        RAID_DEFENSE("raid_defense", 5),
-        HUNT("hunt", 6);
+        ROOST_DEFENSE("roost_defense", 4),
+        NEARBY_BABY_PLAYER("nearby_baby_player", 5),
+        RAID_DEFENSE("raid_defense", 6),
+        HUNT("hunt", 7);
 
         private final String debugName;
         private final int priority;

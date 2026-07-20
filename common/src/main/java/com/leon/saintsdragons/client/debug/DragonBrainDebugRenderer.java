@@ -24,6 +24,10 @@ public final class DragonBrainDebugRenderer {
     private static final Color LOOK_TARGET = new Color(0.25F, 1.0F, 0.95F);
     private static final Color MOVEMENT_INTENT = new Color(1.0F, 0.2F, 0.9F);
     private static final Color HOME = new Color(0.35F, 1.0F, 0.35F);
+    private static final Color LAST_SEEN_TARGET = new Color(1.0F, 0.45F, 0.2F);
+    private static final Color INVESTIGATION_TARGET = new Color(0.95F, 0.35F, 1.0F);
+    private static final Color HEARD_STIMULUS = new Color(1.0F, 0.95F, 0.3F);
+    private static final Color HEARD_TARGET = new Color(0.4F, 1.0F, 0.55F);
     private static final Color OTHER = new Color(0.75F, 0.65F, 1.0F);
 
     private DragonBrainDebugRenderer() {
@@ -83,6 +87,10 @@ public final class DragonBrainDebugRenderer {
             case "LOOK_TARGET" -> LOOK_TARGET;
             case "MOVEMENT_INTENT", "TACTICAL_LANDING" -> MOVEMENT_INTENT;
             case "HOME", "ROOST_SLEEP" -> HOME;
+            case "LAST_SEEN_TARGET" -> LAST_SEEN_TARGET;
+            case "INVESTIGATION_TARGET" -> INVESTIGATION_TARGET;
+            case "HEARD_STIMULUS" -> HEARD_STIMULUS;
+            case "HEARD_TARGET" -> HEARD_TARGET;
             default -> OTHER;
         };
     }

@@ -108,7 +108,7 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
         }
         Volitans dragon = getUser();
         if (section.sectionType == STARTUP) {
-            dragon.triggerAnim(VolitansAnimationHandler.FAST_ACTION_CONTROLLER, "enter_burrow");
+            dragon.triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "enter_burrow");
             playEnterBurrowSound(dragon);
             dragon.setBurrowing(false);
             exitRequested = false;

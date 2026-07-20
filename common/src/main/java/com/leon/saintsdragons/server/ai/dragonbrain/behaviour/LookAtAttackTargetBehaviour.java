@@ -21,21 +21,29 @@ public class LookAtAttackTargetBehaviour<T extends DragonEntity> extends DragonB
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
-        return context.memories().has(DragonMemories.ATTACK_TARGET);
+        return hasVisibleTarget(context);
     }
 
     @Override
     protected boolean canContinue(DragonBrainContext<T> context) {
-        return context.memories().get(DragonMemories.ATTACK_TARGET)
-                .filter(context.dragon()::isTargetValid)
-                .isPresent();
+        return hasVisibleTarget(context);
     }
 
     @Override
     protected void tick(DragonBrainContext<T> context) {
+        if (!context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
+            return;
+        }
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (target != null) {
             context.dragon().getLookControl().setLookAt(target, yawSpeed, pitchSpeed);
         }
+    }
+
+    private boolean hasVisibleTarget(DragonBrainContext<T> context) {
+        return context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)
+                && context.memories().get(DragonMemories.ATTACK_TARGET)
+                .filter(context.dragon()::isTargetValid)
+                .isPresent();
     }
 }

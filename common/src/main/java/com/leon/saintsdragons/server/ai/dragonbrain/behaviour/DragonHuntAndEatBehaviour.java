@@ -279,6 +279,10 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
         T dragon = context.dragon();
         context.memories().erase(DragonMemories.ATTACK_TARGET);
         context.memories().erase(DragonMemories.TARGET_AIRBORNE);
+        context.memories().erase(DragonMemories.TARGET_VISIBLE);
+        context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
+        context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+        context.memories().erase(DragonMemories.HEARD_TARGET);
         if (dragon.getTarget() == target) {
             dragon.setTarget(null);
         }

@@ -1,13 +1,24 @@
 package com.leon.saintsdragons.server.entity.component;
 
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
 public final class DragonSleepComponent {
     private static final int RECENT_COMBAT_SLEEP_BLOCK_TICKS = 20 * 30;
+    private static final float MAX_SLEEP_PRESSURE = 100.0F;
+    private static final float READY_SLEEP_PRESSURE = 65.0F;
+    private static final float CRITICAL_SLEEP_PRESSURE = 92.0F;
+    private static final float RESTED_SLEEP_PRESSURE = 15.0F;
+    private static final int SOUND_ALERT_TICKS = 20 * 20;
+    private static final float AWAKE_PRESSURE_PER_TICK = MAX_SLEEP_PRESSURE / (20.0F * 60.0F * 15.0F);
+    private static final float REST_PRESSURE_PER_TICK = MAX_SLEEP_PRESSURE / (20.0F * 60.0F * 6.0F);
     private final DragonEntity dragon;
     private final EntityDataAccessor<Boolean> dataSleeping;
     private final EntityDataAccessor<Boolean> dataSleepingEntering;
@@ -25,6 +36,8 @@ public final class DragonSleepComponent {
     private int sleepAmbientCooldownTicks = 0;
     private int sleepReentryCooldownTicks = 0;
     private int sleepActionCooldown = 0;
+    private float sleepPressure;
+    private String lastDecision = "initializing";
     private SleepPhase currentPhase = SleepPhase.IDLE;
 
     public DragonSleepComponent(DragonEntity dragon,
@@ -37,15 +50,66 @@ public final class DragonSleepComponent {
         this.dataSleepingExiting = dataSleepingExiting;
         if (shouldSleepBasedOnConditions()) {
             delaySleep(60, 80);
+            sleepPressure = READY_SLEEP_PRESSURE + dragon.getRandom().nextFloat() * 10.0F;
         } else {
             delaySleep(100, 300);
+            sleepPressure = dragon.getRandom().nextFloat() * 20.0F;
         }
     }
 
     public void tick() {
-        tickSleepDecisions();
+        if (!dragon.usesBrainSleepBehaviour()) {
+            tickSleepDecisions(false);
+        }
         tickSleepTransitions();
         tickSleepCooldowns();
+    }
+
+    public void tickBrainDecisions() {
+        if (dragon.level().isClientSide || !dragon.usesBrainSleepBehaviour()) {
+            return;
+        }
+        if (!dragon.supportsSleep()) {
+            lastDecision = "unsupported";
+            publishBrainState(false);
+            return;
+        }
+
+        updateSleepPressure();
+        if (!handleRememberedSound()) {
+            tickSleepDecisions(true);
+        }
+        publishBrainState(dragon.isSleeping()
+                || dragon.isSleepingEntering()
+                || wantsToSleep());
+    }
+
+    public float getSleepPressure() {
+        return sleepPressure;
+    }
+
+    public boolean wantsToSleep() {
+        if (!dragon.supportsSleep()) {
+            return false;
+        }
+        if (dragon.isTame()) {
+            return shouldFollowOwnerSleepNow();
+        }
+        if (dragon.isSleepSuppressed()) {
+            return false;
+        }
+        if (!dragon.usesBrainSleepBehaviour()) {
+            return dragon.getSleepPreferences().canSleepDuringConditions(dragon.level());
+        }
+        if (sleepPressure < adjustedSleepThreshold()) {
+            return false;
+        }
+        return dragon.getSleepPreferences().canSleepDuringConditions(dragon.level())
+                || sleepPressure >= CRITICAL_SLEEP_PRESSURE;
+    }
+
+    public String getLastDecision() {
+        return lastDecision;
     }
 
     public boolean isSleeping() {
@@ -90,7 +154,7 @@ public final class DragonSleepComponent {
         sleepReentryCooldownTicks = 0;
     }
 
-    private void tickSleepDecisions() {
+    private void tickSleepDecisions(boolean useSleepPressure) {
         if (dragon.level().isClientSide) {
             return;
         }
@@ -118,25 +182,33 @@ public final class DragonSleepComponent {
             handleTamedDragonSleep();
         }
 
-        if (currentPhase == SleepPhase.IDLE && shouldAttemptSleep()) {
+        if (currentPhase == SleepPhase.IDLE && shouldAttemptSleep(useSleepPressure)) {
             if (tryStartSleeping()) {
                 currentPhase = SleepPhase.ENTERING;
+                lastDecision = "entering-sleep";
             }
         } else if (currentPhase == SleepPhase.SLEEPING) {
-            boolean shouldWake = shouldWakeUp();
+            boolean shouldWake = shouldWakeUp(useSleepPressure);
             if (shouldWake && tryWakeUp()) {
                 currentPhase = SleepPhase.EXITING;
+                lastDecision = "waking";
+            } else {
+                lastDecision = "sleeping";
             }
+        } else if (currentPhase == SleepPhase.ENTERING) {
+            lastDecision = "entering-sleep";
+        } else if (currentPhase == SleepPhase.EXITING) {
+            lastDecision = "waking";
+        } else {
+            lastDecision = explainSleepBlock(useSleepPressure);
         }
     }
 
     private void updatePhase() {
         if (dragon.isSleepTransitioning()) {
-            if (dragon.isSleeping()) {
-                if (currentPhase != SleepPhase.EXITING) {
-                    currentPhase = SleepPhase.EXITING;
-                }
-            } else if (currentPhase != SleepPhase.ENTERING) {
+            if (dragon.isSleepingExiting()) {
+                currentPhase = SleepPhase.EXITING;
+            } else if (dragon.isSleepingEntering()) {
                 currentPhase = SleepPhase.ENTERING;
             }
         } else if (dragon.isSleeping()) {
@@ -184,7 +256,7 @@ public final class DragonSleepComponent {
                 && isOwnerSleeping();
     }
 
-    private boolean shouldAttemptSleep() {
+    private boolean shouldAttemptSleep(boolean useSleepPressure) {
         if (!dragon.supportsSleep()) {
             return false;
         }
@@ -204,16 +276,12 @@ public final class DragonSleepComponent {
         if (dragon.isTame()) {
             return shouldFollowOwnerSleepNow();
         }
-
-        DragonEntity.DragonSleepPreferences prefs = dragon.getSleepPreferences();
-        if (!prefs.canSleepDuringConditions(dragon.level())) {
-            return false;
-        }
-
-        return true;
+        return useSleepPressure
+                ? wantsToSleep()
+                : dragon.getSleepPreferences().canSleepDuringConditions(dragon.level());
     }
 
-    private boolean shouldWakeUp() {
+    private boolean shouldWakeUp(boolean useSleepPressure) {
         if (!dragon.supportsSleep()) return false;
         if (!dragon.isSleeping()) return false;
         if (!dragon.canSleepNow()) return true;
@@ -224,9 +292,164 @@ public final class DragonSleepComponent {
         }
 
         DragonEntity.DragonSleepPreferences prefs = dragon.getSleepPreferences();
-        if (!prefs.canSleepDuringConditions(dragon.level())) return true;
+        if (useSleepPressure) {
+            if (sleepPressure <= RESTED_SLEEP_PRESSURE) return true;
+            if (!prefs.canSleepDuringConditions(dragon.level())
+                    && sleepPressure < CRITICAL_SLEEP_PRESSURE) return true;
+        } else if (!prefs.canSleepDuringConditions(dragon.level())) {
+            return true;
+        }
 
         return false;
+    }
+
+    private float adjustedSleepThreshold() {
+        float threshold = READY_SLEEP_PRESSURE;
+        if (dragon.getHunger() < 35) {
+            threshold += 15.0F;
+        }
+        float healthRatio = dragon.getMaxHealth() <= 0.0F
+                ? 1.0F
+                : dragon.getHealth() / dragon.getMaxHealth();
+        if (healthRatio < 0.35F) {
+            threshold -= 10.0F;
+        }
+        return Math.max(45.0F, Math.min(CRITICAL_SLEEP_PRESSURE, threshold));
+    }
+
+    private void updateSleepPressure() {
+        if (dragon.isSleeping() || dragon.isSleepingEntering()) {
+            sleepPressure = Math.max(0.0F, sleepPressure - REST_PRESSURE_PER_TICK);
+            return;
+        }
+        if (dragon.isSleepingExiting()) {
+            return;
+        }
+
+        float rate = AWAKE_PRESSURE_PER_TICK;
+        if (dragon.getSleepPreferences().canSleepDuringConditions(dragon.level())) {
+            rate *= 2.0F;
+        }
+        float healthRatio = dragon.getMaxHealth() <= 0.0F
+                ? 1.0F
+                : dragon.getHealth() / dragon.getMaxHealth();
+        if (healthRatio < 0.5F) {
+            rate *= 1.0F + (0.5F - healthRatio);
+        }
+        if (dragon.getHunger() < 35) {
+            rate *= 0.5F;
+        }
+        sleepPressure = Math.min(MAX_SLEEP_PRESSURE, sleepPressure + rate);
+    }
+
+    private boolean handleRememberedSound() {
+        DragonSensoryObservation sound = dragon.getBrain()
+                .getMemory(DragonMemories.HEARD_STIMULUS)
+                .orElse(null);
+        Entity source = resolveSoundSource(sound);
+        if (sound == null || !shouldWakeForSound(sound, source)) {
+            return false;
+        }
+
+        dragon.getBrain().eraseMemory(DragonMemories.HEARD_STIMULUS);
+        rememberAggressiveWakeTarget(source);
+        suppressSleep(SOUND_ALERT_TICKS);
+
+        if (dragon.isSleepingExiting()) {
+            lastDecision = "alerted-during-wake";
+            return false;
+        }
+        if (!dragon.isSleeping() && !dragon.isSleepingEntering()) {
+            lastDecision = "alerted-by-" + sound.kind().name().toLowerCase(java.util.Locale.ROOT);
+            return false;
+        }
+
+        sleepActionCooldown = 0;
+        if (tryWakeUp()) {
+            currentPhase = SleepPhase.EXITING;
+            lastDecision = "waking-from-" + sound.kind().name().toLowerCase(java.util.Locale.ROOT);
+            return true;
+        }
+        return false;
+    }
+
+    private Entity resolveSoundSource(DragonSensoryObservation sound) {
+        if (sound == null
+                || sound.sourceUuid() == null
+                || !(dragon.level() instanceof ServerLevel level)) {
+            return null;
+        }
+        return level.getEntity(sound.sourceUuid());
+    }
+
+    private boolean shouldWakeForSound(DragonSensoryObservation sound, Entity source) {
+        if (source == dragon.getOwner()) {
+            return false;
+        }
+
+        boolean dangerous = switch (sound.kind()) {
+            case EXPLOSION, COMBAT, PROJECTILE, ROAR -> true;
+            default -> false;
+        };
+        if (!(source instanceof Player player)) {
+            return dangerous && sound.confidence() >= 0.12F;
+        }
+        if (player.isCreative() || player.isSpectator()) {
+            return false;
+        }
+        if (dragon.isTame()) {
+            return dangerous && sound.confidence() >= 0.18F;
+        }
+        if (!dragon.isWildAggressionEnabled()) {
+            return dangerous && sound.confidence() >= 0.18F;
+        }
+
+        float threshold = switch (sound.kind()) {
+            case SPLASH -> dragon.isInWaterOrBubble() ? 0.09F : 0.16F;
+            case STEP -> 0.16F;
+            case BLOCK, TELEPORT -> 0.14F;
+            default -> 0.10F;
+        };
+        return sound.confidence() >= threshold
+                && dragon.position().distanceToSqr(sound.position()) <= 24.0D * 24.0D;
+    }
+
+    private void rememberAggressiveWakeTarget(Entity source) {
+        if (!(source instanceof Player player)
+                || player.isCreative()
+                || player.isSpectator()
+                || dragon.isTame()
+                || !dragon.isWildAggressionEnabled()
+                || !dragon.isTargetValid(player)
+                || !dragon.canTarget(player)) {
+            return;
+        }
+        dragon.getBrain().setMemoryWithExpiry(
+                DragonMemories.WAKE_TARGET,
+                player,
+                SOUND_ALERT_TICKS
+        );
+    }
+
+    private String explainSleepBlock(boolean useSleepPressure) {
+        if (!dragon.supportsSleep()) return "unsupported";
+        if (dragon.isSleeping()) return "sleeping";
+        if (dragon.isSleepTransitioning()) return "transitioning";
+        if (sleepActionCooldown > 0) return "cooldown";
+        if (!dragon.canSleepNow()) return "species-rule";
+        if (!canSleepInCurrentEnvironment()) return "unsafe-or-unsettled";
+        if (dragon.isTame() && !shouldFollowOwnerSleepNow()) return "owner-awake";
+        if (useSleepPressure && sleepPressure < adjustedSleepThreshold()) return "pressure-low";
+        if (!dragon.getSleepPreferences().canSleepDuringConditions(dragon.level())
+                && (!useSleepPressure || sleepPressure < CRITICAL_SLEEP_PRESSURE)) {
+            return "circadian-awake";
+        }
+        return "ready";
+    }
+
+    private void publishBrainState(boolean intent) {
+        dragon.getBrain().setMemory(DragonMemories.SLEEP_PRESSURE, sleepPressure);
+        dragon.getBrain().setMemory(DragonMemories.SLEEP_INTENT, intent);
     }
 
     private boolean canSleepInCurrentEnvironment() {
@@ -267,9 +490,9 @@ public final class DragonSleepComponent {
     }
 
     public boolean tryWakeUp() {
-        if (sleepActionCooldown > 0) return false;
         if (!dragon.supportsSleep()) return false;
-        if (!dragon.isSleeping() && !dragon.isSleepTransitioning()) return false;
+        if (dragon.isSleepingExiting()) return false;
+        if (!dragon.isSleeping() && !dragon.isSleepingEntering()) return false;
         dragon.startSleepExit();
         delaySleep(20, 40);
         return true;
@@ -391,12 +614,16 @@ public final class DragonSleepComponent {
     }
 
     public void saveToNBT(CompoundTag tag) {
+        tag.putFloat("SleepPressure", sleepPressure);
         if (sleepCommandSnapshot >= 0) {
             tag.putInt("SleepCommandSnapshot", sleepCommandSnapshot);
         }
     }
 
     public void loadFromNBT(CompoundTag tag) {
+        if (tag.contains("SleepPressure")) {
+            sleepPressure = Math.max(0.0F, Math.min(MAX_SLEEP_PRESSURE, tag.getFloat("SleepPressure")));
+        }
         sleepCommandSnapshot = tag.contains("SleepCommandSnapshot") ? tag.getInt("SleepCommandSnapshot") : -1;
 
         sleepTransitionTicks = 0;

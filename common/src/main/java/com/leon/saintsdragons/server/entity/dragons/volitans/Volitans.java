@@ -2542,6 +2542,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 || activeAbilityBlocksTakeoff;
     }
 
+    @Override
     public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
@@ -2731,8 +2732,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean shouldSeekUnderwaterSleepDepth() {
         return !isTame()
-                && supportsSleep()
-                && getSleepPreferences().canSleepDuringConditions(level())
+                && wantsToSleep()
                 && !isSleeping()
                 && !isSleepTransitioning()
                 && !isSleepSuppressed()

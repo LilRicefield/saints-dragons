@@ -26,6 +26,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.varasuchus.Varasuc
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.sensing.Sensor;
 import net.minecraft.world.entity.ai.sensing.SensorType;
@@ -55,7 +56,16 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
 
         boolean wantsSleep = wantsRoostSleep(dragon);
         boolean defendingAgainstRecentAttacker = wantsSleep && isRecentAttacker(dragon, target);
-        if (target != null && wantsSleep && !defendingAgainstRecentAttacker) {
+        boolean defendingRoostIntruder = wantsSleep
+                && dragon.isWildAggressionEnabled()
+                && target instanceof Player player
+                && !player.isCreative()
+                && !player.isSpectator()
+                && dragon.isInsideRoostStructure(player.position());
+        if (target != null
+                && wantsSleep
+                && !defendingAgainstRecentAttacker
+                && !defendingRoostIntruder) {
             clearAttackTarget(brain, dragon);
             target = null;
         }
@@ -65,7 +75,8 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
             return;
         }
 
-        if ((defendingAgainstRecentAttacker || !wantsSleep) && canFight(dragon)) {
+        if ((defendingAgainstRecentAttacker || defendingRoostIntruder || !wantsSleep)
+                && canFight(dragon)) {
             brain.setActiveActivityIfPossible(Activity.FIGHT);
         } else {
             brain.useDefaultActivity();
@@ -175,8 +186,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
 
     private boolean wantsRoostSleep(Varasuchus dragon) {
         return dragon.hasRoostTerritory()
-                && dragon.supportsSleep()
-                && dragon.getSleepPreferences().canSleepDuringConditions(dragon.level())
+                && dragon.wantsToSleep()
                 && dragon.isAlive()
                 && !dragon.isDying()
                 && !dragon.isVehicle()
@@ -226,6 +236,10 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
 
     private static void clearAttackTarget(Brain<Varasuchus> brain, Varasuchus dragon) {
         brain.eraseMemory(DragonMemories.ATTACK_TARGET);
+        brain.eraseMemory(DragonMemories.TARGET_VISIBLE);
+        brain.eraseMemory(DragonMemories.LAST_SEEN_TARGET);
+        brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
+        brain.eraseMemory(DragonMemories.HEARD_TARGET);
         if (dragon.getTarget() != null) {
             dragon.setTarget(null);
         }

@@ -5,6 +5,8 @@ import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
@@ -19,6 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -142,11 +145,11 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} "
+                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} wildAggressive={} "
                         + "onGround={} verticalCollision={} velocity={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
-                        + "coordination={} activity={} behaviours={}",
+                        + "perception={} coordination={} activity={} behaviours={}",
                 player.getGameProfile().getName(),
                 dragon.getId(),
                 dragon.blockPosition(),
@@ -170,6 +173,8 @@ public final class DragonPathDebugTracker {
                 dragon.getHunger(),
                 DragonEntity.HUNGER_MAX,
                 dragon.isHuntFoodPursuitActive(),
+                logState.sleep,
+                dragon.isWildAggressionEnabled(),
                 dragon.onGround(),
                 dragon.verticalCollision,
                 dragon.getDeltaMovement(),
@@ -182,6 +187,7 @@ public final class DragonPathDebugTracker {
                 snapshot.searchOpenNodeCount(),
                 snapshot.searchCandidateNodeCount(),
                 snapshot.searchDurationMicros(),
+                logState.perception,
                 logState.coordination,
                 logState.activity,
                 logState.behaviours
@@ -298,6 +304,42 @@ public final class DragonPathDebugTracker {
                 .toList();
     }
 
+    private static String perceptionSummary(DragonEntity dragon) {
+        if (!dragon.getBrain().checkMemory(DragonMemories.TARGET_VISIBLE, MemoryStatus.REGISTERED)) {
+            return "disabled";
+        }
+        String visible = dragon.getBrain().getMemory(DragonMemories.TARGET_VISIBLE)
+                .map(Object::toString)
+                .orElse("none");
+        String lastSeen = dragon.getBrain().getMemory(DragonMemories.LAST_SEEN_TARGET)
+                .map(observation -> observationSummary(dragon, observation))
+                .orElse("none");
+        String investigation = dragon.getBrain().getMemory(DragonMemories.INVESTIGATION_TARGET)
+                .map(observation -> observationSummary(dragon, observation))
+                .orElse("none");
+        String heard = dragon.getBrain().getMemory(DragonMemories.HEARD_STIMULUS)
+                .map(observation -> observationSummary(dragon, observation))
+                .orElse("none");
+        String heardTarget = dragon.getBrain().getMemory(DragonMemories.HEARD_TARGET)
+                .map(observation -> observationSummary(dragon, observation))
+                .orElse("none");
+        String wakeTarget = dragon.getBrain().getMemory(DragonMemories.WAKE_TARGET)
+                .map(target -> target.getId() + "@" + target.blockPosition().toShortString())
+                .orElse("none");
+        return "visible=" + visible + ",last=" + lastSeen + ",investigate=" + investigation
+                + ",heard=" + heard + ",targetHeard=" + heardTarget
+                + ",wakeTarget=" + wakeTarget;
+    }
+
+    private static String observationSummary(DragonEntity dragon,
+                                             DragonSensoryObservation observation) {
+        return observation.kind().name()
+                + "@" + BlockPos.containing(observation.position()).toShortString()
+                + "(" + String.format(java.util.Locale.ROOT, "%.2f", observation.confidence())
+                + ",age=" + Math.max(0L, dragon.level().getGameTime() - observation.observedAt())
+                + "t)";
+    }
+
     private static void refreshActiveSearchDebug() {
         HashSet<UUID> dragonIds = new HashSet<>();
         for (TrackingEntry entry : TRACKED_DRAGONS.values()) {
@@ -343,6 +385,8 @@ public final class DragonPathDebugTracker {
                             boolean verticalCollision,
                             boolean navigationDone,
                             boolean navigationStuck,
+                            String sleep,
+                            String perception,
                             String coordination,
                             String activity,
                             List<String> behaviours) {
@@ -379,10 +423,21 @@ public final class DragonPathDebugTracker {
                     dragon.verticalCollision,
                     dragon.getNavigation().isDone(),
                     dragon.getNavigation().isStuck(),
+                    sleepSummary(dragon),
+                    perceptionSummary(dragon),
                     coordination,
                     activity,
                     runningBehaviours(dragon)
             );
         }
+    }
+
+    private static String sleepSummary(DragonEntity dragon) {
+        if (!dragon.getBrain().checkMemory(DragonMemories.SLEEP_PRESSURE, MemoryStatus.REGISTERED)) {
+            return "legacy";
+        }
+        int pressure = Math.round(dragon.getBrain().getMemory(DragonMemories.SLEEP_PRESSURE).orElse(0.0F));
+        boolean intent = dragon.getBrain().getMemory(DragonMemories.SLEEP_INTENT).orElse(false);
+        return pressure + "/100,intent=" + intent + ",decision=" + dragon.getSleepDecision();
     }
 }

@@ -120,6 +120,7 @@ public final class VolitansAnimationHandler {
         controller.triggerableAnim("poison_ball_ready", POISON_BALL_READY);
         controller.triggerableAnim("poison_ball_hold", POISON_BALL_HOLD);
         controller.triggerableAnim("poison_ball_shoot", POISON_BALL_SHOOT);
+        controller.triggerableAnim("enter_burrow", ENTER_BURROW);
         controller.triggerableAnim("burrow_idle", BURROW_IDLE);
         controller.triggerableAnim("burrow_move", BURROW_MOVE);
         controller.triggerableAnim("burrow_exit", BURROW_EXIT);
@@ -127,7 +128,6 @@ public final class VolitansAnimationHandler {
 
     public void setupFastActionController(AnimationController<Volitans> controller) {
         controller.triggerableAnim("bite", BITE);
-        controller.triggerableAnim("enter_burrow", ENTER_BURROW);
         controller.triggerableAnim("roar_air_water", ROAR_AIR_WATER);
     }
 

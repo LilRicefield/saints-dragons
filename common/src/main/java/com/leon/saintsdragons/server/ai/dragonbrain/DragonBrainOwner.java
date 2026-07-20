@@ -4,7 +4,12 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPerceptionBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSleepBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -48,12 +53,21 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         for (DragonBehaviourGroup<T> group : getDragonBrainBehaviourGroups()) {
             ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super T>>> behaviours = ImmutableList.builder();
             int priority = group.activity() == Activity.CORE ? 0 : 10;
-            for (DragonBehaviour<T> behaviour : group.behaviours()) {
+            List<DragonBehaviour<T>> configuredBehaviours = new ArrayList<>();
+            if (group.activity() == Activity.IDLE) {
+                configuredBehaviours.add(new DragonInvestigateTargetBehaviour<>());
+            }
+            configuredBehaviours.addAll(group.behaviours());
+            if (group.activity() == Activity.CORE) {
+                configuredBehaviours.add(new DragonPerceptionBehaviour<>());
+                configuredBehaviours.add(new DragonSleepBehaviour<>());
+            }
+            for (DragonBehaviour<T> behaviour : configuredBehaviours) {
                 behaviour.bindActivity(group.activity(), priority);
                 behaviours.add(Pair.of(priority++, behaviour));
                 @SuppressWarnings("unchecked")
-                BehaviorControl<? super net.minecraft.world.entity.LivingEntity> debugBehaviour =
-                        (BehaviorControl<? super net.minecraft.world.entity.LivingEntity>)(BehaviorControl<?>)behaviour;
+                BehaviorControl<? super LivingEntity> debugBehaviour =
+                        (BehaviorControl<? super LivingEntity>)(BehaviorControl<?>)behaviour;
                 registeredBehaviours.add(new DragonBrainDiagnostics.RegisteredBehaviour(
                         group.activity(), priority - 1, debugBehaviour));
             }
@@ -78,7 +92,13 @@ public interface DragonBrainOwner<T extends DragonEntity> {
     default void tickBrain(ServerLevel level, T dragon) {
         @SuppressWarnings("unchecked")
         Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
+        DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
         updateActivity(brain, dragon);
+        if (brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
+                && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
+                && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)) {
+            brain.setActiveActivityIfPossible(Activity.IDLE);
+        }
         brain.tick(level, dragon);
     }
 

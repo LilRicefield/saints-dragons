@@ -52,6 +52,10 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
         if (target != null && (!dragon.isTargetValid(target) || !withinAggroRange(dragon, target))) {
             dragon.setTarget(null);
             brain.eraseMemory(DragonMemories.ATTACK_TARGET);
+            brain.eraseMemory(DragonMemories.TARGET_VISIBLE);
+            brain.eraseMemory(DragonMemories.LAST_SEEN_TARGET);
+            brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
+            brain.eraseMemory(DragonMemories.HEARD_TARGET);
         }
         brain.useDefaultActivity();
     }

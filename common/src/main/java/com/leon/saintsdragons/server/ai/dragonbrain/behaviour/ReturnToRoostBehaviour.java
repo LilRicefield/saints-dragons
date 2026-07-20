@@ -168,8 +168,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         return home != null
                 && home.dimension().equals(context.level().dimension())
                 && !dragon.isTame()
-                && dragon.supportsSleep()
-                && dragon.getSleepPreferences().canSleepDuringConditions(context.level())
+                && dragon.wantsToSleep()
                 && dragon.isAlive()
                 && !dragon.isDying()
                 && !dragon.isVehicle()

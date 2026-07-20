@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.common.registry.ModMemoryTypes;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,6 +32,18 @@ public final class DragonMemories {
     public static final MemoryModuleType<Boolean> GROUND_ROUTE_ABANDONED = ModMemoryTypes.GROUND_ROUTE_ABANDONED.get();
     public static final MemoryModuleType<Vec3> TACTICAL_LANDING_POSITION = ModMemoryTypes.TACTICAL_LANDING_POSITION.get();
     public static final MemoryModuleType<GlobalPos> ROOST_SLEEP_POSITION = ModMemoryTypes.ROOST_SLEEP_POSITION.get();
+    public static final MemoryModuleType<Boolean> TARGET_VISIBLE = ModMemoryTypes.TARGET_VISIBLE.get();
+    public static final MemoryModuleType<DragonSensoryObservation> LAST_SEEN_TARGET =
+            ModMemoryTypes.LAST_SEEN_TARGET.get();
+    public static final MemoryModuleType<DragonSensoryObservation> INVESTIGATION_TARGET =
+            ModMemoryTypes.INVESTIGATION_TARGET.get();
+    public static final MemoryModuleType<DragonSensoryObservation> HEARD_STIMULUS =
+            ModMemoryTypes.HEARD_STIMULUS.get();
+    public static final MemoryModuleType<DragonSensoryObservation> HEARD_TARGET =
+            ModMemoryTypes.HEARD_TARGET.get();
+    public static final MemoryModuleType<LivingEntity> WAKE_TARGET = ModMemoryTypes.WAKE_TARGET.get();
+    public static final MemoryModuleType<Float> SLEEP_PRESSURE = ModMemoryTypes.SLEEP_PRESSURE.get();
+    public static final MemoryModuleType<Boolean> SLEEP_INTENT = ModMemoryTypes.SLEEP_INTENT.get();
 
     private DragonMemories() {
     }
@@ -54,7 +67,15 @@ public final class DragonMemories {
                 INTERCEPT_PROJECTILE,
                 GROUND_ROUTE_ABANDONED,
                 TACTICAL_LANDING_POSITION,
-                ROOST_SLEEP_POSITION
+                ROOST_SLEEP_POSITION,
+                TARGET_VISIBLE,
+                LAST_SEEN_TARGET,
+                INVESTIGATION_TARGET,
+                HEARD_STIMULUS,
+                HEARD_TARGET,
+                WAKE_TARGET,
+                SLEEP_PRESSURE,
+                SLEEP_INTENT
         );
     }
 }

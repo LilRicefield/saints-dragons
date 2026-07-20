@@ -860,6 +860,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         super.setTarget(target);
     }
 
+    @Override
     public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;

@@ -873,6 +873,11 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     public boolean isAggressiveWild() {
+        return isWildAggressionEnabled();
+    }
+
+    @Override
+    public boolean isWildAggressionEnabled() {
         return DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.STEGONAUT_ID)
                 .extraBoolean("aggressive_wild", false);

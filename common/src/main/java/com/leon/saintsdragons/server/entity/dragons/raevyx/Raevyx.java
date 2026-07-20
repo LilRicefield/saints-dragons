@@ -2118,6 +2118,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return false;
         }
         if (entity instanceof Player player && !this.isTame()) {
+            if (isWildAggressionEnabled()) {
+                return !player.isCreative() && !player.isSpectator();
+            }
             return this.getLastHurtByMob() == player || this.getTarget() == player;
         }
 
@@ -2876,6 +2879,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         super.setTarget(target);
     }
 
+    @Override
     public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;

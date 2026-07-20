@@ -4,11 +4,13 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.phys.Vec3;
 
@@ -36,6 +38,18 @@ public final class ModMemoryTypes {
             "roost_sleep_position",
             () -> new MemoryModuleType<>(Optional.of(GlobalPos.CODEC))
     );
+    public static final Supplier<MemoryModuleType<Boolean>> TARGET_VISIBLE = register("target_visible");
+    public static final Supplier<MemoryModuleType<DragonSensoryObservation>> LAST_SEEN_TARGET =
+            register("last_seen_target");
+    public static final Supplier<MemoryModuleType<DragonSensoryObservation>> HEARD_STIMULUS =
+            register("heard_stimulus");
+    public static final Supplier<MemoryModuleType<DragonSensoryObservation>> HEARD_TARGET =
+            register("heard_target");
+    public static final Supplier<MemoryModuleType<LivingEntity>> WAKE_TARGET = register("wake_target");
+    public static final Supplier<MemoryModuleType<Float>> SLEEP_PRESSURE = register("sleep_pressure");
+    public static final Supplier<MemoryModuleType<Boolean>> SLEEP_INTENT = register("sleep_intent");
+    public static final Supplier<MemoryModuleType<DragonSensoryObservation>> INVESTIGATION_TARGET =
+            register("investigation_target");
 
     private ModMemoryTypes() {
     }

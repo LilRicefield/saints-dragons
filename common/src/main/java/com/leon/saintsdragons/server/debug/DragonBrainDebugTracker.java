@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDebugDetails;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.world.entity.LivingEntity;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.ai.behavior.Behavior;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.behavior.PositionTracker;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
@@ -57,6 +59,22 @@ public final class DragonBrainDebugTracker {
                 "TACTICAL_LANDING", memories, markers);
         captureMemory(dragon, brain, DragonMemories.ROOST_SLEEP_POSITION,
                 "ROOST_SLEEP", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.TARGET_VISIBLE,
+                "TARGET_VISIBLE", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.LAST_SEEN_TARGET,
+                "LAST_SEEN_TARGET", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.INVESTIGATION_TARGET,
+                "INVESTIGATION_TARGET", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.HEARD_STIMULUS,
+                "HEARD_STIMULUS", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.HEARD_TARGET,
+                "HEARD_TARGET", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.WAKE_TARGET,
+                "WAKE_TARGET", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.SLEEP_PRESSURE,
+                "SLEEP_PRESSURE", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.SLEEP_INTENT,
+                "SLEEP_INTENT", memories, markers);
 
         LivingEntity mobTarget = dragon.getTarget();
         LivingEntity brainTarget = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
@@ -158,6 +176,9 @@ public final class DragonBrainDebugTracker {
                                           String name,
                                           List<MessageDragonBrainDebug.MemoryState> memories,
                                           List<MessageDragonBrainDebug.Marker> markers) {
+        if (!brain.checkMemory(type, MemoryStatus.REGISTERED)) {
+            return;
+        }
         @SuppressWarnings("unchecked")
         T value = ((Brain<LivingEntity>)(Brain<?>)brain).getMemory(type).orElse(null);
         if (value == null) {
@@ -193,6 +214,12 @@ public final class DragonBrainDebugTracker {
         }
         if (value instanceof DragonMovementIntent intent) {
             return describeMovementIntent(dragon, intent);
+        }
+        if (value instanceof DragonSensoryObservation observation) {
+            return observation.kind() + " " + format(observation.position())
+                    + " confidence=" + decimal(observation.confidence())
+                    + " age=" + Math.max(0L, dragon.level().getGameTime() - observation.observedAt())
+                    + "t";
         }
         return String.valueOf(value);
     }
@@ -266,6 +293,8 @@ public final class DragonBrainDebugTracker {
         } else if (value instanceof DragonMovementIntent.LandingTarget move && move.target() != null) {
             position = move.target().getBoundingBox().getCenter();
             entityId = move.target().getId();
+        } else if (value instanceof DragonSensoryObservation observation) {
+            position = observation.position();
         }
         if (position != null) {
             markers.add(new MessageDragonBrainDebug.Marker(memoryName, position, entityId, memoryName));

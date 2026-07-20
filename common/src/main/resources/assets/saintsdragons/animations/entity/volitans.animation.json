@@ -140662,6 +140662,9 @@
 					}
 				},
 				"rotationbone": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					},
 					"position": {
 						"0.0": {
 							"post": {
@@ -141754,6 +141757,9 @@
 					}
 				},
 				"rotationbone": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					},
 					"position": {
 						"vector": [0, -37, 0]
 					}

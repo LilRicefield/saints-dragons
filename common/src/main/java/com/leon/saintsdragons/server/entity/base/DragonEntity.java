@@ -9,6 +9,8 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonHearingListener;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -38,6 +40,7 @@ import com.leon.saintsdragons.util.animation.AnimationHelper;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import com.leon.saintsdragons.util.math.SmoothValue;
@@ -75,6 +78,7 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -84,6 +88,7 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.gameevent.DynamicGameEventListener;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -153,6 +158,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Nullable
     private final DragonBabyComponent babyComponent;
     private final DragonAiCombatPacingComponent aiCombatPacing = new DragonAiCombatPacingComponent();
+    private final DynamicGameEventListener<DragonHearingListener> hearingListener =
+            new DynamicGameEventListener<>(new DragonHearingListener(this));
 
     private final SmoothValue fallbackBodyRotDeviation = SmoothValue.rotation(0.0);
     private final SmoothValue fallbackPitchDeviation = SmoothValue.rotation(0.0);
@@ -214,6 +221,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public AsyncSwimController getAiSwimController() {
         return this.waterPathController;
+    }
+
+    @Override
+    public void updateDynamicGameEventListener(
+            BiConsumer<DynamicGameEventListener<?>, ServerLevel> listenerConsumer) {
+        super.updateDynamicGameEventListener(listenerConsumer);
+        if (getBrain().checkMemory(DragonMemories.HEARD_STIMULUS, MemoryStatus.REGISTERED)
+                && level() instanceof ServerLevel serverLevel) {
+            listenerConsumer.accept(hearingListener, serverLevel);
+        }
     }
 
     protected void clearWaterPathController() {
@@ -1447,6 +1464,32 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public boolean supportsSleep() {
         return false;
+    }
+
+    public boolean isWildAggressionEnabled() {
+        return false;
+    }
+
+    public boolean usesBrainSleepBehaviour() {
+        return getBrain().checkMemory(DragonMemories.SLEEP_PRESSURE, MemoryStatus.REGISTERED);
+    }
+
+    public void tickBrainSleepBehaviour() {
+        if (sleepComponent != null) {
+            sleepComponent.tickBrainDecisions();
+        }
+    }
+
+    public float getSleepPressure() {
+        return sleepComponent == null ? 0.0F : sleepComponent.getSleepPressure();
+    }
+
+    public boolean wantsToSleep() {
+        return sleepComponent != null && sleepComponent.wantsToSleep();
+    }
+
+    public String getSleepDecision() {
+        return sleepComponent == null ? "unsupported" : sleepComponent.getLastDecision();
     }
 
     public boolean isSleepTransitioning() {

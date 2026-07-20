@@ -46,11 +46,13 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -69,6 +71,8 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.levelgen.structure.Structure;
+import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -89,6 +93,10 @@ import java.util.function.Supplier;
 
 public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen, PassiveTreeDestroyer {
     private static final VarasuchusBrain DRAGON_BRAIN = new VarasuchusBrain();
+    private static final ResourceKey<Structure> VARASUCHUS_ROOST_STRUCTURE = ResourceKey.create(
+            Registries.STRUCTURE,
+            SaintsDragonsCommon.rl("varasuchus_roost")
+    );
     public static final double ROOST_SLEEP_RADIUS = 3.0D;
     public static final double ROOST_TERRITORY_RADIUS = 48.0D;
     public static final double ROOST_TERRITORY_RETURN_RADIUS = 32.0D;
@@ -1007,6 +1015,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return true;
     }
 
+    @Override
     public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
@@ -1975,6 +1984,19 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         double dx = position.x - (home.pos().getX() + 0.5D);
         double dz = position.z - (home.pos().getZ() + 0.5D);
         return dx * dx + dz * dz <= ROOST_TERRITORY_RADIUS * ROOST_TERRITORY_RADIUS;
+    }
+
+    public boolean isInsideRoostStructure(Vec3 position) {
+        if (!hasRoostTerritory()
+                || !isWithinRoostTerritory(position)
+                || !(level() instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        StructureStart roost = serverLevel.structureManager().getStructureWithPieceAt(
+                BlockPos.containing(position),
+                VARASUCHUS_ROOST_STRUCTURE
+        );
+        return roost != null && roost.isValid();
     }
 
     public boolean isOutsideRoostTerritory() {

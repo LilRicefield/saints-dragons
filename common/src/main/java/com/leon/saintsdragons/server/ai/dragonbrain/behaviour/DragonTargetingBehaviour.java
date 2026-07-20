@@ -6,6 +6,8 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +35,25 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     @Override
     protected final void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        LivingEntity wakeTarget = context.memories().get(DragonMemories.WAKE_TARGET).orElse(null);
+        if (wakeTarget != null && !isUsableTarget(dragon, wakeTarget)) {
+            context.memories().erase(DragonMemories.WAKE_TARGET);
+            wakeTarget = null;
+        }
+
         if (!canAcquireTargets(dragon)) {
+            if (dragon.isSleepingExiting()) {
+                return;
+            }
             clearTarget(context);
+            return;
+        }
+
+        if (wakeTarget != null
+                && dragon.isWildAggressionEnabled()
+                && dragon.getSensing().hasLineOfSight(wakeTarget)) {
+            setTarget(context, wakeTarget, "heard_intruder", 3);
+            context.memories().erase(DragonMemories.WAKE_TARGET);
             return;
         }
 
@@ -112,12 +131,34 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         T dragon = context.dragon();
         LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         String oldSource = source;
+        boolean changed = oldTarget != target || !oldSource.equals(newSource);
         prepareTargetChange(dragon, oldTarget, target, oldSource, newSource);
         source = newSource;
         sourcePriority = newPriority;
         context.memories().set(DragonMemories.ATTACK_TARGET, target);
+        if (changed) {
+            context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+            context.memories().erase(DragonMemories.HEARD_TARGET);
+            boolean visible = dragon.getSensing().hasLineOfSight(target);
+            context.memories().set(DragonMemories.TARGET_VISIBLE, visible, 3);
+            if (visible) {
+                context.memories().set(
+                        DragonMemories.LAST_SEEN_TARGET,
+                        new DragonSensoryObservation(
+                                target.getBoundingBox().getCenter(),
+                                target.getUUID(),
+                                DragonSensoryObservation.Kind.SIGHT,
+                                1.0F,
+                                context.gameTime()
+                        ),
+                        DragonPerceptionProfile.forDragon(dragon).targetMemoryTicks()
+                );
+            } else {
+                context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
+            }
+        }
         syncTarget(context, target);
-        if (oldTarget != target || !oldSource.equals(newSource)) {
+        if (changed) {
             targetChanged(dragon, oldTarget, target, oldSource, newSource);
         }
     }
@@ -144,10 +185,19 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         T dragon = context.dragon();
         LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         String oldSource = source;
+        boolean hadCommittedTarget = oldTarget != null
+                || dragon.getTarget() != null
+                || !"none".equals(oldSource);
         source = "none";
         sourcePriority = Integer.MAX_VALUE;
         context.memories().erase(DragonMemories.ATTACK_TARGET);
         context.memories().erase(DragonMemories.TARGET_AIRBORNE);
+        context.memories().erase(DragonMemories.TARGET_VISIBLE);
+        context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
+        if (hadCommittedTarget) {
+            context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+        }
+        context.memories().erase(DragonMemories.HEARD_TARGET);
         if (dragon.getTarget() != null) {
             dragon.setTarget(null);
         }

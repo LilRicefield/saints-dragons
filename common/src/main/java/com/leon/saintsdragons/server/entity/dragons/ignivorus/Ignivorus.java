@@ -2886,6 +2886,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         super.setTarget(target);
     }
 
+    @Override
     public boolean isWildAggressionEnabled() {
         if (isTame() || isBaby()) {
             return false;
