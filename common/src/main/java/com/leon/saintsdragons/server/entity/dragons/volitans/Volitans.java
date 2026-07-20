@@ -1652,6 +1652,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         if (isDying() || !isAlive()) {
             return false;
         }
+        rememberIncomingProjectile(source);
         if (source.getEntity() instanceof Pufferfish || source.getDirectEntity() instanceof Pufferfish) {
             return false;
         }

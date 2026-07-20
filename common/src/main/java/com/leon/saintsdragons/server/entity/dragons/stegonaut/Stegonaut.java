@@ -347,6 +347,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         if (isDying()) {
             return false;
         }
+        rememberIncomingProjectile(source);
         if (!isWildStegonautDamageAllowed(source)) {
             return false;
         }

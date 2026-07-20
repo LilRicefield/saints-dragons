@@ -2018,6 +2018,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         if (super.isDying()) {
             return false;
         }
+        rememberIncomingProjectile(damageSource);
         DragonAbility<?> activeAbility = getActiveAbility();
         if (activeAbility instanceof VarasuchusTailguardAbility tailguard && tailguard.tryParry(damageSource)) {
             return false;

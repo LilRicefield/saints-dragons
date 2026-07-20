@@ -2132,6 +2132,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (isDying()) {
             return false;
         }
+        rememberIncomingProjectile(damageSource);
         if (dodgeIFramesTicks > 0) {
             return false;
         }

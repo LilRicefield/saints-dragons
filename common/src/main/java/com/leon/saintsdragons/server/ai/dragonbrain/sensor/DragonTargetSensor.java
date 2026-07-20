@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonSensor;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -28,11 +29,24 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
     protected void scan(DragonBrainContext<T> context) {
         LivingEntity target = context.dragon().getTarget();
         if (!isValidTarget(context.dragon(), target)) {
-            boolean hadTarget = target != null || context.memories().has(DragonMemories.ATTACK_TARGET);
+            LivingEntity rememberedTarget = context.memories()
+                    .get(DragonMemories.ATTACK_TARGET)
+                    .orElse(null);
             if (target != null) {
                 context.dragon().setTarget(null);
             }
-            if (hadTarget) {
+            DragonSensoryObservation investigation = context.memories()
+                    .get(DragonMemories.INVESTIGATION_TARGET)
+                    .orElse(null);
+            boolean matchesEntityTarget = investigation != null
+                    && target != null
+                    && target.getUUID().equals(investigation.sourceUuid());
+            boolean matchesRememberedTarget = investigation != null
+                    && rememberedTarget != null
+                    && rememberedTarget.getUUID().equals(investigation.sourceUuid());
+            if (investigation != null
+                    && investigation.sourceUuid() != null
+                    && (matchesEntityTarget || matchesRememberedTarget)) {
                 context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
             }
             context.memories().erase(DragonMemories.ATTACK_TARGET);

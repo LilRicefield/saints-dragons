@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.core.particles.ItemParticleOption;
@@ -281,7 +282,12 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
         context.memories().erase(DragonMemories.TARGET_AIRBORNE);
         context.memories().erase(DragonMemories.TARGET_VISIBLE);
         context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
-        context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+        DragonSensoryObservation investigation = context.memories()
+                .get(DragonMemories.INVESTIGATION_TARGET)
+                .orElse(null);
+        if (investigation != null && target.getUUID().equals(investigation.sourceUuid())) {
+            context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+        }
         context.memories().erase(DragonMemories.HEARD_TARGET);
         if (dragon.getTarget() == target) {
             dragon.setTarget(null);

@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import net.minecraft.world.entity.LivingEntity;
@@ -137,7 +138,14 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         sourcePriority = newPriority;
         context.memories().set(DragonMemories.ATTACK_TARGET, target);
         if (changed) {
-            context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+            DragonSensoryObservation investigation = context.memories()
+                    .get(DragonMemories.INVESTIGATION_TARGET)
+                    .orElse(null);
+            boolean investigationMatchesTarget = investigation != null
+                    && target.getUUID().equals(investigation.sourceUuid());
+            if (!investigationMatchesTarget) {
+                context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+            }
             context.memories().erase(DragonMemories.HEARD_TARGET);
             boolean visible = dragon.getSensing().hasLineOfSight(target);
             context.memories().set(DragonMemories.TARGET_VISIBLE, visible, 3);
@@ -184,25 +192,42 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     private void clearTarget(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        LivingEntity entityTarget = dragon.getTarget();
         String oldSource = source;
-        boolean hadCommittedTarget = oldTarget != null
-                || dragon.getTarget() != null
-                || !"none".equals(oldSource);
+        LivingEntity clearedTarget = oldTarget != null ? oldTarget : entityTarget;
+        if (isUsableTarget(dragon, clearedTarget)) {
+            rememberTargetEvidence(context, clearedTarget);
+        }
         source = "none";
         sourcePriority = Integer.MAX_VALUE;
         context.memories().erase(DragonMemories.ATTACK_TARGET);
         context.memories().erase(DragonMemories.TARGET_AIRBORNE);
         context.memories().erase(DragonMemories.TARGET_VISIBLE);
         context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
-        if (hadCommittedTarget) {
-            context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
-        }
         context.memories().erase(DragonMemories.HEARD_TARGET);
         if (dragon.getTarget() != null) {
             dragon.setTarget(null);
         }
         if (oldTarget != null || !"none".equals(oldSource)) {
             targetCleared(dragon, oldTarget, oldSource);
+        }
+    }
+
+    private void rememberTargetEvidence(DragonBrainContext<T> context, LivingEntity target) {
+        DragonSensoryObservation lastSeen = context.memories()
+                .get(DragonMemories.LAST_SEEN_TARGET)
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid()))
+                .orElse(null);
+        DragonSensoryObservation heard = context.memories()
+                .get(DragonMemories.HEARD_TARGET)
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid()))
+                .orElse(null);
+        DragonSensoryObservation freshest = lastSeen;
+        if (heard != null && (freshest == null || heard.observedAt() > freshest.observedAt())) {
+            freshest = heard;
+        }
+        if (freshest != null) {
+            DragonInvestigation.remember(context.dragon(), freshest);
         }
     }
 

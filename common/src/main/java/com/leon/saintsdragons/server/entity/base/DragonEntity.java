@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonHearingListener;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -1188,6 +1189,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             return false;
         }
 
+        rememberIncomingProjectile(source);
         boolean result = super.hurt(source, amount);
         if (result) {
             if (isSleeping() || isSleepingEntering() || isSleepTransitioning()) {
@@ -1221,6 +1223,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             applyHappinessHitPenalty(serverLevel);
         }
         return result;
+    }
+
+    protected final void rememberIncomingProjectile(DamageSource source) {
+        if (!level().isClientSide
+                && (!isDamageFromCurrentRider(source)
+                || source.is(DamageTypeTags.BYPASSES_INVULNERABILITY))
+                && source.getDirectEntity() instanceof Projectile projectile) {
+            DragonInvestigation.rememberProjectileOrigin(this, projectile);
+        }
     }
 
     private boolean isDamageFromCurrentRider(@NotNull DamageSource source) {

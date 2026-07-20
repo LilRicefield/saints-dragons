@@ -529,6 +529,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         if (isDying()) {
             return false;
         }
+        rememberIncomingProjectile(damageSource);
         if (damageSource.is(DamageTypes.IN_FIRE) ||
             damageSource.is(DamageTypes.ON_FIRE) ||
             damageSource.is(DamageTypes.LAVA) ||

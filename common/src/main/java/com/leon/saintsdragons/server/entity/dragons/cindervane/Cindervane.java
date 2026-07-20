@@ -1360,6 +1360,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (isDying()) {
             return false;
         }
+        rememberIncomingProjectile(source);
         if (source.is(DamageTypes.IN_FIRE) ||
             source.is(DamageTypes.ON_FIRE) ||
             source.is(DamageTypes.LAVA) ||

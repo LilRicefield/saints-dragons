@@ -749,6 +749,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
+        rememberIncomingProjectile(source);
         if (source.getDirectEntity() instanceof ShulkerBullet) {
             return false;
         }

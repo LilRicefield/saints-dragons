@@ -37,6 +37,7 @@ public final class DragonSleepComponent {
     private int sleepReentryCooldownTicks = 0;
     private int sleepActionCooldown = 0;
     private float sleepPressure;
+    private DragonSensoryObservation lastHandledSound;
     private String lastDecision = "initializing";
     private SleepPhase currentPhase = SleepPhase.IDLE;
 
@@ -350,8 +351,11 @@ public final class DragonSleepComponent {
         if (sound == null || !shouldWakeForSound(sound, source)) {
             return false;
         }
+        if (sound == lastHandledSound) {
+            return false;
+        }
+        lastHandledSound = sound;
 
-        dragon.getBrain().eraseMemory(DragonMemories.HEARD_STIMULUS);
         rememberAggressiveWakeTarget(source);
         suppressSleep(SOUND_ALERT_TICKS);
 
