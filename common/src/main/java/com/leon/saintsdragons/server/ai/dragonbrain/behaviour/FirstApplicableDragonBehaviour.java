@@ -4,22 +4,26 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
-import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.ai.behavior.Behavior;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-public final class FirstApplicableDragonBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
+public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private final List<DragonBehaviour<T>> behaviours;
     @Nullable
     private DragonBehaviour<T> running;
 
     @SafeVarargs
     public FirstApplicableDragonBehaviour(DragonBehaviour<T>... behaviours) {
-        this.behaviours = List.copyOf(Arrays.asList(behaviours));
+        List<DragonBehaviour<T>> ordered = new ArrayList<>(behaviours.length + 1);
+        ordered.add(new DragonMaintainPersonalSpaceBehaviour<>());
+        ordered.addAll(Arrays.asList(behaviours));
+        this.behaviours = List.copyOf(ordered);
     }
 
     @Override
