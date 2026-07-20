@@ -17,6 +17,11 @@ public final class DragonSleepComponent {
     private static final float CRITICAL_SLEEP_PRESSURE = 92.0F;
     private static final float RESTED_SLEEP_PRESSURE = 15.0F;
     private static final int SOUND_ALERT_TICKS = 20 * 20;
+    private static final float MAX_SLEEP_DISTURBANCE = 100.0F;
+    private static final float WAKE_SLEEP_DISTURBANCE = 40.0F;
+    private static final float SLEEP_DISTURBANCE_DECAY_PER_TICK = 0.05F;
+    private static final float AWAKE_DISTURBANCE_DECAY_PER_TICK = 0.20F;
+    private static final int DISTURBANCE_SAMPLE_INTERVAL_TICKS = 10;
     private static final float AWAKE_PRESSURE_PER_TICK = MAX_SLEEP_PRESSURE / (20.0F * 60.0F * 15.0F);
     private static final float REST_PRESSURE_PER_TICK = MAX_SLEEP_PRESSURE / (20.0F * 60.0F * 6.0F);
     private final DragonEntity dragon;
@@ -37,7 +42,10 @@ public final class DragonSleepComponent {
     private int sleepReentryCooldownTicks = 0;
     private int sleepActionCooldown = 0;
     private float sleepPressure;
+    private float sleepDisturbance;
+    private long lastDisturbanceTick = Long.MIN_VALUE;
     private DragonSensoryObservation lastHandledSound;
+    private String lastDisturbanceCause = "none";
     private String lastDecision = "initializing";
     private SleepPhase currentPhase = SleepPhase.IDLE;
 
@@ -77,6 +85,7 @@ public final class DragonSleepComponent {
         }
 
         updateSleepPressure();
+        updateSleepDisturbance();
         if (!handleRememberedSound()) {
             tickSleepDecisions(true);
         }
@@ -87,6 +96,18 @@ public final class DragonSleepComponent {
 
     public float getSleepPressure() {
         return sleepPressure;
+    }
+
+    public float getSleepDisturbance() {
+        return sleepDisturbance;
+    }
+
+    public float getSleepDisturbanceThreshold() {
+        return WAKE_SLEEP_DISTURBANCE;
+    }
+
+    public String getLastDisturbanceCause() {
+        return lastDisturbanceCause;
     }
 
     public boolean wantsToSleep() {
@@ -347,14 +368,19 @@ public final class DragonSleepComponent {
         DragonSensoryObservation sound = dragon.getBrain()
                 .getMemory(DragonMemories.HEARD_STIMULUS)
                 .orElse(null);
-        Entity source = resolveSoundSource(sound);
-        if (sound == null || !shouldWakeForSound(sound, source)) {
-            return false;
-        }
-        if (sound == lastHandledSound) {
+        if (sound == null || sound == lastHandledSound) {
             return false;
         }
         lastHandledSound = sound;
+
+        Entity source = resolveSoundSource(sound);
+        if (shouldIgnoreSoundSource(source)) {
+            return false;
+        }
+
+        if (!shouldWakeForSound(sound, source)) {
+            return applySleepDisturbance(sound);
+        }
 
         rememberAggressiveWakeTarget(source);
         suppressSleep(SOUND_ALERT_TICKS);
@@ -377,6 +403,70 @@ public final class DragonSleepComponent {
         return false;
     }
 
+    private boolean applySleepDisturbance(DragonSensoryObservation sound) {
+        if (!dragon.isSleeping() && !dragon.isSleepingEntering()) {
+            return false;
+        }
+
+        long gameTime = dragon.level().getGameTime();
+        if (lastDisturbanceTick != Long.MIN_VALUE
+                && gameTime - lastDisturbanceTick < DISTURBANCE_SAMPLE_INTERVAL_TICKS) {
+            return false;
+        }
+
+        float amount = disturbanceFor(sound);
+        if (amount <= 0.0F) {
+            return false;
+        }
+
+        lastDisturbanceTick = gameTime;
+        sleepDisturbance = Math.min(MAX_SLEEP_DISTURBANCE, sleepDisturbance + amount);
+        String kind = sound.kind().name().toLowerCase(java.util.Locale.ROOT);
+        lastDisturbanceCause = kind + "+" + String.format(java.util.Locale.ROOT, "%.1f", amount);
+        if (sleepDisturbance < WAKE_SLEEP_DISTURBANCE) {
+            lastDecision = "disturbed-by-" + kind;
+            return true;
+        }
+
+        suppressSleep(SOUND_ALERT_TICKS);
+        sleepActionCooldown = 0;
+        if (tryWakeUp()) {
+            currentPhase = SleepPhase.EXITING;
+            lastDecision = "waking-disturbed-by-" + kind;
+            return true;
+        }
+        return false;
+    }
+
+    private float disturbanceFor(DragonSensoryObservation sound) {
+        float confidence = sound.confidence();
+        return switch (sound.kind()) {
+            case IMPACT -> 7.0F + confidence * 18.0F;
+            case STEP -> confidence >= 0.18F ? 0.75F + confidence * 2.5F : 0.0F;
+            case SPLASH -> (dragon.isInWaterOrBubble() ? 4.0F : 2.0F)
+                    + confidence * (dragon.isInWaterOrBubble() ? 14.0F : 7.0F);
+            case BLOCK -> 3.0F + confidence * 9.0F;
+            case TELEPORT -> 5.0F + confidence * 12.0F;
+            case EXPLOSION, COMBAT, PROJECTILE, ROAR -> 4.0F + confidence * 10.0F;
+            case SIGHT, OTHER -> 0.0F;
+        };
+    }
+
+    private void updateSleepDisturbance() {
+        if (sleepDisturbance <= 0.0F) {
+            sleepDisturbance = 0.0F;
+            lastDisturbanceCause = "none";
+            return;
+        }
+        float decay = dragon.isSleeping() || dragon.isSleepingEntering()
+                ? SLEEP_DISTURBANCE_DECAY_PER_TICK
+                : AWAKE_DISTURBANCE_DECAY_PER_TICK;
+        sleepDisturbance = Math.max(0.0F, sleepDisturbance - decay);
+        if (sleepDisturbance == 0.0F) {
+            lastDisturbanceCause = "none";
+        }
+    }
+
     private Entity resolveSoundSource(DragonSensoryObservation sound) {
         if (sound == null
                 || sound.sourceUuid() == null
@@ -387,10 +477,6 @@ public final class DragonSleepComponent {
     }
 
     private boolean shouldWakeForSound(DragonSensoryObservation sound, Entity source) {
-        if (source == dragon.getOwner()) {
-            return false;
-        }
-
         boolean dangerous = switch (sound.kind()) {
             case EXPLOSION, COMBAT, PROJECTILE, ROAR -> true;
             default -> false;
@@ -416,6 +502,13 @@ public final class DragonSleepComponent {
         };
         return sound.confidence() >= threshold
                 && dragon.position().distanceToSqr(sound.position()) <= 24.0D * 24.0D;
+    }
+
+    private boolean shouldIgnoreSoundSource(Entity source) {
+        if (source != null && source == dragon.getOwner()) {
+            return true;
+        }
+        return source instanceof Player player && (player.isCreative() || player.isSpectator());
     }
 
     private void rememberAggressiveWakeTarget(Entity source) {
@@ -639,6 +732,10 @@ public final class DragonSleepComponent {
         sleepingEntering = false;
         sleepingExiting = false;
         sleepLocked = false;
+        sleepDisturbance = 0.0F;
+        lastDisturbanceTick = Long.MIN_VALUE;
+        lastHandledSound = null;
+        lastDisturbanceCause = "none";
 
         dragon.getEntityData().set(dataSleeping, false);
         dragon.getEntityData().set(dataSleepingEntering, false);

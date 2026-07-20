@@ -92,7 +92,7 @@ public final class DragonInvestigation {
         }
         return switch (observation.kind()) {
             case EXPLOSION, ROAR, COMBAT, PROJECTILE, BLOCK, TELEPORT -> true;
-            case SIGHT, SPLASH, STEP, OTHER -> false;
+            case SIGHT, SPLASH, STEP, IMPACT, OTHER -> false;
         };
     }
 
@@ -128,7 +128,7 @@ public final class DragonInvestigation {
             case COMBAT, PROJECTILE -> 5;
             case ROAR, TELEPORT -> 4;
             case BLOCK -> 3;
-            case SPLASH -> 2;
+            case SPLASH, IMPACT -> 2;
             case STEP -> 1;
             case OTHER -> 0;
         };

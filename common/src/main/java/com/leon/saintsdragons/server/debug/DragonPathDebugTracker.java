@@ -442,7 +442,12 @@ public final class DragonPathDebugTracker {
         }
         int pressure = Math.round(dragon.getBrain().getMemory(DragonMemories.SLEEP_PRESSURE).orElse(0.0F));
         boolean intent = dragon.getBrain().getMemory(DragonMemories.SLEEP_INTENT).orElse(false);
-        return pressure + "/100,intent=" + intent + ",decision=" + dragon.getSleepDecision();
+        int disturbance = Math.round(dragon.getSleepDisturbance());
+        int wakeDisturbance = Math.round(dragon.getSleepDisturbanceThreshold());
+        return pressure + "/100,intent=" + intent
+                + ",disturbance=" + disturbance + "/" + wakeDisturbance
+                + ",cause=" + dragon.getSleepDisturbanceCause()
+                + ",decision=" + dragon.getSleepDecision();
     }
 
     private static String tacticalSummary(DragonEntity dragon) {

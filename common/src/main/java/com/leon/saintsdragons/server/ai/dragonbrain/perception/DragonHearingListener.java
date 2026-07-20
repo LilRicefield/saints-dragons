@@ -171,7 +171,7 @@ public final class DragonHearingListener implements GameEventListener {
             return new Stimulus(DragonSensoryObservation.Kind.COMBAT, 0.85F, 1.25F, true);
         }
         if (event == GameEvent.HIT_GROUND) {
-            return new Stimulus(DragonSensoryObservation.Kind.COMBAT, 0.85F, 1.25F, false);
+            return new Stimulus(DragonSensoryObservation.Kind.IMPACT, 0.70F, 0.75F, false);
         }
         if (event == GameEvent.PROJECTILE_LAND || event == GameEvent.PROJECTILE_SHOOT) {
             return new Stimulus(DragonSensoryObservation.Kind.PROJECTILE, 0.75F, 1.0F, true);

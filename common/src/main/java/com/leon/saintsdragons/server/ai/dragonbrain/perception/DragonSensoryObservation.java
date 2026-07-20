@@ -19,6 +19,7 @@ public record DragonSensoryObservation(
     public enum Kind {
         SIGHT,
         STEP,
+        IMPACT,
         SPLASH,
         COMBAT,
         PROJECTILE,
