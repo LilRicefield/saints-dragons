@@ -1681,9 +1681,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_landed",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 48
       }
     ]
   },

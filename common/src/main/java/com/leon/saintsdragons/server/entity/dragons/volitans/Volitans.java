@@ -2413,8 +2413,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             boolean verticalKeyPitch = isGoingUp() != isGoingDown();
             boolean verticalKeyPitchRelease = verticalKeyPitchSmoothing
                     && !verticalKeyPitch
-                    && !isRiderPitchKeyMode()
-                    && !hasMovementInput;
+                    && !isRiderPitchKeyMode();
             slowVerticalKeyPitch = verticalKeyPitch || verticalKeyPitchRelease;
             float rawRiderPitchRad = DragonRiderControllerHelper.resolveRiderPitchRadians(
                     this,
@@ -2451,9 +2450,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                         && verticalKeyPitchSmoothing
                         && !isGoingUp()
                         && !isGoingDown()
-                        && Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) <= 0.01f
-                        && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) <= 0.01f
-                        && Math.abs(flightPitchRad) > 0.01f);
+                        && Math.abs(flightPitchRad - targetPitchRad) > 0.01f);
         if (Math.abs(flightPitchRad) < 0.001f) {
             flightPitchRad = 0f;
         }

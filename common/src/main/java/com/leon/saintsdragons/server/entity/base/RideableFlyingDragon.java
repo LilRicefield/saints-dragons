@@ -1884,8 +1884,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             boolean hasMovementInput = Math.abs(riderForward) > 0.01f || Math.abs(riderStrafe) > 0.01f;
             boolean verticalKeyPitchRelease = state.verticalKeyPitchSmoothing
                     && !verticalKeyPitch
-                    && !useKeyPitch
-                    && !hasMovementInput;
+                    && !useKeyPitch;
             slowRiderPitch = verticalKeyPitch || verticalKeyPitchRelease;
             float rawRiderPitchRad = DragonRiderControllerHelper.resolveRiderFlightVisualPitchRadians(
                     this,
@@ -1925,9 +1924,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                         && state.verticalKeyPitchSmoothing
                         && !this.isGoingUp()
                         && !this.isGoingDown()
-                        && Math.abs(this.entityData.get(DATA_RIDER_FORWARD)) <= 0.01F
-                        && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) <= 0.01F
-                        && Math.abs(state.flightPitchRad) > 0.01F);
+                        && Math.abs(state.flightPitchRad - targetPitchRad) > 0.01F);
         this.entityData.set(pitchAccessor, state.flightPitchRad);
 
         if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
