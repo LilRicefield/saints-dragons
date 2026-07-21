@@ -826,8 +826,7 @@ public abstract class RideableDragonBase extends DragonEntity {
     @Override
     protected void onSleepFreezeTick() {
         super.onSleepFreezeTick();
-        this.setRunning(false);
-        this.setGroundMoveStateFromAI(0);
+        this.aiMovement.stopAndClearAllMovement();
     }
 
     public void prepareForMounting() {

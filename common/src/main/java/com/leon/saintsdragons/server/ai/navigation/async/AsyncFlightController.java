@@ -52,6 +52,16 @@ public class AsyncFlightController {
             return;
         }
         this.stuckDetector.tickBackoff();
+        if (this.state == PathState.STUCK) {
+            if (!this.stuckDetector.isInBackoff()) {
+                if (this.currentWaypoint == null) {
+                    this.state = PathState.FAILED;
+                } else {
+                    this.pathResolver.startFlyingPathAsync(this.currentWaypoint);
+                }
+            }
+            return;
+        }
         if (this.stuckDetector.isInBackoff()) {
             return;
         }
@@ -121,6 +131,7 @@ public class AsyncFlightController {
                 || this.state == PathState.IDLE
                 || this.state == PathState.ARRIVED
                 || this.state == PathState.FAILED
+                || this.state == PathState.STUCK
                 || this.currentGroundTransition) {
             this.setWaypoint(target, speed, null);
             return;
@@ -286,7 +297,7 @@ public class AsyncFlightController {
             this.movementExecutor.zeroVelocity();
         } else if (currentWaypoint != null) {
             this.state = PathState.STUCK;
-            this.pathResolver.startFlyingPathAsync(currentWaypoint);
+            this.pathResolver.clearPathNodes();
         }
     }
 

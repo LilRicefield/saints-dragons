@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementInten
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
@@ -112,6 +113,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                                         Raevyx.TAKEOFF_ANIMATION_TICKS
                                                 )
                                         ),
+                                        new DragonDrinkBehaviour<>(DragonDrinkBehaviour.Config.standard()),
                                         new RaevyxAutonomousFlightBehaviour(),
                                         new DragonGroundWanderBehaviour<>(0.6D, 60)
                                 )

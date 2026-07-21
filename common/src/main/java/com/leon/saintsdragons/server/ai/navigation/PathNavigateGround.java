@@ -19,8 +19,10 @@ import javax.annotation.Nonnull;
 
 public class PathNavigateGround extends GroundPathNavigation {
     private static final double MAX_SHORTCUT_DISTANCE = 10.0D;
+    private static final double MAX_DESCENDING_WAYPOINT_OFFSET = 1.5D;
     private static final int MAX_SWEEP_STEPS = 12;
     private boolean waterEntryAllowed;
+    private float finalWaypointTolerance = Float.NaN;
 
     public PathNavigateGround(Mob mob, Level world) {
         super(mob, world);
@@ -36,6 +38,26 @@ public class PathNavigateGround extends GroundPathNavigation {
 
     public boolean isWaterEntryAllowed() {
         return waterEntryAllowed;
+    }
+
+    public void setFinalWaypointTolerance(double tolerance) {
+        finalWaypointTolerance = (float) Math.max(0.05D, tolerance);
+    }
+
+    public void clearFinalWaypointTolerance() {
+        finalWaypointTolerance = Float.NaN;
+    }
+
+    @Override
+    public boolean moveTo(Path path, double speedModifier) {
+        clearFinalWaypointTolerance();
+        return super.moveTo(path, speedModifier);
+    }
+
+    @Override
+    public void stop() {
+        clearFinalWaypointTolerance();
+        super.stop();
     }
 
     @Override
@@ -64,10 +86,19 @@ public class PathNavigateGround extends GroundPathNavigation {
         
         final Vec3 base = entityPos.add(-this.mob.getBbWidth() * 0.5F, 0.0F, -this.mob.getBbWidth() * 0.5F);
         final Vec3 max = base.add(this.mob.getBbWidth(), this.mob.getBbHeight(), this.mob.getBbWidth());
+        float waypointTolerance = this.mob.getBbWidth() > 0.75F
+                ? this.mob.getBbWidth() * 0.5F
+                : 0.75F - this.mob.getBbWidth() * 0.5F;
+        if (path.getNextNodeIndex() == path.getNodeCount() - 1
+                && Float.isFinite(finalWaypointTolerance)) {
+            waypointTolerance = Math.min(waypointTolerance, finalWaypointTolerance);
+        }
         
         // Try to shortcut to later path nodes for smoother movement
         if (this.tryShortcut(path, new Vec3(this.mob.getX(), this.mob.getY(), this.mob.getZ()), pathLength, base, max)) {
-            if (this.isAt(path, 0.5F) || this.atElevationChange(path) && this.isAt(path, this.mob.getBbWidth() * 0.5F)) {
+            if (this.isAt(path, waypointTolerance)
+                    || this.atElevationChange(path)
+                    && this.isAt(path, Math.min(this.mob.getBbWidth() * 0.5F, waypointTolerance))) {
                 path.setNextNodeIndex(path.getNextNodeIndex() + 1);
             }
         }
@@ -76,9 +107,11 @@ public class PathNavigateGround extends GroundPathNavigation {
 
     private boolean isAt(Path path, float threshold) {
         final Vec3 pathPos = path.getNextEntityPos(this.mob);
+        final double verticalOffset = this.mob.getY() - pathPos.y;
         return Mth.abs((float) (this.mob.getX() - pathPos.x)) < threshold &&
                 Mth.abs((float) (this.mob.getZ() - pathPos.z)) < threshold &&
-                Math.abs(this.mob.getY() - pathPos.y) < 1.0D;
+                verticalOffset > -1.0D &&
+                verticalOffset <= MAX_DESCENDING_WAYPOINT_OFFSET;
     }
 
     private boolean atElevationChange(Path path) {

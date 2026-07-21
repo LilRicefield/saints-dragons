@@ -11,6 +11,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "ignivorusFastAction";
     public static final String ACTION_CONTROLLER = "ignivorusAction";
+    public static final String DRINKING_TRIGGER = "drinking";
 
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.idle");
@@ -31,6 +32,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.ignivorus.fall_asleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.ignivorus.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.ignivorus.swim");
+    private static final RawAnimation DRINKING = RawAnimation.begin().thenPlay("animation.ignivorus.drinking");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.ignivorus.stunned");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.ignivorus.sleep");
     private static final RawAnimation BULLDOZER_IDLE = RawAnimation.begin().thenLoop("animation.ignivorus.bulldozer_idle");
@@ -67,6 +69,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
 
     public void triggerWakeUpAnimation() {
         AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.WAKE_UP);
+    }
+
+    public void triggerDrinkingAnimation() {
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, DRINKING_TRIGGER);
     }
 
     public void triggerBulldozeEnterAnimation() {
@@ -108,6 +114,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         AnimationHelper.register(controller, AnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
+        controller.triggerableAnim(DRINKING_TRIGGER, DRINKING);
         controller.triggerableAnim("wing_swipe_left",
                 RawAnimation.begin().thenPlay("animation.ignivorus.wing_swipe_left"));
         controller.triggerableAnim("wing_swipe_right",

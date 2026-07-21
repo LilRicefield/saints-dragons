@@ -17,18 +17,28 @@ import java.util.function.BooleanSupplier;
 
 public class DragonWalkNodeEvaluator extends WalkNodeEvaluator implements DragonPathSearchDebuggable {
     private final BooleanSupplier canPassThroughTrees;
+    private final boolean avoidWater;
     private @Nullable DragonPathSearchDebug.NodeCollector pathSearchDebugCollector;
 
     public DragonWalkNodeEvaluator() {
-        this(false);
+        this(false, false);
     }
 
     public DragonWalkNodeEvaluator(boolean canPassThroughTrees) {
-        this(() -> canPassThroughTrees);
+        this(canPassThroughTrees, false);
+    }
+
+    public DragonWalkNodeEvaluator(boolean canPassThroughTrees, boolean avoidWater) {
+        this(() -> canPassThroughTrees, avoidWater);
     }
 
     public DragonWalkNodeEvaluator(BooleanSupplier canPassThroughTrees) {
+        this(canPassThroughTrees, false);
+    }
+
+    public DragonWalkNodeEvaluator(BooleanSupplier canPassThroughTrees, boolean avoidWater) {
         this.canPassThroughTrees = canPassThroughTrees;
+        this.avoidWater = avoidWater;
     }
 
     @Override
@@ -85,6 +95,10 @@ public class DragonWalkNodeEvaluator extends WalkNodeEvaluator implements Dragon
                 && DragonDestructionManager.isPassivelyBreakableTreeBlock(state)) {
             return BlockPathTypes.OPEN;
         }
-        return super.getBlockPathType(level, x, y, z);
+        BlockPathTypes pathType = super.getBlockPathType(level, x, y, z);
+        if (avoidWater && (pathType == BlockPathTypes.WATER || pathType == BlockPathTypes.WATER_BORDER)) {
+            return BlockPathTypes.BLOCKED;
+        }
+        return pathType;
     }
 }

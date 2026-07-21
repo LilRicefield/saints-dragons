@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementInten
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
@@ -112,6 +113,9 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                 )
                                         ),
                                         new DragonFollowParentBehaviour<>(Ignivorus.class, 1.1D),
+                                        new DragonDrinkBehaviour<>(
+                                                DragonDrinkBehaviour.Config.standard().withSearchRadius(20)
+                                        ),
                                         new IgnivorusAutonomousFlightBehaviour(),
                                         new DragonGroundWanderBehaviour<>(1.0D, 120)
                                 )

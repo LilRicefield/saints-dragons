@@ -36,6 +36,7 @@ public final class DragonSleepComponent {
     private boolean sleepSitUpTriggered = false;
     private boolean sleepLoopTriggered = false;
     private boolean sleepLocked = false;
+    private boolean exhaustionSleep = false;
     private int sleepCommandSnapshot = -1;
     private int sleepTransitionTicks = 0;
     private int sleepAmbientCooldownTicks = 0;
@@ -317,6 +318,7 @@ public final class DragonSleepComponent {
         if (useSleepPressure) {
             if (sleepPressure <= RESTED_SLEEP_PRESSURE) return true;
             if (!prefs.canSleepDuringConditions(dragon.level())
+                    && !exhaustionSleep
                     && sleepPressure < CRITICAL_SLEEP_PRESSURE) return true;
         } else if (!prefs.canSleepDuringConditions(dragon.level())) {
             return true;
@@ -633,6 +635,9 @@ public final class DragonSleepComponent {
         sleepSitUpTriggered = false;
         sleepLoopTriggered = false;
         sleepLocked = true;
+        exhaustionSleep = dragon.usesBrainSleepBehaviour()
+                && !dragon.getSleepPreferences().canSleepDuringConditions(dragon.level())
+                && sleepPressure >= CRITICAL_SLEEP_PRESSURE;
         sleepCommandSnapshot = dragon.getCommand();
 
         dragon.getEntityData().set(dataSleepingEntering, true);
@@ -692,6 +697,7 @@ public final class DragonSleepComponent {
         sleepingEntering = false;
         sleepingExiting = false;
         sleepLocked = false;
+        exhaustionSleep = false;
         sleepCommandSnapshot = -1;
         bumpAmbientCooldown(10);
 
@@ -732,6 +738,7 @@ public final class DragonSleepComponent {
         sleepingEntering = false;
         sleepingExiting = false;
         sleepLocked = false;
+        exhaustionSleep = false;
         sleepDisturbance = 0.0F;
         lastDisturbanceTick = Long.MIN_VALUE;
         lastHandledSound = null;
@@ -838,6 +845,7 @@ public final class DragonSleepComponent {
             sleepingExiting = false;
             sleepTransitioning = false;
             sleepSitUpTriggered = false;
+            exhaustionSleep = false;
             dragon.getEntityData().set(dataSleepingExiting, false);
             dragon.getEntityData().set(dataSleeping, false);
             bumpAmbientCooldown(10);

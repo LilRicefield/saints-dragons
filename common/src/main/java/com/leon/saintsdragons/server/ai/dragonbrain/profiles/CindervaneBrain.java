@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementInten
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
@@ -113,6 +114,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                                         Cindervane.TAKEOFF_ANIMATION_TICKS
                                                 )
                                         ),
+                                        new DragonDrinkBehaviour<>(DragonDrinkBehaviour.Config.standard()),
                                         new CindervaneAutonomousFlightBehaviour(),
                                         new DragonGroundWanderBehaviour<>(0.6D, 160)
                                 )

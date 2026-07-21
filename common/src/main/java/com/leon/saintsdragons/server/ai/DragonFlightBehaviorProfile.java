@@ -16,18 +16,18 @@ public record DragonFlightBehaviorProfile(
 ) {
     public static DragonFlightBehaviorProfile ignivorus() {
         return new DragonFlightBehaviorProfile(
-                60,
+                600,
                 25.0,
                 400,
-                10,
-                10,
-                10,
-                30,
-                30,
-                30,
-                3000,
-                3000,
-                3000
+                20,
+                20,
+                20,
+                180,
+                180,
+                180,
+                300,
+                300,
+                300
         );
     }
 
@@ -54,31 +54,31 @@ public record DragonFlightBehaviorProfile(
                 64.0,
                 300,
                 25,
-                8,
+                25,
                 2,
                 80,
-                8,
+                80,
                 4,
                 200,
-                1800,
+                200,
                 3000
         );
     }
 
     public static DragonFlightBehaviorProfile volitans() {
         return new DragonFlightBehaviorProfile(
-                60,
+                600,
                 64.0,
                 240,
-                12,
-                12,
-                12,
-                45,
-                45,
-                45,
-                2600,
-                2600,
-                2600
+                18,
+                18,
+                18,
+                140,
+                140,
+                140,
+                400,
+                400,
+                400
         );
     }
 }

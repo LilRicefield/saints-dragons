@@ -12,6 +12,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "raevyxFastAction";
     public static final String ACTION_CONTROLLER = "raevyxAction";
+    public static final String DRINKING_TRIGGER = "drinking";
     private static final String DODGE_AIR_LEFT = "dodge_air_left";
     private static final String DODGE_AIR_RIGHT = "dodge_air_right";
 
@@ -40,6 +41,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.raevyx.swim");
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.raevyx.sleep");
+    private static final RawAnimation DRINKING = RawAnimation.begin().thenPlay("animation.raevyx.drinking");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(
                     GROUND_IDLE,
@@ -78,6 +80,10 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
     public void triggerWakeUpAnimation() {
         AnimationHelper.triggerRestAnimation(wyvern, AnimationHelper.WAKE_UP);
+    }
+
+    public void triggerDrinkingAnimation() {
+        wyvern.triggerAnim(MOVEMENT_CONTROLLER, DRINKING_TRIGGER);
     }
 
     public void triggerDodgeLeftAnimation() {
@@ -136,6 +142,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 RawAnimation.begin().thenPlay("animation.raevyx.dash_backward"));
         controller.triggerableAnim("ground_rend",
                 RawAnimation.begin().thenPlay("animation.raevyx.ground_rend"));
+        controller.triggerableAnim(DRINKING_TRIGGER, DRINKING);
         registerVocalTriggers(controller, MOVEMENT_CONTROLLER);
     }
 

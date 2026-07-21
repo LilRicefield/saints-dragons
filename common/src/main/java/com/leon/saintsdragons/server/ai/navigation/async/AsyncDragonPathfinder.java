@@ -51,6 +51,22 @@ public final class AsyncDragonPathfinder {
     }
 
     public static Future<?> calculateGroundPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
+        int goalAccuracy = Math.max(1, Mth.floor(Math.max(1.5D, dragon.getBbWidth() * 0.75D)));
+        return calculateGroundPathAsync(dragon, target, goalAccuracy, callback);
+    }
+
+    public static Future<?> calculateGroundPathAsync(Mob dragon,
+                                                      Vec3 target,
+                                                      int goalAccuracy,
+                                                      Consumer<Path> callback) {
+        return calculateGroundPathAsync(dragon, target, goalAccuracy, false, callback);
+    }
+
+    public static Future<?> calculateGroundPathAsync(Mob dragon,
+                                                      Vec3 target,
+                                                      int goalAccuracy,
+                                                      boolean avoidWater,
+                                                      Consumer<Path> callback) {
         if (dragon.level().isClientSide) {
             return CompletableFuture.completedFuture(null);
         }
@@ -68,7 +84,7 @@ public final class AsyncDragonPathfinder {
         int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
         double routeDistance = Math.sqrt(startPos.distSqr(targetPos));
         int searchRange = Mth.clamp(Mth.ceil(routeDistance) + 24, 32, followRange);
-        int goalAccuracy = Math.max(1, Mth.floor(Math.max(1.5D, dragon.getBbWidth() * 0.75D)));
+        int resolvedGoalAccuracy = Math.max(0, goalAccuracy);
         int horizontalMargin = Math.max(16, Mth.ceil(dragon.getBbWidth()) + 8);
         int verticalMargin = Math.max(12, Mth.ceil(dragon.getBbHeight()) + 6);
         BlockPos minPos = new BlockPos(
@@ -93,7 +109,7 @@ public final class AsyncDragonPathfinder {
         return EXECUTOR.submit(() -> {
             Path path;
             try {
-                NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator(canPassThroughTrees);
+                NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator(canPassThroughTrees, avoidWater);
                 nodeEvaluator.setCanPassDoors(true);
                 PathFinder pathFinder = new PathFinderGround(nodeEvaluator, 5000);
                 path = pathFinder.findPath(
@@ -101,7 +117,7 @@ public final class AsyncDragonPathfinder {
                         dragon,
                         Set.of(targetPos),
                         (float) searchRange,
-                        goalAccuracy,
+                        resolvedGoalAccuracy,
                         1.0F
                 );
             } catch (Exception exception) {

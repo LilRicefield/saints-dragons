@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDebugDetails;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
@@ -120,15 +121,28 @@ public final class DragonBrainDebugTracker {
 
         if (registered.isEmpty()) {
             for (BehaviorControl<?> behaviour : brain.getRunningBehaviors()) {
-                result.add(toState("unknown", 0, behaviour, gameTime));
+                addBehaviourStates(result, "unknown", 0, behaviour, gameTime);
             }
         } else {
             registered.stream()
                     .sorted(Comparator.comparingInt(DragonBrainDiagnostics.RegisteredBehaviour::priority))
-                    .forEach(entry -> result.add(toState(
-                            entry.activity().toString(), entry.priority(), entry.behaviour(), gameTime)));
+                    .forEach(entry -> addBehaviourStates(
+                            result, entry.activity().toString(), entry.priority(), entry.behaviour(), gameTime));
         }
         return result;
+    }
+
+    private static void addBehaviourStates(List<MessageDragonBrainDebug.BehaviourState> result,
+                                           String activity,
+                                           int priority,
+                                           BehaviorControl<?> behaviour,
+                                           long gameTime) {
+        result.add(toState(activity, priority, behaviour, gameTime));
+        if (behaviour instanceof FirstApplicableDragonBehaviour<?> firstApplicable) {
+            for (DragonBehaviour<?> child : firstApplicable.childBehaviours()) {
+                result.add(toState(activity, priority, child, gameTime));
+            }
+        }
     }
 
     private static MessageDragonBrainDebug.BehaviourState toState(String activity,

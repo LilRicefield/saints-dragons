@@ -16,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 
 public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends DragonBehaviour<T> {
+    private static final int STUCK_RETARGET_TICKS = 20;
     protected final DragonFlightBehaviorProfile profile;
     private final double cruiseSpeed;
     private final double landingSpeed;
@@ -234,7 +235,10 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         if (dragon.distanceToSqr(targetPosition) < profile.targetReachedDistanceSq()) {
             return true;
         }
-        if (dragon.isFlightControllerStuck()) {
+        if (dragon.isFlightControllerRetrying()) {
+            return timeSinceTargetChange >= STUCK_RETARGET_TICKS;
+        }
+        if (dragon.isFlightControllerFailed()) {
             return true;
         }
         if (timeSinceTargetChange > profile.maxTargetAgeTicks()) {

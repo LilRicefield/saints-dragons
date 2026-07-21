@@ -8,9 +8,6 @@ public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<R
     private static final double CRUISE_SPEED = 2.0D;
     private static final double LANDING_SPEED = 1.45D;
 
-    private boolean wasThundering;
-    private boolean wasRaining;
-
     public RaevyxAutonomousFlightBehaviour() {
         super(DragonFlightBehaviorProfile.raevyx(), CRUISE_SPEED, LANDING_SPEED, Raevyx.TAKEOFF_ANIMATION_TICKS);
     }
@@ -37,12 +34,10 @@ public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<R
 
     @Override
     protected int getLandingCooldownTicks(Raevyx dragon) {
-        boolean thundering = dragon.level().isThundering();
-        boolean raining = !thundering && dragon.level().isRaining();
-        if (thundering || weatherChangedToStorm(thundering, raining)) {
+        if (dragon.level().isThundering()) {
             return 0;
         }
-        return raining ? profile.landingCooldownTicks() / 4 : profile.landingCooldownTicks();
+        return profile.landingCooldownTicks();
     }
 
     @Override
@@ -93,12 +88,5 @@ public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<R
             return 70.0D;
         }
         return 50.0D;
-    }
-
-    private boolean weatherChangedToStorm(boolean thundering, boolean raining) {
-        boolean changed = (thundering && !wasThundering) || (raining && !wasRaining);
-        wasThundering = thundering;
-        wasRaining = raining;
-        return changed;
     }
 }

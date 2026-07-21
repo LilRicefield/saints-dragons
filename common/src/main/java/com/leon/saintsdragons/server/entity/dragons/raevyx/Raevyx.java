@@ -92,7 +92,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
+public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
+        PassiveTreeDestroyer, DrinkingDragon {
     private static final RaevyxBrain DRAGON_BRAIN = new RaevyxBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -116,6 +117,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final int MAX_AMBIENT_DELAY = 600;
     public static final float MODEL_SCALE = 1.0f;
     public static final int TAKEOFF_ANIMATION_TICKS = 29;
+    public static final int DRINKING_ANIMATION_TICKS = 100;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
@@ -2746,6 +2748,29 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     @Override
     public DragonAbilityType<?, ?> getChannelingAbility() {
         return ModAbilities.RAEVYX_SUMMON_STORM;
+    }
+
+    @Override
+    public int getDrinkingDurationTicks() {
+        return DRINKING_ANIMATION_TICKS;
+    }
+
+    @Override
+    public double getDrinkingReach() {
+        return 5.5D;
+    }
+
+    @Override
+    public void startDrinkingAnimation() {
+        animationHandler.triggerDrinkingAnimation();
+    }
+
+    @Override
+    public void stopDrinkingAnimation() {
+        stopTriggeredAnimation(
+                RaevyxAnimationHandler.MOVEMENT_CONTROLLER,
+                RaevyxAnimationHandler.DRINKING_TRIGGER
+        );
     }
 
     @Override

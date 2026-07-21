@@ -35,6 +35,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
@@ -112,7 +113,8 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
-public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>, DragonChestCarrier, DragonAirCombatSettingsProvider {
+public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>,
+        DragonChestCarrier, DragonAirCombatSettingsProvider, DrinkingDragon {
     private static final CindervaneBrain DRAGON_BRAIN = new CindervaneBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -146,6 +148,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDED_RECOVERY_TICKS = 34;
     public static final int TAKEOFF_ANIMATION_TICKS = 23;
+    public static final int DRINKING_ANIMATION_TICKS = 80;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
@@ -1343,6 +1346,29 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     public DragonAbilityType<?, ?> getRoaringAbility() {
         return ModAbilities.CINDERVANE_ROAR;
+    }
+
+    @Override
+    public int getDrinkingDurationTicks() {
+        return DRINKING_ANIMATION_TICKS;
+    }
+
+    @Override
+    public double getDrinkingReach() {
+        return 4.5D;
+    }
+
+    @Override
+    public void startDrinkingAnimation() {
+        animationHandler.triggerDrinkingAnimation();
+    }
+
+    @Override
+    public void stopDrinkingAnimation() {
+        stopTriggeredAnimation(
+                CindervaneAnimationHandler.MOVEMENT_CONTROLLER,
+                CindervaneAnimationHandler.DRINKING_TRIGGER
+        );
     }
 
     @Override

@@ -6,7 +6,9 @@ import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
@@ -24,6 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
@@ -148,7 +151,7 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} wildAggressive={} "
+                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} drinking={} wildAggressive={} "
                         + "onGround={} verticalCollision={} velocity={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
@@ -177,6 +180,7 @@ public final class DragonPathDebugTracker {
                 DragonEntity.HUNGER_MAX,
                 dragon.isHuntFoodPursuitActive(),
                 logState.sleep,
+                logState.drinking,
                 dragon.isWildAggressionEnabled(),
                 dragon.onGround(),
                 dragon.verticalCollision,
@@ -303,10 +307,39 @@ public final class DragonPathDebugTracker {
     }
 
     private static List<String> runningBehaviours(DragonEntity dragon) {
-        return dragon.getBrain().getRunningBehaviors().stream()
-                .map(behaviour -> behaviour.getClass().getSimpleName())
-                .sorted()
-                .toList();
+        List<String> names = new ArrayList<>();
+        for (BehaviorControl<?> behaviour : dragon.getBrain().getRunningBehaviors()) {
+            names.add(behaviour.getClass().getSimpleName());
+            if (behaviour instanceof FirstApplicableDragonBehaviour<?> firstApplicable
+                    && firstApplicable.runningBehaviour() != null) {
+                names.add(firstApplicable.runningBehaviour().getClass().getSimpleName());
+            }
+        }
+        names.sort(String::compareTo);
+        return List.copyOf(names);
+    }
+
+    private static String drinkingSummary(DragonEntity dragon) {
+        for (DragonBrainDiagnostics.RegisteredBehaviour registered
+                : DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (!(registered.behaviour() instanceof FirstApplicableDragonBehaviour<?> firstApplicable)) {
+                continue;
+            }
+            for (var child : firstApplicable.childBehaviours()) {
+                if (child instanceof DragonDrinkBehaviour<?> drinking) {
+                    Map<String, String> details = drinking.getDragonBrainDebugDetails();
+                    boolean drinkReady = drinking.cooldownRemaining(dragon.level().getGameTime()) == 0L;
+                    return "phase=" + details.getOrDefault("drink_phase", "unknown")
+                            + ",decision=" + details.getOrDefault("drink_decision", "unknown")
+                            + ",site=" + details.getOrDefault("drink_site", "none")
+                            + ",candidates=" + details.getOrDefault("drink_candidates", "0/0")
+                            + ",water=" + details.getOrDefault("drink_water_sources", "0")
+                            + ",valid=" + details.getOrDefault("drink_valid_sites", "0")
+                            + ",cooldown=" + (drinkReady ? "ready" : "waiting");
+                }
+            }
+        }
+        return "disabled";
     }
 
     private static String perceptionSummary(DragonEntity dragon) {
@@ -391,6 +424,7 @@ public final class DragonPathDebugTracker {
                             boolean navigationDone,
                             boolean navigationStuck,
                             String sleep,
+                            String drinking,
                             String perception,
                             String tactical,
                             String pursuit,
@@ -431,6 +465,7 @@ public final class DragonPathDebugTracker {
                     dragon.getNavigation().isDone(),
                     dragon.getNavigation().isStuck(),
                     sleepSummary(dragon),
+                    drinkingSummary(dragon),
                     perceptionSummary(dragon),
                     tacticalSummary(dragon),
                     pursuitSummary(dragon),

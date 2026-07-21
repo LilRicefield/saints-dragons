@@ -40,6 +40,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
@@ -98,7 +99,8 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
+public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
+        PassiveTreeDestroyer, DrinkingDragon {
     private static final IgnivorusBrain DRAGON_BRAIN = new IgnivorusBrain();
 
     @Override
@@ -112,6 +114,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             DragonVariant.of(VARIANT_CRIMSON, "crimson", 5)
     );
     public static final int TAKEOFF_ANIMATION_TICKS = 27;
+    public static final int DRINKING_ANIMATION_TICKS = 140;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
@@ -2327,6 +2330,29 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
 
         return getMeleeMode() == 1 ? ModAbilities.IGNIVORUS_BODY_SLAM : ModAbilities.IGNIVORUS_BITE;
+    }
+
+    @Override
+    public int getDrinkingDurationTicks() {
+        return DRINKING_ANIMATION_TICKS;
+    }
+
+    @Override
+    public double getDrinkingReach() {
+        return 7.5D;
+    }
+
+    @Override
+    public void startDrinkingAnimation() {
+        animationHandler.triggerDrinkingAnimation();
+    }
+
+    @Override
+    public void stopDrinkingAnimation() {
+        stopTriggeredAnimation(
+                IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
+                IgnivorusAnimationHandler.DRINKING_TRIGGER
+        );
     }
 
     private void enforcePrimaryMeleeForFlight(@Nullable Player rider) {

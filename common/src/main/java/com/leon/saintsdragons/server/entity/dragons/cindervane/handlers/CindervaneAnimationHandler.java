@@ -12,6 +12,7 @@ public class CindervaneAnimationHandler {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "cindervaneFastAction";
     public static final String ACTION_CONTROLLER = "cindervaneAction";
+    public static final String DRINKING_TRIGGER = "drinking";
 
     private final Cindervane amphithere;
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.cindervane.idle");
@@ -32,6 +33,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.cindervane.sleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
+    private static final RawAnimation DRINKING = RawAnimation.begin().thenPlay("animation.cindervane.drinking");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, SWIM, null, FALLING);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -69,6 +71,7 @@ public class CindervaneAnimationHandler {
     public void setupMovementController(AnimationController<Cindervane> controller) {
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
+        controller.triggerableAnim(DRINKING_TRIGGER, DRINKING);
         controller.triggerableAnim("slash_left",
                 RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
     }
@@ -103,6 +106,10 @@ public class CindervaneAnimationHandler {
 
     public void triggerWakeUpAnimation() {
         AnimationHelper.triggerRestAnimation(amphithere, AnimationHelper.WAKE_UP);
+    }
+
+    public void triggerDrinkingAnimation() {
+        amphithere.triggerAnim(MOVEMENT_CONTROLLER, DRINKING_TRIGGER);
     }
 
     public PlayState movementPredicate(AnimationState<Cindervane> state) {

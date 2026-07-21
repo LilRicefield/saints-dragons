@@ -1140,6 +1140,16 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 || state == AsyncFlightController.PathState.FAILED;
     }
 
+    public boolean isFlightControllerRetrying() {
+        return isUsingAirNavigation()
+                && this.asyncAirController.getState() == AsyncFlightController.PathState.STUCK;
+    }
+
+    public boolean isFlightControllerFailed() {
+        return isUsingAirNavigation()
+                && this.asyncAirController.getState() == AsyncFlightController.PathState.FAILED;
+    }
+
     protected void tickAsyncFlightNavigation() {
         if (!level().isClientSide
                 && isUsingAirNavigation()

@@ -58,7 +58,6 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     public static final double RIDER_WALK_SPEED = 0.12D;
     public static final double RIDER_RUN_SPEED = 0.28D;
     private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
-    private static final double PRECISE_STRIKE_VERTICAL_DRAG = 0.95D;
 
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private final AtroxiiaRiderController riderController = new AtroxiiaRiderController(this);

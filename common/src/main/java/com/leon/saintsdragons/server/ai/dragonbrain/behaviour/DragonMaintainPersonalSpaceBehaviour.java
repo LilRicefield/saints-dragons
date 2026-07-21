@@ -23,6 +23,7 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
     private static final double MIN_MOVE_DISTANCE = 2.5D;
     private static final double MAX_MOVE_DISTANCE = 8.0D;
     private static final double MOVE_SPEED = 0.6D;
+    private static final double ARRIVAL_TOLERANCE = 0.75D;
 
     @Nullable
     private Vec3 target;
@@ -211,7 +212,12 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
         if (target == null) {
             return;
         }
-        movementIssued = context.dragon().getAIMovement().setWaypoint(target, MOVE_SPEED, false);
+        movementIssued = context.dragon().getAIMovement().moveToPreciseGroundPosition(
+                target,
+                MOVE_SPEED,
+                false,
+                ARRIVAL_TOLERANCE
+        );
         repathCooldown = REPATH_INTERVAL_TICKS;
         if (!movementIssued) {
             target = null;

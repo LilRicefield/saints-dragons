@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -60,9 +61,7 @@ public class DragonAIMovementController {
             return;
         }
         if (groundPathState == GroundPathState.FOLLOWING && dragon.getNavigation().isDone()) {
-            double arrivalDistance = Math.max(1.5D, dragon.getBbWidth() * 0.75D);
-            boolean reached = currentWaypoint != null
-                    && dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
+            boolean reached = hasReachedGroundWaypoint();
             if (reached) {
                 groundPathState = GroundPathState.ARRIVED;
                 currentWaypoint = null;
@@ -140,6 +139,69 @@ public class DragonAIMovementController {
 
     public boolean moveToGroundPosition(Vec3 target, double speed, boolean running) {
         return setGroundWaypoint(target, speed, running);
+    }
+
+    public boolean moveToPreciseGroundPosition(Vec3 target,
+                                               double speed,
+                                               boolean running,
+                                               double arrivalTolerance) {
+        if (target == null || arrivalTolerance <= 0.0D || !canUseGroundNavigation()) {
+            clearGroundPath();
+            return false;
+        }
+        ensureGroundNavigation();
+        return startWaypoint(new QueuedWaypoint(
+                target,
+                speed,
+                running,
+                MovementMode.GROUND,
+                arrivalTolerance
+        ));
+    }
+
+    public boolean followGroundPath(Path path, Vec3 target, double speed, boolean running) {
+        return followGroundPath(path, target, speed, running, Double.NaN);
+    }
+
+    public boolean followGroundPath(Path path,
+                                    Vec3 target,
+                                    double speed,
+                                    boolean running,
+                                    double arrivalTolerance) {
+        if (path == null
+                || path.getNodeCount() == 0
+                || target == null
+                || !canUseGroundNavigation()) {
+            stop();
+            return false;
+        }
+
+        ensureGroundNavigation();
+        resetGroundPathState();
+        dragon.getNavigation().stop();
+        currentWaypoint = new QueuedWaypoint(
+                target,
+                speed,
+                running,
+                MovementMode.GROUND,
+                arrivalTolerance
+        );
+        if (!dragon.getNavigation().moveTo(path, speed)) {
+            recordGroundPathFailure(target);
+            return false;
+        }
+        if (currentWaypoint.hasPreciseGroundArrival()
+                && dragon.getNavigation() instanceof PathNavigateGround groundNavigation) {
+            // The navigator checks X and Z independently, so scale the radial tolerance
+            // to guarantee the controller's horizontal arrival radius.
+            groundNavigation.setFinalWaypointTolerance(arrivalTolerance / Math.sqrt(2.0D));
+        }
+
+        groundPathFailureRetryTicks = 0;
+        lastFailedGroundTarget = null;
+        setGroundMoveState(running);
+        groundPathState = GroundPathState.FOLLOWING;
+        return true;
     }
 
     public boolean moveToProgressiveGroundPosition(Vec3 target, double speed, boolean running) {
@@ -472,6 +534,25 @@ public class DragonAIMovementController {
         return Math.max(2.0D, dragon.getBbWidth() * 0.75D);
     }
 
+    private boolean hasReachedGroundWaypoint() {
+        if (currentWaypoint == null) {
+            return false;
+        }
+        if (!currentWaypoint.hasPreciseGroundArrival()) {
+            double arrivalDistance = Math.max(1.5D, dragon.getBbWidth() * 0.75D);
+            return dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
+        }
+
+        Vec3 target = currentWaypoint.target();
+        double dx = dragon.getX() - target.x;
+        double dz = dragon.getZ() - target.z;
+        double verticalOffset = dragon.getY() - target.y;
+        double arrivalTolerance = currentWaypoint.groundArrivalTolerance();
+        return dx * dx + dz * dz <= arrivalTolerance * arrivalTolerance
+                && verticalOffset > -1.0D
+                && verticalOffset <= 1.5D;
+    }
+
     private Vec3 resolveTargetPosition(LivingEntity target) {
         if (shouldUseWaterMovement() && target.isInWaterOrBubble()) {
             return target.position().add(0.0D, target.getBbHeight() * 0.35D, 0.0D);
@@ -574,35 +655,49 @@ public class DragonAIMovementController {
         }
         long requestGeneration = ++groundPathRequestGeneration;
         groundPathState = GroundPathState.CALCULATING;
-        groundPathRequest = AsyncDragonPathfinder.calculateGroundPathAsync(dragon, waypoint.target(), path -> {
-            if (requestGeneration != groundPathRequestGeneration
-                    || currentWaypoint == null
-                    || currentWaypoint.mode().usesAir()
-                    || !canUseGroundNavigation()) {
-                return;
-            }
-            groundPathRequest = null;
-            if (path == null || path.getNodeCount() == 0) {
-                recordGroundPathFailure(currentWaypoint.target());
-                return;
-            }
+        int goalAccuracy = waypoint.hasPreciseGroundArrival()
+                ? 0
+                : Math.max(1, Mth.floor(Math.max(1.5D, dragon.getBbWidth() * 0.75D)));
+        groundPathRequest = AsyncDragonPathfinder.calculateGroundPathAsync(
+                dragon,
+                waypoint.target(),
+                goalAccuracy,
+                path -> {
+                    if (requestGeneration != groundPathRequestGeneration
+                            || currentWaypoint == null
+                            || currentWaypoint.mode().usesAir()
+                            || !canUseGroundNavigation()) {
+                        return;
+                    }
+                    groundPathRequest = null;
+                    if (path == null || path.getNodeCount() == 0) {
+                        recordGroundPathFailure(currentWaypoint.target());
+                        return;
+                    }
 
-            if (!path.canReach() && currentWaypoint.mode().requiresCompletePath()) {
-                recordGroundPathFailure(currentWaypoint.target());
-                return;
-            }
+                    if (!path.canReach() && currentWaypoint.mode().requiresCompletePath()) {
+                        recordGroundPathFailure(currentWaypoint.target());
+                        return;
+                    }
 
-            Path resolvedPath = path;
-            boolean started = dragon.getNavigation().moveTo(resolvedPath, currentWaypoint.speed());
-            if (!started) {
-                recordGroundPathFailure(currentWaypoint.target());
-                return;
-            }
-            groundPathFailureRetryTicks = 0;
-            lastFailedGroundTarget = null;
-            setGroundMoveState(currentWaypoint.running());
-            groundPathState = GroundPathState.FOLLOWING;
-        });
+                    Path resolvedPath = path;
+                    boolean started = dragon.getNavigation().moveTo(resolvedPath, currentWaypoint.speed());
+                    if (!started) {
+                        recordGroundPathFailure(currentWaypoint.target());
+                        return;
+                    }
+                    if (currentWaypoint.hasPreciseGroundArrival()
+                            && dragon.getNavigation() instanceof PathNavigateGround groundNavigation) {
+                        groundNavigation.setFinalWaypointTolerance(
+                                currentWaypoint.groundArrivalTolerance() / Math.sqrt(2.0D)
+                        );
+                    }
+                    groundPathFailureRetryTicks = 0;
+                    lastFailedGroundTarget = null;
+                    setGroundMoveState(currentWaypoint.running());
+                    groundPathState = GroundPathState.FOLLOWING;
+                }
+        );
     }
 
     private void recordGroundPathFailure(@Nullable Vec3 target) {
@@ -718,7 +813,18 @@ public class DragonAIMovementController {
         return true;
     }
 
-    private record QueuedWaypoint(Vec3 target, double speed, boolean running, MovementMode mode) {
+    private record QueuedWaypoint(Vec3 target,
+                                  double speed,
+                                  boolean running,
+                                  MovementMode mode,
+                                  double groundArrivalTolerance) {
+        private QueuedWaypoint(Vec3 target, double speed, boolean running, MovementMode mode) {
+            this(target, speed, running, mode, Double.NaN);
+        }
+
+        private boolean hasPreciseGroundArrival() {
+            return Double.isFinite(groundArrivalTolerance) && groundArrivalTolerance > 0.0D;
+        }
     }
 
     private enum MovementMode {

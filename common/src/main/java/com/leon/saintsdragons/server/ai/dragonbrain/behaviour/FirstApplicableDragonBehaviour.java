@@ -26,6 +26,15 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
         this.behaviours = List.copyOf(ordered);
     }
 
+    public List<DragonBehaviour<T>> childBehaviours() {
+        return behaviours;
+    }
+
+    @Nullable
+    public DragonBehaviour<T> runningBehaviour() {
+        return running;
+    }
+
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
         if (controlReserved(context)) {
@@ -70,7 +79,13 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
     }
 
     private boolean controlReserved(DragonBrainContext<T> context) {
-        return context.dragon().isHuntFoodPursuitActive()
+        T dragon = context.dragon();
+        return dragon.isSleeping()
+                || dragon.isSleepTransitioning()
+                || dragon.isOrderedToSit()
+                || dragon.isInSittingPose()
+                || dragon.isInSitTransition()
+                || dragon.isHuntFoodPursuitActive()
                 || context.memories().has(DragonMemories.INVESTIGATION_TARGET)
                 && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
     }
