@@ -305,6 +305,9 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     private void igniteArea(ServerLevel server, BlockPos base) {
+        if (!DragonGriefingRules.canSetBlocksOnFire(server)) {
+            return;
+        }
         float scale = getVisualScale();
         int radius = (int) Math.ceil(scale) + 1; // Slightly larger fire spread
         BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();

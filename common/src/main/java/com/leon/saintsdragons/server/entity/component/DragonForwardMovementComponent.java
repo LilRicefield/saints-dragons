@@ -154,9 +154,22 @@ public final class DragonForwardMovementComponent {
         dragon.hurtMarked = true;
     }
 
+    public void applyDirectTravelMotion() {
+        if (!isActive()) {
+            return;
+        }
+        Vec3 motion = state.velocity();
+        lastVelocity = motion;
+        moveInStepFriendlySlices(motion);
+        dragon.setDeltaMovement(Vec3.ZERO);
+        dragon.hasImpulse = true;
+        dragon.hurtMarked = true;
+    }
+
     private void moveInStepFriendlySlices(Vec3 nudge) {
         double horizontalLength = Math.sqrt(nudge.x * nudge.x + nudge.z * nudge.z);
-        int slices = Math.max(1, (int) Math.ceil(horizontalLength / MAX_MOVE_STEP));
+        double longestAxis = Math.max(horizontalLength, Math.abs(nudge.y));
+        int slices = Math.max(1, (int) Math.ceil(longestAxis / MAX_MOVE_STEP));
         Vec3 slice = nudge.scale(1.0D / slices);
         for (int i = 0; i < slices; i++) {
             dragon.move(MoverType.SELF, slice);

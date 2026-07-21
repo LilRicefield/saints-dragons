@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -179,6 +180,9 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     }
 
     private void maybeIgnite(ServerLevel level, Vec3 sample, Cindervane dragon) {
+        if (!DragonGriefingRules.canSetBlocksOnFire(level)) {
+            return;
+        }
         if (dragon.getRandom().nextFloat() > 0.12F) {
             return;
         }

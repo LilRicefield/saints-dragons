@@ -38,6 +38,7 @@ public final class SaintsDragonsConfig {
     public static final boolean STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean DRAGON_GRIEFING_ENABLED_DEFAULT = true;
+    public static final boolean FIRE_DRAGON_BLOCK_IGNITION_ENABLED_DEFAULT = true;
     public static final boolean SCREEN_SHAKE_ENABLED_DEFAULT = true;
     public static final boolean BARREL_ROLL_ENABLED_DEFAULT = true;
     public static final boolean STEGONAUT_BUFFS_ENABLED_DEFAULT = true;
@@ -75,6 +76,7 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.BooleanValue STEGONAUT_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue VOLITANS_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue DRAGON_GRIEFING_ENABLED;
+    public static ConfigHelper.BooleanValue FIRE_DRAGON_BLOCK_IGNITION_ENABLED;
     public static ConfigHelper.BooleanValue SCREEN_SHAKE_ENABLED;
     public static ConfigHelper.BooleanValue BARREL_ROLL_ENABLED;
     public static ConfigHelper.BooleanValue STEGONAUT_BUFFS_ENABLED;
@@ -151,6 +153,8 @@ public final class SaintsDragonsConfig {
         serverBuilder.comment("Extra Saint's Dragons griefing toggle layered on top of the vanilla mobGriefing gamerule.");
         serverBuilder.comment("If false, dragon-caused block destruction is disabled even when mobGriefing is true.");
         DRAGON_GRIEFING_ENABLED = serverBuilder.defineBoolean("dragonGriefingEnabled", DRAGON_GRIEFING_ENABLED_DEFAULT);
+        serverBuilder.comment("Whether Ignivorus and Cindervane attacks may place fire blocks. Also requires dragonGriefingEnabled and the vanilla mobGriefing gamerule.");
+        FIRE_DRAGON_BLOCK_IGNITION_ENABLED = serverBuilder.defineBoolean("fireDragonBlockIgnitionEnabled", FIRE_DRAGON_BLOCK_IGNITION_ENABLED_DEFAULT);
         serverBuilder.comment("Global toggle for dragon and ability-driven screen shake effects.");
         SCREEN_SHAKE_ENABLED = serverBuilder.defineBoolean("screenShakeEnabled", SCREEN_SHAKE_ENABLED_DEFAULT);
         serverBuilder.comment("Global toggle for rider-triggered barrel roll on flying dragons.");
@@ -181,6 +185,10 @@ public final class SaintsDragonsConfig {
 
     public static boolean isDragonBreedingEnabled() {
         return DRAGON_BREEDING_ENABLED == null || DRAGON_BREEDING_ENABLED.get();
+    }
+
+    public static boolean isFireDragonBlockIgnitionEnabled() {
+        return FIRE_DRAGON_BLOCK_IGNITION_ENABLED == null || FIRE_DRAGON_BLOCK_IGNITION_ENABLED.get();
     }
 
     public static boolean isWikiReminderEnabled() {

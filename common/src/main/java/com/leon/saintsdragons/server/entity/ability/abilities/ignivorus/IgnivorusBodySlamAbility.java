@@ -61,7 +61,7 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
         if (section.sectionType == STARTUP) {
             impactApplied = false;
-            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "body_slam");
+            dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "body_slam");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BODY_SLAM.get(), 1.0f, 1.0f, 53);
             }

@@ -1089,6 +1089,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             return;
         }
         boolean allowGriefing = DragonGriefingRules.canDestroyBlocks(server);
+        boolean allowBlockIgnition = DragonGriefingRules.canSetBlocksOnFire(server);
         double x = impact.x;
         double y = impact.y;
         double z = impact.z;
@@ -1118,7 +1119,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                 ? Explosion.BlockInteraction.DESTROY
                 : Explosion.BlockInteraction.KEEP;
         Explosion explosion = new Explosion(server, this, server.damageSources().explosion(this, this), calculator,
-                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, true, blockInteraction);
+                x, y + 0.2D, z, FIRE_BODY_EXPLOSION_RADIUS, allowBlockIgnition, blockInteraction);
 
         List<LivingEntity> allies = grantAlliesExplosionImmunity(server, x, y, z);
         double protectionRadius = FIRE_BODY_EXPLOSION_RADIUS + 4.0D;
@@ -1159,7 +1160,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         server.sendParticles(ParticleTypes.LAVA, x, y + 0.5D, z, 40, 1.3D, 0.6D, 1.3D, 0.12D);
         server.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.5D, z, 80, 2.2D, 0.7D, 2.2D, 0.05D);
 
-        if (allowGriefing) {
+        if (allowBlockIgnition) {
             BlockPos.MutableBlockPos flamePos = new BlockPos.MutableBlockPos();
             int baseY = Mth.floor(y);
             for (int dx = -3; dx <= 3; dx++) {

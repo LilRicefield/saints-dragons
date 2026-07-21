@@ -96,6 +96,7 @@ public class ModBlocks {
                             .strength(5.0F, 6.0F)
                             .sound(SoundType.METAL)
                             .requiresCorrectToolForDrops()
+                            .lightLevel(state -> state.getValue(DraconicCrucibleBlock.LIT) ? 13 : 0)
                             .noOcclusion()));
     public static final Supplier<Block> DRAGONHEART_ALLOY_BLOCK =
             REGISTER.register("dragonheart_alloy_block",

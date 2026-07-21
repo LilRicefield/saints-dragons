@@ -239,6 +239,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "stegonautCustomSpawningEnabled" -> () -> spawnHolder().getConfig().stegonautCustomSpawningEnabled;
             case "volitansCustomSpawningEnabled" -> () -> spawnHolder().getConfig().volitansCustomSpawningEnabled;
             case "dragonGriefingEnabled" -> () -> serverHolder().getConfig().dragonGriefingEnabled;
+            case "fireDragonBlockIgnitionEnabled" -> () -> serverHolder().getConfig().fireDragonBlockIgnitionEnabled;
             case "screenShakeEnabled" -> () -> serverHolder().getConfig().screenShakeEnabled;
             case "barrelRollEnabled" -> () -> serverHolder().getConfig().barrelRollEnabled;
             case "stegonautBuffsEnabled" -> () -> serverHolder().getConfig().stegonautBuffsEnabled;
@@ -264,6 +265,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "stegonautCustomSpawningEnabled" -> value -> spawnHolder().getConfig().stegonautCustomSpawningEnabled = value;
             case "volitansCustomSpawningEnabled" -> value -> spawnHolder().getConfig().volitansCustomSpawningEnabled = value;
             case "dragonGriefingEnabled" -> value -> serverHolder().getConfig().dragonGriefingEnabled = value;
+            case "fireDragonBlockIgnitionEnabled" -> value -> serverHolder().getConfig().fireDragonBlockIgnitionEnabled = value;
             case "screenShakeEnabled" -> value -> serverHolder().getConfig().screenShakeEnabled = value;
             case "barrelRollEnabled" -> value -> serverHolder().getConfig().barrelRollEnabled = value;
             case "stegonautBuffsEnabled" -> value -> serverHolder().getConfig().stegonautBuffsEnabled = value;

@@ -13,6 +13,10 @@ public final class SaintsDragonsFabricServerConfig implements ConfigData {
 
     @ConfigEntry.Category("gameplay")
     @ConfigEntry.Gui.Tooltip
+    public boolean fireDragonBlockIgnitionEnabled = SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("gameplay")
+    @ConfigEntry.Gui.Tooltip
     public boolean screenShakeEnabled = SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT;
 
     @ConfigEntry.Category("gameplay")

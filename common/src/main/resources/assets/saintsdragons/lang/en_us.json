@@ -1019,6 +1019,8 @@
   "saintsdragons.config_screen.others.dragon_griefing.section": "Dragon Stuff",
   "saintsdragons.config_screen.others.dragon_griefing": "Enable Dragon Block Destruction",
   "saintsdragons.config_screen.others.dragon_griefing.tooltip": "Saint's Dragons only break blocks when this is enabled and the vanilla mobGriefing gamerule is also true",
+  "saintsdragons.config_screen.others.fire_dragon_block_ignition": "Enable Fire Dragon Block Ignition",
+  "saintsdragons.config_screen.others.fire_dragon_block_ignition.tooltip": "Allows Ignivorus and Cindervane attacks to place fire blocks. Dragon block destruction and vanilla mobGriefing must also be enabled",
   "saintsdragons.config_screen.others.screen_shake": "Enable Screen Shake",
   "saintsdragons.config_screen.others.screen_shake.tooltip": "Disables dragon and ability-driven camera shake effects when turned off",
   "saintsdragons.config_screen.others.barrel_roll": "Enable Barrel Roll",

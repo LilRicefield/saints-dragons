@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.cindervane;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
@@ -219,6 +220,9 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     private void igniteArea(ServerLevel server, BlockPos base) {
+        if (!DragonGriefingRules.canSetBlocksOnFire(server)) {
+            return;
+        }
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 BlockPos pos = base.offset(dx, 0, dz);

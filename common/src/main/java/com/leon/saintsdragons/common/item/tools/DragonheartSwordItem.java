@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.item.ConfiguredItemAttributes;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 
 public class DragonheartSwordItem extends SwordItem {
+    private static final int DRAGONLORD_FIRE_ASPECT_SECONDS = 8;
     public static final UUID ENTITY_REACH_MODIFIER_UUID = UUID.fromString("513fc6ee-03f7-4aa7-8f3b-6f8f7fd57d60");
     public static final UUID TARGETING_REACH_MODIFIER_UUID = UUID.fromString("f614ef20-d69e-4c41-8363-c7e9c9b106ec");
     public static final double VANILLA_ENTITY_REACH = 3.0D;
@@ -70,6 +72,15 @@ public class DragonheartSwordItem extends SwordItem {
         return (float) (isBloodTempest()
                 ? ToolsArmorConfig.BLOOD_TEMPEST_KATANA_CRITICAL_BONUS.get()
                 : ToolsArmorConfig.DRAGONLORD_SWORD_CRITICAL_BONUS.get());
+    }
+
+    @Override
+    public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
+        boolean hurt = super.hurtEnemy(stack, target, attacker);
+        if (hurt && !isBloodTempest()) {
+            target.setSecondsOnFire(DRAGONLORD_FIRE_ASPECT_SECONDS);
+        }
+        return hurt;
     }
 
     @Override

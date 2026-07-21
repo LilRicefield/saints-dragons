@@ -38,6 +38,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
+import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
@@ -126,6 +127,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                     5.0D
             );
     private static final int LANDED_RECOVERY_TICKS = 18;
+    private static final int PHASE2_ENTER_LOCK_TICKS = 13;
+    private static final int PHASE2_EXIT_LOCK_TICKS = 13;
     private static final int PHASE2_LANDED_RECOVERY_TICKS = 20;
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
@@ -137,6 +140,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_LEAP_ANIM_STATE =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Integer> DATA_LEAP_MOVE_TICKS =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_LEAP_MOVE_X =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_LEAP_MOVE_Y =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_LEAP_MOVE_Z =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
@@ -204,10 +215,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final double BULLDOZE_DAMAGE_HALF_HEIGHT = 2.5D;
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 55.0F;
-    private static final double LEAP_HORIZONTAL_SPEED = 2.75D;
-    private static final double LEAP_VERTICAL_BOOST = 1.15D;
-    private static final double LEAP_HORIZONTAL_DRAG = 0.94D;
-    private static final double LEAP_GRAVITY = 0.06D;
+    private static final double LEAP_ARC_FORWARD_DISTANCE = 42.0D;
+    private static final double LEAP_ARC_HEIGHT = 15.0D;
+    private static final int LEAP_ARC_ASCENT_TICKS = 20;
+    private static final int LEAP_ARC_DESCENT_TICKS = 10;
+    private static final int LEAP_ARC_DURATION_TICKS = LEAP_ARC_ASCENT_TICKS + LEAP_ARC_DESCENT_TICKS;
     private static final float LEAP_SLAM_DAMAGE = 50.0F;
     private static final float DEFAULT_BULLDOZE_DAMAGE = 10.0F;
     private static final double LEAP_SLAM_RADIUS = 20.0D;
@@ -216,9 +228,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final double LEAP_IMPACT_TRIGGER_HEIGHT = 7.0D;
     private static final int LEAP_GROUNDED_FAILSAFE_TICKS = 6;
     private static final int LEAP_COOLDOWN_TICKS = 140;
+    private static final int LEAP_WINDUP_TICKS = 20;
     private static final int LEAP_STATE_NONE = 0;
     private static final int LEAP_STATE_TAKEOFF = 1;
-    private static final int LEAP_IMPACT_RECOVERY_DURATION = 20;
+    private static final int LEAP_IMPACT_RECOVERY_DURATION = 18;
     private static final int FLEX_CONTROL_LOCK_TICKS = 170;
     private static final int FLEX_COOLDOWN_TICKS = 200;
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
@@ -283,11 +296,63 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private boolean leapWasVehicle = false;
     private int leapAnimState = LEAP_STATE_NONE;
     private Vec3 leapVelocity = Vec3.ZERO;
+    private Vec3 leapArcDirection = Vec3.ZERO;
+    private int leapArcTick = 0;
     private int leapCooldownTicks = 0;
+    private int leapWindupTicks = 0;
     private int leapImpactRecoveryTicks = 0;
     private boolean leapImpactTriggered = false;
     private boolean wasAirborneBeforeLanding = false;
     private int leapGroundedTicks = 0;
+    private final DragonForwardMovementComponent leapMovement = new DragonForwardMovementComponent(
+            this,
+            new DragonForwardMovementComponent.StateAccess() {
+                @Override
+                public void start(int ticks, Vec3 velocity, boolean dashing, boolean dodging, double horizontalDrag) {
+                    entityData.set(DATA_LEAP_MOVE_TICKS, Math.max(1, ticks));
+                    setVelocity(velocity);
+                }
+
+                @Override
+                public int ticks() {
+                    return entityData.get(DATA_LEAP_MOVE_TICKS);
+                }
+
+                @Override
+                public void setTicks(int ticks) {
+                    entityData.set(DATA_LEAP_MOVE_TICKS, Math.max(0, ticks));
+                }
+
+                @Override
+                public Vec3 velocity() {
+                    return new Vec3(
+                            entityData.get(DATA_LEAP_MOVE_X),
+                            entityData.get(DATA_LEAP_MOVE_Y),
+                            entityData.get(DATA_LEAP_MOVE_Z)
+                    );
+                }
+
+                @Override
+                public void setVelocity(Vec3 velocity) {
+                    entityData.set(DATA_LEAP_MOVE_X, (float) velocity.x);
+                    entityData.set(DATA_LEAP_MOVE_Y, (float) velocity.y);
+                    entityData.set(DATA_LEAP_MOVE_Z, (float) velocity.z);
+                }
+
+                @Override
+                public double horizontalDrag() {
+                    return 1.0D;
+                }
+
+                @Override
+                public void clear() {
+                    entityData.set(DATA_LEAP_MOVE_TICKS, 0);
+                    entityData.set(DATA_LEAP_MOVE_X, 0.0F);
+                    entityData.set(DATA_LEAP_MOVE_Y, 0.0F);
+                    entityData.set(DATA_LEAP_MOVE_Z, 0.0F);
+                }
+            }
+    );
     private long lastAiLandedAnimTick = -40L;
     private final ScreenShakeComponent screenShakeComponent;
     private float cinematicZoomProgress = 0.0F;
@@ -347,6 +412,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.define(DATA_PHASE2, false);
         this.entityData.define(DATA_LEAPING, false);
         this.entityData.define(DATA_LEAP_ANIM_STATE, 0);
+        this.entityData.define(DATA_LEAP_MOVE_TICKS, 0);
+        this.entityData.define(DATA_LEAP_MOVE_X, 0.0F);
+        this.entityData.define(DATA_LEAP_MOVE_Y, 0.0F);
+        this.entityData.define(DATA_LEAP_MOVE_Z, 0.0F);
         this.entityData.define(DATA_FIRE_BREATHING, false);
         this.entityData.define(DATA_FIRE_BREATH_PROGRESS, 0);
         this.entityData.define(DATA_FIRE_BREATH_ENERGY, 1.0F);
@@ -512,6 +581,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         wasAirborneBeforeLanding = false;
         leapGroundedTicks = 0;
         leapVelocity = Vec3.ZERO;
+        leapArcDirection = Vec3.ZERO;
+        leapArcTick = 0;
+        leapWindupTicks = 0;
+        leapMovement.clear();
         leapAnimState = LEAP_STATE_NONE;
         leapImpactRecoveryTicks = 0;
         this.entityData.set(DATA_LEAPING, false);
@@ -876,16 +949,47 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                 leapAnimState = LEAP_STATE_NONE;
                 this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
                 leapVelocity = Vec3.ZERO;
+                leapArcDirection = Vec3.ZERO;
+                leapArcTick = 0;
                 setDeltaMovement(Vec3.ZERO);
                 wasAirborneBeforeLanding = false;
                 leapImpactTriggered = false;
                 leapGroundedTicks = 0;
+                leapWindupTicks = 0;
+                leapMovement.cancelActive();
                 leapImpactRecoveryTicks = 0;
                 leapWasVehicle = false;
             }
             if (leaping) {
-                handleLeapMovement();
+                if (leapWindupTicks > 0) {
+                    handleLeapWindup();
+                } else {
+                    handleLeapMovement();
+                }
             }
+            if (leapMovement.isActive()) {
+                leapMovement.tickServerState();
+            }
+        }
+    }
+
+    private void handleLeapWindup() {
+        this.getNavigation().stop();
+        this.getMoveControl().setWantedPosition(getX(), getY(), getZ(), 0.0D);
+        setDeltaMovement(Vec3.ZERO);
+        hasImpulse = true;
+
+        leapWindupTicks--;
+        if (leapWindupTicks > 0) {
+            return;
+        }
+
+        setDeltaMovement(Vec3.ZERO);
+        hasImpulse = true;
+        leapGroundedTicks = 0;
+        leapMovement.startContinuous(leapVelocity, 3);
+        if (level() instanceof ServerLevel server) {
+            breakGroundCircle(server, position(), 8.0D);
         }
     }
 
@@ -905,12 +1009,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             }
         }
 
-        double newX = leapVelocity.x * LEAP_HORIZONTAL_DRAG;
-        double newZ = leapVelocity.z * LEAP_HORIZONTAL_DRAG;
-        double newY = leapVelocity.y - LEAP_GRAVITY;
-        leapVelocity = new Vec3(newX, newY, newZ);
-        setDeltaMovement(leapVelocity);
-        hasImpulse = true;
+        leapArcTick++;
+        leapVelocity = calculateLeapArcStep(leapArcDirection, leapArcTick);
+        leapMovement.updateContinuous(leapVelocity, 3);
         if (onGround() && wasAirborneBeforeLanding) {
             applyLeapSlamDamage();
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_IMPACT.get(), 1.0f, 1.0f, 43);
@@ -921,6 +1022,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             leaping = false;
             this.entityData.set(DATA_LEAPING, false);
             leapVelocity = Vec3.ZERO;
+            leapArcDirection = Vec3.ZERO;
+            leapArcTick = 0;
+            leapWindupTicks = 0;
+            leapMovement.cancelActive();
             wasAirborneBeforeLanding = false;
             leapImpactTriggered = false;
             if (!leapWasVehicle) {
@@ -939,6 +1044,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             leapAnimState = LEAP_STATE_NONE;
             this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
             leapVelocity = Vec3.ZERO;
+            leapArcDirection = Vec3.ZERO;
+            leapArcTick = 0;
+            leapWindupTicks = 0;
+            leapMovement.cancelActive();
             setDeltaMovement(Vec3.ZERO);
             wasAirborneBeforeLanding = false;
             leapImpactTriggered = false;
@@ -1242,7 +1351,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected boolean isRiderInputLocked(Player player) {
-        return areRiderControlsLocked();
+        return areRiderControlsLocked() || isLeaping();
     }
 
     @Override
@@ -1267,8 +1376,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public void travel(@NotNull Vec3 travelVec) {
-        if (leaping) {
-            super.travel(Vec3.ZERO);
+        if (isLeaping()) {
+            setDeltaMovement(Vec3.ZERO);
+            if (leapMovement.isActive()) {
+                leapMovement.applyDirectTravelMotion();
+            }
             return;
         }
 
@@ -1728,11 +1840,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
         dir = dir.normalize();
 
-        Vec3 leapVec = new Vec3(
-            dir.x * LEAP_HORIZONTAL_SPEED,
-            LEAP_VERTICAL_BOOST,
-            dir.z * LEAP_HORIZONTAL_SPEED
-        );
+        Vec3 leapVec = calculateLeapArcStep(dir, 0);
 
         leaping = true;
         leapWasVehicle = this.isVehicle();
@@ -1740,18 +1848,41 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         leapAnimState = LEAP_STATE_TAKEOFF;
         this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_TAKEOFF);
         leapVelocity = leapVec;
+        leapArcDirection = dir;
+        leapArcTick = 0;
+        leapWindupTicks = LEAP_WINDUP_TICKS;
+        leapMovement.cancelActive();
         wasAirborneBeforeLanding = false;
         leapImpactTriggered = false;
-        this.setDeltaMovement(leapVec);
+        this.setDeltaMovement(Vec3.ZERO);
         this.getNavigation().stop();
+        this.getMoveControl().setWantedPosition(getX(), getY(), getZ(), 0.0D);
         this.hasImpulse = true;
         leapGroundedTicks = 0;
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEAP.get(), 1.0f, 1.0f, 58);
-
-        if (level() instanceof ServerLevel server) {
-            breakGroundCircle(server, position(), 8.0D);
-        }
         return true;
+    }
+
+    private Vec3 calculateLeapArcStep(Vec3 direction, int step) {
+        double horizontalStep = LEAP_ARC_FORWARD_DISTANCE / LEAP_ARC_DURATION_TICKS;
+        double startHeight = calculateLeapArcHeight(step);
+        double endHeight = calculateLeapArcHeight(step + 1);
+        return new Vec3(
+                direction.x * horizontalStep,
+                endHeight - startHeight,
+                direction.z * horizontalStep
+        );
+    }
+
+    private double calculateLeapArcHeight(int tick) {
+        if (tick <= LEAP_ARC_ASCENT_TICKS) {
+            double progress = (double) tick / LEAP_ARC_ASCENT_TICKS;
+            double remaining = 1.0D - progress;
+            return LEAP_ARC_HEIGHT * (1.0D - remaining * remaining);
+        }
+
+        double progress = (double) (tick - LEAP_ARC_ASCENT_TICKS) / LEAP_ARC_DESCENT_TICKS;
+        return LEAP_ARC_HEIGHT * (1.0D - progress * progress);
     }
 
     protected void onRiderPhase2Toggle(Player player) {
@@ -1779,13 +1910,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             phase2Active = false;
             this.entityData.set(DATA_PHASE2, false);
             phase2CooldownTicks = 40;
-            lockRiderControls(13);
+            lockRiderControls(PHASE2_EXIT_LOCK_TICKS);
             animationHandler.triggerPhase2ExitAnimation();
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 1.0f, 38);
         } else {
             phase2Active = true;
             this.entityData.set(DATA_PHASE2, true);
-            lockRiderControls(20);
+            lockRiderControls(PHASE2_ENTER_LOCK_TICKS);
             animationHandler.triggerPhase2EnterAnimation();
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 1.0f, 47);
         }
@@ -1834,12 +1965,12 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         phase2Active = enable;
         this.entityData.set(DATA_PHASE2, enable);
         if (enable) {
-            startAiPhase2Lock(20);
+            startAiPhase2Lock(PHASE2_ENTER_LOCK_TICKS);
             animationHandler.triggerPhase2EnterAnimation();
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 1.0f, 47);
         } else {
             phase2CooldownTicks = 40;
-            startAiPhase2Lock(13);
+            startAiPhase2Lock(PHASE2_EXIT_LOCK_TICKS);
             animationHandler.triggerPhase2ExitAnimation();
             getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 1.0f, 38);
         }
@@ -2028,8 +2159,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void onTakeoffStateStarted() {
-        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER,
-                isPhase2Active() ? AnimationHelper.PHASE2_TAKEOFF : AnimationHelper.TAKEOFF);
+        if (isPhase2Active()) {
+            triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, AnimationHelper.PHASE2_TAKEOFF);
+        } else {
+            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.TAKEOFF);
+        }
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
     }
 
@@ -2830,8 +2964,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
         tag.putBoolean("Phase2Active", phase2Active);
         tag.putInt("Phase2CooldownTicks", Math.max(0, phase2CooldownTicks));
-        tag.putBoolean("Leaping", leaping);
-        tag.putInt("LeapAnimState", leapAnimState);
         tag.putInt("LeapCooldownTicks", Math.max(0, leapCooldownTicks));
         tag.putFloat("FireBreathEnergy", getFireBreathEnergy());
         tag.putBoolean("FireBreathDepleted", isFireBreathDepleted());
@@ -2861,14 +2993,25 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         if (tag.contains("Phase2CooldownTicks")) {
             phase2CooldownTicks = Math.max(0, tag.getInt("Phase2CooldownTicks"));
         }
-        if (tag.contains("Leaping")) {
-            leaping = tag.getBoolean("Leaping");
-            this.entityData.set(DATA_LEAPING, leaping);
-            leapWasVehicle = leaping && this.isVehicle();
-        }
-        if (tag.contains("LeapAnimState")) {
-            leapAnimState = tag.getInt("LeapAnimState");
-            this.entityData.set(DATA_LEAP_ANIM_STATE, leapAnimState);
+        boolean interruptedLeap = tag.getBoolean("Leaping")
+                || tag.getInt("LeapAnimState") != LEAP_STATE_NONE;
+        leaping = false;
+        leapWasVehicle = false;
+        leapAnimState = LEAP_STATE_NONE;
+        leapVelocity = Vec3.ZERO;
+        leapArcDirection = Vec3.ZERO;
+        leapArcTick = 0;
+        leapWindupTicks = 0;
+        leapImpactRecoveryTicks = 0;
+        leapImpactTriggered = false;
+        wasAirborneBeforeLanding = false;
+        leapGroundedTicks = 0;
+        leapMovement.clear();
+        this.entityData.set(DATA_LEAPING, false);
+        this.entityData.set(DATA_LEAP_ANIM_STATE, LEAP_STATE_NONE);
+        if (interruptedLeap) {
+            clearRiderControlLock();
+            setDeltaMovement(Vec3.ZERO);
         }
         if (tag.contains("LeapCooldownTicks")) {
             leapCooldownTicks = Math.max(0, tag.getInt("LeapCooldownTicks"));

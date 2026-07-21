@@ -349,6 +349,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.save();
                 SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
+                SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED.save();
                 SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
                 SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
                 SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
@@ -435,6 +436,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             ).setDefaultValue(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(value))
+             .build());
+            others.addEntry(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.fire_dragon_block_ignition"),
+                    SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.fire_dragon_block_ignition.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED.set(value))
              .build());
             others.addEntry(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.screen_shake"),

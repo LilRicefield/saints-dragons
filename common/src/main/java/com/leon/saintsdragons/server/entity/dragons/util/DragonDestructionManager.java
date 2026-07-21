@@ -308,6 +308,9 @@ public final class DragonDestructionManager {
     }
 
     private static void igniteBlocks(ServerLevel level, Vec3 impactPoint, double radius) {
+        if (!DragonGriefingRules.canSetBlocksOnFire(level)) {
+            return;
+        }
         BlockPos center = BlockPos.containing(impactPoint);
         int r = (int) Math.ceil(radius);
         RandomSource random = level.random;

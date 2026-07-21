@@ -35,6 +35,12 @@ public final class ForgeOthersScreen extends ForgePagedConfigScreen {
                     SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED::save
             ));
             entries.add(new BooleanEntry(
+                    Component.translatable("saintsdragons.config_screen.others.fire_dragon_block_ignition"),
+                    SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED::get,
+                    SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED::set,
+                    SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED::save
+            ));
+            entries.add(new BooleanEntry(
                     Component.translatable("saintsdragons.config_screen.others.screen_shake"),
                     SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::get,
                     SaintsDragonsConfig.SCREEN_SHAKE_ENABLED::set,

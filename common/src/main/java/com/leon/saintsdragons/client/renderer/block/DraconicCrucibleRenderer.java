@@ -10,7 +10,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -21,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 public class DraconicCrucibleRenderer implements BlockEntityRenderer<DraconicCrucibleBlockEntity> {
     private static final ResourceLocation TEXTURE =
             SaintsDragonsCommon.rl("textures/block/draconic_crucible.png");
-    private static final ResourceLocation ACTIVE_TEXTURE =
-            SaintsDragonsCommon.rl("textures/block/draconic_crucible_active.png");
     private final DraconicCrucibleEntity model;
 
     public DraconicCrucibleRenderer(BlockEntityRendererProvider.Context context) {
@@ -49,10 +46,8 @@ public class DraconicCrucibleRenderer implements BlockEntityRenderer<DraconicCru
         poseStack.mulPose(Axis.YP.rotationDegrees(-facing.toYRot()));
         poseStack.scale(1.0F, -1.0F, -1.0F);
 
-        ResourceLocation texture = active ? ACTIVE_TEXTURE : TEXTURE;
-        int modelLight = active ? LightTexture.FULL_BRIGHT : packedLight;
-        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(texture));
-        this.model.renderToBuffer(poseStack, consumer, modelLight, OverlayTexture.NO_OVERLAY,
+        VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        this.model.renderToBuffer(poseStack, consumer, packedLight, OverlayTexture.NO_OVERLAY,
                 1.0F, 1.0F, 1.0F, 1.0F);
         poseStack.popPose();
     }

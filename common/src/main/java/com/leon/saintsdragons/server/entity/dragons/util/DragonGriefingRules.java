@@ -23,6 +23,10 @@ public final class DragonGriefingRules {
                 || SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get();
     }
 
+    public static boolean canSetBlocksOnFire(Level level) {
+        return canDestroyBlocks(level) && SaintsDragonsConfig.isFireDragonBlockIgnitionEnabled();
+    }
+
     public static boolean isProtectedFromPassiveTreeDestruction(ServerLevel level, BlockPos pos) {
         for (Structure structure : level.structureManager().getAllStructuresAt(pos).keySet()) {
             StructureStart start = level.structureManager().getStructureWithPieceAt(pos, structure);
