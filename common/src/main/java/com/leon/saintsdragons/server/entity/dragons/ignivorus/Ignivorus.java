@@ -1009,6 +1009,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             }
         }
 
+        updateRiderSteeredLeapDirection();
         leapArcTick++;
         leapVelocity = calculateLeapArcStep(leapArcDirection, leapArcTick);
         leapMovement.updateContinuous(leapVelocity, 3);
@@ -1774,13 +1775,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     protected void onRiderLeapSlam() {
-        Vec3 look = this.getLookAngle();
+        Entity rider = getControllingPassenger();
+        Vec3 look = rider instanceof LivingEntity living ? living.getLookAngle() : this.getLookAngle();
         Vec3 horizontal = new Vec3(look.x, 0.0D, look.z);
         if (horizontal.lengthSqr() < 1.0E-6D) {
             float yawRad = (float) Math.toRadians(this.getYRot());
             horizontal = new Vec3(-Math.sin(yawRad), 0.0D, Math.cos(yawRad));
         }
         startLeapSlam(horizontal);
+    }
+
+    private void updateRiderSteeredLeapDirection() {
+        if (!leapWasVehicle || !(getControllingPassenger() instanceof Player)) {
+            return;
+        }
+
+        float yawRadians = this.getYRot() * Mth.DEG_TO_RAD;
+        leapArcDirection = new Vec3(-Mth.sin(yawRadians), 0.0D, Mth.cos(yawRadians));
     }
 
     public boolean tryStartLeapSlamForAI(@Nullable LivingEntity target) {
