@@ -64,7 +64,14 @@ public class BloodTempestArmorItem extends ArmorItem implements GeoItem {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_armor.tooltip")
+        tooltip.add(Component.empty());
+        tooltip.add(Component.empty()
+                .append(Component.translatable("item.saintsdragons.blood_tempest_armor.tooltip.title")
+                        .withStyle(ChatFormatting.DARK_RED))
+                .append(Component.literal(" "))
+                .append(Component.translatable("item.saintsdragons.blood_tempest_armor.tooltip.full_set")
+                        .withStyle(ChatFormatting.GRAY)));
+        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_armor.tooltip.description")
                 .withStyle(ChatFormatting.GRAY));
     }
 

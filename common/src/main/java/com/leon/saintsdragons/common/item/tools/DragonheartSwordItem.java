@@ -86,10 +86,31 @@ public class DragonheartSwordItem extends SwordItem {
     @Override
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
-        String key = isBloodTempest()
-                ? "item.saintsdragons.blood_tempest_katana.tooltip"
-                : "item.saintsdragons.dragonlord_sword.tooltip";
-        tooltip.add(Component.translatable(key).withStyle(ChatFormatting.GRAY));
+        if (!isBloodTempest()) {
+            tooltip.add(Component.empty());
+            tooltip.add(Component.translatable("item.saintsdragons.dragonlord_sword.tooltip.ability.title")
+                    .withStyle(ChatFormatting.GOLD));
+            tooltip.add(Component.translatable("item.saintsdragons.dragonlord_sword.tooltip.ability.description")
+                    .withStyle(ChatFormatting.GRAY));
+            tooltip.add(Component.empty());
+            tooltip.add(Component.translatable("item.saintsdragons.dragonlord_sword.tooltip.description")
+                    .withStyle(ChatFormatting.GOLD, ChatFormatting.ITALIC));
+            return;
+        }
+
+        tooltip.add(Component.empty());
+        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_katana.tooltip.passive.title")
+                .withStyle(ChatFormatting.DARK_RED));
+        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_katana.tooltip.passive.description")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.empty());
+        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_katana.tooltip.ability.title")
+                .withStyle(ChatFormatting.DARK_RED));
+        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_katana.tooltip.ability.description")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.empty());
+        tooltip.add(Component.translatable("item.saintsdragons.blood_tempest_katana.tooltip.quote")
+                .withStyle(ChatFormatting.DARK_RED, ChatFormatting.ITALIC));
     }
 
     private boolean isBloodTempest() {
