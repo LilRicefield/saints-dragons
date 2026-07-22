@@ -17,8 +17,8 @@ public class AtroxiiaModel extends DragonGeoModel<Atroxiia> {
             0.15f, 0.30f, 0.45f
     );
     private static final DragonModelPoseHelper.WeightedBoneChain TAIL = DragonModelPoseHelper.WeightedBoneChain.of(
-            new String[] {"bone", "tail1", "tail2", "tail3", "tail4", "tail5", "tail6"},
-            0.25f, 0.30f, 0.35f, 0.40f, 0.75f, 0.80f, 1f
+            new String[] {"tail1", "tail2", "tail3", "tail4", "tail5", "tail6"},
+             0.30f, 0.35f, 0.40f, 0.75f, 0.80f, 1f
     );
 
     public AtroxiiaModel() {

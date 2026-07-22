@@ -81,6 +81,14 @@
         },
         {
           "text": {
+            "text": "What do I do if you can't get to me?"
+          },
+          "next": "plushie_prepared",
+          "requires_flag": "ivy_recruited",
+          "hidden_if_flag": "ivy_plushie_received"
+        },
+        {
+          "text": {
             "text": "What do you do out here?"
           },
           "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do",
@@ -205,6 +213,97 @@
           "next": "return_greeting"
         }
       ]
+    },
+    "plushie_prepared": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Oh, right! I'm glad you asked, actually. I almost forgot."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "plushie_important"
+        }
+      ]
+    },
+    "plushie_important": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I'll give you an item that will help you, and it is quite important to me. I trust you'll keep it safe."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "plushie_gift",
+          "set_flag": "ivy_plushie_received"
+        }
+      ]
+    },
+    "plushie_gift": {
+      "type": "give_ivy_plushie",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Here it is."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "plushie_magic"
+        }
+      ]
+    },
+    "plushie_magic": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Whenever I can't get to you, use this, and well, something magical will happen, for lack of a better explanation."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "plushie_appear"
+        }
+      ]
+    },
+    "plushie_appear": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I will be able to appear near you. I'll get used to being transported suddenly."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "Thank you."
+          },
+          "next": "plushie_thanks"
+        }
+      ]
+    },
+    "plushie_thanks": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "You're welcome. Try not lose it, hm? You won't get a second one."
+      }
     },
     "needs_help": {
       "speaker": {

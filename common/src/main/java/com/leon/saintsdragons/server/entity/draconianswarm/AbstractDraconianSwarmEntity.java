@@ -20,6 +20,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
@@ -35,6 +36,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.ai.navigation.FlyingPathNavigation;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.monster.EnderMan;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
@@ -356,10 +358,25 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
 
     @Override
     public boolean canAttack(@NotNull LivingEntity target) {
+        if (!canHitWithSwarmAttack(target)) {
+            return false;
+        }
         if (this.nucleusPos != null && target.distanceToSqr(Vec3.atCenterOf(this.nucleusPos)) > 64.0D * 64.0D) {
             return false;
         }
         return !(target instanceof AbstractDraconianSwarmEntity) && super.canAttack(target);
+    }
+
+    public boolean canHitWithSwarmAttack(LivingEntity target) {
+        return target.isAlive()
+                && target != this
+                && !(target instanceof AbstractDraconianSwarmEntity)
+                && !(target instanceof EnderMan);
+    }
+
+    @Override
+    public boolean doHurtTarget(@NotNull Entity target) {
+        return !(target instanceof EnderMan) && super.doHurtTarget(target);
     }
 
     @Override
@@ -485,8 +502,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     }
 
     protected boolean canTargetFromSwarm(LivingEntity target) {
-        return target.isAlive()
-                && !(target instanceof AbstractDraconianSwarmEntity)
+        return canHitWithSwarmAttack(target)
                 && !(target instanceof Mob mob && mob.getType() == getType());
     }
 

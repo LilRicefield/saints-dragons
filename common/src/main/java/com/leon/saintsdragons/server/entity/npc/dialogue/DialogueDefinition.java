@@ -53,6 +53,10 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
             return type == Type.RECRUIT_IVY;
         }
 
+        public boolean givesIvyPlushie() {
+            return type == Type.GIVE_IVY_PLUSHIE;
+        }
+
         public String ivyAnimationTrigger() {
             return type.ivyAnimationTrigger();
         }
@@ -82,6 +86,7 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
         USE_PLAYER_NAME,
         NAME_INPUT,
         RECRUIT_IVY,
+        GIVE_IVY_PLUSHIE,
         IVY_EMBARRASSED,
         IVY_SIGH,
         IVY_HMM_TRADER,
@@ -119,6 +124,9 @@ public record DialogueDefinition(ResourceLocation id, String start, Map<String, 
             }
             if ("recruit_ivy".equalsIgnoreCase(name)) {
                 return RECRUIT_IVY;
+            }
+            if ("give_ivy_plushie".equalsIgnoreCase(name)) {
+                return GIVE_IVY_PLUSHIE;
             }
             if ("ivy_embarrassed".equalsIgnoreCase(name)) {
                 return IVY_EMBARRASSED;

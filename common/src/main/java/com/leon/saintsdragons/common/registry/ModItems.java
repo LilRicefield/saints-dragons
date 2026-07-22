@@ -197,6 +197,14 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> IVY_OCTOPUS_PLUSHIE =
+            REGISTER.register("ivy_octopus_plushie",
+                    () -> new IvyOctopusPlushieItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .rarity(Rarity.RARE)
+                    ));
+
     // Block Items
     public static final Supplier<Item> DRACONIAN_PELLUCIDA =
             REGISTER.register("draconian_pellucida",

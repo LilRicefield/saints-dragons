@@ -4,7 +4,6 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -24,7 +23,6 @@ final class IvyCompanionController {
     private static final double FOLLOW_START_DISTANCE_SQR = 10.0D;
     private static final double FOLLOW_STOP_DISTANCE_SQR = 5.0D;
     private static final double FOLLOW_RUN_DISTANCE_SQR = 18.0D;
-    private static final double  FOLLOW_TELEPORT_DISTANCE_SQR = 128.0D;
     private static final double BOAT_BOARD_DISTANCE_SQR = 5.0D;
     private static final double BOAT_NAVIGATION_SPEED = 1.3D;
     private static final double BOAT_SWIM_SPEED = 0.28D;
@@ -271,11 +269,6 @@ final class IvyCompanionController {
             }
             ivy.getLookControl().setLookAt(owner, 30.0F, 30.0F);
             double distance = ivy.distanceToSqr(owner);
-            if (distance > FOLLOW_TELEPORT_DISTANCE_SQR && tryTeleportNearOwner(owner)) {
-                ivy.setRunning(false);
-                ivy.getNavigation().stop();
-                return;
-            }
             boolean shouldRun = distance > FOLLOW_RUN_DISTANCE_SQR;
             ivy.setRunning(shouldRun);
             boolean pathing = ivy.getNavigation().moveTo(owner, shouldRun ? FOLLOW_RUN_SPEED : FOLLOW_WALK_SPEED);
@@ -314,27 +307,6 @@ final class IvyCompanionController {
             return ivy.isInWaterOrBubble() && !ivy.isInShallowWaterForWading();
         }
 
-        private boolean tryTeleportNearOwner(LivingEntity owner) {
-            if (!(ivy.level() instanceof ServerLevel serverLevel)) {
-                return false;
-            }
-            for (int attempt = 0; attempt < 12; attempt++) {
-                int xOffset = ivy.getRandom().nextIntBetweenInclusive(-3, 3);
-                int zOffset = ivy.getRandom().nextIntBetweenInclusive(-3, 3);
-                if (Math.abs(xOffset) < 2 && Math.abs(zOffset) < 2) {
-                    continue;
-                }
-                int x = Mth.floor(owner.getX()) + xOffset;
-                int y = Mth.floor(owner.getY());
-                int z = Mth.floor(owner.getZ()) + zOffset;
-                if (!serverLevel.noCollision(ivy, ivy.getBoundingBox().move(x - ivy.getX(), y - ivy.getY(), z - ivy.getZ()))) {
-                    continue;
-                }
-                ivy.moveTo(x + 0.5D, y, z + 0.5D, ivy.getYRot(), ivy.getXRot());
-                return true;
-            }
-            return false;
-        }
     }
 
     private class BoardOwnerVehicleGoal extends Goal {

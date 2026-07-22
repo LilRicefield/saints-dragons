@@ -25,8 +25,10 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,6 +46,7 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.RelativeMovement;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -85,6 +88,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.stats.Stats;
@@ -417,6 +421,117 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
 
     public boolean isOwnedBy(LivingEntity entity) {
         return entity != null && entity.getUUID().equals(getOwnerUUID());
+    }
+
+    public boolean summonNear(ServerPlayer player) {
+        if (!isAlive() || !isTame() || !isOwnedBy(player)) {
+            return false;
+        }
+        ServerLevel destinationLevel = player.serverLevel();
+        BlockPos destination = findSummonPosition(destinationLevel, player.blockPosition());
+        if (destination == null) {
+            return false;
+        }
+
+        ServerLevel sourceLevel = level() instanceof ServerLevel serverLevel ? serverLevel : null;
+        Vec3 sourcePosition = position();
+        UUID ivyUuid = getUUID();
+        boolean changingDimensions = sourceLevel != destinationLevel;
+
+        getNavigation().stop();
+        stopRiding();
+        setTarget(null);
+        setNoGravity(false);
+        setShiftKeyDown(false);
+        setClimbingLadder(false);
+        setRunning(false);
+        setDeltaMovement(Vec3.ZERO);
+        fallDistance = 0.0F;
+
+        CompoundTag savedData = null;
+        if (changingDimensions) {
+            savedData = new CompoundTag();
+            saveWithoutId(savedData);
+        }
+        if (sourceLevel != null) {
+            sourceLevel.sendParticles(ParticleTypes.PORTAL, sourcePosition.x, sourcePosition.y + 1.0D, sourcePosition.z,
+                    32, 0.45D, 0.75D, 0.45D, 0.08D);
+            sourceLevel.playSound(null, sourcePosition.x, sourcePosition.y, sourcePosition.z,
+                    SoundEvents.ENDERMAN_TELEPORT, getSoundSource(), 0.8F, 1.1F);
+        }
+
+        Vec3 destinationPosition = Vec3.atBottomCenterOf(destination);
+        if (!teleportTo(destinationLevel, destinationPosition.x, destinationPosition.y, destinationPosition.z,
+                Set.<RelativeMovement>of(), getYRot(), getXRot())) {
+            return false;
+        }
+
+        IvyTheDragonMerchant movedIvy = this;
+        if (changingDimensions) {
+            Entity movedEntity = destinationLevel.getEntity(ivyUuid);
+            if (!(movedEntity instanceof IvyTheDragonMerchant transferredIvy)) {
+                return false;
+            }
+            movedIvy = transferredIvy;
+            movedIvy.load(savedData);
+            movedIvy.moveTo(destinationPosition.x, destinationPosition.y, destinationPosition.z,
+                    movedIvy.getYRot(), movedIvy.getXRot());
+        }
+        movedIvy.setDeltaMovement(Vec3.ZERO);
+        movedIvy.fallDistance = 0.0F;
+        destinationLevel.sendParticles(ParticleTypes.PORTAL, destinationPosition.x, destinationPosition.y + 1.0D,
+                destinationPosition.z, 32, 0.45D, 0.75D, 0.45D, 0.08D);
+        destinationLevel.playSound(null, destinationPosition.x, destinationPosition.y, destinationPosition.z,
+                SoundEvents.ENDERMAN_TELEPORT, movedIvy.getSoundSource(), 0.8F, 1.1F);
+        return true;
+    }
+
+    @Nullable
+    private BlockPos findSummonPosition(ServerLevel level, BlockPos origin) {
+        for (int radius = 2; radius <= 5; radius++) {
+            for (int xOffset = -radius; xOffset <= radius; xOffset++) {
+                for (int zOffset = -radius; zOffset <= radius; zOffset++) {
+                    if (Math.max(Math.abs(xOffset), Math.abs(zOffset)) != radius) {
+                        continue;
+                    }
+                    for (int verticalOffset = 0; verticalOffset <= 32; verticalOffset++) {
+                        BlockPos below = origin.offset(xOffset, -verticalOffset, zOffset);
+                        if (canSummonAt(level, below)) {
+                            return below;
+                        }
+                        if (verticalOffset > 0 && verticalOffset <= 8) {
+                            BlockPos above = origin.offset(xOffset, verticalOffset, zOffset);
+                            if (canSummonAt(level, above)) {
+                                return above;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean canSummonAt(ServerLevel level, BlockPos feet) {
+        if (!level.getWorldBorder().isWithinBounds(feet)
+                || !level.getChunkSource().hasChunk(feet.getX() >> 4, feet.getZ() >> 4)
+                || feet.getY() <= level.getMinBuildHeight()
+                || feet.getY() >= level.getMaxBuildHeight() - 1) {
+            return false;
+        }
+        BlockPos floor = feet.below();
+        if (!level.getBlockState(floor).isFaceSturdy(level, floor, Direction.UP)
+                || !level.getFluidState(feet).isEmpty()
+                || !level.getFluidState(feet.above()).isEmpty()) {
+            return false;
+        }
+        Vec3 position = Vec3.atBottomCenterOf(feet);
+        AABB destinationBox = getBoundingBox().move(
+                position.x - getX(),
+                position.y - getY(),
+                position.z - getZ()
+        );
+        return level.noCollision(this, destinationBox);
     }
 
     @Nullable

@@ -3,12 +3,14 @@ package com.leon.saintsdragons.server.entity.npc.dialogue;
 import com.leon.saintsdragons.common.network.MessageDialogueClose;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.HashSet;
 import java.util.List;
@@ -374,6 +376,12 @@ public final class DialogueSessionRegistry {
             ivy.recruitAsCompanion(player);
             ivy.rememberDialogueFlag(player, "ivy_recruited");
             ivy.rememberDialogueFlag(player, "cindervane_quest_completed");
+        }
+        if (node.givesIvyPlushie() && !player.getInventory().contains(new ItemStack(ModItems.IVY_OCTOPUS_PLUSHIE.get()))) {
+            ItemStack plushie = new ItemStack(ModItems.IVY_OCTOPUS_PLUSHIE.get());
+            if (!player.getInventory().add(plushie)) {
+                player.drop(plushie, false);
+            }
         }
         String animationTrigger = node.ivyAnimationTrigger();
         if (!animationTrigger.isBlank()) {

@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.ai.goals.draconianswarm;
 
-import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.server.entity.draconianswarm.Winged;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -161,8 +160,7 @@ public class WingedDiveBombGoal extends Goal {
         AABB hitbox = this.winged.getBoundingBox().inflate(0.85D);
         List<LivingEntity> hits = this.winged.level().getEntitiesOfClass(
                 LivingEntity.class, hitbox,
-                entity -> entity.isAlive() && entity != this.winged
-                        && !(entity instanceof AbstractDraconianSwarmEntity));
+                this.winged::canHitWithSwarmAttack);
         if (hits.isEmpty()) {
             return;
         }

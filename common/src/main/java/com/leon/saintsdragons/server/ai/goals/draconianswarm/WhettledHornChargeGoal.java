@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.ai.goals.draconianswarm;
 
-import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.server.entity.draconianswarm.Whettled;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.goal.Goal;
@@ -126,8 +125,7 @@ public class WhettledHornChargeGoal extends Goal {
         AABB hitbox = this.whettled.getBoundingBox().inflate(0.85D);
         List<LivingEntity> hits = this.whettled.level().getEntitiesOfClass(
                 LivingEntity.class, hitbox,
-                entity -> entity.isAlive() && entity != this.whettled
-                        && !(entity instanceof AbstractDraconianSwarmEntity));
+                this.whettled::canHitWithSwarmAttack);
         if (hits.isEmpty()) {
             return;
         }

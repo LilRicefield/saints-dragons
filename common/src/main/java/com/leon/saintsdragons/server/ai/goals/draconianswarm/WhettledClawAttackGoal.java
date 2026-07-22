@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.ai.goals.draconianswarm;
 
-import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.server.entity.draconianswarm.Whettled;
 import java.util.List;
 import net.minecraft.world.entity.LivingEntity;
@@ -57,9 +56,7 @@ public class WhettledClawAttackGoal extends Goal {
                 List<LivingEntity> victims = this.whettled.level().getEntitiesOfClass(
                         LivingEntity.class,
                         this.whettled.getBoundingBox().inflate(1.25D),
-                        entity -> entity.isAlive()
-                                && entity != this.whettled
-                                && !(entity instanceof AbstractDraconianSwarmEntity));
+                        this.whettled::canHitWithSwarmAttack);
                 boolean hit = false;
                 for (LivingEntity victim : victims) {
                     hit |= this.whettled.doHurtTarget(victim);
