@@ -13107,6 +13107,66 @@
 					"rotation": {
 						"vector": [-15, 0, 0]
 					}
+				},
+				"leftforearm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftfinger": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftmostouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"leftforearm2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightforearm": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightforearm2": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightmostinnerphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightmostouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightfinger": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},

@@ -243,6 +243,15 @@ public final class DragonFlightStateEvaluator {
         resetAiState(state);
     }
 
+    public static void primeRiderIdle(State state, double x, double y, double z) {
+        state.riderHighAltitudeGlide = false;
+        state.ticksSinceLastMovement = RIDER_IDLE_TICKS + 1;
+        state.lastCheckedX = x;
+        state.lastCheckedY = y;
+        state.lastCheckedZ = z;
+        resetAiState(state);
+    }
+
     private static void resetAiState(State state) {
         state.aiStableMode = MODE_GROUND;
         state.aiPendingMode = MODE_GROUND;

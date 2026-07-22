@@ -222,7 +222,8 @@ public final class AnimationHelper {
 
         RawAnimation animation = switch (visualState) {
             case TAKEOFF -> animations.takeoff();
-            case GLIDE_DOWN, LANDING -> animations.glideDown();
+            case LANDING -> animations.landing();
+            case GLIDE_DOWN -> animations.glideDown();
             case FLY_IDLE -> animations.flyIdle();
             case SPRINT_FLAP -> animations.sprintFlap();
             case FLAP -> animations.flap();
@@ -475,7 +476,7 @@ public final class AnimationHelper {
     public record FlightAnimations(
             RawAnimation takeoff,
             RawAnimation riderTakeoff,
-            RawAnimation landed,
+            RawAnimation landing,
             RawAnimation flyGlide,
             RawAnimation glideDown,
             RawAnimation flyIdle,

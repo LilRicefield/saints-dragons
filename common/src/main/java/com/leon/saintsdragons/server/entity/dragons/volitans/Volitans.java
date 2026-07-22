@@ -2429,6 +2429,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 smoothedPlayerPitchRad = 0f;
                 verticalKeyPitchSmoothing = false;
             }
+            if (isLanding()) {
+                targetPitchRad = 35.0F * Mth.DEG_TO_RAD;
+            }
         } else {
             Vec3 velocity = getDeltaMovement();
             double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);

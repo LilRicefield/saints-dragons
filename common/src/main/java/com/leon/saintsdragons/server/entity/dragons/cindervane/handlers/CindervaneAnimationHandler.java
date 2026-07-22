@@ -23,6 +23,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.cindervane.sprint_flap");
     private static final RawAnimation FLY_IDLE = RawAnimation.begin().thenLoop("animation.cindervane.fly_idle");
     private static final RawAnimation TAKEOFF = RawAnimation.begin().thenPlay("animation.cindervane.takeoff");
+    private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.cindervane.landing");
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.cindervane.landed");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.cindervane.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.cindervane.run");
@@ -39,7 +40,7 @@ public class CindervaneAnimationHandler {
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
-            new AnimationHelper.FlightAnimations(TAKEOFF, null, null, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+            new AnimationHelper.FlightAnimations(TAKEOFF, null, LANDING, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(1, 8, 6, 3, 6, 6, 3, 1);
     private static final int ACTION_TRANSITION_TICKS = 4;

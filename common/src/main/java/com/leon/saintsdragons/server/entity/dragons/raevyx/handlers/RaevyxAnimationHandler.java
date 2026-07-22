@@ -60,7 +60,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 2, 4, 4, 4, 4, 4, 4);
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
-            new AnimationHelper.FlightAnimations(TAKEOFF, RIDER_TAKEOFF, null, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+            new AnimationHelper.FlightAnimations(TAKEOFF, RIDER_TAKEOFF, LANDING, FLY_GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(1, 12, 6, 3, 6, 4, 3, 1);
     private static final int ACTION_TRANSITION_TICKS = 3;

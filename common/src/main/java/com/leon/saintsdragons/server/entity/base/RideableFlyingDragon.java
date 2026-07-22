@@ -1834,6 +1834,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         return DragonFlightStateEvaluator.evaluateSyncedMode(flightModeState, input);
     }
 
+    protected void primeRiderFlightIdleMode() {
+        DragonFlightStateEvaluator.primeRiderIdle(flightModeState, getX(), getY(), getZ());
+    }
+
     protected DragonFlightStateEvaluator.VisualState evaluateVisualFlightState(float partialTick, float flightPitchRadians) {
         return DragonFlightStateEvaluator.evaluateAnimationVisualState(
                 getSyncedFlightMode(),
@@ -1904,7 +1908,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
             if (wantsRiderLandingPitch(player, useKeyPitch) && isNearStandardPitchLandingBlendTerrain()) {
                 float landingPitchRad = (float) -Math.toRadians(35.0f);
-                targetPitchRad = Math.min(targetPitchRad, landingPitchRad);
+                targetPitchRad = landingPitchRad;
             }
         } else {
             targetPitchRad = DragonFlightVisuals.computeAiPitchTarget(velocity);

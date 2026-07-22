@@ -33874,6 +33874,26 @@
 							"lerp_mode": "catmullrom"
 						}
 					}
+				},
+				"leftouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"lefttmostmiddlephalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightmostmiddlephalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
+				},
+				"rightouterphalanges": {
+					"rotation": {
+						"vector": [0, 0, 0]
+					}
 				}
 			}
 		},

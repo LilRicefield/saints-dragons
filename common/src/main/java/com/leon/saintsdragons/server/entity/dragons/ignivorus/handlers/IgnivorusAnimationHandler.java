@@ -49,7 +49,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 2, 4, 4, 4);
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
-            new AnimationHelper.FlightAnimations(TAKEOFF, null, null, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+            new AnimationHelper.FlightAnimations(TAKEOFF, null, LANDING, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(2, 12, 6, 3, 6, 4, 3, 2);
     private static final int ACTION_TRANSITION_TICKS = 4;
@@ -184,6 +184,12 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     public PlayState movementPredicate(AnimationState<Ignivorus> state) {
         var controller = state.getController();
         boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+
+        if (dragon.isPhase2RiderTakeoffAnimating()) {
+            controller.transitionLength(GROUND_TRANSITIONS.bodyTransition());
+            AnimationHelper.setAndContinue(state, PHASE2_TAKEOFF);
+            return PlayState.CONTINUE;
+        }
 
         if (dragon.areRiderControlsLocked()) {
             return PlayState.STOP;
