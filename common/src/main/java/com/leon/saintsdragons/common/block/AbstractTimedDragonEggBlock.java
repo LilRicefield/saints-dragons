@@ -100,8 +100,13 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
             return;
         }
         if (!canProgressHatching(serverLevel, pos, state, eggEntity)) {
+            if (!eggEntity.hasShownPausedHatchingParticles()) {
+                spawnPausedHatchingParticles(serverLevel, pos);
+                eggEntity.setPausedHatchingParticlesShown(true);
+            }
             return;
         }
+        eggEntity.setPausedHatchingParticlesShown(false);
 
         double previousProgress = eggEntity.getHatchProgress();
         int previousStage = getHatchStageForProgress(previousProgress);
@@ -124,6 +129,20 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
 
     protected boolean canProgressHatching(ServerLevel level, BlockPos pos, BlockState state, E eggEntity) {
         return true;
+    }
+
+    protected void spawnPausedHatchingParticles(ServerLevel level, BlockPos pos) {
+        level.sendParticles(
+                ParticleTypes.SMOKE,
+                pos.getX() + 0.5D,
+                pos.getY() + 0.7D,
+                pos.getZ() + 0.5D,
+                10,
+                0.26D,
+                0.18D,
+                0.26D,
+                0.02D
+        );
     }
 
     protected void spawnHatchingStartedParticles(ServerLevel level, BlockPos pos) {

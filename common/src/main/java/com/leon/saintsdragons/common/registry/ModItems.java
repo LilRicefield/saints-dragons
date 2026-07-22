@@ -234,6 +234,10 @@ public class ModItems {
             REGISTER.register("raw_worldroot_block",
                     () -> new BlockItem(ModBlocks.RAW_WORLDROOT_BLOCK.get(), new Item.Properties()));
 
+    public static final Supplier<Item> IGNIVORUS_INCUBATOR_BLOCK =
+            REGISTER.register("ignivorus_incubator_block",
+                    () -> new BlockItem(ModBlocks.IGNIVORUS_INCUBATOR_BLOCK.get(), new Item.Properties()));
+
     public static final Supplier<Item> RAEVYX_EGG =
             REGISTER.register("raevyx_egg",
                     () -> new BlockItem(ModBlocks.RAEVYX_EGG.get(),

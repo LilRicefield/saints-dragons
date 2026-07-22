@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.block;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
+import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -10,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -31,6 +33,22 @@ public class IgnivorusEggBlock extends AbstractTimedDragonEggBlock<IgnivorusEggB
     public @NotNull VoxelShape getShape(@NotNull BlockState state, @NotNull BlockGetter level, @NotNull BlockPos pos,
                                         @NotNull CollisionContext context) {
         return SHAPE;
+    }
+
+    @Override
+    protected boolean canProgressHatching(ServerLevel level, BlockPos pos, BlockState state,
+                                           IgnivorusEggBlockEntity eggEntity) {
+        return isOnIncubator(level, pos);
+    }
+
+    @Override
+    public boolean isHatchingPaused(Level level, BlockPos pos, BlockState state,
+                                    AbstractDragonEggBlockEntity eggEntity) {
+        return !isOnIncubator(level, pos);
+    }
+
+    private boolean isOnIncubator(Level level, BlockPos pos) {
+        return level.getBlockState(pos.below()).is(ModBlocks.IGNIVORUS_INCUBATOR_BLOCK.get());
     }
 
     @Override

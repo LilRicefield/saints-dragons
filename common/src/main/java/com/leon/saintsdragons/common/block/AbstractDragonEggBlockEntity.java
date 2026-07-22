@@ -22,6 +22,7 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
     private UUID hatchAdvancementOwnerUUID;
     @Nullable
     private DragonGender babyGender;
+    private boolean pausedHatchingParticlesShown;
 
     protected AbstractDragonEggBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
@@ -66,6 +67,17 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
         this.setChanged();
     }
 
+    public boolean hasShownPausedHatchingParticles() {
+        return this.pausedHatchingParticlesShown;
+    }
+
+    public void setPausedHatchingParticlesShown(boolean shown) {
+        if (this.pausedHatchingParticlesShown != shown) {
+            this.pausedHatchingParticlesShown = shown;
+            this.setChanged();
+        }
+    }
+
     @Override
     protected void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
@@ -79,6 +91,7 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
         if (this.babyGender != null) {
             tag.putByte("BabyGender", this.babyGender.getId());
         }
+        tag.putBoolean("PausedHatchingParticlesShown", this.pausedHatchingParticlesShown);
     }
 
     @Override
@@ -99,5 +112,6 @@ public abstract class AbstractDragonEggBlockEntity extends BlockEntity {
         if (tag.contains("BabyGender")) {
             this.babyGender = DragonGender.fromId(tag.getByte("BabyGender"));
         }
+        this.pausedHatchingParticlesShown = tag.getBoolean("PausedHatchingParticlesShown");
     }
 }

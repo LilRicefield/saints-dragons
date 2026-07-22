@@ -130,6 +130,11 @@ public class ModBlocks {
                     () -> new Block(BlockBehaviour.Properties.copy(Blocks.RAW_IRON_BLOCK)
                             .mapColor(MapColor.COLOR_BROWN)
                             .requiresCorrectToolForDrops()));
+    public static final Supplier<Block> IGNIVORUS_INCUBATOR_BLOCK =
+            REGISTER.register("ignivorus_incubator_block",
+                    () -> new Block(BlockBehaviour.Properties.copy(Blocks.RAW_IRON_BLOCK)
+                            .mapColor(MapColor.COLOR_RED)
+                            .requiresCorrectToolForDrops()));
 
     public static void register() {
         REGISTER.register();

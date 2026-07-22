@@ -1,0 +1,25 @@
+{
+  "type": "saintsdragons:draconic_crucible",
+  "pattern": [
+    "BMB",
+    "MIM",
+    "BMB"
+  ],
+  "key": {
+    "I": {
+      "item": "saintsdragons:ignivorus_heart"
+    },
+    "M": {
+      "item": "minecraft:magma_block"
+    },
+    "B": {
+      "item": "minecraft:basalt"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:ignivorus_incubator_block",
+    "count": 1
+  },
+  "required_heat_level": 3,
+  "processing_time": 1800
+}

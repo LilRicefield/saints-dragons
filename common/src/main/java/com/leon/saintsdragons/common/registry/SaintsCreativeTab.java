@@ -82,6 +82,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModPotionItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModPotionItems.POTION_OF_SEARING.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
+                                output.accept(ModItems.IGNIVORUS_INCUBATOR_BLOCK.get());
                                 output.accept(ModItems.DRAGONHEART_ORE.get());
                                 output.accept(ModItems.DRAGONHEART_ALLOY_BLOCK.get());
                                 output.accept(ModItems.DRAGONHEART_BLOCK.get());
