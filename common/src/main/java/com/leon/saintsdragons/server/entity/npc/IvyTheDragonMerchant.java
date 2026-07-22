@@ -28,7 +28,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -88,7 +87,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.stats.Stats;
@@ -428,10 +426,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             return false;
         }
         ServerLevel destinationLevel = player.serverLevel();
-        BlockPos destination = findSummonPosition(destinationLevel, player.blockPosition());
-        if (destination == null) {
-            return false;
-        }
+        Vec3 destinationPosition = player.position();
 
         ServerLevel sourceLevel = level() instanceof ServerLevel serverLevel ? serverLevel : null;
         Vec3 sourcePosition = position();
@@ -460,10 +455,14 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
                     SoundEvents.ENDERMAN_TELEPORT, getSoundSource(), 0.8F, 1.1F);
         }
 
-        Vec3 destinationPosition = Vec3.atBottomCenterOf(destination);
-        if (!teleportTo(destinationLevel, destinationPosition.x, destinationPosition.y, destinationPosition.z,
-                Set.<RelativeMovement>of(), getYRot(), getXRot())) {
-            return false;
+        if (changingDimensions) {
+            if (!teleportTo(destinationLevel, destinationPosition.x, destinationPosition.y, destinationPosition.z,
+                    Set.<RelativeMovement>of(), getYRot(), getXRot())) {
+                return false;
+            }
+        } else {
+            moveTo(destinationPosition.x, destinationPosition.y, destinationPosition.z, getYRot(), getXRot());
+            setYHeadRot(getYRot());
         }
 
         IvyTheDragonMerchant movedIvy = this;
@@ -484,54 +483,6 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         destinationLevel.playSound(null, destinationPosition.x, destinationPosition.y, destinationPosition.z,
                 SoundEvents.ENDERMAN_TELEPORT, movedIvy.getSoundSource(), 0.8F, 1.1F);
         return true;
-    }
-
-    @Nullable
-    private BlockPos findSummonPosition(ServerLevel level, BlockPos origin) {
-        for (int radius = 2; radius <= 5; radius++) {
-            for (int xOffset = -radius; xOffset <= radius; xOffset++) {
-                for (int zOffset = -radius; zOffset <= radius; zOffset++) {
-                    if (Math.max(Math.abs(xOffset), Math.abs(zOffset)) != radius) {
-                        continue;
-                    }
-                    for (int verticalOffset = 0; verticalOffset <= 32; verticalOffset++) {
-                        BlockPos below = origin.offset(xOffset, -verticalOffset, zOffset);
-                        if (canSummonAt(level, below)) {
-                            return below;
-                        }
-                        if (verticalOffset > 0 && verticalOffset <= 8) {
-                            BlockPos above = origin.offset(xOffset, verticalOffset, zOffset);
-                            if (canSummonAt(level, above)) {
-                                return above;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean canSummonAt(ServerLevel level, BlockPos feet) {
-        if (!level.getWorldBorder().isWithinBounds(feet)
-                || !level.getChunkSource().hasChunk(feet.getX() >> 4, feet.getZ() >> 4)
-                || feet.getY() <= level.getMinBuildHeight()
-                || feet.getY() >= level.getMaxBuildHeight() - 1) {
-            return false;
-        }
-        BlockPos floor = feet.below();
-        if (!level.getBlockState(floor).isFaceSturdy(level, floor, Direction.UP)
-                || !level.getFluidState(feet).isEmpty()
-                || !level.getFluidState(feet.above()).isEmpty()) {
-            return false;
-        }
-        Vec3 position = Vec3.atBottomCenterOf(feet);
-        AABB destinationBox = getBoundingBox().move(
-                position.x - getX(),
-                position.y - getY(),
-                position.z - getZ()
-        );
-        return level.noCollision(this, destinationBox);
     }
 
     @Nullable

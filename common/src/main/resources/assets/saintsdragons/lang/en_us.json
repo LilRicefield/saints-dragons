@@ -78,7 +78,7 @@
   "item.saintsdragons.ivy_the_merchant_spawn_egg": "Ivy the Merchant Spawn Egg",
   "item.saintsdragons.ivy_octopus_plushie": "Ivy's Octopus Plushie",
   "message.saintsdragons.ivy_plushie.not_loaded": "Ivy is too far away for the plushie's magic to reach.",
-  "message.saintsdragons.ivy_plushie.no_safe_position": "Ivy can't find a safe place to appear nearby.",
+  "message.saintsdragons.ivy_plushie.no_safe_position": "The plushie's magic fizzles out.",
   "item.saintsdragons.raevyx_spawn_egg": "Raevyx Spawn Egg",
   "block.saintsdragons.raevyx_egg": "Raevyx Egg",
   "block.saintsdragons.varasuchus_egg": "Varasuchus Egg",
