@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
@@ -45,7 +46,7 @@ public enum Dragons {
 
     IGNIVORUS("ignivorus",
         DragonAttributeConfigLoader.IGNIVORUS_ID,
-        com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus.class, ModEntities.IGNIVORUS);
+        Ignivorus.class, ModEntities.IGNIVORUS);
 
     private final String name;
     private final ResourceLocation configId;
