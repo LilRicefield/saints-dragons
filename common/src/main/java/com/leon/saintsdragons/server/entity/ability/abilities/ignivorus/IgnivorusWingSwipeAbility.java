@@ -33,6 +33,7 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
     };
 
     private boolean appliedHit;
+    private boolean attackRight;
 
     public IgnivorusWingSwipeAbility(DragonAbilityType<Ignivorus, IgnivorusWingSwipeAbility> type,
                                      Ignivorus user) {
@@ -41,7 +42,7 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
 
     @Override
     public boolean tryAbility() {
-        return getUser().isPhase2Active() && !getUser().isFlying();
+        return getUser().isPhase2Active() && getUser().isGroundedForAction();
     }
 
     @Override
@@ -53,8 +54,8 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
             dragon.lockRiderControls(25);
-            boolean useRight = dragon.shouldUseRightWingSwipe();
-            String animationName = useRight ? "wing_swipe_right" : "wing_swipe_left";
+            attackRight = dragon.shouldUseRightWingSwipe();
+            String animationName = attackRight ? "wing_swipe_right" : "wing_swipe_left";
             dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, animationName);
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_WING_SWIPE.get(), 1.0f, 1.0f, 55);
@@ -104,7 +105,6 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
         Vec3 dragonPos = dragon.position().add(0, dragon.getBbHeight() * 0.5, 0);
         Vec3 lookDir = dragon.getLookAngle();
         double dragonYaw = Math.atan2(lookDir.z, lookDir.x);
-        boolean isRightWing = dragon.shouldUseRightWingSwipe();
         AABB detectionBox = new AABB(dragonPos, dragonPos).inflate(AOE_RADIUS);
         List<LivingEntity> candidates = dragon.level().getEntitiesOfClass(LivingEntity.class, detectionBox,
                 entity -> {
@@ -123,7 +123,7 @@ public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
                     double relativeAngle = angleToEntity - dragonYaw;
                     while (relativeAngle > Math.PI) relativeAngle -= 2 * Math.PI;
                     while (relativeAngle < -Math.PI) relativeAngle += 2 * Math.PI;
-                    if (isRightWing) {
+                    if (attackRight) {
                         return relativeAngle >= -2.356 && relativeAngle <= 2.356;
                     } else {
                         return relativeAngle >= -0.785 || relativeAngle <= 2.356;

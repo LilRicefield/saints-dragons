@@ -1785,31 +1785,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public boolean tryStartLeapSlamForAI(@Nullable LivingEntity target) {
-        if (level().isClientSide || target == null) {
-            return false;
-        }
-        if (isBaby() || isTame()) {
-            return false;
-        }
-        if (!isPhase2Active()) {
-            return false;
-        }
-        if (isAerial()) {
-            return false;
-        }
-        if (isAiSpecialCombatActive()) {
-            return false;
-        }
-        if (!onGround()) {
-            return false;
-        }
-        if (bulldozing || leaping || leapImpactRecoveryTicks > 0) {
-            return false;
-        }
-        if (areRiderControlsLocked() || getActiveAbility() != null) {
-            return false;
-        }
-        if (!isTargetValid(target)) {
+        if (!canStartLeapSlamForAI(target)) {
             return false;
         }
 
@@ -1825,6 +1801,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.yHeadRot = yaw;
 
         return startLeapSlam(horizontal);
+    }
+
+    public boolean canStartLeapSlamForAI(@Nullable LivingEntity target) {
+        if (level().isClientSide || target == null || leapCooldownTicks > 0) {
+            return false;
+        }
+        if (isBaby() || isTame() || !isPhase2Active() || isAerial() || isAiSpecialCombatActive()) {
+            return false;
+        }
+        if (!isGroundedForAction() || bulldozing || leaping || leapImpactRecoveryTicks > 0) {
+            return false;
+        }
+        if (areRiderControlsLocked() || getActiveAbility() != null || !isTargetValid(target)) {
+            return false;
+        }
+        Vec3 horizontal = target.position().subtract(this.position()).multiply(1.0D, 0.0D, 1.0D);
+        return horizontal.lengthSqr() >= 1.0E-6D;
     }
 
     private boolean startLeapSlam(Vec3 horizontalDirection) {

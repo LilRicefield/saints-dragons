@@ -1271,7 +1271,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
-        String abilityId = (isFlying() || !onGround())
+        String abilityId = (isFlying() || !isGroundedForAction())
                 ? ModAbilities.VOLITANS_ULTIMATE.getName()
                 : ModAbilities.VOLITANS_BURROW.getName();
         return new RiderAbilityBinding(abilityId, RiderAbilityBinding.Activation.PRESS);

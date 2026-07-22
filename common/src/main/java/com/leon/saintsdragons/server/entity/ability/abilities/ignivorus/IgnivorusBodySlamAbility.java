@@ -144,7 +144,7 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
     @Override
     public boolean tryAbility() {
         Ignivorus dragon = getUser();
-        if (dragon == null || dragon.isBaby() || dragon.isFlying() || !dragon.onGround() || dragon.areRiderControlsLocked()) {
+        if (dragon == null || dragon.isBaby() || !dragon.isGroundedForAction() || dragon.areRiderControlsLocked()) {
             return false;
         }
         return super.tryAbility();

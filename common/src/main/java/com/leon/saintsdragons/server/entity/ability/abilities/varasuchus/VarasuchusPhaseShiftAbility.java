@@ -42,7 +42,7 @@ public class VarasuchusPhaseShiftAbility extends DragonAbility<Varasuchus> {
     @Override
     public boolean canUse() {
         Varasuchus user = getUser();
-        if (!underwaterTransition && !user.onGround()) {
+        if (!underwaterTransition && !user.isGroundedForAction()) {
             return false;
         }
         return super.canUse();

@@ -74,7 +74,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 && !wyvern.isLanding()
                 && !wyvern.isHovering()
                 && !wyvern.isInWaterOrBubble()
-                && wyvern.onGround();
+                && wyvern.isGroundedForAction();
     }
 
     @Override

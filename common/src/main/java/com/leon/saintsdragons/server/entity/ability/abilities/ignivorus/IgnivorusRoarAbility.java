@@ -158,7 +158,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
         }
 
         boolean allowCosmetic = dragon.isFlying();
-        boolean grounded = dragon.onGround();
+        boolean grounded = dragon.isGroundedForAction();
 
         if (!allowCosmetic && !grounded) {
             return false;

@@ -53,8 +53,7 @@ public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
 
     @Override
     public boolean tryAbility() {
-
-        return getUser().isPhase2Active() && !getUser().isFlying();
+        return getUser().isPhase2Active() && getUser().isGroundedForAction();
     }
 
     @Override

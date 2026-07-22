@@ -47,7 +47,7 @@ public class AtroxiiaSlamAbility extends DragonAbility<Atroxiia> {
     @Override
     public boolean tryAbility() {
         Atroxiia dragon = getUser();
-        return dragon.getControllingPassenger() != null && dragon.onGround() && !dragon.isBaby();
+        return dragon.getControllingPassenger() != null && dragon.isGroundedForAction() && !dragon.isBaby();
     }
 
     @Override

@@ -60,7 +60,7 @@ public class CindervaneSlashGrabAbility extends DragonAbility<Cindervane> {
     public boolean tryAbility() {
         Cindervane dragon = getUser();
         return super.tryAbility()
-                && dragon.onGround()
+                && dragon.isGroundedForAction()
                 && !dragon.isFlying()
                 && !dragon.isTakeoff()
                 && !dragon.isHovering()
