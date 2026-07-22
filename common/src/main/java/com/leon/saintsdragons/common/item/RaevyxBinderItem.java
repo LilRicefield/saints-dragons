@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public class RaevyxBinderItem extends AbstractDragonBinderItem<Raevyx> {
+public class RaevyxBinderItem extends AbstractFlyingDragonBinderItem<Raevyx> {
 
     private static final String DRAGON_DATA_KEY = "RaevyxData";
 

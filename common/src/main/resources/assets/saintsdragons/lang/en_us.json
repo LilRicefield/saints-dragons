@@ -495,6 +495,7 @@
   "saintsdragons.tooltip.binder.bound": "Contains: %s",
   "saintsdragons.tooltip.binder.right_click_to_bind": "Right-click on a tamed creature to bind it",
   "saintsdragons.tooltip.binder.right_click_to_release": "Right-click on ground to release the bound creature",
+  "saintsdragons.tooltip.flying_binder.right_click_to_release": "Right-click on ground or into open air to release the bound dragon",
   
   "saintsdragons.message.dragon_not_found": "Dragon not found",
   "saintsdragons.message.not_dragon_owner": "You don't own this dragon",

@@ -45,6 +45,7 @@ public final class DragonMemories {
     public static final MemoryModuleType<LivingEntity> WAKE_TARGET = ModMemoryTypes.WAKE_TARGET.get();
     public static final MemoryModuleType<Float> SLEEP_PRESSURE = ModMemoryTypes.SLEEP_PRESSURE.get();
     public static final MemoryModuleType<Boolean> SLEEP_INTENT = ModMemoryTypes.SLEEP_INTENT.get();
+    public static final MemoryModuleType<LivingEntity> RESCUE_TARGET = ModMemoryTypes.RESCUE_TARGET.get();
     public static final MemoryModuleType<DragonTacticalCommitment> TACTICAL_COMMITMENT =
             ModMemoryTypes.TACTICAL_COMMITMENT.get();
 
@@ -79,6 +80,7 @@ public final class DragonMemories {
                 WAKE_TARGET,
                 SLEEP_PRESSURE,
                 SLEEP_INTENT,
+                RESCUE_TARGET,
                 TACTICAL_COMMITMENT
         );
     }

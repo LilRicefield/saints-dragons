@@ -22,6 +22,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,13 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             return InteractionResult.SUCCESS;
         }
 
-        boolean released = releaseDragon(stack, player, context.getClickedPos());
+        BlockPos clickedPos = context.getClickedPos();
+        Vec3 releasePosition = new Vec3(
+                clickedPos.getX() + 0.5D,
+                clickedPos.getY() + 1.0D,
+                clickedPos.getZ() + 0.5D
+        );
+        boolean released = releaseDragon(stack, player, releasePosition, false);
         if (released) {
             syncPlayerInventory(player);
         }
@@ -161,7 +168,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         }
     }
 
-    private boolean releaseDragon(ItemStack stack, Player player, BlockPos pos) {
+    protected final boolean releaseDragon(ItemStack stack, Player player, Vec3 position, boolean airborne) {
         CompoundTag tag = stack.getTag();
         if (tag == null || !tag.contains(BinderComponentUtil.BOUND_DRAGON_UUID)) {
             return false;
@@ -193,7 +200,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         }
 
         newDragon.setUUID(originalUUID);
-        newDragon.setPos(pos.getX() + 0.5D, pos.getY() + 1.0D, pos.getZ() + 0.5D);
+        newDragon.setPos(position.x, position.y, position.z);
         prepareDragonForRelease(newDragon, player);
 
         if (ownerUUID != null) {
@@ -213,6 +220,14 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             }
         }
 
+        if (airborne && !serverLevel.noCollision(newDragon, newDragon.getBoundingBox())) {
+            player.displayClientMessage(Component.translatable(getReleaseFailedMessageKey(), dragonName), true);
+            return false;
+        }
+        if (airborne) {
+            prepareDragonForAirRelease(newDragon, player);
+        }
+
         if (!serverLevel.addFreshEntity(newDragon)) {
             player.displayClientMessage(Component.translatable(getReleaseFailedMessageKey(), dragonName), true);
             return false;
@@ -225,7 +240,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
         return true;
     }
 
-    private void syncPlayerInventory(Player player) {
+    protected final void syncPlayerInventory(Player player) {
         if (player instanceof ServerPlayer serverPlayer) {
             serverPlayer.containerMenu.broadcastChanges();
             serverPlayer.inventoryMenu.broadcastChanges();
@@ -252,6 +267,9 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
     }
 
     protected void prepareDragonForRelease(T dragon, Player player) {
+    }
+
+    protected void prepareDragonForAirRelease(T dragon, Player player) {
     }
 
     protected String getNotOwnerMessageKey() {

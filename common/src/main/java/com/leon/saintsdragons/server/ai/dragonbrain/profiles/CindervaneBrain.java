@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParent
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPackFollowBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
@@ -37,6 +38,9 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
+    private static final DragonRescueFallingOwnerBehaviour.Config RESCUE_CONFIG =
+            DragonRescueFallingOwnerBehaviour.Config.cindervane();
+
     @Override
     public List<SensorType<? extends Sensor<? super Cindervane>>> getDragonBrainSensors() {
         return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
@@ -44,6 +48,10 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
 
     @Override
     public void updateActivity(Brain<Cindervane> brain, Cindervane dragon) {
+        if (DragonRescueFallingOwnerBehaviour.updateRescueTarget(brain, dragon, RESCUE_CONFIG)) {
+            brain.setActiveActivityIfPossible(Activity.PANIC);
+            return;
+        }
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (dragon.isAerial()
                 && dragon.isLanding()
@@ -89,6 +97,16 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                 new CindervaneMeleeAttackBehaviour()
                         )
                         .clearWhenStopped(
+                                DragonMemories.MOVEMENT_INTENT,
+                                DragonMemories.WALK_TARGET,
+                                DragonMemories.PATH,
+                                DragonMemories.CANT_REACH_WALK_TARGET_SINCE
+                        )
+                        .build(),
+                DragonBehaviourGroup.<Cindervane>activity(Activity.PANIC)
+                        .behaviours(new DragonRescueFallingOwnerBehaviour<>(RESCUE_CONFIG))
+                        .clearWhenStopped(
+                                DragonMemories.RESCUE_TARGET,
                                 DragonMemories.MOVEMENT_INTENT,
                                 DragonMemories.WALK_TARGET,
                                 DragonMemories.PATH,

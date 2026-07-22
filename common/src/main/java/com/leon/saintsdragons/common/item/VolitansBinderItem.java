@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public class VolitansBinderItem extends AbstractDragonBinderItem<Volitans> {
+public class VolitansBinderItem extends AbstractFlyingDragonBinderItem<Volitans> {
 
     private static final String DRAGON_DATA_KEY = "VolitansData";
 

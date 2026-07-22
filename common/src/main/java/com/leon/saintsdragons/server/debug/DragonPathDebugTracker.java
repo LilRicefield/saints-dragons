@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
@@ -151,7 +152,7 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} drinking={} wildAggressive={} "
+                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} drinking={} rescue={} wildAggressive={} "
                         + "onGround={} verticalCollision={} velocity={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
@@ -181,6 +182,7 @@ public final class DragonPathDebugTracker {
                 dragon.isHuntFoodPursuitActive(),
                 logState.sleep,
                 logState.drinking,
+                logState.rescue,
                 dragon.isWildAggressionEnabled(),
                 dragon.onGround(),
                 dragon.verticalCollision,
@@ -342,6 +344,19 @@ public final class DragonPathDebugTracker {
         return "disabled";
     }
 
+    private static String rescueSummary(DragonEntity dragon) {
+        if (!(dragon instanceof RideableFlyingDragon flyingDragon)) {
+            return "disabled";
+        }
+        for (DragonBrainDiagnostics.RegisteredBehaviour registered
+                : DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (registered.behaviour() instanceof DragonRescueFallingOwnerBehaviour<?> rescue) {
+                return rescue.getRescueDebugSummary(flyingDragon);
+            }
+        }
+        return "disabled";
+    }
+
     private static String perceptionSummary(DragonEntity dragon) {
         if (!dragon.getBrain().checkMemory(DragonMemories.TARGET_VISIBLE, MemoryStatus.REGISTERED)) {
             return "disabled";
@@ -425,6 +440,7 @@ public final class DragonPathDebugTracker {
                             boolean navigationStuck,
                             String sleep,
                             String drinking,
+                            String rescue,
                             String perception,
                             String tactical,
                             String pursuit,
@@ -466,6 +482,7 @@ public final class DragonPathDebugTracker {
                     dragon.getNavigation().isStuck(),
                     sleepSummary(dragon),
                     drinkingSummary(dragon),
+                    rescueSummary(dragon),
                     perceptionSummary(dragon),
                     tacticalSummary(dragon),
                     pursuitSummary(dragon),

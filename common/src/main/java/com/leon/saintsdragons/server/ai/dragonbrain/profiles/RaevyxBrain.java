@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerB
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
@@ -35,6 +36,9 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
+    private static final DragonRescueFallingOwnerBehaviour.Config RESCUE_CONFIG =
+            DragonRescueFallingOwnerBehaviour.Config.raevyx();
+
     @Override
     public List<SensorType<? extends Sensor<? super Raevyx>>> getDragonBrainSensors() {
         return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
@@ -42,6 +46,10 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
 
     @Override
     public void updateActivity(Brain<Raevyx> brain, Raevyx dragon) {
+        if (DragonRescueFallingOwnerBehaviour.updateRescueTarget(brain, dragon, RESCUE_CONFIG)) {
+            brain.setActiveActivityIfPossible(Activity.PANIC);
+            return;
+        }
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (dragon.isAerial()
                 && dragon.isLanding()
@@ -89,6 +97,16 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                 new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F)
                         )
                         .clearWhenStopped(
+                                DragonMemories.MOVEMENT_INTENT,
+                                DragonMemories.WALK_TARGET,
+                                DragonMemories.PATH,
+                                DragonMemories.CANT_REACH_WALK_TARGET_SINCE
+                        )
+                        .build(),
+                DragonBehaviourGroup.<Raevyx>activity(Activity.PANIC)
+                        .behaviours(new DragonRescueFallingOwnerBehaviour<>(RESCUE_CONFIG))
+                        .clearWhenStopped(
+                                DragonMemories.RESCUE_TARGET,
                                 DragonMemories.MOVEMENT_INTENT,
                                 DragonMemories.WALK_TARGET,
                                 DragonMemories.PATH,

@@ -78,6 +78,11 @@ public final class DragonHuntAndEatBehaviour<T extends RideableDragonBase> exten
         if (dropRescanCooldown > 0) dropRescanCooldown--;
         if (moveRefreshCooldown > 0) moveRefreshCooldown--;
 
+        if (context.memories().has(DragonMemories.RESCUE_TARGET)) {
+            abandonFoodSearch(context, "rescuing_owner");
+            return;
+        }
+
         LivingEntity attackTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         updateTrackedPrey(context, attackTarget);
 

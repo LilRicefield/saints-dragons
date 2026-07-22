@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
 
-public class CindervaneBinderItem extends AbstractDragonBinderItem<Cindervane> {
+public class CindervaneBinderItem extends AbstractFlyingDragonBinderItem<Cindervane> {
 
     private static final String DRAGON_DATA_KEY = "CindervaneData";
 

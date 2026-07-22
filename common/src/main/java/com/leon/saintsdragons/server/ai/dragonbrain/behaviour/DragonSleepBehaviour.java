@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 
 import java.util.LinkedHashMap;
@@ -40,6 +41,15 @@ public final class DragonSleepBehaviour<T extends DragonEntity> extends DragonBe
 
     private void update(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        if (context.memories().has(DragonMemories.RESCUE_TARGET)) {
+            dragon.wakeUpImmediately();
+            decision = "rescuing-owner";
+            disturbanceCause = "owner-falling";
+            pressure = dragon.getSleepPressure();
+            disturbance = dragon.getSleepDisturbance();
+            wakeDisturbance = dragon.getSleepDisturbanceThreshold();
+            return;
+        }
         dragon.tickBrainSleepBehaviour();
         pressure = dragon.getSleepPressure();
         disturbance = dragon.getSleepDisturbance();

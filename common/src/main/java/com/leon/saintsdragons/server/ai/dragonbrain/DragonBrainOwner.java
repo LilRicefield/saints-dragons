@@ -97,6 +97,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
         updateActivity(brain, dragon);
         if (brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
+                && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
                 && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
                 && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)) {
             brain.setActiveActivityIfPossible(Activity.IDLE);

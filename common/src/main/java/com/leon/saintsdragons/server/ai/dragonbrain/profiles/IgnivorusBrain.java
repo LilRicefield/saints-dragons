@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerB
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
@@ -35,6 +36,9 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
+    private static final DragonRescueFallingOwnerBehaviour.Config RESCUE_CONFIG =
+            DragonRescueFallingOwnerBehaviour.Config.ignivorus();
+
     @Override
     public List<SensorType<? extends Sensor<? super Ignivorus>>> getDragonBrainSensors() {
         return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
@@ -42,6 +46,10 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
 
     @Override
     public void updateActivity(Brain<Ignivorus> brain, Ignivorus dragon) {
+        if (DragonRescueFallingOwnerBehaviour.updateRescueTarget(brain, dragon, RESCUE_CONFIG)) {
+            brain.setActiveActivityIfPossible(Activity.PANIC);
+            return;
+        }
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (dragon.isAerial()
                 && dragon.isLanding()
@@ -89,6 +97,16 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                 groundCombat
                         )
                         .clearWhenStopped(
+                                DragonMemories.MOVEMENT_INTENT,
+                                DragonMemories.WALK_TARGET,
+                                DragonMemories.PATH,
+                                DragonMemories.CANT_REACH_WALK_TARGET_SINCE
+                        )
+                        .build(),
+                DragonBehaviourGroup.<Ignivorus>activity(Activity.PANIC)
+                        .behaviours(new DragonRescueFallingOwnerBehaviour<>(RESCUE_CONFIG))
+                        .clearWhenStopped(
+                                DragonMemories.RESCUE_TARGET,
                                 DragonMemories.MOVEMENT_INTENT,
                                 DragonMemories.WALK_TARGET,
                                 DragonMemories.PATH,
