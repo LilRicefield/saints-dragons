@@ -551,6 +551,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH::set,
                 null));
+        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_trigger_health_fraction"),
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION::get,
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_drain_per_tick"),
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK::set,
@@ -574,22 +578,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"),
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"),
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE::set,
-                null));
-        entries.add(new PercentDoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"),
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_min_ticks"),
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_max_ticks"),
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS::get,
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS::set,
                 null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"),
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE::get,
@@ -954,16 +942,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_BULLDOZE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_BULLDOZE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_PENALTY_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION.set(ForgeDragonAttributesConfig.IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MIN_TICKS.getDefault());
-                ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS.set(ForgeDragonAttributesConfig.IGNIVORUS_PHASE2_DECISION_MAX_TICKS.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_BEEF.getDefault());
                 ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_MUTTON.set(ForgeDragonAttributesConfig.IGNIVORUS_TAMING_CHANCE_MUTTON.getDefault());

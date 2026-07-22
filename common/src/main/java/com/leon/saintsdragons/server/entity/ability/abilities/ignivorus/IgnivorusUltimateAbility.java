@@ -71,6 +71,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean isAirborneMode;
     private boolean phase2DamageApplied;
     private boolean novaSpawned;
+    private boolean transitionsToPhase2;
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
                                     Ignivorus user) {
@@ -97,9 +98,13 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
 
         if (section.sectionType == STARTUP) {
-            boolean isAirborne = dragon.isFlying() || !dragon.onGround();
+            boolean wildPhase1Transition = !dragon.isTame()
+                    && !dragon.isPhase2Active()
+                    && !dragon.hasTriggeredWildPhase2Ultimate();
+            boolean isAirborne = !wildPhase1Transition && dragon.isAerial();
             isAirborneMode = isAirborne;
             isPhase2GroundMode = dragon.isPhase2Active() && !isAirborne;
+            transitionsToPhase2 = wildPhase1Transition;
 
             if (isPhase2GroundMode) {
                 dragon.lockRiderControls(ULTIMATE_LOOP_TICKS);
@@ -217,6 +222,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             if (isAirborneMode) {
                 dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_end_air");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END_AIR.get(), 1.0f, 1.0f, 38);
+            } else if (transitionsToPhase2) {
+                dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "ultimate_end_to_phase_2");
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END.get(), 1.0f, 1.0f, 57);
             } else {
                 dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "ultimate_end");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_END.get(), 1.0f, 1.0f, 57);
@@ -259,12 +267,17 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     @Override
     protected void endSection(DragonAbilitySection section) {
         if (section != null && section.sectionType == STARTUP) {
+            if (transitionsToPhase2 && endAnimPlayed) {
+                getUser().completeWildPhase2Transition();
+                transitionsToPhase2 = false;
+            }
             releaseLocks();
         }
     }
 
     @Override
     public void interrupt() {
+        transitionsToPhase2 = false;
         releaseLocks();
         super.interrupt();
     }

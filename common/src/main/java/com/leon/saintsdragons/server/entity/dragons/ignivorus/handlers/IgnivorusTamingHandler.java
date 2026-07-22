@@ -16,6 +16,9 @@ public class IgnivorusTamingHandler extends DragonTamingStunComponent<Ignivorus>
 
     @Override
     protected void setTamingStunned(boolean stunned) {
+        if (stunned) {
+            dragon.clearPhase2ForTamingStun();
+        }
         dragon.getEntityData().set(Ignivorus.DATA_TAMING_STUNNED, stunned);
     }
 

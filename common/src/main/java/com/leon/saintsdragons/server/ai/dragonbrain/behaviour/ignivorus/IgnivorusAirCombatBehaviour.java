@@ -5,10 +5,14 @@ import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.RangedAirCombatBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.levelgen.Heightmap;
 
 public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivorus> {
     private static final int BREATH_COOLDOWN_TICKS = 2400;
+    private static final double MOUNTED_FLIGHT_CLEARANCE = 3.0D;
     private static final RangedAirCombatSettings COMBAT_SETTINGS = new RangedAirCombatSettings(
             3.75D,
             5.5D,
@@ -26,6 +30,39 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
 
     public IgnivorusAirCombatBehaviour() {
         super(COMBAT_SETTINGS);
+    }
+
+    @Override
+    protected void prepareStartConditions(Ignivorus dragon, LivingEntity target) {
+        if (shouldExitPhase2ForAirPursuit(dragon, target)) {
+            dragon.exitWildPhase2ForAirPursuit();
+        }
+    }
+
+    private boolean shouldExitPhase2ForAirPursuit(Ignivorus dragon, LivingEntity target) {
+        if (!dragon.isPhase2Active() || target == null) {
+            return false;
+        }
+        if (target instanceof Player player && player.isFallFlying()) {
+            return true;
+        }
+        if (!(target.getVehicle() instanceof LivingEntity vehicle)
+                || !(vehicle instanceof DragonFlightCapable flightCapable)) {
+            return false;
+        }
+        if (flightCapable.isTakeoff()) {
+            return true;
+        }
+        if ((!flightCapable.isFlying() && !flightCapable.isHovering())
+                || flightCapable.isLanding()
+                || vehicle.onGround()) {
+            return false;
+        }
+
+        double groundY = vehicle.level()
+                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, vehicle.blockPosition())
+                .getY();
+        return vehicle.getY() - groundY > MOUNTED_FLIGHT_CLEARANCE;
     }
 
     @Override

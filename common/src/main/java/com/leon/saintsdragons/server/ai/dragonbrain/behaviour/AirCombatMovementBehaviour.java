@@ -26,6 +26,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
     protected final boolean canStart(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        prepareStartConditions(dragon, target);
         return isValidAirTarget(context, target) && checkExtraStartConditions(dragon, target);
     }
 
@@ -119,6 +120,9 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
 
     protected boolean checkExtraStartConditions(T dragon, LivingEntity target) {
         return true;
+    }
+
+    protected void prepareStartConditions(T dragon, LivingEntity target) {
     }
 
     protected boolean checkExtraContinueConditions(T dragon, LivingEntity target) {

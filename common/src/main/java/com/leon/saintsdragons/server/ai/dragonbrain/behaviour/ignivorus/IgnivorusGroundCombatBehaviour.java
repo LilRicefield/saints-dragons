@@ -26,15 +26,9 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     private Ignivorus dragon;
     private DragonBrainContext<Ignivorus> currentContext;
     private int attackCooldown = 0;
-    private boolean hasUsedUltimateTrigger = false;
     private int breathCooldown = 0;
     private static final int BREATH_COOLDOWN_TICKS = 3600;
     private static final float BREATH_RANDOM_CHANCE = 0.12f;
-    private int phase2DecisionCooldown = 0;
-    private static final int PHASE2_DECISION_MIN = 60;
-    private static final int PHASE2_DECISION_MAX = 120;
-    private static final float PHASE2_TOGGLE_ON_CHANCE = 0.85f;
-    private static final float PHASE2_TOGGLE_OFF_CHANCE = 0.05f;
     private int fireballDecisionCooldown = 0;
     private int fireballPostCooldown = 0;
     private FireballMode fireballMode = FireballMode.NONE;
@@ -153,7 +147,6 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     protected void stop(DragonBrainContext<Ignivorus> context) {
         dragon.setAggressive(false);
         cancelFireBreathIfActive();
-        hasUsedUltimateTrigger = false;
         currentContext = null;
     }
 
@@ -161,7 +154,6 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     protected void start(DragonBrainContext<Ignivorus> context) {
         this.dragon = context.dragon();
         dragon.setAggressive(true);
-        hasUsedUltimateTrigger = false;
     }
 
     @Override
@@ -173,20 +165,12 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
             return;
         }
 
-        if (dragon.isAiPhase2Locked()) {
-            stopMovement("ignivorus-combat:phase-locked");
-            return;
-        }
-
         if (attackCooldown > 0) {
             attackCooldown--;
         }
 
         if (breathCooldown > 0) {
             breathCooldown--;
-        }
-        if (phase2DecisionCooldown > 0) {
-            phase2DecisionCooldown--;
         }
         if (fireballDecisionCooldown > 0) {
             fireballDecisionCooldown--;
@@ -205,13 +189,12 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
 
         boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target);
 
-        if (!biteOnlyPrey && !hasUsedUltimateTrigger && shouldTriggerLowHealthUltimate()) {
+        if (!biteOnlyPrey && shouldTriggerLowHealthUltimate()) {
             if (canUseAiAbility(ModAbilities.IGNIVORUS_ULTIMATE, true)) {
                 dragon.combatManager.tryUseAbility(ModAbilities.IGNIVORUS_ULTIMATE);
                 dragon.getAiCombatPacing().recordUse(ModAbilities.IGNIVORUS_ULTIMATE, 20, 140, true, 180, 100);
             }
             if (dragon.isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE)) {
-                hasUsedUltimateTrigger = true;
                 attackCooldown = 0;
             }
         }
@@ -222,10 +205,6 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
         if (dragon.isInWaterOrBubble()) {
             handleWaterCombat(target, gap, hasLineOfSight);
             return;
-        }
-
-        if (!biteOnlyPrey) {
-            maybeTogglePhase2(target, gap, hasLineOfSight);
         }
 
         if (!biteOnlyPrey && handleFireballActive(target)) {
@@ -471,75 +450,16 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
             + dragon.getRandom().nextInt(FIREBALL_DECISION_MAX - FIREBALL_DECISION_MIN + 1);
     }
 
-    private void maybeTogglePhase2(LivingEntity target, double gap, boolean hasLineOfSight) {
-        if (phase2DecisionCooldown > 0) {
-            return;
-        }
-        if (dragon.isVehicle() || dragon.getControllingPassenger() != null) {
-            return;
-        }
-        if (!dragon.onGround()) {
-            return;
-        }
-        if (isCurrentlyAttacking()) {
-            return;
-        }
-        if (!hasLineOfSight) {
-            return;
-        }
-        if (gap > MELEE_ENGAGE_RANGE) {
-            return;
-        }
-
-        boolean enable = !dragon.isPhase2Active();
-        float chance = enable ? getPhase2ToggleOnChance() : getPhase2ToggleOffChance();
-        if (dragon.getRandom().nextFloat() < chance) {
-            if (!dragon.tryTogglePhase2ForAI(enable)) {
-                phase2DecisionCooldown = 80;
-                return;
-            }
-        }
-
-        int minTicks = getPhase2DecisionMinTicks();
-        int maxTicks = getPhase2DecisionMaxTicks();
-        phase2DecisionCooldown = minTicks
-            + dragon.getRandom().nextInt(maxTicks - minTicks + 1);
-    }
-
-    private float getPhase2ToggleOnChance() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        return Mth.clamp((float) config.extraDouble("phase2_toggle_on_chance", PHASE2_TOGGLE_ON_CHANCE), 0.0F, 1.0F);
-    }
-
-    private float getPhase2ToggleOffChance() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        return Mth.clamp((float) config.extraDouble("phase2_toggle_off_chance", PHASE2_TOGGLE_OFF_CHANCE), 0.0F, 1.0F);
-    }
-
-    private int getPhase2DecisionMinTicks() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        return Math.max(1, Mth.floor(config.extraDouble("phase2_decision_min_ticks", PHASE2_DECISION_MIN)));
-    }
-
-    private int getPhase2DecisionMaxTicks() {
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        int minTicks = getPhase2DecisionMinTicks();
-        int maxTicks = Math.max(1, Mth.floor(config.extraDouble("phase2_decision_max_ticks", PHASE2_DECISION_MAX)));
-        return Math.max(minTicks, maxTicks);
-    }
-
     private boolean shouldTriggerLowHealthUltimate() {
-        if (dragon.isTame() && dragon.getOwner() != null) {
+        if (dragon.isPhase2Active()
+                || dragon.hasTriggeredWildPhase2Ultimate()
+                || dragon.isTame()) {
             return false;
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
             .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         double healthFraction = Mth.clamp(
-            config.extraDouble("ultimate_trigger_health_fraction", 0.5D),
+            config.extraDouble("ultimate_trigger_health_fraction", 0.6D),
             0.0D,
             1.0D
         );

@@ -211,6 +211,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.abilityDamage("ultimate", 200.0D));
         ignivorusBuffer.ultimatePenalty = ignivorusCurrent.extraDouble("ultimate_penalty_health",
                 ignivorusDefaults.extraDouble("ultimate_penalty_health", 50.0D));
+        ignivorusBuffer.ultimateTriggerHealthFraction = ignivorusCurrent.extraDouble(
+                "ultimate_trigger_health_fraction",
+                ignivorusDefaults.extraDouble("ultimate_trigger_health_fraction", 0.6D)
+        );
         ignivorusBuffer.tamingChanceBase = ignivorusCurrent.extraDouble("taming_chance_base", 14.2857D);
         ignivorusBuffer.tamingChanceBeef = ignivorusCurrent.extraDouble("taming_chance_beef", 20.0D);
         ignivorusBuffer.tamingChanceMutton = ignivorusCurrent.extraDouble("taming_chance_mutton", 14.2857D);
@@ -232,14 +236,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.extraDouble("fire_breath_flame_lifetime_multiplier", 1.0D));
         ignivorusBuffer.fireBreathIgniteBlockChance = ignivorusCurrent.extraDouble("fire_breath_ignite_block_chance",
                 ignivorusDefaults.extraDouble("fire_breath_ignite_block_chance", 1.0D));
-        ignivorusBuffer.phase2ToggleOnChance = ignivorusCurrent.extraDouble("phase2_toggle_on_chance",
-                ignivorusDefaults.extraDouble("phase2_toggle_on_chance", 0.85D));
-        ignivorusBuffer.phase2ToggleOffChance = ignivorusCurrent.extraDouble("phase2_toggle_off_chance",
-                ignivorusDefaults.extraDouble("phase2_toggle_off_chance", 0.05D));
-        ignivorusBuffer.phase2DecisionMinTicks = ignivorusCurrent.extraDouble("phase2_decision_min_ticks",
-                ignivorusDefaults.extraDouble("phase2_decision_min_ticks", 60.0D));
-        ignivorusBuffer.phase2DecisionMaxTicks = ignivorusCurrent.extraDouble("phase2_decision_max_ticks",
-                ignivorusDefaults.extraDouble("phase2_decision_max_ticks", 120.0D));
         ignivorusBuffer.legacyTaming = ignivorusCurrent.extraBoolean("legacy_taming", false);
         ignivorusBuffer.eggHatchChanceNormal = ignivorusCurrent.extraDouble("egg_hatch_time_ticks_normal", 36000.0D);
         ignivorusBuffer.aggressiveWild = ignivorusCurrent.extraBoolean("aggressive_wild", false);
@@ -1376,6 +1372,11 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(10000.0D)
                 .setSaveConsumer(value -> buffer.ultimatePenalty = value)
                 .build());
+        entries.add(buildPercentChanceEntry(entryBuilder,
+                Component.translatable("config.saintsdragons.attributes.ignivorus.ultimate_trigger_health_fraction"),
+                buffer.ultimateTriggerHealthFraction,
+                defaults.extraDouble("ultimate_trigger_health_fraction", 0.6D),
+                value -> buffer.ultimateTriggerHealthFraction = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.taming_base"), buffer.tamingChanceBase)
                 .setDefaultValue(defaults.extraDouble("taming_chance_base", 14.2857D))
                 .setMin(0.0D)
@@ -1447,28 +1448,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 buffer.fireBreathIgniteBlockChance,
                 defaults.extraDouble("fire_breath_ignite_block_chance", 1.0D),
                 value -> buffer.fireBreathIgniteBlockChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_on_chance"),
-                buffer.phase2ToggleOnChance,
-                defaults.extraDouble("phase2_toggle_on_chance", 0.85D),
-                value -> buffer.phase2ToggleOnChance = value));
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_toggle_off_chance"),
-                buffer.phase2ToggleOffChance,
-                defaults.extraDouble("phase2_toggle_off_chance", 0.05D),
-                value -> buffer.phase2ToggleOffChance = value));
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_min_ticks"), buffer.phase2DecisionMinTicks)
-                .setDefaultValue(defaults.extraDouble("phase2_decision_min_ticks", 60.0D))
-                .setMin(1.0D)
-                .setMax(1200.0D)
-                .setSaveConsumer(value -> buffer.phase2DecisionMinTicks = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.phase2_decision_max_ticks"), buffer.phase2DecisionMaxTicks)
-                .setDefaultValue(defaults.extraDouble("phase2_decision_max_ticks", 120.0D))
-                .setMin(1.0D)
-                .setMax(1200.0D)
-                .setSaveConsumer(value -> buffer.phase2DecisionMaxTicks = value)
-                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_hatch_time_ticks_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_time_ticks_normal", 36000.0D))
                 .setMin(20.0D)
@@ -2141,6 +2120,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double bulldozeDamage;
         double ultimateDamage;
         double ultimatePenalty;
+        double ultimateTriggerHealthFraction;
         double tamingChanceBase;
         double tamingChanceBeef;
         double tamingChanceMutton;
@@ -2154,10 +2134,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double fireBreathFlameSpeedMultiplier;
         double fireBreathFlameLifetimeMultiplier;
         double fireBreathIgniteBlockChance;
-        double phase2ToggleOnChance;
-        double phase2ToggleOffChance;
-        double phase2DecisionMinTicks;
-        double phase2DecisionMaxTicks;
         boolean legacyTaming;
         double eggHatchChanceNormal;
         boolean aggressiveWild;
@@ -2246,6 +2222,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static Map<String, Double> buildIgnivorusExtras(IgnivorusAttributeBuffer buffer) {
         Map<String, Double> extras = new HashMap<>();
         extras.put("ultimate_penalty_health", buffer.ultimatePenalty);
+        extras.put("ultimate_trigger_health_fraction", buffer.ultimateTriggerHealthFraction);
         extras.put("taming_chance_base", buffer.tamingChanceBase);
         extras.put("taming_chance_beef", buffer.tamingChanceBeef);
         extras.put("taming_chance_mutton", buffer.tamingChanceMutton);
@@ -2259,10 +2236,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("fire_breath_flame_speed_multiplier", buffer.fireBreathFlameSpeedMultiplier);
         extras.put("fire_breath_flame_lifetime_multiplier", buffer.fireBreathFlameLifetimeMultiplier);
         extras.put("fire_breath_ignite_block_chance", buffer.fireBreathIgniteBlockChance);
-        extras.put("phase2_toggle_on_chance", buffer.phase2ToggleOnChance);
-        extras.put("phase2_toggle_off_chance", buffer.phase2ToggleOffChance);
-        extras.put("phase2_decision_min_ticks", buffer.phase2DecisionMinTicks);
-        extras.put("phase2_decision_max_ticks", buffer.phase2DecisionMaxTicks);
         extras.put("egg_hatch_time_ticks_normal", buffer.eggHatchChanceNormal);
         return extras;
     }

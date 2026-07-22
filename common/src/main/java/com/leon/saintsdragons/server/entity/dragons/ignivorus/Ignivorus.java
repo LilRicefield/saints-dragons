@@ -296,8 +296,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private boolean phase2RiderTakeoffActive = false;
     private boolean useRightWingSwipe = true;
     private boolean phase2WasVehicle = false;
-    private int aiPhase2LockTicks = 0;
-    private int phase2InvalidTargetTicks = 0;
+    private boolean wildPhase2UltimateTriggered = false;
     private boolean aiSpecialCombatActive = false;
     private boolean leaping = false;
     private boolean leapWasVehicle = false;
@@ -582,8 +581,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         phase2RiderTakeoffActive = false;
         this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
         phase2WasVehicle = false;
-        phase2InvalidTargetTicks = 0;
-        aiPhase2LockTicks = 0;
 
         leaping = false;
         leapWasVehicle = false;
@@ -789,7 +786,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.setDeltaMovement(Vec3.ZERO);
         if (!this.level().isClientSide) {
             this.getNavigation().stop();
-            this.setTarget(null);
+            if (this.isVehicle() || this.getControllingPassenger() != null) {
+                this.setTarget(null);
+            }
         }
     }
 
@@ -891,10 +890,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             if (phase2CooldownTicks > 0) {
                 phase2CooldownTicks--;
             }
-            if (aiPhase2LockTicks > 0) {
-                aiPhase2LockTicks--;
+            if (phase2Active && wildPhase2UltimateTriggered && !isTame()) {
+                LivingEntity target = getTarget();
+                if (target == null || !target.isAlive() || target.isRemoved()) {
+                    exitPhase2(true);
+                    return;
+                }
             }
-
             if (phase2Active && phase2WasVehicle && !currentlyVehicle) {
                 phase2Active = false;
                 this.entityData.set(DATA_PHASE2, false);
@@ -902,39 +904,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                 clearRiderControlLock();
             }
 
-            if (phase2Active && !currentlyVehicle) {
-                if (hasValidPhase2CombatTarget()) {
-                    phase2InvalidTargetTicks = 0;
-                } else {
-                    phase2InvalidTargetTicks++;
-                    if (phase2InvalidTargetTicks >= 40) {
-                        phase2Active = false;
-                        this.entityData.set(DATA_PHASE2, false);
-                        phase2CooldownTicks = 40;
-                        if (!isAerial()) {
-                            animationHandler.triggerPhase2ExitAnimation();
-                        }
-                    }
-                }
-            } else {
-                phase2InvalidTargetTicks = 0;
-            }
             phase2WasVehicle = currentlyVehicle;
         }
-    }
-
-    private boolean hasValidPhase2CombatTarget() {
-        LivingEntity target = this.getTarget();
-        if (target == null || !target.isAlive()) {
-            return false;
-        }
-        if (target.level() != this.level()) {
-            return false;
-        }
-        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
-            return false;
-        }
-        return true;
     }
 
     private void tickLeapState() {
@@ -1936,13 +1907,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
         if (phase2Active) {
-
-            phase2Active = false;
-            this.entityData.set(DATA_PHASE2, false);
-            phase2CooldownTicks = 40;
-            lockRiderControls(PHASE2_EXIT_LOCK_TICKS);
-            animationHandler.triggerPhase2ExitAnimation();
-            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 1.0f, 38);
+            exitPhase2(true);
         } else {
             phase2Active = true;
             this.entityData.set(DATA_PHASE2, true);
@@ -1956,55 +1921,62 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return level().isClientSide ? this.entityData.get(DATA_PHASE2) : phase2Active;
     }
 
-    public boolean isAiPhase2Locked() {
-        return !level().isClientSide && aiPhase2LockTicks > 0;
+    public boolean hasTriggeredWildPhase2Ultimate() {
+        return wildPhase2UltimateTriggered;
     }
 
-    private void startAiPhase2Lock(int ticks) {
-        if (!level().isClientSide) {
-            aiPhase2LockTicks = Math.max(aiPhase2LockTicks, ticks);
+    public void completeWildPhase2Transition() {
+        if (level().isClientSide || isTame() || isBaby()) {
+            return;
         }
+        wildPhase2UltimateTriggered = true;
+        phase2Active = true;
+        this.entityData.set(DATA_PHASE2, true);
+        phase2CooldownTicks = 0;
+        phase2WasVehicle = false;
     }
 
-    public boolean tryTogglePhase2ForAI(boolean enable) {
-        if (level().isClientSide) {
-            return false;
+    public void exitWildPhase2ForAirPursuit() {
+        if (level().isClientSide || isTame() || isVehicle() || !phase2Active) {
+            return;
         }
-        if (isBaby()) {
-            return false;
-        }
-        if (isVehicle() || getControllingPassenger() != null) {
-            return false;
-        }
-        if (isAerial()) {
-            return false;
-        }
-        if (bulldozing || leaping) {
-            return false;
-        }
-        if (phase2CooldownTicks > 0) {
-            return false;
-        }
-        if (phase2Active == enable) {
-            return false;
-        }
-        if (getActiveAbility() != null) {
-            return false;
-        }
+        exitPhase2(true);
+    }
 
-        phase2Active = enable;
-        this.entityData.set(DATA_PHASE2, enable);
-        if (enable) {
-            startAiPhase2Lock(PHASE2_ENTER_LOCK_TICKS);
-            animationHandler.triggerPhase2EnterAnimation();
-            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0f, 1.0f, 47);
-        } else {
-            phase2CooldownTicks = 40;
-            startAiPhase2Lock(PHASE2_EXIT_LOCK_TICKS);
+    public void clearPhase2ForTamingStun() {
+        boolean wasPhase2Active = phase2Active;
+        phase2Active = false;
+        this.entityData.set(DATA_PHASE2, false);
+        phase2RiderTakeoffActive = false;
+        this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
+        phase2WasVehicle = false;
+        phase2CooldownTicks = 0;
+        if (wasPhase2Active && !level().isClientSide) {
             animationHandler.triggerPhase2ExitAnimation();
-            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_EXIT.get(), 1.0f, 1.0f, 38);
+            getSoundHandler().playMovingEntitySound(
+                    ModSounds.IGNIVORUS_PHASE2_EXIT.get(),
+                    1.0f,
+                    1.0f,
+                    38
+            );
         }
-        return true;
+    }
+
+    private void exitPhase2(boolean lockControls) {
+        phase2Active = false;
+        this.entityData.set(DATA_PHASE2, false);
+        phase2CooldownTicks = 40;
+        phase2WasVehicle = false;
+        if (lockControls) {
+            lockRiderControls(PHASE2_EXIT_LOCK_TICKS);
+        }
+        animationHandler.triggerPhase2ExitAnimation();
+        getSoundHandler().playMovingEntitySound(
+                ModSounds.IGNIVORUS_PHASE2_EXIT.get(),
+                1.0f,
+                1.0f,
+                38
+        );
     }
 
     public boolean shouldUseRightWingSwipe() {
@@ -3058,6 +3030,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
         tag.putBoolean("Phase2Active", phase2Active);
         tag.putInt("Phase2CooldownTicks", Math.max(0, phase2CooldownTicks));
+        tag.putBoolean("WildPhase2UltimateTriggered", wildPhase2UltimateTriggered);
         tag.putInt("LeapCooldownTicks", Math.max(0, leapCooldownTicks));
         tag.putFloat("FireBreathEnergy", getFireBreathEnergy());
         tag.putBoolean("FireBreathDepleted", isFireBreathDepleted());
@@ -3084,6 +3057,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             phase2Active = tag.getBoolean("Phase2Active");
             this.entityData.set(DATA_PHASE2, phase2Active);
         }
+        wildPhase2UltimateTriggered = tag.contains("WildPhase2UltimateTriggered")
+                ? tag.getBoolean("WildPhase2UltimateTriggered")
+                : phase2Active;
         if (tag.contains("Phase2CooldownTicks")) {
             phase2CooldownTicks = Math.max(0, tag.getInt("Phase2CooldownTicks"));
         }

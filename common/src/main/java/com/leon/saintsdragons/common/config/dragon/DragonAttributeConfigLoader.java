@@ -306,7 +306,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double bulldozeDamage = 10.0D;
         double ultimateDamage = 200.0D;
         double ultimatePenaltyHealth = 50.0D;
-        double ultimateTriggerHealthFraction = 0.5D;
+        double ultimateTriggerHealthFraction = 0.6D;
         double tamingChanceBase = 14.2857D;
         double tamingChanceBeef = 20.0D;
         double tamingChanceMutton = 14.2857D;
@@ -319,10 +319,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double fireBreathFlameSpeedMultiplier = 1.0D;
         double fireBreathFlameLifetimeMultiplier = 1.0D;
         double fireBreathIgniteBlockChance = 1.0D;
-        double phase2ToggleOnChance = 0.85D;
-        double phase2ToggleOffChance = 0.05D;
-        double phase2DecisionMinTicks = 60.0D;
-        double phase2DecisionMaxTicks = 120.0D;
         double eggHatchTimeTicksNormal = 36000.0D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
@@ -358,10 +354,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 fireBreathFlameSpeedMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null));
                 fireBreathFlameLifetimeMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null));
                 fireBreathIgniteBlockChance = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null));
-                phase2ToggleOnChance = (double) configClass.getField("IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_TOGGLE_ON_CHANCE").get(null));
-                phase2ToggleOffChance = (double) configClass.getField("IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_TOGGLE_OFF_CHANCE").get(null));
-                phase2DecisionMinTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MIN_TICKS").get(null));
-                phase2DecisionMaxTicks = (double) configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_PHASE2_DECISION_MAX_TICKS").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 tamingStunHealth = (double) configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
@@ -379,10 +371,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("fire_breath_flame_speed_multiplier", fireBreathFlameSpeedMultiplier);
         extras.put("fire_breath_flame_lifetime_multiplier", fireBreathFlameLifetimeMultiplier);
         extras.put("fire_breath_ignite_block_chance", fireBreathIgniteBlockChance);
-        extras.put("phase2_toggle_on_chance", phase2ToggleOnChance);
-        extras.put("phase2_toggle_off_chance", phase2ToggleOffChance);
-        extras.put("phase2_decision_min_ticks", phase2DecisionMinTicks);
-        extras.put("phase2_decision_max_ticks", phase2DecisionMaxTicks);
         extras.put("taming_chance_base", tamingChanceBase);
         extras.put("taming_chance_beef", tamingChanceBeef);
         extras.put("taming_chance_mutton", tamingChanceMutton);
@@ -1105,27 +1093,19 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 }
                 if (!extra.has("ultimate_trigger_health_fraction")) {
                     extra.addProperty("ultimate_trigger_health_fraction",
-                            mergedConfig.extraDouble("ultimate_trigger_health_fraction", 0.5D));
+                            mergedConfig.extraDouble("ultimate_trigger_health_fraction", 0.6D));
                     updated = true;
                 }
-                if (!extra.has("phase2_toggle_on_chance")) {
-                    extra.addProperty("phase2_toggle_on_chance",
-                            mergedConfig.extraDouble("phase2_toggle_on_chance", 0.85D));
+                if (extra.remove("phase2_toggle_on_chance") != null) {
                     updated = true;
                 }
-                if (!extra.has("phase2_toggle_off_chance")) {
-                    extra.addProperty("phase2_toggle_off_chance",
-                            mergedConfig.extraDouble("phase2_toggle_off_chance", 0.05D));
+                if (extra.remove("phase2_toggle_off_chance") != null) {
                     updated = true;
                 }
-                if (!extra.has("phase2_decision_min_ticks")) {
-                    extra.addProperty("phase2_decision_min_ticks",
-                            mergedConfig.extraDouble("phase2_decision_min_ticks", 60.0D));
+                if (extra.remove("phase2_decision_min_ticks") != null) {
                     updated = true;
                 }
-                if (!extra.has("phase2_decision_max_ticks")) {
-                    extra.addProperty("phase2_decision_max_ticks",
-                            mergedConfig.extraDouble("phase2_decision_max_ticks", 120.0D));
+                if (extra.remove("phase2_decision_max_ticks") != null) {
                     updated = true;
                 }
             }

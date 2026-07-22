@@ -140,6 +140,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
         controller.triggerableAnim("ultimate_end",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end"));
+        controller.triggerableAnim("ultimate_end_to_phase_2",
+                RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_end_to_phase_2"));
         controller.triggerableAnim("phase2_ultimate", PHASE2_ULTIMATE);
         controller.triggerableAnim("ignivorus_flex",
                 RawAnimation.begin().thenPlay("animation.ignivorus.flex"));
