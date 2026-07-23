@@ -4,7 +4,7 @@
   "flying_speed": 0.3,
   "abilities": {
     "latcher_bite": {
-      "damage": 2.0
+      "damage": 4.0
     },
     "winged_attack": {
       "damage": 1.5
@@ -20,17 +20,17 @@
     }
   },
   "extra": {
-    "wave_1_count": 3.0,
-    "wave_2_count": 6.0,
-    "wave_3_count": 9.0,
+    "wave_1_count": 6.0,
+    "wave_2_count": 9.0,
+    "wave_3_count": 12.0,
     "latcher_max_health": 12.0,
     "latcher_armor": 0.0,
-    "latcher_chase_speed": 0.5,
-    "winged_max_health": 8.0,
+    "latcher_chase_speed": 0.8,
+    "winged_max_health": 6.0,
     "winged_armor": 0.0,
-    "winged_chase_speed": 0.76,
+    "winged_chase_speed": 1.0,
     "whettled_max_health": 16.0,
     "whettled_armor": 0.0,
-    "whettled_chase_speed": 0.6
+    "whettled_chase_speed": 0.9
   }
 }

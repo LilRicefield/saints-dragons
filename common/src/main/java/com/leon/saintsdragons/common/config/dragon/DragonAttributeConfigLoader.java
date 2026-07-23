@@ -39,9 +39,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final ResourceLocation DRACONIAN_SWARM_ID = SaintsDragonsCommon.rl("draconian_swarm");
     public static final int SWARM_WAVE_MIN_COUNT = 1;
     public static final int SWARM_WAVE_MAX_COUNT = 50;
-    public static final int SWARM_WAVE_1_DEFAULT_COUNT = 3;
-    public static final int SWARM_WAVE_2_DEFAULT_COUNT = 6;
-    public static final int SWARM_WAVE_3_DEFAULT_COUNT = 9;
+    public static final int SWARM_WAVE_1_DEFAULT_COUNT = 6;
+    public static final int SWARM_WAVE_2_DEFAULT_COUNT = 9;
+    public static final int SWARM_WAVE_3_DEFAULT_COUNT = 12;
 
     private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = "forge".equals(Services.PLATFORM.getPlatformId());
@@ -532,16 +532,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         int wave3Count = SWARM_WAVE_3_DEFAULT_COUNT;
         double latcherMaxHealth = 12.0D;
         double latcherArmor = 0.0D;
-        double latcherChaseSpeed = 0.50D;
-        double latcherBiteDamage = 2.0D;
-        double wingedMaxHealth = 8.0D;
+        double latcherChaseSpeed = 0.80D;
+        double latcherBiteDamage = 4.0D;
+        double wingedMaxHealth = 6.0D;
         double wingedArmor = 0.0D;
-        double wingedChaseSpeed = 0.76D;
+        double wingedChaseSpeed = 1.0D;
         double wingedHookAndPullDamage = 1.5D;
         double wingedDiveBombDamage = 2.025D;
         double whettledMaxHealth = 16.0D;
         double whettledArmor = 0.0D;
-        double whettledChaseSpeed = 0.60D;
+        double whettledChaseSpeed = 0.90D;
         double whettledClawAttackDamage = 4.0D;
         double whettledLungeDamage = 9.0D;
 

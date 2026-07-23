@@ -318,16 +318,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         swarmBuffer.wave3Count = DragonAttributeConfigLoader.swarmWaveCount(swarmCurrent, 3);
         swarmBuffer.latcherMaxHealth = swarmCurrent.extraDouble("latcher_max_health", swarmDefaults.extraDouble("latcher_max_health", 12.0D));
         swarmBuffer.latcherArmor = swarmCurrent.extraDouble("latcher_armor", swarmDefaults.extraDouble("latcher_armor", 0.0D));
-        swarmBuffer.latcherChaseSpeed = swarmCurrent.extraDouble("latcher_chase_speed", swarmDefaults.extraDouble("latcher_chase_speed", 0.50D));
-        swarmBuffer.latcherBiteDamage = swarmCurrent.abilityDamage("latcher_bite", swarmDefaults.abilityDamage("latcher_bite", 2.0D));
-        swarmBuffer.wingedMaxHealth = swarmCurrent.extraDouble("winged_max_health", swarmDefaults.extraDouble("winged_max_health", 8.0D));
+        swarmBuffer.latcherChaseSpeed = swarmCurrent.extraDouble("latcher_chase_speed", swarmDefaults.extraDouble("latcher_chase_speed", 0.80D));
+        swarmBuffer.latcherBiteDamage = swarmCurrent.abilityDamage("latcher_bite", swarmDefaults.abilityDamage("latcher_bite", 4.0D));
+        swarmBuffer.wingedMaxHealth = swarmCurrent.extraDouble("winged_max_health", swarmDefaults.extraDouble("winged_max_health", 6.0D));
         swarmBuffer.wingedArmor = swarmCurrent.extraDouble("winged_armor", swarmDefaults.extraDouble("winged_armor", 0.0D));
-        swarmBuffer.wingedChaseSpeed = swarmCurrent.extraDouble("winged_chase_speed", swarmDefaults.extraDouble("winged_chase_speed", 0.76D));
+        swarmBuffer.wingedChaseSpeed = swarmCurrent.extraDouble("winged_chase_speed", swarmDefaults.extraDouble("winged_chase_speed", 1.0D));
         swarmBuffer.wingedHookAndPullDamage = swarmCurrent.abilityDamage("winged_attack", swarmDefaults.abilityDamage("winged_attack", 1.5D));
         swarmBuffer.wingedDiveBombDamage = swarmCurrent.abilityDamage("winged_attack2", swarmDefaults.abilityDamage("winged_attack2", 2.025D));
         swarmBuffer.whettledMaxHealth = swarmCurrent.extraDouble("whettled_max_health", swarmDefaults.extraDouble("whettled_max_health", 16.0D));
         swarmBuffer.whettledArmor = swarmCurrent.extraDouble("whettled_armor", swarmDefaults.extraDouble("whettled_armor", 0.0D));
-        swarmBuffer.whettledChaseSpeed = swarmCurrent.extraDouble("whettled_chase_speed", swarmDefaults.extraDouble("whettled_chase_speed", 0.60D));
+        swarmBuffer.whettledChaseSpeed = swarmCurrent.extraDouble("whettled_chase_speed", swarmDefaults.extraDouble("whettled_chase_speed", 0.90D));
         swarmBuffer.whettledClawAttackDamage = swarmCurrent.abilityDamage("whettled_clawattack", swarmDefaults.abilityDamage("whettled_clawattack", 4.0D));
         swarmBuffer.whettledLungeDamage = swarmCurrent.abilityDamage("whettled_movehornattack", swarmDefaults.abilityDamage("whettled_movehornattack", 9.0D));
 
@@ -1738,20 +1738,20 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.latcherArmor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.chase_speed"), buffer.latcherChaseSpeed)
-                .setDefaultValue(defaults.extraDouble("latcher_chase_speed", 0.50D))
+                .setDefaultValue(defaults.extraDouble("latcher_chase_speed", 0.80D))
                 .setMin(0.0D)
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.latcherChaseSpeed = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.latcher.bite"), buffer.latcherBiteDamage)
-                .setDefaultValue(defaults.abilityDamage("latcher_bite", 2.0D))
+                .setDefaultValue(defaults.abilityDamage("latcher_bite", 4.0D))
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.latcherBiteDamage = value)
                 .build());
         entries.add(entryBuilder.startTextDescription(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged")).build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.max_health"), buffer.wingedMaxHealth)
-                .setDefaultValue(defaults.extraDouble("winged_max_health", 8.0D))
+                .setDefaultValue(defaults.extraDouble("winged_max_health", 6.0D))
                 .setMin(1.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.wingedMaxHealth = value)
@@ -1763,7 +1763,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.wingedArmor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.winged.chase_speed"), buffer.wingedChaseSpeed)
-                .setDefaultValue(defaults.extraDouble("winged_chase_speed", 0.76D))
+                .setDefaultValue(defaults.extraDouble("winged_chase_speed", 1.0D))
                 .setMin(0.0D)
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.wingedChaseSpeed = value)
@@ -1794,7 +1794,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.whettledArmor = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.draconian_swarm.whettled.chase_speed"), buffer.whettledChaseSpeed)
-                .setDefaultValue(defaults.extraDouble("whettled_chase_speed", 0.60D))
+                .setDefaultValue(defaults.extraDouble("whettled_chase_speed", 0.90D))
                 .setMin(0.0D)
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.whettledChaseSpeed = value)

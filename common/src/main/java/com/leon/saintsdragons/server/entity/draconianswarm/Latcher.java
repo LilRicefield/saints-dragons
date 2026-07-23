@@ -38,7 +38,7 @@ public class Latcher extends AbstractDraconianSwarmEntity {
                 .add(Attributes.MAX_HEALTH, swarmHealth("latcher", 12.0D))
                 .add(Attributes.MOVEMENT_SPEED, 0.25D)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
-                .add(Attributes.ATTACK_DAMAGE, swarmAbilityDamage("latcher_bite", 2.0D))
+                .add(Attributes.ATTACK_DAMAGE, swarmAbilityDamage("latcher_bite", 4.0D))
                 .add(Attributes.ARMOR, swarmArmor("latcher", 0.0D));
     }
 
@@ -54,7 +54,7 @@ public class Latcher extends AbstractDraconianSwarmEntity {
 
     @Override
     protected double getConfiguredAttackDamage() {
-        return swarmAbilityDamage("latcher_bite", 2.0D);
+        return swarmAbilityDamage("latcher_bite", 4.0D);
     }
 
     @Override
@@ -75,7 +75,7 @@ public class Latcher extends AbstractDraconianSwarmEntity {
 
     @Override
     protected double getChaseFlightSpeed() {
-        return swarmChaseSpeed("latcher", 0.50D);
+        return swarmChaseSpeed("latcher", 0.80D);
     }
 
     @Override

@@ -145,7 +145,7 @@ public class Whettled extends AbstractDraconianSwarmEntity implements CombatBody
 
     @Override
     protected double getChaseFlightSpeed() {
-        return swarmChaseSpeed("whettled", 0.60D);
+        return swarmChaseSpeed("whettled", 0.90D);
     }
 
     @Override
