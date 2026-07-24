@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.draconianswarm;
 import com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.item.DraconianArmorSet;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCombatMovementGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.DraconianSwarmCoordinator;
@@ -72,6 +73,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     private UUID encounterId;
     private int encounterWave;
     private boolean nucleusDeathReported;
+    private boolean controllerSummoned;
     private boolean initialConfiguredAttributesApplied;
 
     protected AbstractDraconianSwarmEntity(EntityType<? extends AbstractDraconianSwarmEntity> entityType, Level level) {
@@ -198,15 +200,29 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     public void tick() {
         if (!level().isClientSide) {
             applyInitialConfiguredAttributes();
+            clearPacifiedPlayerTarget();
         }
         super.tick();
         tickVisualFlightPitch();
         tickTailDragYaw();
         this.setNoGravity(true);
         if (!level().isClientSide) {
+            clearPacifiedPlayerTarget();
             tickNucleusLeash();
             this.swarmFlightController.serverTick();
         }
+    }
+
+    private void clearPacifiedPlayerTarget() {
+        LivingEntity target = getTarget();
+        if (!isNeutralToward(target)) {
+            return;
+        }
+
+        setTarget(null);
+        setCombatAttackWindow(false);
+        releaseCombatAttack();
+        this.swarmFlightController.clearWaypoint();
     }
 
     @Override
@@ -292,11 +308,12 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     public void playSpawnAnimation() {
     }
 
-    public void assignNucleusEncounter(BlockPos nucleusPos, UUID encounterId, int wave) {
+    public void assignNucleusEncounter(BlockPos nucleusPos, UUID encounterId, int wave, boolean controllerSummoned) {
         this.nucleusPos = nucleusPos.immutable();
         this.encounterId = encounterId;
         this.encounterWave = wave;
         this.nucleusDeathReported = false;
+        this.controllerSummoned = controllerSummoned;
         this.setPersistenceRequired();
     }
 
@@ -358,6 +375,9 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
 
     @Override
     public boolean canAttack(@NotNull LivingEntity target) {
+        if (isNeutralToward(target)) {
+            return false;
+        }
         if (!canHitWithSwarmAttack(target)) {
             return false;
         }
@@ -371,17 +391,33 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
         return target.isAlive()
                 && target != this
                 && !(target instanceof AbstractDraconianSwarmEntity)
-                && !(target instanceof EnderMan);
+                && !(target instanceof EnderMan)
+                && !isNeutralToward(target);
     }
 
     @Override
     public boolean doHurtTarget(@NotNull Entity target) {
-        return !(target instanceof EnderMan) && super.doHurtTarget(target);
+        return target instanceof LivingEntity livingEntity
+                && canHitWithSwarmAttack(livingEntity)
+                && super.doHurtTarget(target);
+    }
+
+    private boolean isNeutralToward(@Nullable LivingEntity target) {
+        return target != null
+                && DraconianArmorSet.pacifiesSwarm(target)
+                && getLastHurtByMob() != target;
     }
 
     @Override
     public boolean removeWhenFarAway(double distanceToClosestPlayer) {
         return this.encounterId == null && super.removeWhenFarAway(distanceToClosestPlayer);
+    }
+
+    @Override
+    protected void dropFromLootTable(@NotNull DamageSource source, boolean recentlyHit) {
+        if (!this.controllerSummoned) {
+            super.dropFromLootTable(source, recentlyHit);
+        }
     }
 
     @Override
@@ -392,6 +428,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
             tag.putUUID("NucleusEncounter", this.encounterId);
             tag.putInt("NucleusWave", this.encounterWave);
             tag.putBoolean("NucleusDeathReported", this.nucleusDeathReported);
+            tag.putBoolean("ControllerSummoned", this.controllerSummoned);
         }
     }
 
@@ -405,6 +442,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
             this.encounterId = tag.getUUID("NucleusEncounter");
             this.encounterWave = tag.getInt("NucleusWave");
             this.nucleusDeathReported = tag.getBoolean("NucleusDeathReported");
+            this.controllerSummoned = tag.getBoolean("ControllerSummoned");
             this.setPersistenceRequired();
         }
     }

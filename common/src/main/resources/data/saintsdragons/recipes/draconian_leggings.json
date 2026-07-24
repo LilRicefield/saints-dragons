@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "FFF",
+    "F F",
+    "F F"
+  ],
+  "key": {
+    "F": {
+      "item": "saintsdragons:draconian_flesh"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:draconian_leggings"
+  }
+}

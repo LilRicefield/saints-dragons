@@ -11,6 +11,38 @@ import java.util.function.Supplier;
 public final class ModArmors {
     private ModArmors() {}
 
+    public static final Supplier<Item> DRACONIAN_HELMET =
+            ModItems.REGISTER.register("draconian_helmet",
+                    () -> new ArmorItem(
+                            ModArmorMaterials.DRACONIAN_FLESH,
+                            ArmorItem.Type.HELMET,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> DRACONIAN_CHESTPLATE =
+            ModItems.REGISTER.register("draconian_chestplate",
+                    () -> new ArmorItem(
+                            ModArmorMaterials.DRACONIAN_FLESH,
+                            ArmorItem.Type.CHESTPLATE,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> DRACONIAN_LEGGINGS =
+            ModItems.REGISTER.register("draconian_leggings",
+                    () -> new ArmorItem(
+                            ModArmorMaterials.DRACONIAN_FLESH,
+                            ArmorItem.Type.LEGGINGS,
+                            new Item.Properties()
+                    ));
+
+    public static final Supplier<Item> DRACONIAN_BOOTS =
+            ModItems.REGISTER.register("draconian_boots",
+                    () -> new ArmorItem(
+                            ModArmorMaterials.DRACONIAN_FLESH,
+                            ArmorItem.Type.BOOTS,
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> BLOOD_TEMPEST_HELMET =
             ModItems.REGISTER.register("blood_tempest_helmet",
                     () -> new BloodTempestArmorItem(

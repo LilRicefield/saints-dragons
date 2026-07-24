@@ -21,8 +21,13 @@
 					"pivot": [0, 24, 0]
 				},
 				{
-					"name": "bone2",
+					"name": "heightController",
 					"parent": "all",
+					"pivot": [0, 24, 0]
+				},
+				{
+					"name": "bone2",
+					"parent": "heightController",
 					"pivot": [0, 24, 0]
 				},
 				{

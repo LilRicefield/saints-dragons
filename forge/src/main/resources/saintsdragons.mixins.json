@@ -17,6 +17,7 @@
     "client.CameraMixin",
     "client.CameraPositionMixin",
     "client.CameraRollMixin",
+    "client.DraconianArmorTextureMixin",
     "client.RiderMixin",
     "client.BloodTempestAfterimagePlayerRendererMixin",
     "client.BloodTempestAfterimageLivingRendererMixin",

@@ -270,7 +270,11 @@ public class DraconianNucleusBlockEntity extends BlockEntity {
             }
 
             swarm.finalizeSpawn(level, level.getCurrentDifficultyAt(spawnPos), MobSpawnType.TRIGGERED, null, null);
-            swarm.assignNucleusEncounter(nucleusPos, this.encounterId, this.currentWave);
+            swarm.assignNucleusEncounter(
+                    nucleusPos,
+                    this.encounterId,
+                    this.currentWave,
+                    this.controllerActivationOnly);
             if (level.addFreshEntity(swarm)) {
                 swarm.playSpawnAnimation();
                 return true;

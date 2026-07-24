@@ -69,6 +69,10 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.DRAGONHEART_CHUNK.get());
                                 output.accept(ModItems.DRAGONHEART_ALLOY.get());
                                 output.accept(ModItems.ARROW_OF_VENOM.get());
+                                output.accept(ModArmors.DRACONIAN_HELMET.get());
+                                output.accept(ModArmors.DRACONIAN_CHESTPLATE.get());
+                                output.accept(ModArmors.DRACONIAN_LEGGINGS.get());
+                                output.accept(ModArmors.DRACONIAN_BOOTS.get());
                                 output.accept(ModArmors.BLOOD_TEMPEST_HELMET.get());
                                 output.accept(ModArmors.BLOOD_TEMPEST_CHESTPLATE.get());
                                 output.accept(ModArmors.BLOOD_TEMPEST_LEGGINGS.get());

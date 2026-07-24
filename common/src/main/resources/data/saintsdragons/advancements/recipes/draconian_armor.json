@@ -1,0 +1,30 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_draconian_flesh": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:draconian_flesh"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_draconian_flesh"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:draconian_helmet",
+      "saintsdragons:draconian_chestplate",
+      "saintsdragons:draconian_leggings",
+      "saintsdragons:draconian_boots"
+    ]
+  }
+}
