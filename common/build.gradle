@@ -9,7 +9,7 @@ loom {
 repositories {
     maven {
         name = 'GeckoLib'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
             includeGroupByRegex("software\\.bernie.*")
             includeGroup("com.eliotlash.mclib")
@@ -24,6 +24,10 @@ dependencies {
     // Fabric Loader is only needed on common compile classpath for @Environment and mixin metadata.
     // Keep it compileOnly so Forge classpaths stay clean at runtime.
     compileOnly "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+
+    // GeckoLib's Fabric-facing entity types expose Fabric API interface injections.
+    // Keep the API compile-only here; the Fabric module provides it at runtime.
+    modCompileOnly "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
 
     // GeckoLib common
     modImplementation "software.bernie.geckolib:geckolib-fabric-1.20.1:${rootProject.geckolib_version}"

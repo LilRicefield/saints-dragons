@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow'
+    id 'com.gradleup.shadow'
 }
 
 architectury {
@@ -47,13 +47,13 @@ repositories {
     }
     maven {
         name = 'GeckoLib'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
             includeGroupByRegex("software\\.bernie.*")
             includeGroup("com.eliotlash.mclib")
         }
     }
-    maven { url "https://cursemaven.com" }
+    maven { url = "https://cursemaven.com" }
 }
 
 dependencies {
@@ -71,8 +71,8 @@ dependencies {
 
     // ModMenu integration - Cloth Config will automatically provide the config screen
     modImplementation "com.terraformersmc:modmenu:${rootProject.modmenu_version}"
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle(project(path: ':common', configuration: 'transformProductionFabric')) { transitive false }
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle(project(path: ':common', configuration: 'transformProductionFabric')) { transitive = false }
 
     // Optional JEI integration: API-only for production, full mod in local development.
     modCompileOnly "mezz.jei:jei-${rootProject.minecraft_version}-common-api:${rootProject.jei_version}"

@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.johnrengelman.shadow'
+    id 'com.gradleup.shadow'
 }
 
 loom {
@@ -65,13 +65,13 @@ repositories {
     }
     maven {
         name = 'GeckoLib'
-        url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+        url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
             includeGroupByRegex("software\\.bernie.*")
             includeGroup("com.eliotlash.mclib")
         }
     }
-    maven { url "https://cursemaven.com" }
+    maven { url = "https://cursemaven.com" }
 }
 
 dependencies {
@@ -84,8 +84,8 @@ dependencies {
     compileOnly "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 
     // Common module
-    common(project(path: ':common', configuration: 'namedElements')) { transitive false }
-    shadowBundle(project(path: ':common', configuration: 'transformProductionForge')) { transitive false }
+    common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+    shadowBundle(project(path: ':common', configuration: 'transformProductionForge')) { transitive = false }
 
     // GeckoLib Forge
     modImplementation "software.bernie.geckolib:geckolib-forge-${rootProject.minecraft_version}:${rootProject.geckolib_version}"
