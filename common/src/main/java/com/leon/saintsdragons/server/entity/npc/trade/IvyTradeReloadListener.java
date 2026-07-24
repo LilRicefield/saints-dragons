@@ -10,7 +10,6 @@ import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.entity.npc.VillagerTrades;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,28 +33,19 @@ public final class IvyTradeReloadListener extends SimpleJsonResourceReloadListen
     protected void apply(Map<ResourceLocation, JsonElement> jsonMap,
                          @NotNull ResourceManager resourceManager,
                          @NotNull ProfilerFiller profiler) {
-        List<VillagerTrades.ItemListing> parsed = new ArrayList<>();
-        boolean replace = false;
+        List<IvyTradeRegistry.OfferSource> parsed = new ArrayList<>();
         jsonMap.entrySet().stream()
                 .sorted(Comparator.comparing(entry -> entry.getKey().toString()))
                 .forEach(entry -> parseFile(entry.getKey(), entry.getValue(), parsed));
-        for (Map.Entry<ResourceLocation, JsonElement> entry : jsonMap.entrySet()) {
-            try {
-                JsonObject root = GsonHelper.convertToJsonObject(entry.getValue(), entry.getKey().toString());
-                replace |= IvyTradeRegistry.shouldReplace(root);
-            } catch (Exception exception) {
-                SaintsDragonsCommon.LOGGER.error("Failed to inspect Ivy trade file {}", entry.getKey(), exception);
-            }
-        }
-        IvyTradeRegistry.replaceDatapackTrades(replace, parsed);
+        IvyTradeRegistry.replaceDatapackTrades(parsed);
     }
 
     private static void parseFile(ResourceLocation fileId,
                                   JsonElement element,
-                                  List<VillagerTrades.ItemListing> parsed) {
+                                  List<IvyTradeRegistry.OfferSource> parsed) {
         try {
             JsonObject root = GsonHelper.convertToJsonObject(element, fileId.toString());
-            parsed.addAll(IvyTradeRegistry.parseTrades(fileId, root));
+            parsed.addAll(IvyTradeRegistry.parseOfferSources(fileId, root));
         } catch (Exception exception) {
             SaintsDragonsCommon.LOGGER.error("Failed to parse Ivy trade file {}", fileId, exception);
         }

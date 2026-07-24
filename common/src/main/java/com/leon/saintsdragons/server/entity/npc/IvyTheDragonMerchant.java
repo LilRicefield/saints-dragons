@@ -253,6 +253,9 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private static final String COMMAND_TAG = "Command";
     private static final String IVY_INVENTORY_TAG = "IvyInventory";
     private static final String IVY_INVENTORY_SLOT_TAG = "Slot";
+    private static final String IVY_TRADE_DATA_VERSION_TAG = "IvyTradeDataVersion";
+    private static final String NEXT_TRADE_RESTOCK_GAME_TIME_TAG = "NextTradeRestockGameTime";
+    private static final int IVY_TRADE_DATA_VERSION = 1;
     private static final String DOWNED_TAG = "Downed";
     private static final String DOWNED_BLEED_TICKS_TAG = "DownedBleedTicks";
     private static final String DOWNED_FINISH_HITS_TAG = "DownedFinishHits";
@@ -288,7 +291,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     private final SimpleContainer ivyInventory = new SimpleContainer(IvyInventoryMenu.IVY_SLOT_COUNT);
     private IvyCombatBrain boxingCombat;
     private final int restockInterval;
-    private int restockTimer;
+    private long nextRestockGameTime;
+    private long tradeDataRevision;
     private boolean clientRecoveryItemVisible;
     private UUID pendingDialogueTradePlayerUuid;
     private ResourceLocation pendingDialogueTradeId;
@@ -323,7 +327,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
         this.soundHandler = new HumanSoundHandler(this, new IvySoundProfile());
         this.restockInterval = Math.max(1, resolveRestockInterval());
-        this.restockTimer = this.restockInterval;
+        this.nextRestockGameTime = level.getGameTime() + this.restockInterval;
+        this.tradeDataRevision = IvyTradeRegistry.currentRevision();
         this.idleChatterCooldown = nextIdleChatterCooldown();
     }
 
@@ -2202,6 +2207,8 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         super.addAdditionalSaveData(tag);
         tag.putBoolean(TAME_TAG, isTame());
         tag.put(IVY_INVENTORY_TAG, saveIvyInventory());
+        tag.putInt(IVY_TRADE_DATA_VERSION_TAG, IVY_TRADE_DATA_VERSION);
+        tag.putLong(NEXT_TRADE_RESTOCK_GAME_TIME_TAG, this.nextRestockGameTime);
         UUID ownerUuid = getOwnerUUID();
         if (ownerUuid != null) {
             tag.putUUID(OWNER_UUID_TAG, ownerUuid);
@@ -2242,6 +2249,17 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        boolean hasCurrentTradeData = tag.getInt(IVY_TRADE_DATA_VERSION_TAG) >= IVY_TRADE_DATA_VERSION;
+        if (!hasCurrentTradeData) {
+            this.offers = null;
+        }
+        long scheduledRestockGameTime = hasCurrentTradeData
+                && tag.contains(NEXT_TRADE_RESTOCK_GAME_TIME_TAG, Tag.TAG_LONG)
+                ? tag.getLong(NEXT_TRADE_RESTOCK_GAME_TIME_TAG)
+                : level().getGameTime() + this.restockInterval;
+        this.nextRestockGameTime = Math.min(
+                scheduledRestockGameTime,
+                level().getGameTime() + this.restockInterval);
         if (tag.contains(IVY_INVENTORY_TAG, Tag.TAG_LIST)) {
             loadIvyInventory(tag.getList(IVY_INVENTORY_TAG, Tag.TAG_COMPOUND));
             sanitizeIvyInventoryAfterLoad();
@@ -2409,15 +2427,19 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
     }
 
     private void tickRestocking() {
-        int interval = this.restockInterval;
-        if (restockTimer > interval) {
-            restockTimer = interval;
-        }
-        restockTimer--;
-        if (restockTimer <= 0) {
+        long gameTime = level().getGameTime();
+        long currentTradeDataRevision = IvyTradeRegistry.currentRevision();
+        if (this.tradeDataRevision != currentTradeDataRevision) {
             this.offers = new MerchantOffers();
             IvyTradeRegistry.fillOffers(this, this.random, this.offers);
-            restockTimer = interval;
+            this.tradeDataRevision = currentTradeDataRevision;
+            this.nextRestockGameTime = gameTime + this.restockInterval;
+            return;
+        }
+        if (gameTime >= this.nextRestockGameTime) {
+            this.offers = new MerchantOffers();
+            IvyTradeRegistry.fillOffers(this, this.random, this.offers);
+            this.nextRestockGameTime = gameTime + this.restockInterval;
         }
     }
 

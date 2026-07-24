@@ -1,0 +1,428 @@
+{
+  "trades": [
+    {
+      "cost_a": {
+        "item": "minecraft:egg",
+        "count": 4
+      },
+      "cost_b": {
+        "item": "minecraft:salmon",
+        "count": 4
+      },
+      "result": {
+        "item": "saintsdragons:hearty_dragon_meal",
+        "count": 6
+      },
+      "max_uses": 9999,
+      "xp": 0,
+      "price_multiplier": 0.0
+    }
+  ],
+  "pools": [
+    {
+      "rolls": 4,
+      "entries": [
+        {
+          "weight": 1,
+          "trade": {
+            "cost_a": {
+              "item": "saintsdragons:stegonaut_egg"
+            },
+            "results": [
+              {
+                "item": "minecraft:iron_ingot",
+                "count": {
+                  "min": 16,
+                  "max": 32
+                }
+              },
+              {
+                "item": "minecraft:coal",
+                "count": {
+                  "min": 16,
+                  "max": 48
+                }
+              },
+              {
+                "item": "minecraft:gold_ingot",
+                "count": {
+                  "min": 8,
+                  "max": 16
+                }
+              },
+              {
+                "item": "minecraft:redstone",
+                "count": {
+                  "min": 16,
+                  "max": 24
+                }
+              },
+              {
+                "item": "minecraft:lapis_lazuli",
+                "count": {
+                  "min": 8,
+                  "max": 16
+                }
+              },
+              {
+                "item": "minecraft:cooked_beef",
+                "count": {
+                  "min": 16,
+                  "max": 32
+                }
+              },
+              {
+                "item": "minecraft:golden_carrot",
+                "count": {
+                  "min": 8,
+                  "max": 16
+                }
+              },
+              {
+                "item": "minecraft:bread",
+                "count": {
+                  "min": 24,
+                  "max": 48
+                }
+              },
+              {
+                "item": "minecraft:arrow",
+                "count": {
+                  "min": 32,
+                  "max": 64
+                }
+              },
+              {
+                "item": "minecraft:torch",
+                "count": {
+                  "min": 1,
+                  "max": 64
+                }
+              },
+              {
+                "item": "minecraft:scaffolding",
+                "count": {
+                  "min": 32,
+                  "max": 64
+                }
+              },
+              {
+                "item": "minecraft:emerald",
+                "count": {
+                  "min": 4,
+                  "max": 8
+                }
+              }
+            ],
+            "max_uses": 12,
+            "xp": 5,
+            "price_multiplier": 0.05
+          }
+        },
+        {
+          "weight": 1,
+          "trade": {
+            "cost_a": {
+              "item": "saintsdragons:cindervane_egg"
+            },
+            "results": [
+              {
+                "item": "minecraft:iron_sword",
+                "enchantments": [
+                  {
+                    "id": "minecraft:sharpness",
+                    "level": 3
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:fire_aspect",
+                    "level": 1,
+                    "chance": 0.3
+                  },
+                  {
+                    "id": "minecraft:looting",
+                    "level": 2,
+                    "chance": 0.15
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:iron_axe",
+                "enchantments": [
+                  {
+                    "id": "minecraft:sharpness",
+                    "level": 3
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:efficiency",
+                    "level": 3,
+                    "chance": 0.35
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:iron_pickaxe",
+                "enchantments": [
+                  {
+                    "id": "minecraft:efficiency",
+                    "level": 3
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:fortune",
+                    "level": 2,
+                    "chance": 0.4
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:iron_chestplate",
+                "enchantments": [
+                  {
+                    "id": "minecraft:protection",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:thorns",
+                    "level": 1,
+                    "chance": 0.2
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:iron_leggings",
+                "enchantments": [
+                  {
+                    "id": "minecraft:protection",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:thorns",
+                    "level": 1,
+                    "chance": 0.2
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:iron_helmet",
+                "enchantments": [
+                  {
+                    "id": "minecraft:protection",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:thorns",
+                    "level": 1,
+                    "chance": 0.2
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:iron_boots",
+                "enchantments": [
+                  {
+                    "id": "minecraft:protection",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:thorns",
+                    "level": 1,
+                    "chance": 0.2
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:blaze_rod",
+                "count": {
+                  "min": 4,
+                  "max": 8
+                }
+              },
+              {
+                "item": "minecraft:magma_cream",
+                "count": {
+                  "min": 8,
+                  "max": 16
+                }
+              },
+              {
+                "item": "minecraft:fire_charge",
+                "count": {
+                  "min": 12,
+                  "max": 24
+                }
+              },
+              {
+                "item": "minecraft:ender_pearl",
+                "count": {
+                  "min": 4,
+                  "max": 8
+                }
+              },
+              {
+                "item": "minecraft:iron_hoe",
+                "enchantments": [
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 2
+                  },
+                  {
+                    "id": "minecraft:efficiency",
+                    "level": 3,
+                    "chance": 0.4
+                  }
+                ]
+              }
+            ],
+            "max_uses": 8,
+            "xp": 5,
+            "price_multiplier": 0.05
+          }
+        },
+        {
+          "weight": 1,
+          "trade": {
+            "cost_a": {
+              "item": "saintsdragons:varasuchus_egg"
+            },
+            "result": {
+              "item": "minecraft:diamond_chestplate",
+              "enchantments": [
+                {
+                  "id": "minecraft:mending",
+                  "level": 1
+                },
+                {
+                  "id": "minecraft:thorns",
+                  "level": 2
+                },
+                {
+                  "id": "minecraft:unbreaking",
+                  "level": 3
+                }
+              ]
+            },
+            "max_uses": 3,
+            "xp": 5,
+            "price_multiplier": 0.05
+          }
+        },
+        {
+          "weight": 1,
+          "trade": {
+            "cost_a": {
+              "item": "saintsdragons:volitans_egg"
+            },
+            "results": [
+              {
+                "item": "minecraft:trident",
+                "enchantments": [
+                  {
+                    "id": "minecraft:loyalty",
+                    "level": 3
+                  },
+                  {
+                    "id": "minecraft:impaling",
+                    "level": 5
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 3
+                  }
+                ]
+              },
+              {
+                "item": "minecraft:trident",
+                "enchantments": [
+                  {
+                    "id": "minecraft:riptide",
+                    "level": 3
+                  },
+                  {
+                    "id": "minecraft:impaling",
+                    "level": 4
+                  },
+                  {
+                    "id": "minecraft:unbreaking",
+                    "level": 3
+                  }
+                ]
+              }
+            ],
+            "max_uses": 3,
+            "xp": 5,
+            "price_multiplier": 0.05
+          }
+        },
+        {
+          "weight": 1,
+          "trade": {
+            "cost_a": {
+              "item": "saintsdragons:raevyx_egg"
+            },
+            "results": [
+              {
+                "item": "saintsdragons:raevyx_wingtalon",
+                "count": 2
+              },
+              {
+                "item": "saintsdragons:raevyx_wing_hide",
+                "count": 2
+              }
+            ],
+            "max_uses": 5,
+            "xp": 5,
+            "price_multiplier": 0.05
+          }
+        },
+        {
+          "weight": 1,
+          "trade": {
+            "cost_a": {
+              "item": "saintsdragons:ignivorus_egg"
+            },
+            "results": [
+              {
+                "item": "saintsdragons:ignivorus_tooth",
+                "count": 3
+              },
+              {
+                "item": "saintsdragons:ignivorus_wing_hide",
+                "count": 3
+              }
+            ],
+            "max_uses": 3,
+            "xp": 5,
+            "price_multiplier": 0.05
+          }
+        }
+      ]
+    }
+  ]
+}
