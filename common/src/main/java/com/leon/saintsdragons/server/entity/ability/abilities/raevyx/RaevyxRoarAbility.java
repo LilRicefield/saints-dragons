@@ -25,7 +25,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 6),
-            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 28),
+            new AbilitySectionDuration(AbilitySectionType.ACTIVE, 12),
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 12)
     };
 
@@ -35,7 +35,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
     private int targetCursor = 0;
 
     public RaevyxRoarAbility(DragonAbilityType<Raevyx, RaevyxRoarAbility> type, Raevyx user) {
-        super(type, user, TRACK, 40);
+        super(type, user, TRACK, 30);
     }
 
     @Override

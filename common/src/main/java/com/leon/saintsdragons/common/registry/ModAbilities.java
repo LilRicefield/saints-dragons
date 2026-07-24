@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaDevastatingSweepAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaHelheimQuakeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSwipeAbility;
@@ -64,6 +65,7 @@ public final class ModAbilities {
     public static final DragonAbilityType<Atroxiia, AtroxiiaSwipeAbility> ATROXIIA_SWIPE = register("atroxiia_swipe", AtroxiiaSwipeAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaPreciseStrikeAbility> ATROXIIA_PRECISE_STRIKE = register("atroxiia_precise_strike", AtroxiiaPreciseStrikeAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaDevastatingSweepAbility> ATROXIIA_DEVASTATING_SWEEP = register("atroxiia_devastating_sweep", AtroxiiaDevastatingSweepAbility::new);
+    public static final DragonAbilityType<Atroxiia, AtroxiiaHelheimQuakeAbility> ATROXIIA_HELHEIM_QUAKE = register("atroxiia_helheim_quake", AtroxiiaHelheimQuakeAbility::new);
 
     public static final DragonAbilityType<Raevyx, RaevyxBiteAbility> RAEVYX_BITE = register("raevyx_bite", RaevyxBiteAbility::new);
     public static final DragonAbilityType<Raevyx, RaevyxHornGoreAbility> RAEVYX_HORN_GORE = register("raevyx_horn_gore", RaevyxHornGoreAbility::new);

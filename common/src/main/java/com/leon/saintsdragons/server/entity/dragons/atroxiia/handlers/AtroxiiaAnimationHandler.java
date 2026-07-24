@@ -25,6 +25,8 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     private static final RawAnimation SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.atroxiia.swipe_left");
     private static final RawAnimation PRECISE_STRIKE = RawAnimation.begin().thenPlay("animation.atroxiia.precise_strike");
     private static final RawAnimation DEVASTATING_SWEEP = RawAnimation.begin().thenPlay("animation.atroxiia.devastating_sweep");
+    private static final RawAnimation HELHEIM_QUAKE_ONE = RawAnimation.begin().thenPlay("animation.atroxiia.helheim_quake1");
+    private static final RawAnimation HELHEIM_QUAKE_TWO = RawAnimation.begin().thenPlay("animation.atroxiia.helheim_quake2");
 
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, null, null, null);
@@ -58,6 +60,8 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         AnimationHelper.register(controller, "swipe_left", SWIPE_LEFT);
         AnimationHelper.register(controller, "precise_strike", PRECISE_STRIKE);
         AnimationHelper.register(controller, "devastating_sweep", DEVASTATING_SWEEP);
+        AnimationHelper.register(controller, "helheim_quake1", HELHEIM_QUAKE_ONE);
+        AnimationHelper.register(controller, "helheim_quake2", HELHEIM_QUAKE_TWO);
     }
 
     public void triggerSitDownAnimation() {

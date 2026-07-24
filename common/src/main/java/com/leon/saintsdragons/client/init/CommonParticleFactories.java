@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.client.init;
 
+import com.leon.saintsdragons.client.particle.AtroxiiaSnowParticle;
+import com.leon.saintsdragons.client.particle.AtroxiiaSnowDustParticle;
+import com.leon.saintsdragons.client.particle.AtroxiiaSnowShardParticle;
 import com.leon.saintsdragons.client.particle.DustParticle;
 import com.leon.saintsdragons.client.particle.DraconianNucleusParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
@@ -24,6 +27,10 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.DRAGON_DUST.get(), DustParticle.Factory::new);
         register(registrar, ModParticles.MOSSBACK_POISON_FUME.get(), MossbackPoisonFumeParticle.Factory::new);
         register(registrar, ModParticles.DRACONIAN_NUCLEUS_PARTICLE.get(), DraconianNucleusParticle.Factory::new);
+        register(registrar, ModParticles.ATROXIIA_SNOW.get(), AtroxiiaSnowParticle.FlakeFactory::new);
+        register(registrar, ModParticles.ATROXIIA_SNOW_SHARD.get(), AtroxiiaSnowShardParticle.Factory::new);
+        register(registrar, ModParticles.ATROXIIA_SNOW_SPARK.get(), AtroxiiaSnowParticle.SparkFactory::new);
+        register(registrar, ModParticles.ATROXIIA_SNOW_DUST.get(), AtroxiiaSnowDustParticle.Factory::new);
     }
 
     private static <T extends ParticleOptions> void register(Registrar registrar,

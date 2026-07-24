@@ -6,9 +6,12 @@ import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaHelheimQuakeAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.atroxiia.AtroxiiaRiderController;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaInteractionHandler;
@@ -19,6 +22,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -42,6 +46,8 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
+    private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_PRECISE_STRIKE_NUDGE_TICKS =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_PRECISE_STRIKE_NUDGE_X =
@@ -63,15 +69,18 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     private final AtroxiiaRiderController riderController = new AtroxiiaRiderController(this);
     private final AtroxiiaAnimationHandler animationHandler = new AtroxiiaAnimationHandler(this);
     private final AtroxiiaInteractionHandler interactionHandler = new AtroxiiaInteractionHandler(this);
+    private final ScreenShakeComponent screenShakeComponent;
     private boolean nextMeleeRightSide = true;
 
     public Atroxiia(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
+        this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.18F);
     }
 
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_TICKS, 0);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_X, 0.0F);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_Z, 0.0F);
@@ -207,7 +216,41 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
+        return new RiderAbilityBinding(ModAbilities.ATROXIIA_HELHEIM_QUAKE.getName(), RiderAbilityBinding.Activation.HOLD);
+    }
+
+    @Override
+    public RiderAbilityBinding getTertiaryRiderAbility() {
         return new RiderAbilityBinding(ModAbilities.ATROXIIA_PRECISE_STRIKE.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    protected boolean tryReleaseHeldRidingAbility(String abilityName) {
+        if (ModAbilities.ATROXIIA_HELHEIM_QUAKE.getName().equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == ModAbilities.ATROXIIA_HELHEIM_QUAKE) {
+                ((AtroxiiaHelheimQuakeAbility) active).requestRelease();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
+                                              String abilityName, boolean locked) {
+        if (action == DragonRiderAction.ABILITY_USE
+                && ModAbilities.ATROXIIA_HELHEIM_QUAKE.getName().equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == ModAbilities.ATROXIIA_HELHEIM_QUAKE) {
+                ((AtroxiiaHelheimQuakeAbility) active).requestChain();
+                return true;
+            }
+        }
+        if (action == DragonRiderAction.ABILITY_STOP && tryReleaseHeldRidingAbility(abilityName)) {
+            return true;
+        }
+        return super.handleCustomRiderAction(player, action, abilityName, locked);
     }
 
     @Override
@@ -215,12 +258,14 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
         return abilityType == ModAbilities.ATROXIIA_SLAM
                 || abilityType == ModAbilities.ATROXIIA_SWIPE
                 || abilityType == ModAbilities.ATROXIIA_PRECISE_STRIKE
-                || abilityType == ModAbilities.ATROXIIA_DEVASTATING_SWEEP;
+                || abilityType == ModAbilities.ATROXIIA_DEVASTATING_SWEEP
+                || abilityType == ModAbilities.ATROXIIA_HELHEIM_QUAKE;
     }
 
     @Override
     public void aiStep() {
         super.aiStep();
+        screenShakeComponent.tick();
         tickRiderControlLock();
         tickPreciseStrikeNudge();
         if (!level().isClientSide) {
@@ -450,8 +495,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     }
 
     @Override
-    public float getScreenShakeAmount(float partialTicks) {
-        return 0.0F;
+    protected ScreenShakeComponent getScreenShakeComponent() {
+        return screenShakeComponent;
     }
 
     @Override

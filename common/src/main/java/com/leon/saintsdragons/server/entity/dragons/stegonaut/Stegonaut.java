@@ -223,6 +223,14 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
+        if (action == DragonRiderAction.ABILITY_USE
+                && ModAbilities.STEGONAUT_GROUND_SLAM.getName().equals(abilityName)) {
+            var active = combatManager.getActiveAbility();
+            if (active != null && active.getAbilityType() == ModAbilities.STEGONAUT_GROUND_SLAM) {
+                ((StegonautGroundSlamAbility) active).requestChain();
+                return true;
+            }
+        }
         if (action == DragonRiderAction.ABILITY_STOP
                 && ModAbilities.STEGONAUT_GROUND_SLAM.getName().equals(abilityName)
                 && tryReleaseHeldRidingAbility(abilityName)) {

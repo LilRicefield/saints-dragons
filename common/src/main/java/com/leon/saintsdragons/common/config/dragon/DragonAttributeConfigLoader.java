@@ -519,9 +519,13 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "slam", DragonAbilityOverride.ofDamage(16.0D),
                         "swipe", DragonAbilityOverride.ofDamage(12.0D),
-                        "precise_strike", DragonAbilityOverride.ofDamage(9.0D)
+                        "precise_strike", DragonAbilityOverride.ofDamage(9.0D),
+                        "helheim_quake", DragonAbilityOverride.ofDamage(25.0D)
                 ),
-                Map.of(),
+                Map.of(
+                        "helheim_quake1_knockback", 0.75D,
+                        "helheim_quake2_knockback", 1.8D
+                ),
                 Map.of("aggressive_wild", false)
         );
     }

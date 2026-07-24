@@ -69,6 +69,18 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> DRACONIAN_NUCLEUS_PARTICLE =
             REGISTER.register("draconian_nucleus_particle", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW =
+            REGISTER.register("atroxiia_snow", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW_SHARD =
+            REGISTER.register("atroxiia_snow_shard", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW_SPARK =
+            REGISTER.register("atroxiia_snow_spark", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW_DUST =
+            REGISTER.register("atroxiia_snow_dust", () -> Services.PLATFORM.createSimpleParticle(false));
+
     private ModParticles() {
     }
 

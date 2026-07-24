@@ -58,6 +58,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
     private Phase phase = Phase.FIRST_SLAM;
     private int phaseTicks;
     private boolean releaseRequested;
+    private boolean chainRequested;
     private boolean firstHitApplied;
     private boolean pillarsSpawned;
 
@@ -85,6 +86,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         phase = Phase.FIRST_SLAM;
         phaseTicks = 0;
         releaseRequested = false;
+        chainRequested = false;
         firstHitApplied = false;
         pillarsSpawned = false;
         Stegonaut dragon = getUser();
@@ -108,6 +110,12 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         releaseRequested = true;
     }
 
+    public void requestChain() {
+        if (phase == Phase.FIRST_SLAM) {
+            chainRequested = true;
+        }
+    }
+
     private void tickFirstSlam() {
         phaseTicks++;
         if (!firstHitApplied && phaseTicks >= FIRST_HIT_TICK) {
@@ -116,7 +124,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
             firstHitApplied = true;
         }
         if (phaseTicks >= FIRST_SLAM_TICKS) {
-            if (releaseRequested) {
+            if (releaseRequested && !chainRequested) {
                 end();
             } else {
                 beginSecondSlam();
@@ -393,6 +401,7 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
         phase = Phase.FIRST_SLAM;
         phaseTicks = 0;
         releaseRequested = false;
+        chainRequested = false;
         firstHitApplied = false;
         pillarsSpawned = false;
     }

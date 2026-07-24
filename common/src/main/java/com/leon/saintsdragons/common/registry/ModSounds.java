@@ -91,6 +91,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> ATROXIIA_SWIPE = registerSound("atroxiia_swipe");
     public static final Supplier<SoundEvent> ATROXIIA_PRECISE_STRIKE = registerSound("atroxiia_precise_strike");
     public static final Supplier<SoundEvent> ATROXIIA_DEVASTATING_SWEEP = registerSound("atroxiia_devastating_sweep");
+    public static final Supplier<SoundEvent> ATROXIIA_HELHEIM_QUAKE_1 = registerSound("atroxiia_helheim_quake1");
+    public static final Supplier<SoundEvent> ATROXIIA_HELHEIM_QUAKE_2 = registerSound("atroxiia_helheim_quake2");
 
     // Stegonaut
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");

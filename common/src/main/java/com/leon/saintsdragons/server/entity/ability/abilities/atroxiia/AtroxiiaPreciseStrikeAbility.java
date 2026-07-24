@@ -9,8 +9,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -40,8 +38,7 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
     private static final double PULL_STRENGTH = 0.75D;
     private static final double DAMAGE_KNOCKBACK = 0.75D;
     private static final double DAMAGE_KNOCKBACK_Y = 0.16D;
-    private static final int STUN_SLOWNESS_AMPLIFIER = 6;
-    private static final int STUN_WEAKNESS_AMPLIFIER = 1;
+    private static final int POST_COMBO_STUN_TICKS = 40;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -117,9 +114,8 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
     }
 
     private void applyComboStun(LivingEntity target) {
-        int stunTicks = Math.max(1, ANIMATION_TICKS + RECOVERY_TICKS - getTicksInUse());
-        target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, stunTicks, STUN_SLOWNESS_AMPLIFIER, false, true));
-        target.addEffect(new MobEffectInstance(MobEffects.WEAKNESS, stunTicks, STUN_WEAKNESS_AMPLIFIER, false, true));
+        int stunTicks = Math.max(1, ANIMATION_TICKS + RECOVERY_TICKS - getTicksInUse() + POST_COMBO_STUN_TICKS);
+        AtroxiiaFrostImpact.apply(getUser(), target, stunTicks);
     }
 
     private void knockTargetBack(LivingEntity target) {

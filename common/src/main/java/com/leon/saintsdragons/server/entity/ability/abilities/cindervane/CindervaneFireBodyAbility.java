@@ -59,6 +59,11 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     }
 
     @Override
+    public boolean tryAbility() {
+        return !getUser().isFireBodySuppressed();
+    }
+
+    @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) {
             return;
@@ -89,7 +94,7 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     @Override
     protected boolean canContinueUsing() {
         Cindervane dragon = getUser();
-        if (!dragon.isAlive() || dragon.isRemoved()) {
+        if (!dragon.isAlive() || dragon.isRemoved() || dragon.isFireBodySuppressed()) {
             return false;
         }
         if (dragon.isInWaterOrBubble()) {

@@ -1,4 +1,13 @@
 {
   "max_health": 200.0,
-  "armor": 10
+  "armor": 10,
+  "abilities": {
+    "helheim_quake": {
+      "damage": 25.0
+    }
+  },
+  "extra": {
+    "helheim_quake1_knockback": 0.75,
+    "helheim_quake2_knockback": 1.8
+  }
 }

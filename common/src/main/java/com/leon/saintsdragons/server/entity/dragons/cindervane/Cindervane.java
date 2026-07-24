@@ -201,6 +201,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private int airTicks;
     public int groundTicks;
     public int timeFlying = 0;
+    private int fireBodySuppressionTicks;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
     private boolean autoGrabPassengerMountAllowed;
@@ -459,6 +460,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         tickFlightLifecycle();
         if (level().isClientSide) {
             return;
+        }
+        if (fireBodySuppressionTicks > 0) {
+            fireBodySuppressionTicks--;
         }
         tickStandardTakeoffAndGroundedAerialRecovery();
         tickSittingState();
@@ -1289,6 +1293,22 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public void setBreathingFire(boolean breathing) {
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
+    }
+
+    public boolean isFireBodySuppressed() {
+        return fireBodySuppressionTicks > 0;
+    }
+
+    public void suppressFireBody(int durationTicks) {
+        if (level().isClientSide || durationTicks <= 0) {
+            return;
+        }
+
+        fireBodySuppressionTicks = Math.max(fireBodySuppressionTicks, durationTicks);
+        combatManager.forceEndAbility(ModAbilities.CINDERVANE_FIRE_BODY);
+        fireBodyCrashArmed = false;
+        fireBodyCrashMaxHeight = 0.0D;
+        setBreathingFire(false);
     }
 
     @Override

@@ -856,7 +856,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_summon_storm",
-        "volume": 2.0,
+        "volume": 4.0,
         "pitch": 1.0,
         "attenuation_distance": 64
       }
@@ -1713,9 +1713,9 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/raevyx/raevyx_landed",
-        "volume": 2.0,
+        "volume": 3.0,
         "pitch": 1.0,
-        "attenuation_distance": 16
+        "attenuation_distance": 32
       }
     ]
   },
@@ -2109,6 +2109,28 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/atroxiia/atroxiia_devastating_sweep",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_helheim_quake1": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_helheim_quake1",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_helheim_quake1",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_helheim_quake2": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_helheim_quake2",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_helheim_quake2",
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 32
