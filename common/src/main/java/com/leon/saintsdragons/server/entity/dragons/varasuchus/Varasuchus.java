@@ -745,6 +745,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public void travel(@NotNull Vec3 motion) {
         if (isGroundDashing()) {
             super.travel(Vec3.ZERO);
+            if (getControllingPassenger() instanceof Player) {
+                groundDash.steerHorizontal(DragonMotionMath.horizontalForward(this.getYRot()));
+            }
             groundDash.applyTravelMotion();
             return;
         }

@@ -94,7 +94,6 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             }
             getUser().setAccelerating(false);
             getUser().setGroundRending(true);
-            getUser().setGroundRendTravelSpeed(0.0F);
             aiGroundRendDir = getForwardDir(getUser());
             spawnedStartDust = true;
             spawnedStartBlocks = false;
@@ -146,14 +145,12 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
             Vec3 current = wyvern.getDeltaMovement();
             wyvern.setDeltaMovement(0.0D, current.y, 0.0D);
             wyvern.setGroundRendVelocity(Vec3.ZERO);
-            wyvern.setGroundRendTravelSpeed(0.0F);
             return;
         }
 
         if (section.sectionType == AbilitySectionType.RECOVERY) {
             if (wyvern.isVehicle()) {
                 float speed = getRiddenTravelSpeed();
-                wyvern.setGroundRendTravelSpeed(speed);
                 Vec3 current = wyvern.getDeltaMovement();
                 if (speed <= 0.0F) {
                     wyvern.setGroundRendVelocity(Vec3.ZERO);
@@ -189,7 +186,6 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (wyvern.isVehicle()) {
                 float speed = getRiddenTravelSpeed();
-                wyvern.setGroundRendTravelSpeed(speed);
                 Vec3 current = wyvern.getDeltaMovement();
                 if (speed <= 0.0F) {
                     wyvern.setGroundRendVelocity(Vec3.ZERO);
@@ -232,7 +228,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
                 return;
             }
 
-            // Set velocity - entity will apply it in handleGroundRendMovement().
+            // The forward movement component consumes this velocity during travel.
             Vec3 targetVelocity = horizontal.normalize().scale(speed);
             Vec3 current = wyvern.getDeltaMovement();
             wyvern.setGroundRendVelocity(new Vec3(targetVelocity.x, current.y, targetVelocity.z));
@@ -247,7 +243,6 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     @Override
     public void end() {
         getUser().setGroundRending(false);
-        getUser().setGroundRendTravelSpeed(0.0F);
         aiGroundRendDir = Vec3.ZERO;
         spawnedStartDust = false;
         spawnedStartBlocks = false;
@@ -260,7 +255,6 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     @Override
     public void interrupt() {
         getUser().setGroundRending(false);
-        getUser().setGroundRendTravelSpeed(0.0F);
         aiGroundRendDir = Vec3.ZERO;
         spawnedStartDust = false;
         spawnedStartBlocks = false;

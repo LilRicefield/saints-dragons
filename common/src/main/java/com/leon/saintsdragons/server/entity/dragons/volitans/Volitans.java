@@ -1139,11 +1139,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
         if (isRiderForwardDashing()) {
             super.travel(Vec3.ZERO);
+            riderGroundNudge.steerHorizontal(DragonMotionMath.horizontalForward(this.getYRot()));
             riderGroundNudge.applyTravelMotion();
             return;
         }
         if (isRiderBackDashing()) {
             super.travel(Vec3.ZERO);
+            riderGroundNudge.steerHorizontal(DragonMotionMath.horizontalForward(this.getYRot()).scale(-1.0D));
             riderGroundNudge.applyTravelMotion();
             return;
         }

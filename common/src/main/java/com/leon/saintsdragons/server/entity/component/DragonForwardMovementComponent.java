@@ -35,6 +35,28 @@ public final class DragonForwardMovementComponent {
         state.setTicks(Math.max(state.ticks(), Math.max(1, durationTicks)));
     }
 
+    public void steerHorizontal(Vec3 direction) {
+        if (!isActive()) {
+            return;
+        }
+
+        Vec3 horizontalDirection = new Vec3(direction.x, 0.0D, direction.z);
+        if (horizontalDirection.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+
+        Vec3 velocity = state.velocity();
+        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        if (horizontalSpeed < 1.0E-6D) {
+            return;
+        }
+
+        Vec3 steered = horizontalDirection.normalize().scale(horizontalSpeed);
+        Vec3 updatedVelocity = new Vec3(steered.x, velocity.y, steered.z);
+        this.lastVelocity = updatedVelocity;
+        state.setVelocity(updatedVelocity);
+    }
+
     public boolean startDash(Vec3 velocity, int durationTicks, int cooldownTicks) {
         return startDash(velocity, durationTicks, cooldownTicks, 1.0D);
     }
