@@ -31,14 +31,16 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
     private static final int THIRD_DAMAGE_TICK = 64;
     private static final int NUDGE_TICKS = 5;
     private static final double NUDGE_DISTANCE = 4.0D;
-    private static final double RANGE = 6.5D;
-    private static final double SWEEP_HORIZONTAL = 6.5D;
-    private static final double SWEEP_VERTICAL = 6.5D;
-    private static final double ANGLE_DEG = 130.0D;
-    private static final double PULL_STRENGTH = 0.75D;
+    private static final double RANGE = 7.5D;
+    private static final double SWEEP_HORIZONTAL = 7.5D;
+    private static final double SWEEP_VERTICAL = 7.5D;
+    private static final double ANGLE_DEG = 180.0D;
+    private static final double PULL_STRENGTH = 1.0D;
     private static final double DAMAGE_KNOCKBACK = 0.75D;
     private static final double DAMAGE_KNOCKBACK_Y = 0.16D;
     private static final int POST_COMBO_STUN_TICKS = 40;
+    private static final float THIRD_STRIKE_SCREEN_SHAKE = 0.75F;
+    private static final int THIRD_STRIKE_SCREEN_SHAKE_TICKS = 8;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -85,6 +87,7 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
         } else if (tick == THIRD_NUDGE_TICK) {
             nudgeForward();
         } else if (tick == THIRD_DAMAGE_TICK) {
+            getUser().triggerScreenShake(THIRD_STRIKE_SCREEN_SHAKE, THIRD_STRIKE_SCREEN_SHAKE_TICKS);
             damageTargets();
         }
     }

@@ -161,6 +161,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_RIDER_NUDGE_MODE =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_STEER_OFFSET =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
 
     private static final double RIDER_WALK_SPEED = 0.24D;
     private static final double RIDER_RUN_SPEED = 0.34D;
@@ -524,6 +526,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.entityData.define(DATA_RIDER_NUDGE_Z, 0.0F);
         this.entityData.define(DATA_RIDER_NUDGE_DRAG, 1.0F);
         this.entityData.define(DATA_RIDER_NUDGE_MODE, RIDER_NUDGE_NONE);
+        this.entityData.define(DATA_RIDER_NUDGE_STEER_OFFSET, 0.0F);
     }
 
     @Override
@@ -898,6 +901,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         Vec3 dodgeVector = new Vec3(dodgeDirX * perTickSpeed, 0.0D, dodgeDirZ * perTickSpeed);
 
         beginRiderSideDodge(dodgeVector);
+        setRiderNudgeSteerOffset(isLeft ? -90.0F : 90.0F);
         riderBackDashCooldownTicks = RIDER_BACK_DASH_COOLDOWN_TICKS;
         triggerAnim(VolitansAnimationHandler.MOVEMENT_CONTROLLER, isLeft ? "dodge_left" : "dodge_right");
         playDodgeSound();
@@ -1145,7 +1149,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
         if (isRiderBackDashing()) {
             super.travel(Vec3.ZERO);
-            riderGroundNudge.steerHorizontal(DragonMotionMath.horizontalForward(this.getYRot()).scale(-1.0D));
+            riderGroundNudge.steerHorizontal(riderGroundBurstSteeringDirection());
             riderGroundNudge.applyTravelMotion();
             return;
         }
@@ -1155,6 +1159,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         }
         if (isRiderSideDodging()) {
             super.travel(Vec3.ZERO);
+            if (getControllingPassenger() instanceof Player) {
+                riderGroundNudge.steerHorizontal(riderGroundBurstSteeringDirection());
+            }
             riderGroundNudge.applyTravelMotion();
             return;
         }
@@ -2173,6 +2180,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.riderSideDodgeVec = Vec3.ZERO;
         this.riderSideDodgeRecoveryTicks = 0;
         this.riderBackDashSpikeDelayTicks = RIDER_BACK_DASH_SPIKE_DELAY_TICKS;
+        setRiderNudgeSteerOffset(180.0F);
         if (this.riderGroundNudge.startDash(
                 vec,
                 RIDER_BACK_DASH_DURATION_TICKS,
@@ -2193,6 +2201,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void handleRiderBackDashRecoveryMovement() {
+        riderBackDashVec = steerRiderGroundBurstVector(riderBackDashVec);
         double yVel = getGroundBurstVerticalVelocity();
         double horizontalX = riderBackDashVec.x;
         double horizontalZ = riderBackDashVec.z;
@@ -2209,6 +2218,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         );
         if (--riderBackDashRecoveryTicks <= 0) {
             riderBackDashVec = Vec3.ZERO;
+            setRiderNudgeSteerOffset(0.0F);
         }
     }
 
@@ -2224,6 +2234,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void handleRiderSideDodgeRecoveryMovement() {
+        riderSideDodgeVec = steerRiderGroundBurstVector(riderSideDodgeVec);
         double yVel = getGroundBurstVerticalVelocity();
         double horizontalX = riderSideDodgeVec.x;
         double horizontalZ = riderSideDodgeVec.z;
@@ -2240,6 +2251,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         );
         if (--riderSideDodgeRecoveryTicks <= 0) {
             riderSideDodgeVec = Vec3.ZERO;
+            setRiderNudgeSteerOffset(0.0F);
         }
     }
 
@@ -2251,6 +2263,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
                 0,
                 RIDER_FORWARD_DASH_HORIZONTAL_DRAG
         );
+        setRiderNudgeSteerOffset(0.0F);
         this.riderForwardDashDamageApplied = false;
 
         this.riderBackDashRecoveryTicks = 0;
@@ -2260,8 +2273,35 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.riderSideDodgeVec = Vec3.ZERO;
     }
 
+    private void setRiderNudgeSteerOffset(float offsetDegrees) {
+        this.entityData.set(DATA_RIDER_NUDGE_STEER_OFFSET, offsetDegrees);
+    }
+
+    private Vec3 riderGroundBurstSteeringDirection() {
+        if (getControllingPassenger() instanceof Player) {
+            return DragonMotionMath.horizontalRelative(
+                    this.getYRot(),
+                    this.entityData.get(DATA_RIDER_NUDGE_STEER_OFFSET)
+            );
+        }
+        return DragonMotionMath.horizontalForward(this.getYRot()).scale(-1.0D);
+    }
+
+    private Vec3 steerRiderGroundBurstVector(Vec3 velocity) {
+        if (!(getControllingPassenger() instanceof Player)) {
+            return velocity;
+        }
+        double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        if (horizontalSpeed < 1.0E-6D) {
+            return velocity;
+        }
+        Vec3 direction = riderGroundBurstSteeringDirection();
+        return new Vec3(direction.x * horizontalSpeed, velocity.y, direction.z * horizontalSpeed);
+    }
+
     private void clearGroundMobilityState() {
         this.riderGroundNudge.cancelActive();
+        setRiderNudgeSteerOffset(0.0F);
         this.riderForwardDashDamageApplied = false;
 
         this.riderBackDashRecoveryTicks = 0;

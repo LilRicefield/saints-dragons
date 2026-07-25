@@ -161,6 +161,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_X = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_Z = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_DRAG = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
+    public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_STEER_OFFSET = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_GROUND_RENDING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.INT);
@@ -554,6 +555,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         this.entityData.define(DATA_RIDER_NUDGE_X, 0.0F);
         this.entityData.define(DATA_RIDER_NUDGE_Z, 0.0F);
         this.entityData.define(DATA_RIDER_NUDGE_DRAG, 1.0F);
+        this.entityData.define(DATA_RIDER_NUDGE_STEER_OFFSET, 0.0F);
         this.entityData.define(DATA_LAST_DASH_RIGHT, false);
         this.entityData.define(DATA_GROUND_RENDING, false);
     }
@@ -1074,11 +1076,20 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return this.entityData.get(DATA_RIDER_NUDGE_DRAG);
     }
 
+    float getRaevyxNudgeSteerOffset() {
+        return this.entityData.get(DATA_RIDER_NUDGE_STEER_OFFSET);
+    }
+
+    void setRaevyxNudgeSteerOffset(float offsetDegrees) {
+        this.entityData.set(DATA_RIDER_NUDGE_STEER_OFFSET, offsetDegrees);
+    }
+
     void clearRaevyxNudgeState() {
         this.entityData.set(DATA_RIDER_NUDGE_TICKS, 0);
         this.entityData.set(DATA_RIDER_NUDGE_X, 0.0F);
         this.entityData.set(DATA_RIDER_NUDGE_Z, 0.0F);
         this.entityData.set(DATA_RIDER_NUDGE_DRAG, 1.0F);
+        this.entityData.set(DATA_RIDER_NUDGE_STEER_OFFSET, 0.0F);
         this.entityData.set(DATA_DASHING, false);
         this.entityData.set(DATA_DODGING, false);
         dashHitCooldowns.clear();
@@ -1147,6 +1158,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
         Vec3 dodgeVector = DragonMotionMath.horizontalRight(this.getYRot()).scale(isLeft ? perTickSpeed : -perTickSpeed);
         beginDodge(dodgeVector, DODGE_DURATION_TICKS);
+        setRaevyxNudgeSteerOffset(isLeft ? -90.0F : 90.0F);
         dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
         dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
@@ -1186,6 +1198,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
         Vec3 dodgeVector = DragonMotionMath.horizontalForward(this.getYRot()).scale(-perTickSpeed);
         beginDodge(dodgeVector, DODGE_DURATION_TICKS);
+        setRaevyxNudgeSteerOffset(180.0F);
         dodgeCooldownTicks = RIDER_DODGE_COOLDOWN_TICKS;
         dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
 
@@ -1988,6 +2001,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             } else {
                 if (isDashing() && getControllingPassenger() instanceof Player) {
                     dashDodgeNudge.steerHorizontal(DragonMotionMath.horizontalForward(this.getYRot()));
+                } else if (isDodging() && getControllingPassenger() instanceof Player) {
+                    dashDodgeNudge.steerHorizontal(DragonMotionMath.horizontalRelative(
+                            this.getYRot(),
+                            getRaevyxNudgeSteerOffset()
+                    ));
                 }
                 dashDodgeNudge.applyTravelMotion();
             }
