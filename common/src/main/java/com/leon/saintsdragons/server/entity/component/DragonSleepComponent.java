@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.component;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
@@ -442,7 +443,7 @@ public final class DragonSleepComponent {
 
     private float disturbanceFor(DragonSensoryObservation sound) {
         float confidence = sound.confidence();
-        return switch (sound.kind()) {
+        float amount = switch (sound.kind()) {
             case IMPACT -> 7.0F + confidence * 18.0F;
             case STEP -> confidence >= 0.18F ? 0.75F + confidence * 2.5F : 0.0F;
             case SPLASH -> (dragon.isInWaterOrBubble() ? 4.0F : 2.0F)
@@ -452,6 +453,8 @@ public final class DragonSleepComponent {
             case EXPLOSION, COMBAT, PROJECTILE, ROAR -> 4.0F + confidence * 10.0F;
             case SIGHT, OTHER -> 0.0F;
         };
+        return amount * DragonAwarenessMemory.get(dragon)
+                .passiveDisturbanceMultiplier(sound, dragon.level().getGameTime());
     }
 
     private void updateSleepDisturbance() {

@@ -1141,6 +1141,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return null;
     }
 
+    public int getHurtAnimationDurationTicks() {
+        return 11;
+    }
+
     protected DragonAbilityType<?, ?> getDeathAbilityType() {
         return null;
     }

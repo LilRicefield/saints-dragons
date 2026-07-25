@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.common.registry.ModMemoryTypes;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import net.minecraft.core.GlobalPos;
@@ -42,6 +43,7 @@ public final class DragonMemories {
             ModMemoryTypes.HEARD_STIMULUS.get();
     public static final MemoryModuleType<DragonSensoryObservation> HEARD_TARGET =
             ModMemoryTypes.HEARD_TARGET.get();
+    public static final MemoryModuleType<DragonAwarenessMemory> AWARENESS = ModMemoryTypes.AWARENESS.get();
     public static final MemoryModuleType<LivingEntity> WAKE_TARGET = ModMemoryTypes.WAKE_TARGET.get();
     public static final MemoryModuleType<Float> SLEEP_PRESSURE = ModMemoryTypes.SLEEP_PRESSURE.get();
     public static final MemoryModuleType<Boolean> SLEEP_INTENT = ModMemoryTypes.SLEEP_INTENT.get();
@@ -77,6 +79,7 @@ public final class DragonMemories {
                 INVESTIGATION_TARGET,
                 HEARD_STIMULUS,
                 HEARD_TARGET,
+                AWARENESS,
                 WAKE_TARGET,
                 SLEEP_PRESSURE,
                 SLEEP_INTENT,

@@ -101,6 +101,11 @@ public final class DragonHearingListener implements GameEventListener {
         int ttl = Math.max(20, Math.round(profile.soundMemoryTicks() * stimulus.memoryMultiplier()));
         boolean storedAmbient = storeObservation(DragonMemories.HEARD_STIMULUS, observation, ttl, level.getGameTime());
         LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
+        boolean threatening = source instanceof LivingEntity living
+                && (living == target || living == dragon.getLastHurtByMob());
+        if (storedAmbient) {
+            DragonAwarenessMemory.get(dragon).rememberSound(observation, threatening, level.getGameTime());
+        }
         boolean storedTarget = target != null
                 && sourceUuid != null
                 && sourceUuid.equals(target.getUUID())

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -14,11 +15,6 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 
 public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
-    private static final int DURATION_TICKS = 11;
-    private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
-            new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, DURATION_TICKS)
-    };
-
     private static final String DEFAULT_CONTROLLER = AnimationHelper.INTERACTION_CONTROLLER;
 
     private final String controllerId;
@@ -26,11 +22,18 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     public HurtAbility(DragonAbilityType<T, ? extends DragonAbility<T>> type,
                        T user) {
-        super(type, user, TRACK, 10);
+        super(type, user, buildTrack(user), 10);
 
         String abilityId = type.getName();
         this.controllerId = resolveControllerId(abilityId);
         this.animationTrigger = resolveAnimationTrigger(abilityId);
+    }
+
+    private static <E extends DragonEntity> DragonAbilitySection[] buildTrack(E dragon) {
+        int duration = Math.max(1, dragon.getHurtAnimationDurationTicks());
+        return new DragonAbilitySection[] {
+                new DragonAbilitySection.AbilitySectionDuration(DragonAbilitySection.AbilitySectionType.ACTIVE, duration)
+        };
     }
 
     private static String resolveAnimationTrigger(String abilityId) {
@@ -42,13 +45,14 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
             case "stegonaut_hurt" -> "stegonaut_hurt";
             case "volitans_hurt" -> "volitans_hurt";
             case "nulljaw_hurt" -> "nulljaw_hurt";
+            case "atroxiia_hurt" -> "atroxiia_hurt";
             default -> "hurt";
         };
     }
 
     private static String resolveControllerId(String abilityId) {
         return switch (abilityId) {
-            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt", "nulljaw_hurt" -> AnimationHelper.INTERACTION_CONTROLLER;
+            case "raevyx_hurt", "ignivorus_hurt", "cindervane_hurt", "varasuchus_hurt", "stegonaut_hurt", "volitans_hurt", "nulljaw_hurt", "atroxiia_hurt" -> AnimationHelper.INTERACTION_CONTROLLER;
             default -> DEFAULT_CONTROLLER;
         };
     }
@@ -97,6 +101,13 @@ public class HurtAbility<T extends DragonEntity> extends DragonAbility<T> {
                 && getUser() instanceof Nulljaw nulljaw) {
             float pitch = 0.95f + nulljaw.getRandom().nextFloat() * 0.1f;
             nulljaw.getSoundHandler().playMovingEntitySound(ModSounds.NULLJAW_HURT.get(), 1.2f, pitch, 44);
+        }
+        if ("atroxiia_hurt".equals(animationTrigger) && !getUser().level().isClientSide
+                && getUser() instanceof Atroxiia atroxiia) {
+            float pitch = 0.95f + atroxiia.getRandom().nextFloat() * 0.1f;
+            atroxiia.getSoundHandler().playMovingEntitySound(
+                    ModSounds.ATROXIIA_HURT.get(), 1.2f, pitch, Atroxiia.HURT_SOUND_TICKS
+            );
         }
     }
 

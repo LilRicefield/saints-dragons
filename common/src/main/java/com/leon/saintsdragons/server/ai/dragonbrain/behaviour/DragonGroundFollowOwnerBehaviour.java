@@ -69,8 +69,8 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         boolean idle = dragon.getAIMovement().hasArrived() || !dragon.getAIMovement().isPathing();
         if (idle || ownerMoved(owner) || repathCooldown <= 0) {
             double speed = fast ? config.fastSpeed : config.speed;
-            if (!dragon.getAIMovement().moveToGroundTarget(owner, speed, false)) {
-                dragon.getAIMovement().moveToGroundPosition(owner.position(), speed, false);
+            if (!dragon.getAIMovement().moveToGroundTarget(owner, speed, fast)) {
+                dragon.getAIMovement().moveToGroundPosition(owner.position(), speed, fast);
             }
             remember(owner);
             repathCooldown = Mth.clamp((int)Math.ceil(distance * 0.45D), 6, 24);
@@ -133,6 +133,11 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         public static Config stegonaut() {
             return new Config(12.0D, 8.0D, 32.0D, 0.8D, 1.0D,
                     Double.POSITIVE_INFINITY, 0.8D);
+        }
+
+        public static Config atroxiia() {
+            return new Config(12.0D, 8.0D, 32.0D, 0.95D, 1.0D,
+                    16.0D, 1.25D);
         }
 
         public static Config varasuchus() {

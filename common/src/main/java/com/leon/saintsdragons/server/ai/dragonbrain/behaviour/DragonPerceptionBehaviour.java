@@ -4,11 +4,13 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashMap;
@@ -17,6 +19,7 @@ import java.util.Map;
 public final class DragonPerceptionBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
     private boolean targetVisible;
     private String lastObservation = "none";
+    private int familiarSources;
 
     public DragonPerceptionBehaviour() {
         super(false);
@@ -36,15 +39,19 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
     protected void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         @SuppressWarnings("unchecked")
-        net.minecraft.world.entity.ai.Brain<T> brain =
-                (net.minecraft.world.entity.ai.Brain<T>)(net.minecraft.world.entity.ai.Brain<?>)dragon.getBrain();
+        Brain<T> brain =
+                (Brain<T>)(Brain<?>)dragon.getBrain();
         LivingEntity target = DragonPerception.refreshTargetVisibility(brain, dragon, context.gameTime());
+        DragonAwarenessMemory awareness = DragonAwarenessMemory.get(dragon);
+        familiarSources = awareness.familiarSourceCount();
         if (target == null) {
             targetVisible = false;
             lastObservation = "none";
-            lookTowardPassiveSound(context);
+            lookTowardAttention(context);
             return;
         }
+
+        awareness.rememberThreat(target.getUUID(), context.gameTime());
 
         targetVisible = context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
 
@@ -112,15 +119,14 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
         );
     }
 
-    private void lookTowardPassiveSound(DragonBrainContext<T> context) {
+    private void lookTowardAttention(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         if (dragon.isVehicle() || dragon.isOrderedToSit() || dragon.isSleepLocked()) {
             return;
         }
-        DragonSensoryObservation heard = context.memories()
-                .get(DragonMemories.HEARD_STIMULUS)
-                .orElse(null);
-        if (heard == null || heard.confidence() < 0.15F) {
+        DragonSensoryObservation heard = DragonAwarenessMemory.get(dragon)
+                .attention(context.gameTime());
+        if (heard == null) {
             return;
         }
         Vec3 position = heard.position();
@@ -139,6 +145,7 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
         Map<String, String> details = new LinkedHashMap<>();
         details.put("target_visible", Boolean.toString(targetVisible));
         details.put("observation", lastObservation);
+        details.put("familiar_sources", Integer.toString(familiarSources));
         return Map.copyOf(details);
     }
 }

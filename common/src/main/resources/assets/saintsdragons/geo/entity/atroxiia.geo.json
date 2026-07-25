@@ -212,8 +212,13 @@
 					]
 				},
 				{
-					"name": "lowerJawController",
+					"name": "lowerJaw",
 					"parent": "headController",
+					"pivot": [0, 54.25, -50.25]
+				},
+				{
+					"name": "lowerJawController",
+					"parent": "lowerJaw",
 					"pivot": [0, 54.25, -50.25],
 					"cubes": [
 						{"origin": [-7.625, 51.125, -67.5], "size": [15.25, 7.25, 17.5], "uv": [442, 427]},

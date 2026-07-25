@@ -357,6 +357,7 @@ public class CodexEcologyPanel {
 
     private TagKey<Item> getFavoriteFoods(String dragonType) {
         return switch (dragonType) {
+            case "atroxiia" -> ModTags.Items.ATROXIIA_FOODS;
             case "ignivorus" -> ModTags.Items.IGNIVORUS_FOODS;
             case "raevyx" -> ModTags.Items.RAEVYX_FOODS;
             case "varasuchus" -> ModTags.Items.VARASUCHUS_FOODS;

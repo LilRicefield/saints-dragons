@@ -1,10 +1,14 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia;
 
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModAbilities;
-import com.leon.saintsdragons.server.ai.goals.base.DragonGroundWanderGoal;
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.ModTags;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.AtroxiiaBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaHelheimQuakeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
@@ -20,6 +24,7 @@ import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -28,14 +33,14 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
-import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.MoverType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +50,10 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.Map;
+
 public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
+    private static final AtroxiiaBrain DRAGON_BRAIN = new AtroxiiaBrain();
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_PRECISE_STRIKE_NUDGE_TICKS =
@@ -54,16 +62,29 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_PRECISE_STRIKE_NUDGE_Z =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.INT);
     private static final int MOVEMENT_TRANSITION_TICKS = 4;
     private static final int SIT_DOWN_TICKS = 48;
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
     private static final int WAKE_UP_TICKS = 42;
+    public static final int HURT_ANIMATION_TICKS = 15;
+    public static final int DEATH_ANIMATION_TICKS = 40;
+    public static final int EAT_ANIMATION_TICKS = 40;
+    public static final int HURT_SOUND_TICKS = 20;
+    public static final int EAT_SOUND_TICKS = 60;
     private static final double RIDER_JUMP_STRENGTH = 0.75D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
     public static final double RIDER_WALK_SPEED = 0.12D;
     public static final double RIDER_RUN_SPEED = 0.28D;
     private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
+    private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
+            .add("atroxiia_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.atroxiia.hurt",
+                    ModSounds.ATROXIIA_HURT, 1.2F, 0.95F, 0.1F, false, true, true)
+            .add("atroxiia_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.atroxiia.die",
+                    ModSounds.ATROXIIA_DIE, 1.5F, 1.0F, 0.0F, false, true, true)
+            .build();
 
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
     private final AtroxiiaRiderController riderController = new AtroxiiaRiderController(this);
@@ -84,15 +105,25 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_TICKS, 0);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_X, 0.0F);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_Z, 0.0F);
+        this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         var movementController = new AnimationController<>(this, AnimationHelper.MOVEMENT_CONTROLLER, MOVEMENT_TRANSITION_TICKS,
                 animationHandler::movementPredicate);
+        var interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1,
+                AnimationHelper::interactionIdle);
         AnimationHelper.registerStepKeyframes(this, movementController);
+        AnimationHelper.registerSoundKeyframes(this, movementController, interactionController);
         animationHandler.setupMovementController(movementController);
-        controllers.add(movementController);
+        animationHandler.setupInteractionController(interactionController);
+        controllers.add(movementController, interactionController);
+    }
+
+    @Override
+    public Map<String, VocalEntry> getVocalEntries() {
+        return VOCAL_ENTRIES;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -114,11 +145,24 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
         };
     }
 
-    public void registerGoals() {
-        super.registerGoals();
-        this.goalSelector.addGoal(11, new DragonGroundWanderGoal<>(this, 1.0, 100));
-        this.goalSelector.addGoal(11, new RandomLookAroundGoal(this));
-        this.goalSelector.addGoal(11, new LookAtPlayerGoal(this, Player.class, 8.0F));
+    @Override
+    protected final void registerGoals() {
+    }
+
+    @Override
+    protected Brain.Provider<Atroxiia> brainProvider() {
+        return DRAGON_BRAIN.brainProvider();
+    }
+
+    @Override
+    protected Brain<?> makeBrain(Dynamic<?> dynamic) {
+        return DragonBrain.makeBrain(DRAGON_BRAIN, dynamic);
+    }
+
+    @Override
+    protected void customServerAiStep() {
+        DragonBrain.tick(DRAGON_BRAIN, this);
+        super.customServerAiStep();
     }
 
     @Override
@@ -269,6 +313,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
         tickRiderControlLock();
         tickPreciseStrikeNudge();
         if (!level().isClientSide) {
+            tickFeedingCooldown();
             tickAtroxiiaAnimationStates();
         }
     }
@@ -497,6 +542,67 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen {
     @Override
     protected ScreenShakeComponent getScreenShakeComponent() {
         return screenShakeComponent;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getHurtAbilityType() {
+        return ModAbilities.ATROXIIA_HURT;
+    }
+
+    @Override
+    public int getHurtAnimationDurationTicks() {
+        return HURT_ANIMATION_TICKS;
+    }
+
+    @Override
+    protected DragonAbilityType<?, ?> getDeathAbilityType() {
+        return ModAbilities.ATROXIIA_DIE;
+    }
+
+    @Override
+    public int getDeathAnimationDurationTicks() {
+        return DEATH_ANIMATION_TICKS;
+    }
+
+    public void playEatMovingSound() {
+        if (level().isClientSide) {
+            return;
+        }
+        getSoundHandler().playMovingEntitySound(ModSounds.ATROXIIA_EAT.get(), 1.0F, 1.0F, EAT_SOUND_TICKS);
+    }
+
+    @Override
+    public boolean isFood(@NotNull ItemStack stack) {
+        return stack.is(ModTags.Items.ATROXIIA_FOODS);
+    }
+
+    public boolean canFeed() {
+        return this.entityData.get(DATA_FEEDING_COOLDOWN) <= 0;
+    }
+
+    public void setFeedingCooldown(int ticks) {
+        this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, ticks));
+    }
+
+    private void tickFeedingCooldown() {
+        int cooldown = this.entityData.get(DATA_FEEDING_COOLDOWN);
+        if (cooldown > 0) {
+            this.entityData.set(DATA_FEEDING_COOLDOWN, cooldown - 1);
+        }
+    }
+
+    @Override
+    public void addAdditionalSaveData(@NotNull CompoundTag tag) {
+        super.addAdditionalSaveData(tag);
+        tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
+    }
+
+    @Override
+    public void readAdditionalSaveData(@NotNull CompoundTag tag) {
+        super.readAdditionalSaveData(tag);
+        if (tag.contains("FeedingCooldownTicks")) {
+            setFeedingCooldown(tag.getInt("FeedingCooldownTicks"));
+        }
     }
 
     @Override

@@ -2137,6 +2137,39 @@
       }
     ]
   },
+  "atroxiia_hurt": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_hurt",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_hurt",
+        "volume": 1.2,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_die": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_die",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_die",
+        "volume": 1.5,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
+  "atroxiia_eat": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_eat",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_eat",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 24
+      }
+    ]
+  },
   "nulljaw_grumble1": {
     "subtitle": "subtitles.saintsdragons.nulljaw_grumble1",
     "sounds": [

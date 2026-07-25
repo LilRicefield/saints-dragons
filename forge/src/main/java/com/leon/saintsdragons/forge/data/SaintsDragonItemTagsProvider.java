@@ -96,6 +96,15 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.MOSSBACK_SPAWN_EGG.get())
                 .add(ModItems.ATROXIIA_SPAWN_EGG.get());
 
+        tag(ModTags.Items.ATROXIIA_FOODS)
+                .add(Items.BEEF)
+                .add(Items.CHICKEN)
+                .add(Items.COD)
+                .add(Items.MUTTON)
+                .add(Items.PORKCHOP)
+                .add(Items.SALMON)
+                .add(ModItems.HEARTY_DRAGON_MEAL.get());
+
         tag(ModTags.Items.CINDERVANE_FOODS)
                 .add(Items.CHICKEN)
                 .add(Items.COD)
@@ -144,6 +153,7 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.HEARTY_DRAGON_MEAL.get());
 
         tag(ModTags.Items.DRAGON_FOODS)
+                .addTag(ModTags.Items.ATROXIIA_FOODS)
                 .addTag(ModTags.Items.CINDERVANE_FOODS)
                 .addTag(ModTags.Items.IGNIVORUS_FOODS)
                 .addTag(ModTags.Items.NULLJAW_FOODS)

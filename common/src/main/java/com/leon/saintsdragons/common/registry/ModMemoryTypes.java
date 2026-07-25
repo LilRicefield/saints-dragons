@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
@@ -46,6 +47,8 @@ public final class ModMemoryTypes {
             register("heard_stimulus");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> HEARD_TARGET =
             register("heard_target");
+    public static final Supplier<MemoryModuleType<DragonAwarenessMemory>> AWARENESS =
+            register("awareness");
     public static final Supplier<MemoryModuleType<LivingEntity>> WAKE_TARGET = register("wake_target");
     public static final Supplier<MemoryModuleType<Float>> SLEEP_PRESSURE = register("sleep_pressure");
     public static final Supplier<MemoryModuleType<Boolean>> SLEEP_INTENT = register("sleep_intent");

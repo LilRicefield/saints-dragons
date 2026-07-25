@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,10 @@ public final class DragonIdleLookBehaviour<T extends DragonEntity> extends Drago
     @Override
     protected void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
-        if (dragon.getTarget() != null || dragon.isVehicle() || dragon.isOrderedToSit()) {
+        if (dragon.getTarget() != null
+                || dragon.isVehicle()
+                || dragon.isOrderedToSit()
+                || DragonAwarenessMemory.get(dragon).hasAttention(context.gameTime())) {
             return;
         }
         if (lookTicks-- <= 0) {

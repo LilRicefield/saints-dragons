@@ -66,6 +66,8 @@ public final class ModAbilities {
     public static final DragonAbilityType<Atroxiia, AtroxiiaPreciseStrikeAbility> ATROXIIA_PRECISE_STRIKE = register("atroxiia_precise_strike", AtroxiiaPreciseStrikeAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaDevastatingSweepAbility> ATROXIIA_DEVASTATING_SWEEP = register("atroxiia_devastating_sweep", AtroxiiaDevastatingSweepAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaHelheimQuakeAbility> ATROXIIA_HELHEIM_QUAKE = register("atroxiia_helheim_quake", AtroxiiaHelheimQuakeAbility::new);
+    public static final DragonAbilityType<Atroxiia, HurtAbility<Atroxiia>> ATROXIIA_HURT = register("atroxiia_hurt", HurtAbility::new);
+    public static final DragonAbilityType<Atroxiia, DieAbility<Atroxiia>> ATROXIIA_DIE = register("atroxiia_die", DieAbility::new);
 
     public static final DragonAbilityType<Raevyx, RaevyxBiteAbility> RAEVYX_BITE = register("raevyx_bite", RaevyxBiteAbility::new);
     public static final DragonAbilityType<Raevyx, RaevyxHornGoreAbility> RAEVYX_HORN_GORE = register("raevyx_horn_gore", RaevyxHornGoreAbility::new);
