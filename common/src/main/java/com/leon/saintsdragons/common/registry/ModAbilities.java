@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaH
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSwipeAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaUnderwaterBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneFireBodyAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneRoarAbility;
@@ -66,6 +67,7 @@ public final class ModAbilities {
     public static final DragonAbilityType<Atroxiia, AtroxiiaPreciseStrikeAbility> ATROXIIA_PRECISE_STRIKE = register("atroxiia_precise_strike", AtroxiiaPreciseStrikeAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaDevastatingSweepAbility> ATROXIIA_DEVASTATING_SWEEP = register("atroxiia_devastating_sweep", AtroxiiaDevastatingSweepAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaHelheimQuakeAbility> ATROXIIA_HELHEIM_QUAKE = register("atroxiia_helheim_quake", AtroxiiaHelheimQuakeAbility::new);
+    public static final DragonAbilityType<Atroxiia, AtroxiiaUnderwaterBiteAbility> ATROXIIA_UNDERWATER_BITE = register("atroxiia_underwater_bite", AtroxiiaUnderwaterBiteAbility::new);
     public static final DragonAbilityType<Atroxiia, HurtAbility<Atroxiia>> ATROXIIA_HURT = register("atroxiia_hurt", HurtAbility::new);
     public static final DragonAbilityType<Atroxiia, DieAbility<Atroxiia>> ATROXIIA_DIE = register("atroxiia_die", DieAbility::new);
 

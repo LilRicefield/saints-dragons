@@ -8,6 +8,10 @@
   },
   "extra": {
     "helheim_quake1_knockback": 0.75,
-    "helheim_quake2_knockback": 1.8
+    "helheim_quake2_knockback": 1.8,
+    "taming_chance_base": 20.0,
+    "taming_chance_hearty": 33.3333,
+    "taming_stun_health": 60.0,
+    "legacy_taming": false
   }
 }

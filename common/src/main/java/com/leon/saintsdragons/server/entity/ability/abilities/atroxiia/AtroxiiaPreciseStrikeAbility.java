@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonMeleeGeometry;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import net.minecraft.util.Mth;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -20,7 +21,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
-    private static final float BASE_DAMAGE = 9.0F;
+    private static final float BASE_DAMAGE = 10.0F;
     private static final int ANIMATION_TICKS = 100;
     private static final int RECOVERY_TICKS = 8;
     private static final int FIRST_NUDGE_AND_DAMAGE_TICK = 11;
@@ -35,12 +36,13 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
     private static final double SWEEP_HORIZONTAL = 7.5D;
     private static final double SWEEP_VERTICAL = 7.5D;
     private static final double ANGLE_DEG = 180.0D;
-    private static final double PULL_STRENGTH = 1.0D;
+    private static final double PULL_STRENGTH = 2.0D;
     private static final double DAMAGE_KNOCKBACK = 0.75D;
     private static final double DAMAGE_KNOCKBACK_Y = 0.16D;
     private static final int POST_COMBO_STUN_TICKS = 40;
     private static final float THIRD_STRIKE_SCREEN_SHAKE = 0.75F;
     private static final int THIRD_STRIKE_SCREEN_SHAKE_TICKS = 8;
+    private static final float AI_STEERING_DEGREES_PER_TICK = 10.0F;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 1),
@@ -54,8 +56,7 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
 
     @Override
     public boolean tryAbility() {
-        Atroxiia dragon = getUser();
-        return dragon.getControllingPassenger() != null && dragon.isGroundedForAction() && !dragon.isBaby();
+        return getUser().canUseGroundCombatAbility();
     }
 
     @Override
@@ -74,6 +75,8 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
             return;
         }
 
+        steerTowardAiTarget();
+
         int tick = getTicksInUse();
         if (tick == FIRST_NUDGE_AND_DAMAGE_TICK) {
             nudgeForward();
@@ -90,6 +93,41 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
             getUser().triggerScreenShake(THIRD_STRIKE_SCREEN_SHAKE, THIRD_STRIKE_SCREEN_SHAKE_TICKS);
             damageTargets();
         }
+    }
+
+    private void steerTowardAiTarget() {
+        Atroxiia dragon = getUser();
+        if (dragon.level().isClientSide || dragon.getControllingPassenger() != null) {
+            return;
+        }
+
+        LivingEntity target = dragon.getTarget();
+        if (!dragon.isTargetValid(target)) {
+            return;
+        }
+
+        double dx = target.getX() - dragon.getX();
+        double dz = target.getZ() - dragon.getZ();
+        Vec3 horizontalDirection = new Vec3(dx, 0.0D, dz);
+        if (horizontalDirection.lengthSqr() < 1.0E-6D) {
+            return;
+        }
+
+        float targetYaw = (float)(Mth.atan2(dz, dx) * Mth.RAD_TO_DEG) - 90.0F;
+        float steeredYaw = Mth.approachDegrees(
+                dragon.getYRot(),
+                targetYaw,
+                AI_STEERING_DEGREES_PER_TICK
+        );
+        dragon.setYRot(steeredYaw);
+        dragon.yBodyRot = steeredYaw;
+        dragon.yHeadRot = Mth.approachDegrees(
+                dragon.yHeadRot,
+                targetYaw,
+                AI_STEERING_DEGREES_PER_TICK * 1.5F
+        );
+        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        dragon.steerPreciseStrikeNudge(Vec3.directionFromRotation(0.0F, steeredYaw));
     }
 
     private void nudgeForward() {

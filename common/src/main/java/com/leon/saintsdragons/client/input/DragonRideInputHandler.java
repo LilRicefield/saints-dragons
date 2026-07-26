@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbility
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -650,7 +651,8 @@ public final class DragonRideInputHandler {
     }
 
     private static boolean supportsPitchLock(RideableDragonBase dragon) {
-        return dragon instanceof Raevyx
+        return dragon instanceof Atroxiia
+                || dragon instanceof Raevyx
                 || dragon instanceof Cindervane
                 || dragon instanceof Ignivorus
                 || dragon instanceof Volitans

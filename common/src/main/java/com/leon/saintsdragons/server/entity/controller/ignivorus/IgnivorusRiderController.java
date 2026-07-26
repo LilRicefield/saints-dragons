@@ -121,6 +121,11 @@ public record IgnivorusRiderController(Ignivorus dragon) {
             return (float) dragon.getAttributeValue(Attributes.FLYING_SPEED);
         }
 
+        if (dragon.isBulldozing()) {
+            dragon.setRunning(true);
+            return (float) (Ignivorus.RIDER_BULLDOZE_SPEED * dragon.getHappinessSpeedMultiplier());
+        }
+
         boolean isMoving = dragon.getDeltaMovement().horizontalDistanceSqr() > 0.0001;
 
         boolean isPhase2 = dragon.getEntityData().get(Ignivorus.DATA_PHASE2);

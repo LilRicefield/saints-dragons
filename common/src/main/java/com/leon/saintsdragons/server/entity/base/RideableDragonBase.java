@@ -889,7 +889,9 @@ public abstract class RideableDragonBase extends DragonEntity {
         this.entityData.set(getRiderForwardAccessor(), riderForward);
         this.entityData.set(getRiderStrafeAccessor(), riderStrafe);
 
-        boolean savedSitting = tag.getBoolean("IsSitting");
+        boolean savedSitting = tag.contains("IsSitting")
+                ? tag.getBoolean("IsSitting")
+                : this.isOrderedToSit();
         this.setOrderedToSit(savedSitting);
         loadSitProgress(tag, savedSitting);
 

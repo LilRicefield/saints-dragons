@@ -1,11 +1,16 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -27,10 +32,77 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
 
     @Override
     protected InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
-        if (dragon.isFood(heldItem)) {
+        if (!dragon.isFood(heldItem)) {
+            return InteractionResult.PASS;
+        }
+        if (dragon.isBaby()) {
             return handleFeeding(player, heldItem);
         }
-        return InteractionResult.PASS;
+
+        boolean client = dragon.level().isClientSide;
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        boolean legacyTaming = config.extraBoolean("legacy_taming", false);
+
+        if (!legacyTaming && dragon.isTamingStunned() && !dragon.isAwaitingTamingFeed()) {
+            sendStatusMessage(player, "entity.saintsdragons.atroxiia.taming_dazed");
+            return InteractionResult.CONSUME;
+        }
+        if (!dragon.canFeed()) {
+            sendStatusMessage(player, "entity.saintsdragons.atroxiia.still_eating");
+            return InteractionResult.CONSUME;
+        }
+        if (!legacyTaming && dragon.getHealth() > dragon.getTamingThreshold() + 1.0F) {
+            sendStatusMessage(
+                    player,
+                    "entity.saintsdragons.atroxiia.taming_need_weakened",
+                    dragon.getName(),
+                    Math.round(dragon.getTamingThreshold())
+            );
+            return InteractionResult.CONSUME;
+        }
+
+        if (!client) {
+            consumeHeldItem(player, heldItem);
+            dragon.triggerAnim(AnimationHelper.INTERACTION_CONTROLLER, AnimationHelper.EAT);
+            dragon.playEatMovingSound();
+            dragon.setFeedingCooldown(Atroxiia.EAT_ANIMATION_TICKS);
+
+            boolean heartyMeal = heldItem.is(ModItems.HEARTY_DRAGON_MEAL.get());
+            if (heartyMeal) {
+                dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+            }
+            dragon.applyFeedingHunger(heartyMeal);
+
+            if (legacyTaming) {
+                dragon.heal(heartyMeal ? 28.0F : 10.0F);
+            } else {
+                dragon.enterTamingStun();
+            }
+
+            double tameChance = heartyMeal
+                    ? config.extraDouble("taming_chance_hearty", 33.3333D)
+                    : config.extraDouble("taming_chance_base", 20.0D);
+            if (DragonTamingChance.rollPercent(dragon.getRandom(), tameChance)) {
+                dragon.tame(player);
+                dragon.setOrderedToSit(true);
+                dragon.setCommand(1);
+                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+                if (!legacyTaming) {
+                    dragon.resetTamingFailures();
+                    dragon.clearTamingRecovery();
+                }
+            } else {
+                if (!legacyTaming) {
+                    dragon.setTamingRecoveryTarget(dragon.getMaxHealth());
+                    dragon.incrementTamingFailures();
+                }
+                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
+                sendStatusMessage(player, "entity.saintsdragons.atroxiia.taming_failed");
+            }
+        }
+
+        return InteractionResult.sidedSuccess(client);
     }
 
     @Override

@@ -36,7 +36,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     private static final int WAVE_INTERVAL_TICKS = 6;
     private static final double LANE_SPACING = 5.0D;
     private static final double BASE_FORWARD_OFFSET = 20.0D;
-    private static final double FORWARD_STEP = 10.0D;
+    private static final double FORWARD_STEP = 6.0D;
     private static final float BASE_DAMAGE = 18.0f;
     private static final float DAMAGE_PER_WAVE = 4.0f;
     private static final double BASE_KNOCKBACK = 0.9D;

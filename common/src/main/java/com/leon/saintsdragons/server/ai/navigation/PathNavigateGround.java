@@ -110,7 +110,7 @@ public class PathNavigateGround extends GroundPathNavigation {
         final double verticalOffset = this.mob.getY() - pathPos.y;
         return Mth.abs((float) (this.mob.getX() - pathPos.x)) < threshold &&
                 Mth.abs((float) (this.mob.getZ() - pathPos.z)) < threshold &&
-                verticalOffset > -1.0D &&
+                verticalOffset >= -1.0D &&
                 verticalOffset <= MAX_DESCENDING_WAYPOINT_OFFSET;
     }
 

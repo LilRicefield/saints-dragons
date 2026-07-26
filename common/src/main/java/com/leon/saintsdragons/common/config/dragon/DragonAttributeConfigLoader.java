@@ -519,14 +519,21 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "slam", DragonAbilityOverride.ofDamage(16.0D),
                         "swipe", DragonAbilityOverride.ofDamage(12.0D),
+                        "underwater_bite", DragonAbilityOverride.ofDamage(10.0D),
                         "precise_strike", DragonAbilityOverride.ofDamage(9.0D),
                         "helheim_quake", DragonAbilityOverride.ofDamage(25.0D)
                 ),
                 Map.of(
                         "helheim_quake1_knockback", 0.75D,
-                        "helheim_quake2_knockback", 1.8D
+                        "helheim_quake2_knockback", 1.8D,
+                        "taming_chance_base", 20.0D,
+                        "taming_chance_hearty", 33.3333D,
+                        "taming_stun_health", 60.0D
                 ),
-                Map.of("aggressive_wild", false)
+                Map.of(
+                        "legacy_taming", false,
+                        "aggressive_wild", false
+                )
         );
     }
 
@@ -1236,9 +1243,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private void backfillTamingStunHealth(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
-        boolean isRaevyx = id.equals(RAEVYX_ID);
-        boolean isIgnivorus = id.equals(IGNIVORUS_ID);
-        if (!isRaevyx && !isIgnivorus) {
+        boolean supportsTamingStun = id.equals(RAEVYX_ID)
+                || id.equals(IGNIVORUS_ID)
+                || id.equals(ATROXIIA_ID);
+        if (!supportsTamingStun) {
             return;
         }
         try (Reader reader = Files.newBufferedReader(path)) {
@@ -1305,7 +1313,12 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static boolean requiresLegacyTamingFlag(ResourceLocation id) {
-        return id.equals(VARASUCHUS_ID) || id.equals(RAEVYX_ID) || id.equals(IGNIVORUS_ID) || id.equals(VOLITANS_ID) || id.equals(NULLJAW_ID);
+        return id.equals(VARASUCHUS_ID)
+                || id.equals(RAEVYX_ID)
+                || id.equals(IGNIVORUS_ID)
+                || id.equals(VOLITANS_ID)
+                || id.equals(NULLJAW_ID)
+                || id.equals(ATROXIIA_ID);
     }
 
     private static Map<ResourceLocation, DragonAttributeConfig> buildDefaultConfigs() {
@@ -1323,7 +1336,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private void backfillPreyTamingChances(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
-        if (!id.equals(IGNIVORUS_ID) && !id.equals(RAEVYX_ID) && !id.equals(VARASUCHUS_ID)) {
+        if (!id.equals(IGNIVORUS_ID)
+                && !id.equals(RAEVYX_ID)
+                && !id.equals(VARASUCHUS_ID)
+                && !id.equals(ATROXIIA_ID)) {
             return;
         }
         try (Reader reader = Files.newBufferedReader(path)) {
@@ -1347,6 +1363,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 extra.addProperty("taming_chance_beef",
                         mergedConfig.extraDouble("taming_chance_beef", 16.6667D));
                 updated = true;
+            }
+            if (id.equals(ATROXIIA_ID)) {
+                if (!extra.has("taming_chance_base")) {
+                    extra.addProperty("taming_chance_base",
+                            mergedConfig.extraDouble("taming_chance_base", 20.0D));
+                    updated = true;
+                }
+                if (!extra.has("taming_chance_hearty")) {
+                    extra.addProperty("taming_chance_hearty",
+                            mergedConfig.extraDouble("taming_chance_hearty", 33.3333D));
+                    updated = true;
+                }
             }
 
             if (updated) {

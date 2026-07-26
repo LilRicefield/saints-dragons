@@ -205,6 +205,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     public static final double BREED_DISTANCE_SQR = 2500.0D;
     public static final double RIDER_WALK_SPEED = 0.225D;
     public static final double RIDER_RUN_SPEED = 0.4D;
+    public static final double RIDER_BULLDOZE_SPEED = 0.55D;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     public static final double RIDER_PHASE2_WALK_SPEED = 0.15D;
     public static final double RIDER_PHASE2_RUN_SPEED = 0.32D;
@@ -219,6 +220,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final double BULLDOZE_DAMAGE_FORWARD_REACH = 4.5D;
     private static final double BULLDOZE_DAMAGE_HALF_WIDTH = 7.0D;
     private static final double BULLDOZE_DAMAGE_HALF_HEIGHT = 2.5D;
+    private static final int BULLDOZE_ENTER_TICKS = 25;
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 55.0F;
     private static final double LEAP_ARC_FORWARD_DISTANCE = 42.0D;
@@ -1445,6 +1447,19 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     @Override
+    protected boolean canUseResolvedRidingAbility(DragonAbilityType<?, ?> abilityType) {
+        if (isBulldozing() && isBulldozeBlockedMelee(abilityType)) {
+            return false;
+        }
+        return super.canUseResolvedRidingAbility(abilityType);
+    }
+
+    private boolean isBulldozeBlockedMelee(DragonAbilityType<?, ?> abilityType) {
+        return abilityType == ModAbilities.IGNIVORUS_BITE
+                || abilityType == ModAbilities.IGNIVORUS_BODY_SLAM;
+    }
+
+    @Override
     protected boolean tryReleaseHeldRidingAbility(String abilityName) {
         if (ModAbilities.IGNIVORUS_FIREBALL.getName().equals(abilityName)) {
             var active = combatManager.getActiveAbility();
@@ -1673,7 +1688,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public RiderAbilityBinding getAttackRiderAbility() {
-        if (isBaby()) {
+        if (isBaby() || isBulldozing()) {
             return null;
         }
         if (isPhase2Active()) {
@@ -1758,9 +1773,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             bulldozing = true;
             this.entityData.set(DATA_BULLDOZING, true);
             setAccelerating(true);
-            lockRiderControls(20);
+            lockRiderControls(BULLDOZE_ENTER_TICKS);
             animationHandler.triggerBulldozeEnterAnimation();
-            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BULLDOZER_ENTER.get(), 1.0f, 1.0f, 41);
+            getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BULLDOZER_ENTER.get(), 1.0f, 1.0f, 80);
         }
     }
 
@@ -2512,7 +2527,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public DragonAbilityType<?, ?> getPrimaryAttackAbility() {
-        if (isBaby()) {
+        if (isBaby() || isBulldozing()) {
             return null;
         }
         if (isPhase2Active()) {
@@ -2528,6 +2543,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     public int getDrinkingDurationTicks() {
         return DRINKING_ANIMATION_TICKS;
+    }
+
+    public boolean isBulldozing() {
+        return this.entityData.get(DATA_BULLDOZING);
     }
 
     @Override

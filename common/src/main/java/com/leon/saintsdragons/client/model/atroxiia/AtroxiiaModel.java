@@ -6,6 +6,7 @@ import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.model.data.EntityModelData;
@@ -58,6 +59,7 @@ public class AtroxiiaModel extends DragonGeoModel<Atroxiia> {
             applyBodyRotationDeviation(entity, partialTick);
             applyGroundNeckTurn(entity, partialTick);
             applyTailDrag(entity, partialTick);
+            applySwimPitch(entity, partialTick);
         }
     }
 
@@ -70,6 +72,16 @@ public class AtroxiiaModel extends DragonGeoModel<Atroxiia> {
 
     private void applyTailDrag(Atroxiia entity, float partialTick) {
         DragonModelPoseHelper.applyTailDrag(this, entity, partialTick, TAIL, 30.0);
+    }
+
+    private void applySwimPitch(Atroxiia entity, float partialTick) {
+        if (!entity.isInWaterOrBubble()) {
+            return;
+        }
+        GeoBone body = getBone("heightController").orElse(null);
+        if (body != null) {
+            body.setRotX(body.getRotX() + entity.getSwimPitchRadians(partialTick));
+        }
     }
 
     private void applyNeckFollow(Atroxiia entity, EntityModelData modelData, float partialTick) {

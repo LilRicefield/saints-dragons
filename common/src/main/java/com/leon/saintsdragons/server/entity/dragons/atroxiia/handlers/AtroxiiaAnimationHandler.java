@@ -9,16 +9,22 @@ import software.bernie.geckolib.core.object.PlayState;
 
 public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
+    public static final String FAST_ACTION_CONTROLLER = "atroxiiaFastAction";
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.atroxiia.idle");
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.atroxiia.walk");
     private static final RawAnimation RUN = RawAnimation.begin().thenLoop("animation.atroxiia.run");
+    private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.atroxiia.swim");
+    private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.atroxiia.swim_idle");
+    private static final RawAnimation JUMP = RawAnimation.begin().thenPlay("animation.atroxiia.jump");
+    private static final RawAnimation UNDERWATER_BITE = RawAnimation.begin().thenPlay("animation.atroxiia.underwater_bite");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.atroxiia.sit");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.atroxiia.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.atroxiia.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.atroxiia.fall_asleep");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.atroxiia.sleep");
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.atroxiia.wake_up");
+    private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.atroxiia.stunned");
     private static final RawAnimation SLAM_RIGHT = RawAnimation.begin().thenPlay("animation.atroxiia.slam_right");
     private static final RawAnimation SLAM_LEFT = RawAnimation.begin().thenPlay("animation.atroxiia.slam_left");
     private static final RawAnimation SWIPE_RIGHT = RawAnimation.begin().thenPlay("animation.atroxiia.swipe_right");
@@ -32,11 +38,25 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.atroxiia.eat");
 
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
-            new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, null, null, null);
+            new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, null, STUNNED, null);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
 
     public PlayState movementPredicate(AnimationState<Atroxiia> state) {
+        if (dragon.isTamingStunned()) {
+            state.getController().transitionLength(GROUND_TRANSITIONS.stunned());
+            state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
+        }
+        if (dragon.isInWaterOrBubble()) {
+            state.getController().transitionLength(GROUND_TRANSITIONS.water());
+            boolean moving = dragon.getDeltaMovement().lengthSqr() > 0.0025D
+                    || Math.abs(dragon.getLastRiderForward()) > 0.02F
+                    || Math.abs(dragon.getLastRiderStrafe()) > 0.02F;
+            state.setAndContinue(moving ? SWIM : SWIM_IDLE);
+            return PlayState.CONTINUE;
+        }
+
         PlayState restPose = AnimationHelper.tryHandleRestPose(
                 state, dragon, SLEEP, SIT, GROUND_TRANSITIONS.sleep(), GROUND_TRANSITIONS.sit()
         );
@@ -65,6 +85,20 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         AnimationHelper.register(controller, "devastating_sweep", DEVASTATING_SWEEP);
         AnimationHelper.register(controller, "helheim_quake1", HELHEIM_QUAKE_ONE);
         AnimationHelper.register(controller, "helheim_quake2", HELHEIM_QUAKE_TWO);
+    }
+
+    public PlayState fastActionPredicate(AnimationState<Atroxiia> state) {
+        state.getController().transitionLength(1);
+        return PlayState.STOP;
+    }
+
+    public void setupFastActionController(AnimationController<Atroxiia> controller) {
+        AnimationHelper.register(controller, "jump", JUMP);
+        AnimationHelper.register(controller, "underwater_bite", UNDERWATER_BITE);
+    }
+
+    public void triggerRiderJumpAnimation() {
+        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "jump");
     }
 
     public void setupInteractionController(AnimationController<Atroxiia> controller) {
