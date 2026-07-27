@@ -79,6 +79,21 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
+    public int atroxiiaSpawnWeight = SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int atroxiiaMinGroupSize = SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int atroxiiaMaxGroupSize = SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
     public int volitansSpawnWeight = 1;
 
     @ConfigEntry.Category("spawning")

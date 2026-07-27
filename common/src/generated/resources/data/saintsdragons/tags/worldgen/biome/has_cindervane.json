@@ -1,19 +1,7 @@
 {
   "values": [
     {
-      "id": "#c:mountain",
-      "required": false
-    },
-    {
       "id": "#c:mountain_peak",
-      "required": false
-    },
-    {
-      "id": "#c:mountain_slope",
-      "required": false
-    },
-    {
-      "id": "#c:is_mountain",
       "required": false
     },
     {
@@ -27,7 +15,6 @@
     "minecraft:stony_peaks",
     "minecraft:jagged_peaks",
     "minecraft:frozen_peaks",
-    "minecraft:snowy_slopes",
     "minecraft:grove",
     "minecraft:cherry_grove",
     "minecraft:meadow"

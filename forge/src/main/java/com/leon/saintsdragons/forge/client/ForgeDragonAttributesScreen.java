@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -31,6 +32,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         IGNIVORUS,
         VOLITANS,
         NULLJAW,
+        ATROXIIA,
         DRACONIAN_SWARM
     }
 
@@ -50,6 +52,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
             case NULLJAW -> addNulljawEntries(entries);
+            case ATROXIIA -> addAtroxiiaEntries(entries);
             case DRACONIAN_SWARM -> addDraconianSwarmEntries(entries);
         }
     }
@@ -118,6 +121,13 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startX + (buttonWidth + spacing) * 7, y, buttonWidth, 20).build());
 
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.atroxiia"), button -> {
+            if (section != Section.ATROXIIA) {
+                section = Section.ATROXIIA;
+                rebuildWidgets();
+            }
+        }).bounds(width / 2 - 40, y + 22, 80, 20).build());
+
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
             rebuildWidgets();
@@ -126,7 +136,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
 
     @Override
     protected int getPanelTop() {
-        return 60;
+        return 82;
     }
 
     @Override
@@ -167,6 +177,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                     volitans.applyConfiguredAttributes();
                 } else if (dragon instanceof Nulljaw nulljaw) {
                     nulljaw.applyConfiguredAttributes();
+                } else if (dragon instanceof Atroxiia atroxiia) {
+                    atroxiia.applyConfiguredAttributes();
                 }
             }
             for (AbstractDraconianSwarmEntity swarm : level.getEntitiesOfClass(AbstractDraconianSwarmEntity.class, bounds)) {
@@ -319,6 +331,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH::get,
                 ForgeDragonAttributesConfig.RAEVYX_MAX_HEALTH::set,
                 null));
+        entries.add(new WarningEntry(Component.translatable("config.saintsdragons.attributes.taming_stun_health.warning")));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.raevyx.armor"),
                 ForgeDragonAttributesConfig.RAEVYX_ARMOR::get,
                 ForgeDragonAttributesConfig.RAEVYX_ARMOR::set,
@@ -495,6 +508,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_MAX_HEALTH::set,
                 null));
+        entries.add(new WarningEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.thresholds.warning")));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.ignivorus.armor"),
                 ForgeDragonAttributesConfig.IGNIVORUS_ARMOR::get,
                 ForgeDragonAttributesConfig.IGNIVORUS_ARMOR::set,
@@ -629,6 +643,70 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 null));
     }
 
+    private void addAtroxiiaEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.atroxiia")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.max_health"),
+                ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH::get,
+                ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.armor"),
+                ForgeDragonAttributesConfig.ATROXIIA_ARMOR::get,
+                ForgeDragonAttributesConfig.ATROXIIA_ARMOR::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.slam_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.swipe_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.underwater_bite_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.precise_strike_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.precise_strike_knockback"),
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_KNOCKBACK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.precise_strike_stun_duration_ticks"),
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.devastating_sweep_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.devastating_sweep_knockback"),
+                ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.helheim_quake_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.helheim_quake_knockback"),
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_KNOCKBACK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.helheim_quake_secondary_knockback"),
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK::get,
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.helheim_quake_stun_duration_ticks"),
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS::set,
+                null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.frost_impact_enabled"),
+                ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED::get,
+                ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED::set,
+                null));
+    }
+
     private void addDraconianSwarmEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm")));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.draconian_swarm.wave_1_count"),
@@ -710,6 +788,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH::get,
                 ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH::set,
                 null));
+        entries.add(new WarningEntry(Component.translatable("config.saintsdragons.attributes.taming_stun_health.warning")));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.armor"),
                 ForgeDragonAttributesConfig.VOLITANS_ARMOR::get,
                 ForgeDragonAttributesConfig.VOLITANS_ARMOR::set,
@@ -997,6 +1076,23 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case NULLJAW -> {
                 ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.set(ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_ARMOR.set(ForgeDragonAttributesConfig.NULLJAW_ARMOR.getDefault());
+            }
+            case ATROXIIA -> {
+                ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH.set(ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_ARMOR.set(ForgeDragonAttributesConfig.ATROXIIA_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_KNOCKBACK.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS.set(ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_KNOCKBACK.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED.set(ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED.getDefault());
             }
             case DRACONIAN_SWARM -> {
                 ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.set(ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.getDefault());

@@ -30,13 +30,51 @@ public record DragonAttributeConfig(double maxHealth, double armor, double flyin
         this.armor = armor;
         this.flyingSpeed = flyingSpeed;
         this.abilities = Map.copyOf(abilities);
-        this.extraDoubles = Map.copyOf(extraDoubles);
+        Map<String, Double> normalizedExtras = new HashMap<>(extraDoubles);
+        Double tamingStunHealth = normalizedExtras.get("taming_stun_health");
+        if (tamingStunHealth != null) {
+            double maximumThreshold = Math.max(0.0D, maxHealth - 1.0D);
+
+            Double phase2TriggerFraction = normalizedExtras.get("ultimate_trigger_health_fraction");
+            if (phase2TriggerFraction != null) {
+                double normalizedFraction = Math.max(0.0D, Math.min(phase2TriggerFraction, 1.0D));
+                if (normalizedFraction > 0.0D) {
+                    // Ignivorus must cross its phase-two boundary before taming stun can intercept damage.
+                    maximumThreshold = Math.min(maximumThreshold,
+                            Math.max(0.0D, maxHealth * normalizedFraction - 1.0D));
+                }
+            }
+
+            normalizedExtras.put("taming_stun_health",
+                    Math.max(0.0D, Math.min(tamingStunHealth, maximumThreshold)));
+        }
+        this.extraDoubles = Map.copyOf(normalizedExtras);
         this.extraBooleans = Map.copyOf(extraBooleans);
     }
 
     public double abilityDamage(String key, double fallback) {
         DragonAbilityOverride override = abilities.get(key);
         return override != null ? override.damageOr(fallback) : fallback;
+    }
+
+    public double abilityKnockback(String key, double fallback) {
+        DragonAbilityOverride override = abilities.get(key);
+        return override != null ? override.knockbackOr(fallback) : fallback;
+    }
+
+    public double abilitySecondaryKnockback(String key, double fallback) {
+        DragonAbilityOverride override = abilities.get(key);
+        return override != null ? override.secondaryKnockbackOr(fallback) : fallback;
+    }
+
+    public int abilityStunDurationTicks(String key, int fallback) {
+        DragonAbilityOverride override = abilities.get(key);
+        return override != null ? override.stunDurationTicksOr(fallback) : fallback;
+    }
+
+    public boolean abilityEnabled(String key, boolean fallback) {
+        DragonAbilityOverride override = abilities.get(key);
+        return override != null ? override.enabledOr(fallback) : fallback;
     }
 
     public double extraDouble(String key, double fallback) {

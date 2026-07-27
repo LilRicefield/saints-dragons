@@ -94,6 +94,12 @@ public final class CommonModEvents {
                 Ignivorus::canSpawnHere
         );
         registrar.register(
+                ModEntities.ATROXIIA.get(),
+                SpawnPlacements.Type.ON_GROUND,
+                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                Atroxiia::canSpawnHere
+        );
+        registrar.register(
                 ModEntities.VOLITANS.get(),
                 SpawnPlacements.Type.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,

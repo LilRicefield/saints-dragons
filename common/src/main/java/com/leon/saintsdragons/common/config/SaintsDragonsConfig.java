@@ -27,6 +27,10 @@ public final class SaintsDragonsConfig {
     public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 1;
 
+    public static final int ATROXIIA_SPAWN_WEIGHT_DEFAULT = 1;
+    public static final int ATROXIIA_MIN_GROUP_SIZE_DEFAULT = 1;
+    public static final int ATROXIIA_MAX_GROUP_SIZE_DEFAULT = 1;
+
     public static final int VOLITANS_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int VOLITANS_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int VOLITANS_MAX_GROUP_SIZE_DEFAULT = 1;
@@ -63,6 +67,10 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue IGNIVORUS_MAX_GROUP_SIZE;
+
+    public static ConfigHelper.IntValue ATROXIIA_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue ATROXIIA_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue ATROXIIA_MAX_GROUP_SIZE;
 
     public static ConfigHelper.IntValue VOLITANS_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue VOLITANS_MIN_GROUP_SIZE;
@@ -131,6 +139,11 @@ public final class SaintsDragonsConfig {
         IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         IGNIVORUS_MIN_GROUP_SIZE = builder.defineInt("ignivorusMinGroupSize", IGNIVORUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         IGNIVORUS_MAX_GROUP_SIZE = builder.defineInt("ignivorusMaxGroupSize", IGNIVORUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
+
+        builder.comment("Atroxiia spawn settings");
+        ATROXIIA_SPAWN_WEIGHT = builder.defineInt("atroxiiaSpawnWeight", ATROXIIA_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
+        ATROXIIA_MIN_GROUP_SIZE = builder.defineInt("atroxiiaMinGroupSize", ATROXIIA_MIN_GROUP_SIZE_DEFAULT, 1, 10);
+        ATROXIIA_MAX_GROUP_SIZE = builder.defineInt("atroxiiaMaxGroupSize", ATROXIIA_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Volitans spawn settings (custom underwater spawner for ocean/wetland habitats)");
         VOLITANS_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("volitansCustomSpawningEnabled", VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT);

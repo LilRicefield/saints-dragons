@@ -55,7 +55,7 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
     private static final double DEFAULT_QUAKE_TWO_KNOCKBACK = 1.8D;
     private static final double QUAKE_ONE_LIFT = 0.2D;
     private static final double QUAKE_TWO_LIFT = 0.5D;
-    private static final int QUAKE_STUN_TICKS = 5 * 20;
+    private static final int DEFAULT_QUAKE_STUN_TICKS = 5 * 20;
     private static final float QUAKE_ONE_SCREEN_SHAKE = 0.55F;
     private static final int QUAKE_ONE_SCREEN_SHAKE_TICKS = 6;
     private static final float QUAKE_TWO_SCREEN_SHAKE = 1.1F;
@@ -182,8 +182,9 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
         damage *= dragon.getHungerMeleeDamageMultiplier();
         boolean firstQuake = phase == Phase.QUAKE_ONE;
         double knockback = firstQuake
-                ? config.extraDouble("helheim_quake1_knockback", DEFAULT_QUAKE_ONE_KNOCKBACK)
-                : config.extraDouble("helheim_quake2_knockback", DEFAULT_QUAKE_TWO_KNOCKBACK);
+                ? config.abilityKnockback("helheim_quake", DEFAULT_QUAKE_ONE_KNOCKBACK)
+                : config.abilitySecondaryKnockback("helheim_quake", DEFAULT_QUAKE_TWO_KNOCKBACK);
+        int stunTicks = config.abilityStunDurationTicks("helheim_quake", DEFAULT_QUAKE_STUN_TICKS);
         double lift = firstQuake ? QUAKE_ONE_LIFT : QUAKE_TWO_LIFT;
         double radiusSqr = QUAKE_RADIUS * QUAKE_RADIUS;
 
@@ -193,7 +194,7 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
                 continue;
             }
 
-            AtroxiiaFrostImpact.apply(dragon, target, QUAKE_STUN_TICKS);
+            AtroxiiaFrostImpact.apply(dragon, target, stunTicks);
             Vec3 direction = target.position().subtract(dragon.position());
             direction = new Vec3(direction.x, 0.0D, direction.z);
             if (direction.lengthSqr() < 1.0E-4D) {

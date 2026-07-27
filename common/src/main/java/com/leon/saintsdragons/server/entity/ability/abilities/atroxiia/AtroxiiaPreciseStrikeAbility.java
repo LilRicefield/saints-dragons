@@ -155,19 +155,25 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
     }
 
     private void applyComboStun(LivingEntity target) {
-        int stunTicks = Math.max(1, ANIMATION_TICKS + RECOVERY_TICKS - getTicksInUse() + POST_COMBO_STUN_TICKS);
+        int postComboStunTicks = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID)
+                .abilityStunDurationTicks("precise_strike", POST_COMBO_STUN_TICKS);
+        int stunTicks = Math.max(1, ANIMATION_TICKS + RECOVERY_TICKS - getTicksInUse() + postComboStunTicks);
         AtroxiiaFrostImpact.apply(getUser(), target, stunTicks);
     }
 
     private void knockTargetBack(LivingEntity target) {
         Atroxiia dragon = getUser();
+        double knockback = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID)
+                .abilityKnockback("precise_strike", DAMAGE_KNOCKBACK);
         Vec3 forward = DragonMeleeGeometry.forwardAttack(dragon).forward();
         Vec3 horizontalForward = new Vec3(forward.x, 0.0D, forward.z);
         if (horizontalForward.lengthSqr() < 1.0E-6D) {
             horizontalForward = Vec3.directionFromRotation(0.0F, dragon.getYRot());
         }
 
-        Vec3 push = horizontalForward.normalize().scale(DAMAGE_KNOCKBACK);
+        Vec3 push = horizontalForward.normalize().scale(knockback);
         target.push(push.x, DAMAGE_KNOCKBACK_Y, push.z);
         target.hurtMarked = true;
     }

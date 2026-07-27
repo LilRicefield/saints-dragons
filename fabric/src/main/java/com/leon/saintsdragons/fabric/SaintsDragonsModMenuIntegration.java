@@ -395,6 +395,15 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT,
                     SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
 
+            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.atroxiia"),
+                    () -> config.atroxiiaSpawnWeight, value -> config.atroxiiaSpawnWeight = value,
+                    () -> config.atroxiiaMinGroupSize, value -> config.atroxiiaMinGroupSize = value,
+                    () -> config.atroxiiaMaxGroupSize, value -> config.atroxiiaMaxGroupSize = value,
+                    null, null, true,
+                    SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT_DEFAULT,
+                    SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE_DEFAULT,
+                    SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE_DEFAULT);
+
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.volitans"),
                     () -> config.volitansSpawnWeight, value -> config.volitansSpawnWeight = value,
                     () -> config.volitansMinGroupSize, value -> config.volitansMinGroupSize = value,
@@ -1016,6 +1025,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.maxHealth = value)
                 .build());
+        entries.add(entryBuilder.startTextDescription(
+                Component.translatable("config.saintsdragons.attributes.taming_stun_health.warning")
+        ).setColor(0xFFFFAA00).build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.raevyx.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
@@ -1288,6 +1300,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.maxHealth = value)
                 .build());
+        entries.add(entryBuilder.startTextDescription(
+                Component.translatable("config.saintsdragons.attributes.ignivorus.thresholds.warning")
+        ).setColor(0xFFFFAA00).build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)
@@ -1481,6 +1496,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.maxHealth = value)
                 .build());
+        entries.add(entryBuilder.startTextDescription(
+                Component.translatable("config.saintsdragons.attributes.taming_stun_health.warning")
+        ).setColor(0xFFFFAA00).build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.armor"), buffer.armor)
                 .setDefaultValue(defaults.armor())
                 .setMin(0.0D)

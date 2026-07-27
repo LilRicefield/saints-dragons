@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -64,7 +65,10 @@ public final class AtroxiiaUnderwaterBiteAbility extends DragonAbility<Atroxiia>
     @Override
     protected void beginSection(DragonAbilitySection section) {
         if (section != null && section.sectionType == STARTUP) {
-            getUser().triggerAnim(AtroxiiaAnimationHandler.FAST_ACTION_CONTROLLER, "underwater_bite");
+            Atroxiia dragon = getUser();
+            dragon.triggerAnim(AtroxiiaAnimationHandler.FAST_ACTION_CONTROLLER, "underwater_bite");
+            dragon.getSoundHandler().playMovingEntitySound(
+                    ModSounds.ATROXIIA_UNDERWATER_BITE.get(), 1.0F, 1.0F, 20);
             appliedHit = false;
         }
     }

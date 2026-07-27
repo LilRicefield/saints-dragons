@@ -96,6 +96,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
@@ -377,7 +378,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                                        MobSpawnType spawnType,
                                        BlockPos pos,
                                        RandomSource random) {
-        return DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+        return !level.getBiome(pos).is(Biomes.SNOWY_SLOPES)
+                && DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
                 && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Cindervane.class);
     }
 

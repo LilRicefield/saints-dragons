@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.particles.ParticleTypes;
@@ -20,6 +21,12 @@ final class AtroxiiaFrostImpact {
     }
 
     static void apply(Atroxiia dragon, LivingEntity target, int stunTicks) {
+        boolean enabled = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID)
+                .abilityEnabled("frost_impact", true);
+        if (!enabled) {
+            return;
+        }
         int duration = Math.max(1, stunTicks);
         target.addEffect(new MobEffectInstance(
                 MobEffects.MOVEMENT_SLOWDOWN, duration, SLOWNESS_AMPLIFIER, false, true

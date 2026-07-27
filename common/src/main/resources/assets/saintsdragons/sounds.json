@@ -2071,12 +2071,56 @@
       }
     ]
   },
+  "atroxiia_grumble1": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_grumble",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_grumble1",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_grumble2": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_grumble",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_grumble2",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_grumble3": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_grumble",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_grumble3",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "atroxiia_slam": {
     "subtitle": "subtitles.saintsdragons.atroxiia_slam",
     "sounds": [
       {
         "name": "saintsdragons:entity/atroxiia/atroxiia_slam",
         "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_underwater_bite": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_underwater_bite",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_underwater_bite",
+        "volume": 1.0,
         "pitch": 1.0,
         "attenuation_distance": 32
       }

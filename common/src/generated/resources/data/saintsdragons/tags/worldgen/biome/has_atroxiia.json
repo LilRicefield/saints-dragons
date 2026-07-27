@@ -1,0 +1,14 @@
+{
+  "values": [
+    {
+      "id": "#c:is_cold/overworld",
+      "required": false
+    },
+    {
+      "id": "#forge:is_cold",
+      "required": false
+    },
+    "minecraft:snowy_plains",
+    "minecraft:ice_spikes"
+  ]
+}

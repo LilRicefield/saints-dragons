@@ -2,13 +2,35 @@
   "max_health": 200.0,
   "armor": 10,
   "abilities": {
+    "slam": {
+      "damage": 16.0
+    },
+    "swipe": {
+      "damage": 12.0
+    },
+    "underwater_bite": {
+      "damage": 10.0
+    },
+    "precise_strike": {
+      "damage": 9.0,
+      "knockback": 0.75,
+      "stun_duration_ticks": 40
+    },
+    "devastating_sweep": {
+      "damage": 13.0,
+      "knockback": 1.65
+    },
     "helheim_quake": {
-      "damage": 25.0
+      "damage": 25.0,
+      "knockback": 0.75,
+      "secondary_knockback": 1.8,
+      "stun_duration_ticks": 100
+    },
+    "frost_impact": {
+      "enabled": true
     }
   },
   "extra": {
-    "helheim_quake1_knockback": 0.75,
-    "helheim_quake2_knockback": 1.8,
     "taming_chance_base": 20.0,
     "taming_chance_hearty": 33.3333,
     "taming_stun_health": 60.0,

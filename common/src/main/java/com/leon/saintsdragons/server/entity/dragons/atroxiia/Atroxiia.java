@@ -21,11 +21,15 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.entity.controller.atroxiia.AtroxiiaRiderController;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaTamingHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -34,12 +38,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -50,6 +56,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +86,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final EntityDataAccessor<Float> DATA_SWIM_PITCH_RAD =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final int MOVEMENT_TRANSITION_TICKS = 4;
+    private static final int MIN_AMBIENT_DELAY = 200;
+    private static final int MAX_AMBIENT_DELAY = 600;
     private static final int SIT_DOWN_TICKS = 48;
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
@@ -97,6 +106,12 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
     private static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
+            .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.atroxiia.grumble1",
+                    ModSounds.ATROXIIA_GRUMBLE_1, 1.0F, 0.95F, 0.1F, false, false, true)
+            .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.atroxiia.grumble2",
+                    ModSounds.ATROXIIA_GRUMBLE_2, 1.0F, 0.95F, 0.1F, false, false, true)
+            .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.atroxiia.grumble3",
+                    ModSounds.ATROXIIA_GRUMBLE_3, 1.0F, 0.95F, 0.1F, false, false, true)
             .add("atroxiia_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.atroxiia.hurt",
                     ModSounds.ATROXIIA_HURT, 1.2F, 0.95F, 0.1F, false, true, true)
             .add("atroxiia_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.atroxiia.die",
@@ -119,6 +134,20 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         super(type, level);
         this.setMaxUpStep(MAX_UP_STEP);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.18F);
+        seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
+        if (!level.isClientSide) {
+            applyConfiguredAttributes();
+            this.setHealth(this.getMaxHealth());
+        }
+    }
+
+    public static boolean canSpawnHere(EntityType<? extends Atroxiia> type,
+                                       LevelAccessor level,
+                                       MobSpawnType spawnType,
+                                       BlockPos pos,
+                                       RandomSource random) {
+        return DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
+                && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Atroxiia.class);
     }
 
     @Override
@@ -142,17 +171,25 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
                 AnimationHelper::interactionIdle);
         var fastActionController = new AnimationController<>(this, AtroxiiaAnimationHandler.FAST_ACTION_CONTROLLER, 1,
                 animationHandler::fastActionPredicate);
+        var vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2,
+                AnimationHelper::vocalIdle);
         AnimationHelper.registerStepKeyframes(this, movementController);
-        AnimationHelper.registerSoundKeyframes(this, movementController, interactionController);
+        AnimationHelper.registerSoundKeyframes(this, movementController, vocalController, interactionController);
+        AnimationHelper.registerGrumbles(vocalController, this);
         animationHandler.setupMovementController(movementController);
         animationHandler.setupInteractionController(interactionController);
         animationHandler.setupFastActionController(fastActionController);
-        controllers.add(movementController, fastActionController, interactionController);
+        controllers.add(movementController, vocalController, fastActionController, interactionController);
     }
 
     @Override
     public Map<String, VocalEntry> getVocalEntries() {
         return VOCAL_ENTRIES;
+    }
+
+    @Override
+    public DragonSoundProfile getSoundProfile() {
+        return AtroxiiaSoundProfile.INSTANCE;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -162,8 +199,15 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
                 .add(Attributes.MOVEMENT_SPEED, 0.28D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-                .add(Attributes.ARMOR, 8.0D)
+                .add(Attributes.ARMOR, config.armor())
                 .add(Attributes.ATTACK_DAMAGE, 10.0D);
+    }
+
+    public void applyConfiguredAttributes() {
+        DragonAttributeConfig config = getConfiguredDragonAttributes();
+        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
+        setAttributeBase(Attributes.ARMOR, config.armor());
+        clampHealthToMax();
     }
 
     @Override
@@ -436,7 +480,28 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             }
             tickFeedingCooldown();
             tickAtroxiiaAnimationStates();
+            handleAmbientSounds();
         }
+    }
+
+    private void handleAmbientSounds() {
+        if (isDying()
+                || isBaby()
+                || getTarget() != null
+                || getActiveAbility() != null
+                || isTamingStunned()
+                || isSleeping()
+                || isSleepTransitioning()
+                || isInSitTransition()
+                || areRiderControlsLocked()) {
+            return;
+        }
+        tickAmbientVocalSounds(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, this::selectAmbientGrumble);
+    }
+
+    private String selectAmbientGrumble() {
+        return selectWeightedAmbientVocal("grumble1", 1.0F / 3.0F,
+                "grumble2", 2.0F / 3.0F, "grumble3");
     }
 
     @Override
@@ -584,6 +649,14 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     private void tickAtroxiiaAnimationStates() {
+        if (isInWaterOrBubble()) {
+            clearSitTransitionFlags();
+            if (getSitProgress() != 0.0F || getPrevSitProgress() != 0.0F) {
+                clearSitProgress();
+            }
+            return;
+        }
+
         tickSitTransition(SIT_DOWN_TICKS, SIT_UP_TICKS,
                 animationHandler::triggerSitDownAnimation,
                 animationHandler::triggerSitUpAnimation);

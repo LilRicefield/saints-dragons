@@ -67,6 +67,15 @@ public final class DragonSpawnRegistry {
                 () -> SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.get());
 
         add(entries,
+                SaintsDragonsCommon.rl("atroxiia"),
+                ModEntities.ATROXIIA,
+                ModTags.Biomes.HAS_ATROXIIA,
+                MobCategory.CREATURE,
+                () -> SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE.get(),
+                () -> SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE.get());
+
+        add(entries,
                 SaintsDragonsCommon.rl("volitans"),
                 ModEntities.VOLITANS,
                 ModTags.Biomes.HAS_VOLITANS_FALLBACK,

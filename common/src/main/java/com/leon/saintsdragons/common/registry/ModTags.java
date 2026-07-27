@@ -91,6 +91,7 @@ public final class ModTags {
     }
 
     public static final class Biomes {
+        public static final TagKey<Biome> HAS_ATROXIIA = tag("has_atroxiia");
         public static final TagKey<Biome> HAS_CINDERVANE = tag("has_cindervane");
         public static final TagKey<Biome> HAS_IGNIVORUS = tag("has_ignivorus");
         public static final TagKey<Biome> HAS_IVY_HOUSE = tag("has_ivy_house");

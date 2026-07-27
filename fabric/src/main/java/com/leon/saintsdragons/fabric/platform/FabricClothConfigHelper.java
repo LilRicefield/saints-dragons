@@ -186,6 +186,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "ignivorusSpawnWeight" -> () -> spawnHolder().getConfig().ignivorusSpawnWeight;
             case "ignivorusMinGroupSize" -> () -> spawnHolder().getConfig().ignivorusMinGroupSize;
             case "ignivorusMaxGroupSize" -> () -> spawnHolder().getConfig().ignivorusMaxGroupSize;
+            case "atroxiiaSpawnWeight" -> () -> spawnHolder().getConfig().atroxiiaSpawnWeight;
+            case "atroxiiaMinGroupSize" -> () -> spawnHolder().getConfig().atroxiiaMinGroupSize;
+            case "atroxiiaMaxGroupSize" -> () -> spawnHolder().getConfig().atroxiiaMaxGroupSize;
             case "volitansSpawnWeight" -> () -> spawnHolder().getConfig().volitansSpawnWeight;
             case "volitansMinGroupSize" -> () -> spawnHolder().getConfig().volitansMinGroupSize;
             case "volitansMaxGroupSize" -> () -> spawnHolder().getConfig().volitansMaxGroupSize;
@@ -218,6 +221,9 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "ignivorusSpawnWeight" -> value -> spawnHolder().getConfig().ignivorusSpawnWeight = value;
             case "ignivorusMinGroupSize" -> value -> spawnHolder().getConfig().ignivorusMinGroupSize = value;
             case "ignivorusMaxGroupSize" -> value -> spawnHolder().getConfig().ignivorusMaxGroupSize = value;
+            case "atroxiiaSpawnWeight" -> value -> spawnHolder().getConfig().atroxiiaSpawnWeight = value;
+            case "atroxiiaMinGroupSize" -> value -> spawnHolder().getConfig().atroxiiaMinGroupSize = value;
+            case "atroxiiaMaxGroupSize" -> value -> spawnHolder().getConfig().atroxiiaMaxGroupSize = value;
             case "volitansSpawnWeight" -> value -> spawnHolder().getConfig().volitansSpawnWeight = value;
             case "volitansMinGroupSize" -> value -> spawnHolder().getConfig().volitansMinGroupSize = value;
             case "volitansMaxGroupSize" -> value -> spawnHolder().getConfig().volitansMaxGroupSize = value;

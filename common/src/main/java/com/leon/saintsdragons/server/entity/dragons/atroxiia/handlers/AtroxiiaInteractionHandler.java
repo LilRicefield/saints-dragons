@@ -31,6 +31,14 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
     }
 
     @Override
+    protected String getCommandStatusMessageKey(int command) {
+        if (command == 1 && dragon.isInWaterOrBubble()) {
+            return "entity.saintsdragons.all.command_1_staying";
+        }
+        return super.getCommandStatusMessageKey(command);
+    }
+
+    @Override
     protected InteractionResult handleUntamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
         if (!dragon.isFood(heldItem)) {
             return InteractionResult.PASS;

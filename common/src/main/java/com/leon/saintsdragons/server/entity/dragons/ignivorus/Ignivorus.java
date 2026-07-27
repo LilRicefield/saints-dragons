@@ -56,6 +56,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
@@ -134,6 +136,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final int PHASE2_RIDER_TAKEOFF_TICKS = 60;
     private static final int PHASE2_RIDER_TAKEOFF_LAUNCH_DELAY_TICKS = 40;
     private static final double PHASE2_RIDER_TAKEOFF_UPWARD_STEP = 1.0D;
+    private static final UUID PHASE2_FOLLOW_RANGE_MODIFIER_UUID =
+            UUID.fromString("9bc2f319-58d7-47b7-84e8-bb0ed524030f");
+    private static final AttributeModifier PHASE2_FOLLOW_RANGE_MODIFIER = new AttributeModifier(
+            PHASE2_FOLLOW_RANGE_MODIFIER_UUID,
+            "Ignivorus phase 2 follow range",
+            32.0D,
+            AttributeModifier.Operation.ADDITION
+    );
     public static final EntityDataAccessor<Boolean> DATA_RIDER_LANDING_BLEND =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
@@ -501,6 +511,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tickRiderControlLock();
         tickBulldozeState();
         tickPhase2State();
+        updatePhase2FollowRange();
         tickLeapState();
         tickScreenShake();
         tickCinematicZoom();
@@ -907,6 +918,29 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             }
 
             phase2WasVehicle = currentlyVehicle;
+        }
+    }
+
+    private void updatePhase2FollowRange() {
+        if (level().isClientSide) {
+            return;
+        }
+
+        AttributeInstance followRange = getAttribute(Attributes.FOLLOW_RANGE);
+        if (followRange == null) {
+            return;
+        }
+
+        boolean wildTransitionUltimate = !isTame()
+                && !wildPhase2UltimateTriggered
+                && isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE);
+        boolean shouldExtendRange = !isTame() && (phase2Active || wildTransitionUltimate);
+        boolean hasModifier = followRange.getModifier(PHASE2_FOLLOW_RANGE_MODIFIER_UUID) != null;
+
+        if (shouldExtendRange && !hasModifier) {
+            followRange.addTransientModifier(PHASE2_FOLLOW_RANGE_MODIFIER);
+        } else if (!shouldExtendRange && hasModifier) {
+            followRange.removeModifier(PHASE2_FOLLOW_RANGE_MODIFIER_UUID);
         }
     }
 

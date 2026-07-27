@@ -109,11 +109,15 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     }
 
     public void triggerSitDownAnimation() {
-        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_DOWN);
+        if (!dragon.isInWaterOrBubble()) {
+            AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_DOWN);
+        }
     }
 
     public void triggerSitUpAnimation() {
-        AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_UP);
+        if (!dragon.isInWaterOrBubble()) {
+            AnimationHelper.triggerRestAnimation(dragon, AnimationHelper.SIT_UP);
+        }
     }
 
     public void triggerFallAsleepAnimation() {

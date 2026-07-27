@@ -19,17 +19,19 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
 
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
+        tag(ModTags.Biomes.HAS_ATROXIIA)
+                .addOptionalTag(rl("c", "is_cold/overworld"))
+                .addOptionalTag(rl("forge", "is_cold"))
+                .add(Biomes.SNOWY_PLAINS)
+                .add(Biomes.ICE_SPIKES);
+
         tag(ModTags.Biomes.HAS_CINDERVANE)
-                .addOptionalTag(rl("c", "mountain"))
                 .addOptionalTag(rl("c", "mountain_peak"))
-                .addOptionalTag(rl("c", "mountain_slope"))
-                .addOptionalTag(rl("c", "is_mountain"))
                 .addOptionalTag(rl("c", "is_mountain/peak"))
                 .addOptionalTag(rl("forge", "is_peak"))
                 .add(Biomes.STONY_PEAKS)
                 .add(Biomes.JAGGED_PEAKS)
                 .add(Biomes.FROZEN_PEAKS)
-                .add(Biomes.SNOWY_SLOPES)
                 .add(Biomes.GROVE)
                 .add(Biomes.CHERRY_GROVE)
                 .add(Biomes.MEADOW);

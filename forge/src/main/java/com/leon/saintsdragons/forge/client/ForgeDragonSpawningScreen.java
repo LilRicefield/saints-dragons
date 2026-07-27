@@ -16,7 +16,8 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         CINDERVANE,
         NULLJAW,
         IGNIVORUS,
-        VOLITANS
+        VOLITANS,
+        ATROXIIA
     }
 
     private Section section = Section.RAEVYX;
@@ -35,6 +36,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             case NULLJAW -> addNulljawEntries(entries);
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
+            case ATROXIIA -> addAtroxiiaEntries(entries);
         }
     }
 
@@ -74,7 +76,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startTopX + (buttonWidth + spacing) * 3, yTop, buttonWidth, 20).build());
 
-        int totalBottomWidth = buttonWidth * 2 + spacing;
+        int totalBottomWidth = buttonWidth * 3 + spacing * 2;
         int startBottomX = (width - totalBottomWidth) / 2;
         int yBottom = yTop + 24;
 
@@ -91,6 +93,13 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 rebuildWidgets();
             }
         }).bounds(startBottomX + (buttonWidth + spacing), yBottom, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.atroxiia"), button -> {
+            if (section != Section.ATROXIIA) {
+                section = Section.ATROXIIA;
+                rebuildWidgets();
+            }
+        }).bounds(startBottomX + (buttonWidth + spacing) * 2, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
@@ -223,6 +232,23 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE::save));
     }
 
+    private void addAtroxiiaEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.atroxiia")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
+                SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT::get,
+                SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT::set,
+                SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
+                SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE::get,
+                SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE::set,
+                SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
+                SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE::get,
+                SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE::set,
+                SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE::save));
+    }
+
     private void resetSection() {
         switch (section) {
             case RAEVYX -> {
@@ -278,6 +304,14 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.save();
+            }
+            case ATROXIIA -> {
+                SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT.set(SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT_DEFAULT);
+                SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE.set(SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE.set(SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT.save();
+                SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE.save();
+                SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE.save();
             }
         }
     }

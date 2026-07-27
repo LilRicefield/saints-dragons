@@ -511,21 +511,76 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         );
     }
 
+    private static double forgeDouble(Class<?> configClass, String fieldName) throws ReflectiveOperationException {
+        Object holder = configClass.getField(fieldName).get(null);
+        Object value = holder.getClass().getMethod("get").invoke(holder);
+        return ((Number)value).doubleValue();
+    }
+
+    private static boolean forgeBoolean(Class<?> configClass, String fieldName) throws ReflectiveOperationException {
+        Object holder = configClass.getField(fieldName).get(null);
+        return (boolean)holder.getClass().getMethod("get").invoke(holder);
+    }
+
     private static DragonAttributeConfig atroxiiaDefaults() {
+        double maxHealth = 200.0D;
+        double armor = 10.0D;
+        double slamDamage = 16.0D;
+        double swipeDamage = 12.0D;
+        double underwaterBiteDamage = 10.0D;
+        double preciseStrikeDamage = 9.0D;
+        double preciseStrikeKnockback = 0.75D;
+        double preciseStrikeStunDurationTicks = 40.0D;
+        double devastatingSweepDamage = 13.0D;
+        double devastatingSweepKnockback = 1.65D;
+        double helheimQuakeDamage = 25.0D;
+        double helheimQuakeKnockback = 0.75D;
+        double helheimQuakeSecondaryKnockback = 1.8D;
+        double helheimQuakeStunDurationTicks = 100.0D;
+        boolean frostImpactEnabled = true;
+
+        if (IS_FORGE) {
+            try {
+                Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
+                maxHealth = forgeDouble(configClass, "ATROXIIA_MAX_HEALTH");
+                armor = forgeDouble(configClass, "ATROXIIA_ARMOR");
+                slamDamage = forgeDouble(configClass, "ATROXIIA_SLAM_DAMAGE");
+                swipeDamage = forgeDouble(configClass, "ATROXIIA_SWIPE_DAMAGE");
+                underwaterBiteDamage = forgeDouble(configClass, "ATROXIIA_UNDERWATER_BITE_DAMAGE");
+                preciseStrikeDamage = forgeDouble(configClass, "ATROXIIA_PRECISE_STRIKE_DAMAGE");
+                preciseStrikeKnockback = forgeDouble(configClass, "ATROXIIA_PRECISE_STRIKE_KNOCKBACK");
+                preciseStrikeStunDurationTicks = forgeDouble(configClass, "ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS");
+                devastatingSweepDamage = forgeDouble(configClass, "ATROXIIA_DEVASTATING_SWEEP_DAMAGE");
+                devastatingSweepKnockback = forgeDouble(configClass, "ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK");
+                helheimQuakeDamage = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_DAMAGE");
+                helheimQuakeKnockback = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_KNOCKBACK");
+                helheimQuakeSecondaryKnockback = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK");
+                helheimQuakeStunDurationTicks = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS");
+                frostImpactEnabled = forgeBoolean(configClass, "ATROXIIA_FROST_IMPACT_ENABLED");
+            } catch (Exception ignored) {
+            }
+        }
+
         return new DragonAttributeConfig(
-                200.0D,
-                10.0D,
+                maxHealth,
+                armor,
                 0.0D,
                 Map.of(
-                        "slam", DragonAbilityOverride.ofDamage(16.0D),
-                        "swipe", DragonAbilityOverride.ofDamage(12.0D),
-                        "underwater_bite", DragonAbilityOverride.ofDamage(10.0D),
-                        "precise_strike", DragonAbilityOverride.ofDamage(9.0D),
-                        "helheim_quake", DragonAbilityOverride.ofDamage(25.0D)
+                        "slam", DragonAbilityOverride.ofDamage(slamDamage),
+                        "swipe", DragonAbilityOverride.ofDamage(swipeDamage),
+                        "underwater_bite", DragonAbilityOverride.ofDamage(underwaterBiteDamage),
+                        "precise_strike", DragonAbilityOverride.ofTuning(
+                                preciseStrikeDamage, preciseStrikeKnockback, null,
+                                preciseStrikeStunDurationTicks, null),
+                        "devastating_sweep", DragonAbilityOverride.ofTuning(
+                                devastatingSweepDamage, devastatingSweepKnockback, null, null, null),
+                        "helheim_quake", DragonAbilityOverride.ofTuning(
+                                helheimQuakeDamage, helheimQuakeKnockback, helheimQuakeSecondaryKnockback,
+                                helheimQuakeStunDurationTicks, null),
+                        "frost_impact", DragonAbilityOverride.ofTuning(
+                                null, null, null, null, frostImpactEnabled)
                 ),
                 Map.of(
-                        "helheim_quake1_knockback", 0.75D,
-                        "helheim_quake2_knockback", 1.8D,
                         "taming_chance_base", 20.0D,
                         "taming_chance_hearty", 33.3333D,
                         "taming_stun_health", 60.0D
@@ -831,6 +886,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillRaevyxEggTimerTuning(path, entry.getKey(), entry.getValue());
                 backfillTamingStunHealth(path, entry.getKey(), entry.getValue());
                 backfillPreyTamingChances(path, entry.getKey(), entry.getValue());
+                backfillAtroxiiaAbilityTuning(path, entry.getKey(), entry.getValue());
                 backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
                 continue;
@@ -887,6 +943,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Double damage = override.damage();
                 if (damage != null) {
                     abilityJson.addProperty("damage", damage);
+                }
+                if (override.knockback() != null) {
+                    abilityJson.addProperty("knockback", override.knockback());
+                }
+                if (override.secondaryKnockback() != null) {
+                    abilityJson.addProperty("secondary_knockback", override.secondaryKnockback());
+                }
+                if (override.stunDurationTicks() != null) {
+                    abilityJson.addProperty("stun_duration_ticks", override.stunDurationTicks());
+                }
+                if (override.enabled() != null) {
+                    abilityJson.addProperty("enabled", override.enabled());
                 }
                 abilitiesJson.add(key, abilityJson);
             });
@@ -1383,6 +1451,81 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             }
         } catch (Exception e) {
             SaintsDragonsCommon.LOGGER.warn("Failed to backfill prey taming chances at {}", path, e);
+        }
+    }
+
+    private void backfillAtroxiiaAbilityTuning(Path path, ResourceLocation id,
+                                               DragonAttributeConfig mergedConfig) {
+        if (!id.equals(ATROXIIA_ID)) {
+            return;
+        }
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonObject json = GsonHelper.convertToJsonObject(JsonParser.parseReader(reader), id.toString());
+            JsonObject abilities = json.has("abilities")
+                    ? GsonHelper.getAsJsonObject(json, "abilities")
+                    : new JsonObject();
+            JsonObject extra = json.has("extra")
+                    ? GsonHelper.getAsJsonObject(json, "extra")
+                    : new JsonObject();
+            boolean updated = false;
+
+            for (Map.Entry<String, DragonAbilityOverride> entry : mergedConfig.abilities().entrySet()) {
+                String abilityId = entry.getKey();
+                DragonAbilityOverride defaults = entry.getValue();
+                JsonObject ability = abilities.has(abilityId)
+                        ? GsonHelper.getAsJsonObject(abilities, abilityId)
+                        : new JsonObject();
+
+                if (defaults.damage() != null && !ability.has("damage")) {
+                    ability.addProperty("damage", defaults.damage());
+                    updated = true;
+                }
+                if (defaults.knockback() != null && !ability.has("knockback")) {
+                    double value = abilityId.equals("helheim_quake") && extra.has("helheim_quake1_knockback")
+                            ? GsonHelper.getAsDouble(extra, "helheim_quake1_knockback")
+                            : defaults.knockback();
+                    ability.addProperty("knockback", value);
+                    updated = true;
+                }
+                if (defaults.secondaryKnockback() != null && !ability.has("secondary_knockback")) {
+                    double value = abilityId.equals("helheim_quake") && extra.has("helheim_quake2_knockback")
+                            ? GsonHelper.getAsDouble(extra, "helheim_quake2_knockback")
+                            : defaults.secondaryKnockback();
+                    ability.addProperty("secondary_knockback", value);
+                    updated = true;
+                }
+                if (defaults.stunDurationTicks() != null && !ability.has("stun_duration_ticks")) {
+                    ability.addProperty("stun_duration_ticks", defaults.stunDurationTicks());
+                    updated = true;
+                }
+                if (defaults.enabled() != null && !ability.has("enabled")) {
+                    ability.addProperty("enabled", defaults.enabled());
+                    updated = true;
+                }
+                if (!abilities.has(abilityId)) {
+                    abilities.add(abilityId, ability);
+                    updated = true;
+                }
+            }
+
+            if (extra.remove("helheim_quake1_knockback") != null) {
+                updated = true;
+            }
+            if (extra.remove("helheim_quake2_knockback") != null) {
+                updated = true;
+            }
+
+            if (updated) {
+                json.add("abilities", abilities);
+                if (extra.entrySet().isEmpty()) {
+                    json.remove("extra");
+                } else {
+                    json.add("extra", extra);
+                }
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill Atroxiia ability tuning at {}", path, e);
         }
     }
 

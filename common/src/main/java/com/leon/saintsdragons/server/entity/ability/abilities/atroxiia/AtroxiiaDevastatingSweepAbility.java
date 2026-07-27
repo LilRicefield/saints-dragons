@@ -71,9 +71,10 @@ public class AtroxiiaDevastatingSweepAbility extends DragonAbility<Atroxiia> {
     }
 
     private void applyHit(Atroxiia dragon, LivingEntity target) {
-        float damage = (float) DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID)
-                .abilityDamage("devastating_sweep", BASE_DAMAGE);
+        var config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        float damage = (float)config.abilityDamage("devastating_sweep", BASE_DAMAGE);
+        double knockback = config.abilityKnockback("devastating_sweep", KNOCKBACK);
         damage *= dragon.getHungerMeleeDamageMultiplier();
 
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
@@ -85,7 +86,7 @@ public class AtroxiiaDevastatingSweepAbility extends DragonAbility<Atroxiia> {
             horizontalDirection = Vec3.directionFromRotation(0.0F, dragon.getYRot());
         }
 
-        Vec3 push = horizontalDirection.normalize().scale(KNOCKBACK);
+        Vec3 push = horizontalDirection.normalize().scale(knockback);
         target.push(push.x, KNOCKBACK_Y, push.z);
         target.hurtMarked = true;
     }

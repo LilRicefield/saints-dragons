@@ -264,6 +264,47 @@ public abstract class ForgePagedConfigScreen extends Screen {
         }
     }
 
+    protected static final class WarningEntry extends ConfigEntry {
+        protected WarningEntry(Component label) {
+            super(label);
+        }
+
+        @Override
+        protected void addWidgets(ForgePagedConfigScreen screen) {
+        }
+
+        @Override
+        protected void updateWidgetPositions() {
+        }
+
+        @Override
+        protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        }
+
+        @Override
+        protected void setVisible(boolean visible) {
+        }
+
+        @Override
+        protected void storeValue() {
+        }
+
+        @Override
+        protected void applyValue() {
+        }
+
+        @Override
+        protected int getHeight() {
+            return 30;
+        }
+
+        @Override
+        protected void renderLabel(GuiGraphics graphics, net.minecraft.client.gui.Font font) {
+            int availableWidth = Math.max(80, inputX + inputWidth - labelX);
+            graphics.drawWordWrap(font, label, labelX, y + 2, availableWidth, 0xFFFFAA00);
+        }
+    }
+
     protected static final class DoubleEntry extends ConfigEntry {
         private final DoubleSupplier getter;
         private final DoubleConsumer setter;

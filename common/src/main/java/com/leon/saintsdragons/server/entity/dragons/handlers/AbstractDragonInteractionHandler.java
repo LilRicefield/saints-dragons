@@ -73,11 +73,15 @@ public abstract class AbstractDragonInteractionHandler<T extends RideableDragonB
             int nextCommand = dragon.getNextCommand();
             dragon.setCommand(nextCommand);
             player.displayClientMessage(
-                    Component.translatable("entity.saintsdragons.all.command_" + nextCommand, dragon.getName()),
+                    Component.translatable(getCommandStatusMessageKey(nextCommand), dragon.getName()),
                     true
             );
         }
         return InteractionResult.sidedSuccess(client);
+    }
+
+    protected String getCommandStatusMessageKey(int command) {
+        return "entity.saintsdragons.all.command_" + command;
     }
 
     protected InteractionResult handleStandardMounting(Player player) {

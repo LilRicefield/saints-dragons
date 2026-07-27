@@ -163,6 +163,23 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue NULLJAW_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
 
+    // Atroxiia
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_MAX_HEALTH;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_ARMOR;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_SLAM_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_SWIPE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_UNDERWATER_BITE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_PRECISE_STRIKE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_PRECISE_STRIKE_KNOCKBACK;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_DEVASTATING_SWEEP_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_HELHEIM_QUAKE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_HELHEIM_QUAKE_KNOCKBACK;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS;
+    public static ForgeConfigSpec.BooleanValue ATROXIIA_FROST_IMPACT_ENABLED;
+
     // Draconian Swarm
     public static ForgeConfigSpec.IntValue SWARM_WAVE_1_COUNT;
     public static ForgeConfigSpec.IntValue SWARM_WAVE_2_COUNT;
@@ -343,6 +360,24 @@ public final class ForgeDragonAttributesConfig {
         builder.push("nulljaw");
         NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 70.0, 1.0, 100000.0);
         NULLJAW_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
+        builder.pop();
+
+        builder.push("atroxiia");
+        ATROXIIA_MAX_HEALTH = builder.defineInRange("max_health", 200.0, 1.0, 100000.0);
+        ATROXIIA_ARMOR = builder.defineInRange("armor", 10.0, 0.0, 100000.0);
+        ATROXIIA_SLAM_DAMAGE = builder.defineInRange("slam_damage", 16.0, 0.0, 100000.0);
+        ATROXIIA_SWIPE_DAMAGE = builder.defineInRange("swipe_damage", 12.0, 0.0, 100000.0);
+        ATROXIIA_UNDERWATER_BITE_DAMAGE = builder.defineInRange("underwater_bite_damage", 10.0, 0.0, 100000.0);
+        ATROXIIA_PRECISE_STRIKE_DAMAGE = builder.defineInRange("precise_strike_damage", 9.0, 0.0, 100000.0);
+        ATROXIIA_PRECISE_STRIKE_KNOCKBACK = builder.defineInRange("precise_strike_knockback", 0.75, 0.0, 1000.0);
+        ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS = builder.defineInRange("precise_strike_stun_duration_ticks", 40.0, 0.0, 12000.0);
+        ATROXIIA_DEVASTATING_SWEEP_DAMAGE = builder.defineInRange("devastating_sweep_damage", 13.0, 0.0, 100000.0);
+        ATROXIIA_DEVASTATING_SWEEP_KNOCKBACK = builder.defineInRange("devastating_sweep_knockback", 1.65, 0.0, 1000.0);
+        ATROXIIA_HELHEIM_QUAKE_DAMAGE = builder.defineInRange("helheim_quake_damage", 25.0, 0.0, 100000.0);
+        ATROXIIA_HELHEIM_QUAKE_KNOCKBACK = builder.defineInRange("helheim_quake_knockback", 0.75, 0.0, 1000.0);
+        ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK = builder.defineInRange("helheim_quake_secondary_knockback", 1.8, 0.0, 1000.0);
+        ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS = builder.defineInRange("helheim_quake_stun_duration_ticks", 100.0, 0.0, 12000.0);
+        ATROXIIA_FROST_IMPACT_ENABLED = builder.define("frost_impact_enabled", true);
         builder.pop();
 
         builder.push("draconian_swarm");
