@@ -2104,6 +2104,17 @@
       }
     ]
   },
+  "atroxiia_flex": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_flex",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_flex",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
   "atroxiia_slam": {
     "subtitle": "subtitles.saintsdragons.atroxiia_slam",
     "sounds": [

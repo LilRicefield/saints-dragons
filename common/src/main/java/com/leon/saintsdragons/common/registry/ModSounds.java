@@ -89,6 +89,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> ATROXIIA_GRUMBLE_1 = registerSound("atroxiia_grumble1");
     public static final Supplier<SoundEvent> ATROXIIA_GRUMBLE_2 = registerSound("atroxiia_grumble2");
     public static final Supplier<SoundEvent> ATROXIIA_GRUMBLE_3 = registerSound("atroxiia_grumble3");
+    public static final Supplier<SoundEvent> ATROXIIA_FLEX = registerSound("atroxiia_flex");
     public static final Supplier<SoundEvent> ATROXIIA_SLAM = registerSound("atroxiia_slam");
     public static final Supplier<SoundEvent> ATROXIIA_UNDERWATER_BITE = registerSound("atroxiia_underwater_bite");
     public static final Supplier<SoundEvent> ATROXIIA_STEP = registerSound("atroxiia_step");

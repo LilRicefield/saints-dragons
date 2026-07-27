@@ -36,6 +36,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     private static final RawAnimation HURT = RawAnimation.begin().thenPlay("animation.atroxiia.hurt");
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.atroxiia.die");
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.atroxiia.eat");
+    private static final RawAnimation FLEX = RawAnimation.begin().thenPlay("animation.atroxiia.flex");
 
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, null, STUNNED, null);
@@ -85,6 +86,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         AnimationHelper.register(controller, "devastating_sweep", DEVASTATING_SWEEP);
         AnimationHelper.register(controller, "helheim_quake1", HELHEIM_QUAKE_ONE);
         AnimationHelper.register(controller, "helheim_quake2", HELHEIM_QUAKE_TWO);
+        AnimationHelper.register(controller, "atroxiia_flex", FLEX);
     }
 
     public PlayState fastActionPredicate(AnimationState<Atroxiia> state) {

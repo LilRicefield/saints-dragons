@@ -14,10 +14,17 @@ public final class AtroxiiaSoundProfile implements DragonSoundProfile {
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.of(
             "grumble1", 20,
             "grumble2", 20,
-            "grumble3", 30
+            "grumble3", 30,
+            "atroxiia_flex", 80
     );
 
     private AtroxiiaSoundProfile() {
+    }
+
+    @Override
+    public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon,
+                                        String key, String locator) {
+        return "atroxiia_flex".equals(key);
     }
 
     @Override

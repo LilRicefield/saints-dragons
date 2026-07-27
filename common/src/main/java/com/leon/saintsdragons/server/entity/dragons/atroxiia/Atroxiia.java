@@ -88,6 +88,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final int MOVEMENT_TRANSITION_TICKS = 4;
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
+    private static final int FLEX_CONTROL_LOCK_TICKS = 67;
+    private static final int FLEX_COOLDOWN_TICKS = 120;
     private static final int SIT_DOWN_TICKS = 48;
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
@@ -112,6 +114,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
                     ModSounds.ATROXIIA_GRUMBLE_2, 1.0F, 0.95F, 0.1F, false, false, true)
             .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.atroxiia.grumble3",
                     ModSounds.ATROXIIA_GRUMBLE_3, 1.0F, 0.95F, 0.1F, false, false, true)
+            .add("atroxiia_flex", AtroxiiaAnimationHandler.MOVEMENT_CONTROLLER, "animation.atroxiia.flex",
+                    ModSounds.ATROXIIA_FLEX, 1.4F, 0.95F, 0.05F, false, false, false)
             .add("atroxiia_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.atroxiia.hurt",
                     ModSounds.ATROXIIA_HURT, 1.2F, 0.95F, 0.1F, false, true, true)
             .add("atroxiia_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.atroxiia.die",
@@ -216,6 +220,33 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             case ABILITY_USE, ABILITY_STOP -> true;
             default -> super.supportsRiderAction(action);
         };
+    }
+
+    @Override
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return new RiderFlexSpec(FLEX_CONTROL_LOCK_TICKS, FLEX_COOLDOWN_TICKS);
+    }
+
+    @Override
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return super.canRiderFlex(player, spec)
+                && !isBaby()
+                && !isDying()
+                && isGroundedForAction()
+                && !isInWaterOrBubble()
+                && !isOrderedToSit()
+                && !isInSitTransition()
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && !isTamingStunned()
+                && getActiveAbility() == null;
+    }
+
+    @Override
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
+        getSoundHandler().playVocal("atroxiia_flex");
     }
 
     @Override
