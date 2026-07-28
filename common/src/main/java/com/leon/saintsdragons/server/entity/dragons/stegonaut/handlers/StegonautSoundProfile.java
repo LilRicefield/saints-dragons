@@ -22,6 +22,7 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
             Map.entry("grumble1", 54),
             Map.entry("grumble2", 83),
             Map.entry("grumble3", 60),
+            Map.entry("stegonaut_flex", 140),
             Map.entry("stegonaut_hurt", 30),
             Map.entry("stegonaut_die", 55)
     );
@@ -62,6 +63,7 @@ public final class StegonautSoundProfile implements DragonSoundProfile {
             case "grumble1", "stegonaut_grumble1" -> 54;
             case "grumble2", "stegonaut_grumble2" -> 83;
             case "grumble3", "stegonaut_grumble3" -> 60;
+            case "stegonaut_flex" -> 140;
             default -> -1;
         };
         if (duration < 0) {

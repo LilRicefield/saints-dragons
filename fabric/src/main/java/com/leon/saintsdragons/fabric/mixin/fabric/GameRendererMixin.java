@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
+import com.leon.saintsdragons.client.ui.SpeedLineOverlay;
 import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -11,6 +12,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -63,6 +65,31 @@ public abstract class GameRendererMixin {
         }
 
         poseStack.mulPose(Axis.ZP.rotationDegrees(roll));
+    }
+
+    @Inject(
+            method = "render",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V"
+            )
+    )
+    private void saintsdragons$renderSpeedLinesWithHiddenGui(float partialTick, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+        if (!renderLevel
+                || this.minecraft.player == null
+                || this.minecraft.screen != null
+                || !this.minecraft.options.hideGui
+                || !FabricClientConfigAccess.isDiveSpeedLinesEnabled()) {
+            return;
+        }
+
+        GuiGraphics graphics = new GuiGraphics(this.minecraft, this.minecraft.renderBuffers().bufferSource());
+        SpeedLineOverlay.INSTANCE.render(
+                graphics,
+                this.minecraft.getWindow().getGuiScaledWidth(),
+                this.minecraft.getWindow().getGuiScaledHeight(),
+                partialTick
+        );
     }
 
     private static boolean saintsdragons$usesFirstPersonDragonRoll(RideableDragonBase dragon) {

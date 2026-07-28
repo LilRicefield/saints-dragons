@@ -16,6 +16,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue CINDERVANE_FLYING_SPEED;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_BITE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue CINDERVANE_DOUBLE_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_SLASH_GRAB_HIT1_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_SLASH_GRAB_HIT2_DAMAGE;
     public static ForgeConfigSpec.DoubleValue CINDERVANE_MAGMA_VOLLEY_DAMAGE;
@@ -208,6 +209,7 @@ public final class ForgeDragonAttributesConfig {
         CINDERVANE_FLYING_SPEED = builder.defineInRange("flying_speed", 0.60, 0.0, 2.0);
         CINDERVANE_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         CINDERVANE_BITE_DAMAGE = builder.defineInRange("bite_damage", 12.0, 0.0, 100000.0);
+        CINDERVANE_DOUBLE_BITE_DAMAGE = builder.defineInRange("double_bite_damage", 15.0, 0.0, 100000.0);
         CINDERVANE_SLASH_GRAB_HIT1_DAMAGE = builder.defineInRange("slash_grab_hit1_damage", 5.0, 0.0, 100000.0);
         CINDERVANE_SLASH_GRAB_HIT2_DAMAGE = builder.defineInRange("slash_grab_hit2_damage", 7.0, 0.0, 100000.0);
         CINDERVANE_MAGMA_VOLLEY_DAMAGE = builder.defineInRange("magma_volley_damage", 20.0, 0.0, 100000.0);

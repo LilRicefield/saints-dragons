@@ -34,7 +34,7 @@ public class DragonUIEventHandler {
     private static final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
     private static final VolitansBreathMeterIndicator volitansBreathMeterIndicator = new VolitansBreathMeterIndicator();
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
-    private static final SpeedLineOverlay diveSpeedLineOverlay = new SpeedLineOverlay();
+    private static final SpeedLineOverlay diveSpeedLineOverlay = SpeedLineOverlay.INSTANCE;
 
     static {
         DragonUIRegistry.init(meleeModeNotification);

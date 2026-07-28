@@ -106,6 +106,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_1 = registerSound("stegonaut_grumble1");
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_2 = registerSound("stegonaut_grumble2");
     public static final Supplier<SoundEvent> STEGONAUT_GRUMBLE_3 = registerSound("stegonaut_grumble3");
+    public static final Supplier<SoundEvent> STEGONAUT_FLEX = registerSound("stegonaut_flex");
     public static final Supplier<SoundEvent> STEGONAUT_HURT = registerSound("stegonaut_hurt");
     public static final Supplier<SoundEvent> STEGONAUT_DIE = registerSound("stegonaut_die");
     public static final Supplier<SoundEvent> STEGONAUT_EAT = registerSound("stegonaut_eat");
@@ -148,16 +149,17 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_1 = registerSound("cindervane_grumble1");
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_2 = registerSound("cindervane_grumble2");
     public static final Supplier<SoundEvent> CINDERVANE_GRUMBLE_3 = registerSound("cindervane_grumble3");
-    public static final Supplier<SoundEvent> CINDERVANE_ROAR = registerSound("cindervane_roar");
+    public static final Supplier<SoundEvent> CINDERVANE_FLEX = registerSound("cindervane_flex");
     public static final Supplier<SoundEvent> CINDERVANE_HURT = registerSound("cindervane_hurt");
     public static final Supplier<SoundEvent> CINDERVANE_BITE = registerSound("cindervane_bite");
+    public static final Supplier<SoundEvent> CINDERVANE_DOUBLE_BITE = registerSound("cindervane_double_bite");
     public static final Supplier<SoundEvent> CINDERVANE_SLASH = registerSound("cindervane_slash");
     public static final Supplier<SoundEvent> CINDERVANE_DIE = registerSound("cindervane_die");
     public static final Supplier<SoundEvent> CINDERVANE_FLAP = registerSound("cindervane_flap");
     public static final Supplier<SoundEvent> CINDERVANE_TAKEOFF = registerSound("cindervane_takeoff");
     public static final Supplier<SoundEvent> CINDERVANE_LANDED = registerSound("cindervane_landed");
     public static final Supplier<SoundEvent> CINDERVANE_EAT = registerSound("cindervane_eat");
-    public static final Supplier<SoundEvent> CINDERVANE_MAGMA_BLAST = registerSound("cindervane_magma_blast");
+    public static final Supplier<SoundEvent> CINDERVANE_MAGMA_VOLLEY = registerSound("cindervane_magma_volley");
     public static final Supplier<SoundEvent> CINDERVANE_STEP = registerSound("cindervane_step");
 
     // Varasuchus

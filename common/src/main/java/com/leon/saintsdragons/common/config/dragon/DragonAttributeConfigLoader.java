@@ -65,6 +65,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double armor = 4.0D;
         double flyingSpeed = 0.60D;
         double biteDamage = 12.0D;
+        double doubleBiteDamage = 15.0D;
         double slashGrabHit1Damage = 5.0D;
         double slashGrabHit2Damage = 7.0D;
         double magmaVolleyDamage = 20.0D;
@@ -85,6 +86,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 armor = (double) configClass.getField("CINDERVANE_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_ARMOR").get(null));
                 flyingSpeed = (double) configClass.getField("CINDERVANE_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FLYING_SPEED").get(null));
                 biteDamage = (double) configClass.getField("CINDERVANE_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_BITE_DAMAGE").get(null));
+                doubleBiteDamage = (double) configClass.getField("CINDERVANE_DOUBLE_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_DOUBLE_BITE_DAMAGE").get(null));
                 slashGrabHit1Damage = (double) configClass.getField("CINDERVANE_SLASH_GRAB_HIT1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SLASH_GRAB_HIT1_DAMAGE").get(null));
                 slashGrabHit2Damage = (double) configClass.getField("CINDERVANE_SLASH_GRAB_HIT2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SLASH_GRAB_HIT2_DAMAGE").get(null));
                 magmaVolleyDamage = (double) configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null));
@@ -107,6 +109,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 flyingSpeed,
                 Map.of(
                         "bite", DragonAbilityOverride.ofDamage(biteDamage),
+                        "double_bite", DragonAbilityOverride.ofDamage(doubleBiteDamage),
                         "slash_grab_hit1", DragonAbilityOverride.ofDamage(slashGrabHit1Damage),
                         "slash_grab_hit2", DragonAbilityOverride.ofDamage(slashGrabHit2Damage),
                         "magma_volley", DragonAbilityOverride.ofDamage(magmaVolleyDamage),

@@ -11,10 +11,10 @@ import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaS
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSwipeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaUnderwaterBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneBiteAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneDoubleBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneFireBodyAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneRoarAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneSlashGrabAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneVolleyAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneMagmaVolleyAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusBodySlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
@@ -94,8 +94,8 @@ public final class ModAbilities {
     public static final DragonAbilityType<Cindervane, CindervaneBiteAbility> CINDERVANE_BITE = register("cindervane_bite", CindervaneBiteAbility::new);
     public static final DragonAbilityType<Cindervane, CindervaneSlashGrabAbility> CINDERVANE_SLASH_GRAB = register("cindervane_slash_grab", CindervaneSlashGrabAbility::new);
     public static final DragonAbilityType<Cindervane, CindervaneFireBodyAbility> CINDERVANE_FIRE_BODY = register("cindervane_fire_body", CindervaneFireBodyAbility::new);
-    public static final DragonAbilityType<Cindervane, CindervaneRoarAbility> CINDERVANE_ROAR = register("cindervane_roar", CindervaneRoarAbility::new);
-    public static final DragonAbilityType<Cindervane, CindervaneVolleyAbility> CINDERVANE_FIRE_BREATH_VOLLEY = register("cindervane_fire_breath_volley", CindervaneVolleyAbility::new);
+    public static final DragonAbilityType<Cindervane, CindervaneDoubleBiteAbility> CINDERVANE_DOUBLE_BITE = register("cindervane_double_bite", CindervaneDoubleBiteAbility::new);
+    public static final DragonAbilityType<Cindervane, CindervaneMagmaVolleyAbility> CINDERVANE_MAGMA_VOLLEY = register("cindervane_magma_volley", CindervaneMagmaVolleyAbility::new);
     public static final DragonAbilityType<Cindervane, HurtAbility<Cindervane>> CINDERVANE_HURT = register("cindervane_hurt", HurtAbility::new);
     public static final DragonAbilityType<Cindervane, DieAbility<Cindervane>> CINDERVANE_DIE = register("cindervane_die", DieAbility::new);
 

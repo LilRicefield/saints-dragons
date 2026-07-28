@@ -27,7 +27,6 @@ import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
-import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
@@ -50,7 +49,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.RandomSource;
@@ -79,7 +77,6 @@ import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
@@ -1005,9 +1002,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         hasImpulse = true;
         leapGroundedTicks = 0;
         leapMovement.startContinuous(leapVelocity, 3);
-        if (level() instanceof ServerLevel server) {
-            breakGroundCircle(server, position(), 8.0D);
-        }
     }
 
     private void handleLeapMovement() {
@@ -1084,7 +1078,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
 
         Vec3 landPos = position();
-        spawnLeapImpactBlockEffect(server);
         spawnLeapImpactDirtParticles(server);
         AABB damageArea = new AABB(
             landPos.x - LEAP_SLAM_RADIUS,
@@ -1128,18 +1121,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                 .abilityDamage("bulldoze", DEFAULT_BULLDOZE_DAMAGE);
     }
 
-    private void spawnLeapImpactBlockEffect(ServerLevel level) {
-        RandomSource random = getRandom();
-        BlockPos dragonPos = blockPosition();
-        List<BlockPos> blockPositions = new ArrayList<>();
-        addRingBlockPositions(blockPositions, dragonPos, 16, 20, random, 25);
-        addRingBlockPositions(blockPositions, dragonPos, 10, 15, random, 20);
-        addRingBlockPositions(blockPositions, dragonPos, 5, 9, random, 15);
-        for (BlockPos pos : blockPositions) {
-            spawnLeapFallingBlockAt(level, pos, random);
-        }
-    }
-
     private void spawnLeapImpactDirtParticles(ServerLevel level) {
         RandomSource random = getRandom();
         Vec3 dragonPos = position();
@@ -1147,49 +1128,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         spawnLeapParticleRing(level, dragonPos, dirtParticles, 5, 10, 40, random);
         spawnLeapParticleRing(level, dragonPos, dirtParticles, 10, 15, 60, random);
         spawnLeapParticleRing(level, dragonPos, dirtParticles, 15, 20, 80, random);
-    }
-
-    private void addRingBlockPositions(List<BlockPos> positions, BlockPos center,
-                                       int minRadius, int maxRadius, RandomSource random, int count) {
-        for (int i = 0; i < count; i++) {
-            double angle = random.nextDouble() * Math.PI * 2;
-            double radius = minRadius + random.nextDouble() * (maxRadius - minRadius);
-            int xOffset = (int) Math.round(Math.cos(angle) * radius);
-            int zOffset = (int) Math.round(Math.sin(angle) * radius);
-            BlockPos targetPos = center.offset(xOffset, 0, zOffset);
-            positions.add(targetPos);
-        }
-    }
-
-    private void spawnLeapFallingBlockAt(ServerLevel level, BlockPos pos, RandomSource random) {
-        BlockPos groundPos = findGroundLevel(pos);
-        if (groundPos == null) {
-            return;
-        }
-
-        BlockState groundState = level.getBlockState(groundPos);
-        if (groundState.isAir() || groundState.liquid() || groundState.is(Blocks.BEDROCK)) {
-            return;
-        }
-
-        double startX = groundPos.getX() + 0.5;
-        double startY = groundPos.getY() + 0.5;
-        double startZ = groundPos.getZ() + 0.5;
-
-        VisualFallingBlockEntity fallingBlock =
-            new VisualFallingBlockEntity(
-                ModEntities.VISUAL_FALLING_BLOCK.get(),
-                level,
-                startX,
-                startY,
-                startZ,
-                groundState,
-                200
-            );
-
-        double upwardVelocity = 0.5 + random.nextDouble() * 0.7;
-        fallingBlock.setDeltaMovement(0, upwardVelocity, 0);
-        level.addFreshEntity(fallingBlock);
     }
 
     private void spawnLeapParticleRing(ServerLevel level, Vec3 center,
@@ -1232,114 +1170,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             }
         }
         return null;
-    }
-
-    private void breakGroundCircle(ServerLevel level, Vec3 center, double radius) {
-        if (!DragonGriefingRules.canDestroyBlocks(level)) {
-            return;
-        }
-
-        int centerX = (int) Math.floor(center.x);
-        int centerY = (int) Math.floor(center.y);
-        int centerZ = (int) Math.floor(center.z);
-
-        int radiusInt = (int) Math.ceil(radius);
-        List<BlockPos> blocksToRestore = new ArrayList<>();
-        Map<BlockPos, BlockState> originalStates = new HashMap<>();
-        for (int x = -radiusInt; x <= radiusInt; x++) {
-            for (int z = -radiusInt; z <= radiusInt; z++) {
-                double distSqr = x * x + z * z;
-                if (distSqr > radius * radius) {
-                    continue;
-                }
-
-                BlockPos targetPos = new BlockPos(centerX + x, centerY, centerZ + z);
-                BlockPos groundPos = findGroundLevelForBreaking(level, targetPos);
-
-                if (groundPos == null) {
-                    continue;
-                }
-                BlockState state = level.getBlockState(groundPos);
-                if (!canBreakBlock(level, groundPos, state)) {
-                    continue;
-                }
-
-                originalStates.put(groundPos.immutable(), state);
-                blocksToRestore.add(groundPos.immutable());
-
-                level.setBlock(groundPos, Blocks.AIR.defaultBlockState(), 3);
-
-                spawnBreakingFallingBlock(level, groundPos, state);
-            }
-        }
-
-        if (!blocksToRestore.isEmpty()) {
-            scheduleBlockRestoration(level, originalStates, 100);
-        }
-    }
-
-    private BlockPos findGroundLevelForBreaking(ServerLevel level, BlockPos startPos) {
-        for (int y = startPos.getY(); y > level.getMinBuildHeight(); y--) {
-            BlockPos checkPos = new BlockPos(startPos.getX(), y, startPos.getZ());
-            BlockState state = level.getBlockState(checkPos);
-
-            if (!state.isAir() && !state.liquid() && state.isSolidRender(level, checkPos)) {
-                return checkPos;
-            }
-        }
-        return null;
-    }
-
-    private boolean canBreakBlock(ServerLevel level, BlockPos pos, BlockState state) {
-        if (state.isAir() || state.liquid()) {
-            return false;
-        }
-
-        if (state.is(Blocks.BEDROCK) ||
-            state.is(Blocks.END_PORTAL) ||
-            state.is(Blocks.END_PORTAL_FRAME) ||
-            state.is(Blocks.END_GATEWAY)) {
-            return false;
-        }
-        if (state.getBlock() instanceof EntityBlock) {
-            return false;
-        }
-
-        return state.isSolidRender(level, pos);
-    }
-
-    private void spawnBreakingFallingBlock(ServerLevel level, BlockPos pos, BlockState state) {
-        double startX = pos.getX() + 0.5;
-        double startY = pos.getY() + 0.5;
-        double startZ = pos.getZ() + 0.5;
-
-        VisualFallingBlockEntity fallingBlock = new VisualFallingBlockEntity(
-                ModEntities.VISUAL_FALLING_BLOCK.get(),
-                level,
-                startX,
-                startY,
-                startZ,
-                state,
-                100
-            );
-        double upwardVelocity = 0.3 + level.random.nextDouble() * 0.4;
-        fallingBlock.setDeltaMovement(0, upwardVelocity, 0);
-        level.addFreshEntity(fallingBlock);
-    }
-
-    private void scheduleBlockRestoration(ServerLevel level, Map<BlockPos, BlockState> blocks, int delayTicks) {
-        level.getServer().tell(new TickTask(
-            level.getServer().getTickCount() + delayTicks,
-            () -> {
-                for (Map.Entry<BlockPos, BlockState> entry : blocks.entrySet()) {
-                    BlockPos pos = entry.getKey();
-                    BlockState state = entry.getValue();
-                    if (level.getBlockState(pos).isAir()) {
-                        level.setBlock(pos, state, 3);
-                    }
-                }
-            }
-        ));
     }
 
     private double getLeapGroundDistance() {

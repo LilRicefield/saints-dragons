@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
-import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
@@ -25,7 +24,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.MoveToGroundWalkTa
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneAirCombatMovementBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneAutonomousFlightBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneMeleeAttackBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneGroundCombatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane.CindervaneTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -83,18 +82,16 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                         .behaviours(
                                 new GroundPursuitFlightTransitionBehaviour<>(
                                         GroundPursuitFlightSettings.standard(),
-                                        dragon -> dragon.isAbilityActive(ModAbilities.CINDERVANE_BITE)
+                                        CindervaneGroundCombatBehaviour::isMovementCommitted
                                 ),
                                 new CindervaneAirCombatMovementBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<Cindervane>(
-                                        1.0F,
-                                        (dragon, target) ->
-                                                CindervaneMeleeAttackBehaviour.groundStopRange(target)
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
-                                        (dragon, target) -> dragon.isAbilityActive(ModAbilities.CINDERVANE_BITE)
+                                        CindervaneGroundCombatBehaviour.CHASE_SPEED,
+                                        CindervaneGroundCombatBehaviour::groundStopRange,
+                                        (dragon, target) -> CindervaneGroundCombatBehaviour.isMovementCommitted(dragon)
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),
-                                new CindervaneMeleeAttackBehaviour()
+                                new CindervaneGroundCombatBehaviour()
                         )
                         .clearWhenStopped(
                                 DragonMemories.MOVEMENT_INTENT,

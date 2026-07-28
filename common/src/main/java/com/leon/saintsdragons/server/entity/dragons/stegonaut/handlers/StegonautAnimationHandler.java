@@ -28,6 +28,7 @@ public class StegonautAnimationHandler {
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.stegonaut.wake_up");
     private static final RawAnimation GROUND_SLAM = RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam");
     private static final RawAnimation GROUND_SLAM2 = RawAnimation.begin().thenPlay("animation.stegonaut.ground_slam2");
+    private static final RawAnimation FLEX = RawAnimation.begin().thenPlay("animation.stegonaut.flex");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE_ANIM, WALK_ANIM, RUN_ANIM, SIT_ANIM, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_ANIM, WAKE_UP, SWIM_ANIM, null, JUMP_ANIM);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -100,6 +101,7 @@ public class StegonautAnimationHandler {
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "ground_slam", GROUND_SLAM);
         AnimationHelper.register(controller, "ground_slam2", GROUND_SLAM2);
+        AnimationHelper.register(controller, "stegonaut_flex", FLEX);
     }
 
     public PlayState fastActionPredicate(AnimationState<Stegonaut> state) {

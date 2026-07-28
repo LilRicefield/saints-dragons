@@ -74,6 +74,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         cindervaneBuffer.flyingSpeed = cindervaneCurrent.flyingSpeed();
         cindervaneBuffer.biteDamage = cindervaneCurrent.abilityDamage("bite",
                 cindervaneDefaults.abilityDamage("bite", 12.0D));
+        cindervaneBuffer.doubleBiteDamage = cindervaneCurrent.abilityDamage("double_bite",
+                cindervaneDefaults.abilityDamage("double_bite", 15.0D));
         cindervaneBuffer.slashGrabHit1Damage = cindervaneCurrent.abilityDamage("slash_grab_hit1",
                 cindervaneDefaults.abilityDamage("slash_grab_hit1", 5.0D));
         cindervaneBuffer.slashGrabHit2Damage = cindervaneCurrent.abilityDamage("slash_grab_hit2",
@@ -833,6 +835,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.double_bite_damage"), buffer.doubleBiteDamage)
+                .setDefaultValue(defaults.abilityDamage("double_bite", 15.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.doubleBiteDamage = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.slash_grab_hit1_damage"), buffer.slashGrabHit1Damage)
                 .setDefaultValue(defaults.abilityDamage("slash_grab_hit1", 5.0D))
@@ -1848,6 +1856,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         Map<String, DragonAbilityOverride> abilities = new HashMap<>(current.abilities());
         abilities.put("bite", DragonAbilityOverride.ofDamage(cindervaneBuffer.biteDamage));
+        abilities.put("double_bite", DragonAbilityOverride.ofDamage(cindervaneBuffer.doubleBiteDamage));
         abilities.put("slash_grab_hit1", DragonAbilityOverride.ofDamage(cindervaneBuffer.slashGrabHit1Damage));
         abilities.put("slash_grab_hit2", DragonAbilityOverride.ofDamage(cindervaneBuffer.slashGrabHit2Damage));
         abilities.put("magma_volley", DragonAbilityOverride.ofDamage(cindervaneBuffer.volleyDamage));
@@ -2043,6 +2052,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double armor;
         double flyingSpeed;
         double biteDamage;
+        double doubleBiteDamage;
         double slashGrabHit1Damage;
         double slashGrabHit2Damage;
         double volleyDamage;

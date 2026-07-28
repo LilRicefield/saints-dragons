@@ -55,6 +55,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.VARASUCHUS_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_EGG.get());
                                 output.accept(ModItems.VOLITANS_EGG.get());
+                                output.accept(ModItems.IVY_OCTOPUS_PLUSHIE.get());
                                 output.accept(ModItems.SEARING_COAL.get());
                                 output.accept(ModItems.ANCIENT_DRAGONITE_FRAGMENT.get());
                                 output.accept(ModItems.DRAGON_SEAL_STONE.get());
@@ -111,9 +112,6 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.DRACONIAN_SWARM_SPAWN_EGG.get());
                                 output.accept(ModItems.MOOP_SPAWN_EGG.get());
                                 output.accept(ModItems.IVY_THE_MERCHANT_SPAWN_EGG.get());
-                                output.accept(ModItems.IVY_OCTOPUS_PLUSHIE.get());
-
-
                                 })
                             .build());
 

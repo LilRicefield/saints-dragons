@@ -70,13 +70,6 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
 
             List<LivingEntity> targets = selectTargets();
 
-            if (targets.isEmpty() && dragon.getControllingPassenger() == null) {
-                LivingEntity currentTarget = dragon.getTarget();
-                if (currentTarget != null && currentTarget.isAlive() && !dragon.isAlly(currentTarget)) {
-                    targets = List.of(currentTarget);
-                }
-            }
-
             for (LivingEntity target : targets) {
                 applyHit(dragon, target);
             }
@@ -85,20 +78,20 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
         }
     }
 
-    private void applyHit(Cindervane dragon, LivingEntity target) {
+    static boolean applyHit(Cindervane dragon, LivingEntity target, String damageKey, float baseDamage) {
         float damage = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
-                .abilityDamage("bite", BASE_DAMAGE);
+                .abilityDamage(damageKey, baseDamage);
         damage *= dragon.getHungerMeleeDamageMultiplier();
         DamageSource source = dragon.level().damageSources().mobAttack(dragon);
-        target.hurt(source, damage);
+        boolean hurt = target.hurt(source, damage);
 
         Vec3 push = dragon.getLookAngle().scale(0.3);
         target.push(push.x, dragon.isFlying() ? 0.15 : 0.05, push.z);
+        return hurt;
     }
 
-    private List<LivingEntity> selectTargets() {
-        Cindervane dragon = getUser();
+    static List<LivingEntity> selectTargets(Cindervane dragon) {
         double range = RANGE;
         if (dragon.isFlying()) {
             range += AIR_RANGE_BONUS;
@@ -108,6 +101,9 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
             LivingEntity target = dragon.getTarget();
             sendDebugBox(dragon, range);
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
+                return List.of(target);
+            }
+            if (target != null && target.isAlive() && !dragon.isAlly(target)) {
                 return List.of(target);
             }
             return List.of();
@@ -124,12 +120,20 @@ public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
         );
     }
 
-    private void sendDebugBox(Cindervane dragon, double range) {
+    private static void sendDebugBox(Cindervane dragon, double range) {
         if (dragon.level().isClientSide) {
             return;
         }
         DragonMeleeGeometry.ForwardAttack attack = DragonMeleeGeometry.bodyForwardAttack(dragon).offset(HITBOX_FORWARD_OFFSET);
         DragonAbilityDebug.sendBox(dragon, attack.sweep(range, range, range), DEBUG_COLOR, DEBUG_TICKS);
+    }
+
+    private void applyHit(Cindervane dragon, LivingEntity target) {
+        applyHit(dragon, target, "bite", BASE_DAMAGE);
+    }
+
+    private List<LivingEntity> selectTargets() {
+        return selectTargets(getUser());
     }
 
 }

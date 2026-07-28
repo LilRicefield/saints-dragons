@@ -632,11 +632,11 @@
       }
     ]
   },
-  "cindervane_magma_blast": {
-    "subtitle": "subtitles.saintsdragons.cindervane_magma_blast",
+  "cindervane_magma_volley": {
+    "subtitle": "subtitles.saintsdragons.cindervane_magma_volley",
     "sounds": [
       {
-        "name": "saintsdragons:entity/cindervane/cindervane_magma_blast",
+        "name": "saintsdragons:entity/cindervane/cindervane_magma_volley",
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 20
@@ -720,14 +720,14 @@
       }
     ]
   },
-  "cindervane_roar": {
-    "subtitle": "subtitles.saintsdragons.cindervane_roar",
+  "cindervane_flex": {
+    "subtitle": "subtitles.saintsdragons.cindervane_flex",
     "sounds": [
       {
-        "name": "saintsdragons:entity/cindervane/cindervane_roar",
-        "volume": 1.5,
+        "name": "saintsdragons:entity/cindervane/cindervane_flex",
+        "volume": 1.4,
         "pitch": 1.0,
-        "attenuation_distance": 32
+        "attenuation_distance": 24
       }
     ]
   },
@@ -750,6 +750,17 @@
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 16
+      }
+    ]
+  },
+  "cindervane_double_bite": {
+    "subtitle": "subtitles.saintsdragons.cindervane_double_bite",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_double_bite",
+        "volume": 1.2,
+        "pitch": 1.0,
+        "attenuation_distance": 24
       }
     ]
   },
@@ -892,6 +903,17 @@
         "volume": 1.0,
         "pitch": 1.0,
         "attenuation_distance": 32
+      }
+    ]
+  },
+  "stegonaut_flex": {
+    "subtitle": "subtitles.saintsdragons.stegonaut_flex",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/stegonaut/stegonaut_flex",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 40
       }
     ]
   },

@@ -173,6 +173,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final double PACK_SEARCH_RADIUS = 48.0D;
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 420;
+    private static final int FLEX_CONTROL_LOCK_TICKS = 69;
+    private static final int FLEX_COOLDOWN_TICKS = 120;
     private static final int CINDERVANE_CHEST_SLOTS = 15;
     public static final double RIDER_WALK_SPEED = 0.18D;
     public static final double RIDER_RUN_SPEED = 0.26D;
@@ -182,7 +184,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                     .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.cindervane.grumble1", ModSounds.CINDERVANE_GRUMBLE_1, 1.1f, 0.98f, 0.06f, false, false, false)
                     .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.cindervane.grumble2", ModSounds.CINDERVANE_GRUMBLE_2, 1.2f, 0.96f, 0.08f, false, false, false)
                     .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.cindervane.grumble3", ModSounds.CINDERVANE_GRUMBLE_3, 1.0f, 1.0f, 0.05f, false, false, false)
-                    .add("roar", CindervaneAnimationHandler.ACTION_CONTROLLER, "animation.cindervane.roar", ModSounds.CINDERVANE_ROAR, 1.5f, 0.95f, 0.1f, false, false, false)
+                    .add("cindervane_flex", CindervaneAnimationHandler.MOVEMENT_CONTROLLER, "animation.cindervane.flex", ModSounds.CINDERVANE_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
                     .add("cindervane_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.cindervane.hurt", ModSounds.CINDERVANE_HURT, 1.2f, 0.95f, 0.1f, false, false, false)
                     .add("cindervane_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
                     .build();
@@ -218,6 +220,36 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             case ABILITY_USE, ABILITY_STOP, OPEN_INVENTORY -> true;
             default -> super.supportsRiderAction(action);
         };
+    }
+
+    @Override
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return new RiderFlexSpec(FLEX_CONTROL_LOCK_TICKS, FLEX_COOLDOWN_TICKS);
+    }
+
+    @Override
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return super.canRiderFlex(player, spec)
+                && !isBaby()
+                && !isDying()
+                && isGroundedForAction()
+                && !isInWaterOrBubble()
+                && !isFlying()
+                && !isTakeoff()
+                && !isHovering()
+                && !isLanding()
+                && !isOrderedToSit()
+                && !isInSitTransition()
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && getActiveAbility() == null;
+    }
+
+    @Override
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
+        getSoundHandler().playVocal("cindervane_flex");
     }
 
     @Override
@@ -775,12 +807,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public RiderAbilityBinding getPrimaryRiderAbility() {
-        return new RiderAbilityBinding(ModAbilities.CINDERVANE_ROAR.getName(), RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.CINDERVANE_DOUBLE_BITE.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
     public RiderAbilityBinding getSecondaryRiderAbility() {
-        return new RiderAbilityBinding(ModAbilities.CINDERVANE_FIRE_BREATH_VOLLEY.getName(), RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.CINDERVANE_MAGMA_VOLLEY.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -1367,11 +1399,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
-    public DragonAbilityType<?, ?> getRoaringAbility() {
-        return ModAbilities.CINDERVANE_ROAR;
-    }
-
-    @Override
     public int getDrinkingDurationTicks() {
         return DRINKING_ANIMATION_TICKS;
     }
@@ -1458,8 +1485,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return abilityType == ModAbilities.CINDERVANE_BITE
                 || abilityType == ModAbilities.CINDERVANE_SLASH_GRAB
                 || abilityType == ModAbilities.CINDERVANE_FIRE_BODY
-                || abilityType == ModAbilities.CINDERVANE_ROAR
-                || abilityType == ModAbilities.CINDERVANE_FIRE_BREATH_VOLLEY;
+                || abilityType == ModAbilities.CINDERVANE_DOUBLE_BITE
+                || abilityType == ModAbilities.CINDERVANE_MAGMA_VOLLEY;
     }
 
     @Override
@@ -1788,7 +1815,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public DragonAbilityType<?, ?> getChannelingAbility() {
-        return ModAbilities.CINDERVANE_FIRE_BREATH_VOLLEY;
+        return ModAbilities.CINDERVANE_MAGMA_VOLLEY;
     }
 
     public void setServerBonePosition(String boneName, Vec3 position) {

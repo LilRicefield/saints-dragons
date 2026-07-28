@@ -59,7 +59,7 @@ public final class CindervaneSoundProfile implements DragonSoundProfile {
             case "grumble1", "cindervane_grumble1" -> 37;
             case "grumble2", "cindervane_grumble2" -> 27;
             case "grumble3", "cindervane_grumble3" -> 39;
-            case "roar", "cindervane_roar" -> 60;
+            case "cindervane_flex" -> 100;
             default -> -1;
         };
         if (duration < 0) {

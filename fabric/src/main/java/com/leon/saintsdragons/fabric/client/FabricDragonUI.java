@@ -31,7 +31,7 @@ public final class FabricDragonUI {
     private static final IgnivorusFireBreathMeterIndicator ignivorusFireBreathMeterIndicator = new IgnivorusFireBreathMeterIndicator();
     private static final VolitansBreathMeterIndicator volitansBreathMeterIndicator = new VolitansBreathMeterIndicator();
     private static final DragonRideHealthBar rideHealthBar = new DragonRideHealthBar();
-    private static final SpeedLineOverlay diveSpeedLineOverlay = new SpeedLineOverlay();
+    private static final SpeedLineOverlay diveSpeedLineOverlay = SpeedLineOverlay.INSTANCE;
 
     private static final KeyMapping TOGGLE_DRAGON_UI = new KeyMapping(
             "key.saintsdragons.toggle_dragon_ui",

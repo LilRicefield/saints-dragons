@@ -35,6 +35,7 @@ public class CindervaneAnimationHandler {
     private static final RawAnimation WAKE_UP = RawAnimation.begin().thenPlay("animation.cindervane.wake_up");
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.cindervane.swim");
     private static final RawAnimation DRINKING = RawAnimation.begin().thenPlay("animation.cindervane.drinking");
+    private static final RawAnimation FLEX = RawAnimation.begin().thenPlay("animation.cindervane.flex");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, SWIM, null, FALLING);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -55,10 +56,12 @@ public class CindervaneAnimationHandler {
                 RawAnimation.begin().thenPlay("animation.cindervane.bite"));
         controller.triggerableAnim("bite_air",
                 RawAnimation.begin().thenPlay("animation.cindervane.bite_air"));
-        controller.triggerableAnim("roar_air",
-                RawAnimation.begin().thenPlay("animation.cindervane.roar_air"));
-        controller.triggerableAnim("magma_blast",
-                RawAnimation.begin().thenPlay("animation.cindervane.magma_blast"));
+        controller.triggerableAnim("double_bite",
+                RawAnimation.begin().thenPlay("animation.cindervane.double_bite"));
+        controller.triggerableAnim("double_bite_air",
+                RawAnimation.begin().thenPlay("animation.cindervane.double_bite_air"));
+        controller.triggerableAnim("magma_volley",
+                RawAnimation.begin().thenPlay("animation.cindervane.magma_volley"));
         amphithere.getVocalEntries().forEach((key, entry) -> {
             if (!ACTION_CONTROLLER.equals(entry.controllerId())) {
                 return;
@@ -73,6 +76,7 @@ public class CindervaneAnimationHandler {
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         controller.triggerableAnim(DRINKING_TRIGGER, DRINKING);
+        AnimationHelper.register(controller, "cindervane_flex", FLEX);
         controller.triggerableAnim("slash_left",
                 RawAnimation.begin().thenPlay("animation.cindervane.cindervane_slash_left"));
     }

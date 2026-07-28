@@ -94,16 +94,19 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private static final float BABY_HITBOX_SCALE = 0.65F;
     private static final double RIDER_JUMP_STRENGTH = 0.75D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
+    private static final int FLEX_CONTROL_LOCK_TICKS = 100;
+    private static final int FLEX_COOLDOWN_TICKS = 160;
     private static final int STEGONAUT_CHEST_SLOTS = 15;
     public static final double RIDER_WALK_SPEED = 0.1D;
     public static final double RIDER_RUN_SPEED = 0.25D;
     private static final int MAX_PACK_SIZE = 4;
     private static final double PACK_SEARCH_RADIUS = 48.0D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
-            .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
-            .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble2", ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, true)
-            .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble3", ModSounds.STEGONAUT_GRUMBLE_3, 0.6f, 1.1f, 0.2f, false, false, true)
-            .add("stegonaut_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
+             .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
+             .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble2", ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, true)
+             .add("grumble3", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble3", ModSounds.STEGONAUT_GRUMBLE_3, 0.6f, 1.1f, 0.2f, false, false, true)
+             .add("stegonaut_flex", StegonautAnimationHandler.MOVEMENT_CONTROLLER, "animation.stegonaut.flex", ModSounds.STEGONAUT_FLEX, 1.4f, 0.95f, 0.05f, false, false, false)
+             .add("stegonaut_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.stegonaut.hurt", ModSounds.STEGONAUT_HURT, 1.0f, 0.95f, 0.1f, false, true, true)
             .add("stegonaut_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.stegonaut.die", ModSounds.STEGONAUT_DIE, 1.2f, 1.0f, 0.0f, false, true, true)
             .build();
     private boolean suppressSitAnimation = false;
@@ -199,6 +202,32 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             case ABILITY_USE, ABILITY_STOP, OPEN_INVENTORY -> true;
             default -> super.supportsRiderAction(action);
         };
+    }
+
+    @Override
+    protected RiderFlexSpec getRiderFlexSpec() {
+        return new RiderFlexSpec(FLEX_CONTROL_LOCK_TICKS, FLEX_COOLDOWN_TICKS);
+    }
+
+    @Override
+    protected boolean canRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        return super.canRiderFlex(player, spec)
+                && !isBaby()
+                && !isDying()
+                && isGroundedForAction()
+                && !isInWaterOrBubble()
+                && !isOrderedToSit()
+                && !isInSitTransition()
+                && !isSleeping()
+                && !isSleepTransitioning()
+                && getActiveAbility() == null;
+    }
+
+    @Override
+    protected void playRiderFlex(ServerPlayer player, RiderFlexSpec spec) {
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
+        getSoundHandler().playVocal("stegonaut_flex");
     }
 
     @Override

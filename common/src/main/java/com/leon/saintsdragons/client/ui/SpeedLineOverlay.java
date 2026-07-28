@@ -18,6 +18,8 @@ import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public final class SpeedLineOverlay {
+    public static final SpeedLineOverlay INSTANCE = new SpeedLineOverlay();
+
     private static final int MAX_LINES = 52;
     private static final float BASE_SPAWN_CHANCE = 0.38F;
     private static final float SPAWN_CHANCE_SCALE = 0.92F;
