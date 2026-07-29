@@ -15,7 +15,18 @@ authors="Leon Saint"
 [[dependencies.saintsdragons]]
 modId="forge"
 mandatory=true
-versionRange="[47.4.0,)"
+versionRange="[47,)"
+ordering="NONE"
+side="BOTH"
+
+# NeoForge 1.20.1 exposes a virtual "forge" mod for backwards compatibility, so this jar
+# already loads unmodified there. This entry is informational only (mandatory=false) so
+# storefronts/tooling that scan mods.toml recognize NeoForge as a supported loader, without
+# affecting load behavior on either Forge or NeoForge.
+[[dependencies.saintsdragons]]
+modId="neoforge"
+mandatory=false
+versionRange="[47.1,)"
 ordering="NONE"
 side="BOTH"
 
