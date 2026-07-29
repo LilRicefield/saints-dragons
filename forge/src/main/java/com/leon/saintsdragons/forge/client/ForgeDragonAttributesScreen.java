@@ -709,6 +709,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED::get,
                 ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED::set,
                 null));
+        entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.aggressive_wild"),
+                ForgeDragonAttributesConfig.ATROXIIA_AGGRESSIVE_WILD::get,
+                ForgeDragonAttributesConfig.ATROXIIA_AGGRESSIVE_WILD::set,
+                null));
     }
 
     private void addDraconianSwarmEntries(List<ConfigEntry> entries) {
@@ -1098,6 +1102,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED.set(ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.ATROXIIA_AGGRESSIVE_WILD.getDefault());
             }
             case DRACONIAN_SWARM -> {
                 ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.set(ForgeDragonAttributesConfig.SWARM_WAVE_1_COUNT.getDefault());

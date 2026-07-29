@@ -199,7 +199,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
             if (hit.isPresent() || pointBlankOverlap) {
                 var hitPos = hit.orElse(start);
-                target.hurt(resolveBeamDamageSource(wyvern, target), DAMAGE);
+                if (!target.hurt(resolveBeamDamageSource(wyvern, target), DAMAGE)) {
+                    continue;
+                }
                 var away = target.position().subtract(hitPos).normalize();
                 target.push(away.x * 0.15, 0.08, away.z * 0.15);
             }
@@ -229,7 +231,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             interrupt();
             return;
         }
-        target.hurt(resolveBeamDamageSource(wyvern, target), Math.min(damage, allowedDamage));
+        if (!target.hurt(resolveBeamDamageSource(wyvern, target), Math.min(damage, allowedDamage))) {
+            return;
+        }
         if (isAtAiBeamMercyThreshold(target)) {
             interrupt();
         }
@@ -262,6 +266,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private DamageSource resolveBeamDamageSource(Raevyx wyvern, LivingEntity target) {
         if (target instanceof DragonEntity) {
             return wyvern.level().damageSources().mobAttack(wyvern);
+        }
+        if (target.isBlocking()) {
+            return wyvern.level().damageSources().mobProjectile(wyvern, wyvern);
         }
         return wyvern.level().damageSources().lightningBolt();
     }

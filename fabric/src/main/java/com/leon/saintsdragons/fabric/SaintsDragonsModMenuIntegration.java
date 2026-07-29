@@ -312,6 +312,11 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         nulljawBuffer.maxHealth = nulljawCurrent.maxHealth();
         nulljawBuffer.armor = nulljawCurrent.armor();
 
+        DragonAttributeConfig atroxiiaCurrent = loader.getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        DragonAttributeConfig atroxiiaDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        AtroxiiaAttributeBuffer atroxiiaBuffer = new AtroxiiaAttributeBuffer();
+        atroxiiaBuffer.aggressiveWild = atroxiiaCurrent.extraBoolean("aggressive_wild", false);
+
         DragonAttributeConfig swarmCurrent = loader.getConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID);
         DragonAttributeConfig swarmDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.DRACONIAN_SWARM_ID);
         DraconianSwarmAttributeBuffer swarmBuffer = new DraconianSwarmAttributeBuffer();
@@ -356,7 +361,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
                 SaintsDragonsConfig.WIKI_REMINDER_ENABLED.save();
                 SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.save();
-                persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer, ignivorusBuffer, volitansBuffer, nulljawBuffer, swarmBuffer);
+                persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer,
+                        ignivorusBuffer, volitansBuffer, nulljawBuffer, atroxiiaBuffer, swarmBuffer);
                 refreshLoadedDragonAttributesOnIntegratedServer();
             }
         });
@@ -429,6 +435,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             addIgnivorusAttributes(attributes, entryBuilder, ignivorusBuffer, ignivorusDefaults);
             addVolitansAttributes(attributes, entryBuilder, volitansBuffer, volitansDefaults);
             addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
+            addAtroxiiaAttributes(attributes, entryBuilder, atroxiiaBuffer, atroxiiaDefaults);
             addDraconianSwarmAttributes(attributes, entryBuilder, swarmBuffer, swarmDefaults);
 
             ConfigCategory toolsArmor = builder.getOrCreateCategory(TOOLS_ARMOR_CATEGORY);
@@ -1727,6 +1734,25 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
     }
 
+    private void addAtroxiiaAttributes(ConfigCategory category,
+                                       ConfigEntryBuilder entryBuilder,
+                                       AtroxiiaAttributeBuffer buffer,
+                                       DragonAttributeConfig defaults) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startBooleanToggle(
+                        Component.translatable("config.saintsdragons.attributes.atroxiia.aggressive_wild"),
+                        buffer.aggressiveWild)
+                .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
+                .setSaveConsumer(value -> buffer.aggressiveWild = value)
+                .build());
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(
+                        Component.translatable("config.saintsdragons.attributes.atroxiia"), rawEntries)
+                .setExpanded(false)
+                .build());
+    }
+
     private void addDraconianSwarmAttributes(ConfigCategory category,
                                              ConfigEntryBuilder entryBuilder,
                                              DraconianSwarmAttributeBuffer buffer,
@@ -1851,6 +1877,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                          IgnivorusAttributeBuffer ignivorusBuffer,
                                          VolitansAttributeBuffer volitansBuffer,
                                          NulljawAttributeBuffer nulljawBuffer,
+                                         AtroxiiaAttributeBuffer atroxiiaBuffer,
                                          DraconianSwarmAttributeBuffer swarmBuffer) {
         DragonAttributeConfigLoader loader = DragonAttributeConfigLoader.getInstance();
         DragonAttributeConfig current = loader.getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
@@ -2016,6 +2043,19 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 new HashMap<>(nulljawCurrent.extraBooleans())
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
+
+        DragonAttributeConfig atroxiiaCurrent = loader.getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        Map<String, Boolean> atroxiiaBooleans = new HashMap<>(atroxiiaCurrent.extraBooleans());
+        atroxiiaBooleans.put("aggressive_wild", atroxiiaBuffer.aggressiveWild);
+        DragonAttributeConfig updatedAtroxiia = new DragonAttributeConfig(
+                atroxiiaCurrent.maxHealth(),
+                atroxiiaCurrent.armor(),
+                atroxiiaCurrent.flyingSpeed(),
+                new HashMap<>(atroxiiaCurrent.abilities()),
+                new HashMap<>(atroxiiaCurrent.extraDoubles()),
+                atroxiiaBooleans
+        );
+        loader.overwriteConfig(DragonAttributeConfigLoader.ATROXIIA_ID, updatedAtroxiia);
 
         Map<String, DragonAbilityOverride> swarmAbilities = new HashMap<>();
         swarmAbilities.put("latcher_bite", DragonAbilityOverride.ofDamage(swarmBuffer.latcherBiteDamage));
@@ -2206,6 +2246,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final class NulljawAttributeBuffer {
         double maxHealth;
         double armor;
+    }
+
+    private static final class AtroxiiaAttributeBuffer {
+        boolean aggressiveWild;
     }
 
     private static final class DraconianSwarmAttributeBuffer {

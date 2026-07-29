@@ -1042,6 +1042,7 @@
   "config.saintsdragons.attributes.atroxiia.helheim_quake_secondary_knockback": "Helheim Quake 2 Knockback",
   "config.saintsdragons.attributes.atroxiia.helheim_quake_stun_duration_ticks": "Helheim Quake Stun Duration (Ticks)",
   "config.saintsdragons.attributes.atroxiia.frost_impact_enabled": "Freeze Passive Enabled",
+  "config.saintsdragons.attributes.atroxiia.aggressive_wild": "Aggressive Wild",
   "config.saintsdragons.spawn.nulljaw": "Nulljaw",
   "config.saintsdragons.attributes.nulljaw": "Nulljaw",
   "config.saintsdragons.attributes.nulljaw.max_health": "Max Health",

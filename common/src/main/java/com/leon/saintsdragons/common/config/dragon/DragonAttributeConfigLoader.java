@@ -541,6 +541,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double helheimQuakeSecondaryKnockback = 1.8D;
         double helheimQuakeStunDurationTicks = 100.0D;
         boolean frostImpactEnabled = true;
+        boolean aggressiveWild = false;
 
         if (IS_FORGE) {
             try {
@@ -560,6 +561,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 helheimQuakeSecondaryKnockback = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK");
                 helheimQuakeStunDurationTicks = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS");
                 frostImpactEnabled = forgeBoolean(configClass, "ATROXIIA_FROST_IMPACT_ENABLED");
+                aggressiveWild = forgeBoolean(configClass, "ATROXIIA_AGGRESSIVE_WILD");
             } catch (Exception ignored) {
             }
         }
@@ -590,7 +592,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ),
                 Map.of(
                         "legacy_taming", false,
-                        "aggressive_wild", false
+                        "aggressive_wild", aggressiveWild
                 )
         );
     }

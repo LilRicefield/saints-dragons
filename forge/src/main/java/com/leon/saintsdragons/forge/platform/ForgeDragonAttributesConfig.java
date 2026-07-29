@@ -180,6 +180,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS;
     public static ForgeConfigSpec.BooleanValue ATROXIIA_FROST_IMPACT_ENABLED;
+    public static ForgeConfigSpec.BooleanValue ATROXIIA_AGGRESSIVE_WILD;
 
     // Draconian Swarm
     public static ForgeConfigSpec.IntValue SWARM_WAVE_1_COUNT;
@@ -380,6 +381,7 @@ public final class ForgeDragonAttributesConfig {
         ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK = builder.defineInRange("helheim_quake_secondary_knockback", 1.8, 0.0, 1000.0);
         ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS = builder.defineInRange("helheim_quake_stun_duration_ticks", 100.0, 0.0, 12000.0);
         ATROXIIA_FROST_IMPACT_ENABLED = builder.define("frost_impact_enabled", true);
+        ATROXIIA_AGGRESSIVE_WILD = builder.define("aggressive_wild", false);
         builder.pop();
 
         builder.push("draconian_swarm");

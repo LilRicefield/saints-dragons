@@ -855,6 +855,16 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     @Override
+    public boolean isWildAggressionEnabled() {
+        if (isTame() || isBaby()) {
+            return false;
+        }
+        return DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID)
+                .extraBoolean("aggressive_wild", false);
+    }
+
+    @Override
     protected double getRiderJumpStrength() {
         return RIDER_JUMP_STRENGTH;
     }

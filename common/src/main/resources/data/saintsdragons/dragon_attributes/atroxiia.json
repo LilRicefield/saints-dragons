@@ -34,6 +34,7 @@
     "taming_chance_base": 20.0,
     "taming_chance_hearty": 33.3333,
     "taming_stun_health": 60.0,
-    "legacy_taming": false
+    "legacy_taming": false,
+    "aggressive_wild": false
   }
 }
