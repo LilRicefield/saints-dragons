@@ -35,6 +35,13 @@ public abstract class AbstractDragonInteractionHandler<T extends RideableDragonB
             return InteractionResult.sidedSuccess(dragon.level().isClientSide);
         }
 
+        if (ModItems.isScalePlucker(heldItem)) {
+            if (!dragon.level().isClientSide) {
+                dragon.tryPluckScale(player, heldItem);
+            }
+            return InteractionResult.sidedSuccess(dragon.level().isClientSide);
+        }
+
         if (isInteractionItem(heldItem)) {
             return InteractionResult.PASS;
         }

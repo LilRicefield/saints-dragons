@@ -580,6 +580,12 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             }
             return InteractionResult.sidedSuccess(this.level().isClientSide);
         }
+        if (ModItems.isScalePlucker(heldItem)) {
+            if (!this.level().isClientSide) {
+                this.tryPluckScale(player, heldItem);
+            }
+            return InteractionResult.sidedSuccess(this.level().isClientSide);
+        }
         if (player.getVehicle() == this) {
             return InteractionResult.PASS;
         }

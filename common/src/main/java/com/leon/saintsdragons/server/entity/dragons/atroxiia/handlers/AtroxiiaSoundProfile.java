@@ -12,9 +12,9 @@ public final class AtroxiiaSoundProfile implements DragonSoundProfile {
     public static final AtroxiiaSoundProfile INSTANCE = new AtroxiiaSoundProfile();
 
     private static final Map<String, Integer> VOCAL_WINDOWS = Map.of(
-            "grumble1", 20,
-            "grumble2", 20,
-            "grumble3", 30,
+            "grumble1", 40,
+            "grumble2", 40,
+            "grumble3", 60,
             "atroxiia_flex", 80
     );
 

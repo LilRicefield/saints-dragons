@@ -146,7 +146,7 @@ public class VolitansModel extends DragonGeoModel<Volitans> {
             lookPitchRad *= 0.5f;
         }
 
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK, lookPitchRad, totalYawRad);
     }
 
     private void applyNeckBankingLean(Volitans entity, float partialTick) {

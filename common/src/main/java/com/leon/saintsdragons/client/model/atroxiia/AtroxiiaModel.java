@@ -4,7 +4,6 @@ import com.leon.saintsdragons.client.model.DragonGeoModel;
 import com.leon.saintsdragons.client.model.DragonModelPoseHelper;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.constant.DataTickets;
@@ -23,17 +22,7 @@ public class AtroxiiaModel extends DragonGeoModel<Atroxiia> {
     );
 
     public AtroxiiaModel() {
-        super("atroxiia", false);
-    }
-
-    @Override
-    protected ResourceLocation getAdultTexture(Atroxiia entity) {
-        return maleTexture;
-    }
-
-    @Override
-    protected ResourceLocation getBabyTexture(Atroxiia entity) {
-        return maleTexture;
+        super("atroxiia");
     }
 
     @Override
@@ -92,7 +81,7 @@ public class AtroxiiaModel extends DragonGeoModel<Atroxiia> {
         }
 
         float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK, lookPitchRad, totalYawRad);
     }
     private void applyBodyRotationDeviation(Atroxiia entity, float partialTick) {
         DragonModelPoseHelper.applyBodyYawDeviation(this, entity, "root", partialTick, -1.0f, true);

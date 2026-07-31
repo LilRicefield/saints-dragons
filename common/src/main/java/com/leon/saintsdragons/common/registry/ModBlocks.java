@@ -73,6 +73,15 @@ public class ModBlocks {
                             .noOcclusion()
                             .randomTicks()));
 
+    public static final Supplier<Block> ATROXIIA_EGG =
+            REGISTER.register("atroxiia_egg",
+                    () -> new AtroxiiaEggBlock(BlockBehaviour.Properties.of()
+                            .mapColor(MapColor.COLOR_LIGHT_BLUE)
+                            .strength(0.5F)
+                            .sound(SoundType.METAL)
+                            .noOcclusion()
+                            .randomTicks()));
+
     public static final Supplier<Block> DRACONIAN_PELLUCIDA =
             REGISTER.register("draconian_pellucida",
                     () -> new Block(BlockBehaviour.Properties.of()

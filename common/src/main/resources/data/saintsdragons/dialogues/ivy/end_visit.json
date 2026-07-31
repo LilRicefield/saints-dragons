@@ -1,0 +1,195 @@
+{
+  "start_at": "end_thoughts_1",
+  "resume": {
+    "texts": [
+      {
+        "text": "Where was I? Ah, right."
+      },
+      {
+        "text": "Back to what I was saying..."
+      },
+      {
+        "text": "Now, where did I leave off...? Oh, yes."
+      },
+      {
+        "text": "Right, we were talking about this..."
+      }
+    ],
+    "requires_all_flags": [
+      "ivy_recruited",
+      "dimension:minecraft:the_end"
+    ]
+  },
+  "states": {
+    "end_thoughts_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Hm... aside from the Endermen and the Ender Dragon? I quite like it here."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_2"
+        }
+      ]
+    },
+    "end_thoughts_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "As long as you don't look an Enderman in the eyes, you're fine. And after the Ender Dragon has been defeated, there's nothing to worry about."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_3"
+        }
+      ]
+    },
+    "end_thoughts_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I get to see the Nulljaws floating around, doing their own thing and minding their own business. I also get to try the 'local' cuisine, most notably Chorus Fruit."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_4"
+        }
+      ]
+    },
+    "end_thoughts_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I was teleported near the edge of the barrens when I bit into one! It would've been the end for me, pun intended, had a Nulljaw not saved me because it was attracted to the Chorus Fruit in my hand..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_5"
+        }
+      ]
+    },
+    "end_thoughts_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And I've always wondered what would hatch from the Ender Dragon's egg. I think it'd look like a slimmer Ignivorus, don't you?"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_6"
+        }
+      ]
+    },
+    "end_thoughts_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "But... there's one thing I've got to tell you."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_7"
+        }
+      ]
+    },
+    "end_thoughts_7": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Recently, travelers in the End have seen... horrid creatures. Not Nulljaws, of course, but dark, ravenous beasts whose birthing sacks have mysteriously appeared."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_8"
+        }
+      ]
+    },
+    "end_thoughts_8": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Thankfully, they only seem to spawn when approached."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_9"
+        }
+      ]
+    },
+    "end_thoughts_9": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "However, their presence is quite concerning. I've only visited the End Barrens a few times, and I don't intend to venture there alone again."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_10"
+        }
+      ]
+    },
+    "end_thoughts_10": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "With your help, however, we may be able to weaken them."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "end_thoughts_11",
+          "set_flag": "ivy_end_dialogue_done"
+        }
+      ]
+    },
+    "end_thoughts_11": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "As we travel through the End Barrens, you'll see what I mean."
+      }
+    }
+  }
+}

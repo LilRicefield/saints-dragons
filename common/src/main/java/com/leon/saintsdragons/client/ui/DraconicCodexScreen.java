@@ -21,6 +21,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.NotNull;
@@ -355,7 +356,7 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private void playDragonGrumble(String dragonType) {
-        if (this.minecraft == null || this.minecraft.player == null) {
+        if (this.minecraft == null) {
             return;
         }
 
@@ -367,11 +368,12 @@ public class DraconicCodexScreen extends Screen {
             case "stegonaut" -> ModSounds.STEGONAUT_GRUMBLE_1.get();
             case "volitans" -> ModSounds.VOLITANS_GRUMBLE_3.get();
             case "nulljaw" -> ModSounds.NULLJAW_GRUMBLE_1.get();
+            case "atroxiia" -> ModSounds.ATROXIIA_GRUMBLE_1.get();
             default -> null;
         };
 
         if (grumbleSound != null) {
-            this.minecraft.player.playSound(grumbleSound, 0.8f, 1.0f);
+            this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(grumbleSound, 1.0f, 0.8f));
         }
     }
 
@@ -382,11 +384,15 @@ public class DraconicCodexScreen extends Screen {
     }
 
     private void playCodexFlipSound() {
-        if (this.minecraft == null || this.minecraft.player == null) {
+        if (this.minecraft == null) {
             return;
         }
-        float pitch = 0.95f + (this.minecraft.player.getRandom().nextFloat() * 0.1f);
-        this.minecraft.player.playSound(ModSounds.DRACONIC_CODEX_FLIP.get(), 0.75f, pitch);
+        float pitch = this.minecraft.player == null
+                ? 1.0f
+                : 0.95f + (this.minecraft.player.getRandom().nextFloat() * 0.1f);
+        this.minecraft.getSoundManager().play(
+                SimpleSoundInstance.forUI(ModSounds.DRACONIC_CODEX_FLIP.get(), pitch, 0.75f)
+        );
     }
 
     private void requestCodexRefresh(boolean pruneMissingBoundEntries) {

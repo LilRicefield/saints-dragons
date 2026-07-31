@@ -1,0 +1,57 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_atroxiia_scale": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:atroxiia_scale"
+            ]
+          }
+        ]
+      }
+    },
+    "has_dragon_binder_core": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:dragon_binder_core"
+            ]
+          }
+        ]
+      }
+    },
+    "has_gold_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:gold_ingot"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_atroxiia_scale"
+    ],
+    [
+      "has_dragon_binder_core"
+    ],
+    [
+      "has_gold_ingot"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:atroxiia_binder"
+    ]
+  }
+}

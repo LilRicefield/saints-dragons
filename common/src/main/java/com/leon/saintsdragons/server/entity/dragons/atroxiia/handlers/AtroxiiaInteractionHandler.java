@@ -1,12 +1,15 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -22,12 +25,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
 
     @Override
     protected Item getBinderItem() {
-        return ModItems.DRACONIC_CODEX.get();
-    }
-
-    @Override
-    protected boolean isInteractionItem(ItemStack heldItem) {
-        return heldItem.is(ModItems.DRACONIC_CODEX.get());
+        return ModItems.ATROXIIA_BINDER.get();
     }
 
     @Override
@@ -96,6 +94,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
                 dragon.setOrderedToSit(true);
                 dragon.setCommand(1);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+                awardTamingAdvancement(player);
                 if (!legacyTaming) {
                     dragon.resetTamingFailures();
                     dragon.clearTamingRecovery();
@@ -113,8 +112,24 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         return InteractionResult.sidedSuccess(client);
     }
 
+    private void awardTamingAdvancement(Player player) {
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+
+        var advancement = serverPlayer.server.getAdvancements()
+                .getAdvancement(SaintsDragonsCommon.rl("tame_atroxiia"));
+        if (advancement != null) {
+            serverPlayer.getAdvancements().award(advancement, "tame_atroxiia");
+        }
+    }
+
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
+        if (dragon.isOwnedBy(player) && player.isCrouching() && dragon.isFood(heldItem)) {
+            return handleBreeding(player, heldItem);
+        }
+
         if (dragon.isFood(heldItem)) {
             return handleFeeding(player, heldItem);
         }
@@ -132,6 +147,22 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         }
 
         return InteractionResult.PASS;
+    }
+
+    private InteractionResult handleBreeding(Player player, ItemStack heldItem) {
+        return DragonBreedingInteractionHelper.handleBreeding(
+                dragon,
+                player,
+                heldItem,
+                dragon::canFeed,
+                "entity.saintsdragons.dragon.still_eating",
+                Atroxiia.EAT_ANIMATION_TICKS,
+                () -> {
+                    dragon.triggerAnim(AnimationHelper.INTERACTION_CONTROLLER, AnimationHelper.EAT);
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown
+        );
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack heldItem) {

@@ -17,6 +17,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_OPEN = registerSound("draconic_crucible_open");
     public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_CLOSE = registerSound("draconic_crucible_close");
     public static final Supplier<SoundEvent> DRACONIC_CRUCIBLE_SMELTING = registerSound("draconic_crucible_smelting");
+    public static final Supplier<SoundEvent> BRUSHING = registerSound("brushing");
+    public static final Supplier<SoundEvent> PLUCKING = registerSound("plucking");
 
     public static final Supplier<SoundEvent> IVY_TRADE_START = registerSound("ivy_trade_start");
     public static final Supplier<SoundEvent> IVY_TRADE_STOP = registerSound("ivy_trade_stop");

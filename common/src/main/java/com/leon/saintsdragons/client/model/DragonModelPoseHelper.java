@@ -46,8 +46,12 @@ public final class DragonModelPoseHelper {
         }
     }
 
-    public static void applyWeightedNeckFollow(GeoModel<?> model, WeightedBoneChain chain,
+    public static void applyWeightedNeckFollow(GeoModel<?> model, DragonEntity entity, WeightedBoneChain chain,
                                                float pitchRad, float yawRad) {
+        if (entity.isStayOrSitMuted()) {
+            return;
+        }
+
         for (int i = 0; i < chain.boneNames().length; i++) {
             String boneName = chain.boneNames()[i];
             float weight = chain.weights()[i];

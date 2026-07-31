@@ -69,7 +69,7 @@ public final class NulljawModel extends DragonGeoModel<Nulljaw> {
 
         float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 1.4D);
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD * 0.35F;
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_FOLLOW, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_FOLLOW, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Nulljaw entity, float partialTick) {

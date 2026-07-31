@@ -162,7 +162,7 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
             lookPitchRad *= 0.5f;
         }
 
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_FOLLOW, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_FOLLOW, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Ignivorus entity, float partialTick) {

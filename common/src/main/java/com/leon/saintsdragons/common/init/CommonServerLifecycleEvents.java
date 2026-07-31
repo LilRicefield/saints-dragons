@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.data.WikiReminderSavedData;
 import com.leon.saintsdragons.server.debug.DragonPathDebugTracker;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry;
 import com.leon.saintsdragons.server.world.RaevyxStormSpawner;
 import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
 import com.leon.saintsdragons.server.world.VolitansUnderwaterSpawner;
@@ -94,6 +95,7 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onPlayerDisconnect(ServerPlayer player) {
+        DialogueSessionRegistry.suspend(player);
         DragonPathDebugTracker.clear(player);
         BloodTempestArmorSetBonus.clear(player);
         DragonlordArmorSetBonus.saveHealthForReload(player);

@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementInten
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundFollowOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
@@ -88,6 +89,8 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
                                         new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
+                                        new DragonBreedBehaviour<>(1.0D, Atroxiia.class,
+                                                Atroxiia.BREED_PARTNER_RANGE, Atroxiia.BREED_DISTANCE_SQR),
                                         new DragonGroundFollowOwnerBehaviour<>(
                                                 DragonGroundFollowOwnerBehaviour.Config.atroxiia()),
                                         new DragonGroundWanderBehaviour<>(IDLE_WANDER_SPEED, 100)

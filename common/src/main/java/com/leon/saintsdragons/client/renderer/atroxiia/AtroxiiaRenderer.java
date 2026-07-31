@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.atroxiia;
 
 import com.leon.saintsdragons.client.model.atroxiia.AtroxiiaModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.layer.atroxiia.AtroxiiaNightEmissiveLayer;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
@@ -13,6 +14,7 @@ public class AtroxiiaRenderer extends DragonGeoEntityRenderer<Atroxiia> {
 
     public AtroxiiaRenderer(EntityRendererProvider.Context context) {
         super(context, new AtroxiiaModel());
+        this.addRenderLayer(new AtroxiiaNightEmissiveLayer(this));
     }
 
     @Override

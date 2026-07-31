@@ -70,6 +70,6 @@ public class StegonautModel extends DragonGeoModel<Stegonaut> {
     private void applyNeckFollow(Stegonaut entity, EntityModelData modelData, float partialTick) {
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_FOLLOW, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_FOLLOW, lookPitchRad, totalYawRad);
     }
 }

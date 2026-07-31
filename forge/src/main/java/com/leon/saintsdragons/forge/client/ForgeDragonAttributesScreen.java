@@ -705,6 +705,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS::get,
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.egg_hatch_time_ticks_normal"),
+                ForgeDragonAttributesConfig.ATROXIIA_EGG_HATCH_TIME_TICKS_NORMAL::get,
+                ForgeDragonAttributesConfig.ATROXIIA_EGG_HATCH_TIME_TICKS_NORMAL::set,
+                null));
         entries.add(new BooleanEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.frost_impact_enabled"),
                 ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED::get,
                 ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED::set,
@@ -1101,6 +1105,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_KNOCKBACK.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS.set(ForgeDragonAttributesConfig.ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_EGG_HATCH_TIME_TICKS_NORMAL.set(ForgeDragonAttributesConfig.ATROXIIA_EGG_HATCH_TIME_TICKS_NORMAL.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED.set(ForgeDragonAttributesConfig.ATROXIIA_FROST_IMPACT_ENABLED.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_AGGRESSIVE_WILD.set(ForgeDragonAttributesConfig.ATROXIIA_AGGRESSIVE_WILD.getDefault());
             }

@@ -7,10 +7,13 @@ import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.debug.DragonPathDebugTracker;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import com.leon.saintsdragons.forge.entity.part.ForgeDragonPart;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
 import net.minecraftforge.event.entity.living.LivingMakeBrainEvent;
@@ -55,6 +58,28 @@ public class ServerEventHandler {
             return;
         }
         CommonServerLifecycleEvents.onPlayerJoin(player);
+    }
+
+    @SubscribeEvent
+    public static void onPlayerChangedDimension(PlayerEvent.PlayerChangedDimensionEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
+            return;
+        }
+        ServerLevel sourceLevel = player.server.getLevel(event.getFrom());
+        if (sourceLevel != null) {
+            IvyTheDragonMerchant.followOwnerAcrossDimension(player, sourceLevel);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player) || !event.isEndConquered()) {
+            return;
+        }
+        ServerLevel endLevel = player.server.getLevel(Level.END);
+        if (endLevel != null) {
+            player.server.execute(() -> IvyTheDragonMerchant.followOwnerAcrossDimension(player, endLevel));
+        }
     }
 
     @SubscribeEvent

@@ -18,6 +18,7 @@ import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
@@ -55,6 +56,10 @@ public class Mossback extends Animal implements GeoEntity {
     private static final int TOXIN_EFFECT_TICKS = 20 * 10;
     private static final double TOXIN_RADIUS = 3.25D;
     private static final int TOXIN_PARTICLES = 36;
+
+    public static MobEffectInstance createToxinEffect(MobEffect effect) {
+        return new MobEffectInstance(effect, TOXIN_EFFECT_TICKS, 0);
+    }
 
     private static final EntityDataAccessor<Boolean> DATA_THROWN =
             SynchedEntityData.defineId(Mossback.class, EntityDataSerializers.BOOLEAN);
@@ -199,9 +204,9 @@ public class Mossback extends Animal implements GeoEntity {
 
         AABB toxinArea = this.getBoundingBox().inflate(TOXIN_RADIUS, 1.4D, TOXIN_RADIUS);
         for (LivingEntity target : serverLevel.getEntitiesOfClass(LivingEntity.class, toxinArea, target -> target != this)) {
-            target.addEffect(new MobEffectInstance(MobEffects.POISON, TOXIN_EFFECT_TICKS, 0));
-            target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, TOXIN_EFFECT_TICKS, 0));
-            target.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, TOXIN_EFFECT_TICKS, 0));
+            target.addEffect(createToxinEffect(MobEffects.POISON));
+            target.addEffect(createToxinEffect(MobEffects.CONFUSION));
+            target.addEffect(createToxinEffect(MobEffects.BLINDNESS));
         }
 
         this.playSound(ModSounds.MOSSBACK_TOXIN.get(), 0.9F, 0.9F + random.nextFloat() * 0.18F);

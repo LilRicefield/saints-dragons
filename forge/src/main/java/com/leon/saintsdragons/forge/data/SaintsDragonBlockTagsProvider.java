@@ -22,6 +22,7 @@ public final class SaintsDragonBlockTagsProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
+        tag(ModTags.Blocks.ATROXIIA_EGGS).add(ModBlocks.ATROXIIA_EGG.get());
         tag(ModTags.Blocks.CINDERVANE_EGGS).add(ModBlocks.CINDERVANE_EGG.get());
         tag(ModTags.Blocks.IGNIVORUS_EGGS).add(ModBlocks.IGNIVORUS_EGG.get());
         tag(ModTags.Blocks.RAEVYX_EGGS).add(ModBlocks.RAEVYX_EGG.get());
@@ -30,6 +31,7 @@ public final class SaintsDragonBlockTagsProvider extends BlockTagsProvider {
         tag(ModTags.Blocks.VOLITANS_EGGS).add(ModBlocks.VOLITANS_EGG.get());
 
         tag(ModTags.Blocks.DRAGON_EGGS)
+                .addTag(ModTags.Blocks.ATROXIIA_EGGS)
                 .addTag(ModTags.Blocks.CINDERVANE_EGGS)
                 .addTag(ModTags.Blocks.IGNIVORUS_EGGS)
                 .addTag(ModTags.Blocks.RAEVYX_EGGS)

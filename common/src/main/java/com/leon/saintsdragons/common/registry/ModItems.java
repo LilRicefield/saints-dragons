@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.item.tools.ConfiguredWorldrootItems;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
+import com.leon.saintsdragons.server.entity.dragons.Mossback;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -17,6 +18,7 @@ import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.RecordItem;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.effect.MobEffects;
 
 import java.util.function.Supplier;
 
@@ -276,6 +278,11 @@ public class ModItems {
                     () -> new BlockItem(ModBlocks.VOLITANS_EGG.get(),
                             new Item.Properties()));
 
+    public static final Supplier<Item> ATROXIIA_EGG =
+            REGISTER.register("atroxiia_egg",
+                    () -> new BlockItem(ModBlocks.ATROXIIA_EGG.get(),
+                            new Item.Properties()));
+
     public static final Supplier<Item> DRACONIC_CODEX =
             REGISTER.register("draconic_codex",
                     () -> new DragonAllyBookItem(
@@ -330,6 +337,14 @@ public class ModItems {
                                     .durability(256)
                     ));
 
+    public static final Supplier<Item> SCALE_PLUCKER =
+            REGISTER.register("scale_plucker",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(64)
+                    ));
+
     public static final Supplier<Item> RAW_MOOP =
             REGISTER.register("raw_moop",
                     () -> new Item(
@@ -365,6 +380,29 @@ public class ModItems {
                     () -> new MossbackItem(
                             new Item.Properties()
                                     .stacksTo(16)
+                    ));
+
+    public static final Supplier<Item> RAW_MOSSBACK =
+            REGISTER.register("raw_mossback",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .food(new FoodProperties.Builder()
+                                            .nutrition(4)
+                                            .saturationMod(0.3F)
+                                            .effect(Mossback.createToxinEffect(MobEffects.POISON), 1.0F)
+                                            .effect(Mossback.createToxinEffect(MobEffects.CONFUSION), 1.0F)
+                                            .effect(Mossback.createToxinEffect(MobEffects.BLINDNESS), 1.0F)
+                                            .build())
+                    ));
+
+    public static final Supplier<Item> COOKED_MOSSBACK =
+            REGISTER.register("cooked_mossback",
+                    () -> new Item(
+                            new Item.Properties()
+                                    .food(new FoodProperties.Builder()
+                                            .nutrition(8)
+                                            .saturationMod(0.5F)
+                                            .build())
                     ));
 
     public static final Supplier<Item> RAEVYX_SCALE =
@@ -457,9 +495,23 @@ public class ModItems {
                             new Item.Properties()
                     ));
 
+    public static final Supplier<Item> ATROXIIA_SCALE =
+            REGISTER.register("atroxiia_scale",
+                    () -> new Item(
+                            new Item.Properties()
+                    ));
+
     public static final Supplier<Item> STEGONAUT_BINDER =
             REGISTER.register("stegonaut_binder",
                     () -> new StegonautBinderItem(
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .durability(0)
+                    ));
+
+    public static final Supplier<Item> ATROXIIA_BINDER =
+            REGISTER.register("atroxiia_binder",
+                    () -> new AtroxiiaBinderItem(
                             new Item.Properties()
                                     .stacksTo(1)
                                     .durability(0)
@@ -542,6 +594,10 @@ public class ModItems {
 
     public static boolean isDragonBrush(ItemStack stack) {
         return stack.is(ModTags.Items.DRAGON_BRUSHES);
+    }
+
+    public static boolean isScalePlucker(ItemStack stack) {
+        return stack.is(SCALE_PLUCKER.get());
     }
 
     public static void register() {

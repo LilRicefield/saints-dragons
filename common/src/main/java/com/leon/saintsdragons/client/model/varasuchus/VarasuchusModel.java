@@ -77,7 +77,7 @@ public class VarasuchusModel extends DragonGeoModel<Varasuchus> {
     private void applyNeckFollow(Varasuchus entity, EntityModelData modelData, float partialTick) {
         float lookPitchRad = modelData.headPitch() * Mth.DEG_TO_RAD;
         float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_FOLLOW, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_FOLLOW, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Varasuchus entity, float partialTick) {

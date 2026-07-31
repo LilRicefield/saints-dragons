@@ -1,0 +1,29 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_raw_mossback": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:raw_mossback"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_mossback"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:cooked_mossback_from_smelting",
+      "saintsdragons:cooked_mossback_from_smoking",
+      "saintsdragons:cooked_mossback_from_campfire_cooking"
+    ]
+  }
+}

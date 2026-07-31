@@ -5,7 +5,10 @@ import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
+import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -24,6 +27,18 @@ public final class FabricServerEvents {
 
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
                 server.execute(() -> CommonServerLifecycleEvents.onPlayerDisconnect(handler.player)));
+
+        ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register(
+                (player, sourceLevel, destinationLevel) ->
+                        IvyTheDragonMerchant.followOwnerAcrossDimension(player, sourceLevel));
+
+        ServerPlayerEvents.AFTER_RESPAWN.register((oldPlayer, newPlayer, alive) -> {
+            var sourceLevel = oldPlayer.serverLevel();
+            if (sourceLevel.dimension() != newPlayer.serverLevel().dimension()) {
+                newPlayer.server.execute(() ->
+                        IvyTheDragonMerchant.followOwnerAcrossDimension(newPlayer, sourceLevel));
+            }
+        });
 
         ServerLifecycleEvents.SERVER_STOPPING.register(CommonServerLifecycleEvents::onServerStopping);
         ServerTickEvents.END_SERVER_TICK.register(CommonServerLifecycleEvents::onEndServerTick);

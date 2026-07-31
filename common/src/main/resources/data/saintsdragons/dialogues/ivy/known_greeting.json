@@ -89,6 +89,28 @@
         },
         {
           "text": {
+            "text": "What are your thoughts on the Nether, Ivy?"
+          },
+          "next": "saintsdragons:ivy/nether_visit#nether_thoughts_1",
+          "requires_all_flags": [
+            "ivy_recruited",
+            "dimension:minecraft:the_nether"
+          ],
+          "hidden_if_flag": "ivy_nether_dialogue_done"
+        },
+        {
+          "text": {
+            "text": "We're here in the End. What's on your mind?"
+          },
+          "next": "saintsdragons:ivy/end_visit#end_thoughts_1",
+          "requires_all_flags": [
+            "ivy_recruited",
+            "dimension:minecraft:the_end"
+          ],
+          "hidden_if_flag": "ivy_end_dialogue_done"
+        },
+        {
+          "text": {
             "text": "What do you do out here?"
           },
           "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do",

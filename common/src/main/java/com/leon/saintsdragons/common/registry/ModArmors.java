@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.item.DragonlordArmorItem;
 import com.leon.saintsdragons.common.item.BloodTempestArmorItem;
+import com.leon.saintsdragons.common.item.DraconianArmorItem;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Rarity;
@@ -13,7 +14,7 @@ public final class ModArmors {
 
     public static final Supplier<Item> DRACONIAN_HELMET =
             ModItems.REGISTER.register("draconian_helmet",
-                    () -> new ArmorItem(
+                    () -> new DraconianArmorItem(
                             ModArmorMaterials.DRACONIAN_FLESH,
                             ArmorItem.Type.HELMET,
                             new Item.Properties()
@@ -21,7 +22,7 @@ public final class ModArmors {
 
     public static final Supplier<Item> DRACONIAN_CHESTPLATE =
             ModItems.REGISTER.register("draconian_chestplate",
-                    () -> new ArmorItem(
+                    () -> new DraconianArmorItem(
                             ModArmorMaterials.DRACONIAN_FLESH,
                             ArmorItem.Type.CHESTPLATE,
                             new Item.Properties()
@@ -29,7 +30,7 @@ public final class ModArmors {
 
     public static final Supplier<Item> DRACONIAN_LEGGINGS =
             ModItems.REGISTER.register("draconian_leggings",
-                    () -> new ArmorItem(
+                    () -> new DraconianArmorItem(
                             ModArmorMaterials.DRACONIAN_FLESH,
                             ArmorItem.Type.LEGGINGS,
                             new Item.Properties()
@@ -37,7 +38,7 @@ public final class ModArmors {
 
     public static final Supplier<Item> DRACONIAN_BOOTS =
             ModItems.REGISTER.register("draconian_boots",
-                    () -> new ArmorItem(
+                    () -> new DraconianArmorItem(
                             ModArmorMaterials.DRACONIAN_FLESH,
                             ArmorItem.Type.BOOTS,
                             new Item.Properties()

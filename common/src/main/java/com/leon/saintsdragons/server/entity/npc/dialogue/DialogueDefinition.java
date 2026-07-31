@@ -7,9 +7,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
-public record DialogueDefinition(ResourceLocation id, String start, Map<String, Node> nodes) {
+public record DialogueDefinition(ResourceLocation id, String start, Map<String, Node> nodes, Resume resume) {
+    public DialogueDefinition(ResourceLocation id, String start, Map<String, Node> nodes) {
+        this(id, start, nodes, Resume.DISABLED);
+    }
+
     public Node startNode() {
         return nodes.get(start);
+    }
+
+    public record Resume(List<Component> texts, List<String> requiresAllFlags) {
+        private static final Resume DISABLED = new Resume(List.of(), List.of());
+
+        public Resume {
+            texts = List.copyOf(texts);
+            requiresAllFlags = List.copyOf(requiresAllFlags);
+        }
+
+        public boolean enabled() {
+            return !texts.isEmpty();
+        }
+
+        public Component selectText() {
+            return texts.get(ThreadLocalRandom.current().nextInt(texts.size()));
+        }
     }
 
     public record Node(Component speaker, Component text, List<Component> texts, List<Choice> choices, Type type) {

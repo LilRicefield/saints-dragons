@@ -167,7 +167,7 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
         }
 
         float totalYawRad = DragonModelPoseHelper.lookYawWithBodyDeviation(entity, modelData, partialTick, 2.0);
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Cindervane entity, float partialTick) {

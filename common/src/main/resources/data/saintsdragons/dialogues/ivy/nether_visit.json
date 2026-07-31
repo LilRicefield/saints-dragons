@@ -1,0 +1,195 @@
+{
+  "start_at": "nether_thoughts_1",
+  "resume": {
+    "texts": [
+      {
+        "text": "Where was I? Ah, right."
+      },
+      {
+        "text": "Back to what I was saying..."
+      },
+      {
+        "text": "Now, where did I leave off...? Oh, yes."
+      },
+      {
+        "text": "Right, we were talking about this..."
+      }
+    ],
+    "requires_all_flags": [
+      "ivy_recruited",
+      "dimension:minecraft:the_nether"
+    ]
+  },
+  "states": {
+    "nether_thoughts_1": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I can't even think because it's too hot..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_2"
+        }
+      ]
+    },
+    "nether_thoughts_2": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I've gone into the Nether a few times to look for Netherite and smaller things like Glowstone Dust and Nether Wart... but I failed on the Netherite part."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_3"
+        }
+      ]
+    },
+    "nether_thoughts_3": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Simply because I can't stand the heat or some of the denizens here."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_4"
+        }
+      ]
+    },
+    "nether_thoughts_4": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I kind of like the biomes, especially the Crimson Forest. It reminds me of the color of my dragon..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_5"
+        }
+      ]
+    },
+    "nether_thoughts_5": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Also, I absolutely hate the Piglins. I almost got jumped because I forgot to wear my gold helmet."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_6"
+        }
+      ]
+    },
+    "nether_thoughts_6": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Don't get me started on the Ghasts. Why do they make those weird sounds? How can they float? Why do they look so creepy? I didn't do anything to them, and I still got a fireball shot at me?!"
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_7"
+        }
+      ]
+    },
+    "nether_thoughts_7": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "Striders are just weird old men with toothpicks for legs, standing in a lake of lava."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_8"
+        }
+      ]
+    },
+    "nether_thoughts_8": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I tried luring one onto land and dragging it back to the Overworld, but seeing it shiver out of the lava made me pity it."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_9"
+        }
+      ]
+    },
+    "nether_thoughts_9": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "And Wither Skeletons and Blazes? Absolutely not. Bunch of freaks..."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_10"
+        }
+      ]
+    },
+    "nether_thoughts_10": {
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "The point is, the Nether is weird, which circles back to it having its own charm, I think. And I only came along because you're with me. Otherwise, I'd never look twice at it."
+      },
+      "choices": [
+        {
+          "text": {
+            "text": "..."
+          },
+          "next": "nether_thoughts_11",
+          "set_flag": "ivy_nether_dialogue_done"
+        }
+      ]
+    },
+    "nether_thoughts_11": {
+      "type": "end_dialogue",
+      "speaker": {
+        "translate": "entity.saintsdragons.ivy_oleander"
+      },
+      "text": {
+        "text": "I'm sweating a lot right now... Let's just hurry up with whatever you're trying to do and get out of this place, please?"
+      }
+    }
+  }
+}

@@ -269,6 +269,7 @@ public final class SaintsDragonVariantRegistry {
         addCustom(defaults, "varasuchus", "void_kissed", 0);
         add(defaults, "stegonaut", 0, "default", 100);
         add(defaults, "nulljaw", 0, "default", 100);
+        add(defaults, "atroxiia", 0, "default", 100);
         Map<ResourceLocation, List<DragonVariantDefinition>> immutable = new LinkedHashMap<>();
         for (Map.Entry<ResourceLocation, List<DragonVariantDefinition>> entry : defaults.entrySet()) {
             immutable.put(entry.getKey(), ImmutableList.copyOf(entry.getValue()));

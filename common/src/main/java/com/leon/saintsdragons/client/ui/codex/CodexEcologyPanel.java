@@ -38,6 +38,10 @@ public class CodexEcologyPanel {
             new ResourceLocation("saintsdragons", "ignivorus_heart"),
             new ResourceLocation("saintsdragons", "ignivorus_egg")
     );
+    private static final List<ResourceLocation> ATROXIIA_DROPS = List.of(
+            new ResourceLocation("saintsdragons", "atroxiia_scale"),
+            new ResourceLocation("saintsdragons", "atroxiia_egg")
+    );
     private static final List<ResourceLocation> RAEVYX_DROPS = List.of(
             new ResourceLocation("saintsdragons", "raevyx_scale"),
             new ResourceLocation("saintsdragons", "raevyx_egg")
@@ -370,6 +374,7 @@ public class CodexEcologyPanel {
 
     private List<ResourceLocation> getDrops(String dragonType) {
         return switch (dragonType) {
+            case "atroxiia" -> ATROXIIA_DROPS;
             case "ignivorus" -> IGNIVORUS_DROPS;
             case "raevyx" -> RAEVYX_DROPS;
             case "varasuchus" -> VARASUCHUS_DROPS;

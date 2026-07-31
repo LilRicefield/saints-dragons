@@ -1,0 +1,10 @@
+{
+  "type": "minecraft:campfire_cooking",
+  "category": "food",
+  "ingredient": {
+    "item": "saintsdragons:raw_mossback"
+  },
+  "result": "saintsdragons:cooked_mossback",
+  "experience": 0.35,
+  "cookingtime": 600
+}

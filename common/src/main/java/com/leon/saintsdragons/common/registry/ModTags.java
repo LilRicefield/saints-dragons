@@ -75,6 +75,7 @@ public final class ModTags {
 
     public static final class Blocks {
         public static final TagKey<Block> DRAGON_EGGS = tag("dragon_eggs");
+        public static final TagKey<Block> ATROXIIA_EGGS = tag("eggs/atroxiia");
         public static final TagKey<Block> CINDERVANE_EGGS = tag("eggs/cindervane");
         public static final TagKey<Block> IGNIVORUS_EGGS = tag("eggs/ignivorus");
         public static final TagKey<Block> RAEVYX_EGGS = tag("eggs/raevyx");

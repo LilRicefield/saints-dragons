@@ -40,6 +40,7 @@ public final class SaintsDragonGameplayLootProvider implements LootTableSubProvi
     }
 
     private static void generateEntityContext(BiConsumer<ResourceLocation, LootTable.Builder> output) {
+        output.accept(DragonLootTables.ATROXIIA_FEMALE_DEATH, chanceTable(ModItems.ATROXIIA_EGG.get(), 0.12F));
         output.accept(DragonLootTables.CINDERVANE_FEMALE_DEATH, chanceTable(ModItems.CINDERVANE_EGG.get(), 0.12F));
         output.accept(DragonLootTables.IGNIVORUS_FEMALE_DEATH, chanceTable(ModItems.IGNIVORUS_EGG.get(), 0.12F));
         output.accept(DragonLootTables.RAEVYX_FEMALE_DEATH, chanceTable(ModItems.RAEVYX_EGG.get(), 0.12F));
@@ -51,12 +52,13 @@ public final class SaintsDragonGameplayLootProvider implements LootTableSubProvi
     }
 
     private static void generateGrooming(BiConsumer<ResourceLocation, LootTable.Builder> output) {
-        output.accept(DragonLootTables.CINDERVANE_GROOMING, chanceCountTable(ModItems.CINDERVANE_SCALE.get(), 0.30F, 1, 1));
-        output.accept(DragonLootTables.IGNIVORUS_GROOMING, chanceCountTable(ModItems.IGNIVORUS_SCALE.get(), 0.35F, 1, 2));
-        output.accept(DragonLootTables.RAEVYX_GROOMING, chanceCountTable(ModItems.RAEVYX_SCALE.get(), 0.35F, 1, 2));
-        output.accept(DragonLootTables.STEGONAUT_GROOMING, chanceCountTable(ModItems.STEGONAUT_SCALE.get(), 0.30F, 1, 2));
-        output.accept(DragonLootTables.VARASUCHUS_GROOMING, chanceCountTable(ModItems.VARASUCHUS_SCALE.get(), 0.30F, 1, 2));
-        output.accept(DragonLootTables.VOLITANS_GROOMING, chanceCountTable(ModItems.VOLITANS_SCALE.get(), 0.30F, 1, 2));
+        output.accept(DragonLootTables.ATROXIIA_GROOMING, countTable(ModItems.ATROXIIA_SCALE.get(), 1, 2));
+        output.accept(DragonLootTables.CINDERVANE_GROOMING, countTable(ModItems.CINDERVANE_SCALE.get(), 1, 1));
+        output.accept(DragonLootTables.IGNIVORUS_GROOMING, countTable(ModItems.IGNIVORUS_SCALE.get(), 1, 2));
+        output.accept(DragonLootTables.RAEVYX_GROOMING, countTable(ModItems.RAEVYX_SCALE.get(), 1, 2));
+        output.accept(DragonLootTables.STEGONAUT_GROOMING, countTable(ModItems.STEGONAUT_SCALE.get(), 1, 2));
+        output.accept(DragonLootTables.VARASUCHUS_GROOMING, countTable(ModItems.VARASUCHUS_SCALE.get(), 1, 2));
+        output.accept(DragonLootTables.VOLITANS_GROOMING, countTable(ModItems.VOLITANS_SCALE.get(), 1, 2));
     }
 
     private static LootTable.Builder chanceTable(ItemLike item, float chance) {
@@ -67,11 +69,10 @@ public final class SaintsDragonGameplayLootProvider implements LootTableSubProvi
                 .add(LootItem.lootTableItem(item)));
     }
 
-    private static LootTable.Builder chanceCountTable(ItemLike item, float chance, int min, int max) {
+    private static LootTable.Builder countTable(ItemLike item, int min, int max) {
         return LootTable.lootTable().withPool(LootPool.lootPool()
                 .setRolls(ConstantValue.exactly(1))
                 .setBonusRolls(ConstantValue.exactly(0))
-                .when(LootItemRandomChanceCondition.randomChance(chance))
                 .add(LootItem.lootTableItem(item)
                         .apply(SetItemCountFunction.setCount(UniformGenerator.between(min, max)))));
     }

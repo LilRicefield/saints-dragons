@@ -1,0 +1,26 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:atroxiia_binder"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.tame_atroxiia.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.tame_atroxiia.description"
+    },
+    "frame": "challenge",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "tame_atroxiia": {
+      "trigger": "minecraft:impossible"
+    }
+  },
+  "rewards": {
+    "experience": 300
+  }
+}

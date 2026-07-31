@@ -1,5 +1,24 @@
 {
   "start_at": "dragon_knowledge",
+  "resume": {
+    "texts": [
+      {
+        "text": "Where was I? Ah, right."
+      },
+      {
+        "text": "Back to what I was saying..."
+      },
+      {
+        "text": "Now, where did I leave off...? Oh, yes."
+      },
+      {
+        "text": "Right, we were talking about this..."
+      }
+    ],
+    "requires_all_flags": [
+      "dimension:minecraft:overworld"
+    ]
+  },
   "states": {
     "dragon_knowledge": {
       "speaker": {

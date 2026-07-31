@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.npc.dialogue;
 import com.leon.saintsdragons.common.network.MessageDialogueClose;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.item.IvyOctopusPlushieItem;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
@@ -45,6 +46,56 @@ public final class DialogueSessionRegistry {
         sendNode(player, ivy.getId(), dialogue, dialogue.start(), startNode, chosenName, flags);
     }
 
+    public static boolean tryResumeInterrupted(ServerPlayer player, IvyTheDragonMerchant ivy) {
+        IvyTheDragonMerchant.DialogueResumePoint resumePoint = ivy.getRememberedDialogueResume(player);
+        if (resumePoint == null) {
+            return false;
+        }
+        DialogueDefinition dialogue = DialogueRegistry.get(resumePoint.dialogueId());
+        DialogueDefinition.Node node = dialogue == null ? null : dialogue.nodes().get(resumePoint.nodeId());
+        if (dialogue == null || !dialogue.resume().enabled() || node == null || !isResumeSafeNode(node)) {
+            ivy.clearRememberedDialogueResume(player.getUUID(), resumePoint.dialogueId());
+            return false;
+        }
+        if (!isValidSpeaker(player, ivy)) {
+            return false;
+        }
+        Set<String> flags = collectFlags(player, ivy, ivy.getRememberedDialogueFlags(player));
+        if (!flags.containsAll(dialogue.resume().requiresAllFlags())) {
+            return false;
+        }
+        if (visibleChoices(node, flags).isEmpty()) {
+            ivy.clearRememberedDialogueResume(player.getUUID(), dialogue.id());
+            return false;
+        }
+        endForEntity(ivy);
+        String chosenName = ivy.getRememberedDialogueName(player);
+        SESSIONS.put(player.getUUID(), new DialogueSession(
+                ivy.getId(), dialogue.id(), resumePoint.nodeId(), chosenName, flags, true));
+        sendResumeIntro(player, ivy.getId(), dialogue, resumePoint.nodeId(), node, chosenName);
+        return true;
+    }
+
+    public static void suspend(ServerPlayer player) {
+        DialogueSession session = SESSIONS.remove(player.getUUID());
+        if (session == null) {
+            return;
+        }
+        Entity entity = player.level().getEntity(session.entityId());
+        if (entity instanceof IvyTheDragonMerchant ivy) {
+            rememberResumePoint(ivy, player.getUUID(), session);
+            ivy.exitDialogueExpressionAnimation();
+        }
+    }
+
+    public static void suspend(ServerPlayer player, int entityId) {
+        DialogueSession session = SESSIONS.get(player.getUUID());
+        if (session == null || session.entityId() != entityId) {
+            return;
+        }
+        suspend(player);
+    }
+
     public static void choose(ServerPlayer player, int entityId, int choiceIndex) {
         DialogueSession session = SESSIONS.get(player.getUUID());
         if (session == null || session.entityId() != entityId) {
@@ -58,6 +109,10 @@ public final class DialogueSessionRegistry {
         DialogueDefinition dialogue = DialogueRegistry.get(session.dialogueId());
         if (dialogue == null) {
             end(player);
+            return;
+        }
+        if (session.interruptionIntro()) {
+            continueInterrupted(player, ivy, session, dialogue, choiceIndex);
             return;
         }
         DialogueDefinition.Node currentNode = dialogue.nodes().get(session.nodeId());
@@ -178,7 +233,7 @@ public final class DialogueSessionRegistry {
             if (player != null) {
                 end(player);
             } else {
-                removeSession(ivy, entry.getKey(), true);
+                suspend(ivy, entry.getKey(), entry.getValue());
             }
         }
     }
@@ -194,7 +249,7 @@ public final class DialogueSessionRegistry {
                 if (player != null) {
                     end(player);
                 } else {
-                    removeSession(ivy, entry.getKey(), true);
+                    suspend(ivy, entry.getKey(), session);
                 }
                 continue;
             }
@@ -217,6 +272,7 @@ public final class DialogueSessionRegistry {
     private static void removeSession(ServerPlayer player, boolean exitExpression) {
         DialogueSession session = SESSIONS.remove(player.getUUID());
         if (exitExpression && session != null && player.level().getEntity(session.entityId()) instanceof IvyTheDragonMerchant ivy) {
+            ivy.clearRememberedDialogueResume(player.getUUID(), session.dialogueId());
             ivy.exitDialogueExpressionAnimation();
         }
     }
@@ -224,7 +280,24 @@ public final class DialogueSessionRegistry {
     private static void removeSession(IvyTheDragonMerchant ivy, UUID playerUuid, boolean exitExpression) {
         DialogueSession session = SESSIONS.remove(playerUuid);
         if (exitExpression && session != null && session.entityId() == ivy.getId()) {
+            ivy.clearRememberedDialogueResume(playerUuid, session.dialogueId());
             ivy.exitDialogueExpressionAnimation();
+        }
+    }
+
+    private static void suspend(IvyTheDragonMerchant ivy, UUID playerUuid, DialogueSession session) {
+        if (!SESSIONS.remove(playerUuid, session)) {
+            return;
+        }
+        rememberResumePoint(ivy, playerUuid, session);
+        ivy.exitDialogueExpressionAnimation();
+    }
+
+    private static void rememberResumePoint(IvyTheDragonMerchant ivy, UUID playerUuid, DialogueSession session) {
+        DialogueDefinition dialogue = DialogueRegistry.get(session.dialogueId());
+        DialogueDefinition.Node node = dialogue == null ? null : dialogue.nodes().get(session.nodeId());
+        if (dialogue != null && dialogue.resume().enabled() && node != null && isResumeSafeNode(node)) {
+            ivy.rememberDialogueResume(playerUuid, dialogue.id(), session.nodeId());
         }
     }
 
@@ -267,6 +340,28 @@ public final class DialogueSessionRegistry {
         sendNode(player, entityId, target.dialogue(), target.nodeId(), target.node(), chosenName, nextFlags);
     }
 
+    private static void continueInterrupted(ServerPlayer player,
+                                            IvyTheDragonMerchant ivy,
+                                            DialogueSession session,
+                                            DialogueDefinition dialogue,
+                                            int choiceIndex) {
+        DialogueDefinition.Node node = dialogue.nodes().get(session.nodeId());
+        Set<String> flags = collectFlags(player, ivy,
+                mergedFlags(session.flags(), ivy.getRememberedDialogueFlags(player)));
+        if (choiceIndex != 0
+                || node == null
+                || !isResumeSafeNode(node)
+                || !flags.containsAll(dialogue.resume().requiresAllFlags())
+                || visibleChoices(node, flags).isEmpty()) {
+            end(player);
+            return;
+        }
+        ivy.clearRememberedDialogueResume(player.getUUID(), dialogue.id());
+        SESSIONS.put(player.getUUID(), new DialogueSession(
+                ivy.getId(), dialogue.id(), session.nodeId(), session.chosenName(), flags));
+        sendNode(player, ivy.getId(), dialogue, session.nodeId(), node, session.chosenName(), flags);
+    }
+
     private static ResolvedTarget resolveTarget(DialogueDefinition currentDialogue, String next) {
         DialogueTargetReference reference = DialogueTargetReference.parse(currentDialogue.id(), next);
         if (reference == null) {
@@ -295,6 +390,36 @@ public final class DialogueSessionRegistry {
                 node.type()
         );
         NetworkHandler.sendToPlayer(player, MessageDialogueOpen.fromNode(entityId, dialogue.id(), nodeId, resolvedNode));
+    }
+
+    private static void sendResumeIntro(ServerPlayer player,
+                                        int entityId,
+                                        DialogueDefinition dialogue,
+                                        String nodeId,
+                                        DialogueDefinition.Node resumedNode,
+                                        String chosenName) {
+        Component text = dialogue.resume().selectText();
+        DialogueDefinition.Node introNode = new DialogueDefinition.Node(
+                resumedNode.speaker(),
+                chosenName == null ? text : resolveName(text, chosenName),
+                List.of(new DialogueDefinition.Choice(Component.literal("..."), nodeId)),
+                DialogueDefinition.Type.DEFAULT
+        );
+        NetworkHandler.sendToPlayer(player,
+                MessageDialogueOpen.fromNode(entityId, dialogue.id(), nodeId, introNode));
+    }
+
+    private static boolean isResumeSafeNode(DialogueDefinition.Node node) {
+        return switch (node.type()) {
+            case DEFAULT,
+                 IVY_EMBARRASSED,
+                 IVY_SIGH,
+                 IVY_HMM_TRADER,
+                 IVY_HMM_GARDENER,
+                 IVY_HMM_DRAGON_ADVICE,
+                 IVY_HMM_EXIT_TO_IDLE -> true;
+            default -> false;
+        };
     }
 
     private static List<DialogueDefinition.Choice> visibleChoices(DialogueDefinition.Node node, Set<String> flags) {
@@ -329,6 +454,7 @@ public final class DialogueSessionRegistry {
 
     private static Set<String> collectFlags(ServerPlayer player, IvyTheDragonMerchant ivy, Set<String> baseFlags) {
         Set<String> flags = new HashSet<>(baseFlags);
+        flags.add("dimension:" + player.serverLevel().dimension().location());
         if (flags.containsAll(IVY_WORK_TOPIC_FLAGS)) {
             flags.add("known_work_done");
         }
@@ -377,8 +503,9 @@ public final class DialogueSessionRegistry {
             ivy.rememberDialogueFlag(player, "ivy_recruited");
             ivy.rememberDialogueFlag(player, "cindervane_quest_completed");
         }
-        if (node.givesIvyPlushie() && !player.getInventory().contains(new ItemStack(ModItems.IVY_OCTOPUS_PLUSHIE.get()))) {
+        if (node.givesIvyPlushie() && !hasUsableIvyPlushie(player, ivy)) {
             ItemStack plushie = new ItemStack(ModItems.IVY_OCTOPUS_PLUSHIE.get());
+            IvyOctopusPlushieItem.bindTo(plushie, ivy, player);
             if (!player.getInventory().add(plushie)) {
                 player.drop(plushie, false);
             }
@@ -387,6 +514,15 @@ public final class DialogueSessionRegistry {
         if (!animationTrigger.isBlank()) {
             ivy.playDialogueAnimation(animationTrigger);
         }
+    }
+
+    private static boolean hasUsableIvyPlushie(ServerPlayer player, IvyTheDragonMerchant ivy) {
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            if (IvyOctopusPlushieItem.canRepresent(player.getInventory().getItem(slot), ivy, player)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Component resolveName(Component component, String chosenName) {

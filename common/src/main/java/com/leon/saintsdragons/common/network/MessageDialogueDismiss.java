@@ -17,6 +17,6 @@ public record MessageDialogueDismiss(int entityId) {
         if (player == null) {
             return;
         }
-        DialogueSessionRegistry.end(player, message.entityId);
+        DialogueSessionRegistry.suspend(player, message.entityId);
     }
 }

@@ -64,7 +64,8 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
                 DialogueDefinition.Type type = DialogueDefinition.Type.byName(GsonHelper.getAsString(nodeJson, "type", "default"));
                 nodes.put(entry.getKey(), new DialogueDefinition.Node(speaker, text, texts, choices, type));
             }
-            DialogueDefinition dialogue = new DialogueDefinition(fileId, start, nodes);
+            DialogueDefinition.Resume resume = parseResume(root);
+            DialogueDefinition dialogue = new DialogueDefinition(fileId, start, nodes, resume);
             DialogueValidationResult validation = DialogueValidator.validate(dialogue);
             if (!validation.valid()) {
                 SaintsDragonsCommon.LOGGER.error("Failed to validate dialogue file {}: {}", fileId, validation.message());
@@ -74,6 +75,17 @@ public final class DialogueReloadListener extends SimpleJsonResourceReloadListen
         } catch (Exception exception) {
             SaintsDragonsCommon.LOGGER.error("Failed to parse dialogue file {}", fileId, exception);
         }
+    }
+
+    private static DialogueDefinition.Resume parseResume(JsonObject root) {
+        if (!root.has("resume")) {
+            return new DialogueDefinition.Resume(List.of(), List.of());
+        }
+        JsonObject resume = GsonHelper.getAsJsonObject(root, "resume");
+        List<Component> texts = resume.has("texts")
+                ? parseComponents(GsonHelper.getAsJsonArray(resume, "texts"))
+                : List.of();
+        return new DialogueDefinition.Resume(texts, parseStringList(resume, "requires_all_flags"));
     }
 
     private static DialogueDefinition.Choice parseChoice(ResourceLocation fileId, JsonElement element) {

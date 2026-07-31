@@ -28,14 +28,18 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.IGNIVORUS_BINDER.get());
                                 output.accept(ModItems.VOLITANS_BINDER.get());
                                 output.accept(ModItems.NULLJAW_BINDER.get());
+                                output.accept(ModItems.ATROXIIA_BINDER.get());
                                 output.accept(ModItems.DRACONIAN_CONTROLLER.get());
                                 output.accept(ModItems.DRACONIC_CODEX.get());
                                 output.accept(ModItems.DRAGON_BRUSH.get());
                                 output.accept(ModItems.GOLDEN_DRAGON_BRUSH.get());
+                                output.accept(ModItems.SCALE_PLUCKER.get());
                                 output.accept(ModItems.HEARTY_DRAGON_MEAL.get());
                                 output.accept(ModItems.RAW_MOOP.get());
                                 output.accept(ModItems.COOKED_MOOP.get());
                                 output.accept(ModItems.BUCKET_OF_MOOP.get());
+                                output.accept(ModItems.RAW_MOSSBACK.get());
+                                output.accept(ModItems.COOKED_MOSSBACK.get());
                                 output.accept(ModItems.RAEVYX_SCALE.get());
                                 output.accept(ModItems.RAEVYX_WING_HIDE.get());
                                 output.accept(ModItems.RAEVYX_WINGTALON.get());
@@ -48,6 +52,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.IGNIVORUS_HEART.get());
                                 output.accept(ModItems.VOLITANS_SCALE.get());
                                 output.accept(ModItems.VOLITANS_SPINE.get());
+                                output.accept(ModItems.ATROXIIA_SCALE.get());
                                 output.accept(ModItems.DRACONIAN_FLESH.get());
                                 output.accept(ModItems.RAEVYX_EGG.get());
                                 output.accept(ModItems.CINDERVANE_EGG.get());
@@ -55,6 +60,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.VARASUCHUS_EGG.get());
                                 output.accept(ModItems.IGNIVORUS_EGG.get());
                                 output.accept(ModItems.VOLITANS_EGG.get());
+                                output.accept(ModItems.ATROXIIA_EGG.get());
                                 output.accept(ModItems.IVY_OCTOPUS_PLUSHIE.get());
                                 output.accept(ModItems.SEARING_COAL.get());
                                 output.accept(ModItems.ANCIENT_DRAGONITE_FRAGMENT.get());

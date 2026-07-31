@@ -159,7 +159,7 @@ public class RaevyxModel extends DragonGeoModel<Raevyx> {
             lookPitchRad *= 0.5f;
         }
 
-        DragonModelPoseHelper.applyWeightedNeckFollow(this, NECK_TURN, lookPitchRad, totalYawRad);
+        DragonModelPoseHelper.applyWeightedNeckFollow(this, entity, NECK_TURN, lookPitchRad, totalYawRad);
     }
 
     private void applyTailDrag(Raevyx entity, float partialTick) {

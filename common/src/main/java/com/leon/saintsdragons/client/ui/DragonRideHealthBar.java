@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -27,6 +28,8 @@ public class DragonRideHealthBar {
     private static final ResourceLocation STEGONAUT_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/stegonaut/stegonaut_overlay.png");
     private static final ResourceLocation VOLITANS_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/volitans/volitans_base.png");
     private static final ResourceLocation VOLITANS_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/volitans/volitans_overlay.png");
+    private static final ResourceLocation ATROXIIA_BASE = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/atroxiia/atroxiia_base.png");
+    private static final ResourceLocation ATROXIIA_OVERLAY = new ResourceLocation(SaintsDragonsCommon.MOD_ID, "textures/gui/healthbar/atroxiia/atroxiia_overlay.png");
     private static final int BAR_WIDTH = 182;
     private static final int BAR_HEIGHT = 22;
     private DragonEntity dragon;
@@ -82,6 +85,8 @@ public class DragonRideHealthBar {
             renderTexturedHealthBar(guiGraphics, x, y, STEGONAUT_BASE, STEGONAUT_OVERLAY);
         } else if (dragon instanceof Volitans) {
             renderTexturedHealthBar(guiGraphics, x, y, VOLITANS_BASE, VOLITANS_OVERLAY);
+        } else if (dragon instanceof Atroxiia) {
+            renderTexturedHealthBar(guiGraphics, x, y, ATROXIIA_BASE, ATROXIIA_OVERLAY);
         } else {
             renderFallbackHealthBar(guiGraphics, x, y);
         }
@@ -92,11 +97,11 @@ public class DragonRideHealthBar {
     }
 
     private void renderTexturedHealthBar(GuiGraphics guiGraphics, int x, int y, ResourceLocation baseTexture, ResourceLocation overlayTexture) {
-        guiGraphics.blit(overlayTexture, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         int fillWidth = Math.max(0, Math.min(BAR_WIDTH, Math.round(BAR_WIDTH * currentHealthPercent)));
         if (fillWidth > 0) {
             guiGraphics.blit(baseTexture, x, y, 0, 0, fillWidth, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
         }
+        guiGraphics.blit(overlayTexture, x, y, 0, 0, BAR_WIDTH, BAR_HEIGHT, BAR_WIDTH, BAR_HEIGHT);
     }
 
     private void renderFallbackHealthBar(GuiGraphics guiGraphics, int x, int y) {

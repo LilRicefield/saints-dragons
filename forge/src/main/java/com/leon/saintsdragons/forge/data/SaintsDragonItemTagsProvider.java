@@ -27,6 +27,7 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
         tag(ModTags.Items.DRAGON_EGGS)
+                .add(ModItems.ATROXIIA_EGG.get())
                 .add(ModItems.STEGONAUT_EGG.get())
                 .add(ModItems.VARASUCHUS_EGG.get())
                 .add(ModItems.IGNIVORUS_EGG.get())
@@ -35,6 +36,7 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.RAEVYX_EGG.get());
 
         tag(ModTags.Items.DRAGON_BINDERS)
+                .add(ModItems.ATROXIIA_BINDER.get())
                 .add(ModItems.CINDERVANE_BINDER.get())
                 .add(ModItems.IGNIVORUS_BINDER.get())
                 .add(ModItems.RAEVYX_BINDER.get())
@@ -68,6 +70,7 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.WORLDROOT_HOE.get());
 
         tag(ModTags.Items.DRAGON_PARTS)
+                .add(ModItems.ATROXIIA_SCALE.get())
                 .add(ModItems.CINDERVANE_SCALE.get())
                 .add(ModItems.IGNIVORUS_SCALE.get())
                 .add(ModItems.RAEVYX_SCALE.get())

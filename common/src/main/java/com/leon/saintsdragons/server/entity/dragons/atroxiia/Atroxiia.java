@@ -5,6 +5,8 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.registry.ModAbilities;
+import com.leon.saintsdragons.common.registry.ModBlocks;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
@@ -15,6 +17,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaH
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
@@ -28,6 +31,7 @@ import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
+import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -57,6 +61,7 @@ import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,6 +71,7 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer {
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
@@ -90,6 +96,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final int MAX_AMBIENT_DELAY = 600;
     private static final int FLEX_CONTROL_LOCK_TICKS = 67;
     private static final int FLEX_COOLDOWN_TICKS = 120;
+    public static final double BREED_PARTNER_RANGE = 20.0D;
+    public static final double BREED_DISTANCE_SQR = 36.0D;
     private static final int SIT_DOWN_TICKS = 48;
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
@@ -99,6 +107,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     public static final int EAT_ANIMATION_TICKS = 40;
     public static final int HURT_SOUND_TICKS = 20;
     public static final int EAT_SOUND_TICKS = 60;
+    private static final double BABY_MAX_HEALTH = 30.0D;
+    private static final double BABY_ARMOR = 0.0D;
     private static final double RIDER_JUMP_STRENGTH = 0.75D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
     private static final float MAX_UP_STEP = 1.25F;
@@ -209,9 +219,20 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
 
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
-        setAttributeBase(Attributes.MAX_HEALTH, config.maxHealth());
-        setAttributeBase(Attributes.ARMOR, config.armor());
+        applyConfiguredHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         clampHealthToMax();
+    }
+
+    @Override
+    protected float getBabyHitboxScale() {
+        return 0.30F;
+    }
+
+    @Override
+    public void ageBoundaryReached() {
+        super.ageBoundaryReached();
+        applyConfiguredAttributes();
+        refreshDimensions();
     }
 
     @Override
@@ -544,6 +565,13 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             return true;
         }
         return super.hurt(damageSource, amount);
+    }
+
+    @Override
+    protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.ATROXIIA_FEMALE_DEATH, source);
+        }
     }
 
     @Override
@@ -985,6 +1013,20 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
 
     @Override
     public @Nullable AgeableMob getBreedOffspring(@NotNull ServerLevel serverLevel, @NotNull AgeableMob ageableMob) {
-        return null;
+        return createBreedOffspring(serverLevel, ageableMob, ModEntities.ATROXIIA.get(), Atroxiia::applyConfiguredAttributes);
+    }
+
+    @Override
+    public boolean canBreed() {
+        return isTame() && !isBaby() && getHealth() >= getMaxHealth() && isInLove();
+    }
+
+    public boolean canBeBound() {
+        return !isSleeping() && !isDying();
+    }
+
+    @Override
+    protected Supplier<? extends Block> getEggBlock() {
+        return ModBlocks.ATROXIIA_EGG;
     }
 }

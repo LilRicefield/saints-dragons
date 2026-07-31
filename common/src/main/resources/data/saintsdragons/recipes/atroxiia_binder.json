@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GGG",
+    "ACA",
+    "GAG"
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "C": {
+      "item": "saintsdragons:dragon_binder_core"
+    },
+    "A": {
+      "item": "saintsdragons:atroxiia_scale"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:atroxiia_binder",
+    "count": 1
+  }
+}

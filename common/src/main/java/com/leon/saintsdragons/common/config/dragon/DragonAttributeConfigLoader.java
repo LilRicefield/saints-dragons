@@ -540,6 +540,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double helheimQuakeKnockback = 0.75D;
         double helheimQuakeSecondaryKnockback = 1.8D;
         double helheimQuakeStunDurationTicks = 100.0D;
+        double eggHatchTimeTicksNormal = 24000.0D;
         boolean frostImpactEnabled = true;
         boolean aggressiveWild = false;
 
@@ -560,6 +561,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 helheimQuakeKnockback = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_KNOCKBACK");
                 helheimQuakeSecondaryKnockback = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_SECONDARY_KNOCKBACK");
                 helheimQuakeStunDurationTicks = forgeDouble(configClass, "ATROXIIA_HELHEIM_QUAKE_STUN_DURATION_TICKS");
+                eggHatchTimeTicksNormal = forgeDouble(configClass, "ATROXIIA_EGG_HATCH_TIME_TICKS_NORMAL");
                 frostImpactEnabled = forgeBoolean(configClass, "ATROXIIA_FROST_IMPACT_ENABLED");
                 aggressiveWild = forgeBoolean(configClass, "ATROXIIA_AGGRESSIVE_WILD");
             } catch (Exception ignored) {
@@ -588,7 +590,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "taming_chance_base", 20.0D,
                         "taming_chance_hearty", 33.3333D,
-                        "taming_stun_health", 60.0D
+                        "taming_stun_health", 60.0D,
+                        "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal
                 ),
                 Map.of(
                         "legacy_taming", false,
@@ -1245,6 +1248,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
     private void backfillNormalEggTimerTuning(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
         boolean applies = id.equals(CINDERVANE_ID)
+                || id.equals(ATROXIIA_ID)
                 || id.equals(VARASUCHUS_ID)
                 || id.equals(IGNIVORUS_ID)
                 || id.equals(STEGONAUT_ID)

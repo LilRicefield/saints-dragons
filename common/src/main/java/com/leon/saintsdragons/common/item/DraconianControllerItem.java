@@ -1,7 +1,9 @@
 package com.leon.saintsdragons.common.item;
 
 import com.leon.saintsdragons.common.block.DraconianNucleusBlockEntity;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -10,11 +12,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 import org.jetbrains.annotations.NotNull;
+
+import javax.annotation.Nullable;
+import java.util.List;
 
 public class DraconianControllerItem extends Item {
     private static final double ACTIVATION_RADIUS = 64.0D;
@@ -22,6 +28,18 @@ public class DraconianControllerItem extends Item {
 
     public DraconianControllerItem(Properties properties) {
         super(properties);
+    }
+
+    @Override
+    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+        tooltip.add(Component.empty());
+        tooltip.add(Component.translatable("item.saintsdragons.draconian_controller.tooltip.passive.title")
+                .withStyle(ChatFormatting.DARK_PURPLE));
+        tooltip.add(Component.translatable("item.saintsdragons.draconian_controller.tooltip.ability.description")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.translatable("item.saintsdragons.draconian_controller.tooltip.requirement")
+                .withStyle(ChatFormatting.DARK_GRAY));
     }
 
     @Override

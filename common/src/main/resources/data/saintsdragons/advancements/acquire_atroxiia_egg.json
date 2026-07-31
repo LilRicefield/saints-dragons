@@ -1,0 +1,32 @@
+{
+  "parent": "saintsdragons:encounter_dragon",
+  "display": {
+    "icon": {
+      "item": "saintsdragons:atroxiia_egg"
+    },
+    "title": {
+      "translate": "advancement.saintsdragons.acquire_atroxiia_egg.title"
+    },
+    "description": {
+      "translate": "advancement.saintsdragons.acquire_atroxiia_egg.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true,
+    "hidden": false
+  },
+  "criteria": {
+    "has_atroxiia_egg": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:atroxiia_egg"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

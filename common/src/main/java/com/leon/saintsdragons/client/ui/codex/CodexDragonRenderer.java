@@ -23,7 +23,7 @@ public class CodexDragonRenderer {
     private static final int IGNIVORUS_OFFSET_Y = 0;
     private static final int RAEVYX_OFFSET_X = 0;
     private static final int RAEVYX_OFFSET_Y = -5;
-    private static final int ATROXIIA_OFFSET_X = -5;
+    private static final int ATROXIIA_OFFSET_X = 0;
     private static final int ATROXIIA_OFFSET_Y = 0;
     private static final int VOLITANS_OFFSET_X = 0;
     private static final int VOLITANS_OFFSET_Y = -5;

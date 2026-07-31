@@ -958,6 +958,11 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                 && groomingComponent.tryBrush(player, brushStack);
     }
 
+    public boolean tryPluckScale(Player player, ItemStack pluckerStack) {
+        return groomingComponent != null && player != null && pluckerStack != null
+                && groomingComponent.tryPluck(player, pluckerStack);
+    }
+
     public boolean isBrushingAvailable() {
         return groomingComponent != null && groomingComponent.isBrushingAvailable();
     }
@@ -1150,6 +1155,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     protected void onSuccessfulDamage(DamageSource source, float amount) {
+        triggerHurtReaction();
+    }
+
+    public void triggerHurtReaction() {
         if (level().isClientSide || isDying()) {
             return;
         }
