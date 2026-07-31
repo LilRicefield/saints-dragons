@@ -92,6 +92,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private static final double BABY_MAX_HEALTH = 50.0D;
     private static final double BABY_ARMOR = 5.0D;
     private static final float BABY_HITBOX_SCALE = 0.65F;
+    private static final float MAX_UP_STEP = 1.25F;
     private static final double RIDER_JUMP_STRENGTH = 0.75D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
     private static final int FLEX_CONTROL_LOCK_TICKS = 100;
@@ -128,6 +129,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     public Stegonaut(EntityType<? extends Stegonaut> entityType, Level level) {
         super(entityType, level);
+        this.setMaxUpStep(MAX_UP_STEP);
         this.movementController = new AnimationController<>(this, "movement", 2, animationController::handleMovementAnimation);
         this.actionController = new AnimationController<>(this, StegonautAnimationHandler.ACTION_CONTROLLER, 5, animationController::actionPredicate);
         this.fastActionController = new AnimationController<>(this, StegonautAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationController::fastActionPredicate);
