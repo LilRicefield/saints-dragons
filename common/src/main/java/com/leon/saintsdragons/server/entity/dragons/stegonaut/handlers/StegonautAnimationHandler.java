@@ -10,7 +10,6 @@ import software.bernie.geckolib.core.object.PlayState;
 
 public class StegonautAnimationHandler {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
-    public static final String FAST_ACTION_CONTROLLER = "stegonautFastAction";
     public static final String ACTION_CONTROLLER = "stegonautAction";
 
     private final Stegonaut drake;
@@ -22,6 +21,7 @@ public class StegonautAnimationHandler {
     private static final RawAnimation SLEEP_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sleep");
     private static final RawAnimation SIT_ANIM = RawAnimation.begin().thenLoop("animation.stegonaut.sit");
     private static final RawAnimation JUMP_ANIM = RawAnimation.begin().thenPlay("animation.stegonaut.jump");
+    private static final RawAnimation JUMP_LANDED_ANIM = RawAnimation.begin().thenPlay("animation.stegonaut.jump_landed");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.stegonaut.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.stegonaut.up");
     private static final RawAnimation FALL_ASLEEP = RawAnimation.begin().thenPlay("animation.stegonaut.fall_asleep");
@@ -33,7 +33,6 @@ public class StegonautAnimationHandler {
             new AnimationHelper.Animations(IDLE_ANIM, WALK_ANIM, RUN_ANIM, SIT_ANIM, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_ANIM, WAKE_UP, SWIM_ANIM, null, JUMP_ANIM);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
-    private static final int FAST_ACTION_TRANSITION_TICKS = 1;
     private static final int ACTION_TRANSITION_TICKS = 5;
     
     public StegonautAnimationHandler(Stegonaut drake) {
@@ -102,19 +101,16 @@ public class StegonautAnimationHandler {
         AnimationHelper.register(controller, "ground_slam", GROUND_SLAM);
         AnimationHelper.register(controller, "ground_slam2", GROUND_SLAM2);
         AnimationHelper.register(controller, "stegonaut_flex", FLEX);
-    }
-
-    public PlayState fastActionPredicate(AnimationState<Stegonaut> state) {
-        state.getController().transitionLength(FAST_ACTION_TRANSITION_TICKS);
-        return PlayState.STOP;
-    }
-
-    public void setupFastActionController(AnimationController<Stegonaut> controller) {
         AnimationHelper.register(controller, "jump", JUMP_ANIM);
+        AnimationHelper.register(controller, "jump_landed", JUMP_LANDED_ANIM);
     }
 
-    public void triggerRiderJumpAnimation() {
-        drake.triggerAnim(FAST_ACTION_CONTROLLER, "jump");
+    public void triggerJumpAnimation() {
+        drake.triggerAnim(MOVEMENT_CONTROLLER, "jump");
+    }
+
+    public void triggerJumpLandedAnimation() {
+        drake.triggerAnim(MOVEMENT_CONTROLLER, "jump_landed");
     }
 
     public void setupInteractionController(AnimationController<Stegonaut> controller) {

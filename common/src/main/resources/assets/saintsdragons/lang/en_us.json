@@ -767,6 +767,8 @@
   "entity.saintsdragons.atroxiia.fed": "%s is fully healed!",
   "entity.saintsdragons.atroxiia.fed_partial": "%s is being healed...",
   "entity.saintsdragons.atroxiia.still_eating": "%s is still eating...",
+  "entity.saintsdragons.atroxiia.baby_fed": "%s grows a bit stronger!",
+  "entity.saintsdragons.atroxiia.baby_grown": "%s has fully grown!",
   "entity.saintsdragons.cindervane.baby_fed": "%s grows a bit stronger!",
   "entity.saintsdragons.cindervane.baby_grown": "%s has fully grown!",
   "entity.saintsdragons.varasuchus.fed": "%s is fully healed!",

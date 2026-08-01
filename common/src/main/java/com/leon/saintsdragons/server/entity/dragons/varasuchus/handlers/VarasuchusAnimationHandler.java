@@ -23,7 +23,9 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.varasuchus.swim_idle");
     private static final RawAnimation SWIM_MOVE = RawAnimation.begin().thenLoop("animation.varasuchus.swim_move");
     private static final RawAnimation JUMP = RawAnimation.begin().thenPlay("animation.varasuchus.jump");
+    private static final RawAnimation JUMP_LANDED = RawAnimation.begin().thenPlay("animation.varasuchus.jump_landed");
     private static final RawAnimation JUMP2 = RawAnimation.begin().thenPlay("animation.varasuchus.jump2");
+    private static final RawAnimation JUMP_LANDED2 = RawAnimation.begin().thenPlay("animation.varasuchus.jump_landed2");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.varasuchus.sit");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.varasuchus.down");
     private static final RawAnimation SIT_UP = RawAnimation.begin().thenPlay("animation.varasuchus.up");
@@ -145,6 +147,10 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "sit_down2", SIT_DOWN2);
         AnimationHelper.register(controller, "sit_up2", SIT_UP2);
+        AnimationHelper.register(controller, "jump", JUMP);
+        AnimationHelper.register(controller, "jump_landed", JUMP_LANDED);
+        AnimationHelper.register(controller, "jump2", JUMP2);
+        AnimationHelper.register(controller, "jump_landed2", JUMP_LANDED2);
         AnimationHelper.register(controller, "tail_swipe_left", TAIL_SWIPE_LEFT);
         AnimationHelper.register(controller, "phase2_dash_left", PHASE2_DASH_LEFT);
         AnimationHelper.register(controller, "phase2_dash_right", PHASE2_DASH_RIGHT);
@@ -176,12 +182,13 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     public void triggerFlexAnimation() {
         drake.triggerAnim(MOVEMENT_CONTROLLER, drake.isPhaseTwoActive() ? "flex2" : "flex");
     }
-    public void triggerRiderJumpAnimation() {
-        drake.triggerAnim(FAST_ACTION_CONTROLLER, drake.isPhaseTwoActive() ? "jump2" : "jump");
+    public void triggerJumpAnimation() {
+        drake.triggerAnim(MOVEMENT_CONTROLLER, drake.isPhaseTwoActive() ? "jump2" : "jump");
+    }
+    public void triggerJumpLandedAnimation() {
+        drake.triggerAnim(MOVEMENT_CONTROLLER, drake.isPhaseTwoActive() ? "jump_landed2" : "jump_landed");
     }
     public void setupFastActionController(AnimationController<Varasuchus> controller) {
-        AnimationHelper.register(controller, "jump", JUMP);
-        AnimationHelper.register(controller, "jump2", JUMP2);
         controller.triggerableAnim("tail_attack_right",
                 RawAnimation.begin().thenPlay("animation.varasuchus.tail_attack_right"));
         controller.triggerableAnim("tail_attack_left",

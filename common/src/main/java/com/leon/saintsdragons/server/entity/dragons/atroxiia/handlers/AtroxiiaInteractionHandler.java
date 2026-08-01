@@ -126,7 +126,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
 
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
-        if (dragon.isOwnedBy(player) && player.isCrouching() && dragon.isFood(heldItem)) {
+        if (!dragon.isBaby() && dragon.isOwnedBy(player) && player.isCrouching() && dragon.isFood(heldItem)) {
             return handleBreeding(player, heldItem);
         }
 
@@ -166,8 +166,8 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
     }
 
     private InteractionResult handleFeeding(Player player, ItemStack heldItem) {
-        if (!dragon.canFeed()) {
-            sendStatusMessage(player, "entity.saintsdragons.atroxiia.still_eating");
+        var baby = dragon.getBabyComponent();
+        if (baby != null && !baby.ensureCanFeed(player, "entity.saintsdragons.atroxiia", dragon.canFeed())) {
             return InteractionResult.CONSUME;
         }
 
@@ -180,16 +180,22 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
             dragon.playEatMovingSound();
             dragon.setFeedingCooldown(Atroxiia.EAT_ANIMATION_TICKS);
 
-            float healAmount = heartyMeal ? 28.0F : 10.0F;
-            dragon.heal(healAmount);
-            dragon.applyFeedingHunger(heartyMeal);
-            dragon.level().broadcastEntityEvent(dragon, (byte) 6);
-            dragon.level().broadcastEntityEvent(dragon, (byte) 7);
+            if (dragon.isBaby()) {
+                if (baby != null) {
+                    baby.applyBabyGrowth(player, heartyMeal, "entity.saintsdragons.atroxiia", 2400, 4800);
+                }
+            } else {
+                float healAmount = heartyMeal ? 28.0F : 10.0F;
+                dragon.heal(healAmount);
+                dragon.applyFeedingHunger(heartyMeal);
+                dragon.level().broadcastEntityEvent(dragon, (byte) 6);
+                dragon.level().broadcastEntityEvent(dragon, (byte) 7);
 
-            String messageKey = dragon.getHealth() >= dragon.getMaxHealth()
-                    ? (wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.atroxiia.fed")
-                    : "entity.saintsdragons.atroxiia.fed_partial";
-            sendStatusMessage(player, messageKey);
+                String messageKey = dragon.getHealth() >= dragon.getMaxHealth()
+                        ? (wasHungry ? "entity.saintsdragons.dragon.feeding" : "entity.saintsdragons.atroxiia.fed")
+                        : "entity.saintsdragons.atroxiia.fed_partial";
+                sendStatusMessage(player, messageKey);
+            }
         }
 
         return InteractionResult.sidedSuccess(dragon.level().isClientSide);

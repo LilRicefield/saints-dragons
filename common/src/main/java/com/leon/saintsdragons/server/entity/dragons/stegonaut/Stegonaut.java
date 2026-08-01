@@ -121,7 +121,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private final ScreenShakeComponent screenShakeComponent;
     private final AnimationController<Stegonaut> movementController;
     private final AnimationController<Stegonaut> actionController;
-    private final AnimationController<Stegonaut> fastActionController;
     private final AnimationController<Stegonaut> vocalController;
     private final AnimationController<Stegonaut> interactionController;
     private final SimpleContainer stegonautChestInventory = new SimpleContainer(STEGONAUT_CHEST_SLOTS);
@@ -132,7 +131,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         this.setMaxUpStep(MAX_UP_STEP);
         this.movementController = new AnimationController<>(this, "movement", 2, animationController::handleMovementAnimation);
         this.actionController = new AnimationController<>(this, StegonautAnimationHandler.ACTION_CONTROLLER, 5, animationController::actionPredicate);
-        this.fastActionController = new AnimationController<>(this, StegonautAnimationHandler.FAST_ACTION_CONTROLLER, 1, animationController::fastActionPredicate);
         this.vocalController = new AnimationController<>(this, AnimationHelper.VOCAL_CONTROLLER, 2, AnimationHelper::vocalIdle);
         this.interactionController = new AnimationController<>(this, AnimationHelper.INTERACTION_CONTROLLER, 1, AnimationHelper::interactionIdle);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.18F);
@@ -288,9 +286,18 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
-    protected void onGroundDragonJumped(int jumpPower) {
-        super.onGroundDragonJumped(jumpPower);
-        animationController.triggerRiderJumpAnimation();
+    protected boolean usesGroundJumpLandingAnimation() {
+        return true;
+    }
+
+    @Override
+    protected void triggerGroundJumpAnimation() {
+        animationController.triggerJumpAnimation();
+    }
+
+    @Override
+    protected void triggerGroundJumpLandedAnimation() {
+        animationController.triggerJumpLandedAnimation();
     }
 
     @Override
@@ -433,15 +440,14 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(movementController, vocalController, actionController, fastActionController, interactionController);
+        controllers.add(movementController, vocalController, actionController, interactionController);
     }
 
     private void setupAnimationControllers() {
         AnimationHelper.registerSoundKeyframes(this, movementController, actionController,
-                fastActionController, vocalController, interactionController);
+                vocalController, interactionController);
         animationController.setupMovementController(movementController);
         animationController.setupActionController(actionController);
-        animationController.setupFastActionController(fastActionController);
         AnimationHelper.registerGrumbles(vocalController, this);
         animationController.setupInteractionController(interactionController);
     }

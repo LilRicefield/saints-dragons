@@ -109,7 +109,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     public static final int EAT_SOUND_TICKS = 60;
     private static final double BABY_MAX_HEALTH = 30.0D;
     private static final double BABY_ARMOR = 0.0D;
-    private static final double RIDER_JUMP_STRENGTH = 0.75D;
+    private static final double RIDER_JUMP_STRENGTH = 1.15D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
     private static final float MAX_UP_STEP = 1.25F;
     public static final double RIDER_WALK_SPEED = 0.12D;
@@ -513,9 +513,18 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     @Override
-    protected void onGroundDragonJumped(int jumpPower) {
-        super.onGroundDragonJumped(jumpPower);
-        animationHandler.triggerRiderJumpAnimation();
+    protected boolean usesGroundJumpLandingAnimation() {
+        return true;
+    }
+
+    @Override
+    protected void triggerGroundJumpAnimation() {
+        animationHandler.triggerJumpAnimation();
+    }
+
+    @Override
+    protected void triggerGroundJumpLandedAnimation() {
+        animationHandler.triggerJumpLandedAnimation();
     }
 
     @Override

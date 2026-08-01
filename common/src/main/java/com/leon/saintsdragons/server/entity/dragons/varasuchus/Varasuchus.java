@@ -892,9 +892,18 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     @Override
-    protected void onGroundDragonJumped(int jumpPower) {
-        super.onGroundDragonJumped(jumpPower);
-        animationHandler.triggerRiderJumpAnimation();
+    protected boolean usesGroundJumpLandingAnimation() {
+        return true;
+    }
+
+    @Override
+    protected void triggerGroundJumpAnimation() {
+        animationHandler.triggerJumpAnimation();
+    }
+
+    @Override
+    protected void triggerGroundJumpLandedAnimation() {
+        animationHandler.triggerJumpLandedAnimation();
     }
 
     @Override

@@ -17,6 +17,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     private static final RawAnimation SWIM = RawAnimation.begin().thenLoop("animation.atroxiia.swim");
     private static final RawAnimation SWIM_IDLE = RawAnimation.begin().thenLoop("animation.atroxiia.swim_idle");
     private static final RawAnimation JUMP = RawAnimation.begin().thenPlay("animation.atroxiia.jump");
+    private static final RawAnimation JUMP_LANDED = RawAnimation.begin().thenPlay("animation.atroxiia.jump_landed");
     private static final RawAnimation UNDERWATER_BITE = RawAnimation.begin().thenPlay("animation.atroxiia.underwater_bite");
     private static final RawAnimation SIT = RawAnimation.begin().thenLoop("animation.atroxiia.sit");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.atroxiia.down");
@@ -87,6 +88,8 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         AnimationHelper.register(controller, "helheim_quake1", HELHEIM_QUAKE_ONE);
         AnimationHelper.register(controller, "helheim_quake2", HELHEIM_QUAKE_TWO);
         AnimationHelper.register(controller, "atroxiia_flex", FLEX);
+        AnimationHelper.register(controller, "jump", JUMP);
+        AnimationHelper.register(controller, "jump_landed", JUMP_LANDED);
     }
 
     public PlayState fastActionPredicate(AnimationState<Atroxiia> state) {
@@ -95,12 +98,15 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     }
 
     public void setupFastActionController(AnimationController<Atroxiia> controller) {
-        AnimationHelper.register(controller, "jump", JUMP);
         AnimationHelper.register(controller, "underwater_bite", UNDERWATER_BITE);
     }
 
-    public void triggerRiderJumpAnimation() {
-        dragon.triggerAnim(FAST_ACTION_CONTROLLER, "jump");
+    public void triggerJumpAnimation() {
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "jump");
+    }
+
+    public void triggerJumpLandedAnimation() {
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "jump_landed");
     }
 
     public void setupInteractionController(AnimationController<Atroxiia> controller) {
