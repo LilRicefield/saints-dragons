@@ -140,6 +140,10 @@ public class AsyncSwimController {
         this.steering.slow(0.8D);
     }
 
+    public void pause() {
+        this.steering.slow(0.8D);
+    }
+
     public void clear() {
         this.target = null;
         this.liveTracking = false;

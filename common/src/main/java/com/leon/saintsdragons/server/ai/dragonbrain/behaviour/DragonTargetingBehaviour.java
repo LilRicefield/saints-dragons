@@ -66,8 +66,22 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         if (isUsableTarget(dragon, current)) {
             String abandonmentReason = pursuitSafety.abandonmentReason(context, current);
             if (abandonmentReason != null) {
-                abandonTarget(context, current, abandonmentReason);
-                return;
+                if (DragonPursuitSafety.isNavigationFailure(abandonmentReason)
+                        && retainsVisibleTargetThroughNavigationFailure(
+                        context,
+                        current,
+                        source,
+                        abandonmentReason
+                )) {
+                    pursuitSafety.recoverVisiblePursuit(
+                            context.gameTime(),
+                            current,
+                            dragon.distanceTo(current)
+                    );
+                } else {
+                    abandonTarget(context, current, abandonmentReason);
+                    return;
+                }
             }
         } else {
             pursuitSafety.resetTracking();
@@ -121,6 +135,13 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     protected abstract boolean canRetainTarget(T dragon, LivingEntity target, String source);
 
     protected boolean suppressesTargetRetention(DragonBrainContext<T> context) {
+        return false;
+    }
+
+    protected boolean retainsVisibleTargetThroughNavigationFailure(DragonBrainContext<T> context,
+                                                                   LivingEntity target,
+                                                                   String source,
+                                                                   String reason) {
         return false;
     }
 

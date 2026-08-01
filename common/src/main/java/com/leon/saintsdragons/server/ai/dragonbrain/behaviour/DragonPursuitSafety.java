@@ -128,6 +128,21 @@ final class DragonPursuitSafety {
         resetTracking(false);
     }
 
+    void recoverVisiblePursuit(long gameTime, LivingEntity target, double distance) {
+        if (!target.getUUID().equals(pursuedTargetId)) {
+            beginPursuit(target, distance, gameTime);
+            return;
+        }
+        lastProgressAt = gameTime;
+        routeFailurePressure = 0;
+        idlePursuitTicks = 0;
+        pursuitState = "tracking";
+    }
+
+    static boolean isNavigationFailure(String reason) {
+        return "route-failed".equals(reason) || "movement-idle".equals(reason);
+    }
+
     boolean canReacquire(RideableDragonBase dragon, LivingEntity target, long gameTime) {
         if (abandonedTargetId == null || !abandonedTargetId.equals(target.getUUID())) {
             return true;

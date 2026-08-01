@@ -149,6 +149,16 @@ public final class VolitansTargetingBehaviour extends DragonTargetingBehaviour<V
     }
 
     @Override
+    protected boolean retainsVisibleTargetThroughNavigationFailure(DragonBrainContext<Volitans> context,
+                                                                   LivingEntity target,
+                                                                   String source,
+                                                                   String reason) {
+        return !Source.HUNT.debugName.equals(source)
+                && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)
+                && canRetainTarget(context.dragon(), target, source);
+    }
+
+    @Override
     protected boolean suppressesTargetRetention(DragonBrainContext<Volitans> context) {
         if (!protectingBabies) {
             return false;

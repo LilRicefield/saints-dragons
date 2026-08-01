@@ -143,11 +143,20 @@ public final class VolitansAnimationHandler {
     }
 
     public PlayState movementPredicate(AnimationState<Volitans> state) {
-        if (dragon.isDying() || dragon.areRiderControlsLocked()) {
+        if (dragon.isDying()) {
             return PlayState.STOP;
         }
 
         var controller = state.getController();
+        if (dragon.isTamingStunned()) {
+            controller.transitionLength(GROUND_TRANSITIONS.idle());
+            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
+            return PlayState.CONTINUE;
+        }
+        if (dragon.areRiderControlsLocked()) {
+            return PlayState.STOP;
+        }
+
         boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
 
         RawAnimation sleepPose = dragon.isInWaterOrBubble() ? SLEEP_UNDERWATER : SLEEP;
@@ -192,12 +201,6 @@ public final class VolitansAnimationHandler {
             } else {
                 state.setAndContinue(SWIM_IDLE);
             }
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isTamingStunned()) {
-            controller.transitionLength(GROUND_TRANSITIONS.idle());
-            state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
             return PlayState.CONTINUE;
         }
 

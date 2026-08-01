@@ -340,6 +340,8 @@ public final class AsyncDragonPathfinder {
         private static final int VERTICAL_PADDING = 8;
         private static final int MAX_HORIZONTAL_SPAN = 96;
         private static final int MAX_VERTICAL_SPAN = 32;
+        private static final int NEAREST_START_WATER_RADIUS = 6;
+        private static final int NEAREST_GOAL_WATER_RADIUS = 32;
 
         private final boolean[] water;
         private final int minX;
@@ -443,14 +445,32 @@ public final class AsyncDragonPathfinder {
             int goalY = Mth.clamp(goalPos.getY() - minY, 0, sizeY - 1);
             int goalZ = Mth.clamp(goalPos.getZ() - minZ, 0, sizeZ - 1);
 
-            int nearestStart = nearestWaterIndex(water, sizeX, sizeY, sizeZ, startX, startY, startZ, 6);
+            int nearestStart = nearestWaterIndex(
+                    water,
+                    sizeX,
+                    sizeY,
+                    sizeZ,
+                    startX,
+                    startY,
+                    startZ,
+                    NEAREST_START_WATER_RADIUS
+            );
             if (nearestStart >= 0) {
                 startX = nearestStart % sizeX;
                 startY = (nearestStart / sizeX) % sizeY;
                 startZ = nearestStart / (sizeX * sizeY);
             }
 
-            int nearestGoal = nearestWaterIndex(water, sizeX, sizeY, sizeZ, goalX, goalY, goalZ, 12);
+            int nearestGoal = nearestWaterIndex(
+                    water,
+                    sizeX,
+                    sizeY,
+                    sizeZ,
+                    goalX,
+                    goalY,
+                    goalZ,
+                    NEAREST_GOAL_WATER_RADIUS
+            );
             if (nearestGoal >= 0) {
                 goalX = nearestGoal % sizeX;
                 goalY = (nearestGoal / sizeX) % sizeY;

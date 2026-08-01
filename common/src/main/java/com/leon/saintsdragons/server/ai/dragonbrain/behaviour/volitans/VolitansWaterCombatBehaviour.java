@@ -96,6 +96,11 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
             return;
         }
 
+        // Finish climbing out before committing to a ranged attack against a dry target.
+        if (!target.isInWaterOrBubble() && gap > GORE_RANGE) {
+            return;
+        }
+
         if (attackCooldown > 0 || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0 || dragon.isGroundMobilityActive()) {
             return;
         }
