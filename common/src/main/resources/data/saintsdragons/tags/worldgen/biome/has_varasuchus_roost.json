@@ -4,11 +4,7 @@
     "minecraft:beach",
     "minecraft:stony_shore",
     {
-      "id": "c:beach",
-      "required": false
-    },
-    {
-      "id": "c:stony_shores",
+      "id": "terralith:gravel_beach",
       "required": false
     },
     {
