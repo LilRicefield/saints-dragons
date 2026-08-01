@@ -89,21 +89,40 @@ public final class DragonRiderFlightController {
 
         Vec3 current = dragon.getDeltaMovement();
         Vec3 velocity;
+        boolean preservingDivePullUp = false;
         if (hasInput && dirLength > 0.01D) {
             targetDirX /= dirLength;
             targetDirY /= dirLength;
             targetDirZ /= dirLength;
-            Vec3 targetVelocity = new Vec3(
-                    targetDirX * currentFlightSpeed,
-                    targetDirY * currentFlightSpeed,
-                    targetDirZ * currentFlightSpeed
-            );
+            Vec3 targetDirection = new Vec3(targetDirX, targetDirY, targetDirZ);
             double acceleration = diving ? settings.diveAcceleration() : settings.flightAcceleration();
-            velocity = new Vec3(
-                    Mth.lerp(acceleration, current.x, targetVelocity.x),
-                    Mth.lerp(acceleration, current.y, targetVelocity.y),
-                    Mth.lerp(acceleration, current.z, targetVelocity.z)
-            );
+            preservingDivePullUp = !diving
+                    && forwardInput > 0.01D
+                    && targetDirY > 0.01D
+                    && dragon.isHoldingRiderDiveMomentum();
+            if (preservingDivePullUp) {
+                double maxDiveSpeed = Math.max(settings.baseSpeed(), settings.sprintSpeed())
+                        * settings.diveSpeedMultiplier();
+                double preservedSpeed = Mth.clamp(
+                        Math.max(current.length(), currentFlightSpeed),
+                        currentFlightSpeed,
+                        maxDiveSpeed
+                );
+                velocity = steerPreservingSpeed(
+                        current,
+                        targetDirection,
+                        preservedSpeed,
+                        acceleration,
+                        yawRadians
+                );
+            } else {
+                Vec3 targetVelocity = targetDirection.scale(currentFlightSpeed);
+                velocity = new Vec3(
+                        Mth.lerp(acceleration, current.x, targetVelocity.x),
+                        Mth.lerp(acceleration, current.y, targetVelocity.y),
+                        Mth.lerp(acceleration, current.z, targetVelocity.z)
+                );
+            }
         } else {
             velocity = current.scale(1.0D - settings.noInputDrag());
             if (velocity.lengthSqr() < 0.0001D) {
@@ -123,8 +142,43 @@ public final class DragonRiderFlightController {
         }
 
         double downwardLimit = diving ? Math.max(settings.verticalSpeedLimit(), currentFlightSpeed) : settings.verticalSpeedLimit();
-        vertical = Mth.clamp(vertical, -downwardLimit, settings.verticalSpeedLimit());
+        double upwardLimit = preservingDivePullUp
+                ? Math.max(settings.verticalSpeedLimit(), currentFlightSpeed)
+                : settings.verticalSpeedLimit();
+        vertical = Mth.clamp(vertical, -downwardLimit, upwardLimit);
         return new Vec3(velocity.x, vertical, velocity.z);
+    }
+
+    private static Vec3 steerPreservingSpeed(Vec3 current, Vec3 targetDirection, double speed,
+                                              double turnFraction, float yawRadians) {
+        Vec3 to = targetDirection.normalize();
+        if (current.lengthSqr() < 1.0E-8D) {
+            return to.scale(speed);
+        }
+
+        Vec3 from = current.normalize();
+        double dot = Mth.clamp(from.dot(to), -1.0D, 1.0D);
+        if (dot > 0.9999D) {
+            return to.scale(speed);
+        }
+
+        Vec3 axis = from.cross(to);
+        if (axis.lengthSqr() < 1.0E-8D) {
+            Vec3 horizontalForward = new Vec3(-Math.sin(yawRadians), 0.0D, Math.cos(yawRadians));
+            axis = from.cross(horizontalForward);
+            if (axis.lengthSqr() < 1.0E-8D) {
+                axis = new Vec3(1.0D, 0.0D, 0.0D);
+            }
+        }
+        axis = axis.normalize();
+
+        double turnRadians = Math.acos(dot) * Mth.clamp(turnFraction, 0.0D, 1.0D);
+        double cos = Math.cos(turnRadians);
+        double sin = Math.sin(turnRadians);
+        Vec3 turned = from.scale(cos)
+                .add(axis.cross(from).scale(sin))
+                .add(axis.scale(axis.dot(from) * (1.0D - cos)));
+        return turned.normalize().scale(speed);
     }
 
     private static double tickThrottle(RideableFlyingDragon dragon, boolean hasInput, double forwardInput,
