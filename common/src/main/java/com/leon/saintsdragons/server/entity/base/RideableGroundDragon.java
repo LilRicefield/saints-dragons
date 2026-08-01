@@ -15,8 +15,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 public abstract class RideableGroundDragon extends RideableDragonBase implements PlayerRideableJumping {
-    private static final double MIN_AUTONOMOUS_JUMP_UPWARD_VELOCITY = 0.08D;
     private static final int MIN_JUMP_AIRBORNE_TICKS = 2;
+    private static final int MAX_JUMP_LAUNCH_WAIT_TICKS = 8;
     private static final EntityDataAccessor<Boolean> DATA_RIDER_GROUND_JUMPING =
             SynchedEntityData.defineId(RideableGroundDragon.class, EntityDataSerializers.BOOLEAN);
     private float playerJumpPendingScale = 0.0F;
@@ -25,7 +25,7 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
     private int riderJumpAnimationTicks = 0;
     private int riderJumpAnimationHoldTicks = 0;
     private boolean trackingJumpLanding = false;
-    private boolean jumpTrackingWasGrounded = true;
+    private int jumpTrackingLaunchWaitTicks = 0;
     private int jumpTrackingAirborneTicks = 0;
 
     protected RideableGroundDragon(EntityType<? extends TamableAnimal> entityType, Level level) {
@@ -43,9 +43,9 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
         super.tick();
         if (!level().isClientSide) {
             tickRiderGroundJumpAnimationState();
-            if (usesGroundJumpLandingAnimation() && !isBaby()) {
-                tickGroundJumpLandingAnimation();
-            }
+        }
+        if (usesGroundJumpLandingAnimation() && !isBaby()) {
+            tickGroundJumpLandingAnimation();
         }
     }
 
@@ -171,50 +171,43 @@ public abstract class RideableGroundDragon extends RideableDragonBase implements
         riderJumpAnimationHoldTicks = 0;
         this.entityData.set(DATA_RIDER_GROUND_JUMPING, true);
         if (usesGroundJumpLandingAnimation()) {
+            trackingJumpLanding = true;
+            jumpTrackingLaunchWaitTicks = 0;
+            jumpTrackingAirborneTicks = 0;
             triggerGroundJumpAnimation();
         }
     }
 
     private void tickGroundJumpLandingAnimation() {
-        boolean grounded = isGroundedForRiderJump();
-        boolean leftGroundWhileRidden = isVehicle()
-                && jumpTrackingWasGrounded
-                && !grounded;
-        boolean autonomousUpwardLaunch = !isVehicle()
-                && jumpTrackingWasGrounded
-                && !grounded
-                && getDeltaMovement().y > MIN_AUTONOMOUS_JUMP_UPWARD_VELOCITY;
-
-        if (!isAlive() || isInWaterOrBubble()) {
-            resetGroundJumpLandingTracking(grounded);
+        if (!trackingJumpLanding) {
             return;
         }
 
-        if (!trackingJumpLanding) {
-            if (leftGroundWhileRidden || autonomousUpwardLaunch) {
-                trackingJumpLanding = true;
-                jumpTrackingAirborneTicks = 1;
-                if (autonomousUpwardLaunch) {
-                    triggerGroundJumpAnimation();
-                }
-            }
-        } else if (!grounded) {
-            jumpTrackingAirborneTicks++;
-        } else {
-            if (jumpTrackingAirborneTicks >= MIN_JUMP_AIRBORNE_TICKS) {
-                triggerGroundJumpLandedAnimation();
-            }
-            trackingJumpLanding = false;
-            jumpTrackingAirborneTicks = 0;
+        if (!isAlive() || !isVehicle() || isInWaterOrBubble()) {
+            resetGroundJumpLandingTracking();
+            return;
         }
 
-        jumpTrackingWasGrounded = grounded;
+        boolean grounded = isGroundedForRiderJump();
+        if (!grounded) {
+            jumpTrackingAirborneTicks++;
+            return;
+        }
+
+        if (jumpTrackingAirborneTicks >= MIN_JUMP_AIRBORNE_TICKS) {
+            triggerGroundJumpLandedAnimation();
+            resetGroundJumpLandingTracking();
+        } else if (jumpTrackingAirborneTicks > 0) {
+            resetGroundJumpLandingTracking();
+        } else if (++jumpTrackingLaunchWaitTicks > MAX_JUMP_LAUNCH_WAIT_TICKS) {
+            resetGroundJumpLandingTracking();
+        }
     }
 
-    private void resetGroundJumpLandingTracking(boolean grounded) {
+    private void resetGroundJumpLandingTracking() {
         trackingJumpLanding = false;
+        jumpTrackingLaunchWaitTicks = 0;
         jumpTrackingAirborneTicks = 0;
-        jumpTrackingWasGrounded = grounded;
     }
 
     protected boolean usesGroundJumpLandingAnimation() {
