@@ -74,6 +74,11 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 dragon.getMaxHeadXRot()
         );
 
+        if (issuedMovement && dragon.getAIMovement().hasFailed()) {
+            abandonInvestigation(context, dragon);
+            return;
+        }
+
         double arrivalDistance = profile.arrivalDistance();
         if (dragon.position().distanceToSqr(destination) > arrivalDistance * arrivalDistance) {
             searchTicks = 0;
@@ -101,10 +106,20 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 dragon.getMaxHeadXRot()
         );
         if (searchTicks >= profile.searchTicks()) {
-            context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
-            context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
-            context.memories().erase(DragonMemories.HEARD_TARGET);
+            clearInvestigationMemories(context);
         }
+    }
+
+    private void abandonInvestigation(DragonBrainContext<T> context, RideableDragonBase dragon) {
+        dragon.getAIMovement().stop();
+        issuedMovement = false;
+        clearInvestigationMemories(context);
+    }
+
+    private void clearInvestigationMemories(DragonBrainContext<T> context) {
+        context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
+        context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
+        context.memories().erase(DragonMemories.HEARD_TARGET);
     }
 
     @Override

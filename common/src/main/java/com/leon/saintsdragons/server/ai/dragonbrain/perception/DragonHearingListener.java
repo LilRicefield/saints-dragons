@@ -112,9 +112,14 @@ public final class DragonHearingListener implements GameEventListener {
                 && storeObservation(DragonMemories.HEARD_TARGET, observation, ttl, level.getGameTime());
         boolean storedInvestigation = target == null
                 && stimulus.investigate()
+                && canInvestigate(stimulus, source)
                 && DragonInvestigation.isMeaningfulSound(observation)
                 && DragonInvestigation.remember(dragon, observation);
         return storedAmbient || storedTarget || storedInvestigation;
+    }
+
+    private static boolean canInvestigate(Stimulus stimulus, Entity source) {
+        return stimulus.kind() != DragonSensoryObservation.Kind.BLOCK || source != null;
     }
 
     private Entity perceivedSource(Entity source) {
