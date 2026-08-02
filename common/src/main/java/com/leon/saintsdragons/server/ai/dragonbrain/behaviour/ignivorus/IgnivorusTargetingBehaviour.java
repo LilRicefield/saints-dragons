@@ -125,14 +125,6 @@ public final class IgnivorusTargetingBehaviour extends DragonTargetingBehaviour<
     }
 
     @Override
-    protected boolean isUsableTarget(Ignivorus dragon, @Nullable LivingEntity target) {
-        return target != null
-                && target.isAlive()
-                && dragon.isTargetValid(target)
-                && dragon.canTarget(target);
-    }
-
-    @Override
     protected boolean canRetainTarget(Ignivorus dragon, LivingEntity target, String source) {
         if (Source.HUNT.debugName.equals(source)
                 && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {

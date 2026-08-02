@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -91,7 +92,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         if (current == null
                 && assignedTarget != null
                 && !pursuitSafety.canReacquire(dragon, assignedTarget, context.gameTime())) {
-            dragon.setTarget(null);
+            DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
         }
         if (current == null && pursuitSafety.shouldThrottleAcquisition(dragon, context.gameTime())) {
             return;
@@ -130,7 +131,9 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     @Nullable
     protected abstract TargetChoice findPriorityTarget(DragonBrainContext<T> context);
 
-    protected abstract boolean isUsableTarget(T dragon, @Nullable LivingEntity target);
+    protected boolean isUsableTarget(T dragon, @Nullable LivingEntity target) {
+        return DragonTargetLifecycle.isValidTarget(dragon, target) && dragon.canTarget(target);
+    }
 
     protected abstract boolean canRetainTarget(T dragon, LivingEntity target, String source);
 
@@ -253,14 +256,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         }
         source = "none";
         sourcePriority = Integer.MAX_VALUE;
-        context.memories().erase(DragonMemories.ATTACK_TARGET);
-        context.memories().erase(DragonMemories.TARGET_AIRBORNE);
-        context.memories().erase(DragonMemories.TARGET_VISIBLE);
-        context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
-        context.memories().erase(DragonMemories.HEARD_TARGET);
-        if (dragon.getTarget() != null) {
-            dragon.setTarget(null);
-        }
+        DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
         if (oldTarget != null || !"none".equals(oldSource)) {
             targetCleared(dragon, oldTarget, oldSource);
         }

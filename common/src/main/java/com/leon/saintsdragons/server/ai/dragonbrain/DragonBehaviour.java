@@ -35,6 +35,10 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
         this.claimsControl = claimsControl;
     }
 
+    /**
+     * Describes whether this behaviour is intended to own an exclusive action slot.
+     * Vanilla Brain does not arbitrate this flag; composites and movement intents do.
+     */
     public final boolean claimsControl() {
         return claimsControl;
     }

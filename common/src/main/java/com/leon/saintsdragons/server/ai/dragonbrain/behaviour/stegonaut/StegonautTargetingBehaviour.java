@@ -249,11 +249,6 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
     }
 
     @Override
-    protected boolean isUsableTarget(Stegonaut dragon, @Nullable LivingEntity target) {
-        return target != null && target.isAlive() && dragon.isTargetValid(target) && dragon.canTarget(target);
-    }
-
-    @Override
     protected boolean canRetainTarget(Stegonaut dragon, LivingEntity target, String source) {
         double range = Source.PACK_DEFENSE.debugName.equals(source)
                 ? PACK_ASSIST_RANGE * 2.0D

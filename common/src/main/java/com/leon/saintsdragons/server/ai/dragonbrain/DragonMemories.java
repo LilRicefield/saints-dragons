@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMe
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -17,6 +18,7 @@ import java.util.List;
 
 public final class DragonMemories {
     public static final MemoryModuleType<LivingEntity> ATTACK_TARGET = MemoryModuleType.ATTACK_TARGET;
+    public static final MemoryModuleType<AgeableMob> BREED_TARGET = MemoryModuleType.BREED_TARGET;
     public static final MemoryModuleType<WalkTarget> WALK_TARGET = MemoryModuleType.WALK_TARGET;
     public static final MemoryModuleType<Path> PATH = MemoryModuleType.PATH;
     public static final MemoryModuleType<Long> CANT_REACH_WALK_TARGET_SINCE = MemoryModuleType.CANT_REACH_WALK_TARGET_SINCE;
@@ -57,6 +59,7 @@ public final class DragonMemories {
     public static List<MemoryModuleType<?>> all() {
         return List.of(
                 ATTACK_TARGET,
+                BREED_TARGET,
                 WALK_TARGET,
                 PATH,
                 CANT_REACH_WALK_TARGET_SINCE,

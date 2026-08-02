@@ -76,14 +76,6 @@ public final class AtroxiiaTargetingBehaviour extends DragonTargetingBehaviour<A
     }
 
     @Override
-    protected boolean isUsableTarget(Atroxiia dragon, @Nullable LivingEntity target) {
-        return target != null
-                && target.isAlive()
-                && dragon.isTargetValid(target)
-                && dragon.canTarget(target);
-    }
-
-    @Override
     protected boolean canRetainTarget(Atroxiia dragon, LivingEntity target, String source) {
         double range = Math.max(32.0D, dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
         return dragon.distanceToSqr(target) <= range * range;

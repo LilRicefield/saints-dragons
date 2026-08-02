@@ -92,17 +92,22 @@ public interface DragonBrainOwner<T extends DragonEntity> {
     }
 
     default void tickBrain(ServerLevel level, T dragon) {
-        @SuppressWarnings("unchecked")
-        Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
-        DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
-        updateActivity(brain, dragon);
-        if (brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
-                && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
-                && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
-                && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)) {
-            brain.setActiveActivityIfPossible(Activity.IDLE);
+        level.getProfiler().push("dragonBrain");
+        try {
+            @SuppressWarnings("unchecked")
+            Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
+            DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
+            updateActivity(brain, dragon);
+            if (brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
+                    && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
+                    && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
+                    && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)) {
+                brain.setActiveActivityIfPossible(Activity.IDLE);
+            }
+            brain.tick(level, dragon);
+        } finally {
+            level.getProfiler().pop();
         }
-        brain.tick(level, dragon);
     }
 
     default void updateActivity(Brain<T> brain, T dragon) {

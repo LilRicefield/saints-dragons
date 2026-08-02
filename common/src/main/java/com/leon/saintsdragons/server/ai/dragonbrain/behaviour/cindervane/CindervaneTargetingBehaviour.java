@@ -135,14 +135,6 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
     }
 
     @Override
-    protected boolean isUsableTarget(Cindervane dragon, @Nullable LivingEntity target) {
-        return target != null
-                && target.isAlive()
-                && dragon.isTargetValid(target)
-                && dragon.canTarget(target);
-    }
-
-    @Override
     protected boolean canRetainTarget(Cindervane dragon, LivingEntity target, String source) {
         if (Source.HUNT.debugName.equals(source)
                 && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {

@@ -28,6 +28,15 @@ public final class DragonMemoryMap {
         return brain.getMemory(key);
     }
 
+    /**
+     * Returns the current value and erases it before the caller acts on it.
+     */
+    public <T> Optional<T> take(MemoryModuleType<T> key) {
+        Optional<T> value = get(key);
+        erase(key);
+        return value;
+    }
+
     public boolean has(MemoryModuleType<?> key) {
         return brain.hasMemoryValue(key);
     }

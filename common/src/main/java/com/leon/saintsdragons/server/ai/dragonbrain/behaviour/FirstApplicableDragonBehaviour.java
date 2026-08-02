@@ -37,6 +37,9 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
+        if (context.memories().has(DragonMemories.BREED_TARGET)) {
+            return !controlReservedByState(context) && tryStartReservedBreeding(context);
+        }
         if (controlReserved(context)) {
             return false;
         }
@@ -79,6 +82,12 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
     }
 
     private boolean controlReserved(DragonBrainContext<T> context) {
+        return controlReservedByState(context)
+                || (context.memories().has(DragonMemories.BREED_TARGET)
+                && !(running instanceof DragonBreedBehaviour<?>));
+    }
+
+    private boolean controlReservedByState(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         return dragon.isSleeping()
                 || dragon.isSleepTransitioning()
@@ -88,6 +97,19 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
                 || dragon.isHuntFoodPursuitActive()
                 || context.memories().has(DragonMemories.INVESTIGATION_TARGET)
                 && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
+    }
+
+    private boolean tryStartReservedBreeding(DragonBrainContext<T> context) {
+        long gameTime = context.gameTime();
+        for (DragonBehaviour<T> behaviour : behaviours) {
+            if (behaviour instanceof DragonBreedBehaviour<?>
+                    && behaviour.tryStart(context.level(), context.dragon(), gameTime)) {
+                running = behaviour;
+                return true;
+            }
+        }
+        DragonBreedBehaviour.releaseReservation(context.dragon());
+        return false;
     }
 
     private void relinquishControl(DragonBrainContext<T> context) {

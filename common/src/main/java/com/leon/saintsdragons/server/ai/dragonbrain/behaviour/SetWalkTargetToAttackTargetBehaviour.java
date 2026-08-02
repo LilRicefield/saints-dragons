@@ -8,15 +8,15 @@
  */
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourUtils;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.behavior.EntityTracker;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
-import net.minecraft.world.entity.ai.memory.WalkTarget;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -25,7 +25,7 @@ import java.util.function.BiPredicate;
 /**
  * Converts the current attack target into vanilla Brain movement memories.
  */
-public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
+public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> extends DragonOneShotBehaviour<T> {
     private final BiFunction<T, LivingEntity, Float> speedModifier;
     private final BiFunction<T, LivingEntity, Double> closeEnoughDistance;
     private final BiPredicate<T, LivingEntity> movementLocked;
@@ -48,17 +48,12 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
         T dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         return target != null
-                && dragon.isTargetValid(target)
+                && DragonTargetLifecycle.isValidTarget(dragon, target)
                 && !dragon.isAerial()
                 && !dragon.isInWaterOrBubble()
                 && dragon.getLocomotionMode() == DragonLocomotionMode.GROUND
                 && !context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false)
                 && !context.memories().get(DragonMemories.GROUND_ROUTE_ABANDONED).orElse(false);
-    }
-
-    @Override
-    protected boolean canContinue(DragonBrainContext<T> context) {
-        return false;
     }
 
     @Override
@@ -81,11 +76,11 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
             return;
         }
 
-        context.memories().set(DragonMemories.LOOK_TARGET, new EntityTracker(target, true));
-        context.memories().set(DragonMemories.WALK_TARGET, new WalkTarget(
-                new EntityTracker(target, false),
+        DragonBehaviourUtils.setWalkAndLookTarget(
+                context,
+                target,
                 speedModifier.apply(dragon, target),
                 (int)Math.floor(closeEnough)
-        ));
+        );
     }
 }

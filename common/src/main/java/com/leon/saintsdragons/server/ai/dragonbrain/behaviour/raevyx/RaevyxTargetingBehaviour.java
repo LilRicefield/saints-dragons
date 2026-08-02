@@ -133,14 +133,6 @@ public final class RaevyxTargetingBehaviour extends DragonTargetingBehaviour<Rae
     }
 
     @Override
-    protected boolean isUsableTarget(Raevyx dragon, @Nullable LivingEntity target) {
-        return target != null
-                && target.isAlive()
-                && dragon.isTargetValid(target)
-                && dragon.canTarget(target);
-    }
-
-    @Override
     protected boolean canRetainTarget(Raevyx dragon, LivingEntity target, String source) {
         if (Source.HUNT.debugName.equals(source)
                 && !DragonHuntAndEatBehaviour.shouldAcquirePrey(dragon)) {

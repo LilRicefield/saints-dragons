@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
@@ -50,7 +51,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
         if (target != null
                 && dragon.hasRoostTerritory()
                 && !dragon.isWithinRoostTerritory(target.position())) {
-            clearAttackTarget(brain, dragon);
+            DragonTargetLifecycle.clearCombatTarget(brain, dragon, true);
             target = null;
         }
 
@@ -66,7 +67,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                 && wantsSleep
                 && !defendingAgainstRecentAttacker
                 && !defendingRoostIntruder) {
-            clearAttackTarget(brain, dragon);
+            DragonTargetLifecycle.clearCombatTarget(brain, dragon, true);
             target = null;
         }
 
@@ -173,7 +174,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
     private boolean canFight(Varasuchus dragon) {
         LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (target == null
-                || !dragon.isTargetValid(target)
+                || !DragonTargetLifecycle.isValidTarget(dragon, target)
                 || dragon.isBaby()
                 || dragon.isVehicle()
                 || dragon.isOrderedToSit()
@@ -197,7 +198,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
     }
 
     private boolean isRecentAttacker(Varasuchus dragon, LivingEntity target) {
-        if (target == null || !target.isAlive() || !dragon.isTargetValid(target)) {
+        if (!DragonTargetLifecycle.isValidTarget(dragon, target)) {
             return false;
         }
 
@@ -234,14 +235,4 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                 || !owner.isInWaterOrBubble();
     }
 
-    private static void clearAttackTarget(Brain<Varasuchus> brain, Varasuchus dragon) {
-        brain.eraseMemory(DragonMemories.ATTACK_TARGET);
-        brain.eraseMemory(DragonMemories.TARGET_VISIBLE);
-        brain.eraseMemory(DragonMemories.LAST_SEEN_TARGET);
-        brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
-        brain.eraseMemory(DragonMemories.HEARD_TARGET);
-        if (dragon.getTarget() != null) {
-            dragon.setTarget(null);
-        }
-    }
 }

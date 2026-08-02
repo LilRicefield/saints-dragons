@@ -4,12 +4,12 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonSensor;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
-import net.minecraft.world.entity.player.Player;
 
 import java.util.Set;
 
@@ -32,9 +32,6 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
             LivingEntity rememberedTarget = context.memories()
                     .get(DragonMemories.ATTACK_TARGET)
                     .orElse(null);
-            if (target != null) {
-                context.dragon().setTarget(null);
-            }
             DragonSensoryObservation investigation = context.memories()
                     .get(DragonMemories.INVESTIGATION_TARGET)
                     .orElse(null);
@@ -49,11 +46,7 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
                     && (matchesEntityTarget || matchesRememberedTarget)) {
                 context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
             }
-            context.memories().erase(DragonMemories.ATTACK_TARGET);
-            context.memories().erase(DragonMemories.TARGET_AIRBORNE);
-            context.memories().erase(DragonMemories.TARGET_VISIBLE);
-            context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
-            context.memories().erase(DragonMemories.HEARD_TARGET);
+            DragonTargetLifecycle.clearCombatTarget(context.memories(), context.dragon(), false);
             return;
         }
 
@@ -71,10 +64,7 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
     }
 
     protected boolean isValidTarget(T dragon, LivingEntity target) {
-        if (target == null || !dragon.isTargetValid(target)) {
-            return false;
-        }
-        return !(target instanceof Player player) || (!player.isCreative() && !player.isSpectator());
+        return DragonTargetLifecycle.isValidTarget(dragon, target);
     }
 
     @Override

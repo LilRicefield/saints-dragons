@@ -144,10 +144,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
 
     @Override
     protected boolean isUsableTarget(Varasuchus dragon, @Nullable LivingEntity target) {
-        return target != null
-                && target.isAlive()
-                && dragon.isTargetValid(target)
-                && dragon.canTarget(target)
+        return super.isUsableTarget(dragon, target)
                 && (!dragon.hasRoostTerritory() || dragon.isWithinRoostTerritory(target.position()));
     }
 

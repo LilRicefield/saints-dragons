@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
@@ -49,13 +50,9 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
         }
 
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (target != null && (!dragon.isTargetValid(target) || !withinAggroRange(dragon, target))) {
-            dragon.setTarget(null);
-            brain.eraseMemory(DragonMemories.ATTACK_TARGET);
-            brain.eraseMemory(DragonMemories.TARGET_VISIBLE);
-            brain.eraseMemory(DragonMemories.LAST_SEEN_TARGET);
-            brain.eraseMemory(DragonMemories.INVESTIGATION_TARGET);
-            brain.eraseMemory(DragonMemories.HEARD_TARGET);
+        if (target != null && (!DragonTargetLifecycle.isValidTarget(dragon, target)
+                || !withinAggroRange(dragon, target))) {
+            DragonTargetLifecycle.clearCombatTarget(brain, dragon, true);
         }
         brain.useDefaultActivity();
     }
@@ -112,7 +109,7 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
     private boolean canFight(Stegonaut dragon) {
         LivingEntity target = dragon.getTarget();
         return target != null
-                && dragon.isTargetValid(target)
+                && DragonTargetLifecycle.isValidTarget(dragon, target)
                 && dragon.canTarget(target)
                 && !dragon.isVehicle()
                 && !dragon.isOrderedToSit()

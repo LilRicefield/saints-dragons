@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -14,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -29,6 +31,11 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
     private static final double RIDEABLE_BREED_MOVE_SPEED = 0.55D;
     private static final double CONTACT_BREED_DISTANCE = 2.0D;
     private static final double MAX_CENTER_BREED_DISTANCE_SQR = 16.0D;
+    private static final int MIN_COURTSHIP_TICKS = 60;
+    private static final int MAX_COURTSHIP_TICKS = 109;
+    private static final int MAX_ATTEMPT_TICKS = 300;
+    private static final int MIN_RETRY_COOLDOWN_TICKS = 40;
+    private static final int MAX_RETRY_COOLDOWN_TICKS = 80;
     private static final int EGG_SEARCH_RADIUS = 4;
     private static final int EGG_SEARCH_DEPTH = 8;
 
@@ -41,6 +48,11 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
     protected int loveTime;
     private boolean suspendedSitCommand;
     private int landingRetryTicks;
+    private boolean movementIssued;
+    private boolean coordinator;
+    private long courtshipStartedAt;
+    private long spawnEggAt;
+    private long attemptEndsAt;
     private String startState = "not_checked";
     private String mateState = "not_checked";
     private int nearbyCandidates;
@@ -65,7 +77,11 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
             return false;
         }
         startState = "eligible";
-        partner = findMate(context.level(), dragon);
+        partner = reservedMate(dragon);
+        if (partner == null) {
+            releaseReservation(dragon);
+            partner = findMate(context.level(), dragon);
+        }
         if (partner == null) {
             startState = "no_eligible_mate";
         }
@@ -75,18 +91,34 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
     @Override
     protected boolean canContinue(DragonBrainContext<T> context) {
         return partner != null && partner.isAlive() && partner.isInLove()
+                && partner.level() == context.level()
                 && breedingAllowed(partner)
                 && breedingAllowed(context.dragon())
-                && (!context.dragon().isOrderedToSit() || suspendedSitCommand);
+                && (!context.dragon().isOrderedToSit() || suspendedSitCommand)
+                && reciprocalReservation(context.dragon(), partner)
+                && context.gameTime() <= attemptEndsAt
+                && !(movementIssued
+                && context.dragon() instanceof RideableDragonBase rideable
+                && rideable.getAIMovement().hasFailed());
     }
 
     @Override
     protected void start(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        reservePair(dragon, partner);
         suspendedSitCommand = dragon.isOrderedToSit() && dragon.getCommand() == 1;
         if (suspendedSitCommand) {
             dragon.setOrderedToSit(false);
         }
+        movementIssued = false;
+        landingRetryTicks = 0;
+        courtshipStartedAt = context.gameTime();
+        attemptEndsAt = courtshipStartedAt + MAX_ATTEMPT_TICKS;
+        coordinator = partner != null && dragon.getUUID().compareTo(partner.getUUID()) < 0;
+        spawnEggAt = coordinator
+                ? courtshipStartedAt + MIN_COURTSHIP_TICKS
+                + dragon.getRandom().nextInt(MAX_COURTSHIP_TICKS - MIN_COURTSHIP_TICKS + 1)
+                : Long.MAX_VALUE;
     }
 
     @Override
@@ -102,7 +134,8 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
                 landingRetryTicks--;
             }
             if (!rideable.getAIMovement().isPathing() && landingRetryTicks <= 0) {
-                rideable.getAIMovement().requestGroundTransition(partner, speedModifier);
+                movementIssued = rideable.getAIMovement().requestGroundTransition(partner, speedModifier)
+                        || movementIssued;
                 landingRetryTicks = 20;
             }
         } else if (close) {
@@ -116,13 +149,14 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
                         && dragon instanceof SemiAquaticDragon swimmer) {
                     speed *= swimmer.getSwimSpeed();
                 }
-                rideable.getAIMovement().setWaypoint(partner, speed, false);
+                movementIssued = rideable.getAIMovement().setWaypoint(partner, speed, false)
+                        || movementIssued;
             } else {
-                dragon.getNavigation().moveTo(partner, speed);
+                movementIssued = dragon.getNavigation().moveTo(partner, speed) || movementIssued;
             }
         }
-        loveTime = Math.min(60, loveTime + 1);
-        if (loveTime >= 60 && close && readyToBreed(dragon)) {
+        loveTime = (int)Math.min(Integer.MAX_VALUE, context.gameTime() - courtshipStartedAt);
+        if (coordinator && context.gameTime() >= spawnEggAt && close && readyToBreed(dragon)) {
             breed(context.level(), dragon);
         }
     }
@@ -130,8 +164,10 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
     @Override
     protected void stop(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        boolean reciprocal = partner != null && reciprocalReservation(dragon, partner);
+        releaseReservation(dragon);
         stopMovement(dragon);
-        if (partner != null) {
+        if (reciprocal) {
             stopMovement(partner);
         }
         if (suspendedSitCommand && dragon.getCommand() == 1) {
@@ -139,8 +175,19 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
         }
         suspendedSitCommand = false;
         landingRetryTicks = 0;
+        movementIssued = false;
+        coordinator = false;
+        courtshipStartedAt = 0L;
+        spawnEggAt = 0L;
+        attemptEndsAt = 0L;
         partner = null;
         loveTime = 0;
+    }
+
+    @Override
+    protected int cooldownForTicks(DragonBrainContext<T> context) {
+        return MIN_RETRY_COOLDOWN_TICKS
+                + context.dragon().getRandom().nextInt(MAX_RETRY_COOLDOWN_TICKS - MIN_RETRY_COOLDOWN_TICKS + 1);
     }
 
     protected boolean breedingAllowed(T dragon) {
@@ -183,7 +230,11 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
                 nearestCandidateDistance = candidateDistance;
                 mateState = mateRejection(dragon, candidate);
             }
-            if (dragon.canMate(candidate) && breedingAllowed(candidate)) {
+            AgeableMob reservation = candidate.getBrain()
+                    .getMemory(DragonMemories.BREED_TARGET)
+                    .orElse(null);
+            boolean available = reservation == null || reservation == dragon;
+            if (available && dragon.canMate(candidate) && breedingAllowed(candidate)) {
                 if (distance < closestDistance) {
                     closest = candidate;
                     closestDistance = distance;
@@ -192,6 +243,57 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
             }
         }
         return closest;
+    }
+
+    @Nullable
+    private T reservedMate(T dragon) {
+        AgeableMob reserved = dragon.getBrain()
+                .getMemory(DragonMemories.BREED_TARGET)
+                .orElse(null);
+        if (!partnerClass.isInstance(reserved)) {
+            return null;
+        }
+        T candidate = partnerClass.cast(reserved);
+        return candidate != dragon
+                && candidate.isAlive()
+                && candidate.level() == dragon.level()
+                && dragon.canMate(candidate)
+                && breedingAllowed(candidate)
+                && reciprocalReservation(dragon, candidate)
+                ? candidate
+                : null;
+    }
+
+    private void reservePair(T dragon, @Nullable T mate) {
+        if (mate == null) {
+            return;
+        }
+        dragon.getBrain().setMemory(DragonMemories.BREED_TARGET, mate);
+        mate.getBrain().setMemory(DragonMemories.BREED_TARGET, dragon);
+    }
+
+    private boolean reciprocalReservation(T dragon, T mate) {
+        return dragon.getBrain()
+                .getMemory(DragonMemories.BREED_TARGET)
+                .filter(target -> target == mate)
+                .isPresent()
+                && mate.getBrain()
+                .getMemory(DragonMemories.BREED_TARGET)
+                .filter(target -> target == dragon)
+                .isPresent();
+    }
+
+    static void releaseReservation(DragonEntity dragon) {
+        AgeableMob mate = dragon.getBrain()
+                .getMemory(DragonMemories.BREED_TARGET)
+                .orElse(null);
+        dragon.getBrain().eraseMemory(DragonMemories.BREED_TARGET);
+        if (mate != null && mate.getBrain()
+                .getMemory(DragonMemories.BREED_TARGET)
+                .filter(target -> target == dragon)
+                .isPresent()) {
+            mate.getBrain().eraseMemory(DragonMemories.BREED_TARGET);
+        }
     }
 
     private String selfRejection(T dragon) {

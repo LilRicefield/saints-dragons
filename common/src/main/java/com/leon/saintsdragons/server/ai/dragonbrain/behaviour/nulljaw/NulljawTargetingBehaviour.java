@@ -1,12 +1,12 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Shulker;
-import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -53,14 +53,12 @@ public final class NulljawTargetingBehaviour extends DragonTargetingBehaviour<Nu
 
     @Override
     protected boolean isUsableTarget(Nulljaw dragon, @Nullable LivingEntity target) {
-        if (target == null
-                || !target.isAlive()
-                || target.level() != dragon.level()
+        if (!DragonTargetLifecycle.isValidTarget(dragon, target)
                 || !target.attackable()
                 || dragon.isAlly(target)) {
             return false;
         }
-        return !(target instanceof Player player) || !player.isCreative() && !player.isSpectator();
+        return true;
     }
 
     @Override

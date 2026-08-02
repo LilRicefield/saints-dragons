@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.perception;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.Brain;
@@ -14,10 +15,8 @@ public final class DragonPerception {
                                                                                           T dragon,
                                                                                           long gameTime) {
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (target == null || !target.isAlive() || target.level() != dragon.level()) {
-            brain.eraseMemory(DragonMemories.TARGET_VISIBLE);
-            brain.eraseMemory(DragonMemories.LAST_SEEN_TARGET);
-            brain.eraseMemory(DragonMemories.HEARD_TARGET);
+        if (!DragonTargetLifecycle.isValidTarget(dragon, target)) {
+            DragonTargetLifecycle.clearPerceptionMemories(brain);
             if (target != null) {
                 DragonSensoryObservation investigation = brain
                         .getMemory(DragonMemories.INVESTIGATION_TARGET)

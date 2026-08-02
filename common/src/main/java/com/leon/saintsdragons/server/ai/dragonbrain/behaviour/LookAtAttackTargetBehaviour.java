@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
@@ -43,7 +44,7 @@ public class LookAtAttackTargetBehaviour<T extends DragonEntity> extends DragonB
     private boolean hasVisibleTarget(DragonBrainContext<T> context) {
         return context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)
                 && context.memories().get(DragonMemories.ATTACK_TARGET)
-                .filter(context.dragon()::isTargetValid)
+                .filter(target -> DragonTargetLifecycle.isValidTarget(context.dragon(), target))
                 .isPresent();
     }
 }

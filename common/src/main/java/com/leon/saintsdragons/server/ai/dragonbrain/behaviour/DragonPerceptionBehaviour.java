@@ -3,14 +3,13 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
-import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashMap;
@@ -38,10 +37,7 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
     @Override
     protected void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
-        @SuppressWarnings("unchecked")
-        Brain<T> brain =
-                (Brain<T>)(Brain<?>)dragon.getBrain();
-        LivingEntity target = DragonPerception.refreshTargetVisibility(brain, dragon, context.gameTime());
+        LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         DragonAwarenessMemory awareness = DragonAwarenessMemory.get(dragon);
         familiarSources = awareness.familiarSourceCount();
         if (target == null) {
@@ -91,12 +87,10 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
                 .filter(observation -> target.getUUID().equals(observation.sourceUuid()))
                 .orElse(null);
         if (!hasFreshEvidence && investigation == null) {
-            context.memories().erase(DragonMemories.ATTACK_TARGET);
-            context.memories().erase(DragonMemories.TARGET_AIRBORNE);
-            context.memories().erase(DragonMemories.TARGET_VISIBLE);
-            context.memories().erase(DragonMemories.HEARD_TARGET);
-            if (dragon.getTarget() == target) {
-                dragon.setTarget(null);
+            if (dragon.getTarget() == null || dragon.getTarget() == target) {
+                DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
+            } else {
+                DragonTargetLifecycle.clearTargetMemories(context.memories());
             }
             lastObservation = "forgotten";
             return;

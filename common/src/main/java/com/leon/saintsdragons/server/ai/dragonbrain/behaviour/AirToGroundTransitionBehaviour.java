@@ -2,10 +2,11 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -15,7 +16,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 
-public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
+public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extends DragonOneShotBehaviour<T> {
     private final GroundPursuitFlightSettings pursuitSettings = GroundPursuitFlightSettings.standard();
 
     public AirToGroundTransitionBehaviour() {
@@ -54,7 +55,7 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
             return true;
         }
         return context.memories().get(DragonMemories.ATTACK_TARGET)
-                .filter(transition.dragon()::isTargetValid)
+                .filter(target -> DragonTargetLifecycle.isValidTarget(transition.dragon(), target))
                 .isPresent();
     }
 
@@ -98,11 +99,6 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
                     DragonMovementIntent.transitionToGround(landingSpeed)
             );
         }
-    }
-
-    @Override
-    protected boolean canContinue(DragonBrainContext<T> context) {
-        return false;
     }
 
     private static TransitionDragon transitionDragon(DragonEntity dragon) {

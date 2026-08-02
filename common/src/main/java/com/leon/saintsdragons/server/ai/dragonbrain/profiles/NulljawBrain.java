@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
@@ -82,9 +83,7 @@ public final class NulljawBrain implements DragonBrainOwner<Nulljaw> {
     }
 
     private boolean canFight(Nulljaw dragon, LivingEntity target) {
-        if (target == null
-                || !target.isAlive()
-                || target.level() != dragon.level()
+        if (!DragonTargetLifecycle.isValidTarget(dragon, target)
                 || !target.attackable()
                 || dragon.isAlly(target)
                 || dragon.isBaby()

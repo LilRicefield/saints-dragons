@@ -2252,6 +2252,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     public void setTarget(@Nullable LivingEntity target) {
         if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
             super.setTarget(null);
+            setAggressive(false);
             return;
         }
         if (target != null
@@ -2261,6 +2262,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             suppressSleep(DAMAGE_SLEEP_SUPPRESSION_TICKS);
         }
         super.setTarget(target);
+        if (target == null) {
+            setAggressive(false);
+        }
     }
 
     @Override
