@@ -41,7 +41,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
 
     @Override
     public List<SensorType<? extends Sensor<? super Ignivorus>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
+        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get(), ModSensorTypes.DRAGON_SCENT.get());
     }
 
     @Override

@@ -44,7 +44,7 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
 
     @Override
     public List<SensorType<? extends Sensor<? super Volitans>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
+        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get(), ModSensorTypes.DRAGON_SCENT.get());
     }
 
     @Override

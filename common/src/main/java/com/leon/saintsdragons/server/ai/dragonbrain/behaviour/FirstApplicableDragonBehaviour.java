@@ -95,6 +95,7 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
                 || dragon.isInSittingPose()
                 || dragon.isInSitTransition()
                 || dragon.isHuntFoodPursuitActive()
+                || context.memories().has(DragonMemories.SCENT_CANDIDATE)
                 || context.memories().has(DragonMemories.INVESTIGATION_TARGET)
                 && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
     }

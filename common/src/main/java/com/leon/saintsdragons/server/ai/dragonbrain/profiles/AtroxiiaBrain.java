@@ -34,7 +34,7 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
 
     @Override
     public List<SensorType<? extends Sensor<? super Atroxiia>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
+        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get(), ModSensorTypes.DRAGON_SCENT.get());
     }
 
     @Override

@@ -41,7 +41,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
 
     @Override
     public List<SensorType<? extends Sensor<? super Raevyx>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
+        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get(), ModSensorTypes.DRAGON_SCENT.get());
     }
 
     @Override

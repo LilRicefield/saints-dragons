@@ -57,6 +57,9 @@ public final class ModMemoryTypes {
             register("tactical_commitment");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> INVESTIGATION_TARGET =
             register("investigation_target");
+    public static final Supplier<MemoryModuleType<DragonSensoryObservation>> SCENT_CANDIDATE =
+            register("scent_candidate");
+    public static final Supplier<MemoryModuleType<Boolean>> SCENT_COOLDOWN = register("scent_cooldown");
 
     private ModMemoryTypes() {
     }

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirToGroundTransitionBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPerceptionBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonScentAssessmentBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSleepBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTacticalPlannerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
@@ -56,6 +57,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             int priority = group.activity() == Activity.CORE ? 0 : 10;
             List<DragonBehaviour<T>> configuredBehaviours = new ArrayList<>();
             if (group.activity() == Activity.IDLE) {
+                configuredBehaviours.add(new DragonScentAssessmentBehaviour<>());
                 configuredBehaviours.add(new DragonInvestigateTargetBehaviour<>());
             }
             if (group.activity() == Activity.FIGHT) {

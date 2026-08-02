@@ -41,6 +41,9 @@ public final class DragonMemories {
             ModMemoryTypes.LAST_SEEN_TARGET.get();
     public static final MemoryModuleType<DragonSensoryObservation> INVESTIGATION_TARGET =
             ModMemoryTypes.INVESTIGATION_TARGET.get();
+    public static final MemoryModuleType<DragonSensoryObservation> SCENT_CANDIDATE =
+            ModMemoryTypes.SCENT_CANDIDATE.get();
+    public static final MemoryModuleType<Boolean> SCENT_COOLDOWN = ModMemoryTypes.SCENT_COOLDOWN.get();
     public static final MemoryModuleType<DragonSensoryObservation> HEARD_STIMULUS =
             ModMemoryTypes.HEARD_STIMULUS.get();
     public static final MemoryModuleType<DragonSensoryObservation> HEARD_TARGET =
@@ -80,6 +83,8 @@ public final class DragonMemories {
                 TARGET_VISIBLE,
                 LAST_SEEN_TARGET,
                 INVESTIGATION_TARGET,
+                SCENT_CANDIDATE,
+                SCENT_COOLDOWN,
                 HEARD_STIMULUS,
                 HEARD_TARGET,
                 AWARENESS,

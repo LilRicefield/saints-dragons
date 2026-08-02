@@ -72,7 +72,6 @@ public abstract class RideableDragonBase extends DragonEntity {
     private int riderAirborneTicksForLanding = 0;
     private double riderFlightThrottle = 0.0D;
     private final DragonAIMovementController aiMovement = new DragonAIMovementController(this);
-    private final DragonSitTransitionController sitTransition = new DragonSitTransitionController(this);
 
     protected RideableDragonBase(EntityType<? extends TamableAnimal> entityType, Level level) {
         super(entityType, level);
@@ -969,31 +968,6 @@ public abstract class RideableDragonBase extends DragonEntity {
     }
 
     protected void onMountedStateStopped() {
-    }
-
-    protected final void tickSitTransition(int sitDownTicks, int sitUpTicks,
-                                           Runnable sitDownAnimation, Runnable sitUpAnimation) {
-        sitTransition.tick(sitDownTicks, sitUpTicks, sitDownAnimation, sitUpAnimation);
-    }
-
-    protected final void clearSitTransitionState() {
-        sitTransition.clear();
-    }
-
-    protected final void clearSitTransitionFlags() {
-        sitTransition.clearTransitionOnly();
-    }
-
-    public final boolean isInSitTransition() {
-        return sitTransition.isInTransition();
-    }
-
-    public final boolean isSittingDownAnimation() {
-        return sitTransition.isSittingDown();
-    }
-
-    public final boolean isStandingUpAnimation() {
-        return sitTransition.isStandingUp();
     }
 
     protected void onSitStateHardReset() {

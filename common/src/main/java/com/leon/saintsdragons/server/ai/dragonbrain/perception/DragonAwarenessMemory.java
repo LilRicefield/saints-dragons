@@ -40,6 +40,21 @@ public final class DragonAwarenessMemory {
     public void rememberSound(DragonSensoryObservation observation,
                               boolean threatening,
                               long gameTime) {
+        rememberObservation(observation, threatening, gameTime);
+    }
+
+    public boolean rememberScent(DragonSensoryObservation observation, long gameTime) {
+        UUID sourceUuid = observation.sourceUuid();
+        Familiarity record = sourceUuid == null ? null : familiarity.get(sourceUuid);
+        if (record != null && gameTime < record.nextPassiveAttentionAt) {
+            return false;
+        }
+        return rememberObservation(observation, false, gameTime);
+    }
+
+    private boolean rememberObservation(DragonSensoryObservation observation,
+                                        boolean threatening,
+                                        long gameTime) {
         prune(gameTime);
         boolean passive = isPassive(observation.kind());
         UUID sourceUuid = observation.sourceUuid();
@@ -61,22 +76,23 @@ public final class DragonAwarenessMemory {
             } else if (passive) {
                 record.harmlessObservations = Math.min(12, record.harmlessObservations + 1);
                 if (gameTime < record.nextPassiveAttentionAt) {
-                    return;
+                    return false;
                 }
                 record.nextPassiveAttentionAt = gameTime + passiveCooldown(record.harmlessObservations);
             }
         } else if (passive) {
             long nextAttentionAt = anonymousCooldowns.getOrDefault(observation.kind(), Long.MIN_VALUE);
             if (gameTime < nextAttentionAt) {
-                return;
+                return false;
             }
             anonymousCooldowns.put(observation.kind(), gameTime + 80L);
         }
 
         if (observation.confidence() < attentionThreshold(observation.kind())) {
-            return;
+            return false;
         }
         proposeAttention(observation, threatening, gameTime);
+        return true;
     }
 
     public void rememberThreat(UUID sourceUuid, long gameTime) {
@@ -177,6 +193,7 @@ public final class DragonAwarenessMemory {
 
     private static boolean isPassive(DragonSensoryObservation.Kind kind) {
         return kind == DragonSensoryObservation.Kind.STEP
+                || kind == DragonSensoryObservation.Kind.SCENT
                 || kind == DragonSensoryObservation.Kind.SPLASH
                 || kind == DragonSensoryObservation.Kind.IMPACT;
     }
@@ -193,6 +210,7 @@ public final class DragonAwarenessMemory {
 
     private static int attentionDuration(DragonSensoryObservation.Kind kind) {
         return switch (kind) {
+            case SCENT -> 18;
             case STEP -> 10;
             case SPLASH -> 14;
             case IMPACT -> 16;
@@ -208,6 +226,7 @@ public final class DragonAwarenessMemory {
 
     private static float attentionThreshold(DragonSensoryObservation.Kind kind) {
         return switch (kind) {
+            case SCENT -> 0.20F;
             case STEP -> 0.18F;
             case SPLASH -> 0.15F;
             case IMPACT -> 0.12F;
@@ -217,6 +236,7 @@ public final class DragonAwarenessMemory {
 
     private static float attentionPriority(DragonSensoryObservation.Kind kind) {
         return switch (kind) {
+            case SCENT -> 0.25F;
             case STEP -> 0.20F;
             case SPLASH -> 0.30F;
             case IMPACT -> 0.40F;

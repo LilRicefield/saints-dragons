@@ -67,6 +67,10 @@ public final class DragonBrainDebugTracker {
                 "LAST_SEEN_TARGET", memories, markers);
         captureMemory(dragon, brain, DragonMemories.INVESTIGATION_TARGET,
                 "INVESTIGATION_TARGET", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.SCENT_CANDIDATE,
+                "SCENT_CANDIDATE", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.SCENT_COOLDOWN,
+                "SCENT_COOLDOWN", memories, markers);
         captureMemory(dragon, brain, DragonMemories.HEARD_STIMULUS,
                 "HEARD_STIMULUS", memories, markers);
         captureMemory(dragon, brain, DragonMemories.HEARD_TARGET,

@@ -451,7 +451,7 @@ public final class DragonSleepComponent {
             case BLOCK -> 3.0F + confidence * 9.0F;
             case TELEPORT -> 5.0F + confidence * 12.0F;
             case EXPLOSION, COMBAT, PROJECTILE, ROAR -> 4.0F + confidence * 10.0F;
-            case SIGHT, OTHER -> 0.0F;
+            case SIGHT, SCENT, OTHER -> 0.0F;
         };
         return amount * DragonAwarenessMemory.get(dragon)
                 .passiveDisturbanceMultiplier(sound, dragon.level().getGameTime());

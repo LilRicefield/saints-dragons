@@ -18,6 +18,7 @@ public record DragonSensoryObservation(
 
     public enum Kind {
         SIGHT,
+        SCENT,
         STEP,
         IMPACT,
         SPLASH,

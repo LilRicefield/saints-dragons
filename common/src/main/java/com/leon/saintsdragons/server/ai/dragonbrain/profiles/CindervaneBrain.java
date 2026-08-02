@@ -42,7 +42,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
 
     @Override
     public List<SensorType<? extends Sensor<? super Cindervane>>> getDragonBrainSensors() {
-        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get());
+        return List.of(ModSensorTypes.DRAGON_MOVEMENT_STATE.get(), ModSensorTypes.DRAGON_SCENT.get());
     }
 
     @Override

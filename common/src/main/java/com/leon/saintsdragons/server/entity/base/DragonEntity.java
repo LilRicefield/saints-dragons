@@ -152,6 +152,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private final DragonGroomingComponent groomingComponent;
     @Nullable
     private final DragonSitComponent sitComponent;
+    private final DragonSitTransitionController sitTransition = new DragonSitTransitionController(this);
     @Nullable
     private final DragonSleepComponent sleepComponent;
     @Nullable
@@ -1991,6 +1992,31 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         if (sitComponent != null) {
             sitComponent.loadFromNBT(tag, orderedToSit);
         }
+    }
+
+    protected final void tickSitTransition(int sitDownTicks, int sitUpTicks,
+                                           Runnable sitDownAnimation, Runnable sitUpAnimation) {
+        sitTransition.tick(sitDownTicks, sitUpTicks, sitDownAnimation, sitUpAnimation);
+    }
+
+    protected final void clearSitTransitionState() {
+        sitTransition.clear();
+    }
+
+    protected final void clearSitTransitionFlags() {
+        sitTransition.clearTransitionOnly();
+    }
+
+    public final boolean isInSitTransition() {
+        return sitTransition.isInTransition();
+    }
+
+    public final boolean isSittingDownAnimation() {
+        return sitTransition.isSittingDown();
+    }
+
+    public final boolean isStandingUpAnimation() {
+        return sitTransition.isStandingUp();
     }
 
     public boolean isGoingUp() {
