@@ -38,6 +38,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     private static final RawAnimation DIE = RawAnimation.begin().thenPlay("animation.atroxiia.die");
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.atroxiia.eat");
     private static final RawAnimation FLEX = RawAnimation.begin().thenPlay("animation.atroxiia.flex");
+    private static final RawAnimation INVESTIGATING = RawAnimation.begin().thenPlay("animation.atroxiia.investigating");
 
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, null, STUNNED, null);
@@ -48,6 +49,11 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         if (dragon.isTamingStunned()) {
             state.getController().transitionLength(GROUND_TRANSITIONS.stunned());
             state.setAndContinue(STUNNED);
+            return PlayState.CONTINUE;
+        }
+        if (dragon.isScentAssessing()) {
+            state.getController().transitionLength(GROUND_TRANSITIONS.idle());
+            state.setAndContinue(INVESTIGATING);
             return PlayState.CONTINUE;
         }
         if (dragon.isInWaterOrBubble()) {

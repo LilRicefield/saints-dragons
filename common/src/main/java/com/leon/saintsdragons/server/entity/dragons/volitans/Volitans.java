@@ -46,6 +46,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
+import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -93,7 +94,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer {
+public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer, ScentAssessingDragon {
     private static final VolitansBrain DRAGON_BRAIN = new VolitansBrain();
     @Override
     public EnumSet<DragonMovementCapability> movementCapabilities() {
@@ -113,6 +114,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final int SLEEP_AFTER_SPAWN_GRACE_TICKS = 600;
+    private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 90;
+
+    @Override
+    public int getScentAssessmentDurationTicks() {
+        return SCENT_ASSESSMENT_ANIMATION_TICKS;
+    }
+
     private static final int WATER_SURFACE_SLEEP_SCAN_BLOCKS = 16;
     private static final double MIN_UNDERWATER_SLEEP_SURFACE_CLEARANCE = 10D;
     public static final int VARIANT_DEFAULT = 0;

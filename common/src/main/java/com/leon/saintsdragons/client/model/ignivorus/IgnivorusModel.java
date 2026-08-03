@@ -53,6 +53,9 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
         if (DraconicCodexScreen.RENDERING_IN_GUI.get()) {
             return;
         }
+        if (entity.isScentAssessing()) {
+            return;
+        }
         EntityModelData modelData = animationState.getData(DataTickets.ENTITY_MODEL_DATA);
         if (modelData == null) return;
 

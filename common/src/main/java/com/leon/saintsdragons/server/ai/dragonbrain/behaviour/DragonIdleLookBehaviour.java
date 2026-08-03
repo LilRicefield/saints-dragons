@@ -21,12 +21,12 @@ public final class DragonIdleLookBehaviour<T extends DragonEntity> extends Drago
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
-        return true;
+        return !context.dragon().isScentAssessing();
     }
 
     @Override
     protected boolean canContinue(DragonBrainContext<T> context) {
-        return true;
+        return !context.dragon().isScentAssessing();
     }
 
     @Override
@@ -34,6 +34,7 @@ public final class DragonIdleLookBehaviour<T extends DragonEntity> extends Drago
         T dragon = context.dragon();
         if (dragon.getTarget() != null
                 || dragon.isVehicle()
+                || dragon.isScentAssessing()
                 || dragon.isOrderedToSit()
                 || DragonAwarenessMemory.get(dragon).hasAttention(context.gameTime())) {
             return;

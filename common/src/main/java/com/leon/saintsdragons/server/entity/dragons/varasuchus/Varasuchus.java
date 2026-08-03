@@ -91,7 +91,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 
-public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen, PassiveTreeDestroyer {
+public class Varasuchus extends RideableGroundDragon implements SemiAquaticDragon, ShakesScreen,
+        PassiveTreeDestroyer, ScentAssessingDragon {
     private static final VarasuchusBrain DRAGON_BRAIN = new VarasuchusBrain();
     private static final ResourceKey<Structure> VARASUCHUS_ROOST_STRUCTURE = ResourceKey.create(
             Registries.STRUCTURE,
@@ -229,6 +230,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.4D;
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
+    private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 70;
     private static final double BABY_MAX_HEALTH = 80.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final float BABY_HITBOX_SCALE = 0.5F;
@@ -246,6 +248,12 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final int FLEX_CONTROL_LOCK_TICKS = 70;
     private static final int FLEX2_CONTROL_LOCK_TICKS = 140;
     private static final int FLEX_COOLDOWN_TICKS = 60;
+
+    @Override
+    public int getScentAssessmentDurationTicks() {
+        return SCENT_ASSESSMENT_ANIMATION_TICKS;
+    }
+
     public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VarasuchusAnimationHandler animationHandler = new VarasuchusAnimationHandler(this);
     private final VarasuchusInteractionHandler interactionHandler = new VarasuchusInteractionHandler(this);

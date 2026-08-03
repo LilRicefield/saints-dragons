@@ -44,6 +44,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     private static final RawAnimation PHASE2_LANDED = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_landed");
     private static final RawAnimation PHASE2_ULTIMATE = RawAnimation.begin().thenPlay("animation.ignivorus.phase2_ultimate");
     private static final RawAnimation LEAP_TAKEOFF = RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_leap");
+    private static final RawAnimation INVESTIGATING = RawAnimation.begin().thenPlay("animation.ignivorus.investigating");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, SWIM, STUNNED, FALLING);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -202,6 +203,11 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
         if (dragon.isDying()) {
             return PlayState.STOP;
+        }
+        if (dragon.isScentAssessing()) {
+            controller.transitionLength(GROUND_TRANSITIONS.idle());
+            AnimationHelper.setAndContinue(state, INVESTIGATING);
+            return PlayState.CONTINUE;
         }
 
         PlayState restPose = AnimationHelper.tryHandleRestPose(

@@ -43,6 +43,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.core.BlockPos;
@@ -101,7 +102,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
-        PassiveTreeDestroyer, DrinkingDragon {
+        PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon {
     private static final IgnivorusBrain DRAGON_BRAIN = new IgnivorusBrain();
 
     @Override
@@ -116,6 +117,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     );
     public static final int TAKEOFF_ANIMATION_TICKS = 27;
     public static final int DRINKING_ANIMATION_TICKS = 140;
+    private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 120;
+
+    @Override
+    public int getScentAssessmentDurationTicks() {
+        return SCENT_ASSESSMENT_ANIMATION_TICKS;
+    }
+
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,

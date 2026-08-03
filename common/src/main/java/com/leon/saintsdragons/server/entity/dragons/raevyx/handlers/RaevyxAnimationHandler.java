@@ -42,6 +42,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final RawAnimation STUNNED = RawAnimation.begin().thenLoop("animation.raevyx.stunned");
     private static final RawAnimation SLEEP = RawAnimation.begin().thenLoop("animation.raevyx.sleep");
     private static final RawAnimation DRINKING = RawAnimation.begin().thenPlay("animation.raevyx.drinking");
+    private static final RawAnimation INVESTIGATING = RawAnimation.begin().thenPlay("animation.raevyx.investigating");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(
                     GROUND_IDLE,
@@ -175,6 +176,14 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public PlayState movementPredicate(AnimationState<Raevyx> state) {
+        if (wyvern.isDying()) {
+            return PlayState.STOP;
+        }
+        if (wyvern.isScentAssessing() && !wyvern.isTamingStunned()) {
+            state.getController().transitionLength(GROUND_TRANSITIONS.idle());
+            state.setAndContinue(INVESTIGATING);
+            return PlayState.CONTINUE;
+        }
         return AnimationHelper.handleGrounded(state, wyvern, GROUND_ANIMATIONS, GROUND_TRANSITIONS, RaevyxGroundStates.INSTANCE);
     }
 

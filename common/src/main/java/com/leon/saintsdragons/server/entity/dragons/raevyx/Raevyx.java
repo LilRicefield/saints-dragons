@@ -93,7 +93,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
-        PassiveTreeDestroyer, DrinkingDragon {
+        PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon {
     private static final RaevyxBrain DRAGON_BRAIN = new RaevyxBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -118,6 +118,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final float MODEL_SCALE = 1.0f;
     public static final int TAKEOFF_ANIMATION_TICKS = 29;
     public static final int DRINKING_ANIMATION_TICKS = 100;
+    private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 129;
+
+    @Override
+    public int getScentAssessmentDurationTicks() {
+        return SCENT_ASSESSMENT_ANIMATION_TICKS;
+    }
+
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,

@@ -12,18 +12,18 @@ public record DragonScentProfile(
         int maxCooldownTicks
 ) {
     public static DragonScentProfile forDragon(DragonEntity dragon) {
-        double horizontalRange = Mth.clamp(10.0D + dragon.getBbWidth() * 1.2D, 12.0D, 18.0D);
-        double verticalRange = Mth.clamp(4.0D + dragon.getBbHeight() * 0.5D, 5.0D, 9.0D);
+        double horizontalRange = Mth.clamp(18.0D + dragon.getBbWidth() * 2.0D, 20.0D, 30.0D);
+        double verticalRange = Mth.clamp(6.0D + dragon.getBbHeight() * 0.75D, 8.0D, 14.0D);
         return new DragonScentProfile(horizontalRange, verticalRange, 24, 36, 20 * 12, 20 * 20);
     }
 
     public double uncertainty(double distance) {
         double rangeFactor = Mth.clamp(distance / horizontalRange, 0.0D, 1.0D);
-        return 1.5D + rangeFactor * 2.5D;
+        return 1.5D + rangeFactor * 4.5D;
     }
 
     public float confidence(double distance) {
         double rangeFactor = Mth.clamp(distance / horizontalRange, 0.0D, 1.0D);
-        return (float)(0.8D - rangeFactor * 0.4D);
+        return (float)(0.85D - rangeFactor * 0.5D);
     }
 }

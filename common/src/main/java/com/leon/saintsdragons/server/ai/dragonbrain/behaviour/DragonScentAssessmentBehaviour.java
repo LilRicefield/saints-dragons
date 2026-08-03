@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonScentProfil
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -41,15 +42,29 @@ public final class DragonScentAssessmentBehaviour<T extends DragonEntity> extend
         outcome = "assessing";
 
         DragonScentProfile profile = DragonScentProfile.forDragon(context.dragon());
-        assessmentDuration = randomBetween(
-                context,
-                profile.minAssessmentTicks(),
-                profile.maxAssessmentTicks()
-        );
         int cooldown = randomBetween(context, profile.minCooldownTicks(), profile.maxCooldownTicks());
         context.memories().set(DragonMemories.SCENT_COOLDOWN, true, cooldown);
+
+        if (context.dragon().isInWaterOrBubble()) {
+            assessmentDuration = 0;
+            context.memories().erase(DragonMemories.SCENT_CANDIDATE);
+            context.dragon().setScentAssessing(false);
+            if (context.memories().has(DragonMemories.ATTACK_TARGET)) {
+                outcome = "underwater-combat-interrupted";
+            } else {
+                outcome = DragonInvestigation.remember(context.dragon(), candidate)
+                        ? "underwater-investigate"
+                        : "underwater-superseded";
+            }
+            return;
+        }
+
+        assessmentDuration = context.dragon() instanceof ScentAssessingDragon scentDragon
+                ? Math.max(1, scentDragon.getScentAssessmentDurationTicks())
+                : randomBetween(context, profile.minAssessmentTicks(), profile.maxAssessmentTicks());
         clearExistingMovement(context);
         claimMovement(context);
+        context.dragon().setScentAssessing(true);
     }
 
     @Override
@@ -58,13 +73,6 @@ public final class DragonScentAssessmentBehaviour<T extends DragonEntity> extend
             return;
         }
         claimMovement(context);
-        context.dragon().getLookControl().setLookAt(
-                candidate.position().x,
-                candidate.position().y,
-                candidate.position().z,
-                10.0F,
-                context.dragon().getMaxHeadXRot()
-        );
         assessmentTicks++;
         if (assessmentTicks < assessmentDuration) {
             return;
@@ -91,6 +99,7 @@ public final class DragonScentAssessmentBehaviour<T extends DragonEntity> extend
 
     @Override
     protected void stop(DragonBrainContext<T> context) {
+        context.dragon().setScentAssessing(false);
         context.memories().erase(DragonMemories.SCENT_CANDIDATE);
         DragonMovementIntent intent = context.memories().get(DragonMemories.MOVEMENT_INTENT).orElse(null);
         if (SCENT_STOP.equals(intent)) {

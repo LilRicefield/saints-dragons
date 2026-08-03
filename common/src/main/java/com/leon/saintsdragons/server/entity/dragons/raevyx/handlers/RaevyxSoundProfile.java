@@ -44,6 +44,16 @@ public final class RaevyxSoundProfile implements DragonSoundProfile {
             playWingFlap(handler, dragon);
             return true;
         }
+        if ("raevyx_investigating".equals(key)) {
+            handler.playClientSound(
+                    dragon,
+                    dragon.position(),
+                    ModSounds.RAEVYX_INVESTIGATING.get(),
+                    1.0F,
+                    1.0F
+            );
+            return true;
+        }
         return key.startsWith("raevyx_");
     }
 

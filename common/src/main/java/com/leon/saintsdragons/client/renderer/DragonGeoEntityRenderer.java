@@ -22,6 +22,7 @@ import org.joml.Vector3d;
 import org.joml.Vector4f;
 import software.bernie.geckolib.cache.object.BakedGeoModel;
 import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
@@ -100,6 +101,8 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
             super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
         } finally {
             RenderPassContext.endExtraction();
+            getGeoModel().getAnimationProcessor().getRegisteredBones()
+                    .forEach(CoreGeoBone::resetStateChanges);
         }
 
         sampleLocators(entity);

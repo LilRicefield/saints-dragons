@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -35,6 +36,16 @@ public final class VarasuchusSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon, String key, String locator) {
         if (dragon.isBaby() && key.startsWith("varasuchus_") && !BABY_ALLOWED_KEYS.containsKey(key)) {
+            return true;
+        }
+        if ("varasuchus_investigating".equals(key)) {
+            handler.playClientSound(
+                    dragon,
+                    dragon.position(),
+                    ModSounds.VARASUCHUS_INVESTIGATING.get(),
+                    1.0F,
+                    1.0F
+            );
             return true;
         }
         return key.startsWith("varasuchus_");

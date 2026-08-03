@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Pair;
+import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirToGroundTransitionBehaviour;
@@ -56,7 +57,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super T>>> behaviours = ImmutableList.builder();
             int priority = group.activity() == Activity.CORE ? 0 : 10;
             List<DragonBehaviour<T>> configuredBehaviours = new ArrayList<>();
-            if (group.activity() == Activity.IDLE) {
+            if (group.activity() == Activity.IDLE && usesDragonScent()) {
                 configuredBehaviours.add(new DragonScentAssessmentBehaviour<>());
                 configuredBehaviours.add(new DragonInvestigateTargetBehaviour<>());
             }
@@ -91,6 +92,10 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         brain.useDefaultActivity();
         DragonBrainDiagnostics.attach(brain, registeredBehaviours);
         return brain;
+    }
+
+    default boolean usesDragonScent() {
+        return getDragonBrainSensors().contains(ModSensorTypes.DRAGON_SCENT.get());
     }
 
     default void tickBrain(ServerLevel level, T dragon) {

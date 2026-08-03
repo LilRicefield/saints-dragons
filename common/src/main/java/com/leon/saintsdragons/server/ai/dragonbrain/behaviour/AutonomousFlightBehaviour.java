@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.core.BlockPos;
@@ -45,14 +46,18 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         if (!canUseAutonomousFlight(dragon)) {
             return false;
         }
-        if (!dragon.isFlying() && dragon.level().getGameTime() - lastLandingTime < getLandingCooldownTicks(dragon)) {
+        boolean recoveringGroundPath = shouldRecoverFromGroundPathFailure(dragon);
+        if (!recoveringGroundPath
+                && !dragon.isFlying()
+                && dragon.level().getGameTime() - lastLandingTime < getLandingCooldownTicks(dragon)) {
             return false;
         }
-        if (decisionCooldown > 0 && --decisionCooldown > 0) {
+        if (!recoveringGroundPath && decisionCooldown > 0 && --decisionCooldown > 0) {
             return false;
         }
 
-        boolean shouldFly = dragon.isOverStandardFlightDanger()
+        boolean shouldFly = recoveringGroundPath
+                || dragon.isOverStandardFlightDanger()
                 || (dragon.isFlying()
                 ? shouldKeepFlying(dragon)
                 : dragon.hasStandardTakeoffClearance(getTakeoffClearanceHeight(dragon)) && shouldTakeOff(dragon));
@@ -92,6 +97,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     @Override
     protected void start(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        dragon.getAIMovement().clearGroundPathFailureHistory();
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isTakeoff() && !dragon.isLanding()) {
             beginAutonomousTakeoff(dragon);
         } else {
@@ -181,6 +187,12 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     protected boolean shouldTakeOff(T dragon) {
         return dragon.isOverStandardFlightDanger()
                 || dragon.getRandom().nextInt(Math.max(1, getTakeoffRoll(dragon))) == 0;
+    }
+
+    protected boolean shouldRecoverFromGroundPathFailure(T dragon) {
+        return !dragon.isAerial()
+                && dragon.getAIMovement().hasRepeatedGroundPathFailures()
+                && DragonAirCombatHelper.canTriggerAiFlight(dragon);
     }
 
     protected boolean shouldKeepFlying(T dragon) {

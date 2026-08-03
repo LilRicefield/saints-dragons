@@ -13,8 +13,8 @@ public record DragonPerceptionProfile(
         double investigationSpeed,
         double arrivalDistance
 ) {
-    private static final int MIN_HEARING_RANGE = 16;
-    private static final int MAX_HEARING_RANGE = 32;
+    private static final int MIN_HEARING_RANGE = 24;
+    private static final int MAX_HEARING_RANGE = 48;
     private static final int MIN_INVESTIGATION_TICKS = 20 * 8;
     private static final int MAX_INVESTIGATION_TICKS = 20 * 20;
     private static final int ROUTE_MARGIN_TICKS = 20 * 2;
@@ -23,7 +23,7 @@ public record DragonPerceptionProfile(
     public static DragonPerceptionProfile forDragon(DragonEntity dragon) {
         double followRange = dragon.getAttributeValue(Attributes.FOLLOW_RANGE);
         int hearingRange = Mth.clamp(
-                (int)Math.round(Math.max(MIN_HEARING_RANGE, followRange * 0.75D)),
+                (int)Math.round(Math.max(MIN_HEARING_RANGE, followRange * 0.9D)),
                 MIN_HEARING_RANGE,
                 MAX_HEARING_RANGE
         );

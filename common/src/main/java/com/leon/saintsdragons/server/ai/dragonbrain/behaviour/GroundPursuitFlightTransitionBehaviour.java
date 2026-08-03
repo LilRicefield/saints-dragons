@@ -105,6 +105,10 @@ public class GroundPursuitFlightTransitionBehaviour<
             resetProgressTracking();
             return;
         }
+        if (dragon.getAIMovement().hasRepeatedGroundPathFailures()) {
+            abandonGroundRoute(context);
+            return;
+        }
 
         long unreachableSince = context.memories()
                 .get(DragonMemories.CANT_REACH_WALK_TARGET_SINCE)
@@ -129,6 +133,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         context.memories().erase(DragonMemories.TACTICAL_LANDING_POSITION);
         context.memories().erase(DragonMemories.MOVEMENT_INTENT);
         dragon.getAIMovement().stopAndClearAllMovement();
+        dragon.getAIMovement().clearGroundPathFailureHistory();
         DragonAirCombatHelper.startOrResumeFlight(
                 dragon,
                 dragon.getAiAirCombatSettings().takeoffAnimationTicks()

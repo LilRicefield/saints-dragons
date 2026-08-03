@@ -91,6 +91,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> ATROXIIA_GRUMBLE_1 = registerSound("atroxiia_grumble1");
     public static final Supplier<SoundEvent> ATROXIIA_GRUMBLE_2 = registerSound("atroxiia_grumble2");
     public static final Supplier<SoundEvent> ATROXIIA_GRUMBLE_3 = registerSound("atroxiia_grumble3");
+    public static final Supplier<SoundEvent> ATROXIIA_INVESTIGATING = registerSound("atroxiia_investigating");
     public static final Supplier<SoundEvent> ATROXIIA_FLEX = registerSound("atroxiia_flex");
     public static final Supplier<SoundEvent> ATROXIIA_SLAM = registerSound("atroxiia_slam");
     public static final Supplier<SoundEvent> ATROXIIA_UNDERWATER_BITE = registerSound("atroxiia_underwater_bite");
@@ -135,6 +136,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_1 = registerSound("raevyx_grumble_1");
     public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_2 = registerSound("raevyx_grumble_2");
     public static final Supplier<SoundEvent> RAEVYX_GRUMBLE_3 = registerSound("raevyx_grumble_3");
+    public static final Supplier<SoundEvent> RAEVYX_INVESTIGATING = registerSound("raevyx_investigating");
     public static final Supplier<SoundEvent> RAEVYX_TAKEOFF = registerSound("raevyx_takeoff");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAM_START = registerSound("raevyx_lightning_beam_start");
     public static final Supplier<SoundEvent> RAEVYX_LIGHTNING_BEAMING = registerSound("raevyx_lightning_beaming");
@@ -168,6 +170,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VARASUCHUS_GRUMBLE_1 = registerSound("varasuchus_grumble1");
     public static final Supplier<SoundEvent> VARASUCHUS_GRUMBLE_2 = registerSound("varasuchus_grumble2");
     public static final Supplier<SoundEvent> VARASUCHUS_GRUMBLE_3 = registerSound("varasuchus_grumble3");
+    public static final Supplier<SoundEvent> VARASUCHUS_INVESTIGATING = registerSound("varasuchus_investigating");
     public static final Supplier<SoundEvent> VARASUCHUS_PHASE1 = registerSound("varasuchus_phase1");
     public static final Supplier<SoundEvent> VARASUCHUS_PHASE1_UNDERWATER = registerSound("varasuchus_phase1_underwater");
     public static final Supplier<SoundEvent> VARASUCHUS_PHASE2 = registerSound("varasuchus_phase2");
@@ -207,6 +210,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_1 = registerSound("ignivorus_grumble1");
     public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_2 = registerSound("ignivorus_grumble2");
     public static final Supplier<SoundEvent> IGNIVORUS_GRUMBLE_3 = registerSound("ignivorus_grumble3");
+    public static final Supplier<SoundEvent> IGNIVORUS_INVESTIGATING = registerSound("ignivorus_investigating");
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE_START = registerSound("ignivorus_ultimate_start");
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE = registerSound("ignivorus_ultimate");
     public static final Supplier<SoundEvent> IGNIVORUS_ULTIMATE_END = registerSound("ignivorus_ultimate_end");
@@ -248,6 +252,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> VOLITANS_GRUMBLE_1 = registerSound("volitans_grumble1");
     public static final Supplier<SoundEvent> VOLITANS_GRUMBLE_2 = registerSound("volitans_grumble2");
     public static final Supplier<SoundEvent> VOLITANS_GRUMBLE_3 = registerSound("volitans_grumble3");
+    public static final Supplier<SoundEvent> VOLITANS_INVESTIGATING = registerSound("volitans_investigating");
     public static final Supplier<SoundEvent> VOLITANS_FLAP = registerSound("volitans_flap");
     public static final Supplier<SoundEvent> VOLITANS_EAT = registerSound("volitans_eat");
     public static final Supplier<SoundEvent> VOLITANS_POISON_BALL_READY = registerSound("volitans_poison_ball_ready");

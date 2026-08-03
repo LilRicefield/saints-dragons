@@ -586,6 +586,17 @@
       }
     ]
   },
+  "raevyx_investigating": {
+    "subtitle": "subtitles.saintsdragons.raevyx_investigating",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/raevyx/raevyx_investigating",
+        "volume": 1.25,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "raevyx_takeoff": {
     "subtitle": "subtitles.saintsdragons.raevyx_takeoff",
     "sounds": [
@@ -1077,6 +1088,17 @@
         "volume": 1.5,
         "pitch": 1.0,
         "attenuation_distance": 16
+      }
+    ]
+  },
+  "varasuchus_investigating": {
+    "subtitle": "subtitles.saintsdragons.varasuchus_investigating",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/varasuchus/varasuchus_investigating",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
       }
     ]
   },
@@ -1641,6 +1663,17 @@
       }
     ]
   },
+  "ignivorus_investigating": {
+    "subtitle": "subtitles.saintsdragons.ignivorus_investigating",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_investigating",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 40
+      }
+    ]
+  },
   "ignivorus_ultimate_start": {
     "subtitle": "subtitles.saintsdragons.ignivorus_ultimate_start",
     "sounds": [
@@ -1813,6 +1846,17 @@
         "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 40
+      }
+    ]
+  },
+  "volitans_investigating": {
+    "subtitle": "subtitles.saintsdragons.volitans_investigating",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/volitans/volitans_investigating",
+        "volume": 1.25,
+        "pitch": 1.0,
+        "attenuation_distance": 32
       }
     ]
   },
@@ -2140,6 +2184,17 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/atroxiia/atroxiia_grumble3",
+        "volume": 1.0,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
+  "atroxiia_investigating": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_investigating",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_investigating",
         "volume": 1.0,
         "pitch": 1.0,
         "attenuation_distance": 32

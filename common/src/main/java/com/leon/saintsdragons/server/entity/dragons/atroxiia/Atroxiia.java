@@ -30,6 +30,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManage
 import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -73,7 +74,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer {
+public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer, ScentAssessingDragon {
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.BOOLEAN);
     private static final AtroxiiaBrain DRAGON_BRAIN = new AtroxiiaBrain();
@@ -102,6 +103,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
     private static final int WAKE_UP_TICKS = 42;
+    private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 70;
     public static final int HURT_ANIMATION_TICKS = 15;
     public static final int DEATH_ANIMATION_TICKS = 40;
     public static final int EAT_ANIMATION_TICKS = 40;
@@ -117,6 +119,12 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
     private static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
+
+    @Override
+    public int getScentAssessmentDurationTicks() {
+        return SCENT_ASSESSMENT_ANIMATION_TICKS;
+    }
+
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.atroxiia.grumble1",
                     ModSounds.ATROXIIA_GRUMBLE_1, 1.0F, 0.95F, 0.1F, false, false, true)

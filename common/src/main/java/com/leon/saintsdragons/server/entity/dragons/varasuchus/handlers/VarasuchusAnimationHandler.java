@@ -49,6 +49,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     private static final RawAnimation TAILGUARD_HOLD = RawAnimation.begin().thenLoop("animation.varasuchus.tailguard_hold");
     private static final RawAnimation TAILGUARD_CANCEL = RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_cancel");
     private static final RawAnimation TAILGUARD_PARRY = RawAnimation.begin().thenPlay("animation.varasuchus.tailguard_parry");
+    private static final RawAnimation INVESTIGATING = RawAnimation.begin().thenPlay("animation.varasuchus.investigating");
     private static final AnimationHelper.Animations GROUND_ANIMATIONS =
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_LOOP, WAKE_UP, SWIM_MOVE, null, JUMP);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
@@ -77,6 +78,11 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         }
         if (drake.areRiderControlsLocked()) {
             return PlayState.STOP;
+        }
+        if (drake.isScentAssessing()) {
+            controller.transitionLength(GROUND_TRANSITIONS.idle());
+            state.setAndContinue(INVESTIGATING);
+            return PlayState.CONTINUE;
         }
 
         boolean isSwimming = drake.isSwimming();

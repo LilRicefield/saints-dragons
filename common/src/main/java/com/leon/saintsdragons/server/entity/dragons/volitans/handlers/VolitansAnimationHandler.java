@@ -49,6 +49,7 @@ public final class VolitansAnimationHandler {
     private static final RawAnimation EAT = RawAnimation.begin().thenPlay("animation.volitans.eat");
     private static final RawAnimation ROAR = RawAnimation.begin().thenPlay("animation.volitans.roar");
     private static final RawAnimation ROAR_AIR_WATER = RawAnimation.begin().thenPlay("animation.volitans.roar_air_water");
+    private static final RawAnimation INVESTIGATING = RawAnimation.begin().thenPlay("animation.volitans.investigating");
     private static final RawAnimation BREATH_START = RawAnimation.begin().thenPlay("animation.volitans.breath_start");
     private static final RawAnimation BREATHING = RawAnimation.begin().thenLoop("animation.volitans.breathing");
     private static final RawAnimation BREATH_END = RawAnimation.begin().thenPlay("animation.volitans.breath_end");
@@ -151,6 +152,11 @@ public final class VolitansAnimationHandler {
         if (dragon.isTamingStunned()) {
             controller.transitionLength(GROUND_TRANSITIONS.idle());
             state.setAndContinue(dragon.isInWaterOrBubble() ? UNDERWATER_STUNNED : STUNNED);
+            return PlayState.CONTINUE;
+        }
+        if (dragon.isScentAssessing()) {
+            controller.transitionLength(GROUND_TRANSITIONS.idle());
+            state.setAndContinue(INVESTIGATING);
             return PlayState.CONTINUE;
         }
         if (dragon.areRiderControlsLocked()) {

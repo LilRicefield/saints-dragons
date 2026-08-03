@@ -199,7 +199,7 @@ public final class DragonHearingListener implements GameEventListener {
             return new Stimulus(DragonSensoryObservation.Kind.SPLASH, 0.50F, 0.75F, false);
         }
         if (event == GameEvent.STEP || event == GameEvent.FLAP || event == GameEvent.ELYTRA_GLIDE) {
-            return new Stimulus(DragonSensoryObservation.Kind.STEP, 0.42F, 0.65F, false);
+            return new Stimulus(DragonSensoryObservation.Kind.STEP, 0.30F, 0.65F, false);
         }
         return null;
     }

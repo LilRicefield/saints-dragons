@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers;
 
+import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -24,6 +25,16 @@ public final class AtroxiiaSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon,
                                         String key, String locator) {
+        if ("atroxiia_investigating".equals(key)) {
+            handler.playClientSound(
+                    dragon,
+                    dragon.position(),
+                    ModSounds.ATROXIIA_INVESTIGATING.get(),
+                    1.0F,
+                    1.0F
+            );
+            return true;
+        }
         return "atroxiia_flex".equals(key);
     }
 

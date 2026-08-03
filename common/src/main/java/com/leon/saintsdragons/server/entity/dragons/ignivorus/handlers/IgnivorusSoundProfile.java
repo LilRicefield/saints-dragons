@@ -32,6 +32,16 @@ public final class IgnivorusSoundProfile implements DragonSoundProfile {
             playWingFlap(handler, dragon);
             return true;
         }
+        if ("ignivorus_investigating".equals(key)) {
+            handler.playClientSound(
+                    dragon,
+                    dragon.position(),
+                    ModSounds.IGNIVORUS_INVESTIGATING.get(),
+                    1.0F,
+                    1.0F
+            );
+            return true;
+        }
         return key.startsWith("ignivorus_");
     }
 

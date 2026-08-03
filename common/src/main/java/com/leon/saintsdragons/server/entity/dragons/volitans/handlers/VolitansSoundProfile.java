@@ -32,6 +32,16 @@ public final class VolitansSoundProfile implements DragonSoundProfile {
             playWingFlap(handler, dragon);
             return true;
         }
+        if ("volitans_investigating".equals(key)) {
+            handler.playClientSound(
+                    dragon,
+                    dragon.position(),
+                    ModSounds.VOLITANS_INVESTIGATING.get(),
+                    1.0F,
+                    1.0F
+            );
+            return true;
+        }
         return key.startsWith("volitans_");
     }
 

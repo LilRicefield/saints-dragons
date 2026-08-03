@@ -124,6 +124,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Boolean> DATA_DANCING =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SCENT_ASSESSING =
+            SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_TEXTURE_VARIANT =
             SynchedEntityData.defineId(DragonEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Integer> DATA_PENDING_ADULT_TEXTURE_VARIANT =
@@ -437,6 +439,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.entityData.define(DATA_SLEEPING_ENTERING, false);
         this.entityData.define(DATA_SLEEPING_EXITING, false);
         this.entityData.define(DATA_DANCING, false);
+        this.entityData.define(DATA_SCENT_ASSESSING, false);
         this.entityData.define(DATA_TEXTURE_VARIANT, 0);
         this.entityData.define(DATA_PENDING_ADULT_TEXTURE_VARIANT, -1);
         this.entityData.define(DATA_TEXTURE_VARIANT_ID, SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID.toString());
@@ -465,6 +468,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public void setDancing(boolean dancing) {
         this.entityData.set(DATA_DANCING, dancing);
+    }
+
+    public boolean isScentAssessing() {
+        return this.entityData.get(DATA_SCENT_ASSESSING);
+    }
+
+    public void setScentAssessing(boolean scentAssessing) {
+        this.entityData.set(DATA_SCENT_ASSESSING, scentAssessing);
     }
 
     @Override

@@ -20,15 +20,19 @@ import java.util.concurrent.Future;
 
 public class DragonAIMovementController {
     private static final int GROUND_PATH_FAILURE_RETRY_TICKS = 20;
+    private static final int REPEATED_GROUND_PATH_FAILURE_THRESHOLD = 3;
     private static final float WATER_TURN_SPEED = 8.0F;
 
     private final RideableDragonBase dragon;
     private @Nullable QueuedWaypoint currentWaypoint;
+    private long movementCommandGeneration;
     private GroundPathState groundPathState = GroundPathState.IDLE;
     private long groundPathRequestGeneration;
     private @Nullable Future<?> groundPathRequest;
     private int groundPathFailureRetryTicks;
     private @Nullable Vec3 lastFailedGroundTarget;
+    private int consecutiveGroundPathFailures;
+    private @Nullable Vec3 groundPathFailureOrigin;
     private int lastWaterControllerTick = Integer.MIN_VALUE;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
@@ -179,6 +183,7 @@ public class DragonAIMovementController {
         ensureGroundNavigation();
         resetGroundPathState();
         dragon.getNavigation().stop();
+        invalidateMovementCommand();
         currentWaypoint = new QueuedWaypoint(
                 target,
                 speed,
@@ -353,6 +358,7 @@ public class DragonAIMovementController {
     }
 
     public void clearAllWaypoints() {
+        invalidateMovementCommand();
         currentWaypoint = null;
         resetGroundPathState();
         dragon.getNavigation().stop();
@@ -363,6 +369,7 @@ public class DragonAIMovementController {
     }
 
     public void stop() {
+        invalidateMovementCommand();
         boolean wasUsingWater = currentWaypoint != null && currentWaypoint.mode().usesWater();
         currentWaypoint = null;
         resetGroundPathState();
@@ -384,6 +391,7 @@ public class DragonAIMovementController {
     }
 
     public void stopAndClearAllMovement() {
+        invalidateMovementCommand();
         currentWaypoint = null;
         resetGroundPathState();
         dragon.getNavigation().stop();
@@ -395,6 +403,22 @@ public class DragonAIMovementController {
             dragon.setAccelerating(false);
         }
         setGroundIdle();
+    }
+
+    public long getMovementCommandGeneration() {
+        return movementCommandGeneration;
+    }
+
+    public boolean isMovementCommandCurrent(long generation) {
+        return generation == movementCommandGeneration;
+    }
+
+    public boolean stopIfMovementCommandCurrent(long generation) {
+        if (!isMovementCommandCurrent(generation)) {
+            return false;
+        }
+        stop();
+        return true;
     }
 
     public void setGroundIdle() {
@@ -490,6 +514,15 @@ public class DragonAIMovementController {
         lastFailedGroundTarget = null;
     }
 
+    public boolean hasRepeatedGroundPathFailures() {
+        return consecutiveGroundPathFailures >= REPEATED_GROUND_PATH_FAILURE_THRESHOLD;
+    }
+
+    public void clearGroundPathFailureHistory() {
+        consecutiveGroundPathFailures = 0;
+        groundPathFailureOrigin = null;
+    }
+
     public String getDebugMovementMode() {
         return currentWaypoint == null ? "NONE" : currentWaypoint.mode().name();
     }
@@ -581,6 +614,7 @@ public class DragonAIMovementController {
                 && lastFailedGroundTarget.distanceToSqr(waypoint.target()) < 1.0D) {
             return false;
         }
+        invalidateMovementCommand();
         if (!waypoint.mode().usesAir()
                 && !waypoint.mode().usesWater()
                 && !shouldUseAirMovement()
@@ -646,6 +680,10 @@ public class DragonAIMovementController {
         return true;
     }
 
+    private void invalidateMovementCommand() {
+        movementCommandGeneration++;
+    }
+
     private void startGroundPathAsync(QueuedWaypoint waypoint) {
         ensureGroundNavigation();
         boolean replacingActivePath = groundPathState == GroundPathState.FOLLOWING
@@ -694,6 +732,7 @@ public class DragonAIMovementController {
                     }
                     groundPathFailureRetryTicks = 0;
                     lastFailedGroundTarget = null;
+                    clearGroundPathFailureHistory();
                     setGroundMoveState(currentWaypoint.running());
                     groundPathState = GroundPathState.FOLLOWING;
                 }
@@ -701,6 +740,14 @@ public class DragonAIMovementController {
     }
 
     private void recordGroundPathFailure(@Nullable Vec3 target) {
+        double resetDistance = Math.max(2.0D, dragon.getBbWidth());
+        if (groundPathFailureOrigin == null
+                || groundPathFailureOrigin.distanceToSqr(dragon.position())
+                > resetDistance * resetDistance) {
+            consecutiveGroundPathFailures = 0;
+            groundPathFailureOrigin = dragon.position();
+        }
+        consecutiveGroundPathFailures++;
         currentWaypoint = null;
         groundPathState = GroundPathState.FAILED;
         groundPathFailureRetryTicks = GROUND_PATH_FAILURE_RETRY_TICKS;
