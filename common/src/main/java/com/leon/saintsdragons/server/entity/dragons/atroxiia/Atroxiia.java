@@ -404,7 +404,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     public boolean canUseGroundCombatAbility() {
-        if (isBaby() || isTamingStunned() || !isGroundedForAction()) {
+        if (isBaby() || isTamingStunned() || isInWaterOrBubble() || !isGroundedForAction()) {
             return false;
         }
         if (getControllingPassenger() != null) {
