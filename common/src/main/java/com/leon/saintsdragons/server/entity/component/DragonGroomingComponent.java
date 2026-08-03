@@ -25,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 
 public final class DragonGroomingComponent {
     public static final int SCALE_REGROWTH_TICKS = 20 * 60 * 5;
+    private static final int PLUCK_SCALE_COUNT = 3;
     private static final int PLUCK_HAPPINESS_PENALTY = 40;
     private static final float PLUCK_HEALTH_COST = 5.0F;
     private static final int NORMAL_BRUSH_HAPPINESS = 10;
@@ -132,7 +133,7 @@ public final class DragonGroomingComponent {
         dragon.level().playSound(null, dragon.blockPosition(), ModSounds.PLUCKING.get(), SoundSource.PLAYERS,
                 1.0F, 1.0F);
 
-        ItemStack scaleStack = new ItemStack(scaleItem);
+        ItemStack scaleStack = new ItemStack(scaleItem, PLUCK_SCALE_COUNT);
         if (!player.addItem(scaleStack)) {
             dragon.spawnAtLocation(scaleStack);
         }

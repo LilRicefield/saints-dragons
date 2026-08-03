@@ -13,13 +13,13 @@
         ]
       }
     },
-    "has_minecraft_copper_ingot": {
+    "has_saintsdragons_worldroot_ingot": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
         "items": [
           {
             "items": [
-              "minecraft:copper_ingot"
+              "saintsdragons:worldroot_ingot"
             ]
           }
         ]
@@ -29,7 +29,7 @@
   "requirements": [
     [
       "has_minecraft_iron_ingot",
-      "has_minecraft_copper_ingot"
+      "has_saintsdragons_worldroot_ingot"
     ]
   ],
   "rewards": {
