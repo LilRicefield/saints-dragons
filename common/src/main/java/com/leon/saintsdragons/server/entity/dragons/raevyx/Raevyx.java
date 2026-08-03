@@ -280,10 +280,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private Vec3 beamServerTarget = null;
 
     @Override
-    protected void registerGoals() {
-    }
-
-    @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
         return dragonCache;
     }
@@ -363,8 +359,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         tamingController.resetFailures();
     }
 
-    public boolean isAwaitingTamingFeed() {
-        return tamingController.isAwaitingFeed();
+    public boolean isReadyForTamingFeed() {
+        return tamingController.isReadyForTamingFeed();
     }
 
     public boolean isBelowTamingThreshold() {

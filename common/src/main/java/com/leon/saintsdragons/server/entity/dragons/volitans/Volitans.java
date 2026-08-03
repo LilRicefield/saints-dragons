@@ -453,9 +453,6 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         return spawnData;
     }
 
-    @Override
-    protected void registerGoals() {
-    }
 
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
@@ -1407,8 +1404,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         tamingController.resetFailures();
     }
 
-    public boolean isAwaitingTamingFeed() {
-        return tamingController.isAwaitingFeed();
+    public boolean isReadyForTamingFeed() {
+        return tamingController.isReadyForTamingFeed();
     }
 
     public boolean isBelowTamingThreshold() {

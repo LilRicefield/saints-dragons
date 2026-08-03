@@ -29,8 +29,8 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         tickRecovery();
     }
 
-    public boolean isAwaitingFeed() {
-        return awaitingFeed;
+    public boolean isReadyForTamingFeed() {
+        return isTamingStunned() && awaitingFeed;
     }
 
     public boolean tryEnterHoldStateFromDamage(DamageSource source, float amount) {

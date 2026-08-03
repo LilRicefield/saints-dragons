@@ -620,10 +620,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
     }
-    
-    @Override
-    protected final void registerGoals() {
-    }
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {

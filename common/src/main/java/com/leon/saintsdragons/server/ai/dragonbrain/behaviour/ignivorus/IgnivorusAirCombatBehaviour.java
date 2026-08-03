@@ -87,7 +87,31 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
 
     @Override
     protected boolean isAdditionalAttackActive(Ignivorus dragon) {
-        return dragon.isLeaping() || dragon.isLeapImpactRecovering();
+        return dragon.isLeaping()
+                || dragon.isLeapImpactRecovering()
+                || dragon.isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE);
+    }
+
+    @Override
+    protected boolean tryStartPriorityAttack(Ignivorus dragon,
+                                             LivingEntity target,
+                                             boolean hasLineOfSight) {
+        if (!hasLineOfSight
+                || DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                || !dragon.shouldTriggerWildUltimateAtCurrentHealth()
+                || !canUseAiAbility(dragon, ModAbilities.IGNIVORUS_ULTIMATE, true)
+                || !dragon.combatManager.tryUseAbility(ModAbilities.IGNIVORUS_ULTIMATE)) {
+            return false;
+        }
+        dragon.getAiCombatPacing().recordUse(
+                ModAbilities.IGNIVORUS_ULTIMATE,
+                20,
+                140,
+                true,
+                180,
+                100
+        );
+        return true;
     }
 
     @Override

@@ -1,7 +1,5 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -612,22 +610,8 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     }
 
     private boolean shouldTriggerLowHealthUltimate() {
-        if (dragon.isPhase2Active()
-                || dragon.hasTriggeredWildPhase2Ultimate()
-                || dragon.isTame()) {
-            return false;
-        }
-        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-            .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        double healthFraction = Mth.clamp(
-            config.extraDouble("ultimate_trigger_health_fraction", 0.6D),
-            0.0D,
-            1.0D
-        );
-        if (healthFraction <= 0.0D) {
-            return false;
-        }
-        return dragon.getHealth() <= dragon.getMaxHealth() * healthFraction;
+        return dragon.isGroundedForAction()
+                && dragon.shouldTriggerWildUltimateAtCurrentHealth();
     }
 
     private double getGapToTarget(LivingEntity target) {

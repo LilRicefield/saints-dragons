@@ -315,10 +315,6 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     }
 
     @Override
-    protected void registerGoals() {
-    }
-
-    @Override
     protected Brain.Provider<Nulljaw> brainProvider() {
         return DRAGON_BRAIN.brainProvider();
     }

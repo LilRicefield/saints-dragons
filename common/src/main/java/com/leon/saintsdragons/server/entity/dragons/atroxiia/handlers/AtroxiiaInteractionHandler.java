@@ -50,7 +50,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
                 .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
         boolean legacyTaming = config.extraBoolean("legacy_taming", false);
 
-        if (!legacyTaming && dragon.isTamingStunned() && !dragon.isAwaitingTamingFeed()) {
+        if (!legacyTaming && dragon.isTamingStunned() && !dragon.isReadyForTamingFeed()) {
             sendStatusMessage(player, "entity.saintsdragons.atroxiia.taming_dazed");
             return InteractionResult.CONSUME;
         }
@@ -58,7 +58,9 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
             sendStatusMessage(player, "entity.saintsdragons.atroxiia.still_eating");
             return InteractionResult.CONSUME;
         }
-        if (!legacyTaming && dragon.getHealth() > dragon.getTamingThreshold() + 1.0F) {
+        if (!legacyTaming
+                && !dragon.isReadyForTamingFeed()
+                && dragon.getHealth() > dragon.getTamingThreshold() + 1.0F) {
             sendStatusMessage(
                     player,
                     "entity.saintsdragons.atroxiia.taming_need_weakened",
@@ -75,7 +77,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
             dragon.setFeedingCooldown(Atroxiia.EAT_ANIMATION_TICKS);
 
             boolean heartyMeal = heldItem.is(ModItems.HEARTY_DRAGON_MEAL.get());
-            if (heartyMeal) {
+            if (legacyTaming && heartyMeal) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
             dragon.applyFeedingHunger(heartyMeal);
@@ -91,6 +93,9 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
                     : config.extraDouble("taming_chance_base", 20.0D);
             if (DragonTamingChance.rollPercent(dragon.getRandom(), tameChance)) {
                 dragon.tame(player);
+                if (!legacyTaming && heartyMeal) {
+                    dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+                }
                 dragon.setOrderedToSit(true);
                 dragon.setCommand(1);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);

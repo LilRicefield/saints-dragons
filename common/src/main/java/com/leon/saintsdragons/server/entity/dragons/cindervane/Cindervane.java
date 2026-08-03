@@ -444,9 +444,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         setLanding(landing);
     }
 
-    @Override
-    protected void registerGoals() {
-    }
 
     private void tickFlightLifecycle() {
         if (!this.level().isClientSide) {

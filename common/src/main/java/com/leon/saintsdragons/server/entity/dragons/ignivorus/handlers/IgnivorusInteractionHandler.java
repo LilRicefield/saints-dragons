@@ -40,7 +40,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
         if (!legacyTaming) {
             if (dragon.isTamingStunned()) {
-                if (!dragon.isAwaitingTamingFeed()) {
+                if (!dragon.isReadyForTamingFeed()) {
                     sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_dazed");
                     return InteractionResult.CONSUME;
                 }
@@ -58,7 +58,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
         if (!legacyTaming) {
             float minRequiredHealth = dragon.getTamingThreshold();
-            if (dragon.getHealth() > minRequiredHealth + 1.0F) {
+            if (!dragon.isReadyForTamingFeed() && dragon.getHealth() > minRequiredHealth + 1.0F) {
                 sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_need_weakened", dragon.getName(), Math.round(minRequiredHealth));
                 return InteractionResult.CONSUME;
             }
@@ -70,7 +70,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
             dragon.setFeedingCooldown(20);
             boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
             boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
-            if (hearty) {
+            if (legacyTaming && hearty) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
             dragon.applyFeedingHunger(hearty);
@@ -87,6 +87,9 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
             if (success) {
                 dragon.tame(player);
+                if (!legacyTaming && hearty) {
+                    dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+                }
                 dragon.setOrderedToSit(true);
                 dragon.setCommand(1);
                 dragon.combatManager.clearAbilityCooldown(ModAbilities.IGNIVORUS_ULTIMATE);
@@ -101,6 +104,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                     Float healTarget = nextFailureHealTarget();
                     dragon.setTamingRecoveryTarget(healTarget);
                     dragon.incrementTamingFailures();
+                    dragon.resetWildCombatAfterFailedTaming();
                 }
                 dragon.level().broadcastEntityEvent(dragon, (byte) 6);
                 sendStatusMessage(player, "entity.saintsdragons.ignivorus.taming_failed");

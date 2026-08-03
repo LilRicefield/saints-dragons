@@ -162,10 +162,6 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
-    protected final void registerGoals() {
-    }
-
-    @Override
     protected @NotNull PathNavigation createNavigation(@NotNull Level level) {
         return new PathNavigateGround(this, level);
     }

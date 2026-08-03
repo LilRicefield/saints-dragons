@@ -44,7 +44,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             return InteractionResult.PASS;
         }
 
-        if (!legacyTaming && dragon.isTamingStunned() && !dragon.isAwaitingTamingFeed()) {
+        if (!legacyTaming && dragon.isTamingStunned() && !dragon.isReadyForTamingFeed()) {
             sendStatusMessage(player, "entity.saintsdragons.volitans.taming_dazed");
             return InteractionResult.CONSUME;
         }
@@ -61,7 +61,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
 
         if (!legacyTaming) {
             float minRequiredHealth = dragon.getTamingThreshold();
-            if (dragon.getHealth() > minRequiredHealth + 1.0F) {
+            if (!dragon.isReadyForTamingFeed() && dragon.getHealth() > minRequiredHealth + 1.0F) {
                 sendStatusMessage(player, "entity.saintsdragons.volitans.taming_need_weakened", dragon.getName(), Math.round(minRequiredHealth));
                 return InteractionResult.CONSUME;
             }
@@ -74,7 +74,7 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             dragon.setFeedingCooldown(61);
 
             boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
-            if (hearty) {
+            if (legacyTaming && hearty) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
             dragon.applyFeedingHunger(hearty);
@@ -92,6 +92,9 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
             if (success) {
                 dragon.tame(player);
+                if (!legacyTaming && hearty) {
+                    dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
+                }
                 dragon.setOrderedToSit(true);
                 dragon.setCommand(1);
                 dragon.level().broadcastEntityEvent(dragon, (byte) 7);

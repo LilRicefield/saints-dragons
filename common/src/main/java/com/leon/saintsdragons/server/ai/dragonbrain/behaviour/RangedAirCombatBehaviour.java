@@ -36,6 +36,10 @@ public abstract class RangedAirCombatBehaviour<
         }
 
         T dragon = context.dragon();
+        if (tryStartPriorityAttack(dragon, target, hasLineOfSight)) {
+            context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.holdPosition());
+            return;
+        }
         double distance = dragon.distanceTo(target);
         if (distance <= combatSettings.meleeRange() && hasLineOfSight) {
             if (!isCurrentlyAttacking(dragon) && attackCooldown <= 0 && tryStartMeleeAttack(dragon, target)) {
@@ -110,6 +114,12 @@ public abstract class RangedAirCombatBehaviour<
     }
 
     protected boolean isAdditionalAttackActive(T dragon) {
+        return false;
+    }
+
+    protected boolean tryStartPriorityAttack(T dragon,
+                                             LivingEntity target,
+                                             boolean hasLineOfSight) {
         return false;
     }
 

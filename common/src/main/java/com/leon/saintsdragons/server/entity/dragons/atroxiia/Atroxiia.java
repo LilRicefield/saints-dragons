@@ -14,7 +14,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.profiles.AtroxiiaBrain;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaHelheimQuakeAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -276,10 +275,6 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         getNavigation().stop();
         setDeltaMovement(Vec3.ZERO);
         getSoundHandler().playVocal("atroxiia_flex");
-    }
-
-    @Override
-    protected final void registerGoals() {
     }
 
     @Override
@@ -966,8 +961,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         return !isBaby() && this.entityData.get(DATA_TAMING_STUNNED);
     }
 
-    public boolean isAwaitingTamingFeed() {
-        return tamingController.isAwaitingFeed();
+    public boolean isReadyForTamingFeed() {
+        return tamingController.isReadyForTamingFeed();
     }
 
     public boolean isBelowTamingThreshold() {

@@ -73,6 +73,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -475,9 +476,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
     }
 
-    @Override
-    protected void registerGoals() {
-    }
 
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
@@ -641,6 +639,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             }
             return false;
         }
+        if (isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE)
+                && !damageSource.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+            return false;
+        }
         if (isSleeping() || isSleepingEntering() || isSleepingExiting()) {
             wakeUpImmediately();
             suppressSleep(200);
@@ -775,8 +777,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
 
-    public boolean isAwaitingTamingFeed() {
-        return tamingController.isAwaitingFeed();
+    public boolean isReadyForTamingFeed() {
+        return tamingController.isReadyForTamingFeed();
     }
 
     public boolean isBelowTamingThreshold() {
@@ -1805,6 +1807,20 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return wildPhase2UltimateTriggered;
     }
 
+    public boolean shouldTriggerWildUltimateAtCurrentHealth() {
+        if (isPhase2Active() || wildPhase2UltimateTriggered || isTame()) {
+            return false;
+        }
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
+        double healthFraction = Mth.clamp(
+                config.extraDouble("ultimate_trigger_health_fraction", 0.6D),
+                0.0D,
+                1.0D
+        );
+        return healthFraction > 0.0D && getHealth() <= getMaxHealth() * healthFraction;
+    }
+
     public void completeWildPhase2Transition() {
         if (level().isClientSide || isTame() || isBaby()) {
             return;
@@ -1840,6 +1856,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                     38
             );
         }
+    }
+
+    public void resetWildCombatAfterFailedTaming() {
+        if (level().isClientSide || isTame()) {
+            return;
+        }
+
+        phase2Active = false;
+        this.entityData.set(DATA_PHASE2, false);
+        phase2RiderTakeoffActive = false;
+        this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
+        phase2WasVehicle = false;
+        phase2CooldownTicks = 0;
+        wildPhase2UltimateTriggered = false;
+
+        combatManager.clearAllStates();
+        getAiCombatPacing().reset();
     }
 
     private void exitPhase2(boolean lockControls) {
