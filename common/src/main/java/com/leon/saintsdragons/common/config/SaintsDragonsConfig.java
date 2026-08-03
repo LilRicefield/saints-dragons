@@ -38,6 +38,14 @@ public final class SaintsDragonsConfig {
     public static final int NULLJAW_SPAWN_WEIGHT_DEFAULT = 4;
     public static final int NULLJAW_MIN_GROUP_SIZE_DEFAULT = 4;
     public static final int NULLJAW_MAX_GROUP_SIZE_DEFAULT = 4;
+
+    public static final int MOOP_SPAWN_WEIGHT_DEFAULT = 4;
+    public static final int MOOP_MIN_GROUP_SIZE_DEFAULT = 1;
+    public static final int MOOP_MAX_GROUP_SIZE_DEFAULT = 1;
+
+    public static final int MOSSBACK_SPAWN_WEIGHT_DEFAULT = 10;
+    public static final int MOSSBACK_MIN_GROUP_SIZE_DEFAULT = 1;
+    public static final int MOSSBACK_MAX_GROUP_SIZE_DEFAULT = 2;
     public static final boolean RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
@@ -80,6 +88,14 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue NULLJAW_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue NULLJAW_MAX_GROUP_SIZE;
 
+    public static ConfigHelper.IntValue MOOP_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue MOOP_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue MOOP_MAX_GROUP_SIZE;
+
+    public static ConfigHelper.IntValue MOSSBACK_SPAWN_WEIGHT;
+    public static ConfigHelper.IntValue MOSSBACK_MIN_GROUP_SIZE;
+    public static ConfigHelper.IntValue MOSSBACK_MAX_GROUP_SIZE;
+
     public static ConfigHelper.BooleanValue RAEVYX_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue STEGONAUT_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue VOLITANS_CUSTOM_SPAWNING_ENABLED;
@@ -112,10 +128,10 @@ public final class SaintsDragonsConfig {
                 .commonBuilder(SPAWNING_CONFIG_FILE);
 
         builder.push("spawning");
-        builder.comment("Dragon spawn configuration - control where and how often dragons spawn");
+        builder.comment("Entity spawn configuration - control how often Saint's Dragons creatures spawn");
         builder.comment("Note: spawn weights are relative per biome/category roll.");
-        builder.comment("Final spawn frequency also depends on each dragon's spawn predicate and placement checks.");
-        builder.comment("Natural wild spawns are also filtered by shared density rules to stop creature-category dragons from piling up.");
+        builder.comment("Final spawn frequency also depends on each entity's spawn predicate and placement checks.");
+        builder.comment("Natural wild dragon spawns are also filtered by shared density rules to stop creature-category dragons from piling up.");
         builder.comment("Raevyx additionally requires a thunderstorm for natural/chunk-generation spawning.");
 
         builder.comment("Raevyx spawn settings");
@@ -155,6 +171,16 @@ public final class SaintsDragonsConfig {
         NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", NULLJAW_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);
+
+        builder.comment("Moop spawn settings");
+        MOOP_SPAWN_WEIGHT = builder.defineInt("moopSpawnWeight", MOOP_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
+        MOOP_MIN_GROUP_SIZE = builder.defineInt("moopMinGroupSize", MOOP_MIN_GROUP_SIZE_DEFAULT, 1, 10);
+        MOOP_MAX_GROUP_SIZE = builder.defineInt("moopMaxGroupSize", MOOP_MAX_GROUP_SIZE_DEFAULT, 1, 10);
+
+        builder.comment("Mossback spawn settings");
+        MOSSBACK_SPAWN_WEIGHT = builder.defineInt("mossbackSpawnWeight", MOSSBACK_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
+        MOSSBACK_MIN_GROUP_SIZE = builder.defineInt("mossbackMinGroupSize", MOSSBACK_MIN_GROUP_SIZE_DEFAULT, 1, 10);
+        MOSSBACK_MAX_GROUP_SIZE = builder.defineInt("mossbackMaxGroupSize", MOSSBACK_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.pop();
         builder.build();

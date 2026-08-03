@@ -195,6 +195,12 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "nulljawSpawnWeight" -> () -> spawnHolder().getConfig().nulljawSpawnWeight;
             case "nulljawMinGroupSize" -> () -> spawnHolder().getConfig().nulljawMinGroupSize;
             case "nulljawMaxGroupSize" -> () -> spawnHolder().getConfig().nulljawMaxGroupSize;
+            case "moopSpawnWeight" -> () -> spawnHolder().getConfig().moopSpawnWeight;
+            case "moopMinGroupSize" -> () -> spawnHolder().getConfig().moopMinGroupSize;
+            case "moopMaxGroupSize" -> () -> spawnHolder().getConfig().moopMaxGroupSize;
+            case "mossbackSpawnWeight" -> () -> spawnHolder().getConfig().mossbackSpawnWeight;
+            case "mossbackMinGroupSize" -> () -> spawnHolder().getConfig().mossbackMinGroupSize;
+            case "mossbackMaxGroupSize" -> () -> spawnHolder().getConfig().mossbackMaxGroupSize;
             case "ivyRestockInterval" -> () -> serverHolder().getConfig().ivyRestockInterval;
             case "bloodTempestDodgeCooldownTicks" -> () -> toolsArmorHolder().getConfig().bloodTempestDodgeCooldownTicks;
             case "bloodTempestKatanaAbilityCooldownTicks" -> () -> toolsArmorHolder().getConfig().bloodTempestKatanaAbilityCooldownTicks;
@@ -230,6 +236,12 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "nulljawSpawnWeight" -> value -> spawnHolder().getConfig().nulljawSpawnWeight = value;
             case "nulljawMinGroupSize" -> value -> spawnHolder().getConfig().nulljawMinGroupSize = value;
             case "nulljawMaxGroupSize" -> value -> spawnHolder().getConfig().nulljawMaxGroupSize = value;
+            case "moopSpawnWeight" -> value -> spawnHolder().getConfig().moopSpawnWeight = value;
+            case "moopMinGroupSize" -> value -> spawnHolder().getConfig().moopMinGroupSize = value;
+            case "moopMaxGroupSize" -> value -> spawnHolder().getConfig().moopMaxGroupSize = value;
+            case "mossbackSpawnWeight" -> value -> spawnHolder().getConfig().mossbackSpawnWeight = value;
+            case "mossbackMinGroupSize" -> value -> spawnHolder().getConfig().mossbackMinGroupSize = value;
+            case "mossbackMaxGroupSize" -> value -> spawnHolder().getConfig().mossbackMaxGroupSize = value;
             case "ivyRestockInterval" -> value -> serverHolder().getConfig().ivyRestockInterval = value;
             case "bloodTempestDodgeCooldownTicks" -> value -> toolsArmorHolder().getConfig().bloodTempestDodgeCooldownTicks = value;
             case "bloodTempestKatanaAbilityCooldownTicks" -> value -> toolsArmorHolder().getConfig().bloodTempestKatanaAbilityCooldownTicks = value;

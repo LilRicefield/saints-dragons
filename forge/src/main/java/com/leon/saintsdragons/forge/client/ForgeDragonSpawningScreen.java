@@ -17,7 +17,8 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         NULLJAW,
         IGNIVORUS,
         VOLITANS,
-        ATROXIIA
+        ATROXIIA,
+        OTHER
     }
 
     private Section section = Section.RAEVYX;
@@ -37,6 +38,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
             case ATROXIIA -> addAtroxiiaEntries(entries);
+            case OTHER -> addOtherEntries(entries);
         }
     }
 
@@ -76,7 +78,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startTopX + (buttonWidth + spacing) * 3, yTop, buttonWidth, 20).build());
 
-        int totalBottomWidth = buttonWidth * 3 + spacing * 2;
+        int totalBottomWidth = buttonWidth * 4 + spacing * 3;
         int startBottomX = (width - totalBottomWidth) / 2;
         int yBottom = yTop + 24;
 
@@ -100,6 +102,13 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 rebuildWidgets();
             }
         }).bounds(startBottomX + (buttonWidth + spacing) * 2, yBottom, buttonWidth, 20).build());
+
+        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.other"), button -> {
+            if (section != Section.OTHER) {
+                section = Section.OTHER;
+                rebuildWidgets();
+            }
+        }).bounds(startBottomX + (buttonWidth + spacing) * 3, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
@@ -249,6 +258,37 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE::save));
     }
 
+    private void addOtherEntries(List<ConfigEntry> entries) {
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.other")));
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.moop")));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT::get,
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT::set,
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE::get,
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE::set,
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE::get,
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE::set,
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE::save));
+
+        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.mossback")));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT::get,
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT::set,
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE::get,
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE::set,
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE::save));
+        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE::get,
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE::set,
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE::save));
+    }
+
     private void resetSection() {
         switch (section) {
             case RAEVYX -> {
@@ -312,6 +352,20 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT.save();
                 SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE.save();
+            }
+            case OTHER -> {
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT.set(SaintsDragonsConfig.MOOP_SPAWN_WEIGHT_DEFAULT);
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE.set(SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE.set(SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT.set(SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT_DEFAULT);
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE.set(SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE.set(SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE_DEFAULT);
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT.save();
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE.save();
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE.save();
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT.save();
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE.save();
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE.save();
             }
         }
     }

@@ -435,6 +435,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     null, null, true,
                     4, 4, 4);
 
+            addOtherSpawnEntries(spawning, entryBuilder, config);
+
             ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
             addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
             addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
@@ -756,6 +758,26 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                  int defaultWeight,
                                  int defaultMin,
                                  int defaultMax) {
+        category.addEntry(buildSpawnEntries(entryBuilder, label,
+                weightGetter, weightSetter, minGetter, minSetter, maxGetter, maxSetter,
+                customSpawningGetter, customSpawningSetter, defaultCustomSpawning,
+                defaultWeight, defaultMin, defaultMax));
+    }
+
+    private AbstractConfigListEntry<?> buildSpawnEntries(ConfigEntryBuilder entryBuilder,
+                                                          Component label,
+                                                          IntSupplier weightGetter,
+                                                          IntConsumer weightSetter,
+                                                          IntSupplier minGetter,
+                                                          IntConsumer minSetter,
+                                                          IntSupplier maxGetter,
+                                                          IntConsumer maxSetter,
+                                                          BooleanSupplier customSpawningGetter,
+                                                          Consumer<Boolean> customSpawningSetter,
+                                                          boolean defaultCustomSpawning,
+                                                          int defaultWeight,
+                                                          int defaultMin,
+                                                          int defaultMax) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
         if (customSpawningGetter != null && customSpawningSetter != null) {
             entries.add(entryBuilder.startBooleanToggle(
@@ -788,7 +810,35 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
-        category.addEntry(entryBuilder.startSubCategory(label, rawEntries).setExpanded(false).build());
+        return entryBuilder.startSubCategory(label, rawEntries).setExpanded(false).build();
+    }
+
+    private void addOtherSpawnEntries(ConfigCategory category,
+                                      ConfigEntryBuilder entryBuilder,
+                                      SaintsDragonsFabricSpawnConfig config) {
+        List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(buildSpawnEntries(entryBuilder, Component.translatable("config.saintsdragons.spawn.moop"),
+                () -> config.moopSpawnWeight, value -> config.moopSpawnWeight = value,
+                () -> config.moopMinGroupSize, value -> config.moopMinGroupSize = value,
+                () -> config.moopMaxGroupSize, value -> config.moopMaxGroupSize = value,
+                null, null, true,
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT_DEFAULT,
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE_DEFAULT,
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE_DEFAULT));
+        entries.add(buildSpawnEntries(entryBuilder, Component.translatable("config.saintsdragons.spawn.mossback"),
+                () -> config.mossbackSpawnWeight, value -> config.mossbackSpawnWeight = value,
+                () -> config.mossbackMinGroupSize, value -> config.mossbackMinGroupSize = value,
+                () -> config.mossbackMaxGroupSize, value -> config.mossbackMaxGroupSize = value,
+                null, null, true,
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT_DEFAULT,
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE_DEFAULT,
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE_DEFAULT));
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(
+                Component.translatable("config.saintsdragons.spawn.other"), rawEntries)
+                .setExpanded(false)
+                .build());
     }
 
     private static AbstractConfigListEntry<Double> buildPercentChanceEntry(ConfigEntryBuilder entryBuilder,

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.world;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
@@ -58,9 +59,9 @@ public final class Spawns {
                 ModTags.Biomes.HAS_MOOP,
                 MobCategory.WATER_AMBIENT,
                 ModEntities.MOOP.get(),
-                4,
-                1,
-                1
+                SaintsDragonsConfig.MOOP_SPAWN_WEIGHT.get(),
+                SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE.get(),
+                SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE.get()
         );
     }
 
@@ -69,9 +70,9 @@ public final class Spawns {
                 ModTags.Biomes.HAS_MOSSBACK,
                 MobCategory.CREATURE,
                 ModEntities.MOSSBACK.get(),
-                10,
-                1,
-                2
+                SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT.get(),
+                SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE.get(),
+                SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE.get()
         );
     }
 

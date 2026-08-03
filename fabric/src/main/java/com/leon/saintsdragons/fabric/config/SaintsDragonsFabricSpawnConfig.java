@@ -121,4 +121,34 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
     public int nulljawMaxGroupSize = 4;
 
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
+    public int moopSpawnWeight = SaintsDragonsConfig.MOOP_SPAWN_WEIGHT_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int moopMinGroupSize = SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int moopMaxGroupSize = SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
+    public int mossbackSpawnWeight = SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int mossbackMinGroupSize = SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
+    public int mossbackMaxGroupSize = SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE_DEFAULT;
+
 }

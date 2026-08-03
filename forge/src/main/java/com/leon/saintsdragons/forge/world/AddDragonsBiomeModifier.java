@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.world;
 
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.common.world.DragonSpawnRegistry;
 import com.leon.saintsdragons.common.registry.ModEntities;
@@ -53,9 +54,9 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         builder,
                         MobCategory.WATER_AMBIENT,
                         ModEntities.MOOP.get(),
-                        4,
-                        1,
-                        1
+                        SaintsDragonsConfig.MOOP_SPAWN_WEIGHT.get(),
+                        SaintsDragonsConfig.MOOP_MIN_GROUP_SIZE.get(),
+                        SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE.get()
                 );
             }
             if (DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOSSBACK)) {
@@ -63,9 +64,9 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         builder,
                         MobCategory.CREATURE,
                         ModEntities.MOSSBACK.get(),
-                        10,
-                        1,
-                        2
+                        SaintsDragonsConfig.MOSSBACK_SPAWN_WEIGHT.get(),
+                        SaintsDragonsConfig.MOSSBACK_MIN_GROUP_SIZE.get(),
+                        SaintsDragonsConfig.MOSSBACK_MAX_GROUP_SIZE.get()
                 );
             }
         } catch (IllegalStateException e) {
