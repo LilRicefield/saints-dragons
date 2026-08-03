@@ -32,11 +32,11 @@ public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
     private static final int THIRD_DAMAGE_TICK = 64;
     private static final int NUDGE_TICKS = 5;
     private static final double NUDGE_DISTANCE = 5.0D;
-    private static final double RANGE = 7.5D;
-    private static final double SWEEP_HORIZONTAL = 7.5D;
-    private static final double SWEEP_VERTICAL = 7.5D;
+    private static final double RANGE = 8.5D;
+    private static final double SWEEP_HORIZONTAL = 10.5D;
+    private static final double SWEEP_VERTICAL = 10.5D;
     private static final double ANGLE_DEG = 180.0D;
-    private static final double PULL_STRENGTH = 2.0D;
+    private static final double PULL_STRENGTH = 1.0D;
     private static final double DAMAGE_KNOCKBACK = 0.75D;
     private static final double DAMAGE_KNOCKBACK_Y = 0.16D;
     private static final int POST_COMBO_STUN_TICKS = 40;

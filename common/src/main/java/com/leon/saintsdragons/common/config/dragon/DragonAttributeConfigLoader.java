@@ -531,6 +531,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double slamDamage = 16.0D;
         double swipeDamage = 12.0D;
         double underwaterBiteDamage = 10.0D;
+        double gungnirStabDamage = 40.0D;
         double preciseStrikeDamage = 9.0D;
         double preciseStrikeKnockback = 0.75D;
         double preciseStrikeStunDurationTicks = 40.0D;
@@ -552,6 +553,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 slamDamage = forgeDouble(configClass, "ATROXIIA_SLAM_DAMAGE");
                 swipeDamage = forgeDouble(configClass, "ATROXIIA_SWIPE_DAMAGE");
                 underwaterBiteDamage = forgeDouble(configClass, "ATROXIIA_UNDERWATER_BITE_DAMAGE");
+                gungnirStabDamage = forgeDouble(configClass, "ATROXIIA_GUNGNIR_STAB_DAMAGE");
                 preciseStrikeDamage = forgeDouble(configClass, "ATROXIIA_PRECISE_STRIKE_DAMAGE");
                 preciseStrikeKnockback = forgeDouble(configClass, "ATROXIIA_PRECISE_STRIKE_KNOCKBACK");
                 preciseStrikeStunDurationTicks = forgeDouble(configClass, "ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS");
@@ -576,6 +578,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "slam", DragonAbilityOverride.ofDamage(slamDamage),
                         "swipe", DragonAbilityOverride.ofDamage(swipeDamage),
                         "underwater_bite", DragonAbilityOverride.ofDamage(underwaterBiteDamage),
+                        "gungnir_stab", DragonAbilityOverride.ofDamage(gungnirStabDamage),
                         "precise_strike", DragonAbilityOverride.ofTuning(
                                 preciseStrikeDamage, preciseStrikeKnockback, null,
                                 preciseStrikeStunDurationTicks, null),

@@ -669,6 +669,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE::get,
                 ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.gungnir_stab_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_GUNGNIR_STAB_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_GUNGNIR_STAB_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.precise_strike_damage"),
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE::get,
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE::set,
@@ -1096,6 +1100,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_UNDERWATER_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_GUNGNIR_STAB_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_GUNGNIR_STAB_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_KNOCKBACK.set(ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_KNOCKBACK.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS.set(ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS.getDefault());

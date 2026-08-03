@@ -30,6 +30,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     private static final RawAnimation SLAM_LEFT = RawAnimation.begin().thenPlay("animation.atroxiia.slam_left");
     private static final RawAnimation SWIPE_RIGHT = RawAnimation.begin().thenPlay("animation.atroxiia.swipe_right");
     private static final RawAnimation SWIPE_LEFT = RawAnimation.begin().thenPlay("animation.atroxiia.swipe_left");
+    private static final RawAnimation GUNGNIR_STAB = RawAnimation.begin().thenPlay("animation.atroxiia.gungnir_stab");
     private static final RawAnimation PRECISE_STRIKE = RawAnimation.begin().thenPlay("animation.atroxiia.precise_strike");
     private static final RawAnimation DEVASTATING_SWEEP = RawAnimation.begin().thenPlay("animation.atroxiia.devastating_sweep");
     private static final RawAnimation HELHEIM_QUAKE_ONE = RawAnimation.begin().thenPlay("animation.atroxiia.helheim_quake1");
@@ -89,6 +90,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
         AnimationHelper.register(controller, "slam_left", SLAM_LEFT);
         AnimationHelper.register(controller, "swipe_right", SWIPE_RIGHT);
         AnimationHelper.register(controller, "swipe_left", SWIPE_LEFT);
+        AnimationHelper.register(controller, "gungnir_stab", GUNGNIR_STAB);
         AnimationHelper.register(controller, "precise_strike", PRECISE_STRIKE);
         AnimationHelper.register(controller, "devastating_sweep", DEVASTATING_SWEEP);
         AnimationHelper.register(controller, "helheim_quake1", HELHEIM_QUAKE_ONE);

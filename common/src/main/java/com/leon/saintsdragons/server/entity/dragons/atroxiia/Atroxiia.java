@@ -464,7 +464,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
 
     @Override
     public RiderAbilityBinding getTertiaryRiderAbility() {
-        return new RiderAbilityBinding(ModAbilities.ATROXIIA_PRECISE_STRIKE.getName(), RiderAbilityBinding.Activation.PRESS);
+        return new RiderAbilityBinding(ModAbilities.ATROXIIA_GUNGNIR_STAB.getName(), RiderAbilityBinding.Activation.PRESS);
     }
 
     @Override
@@ -503,6 +503,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         }
         return abilityType == ModAbilities.ATROXIIA_SLAM
                 || abilityType == ModAbilities.ATROXIIA_SWIPE
+                || abilityType == ModAbilities.ATROXIIA_GUNGNIR_STAB
                 || abilityType == ModAbilities.ATROXIIA_PRECISE_STRIKE
                 || abilityType == ModAbilities.ATROXIIA_DEVASTATING_SWEEP
                 || abilityType == ModAbilities.ATROXIIA_HELHEIM_QUAKE;
@@ -837,7 +838,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             return;
         }
         if (!isVehicle()) {
-            if (!combatManager.isAbilityActive(ModAbilities.ATROXIIA_PRECISE_STRIKE)) {
+            if (!combatManager.isAbilityActive(ModAbilities.ATROXIIA_PRECISE_STRIKE)
+                    && !combatManager.isAbilityActive(ModAbilities.ATROXIIA_GUNGNIR_STAB)) {
                 clearPreciseStrikeNudge();
                 return;
             }

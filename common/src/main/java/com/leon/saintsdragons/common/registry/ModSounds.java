@@ -97,6 +97,7 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> ATROXIIA_UNDERWATER_BITE = registerSound("atroxiia_underwater_bite");
     public static final Supplier<SoundEvent> ATROXIIA_STEP = registerSound("atroxiia_step");
     public static final Supplier<SoundEvent> ATROXIIA_SWIPE = registerSound("atroxiia_swipe");
+    public static final Supplier<SoundEvent> ATROXIIA_GUNGNIR_STAB = registerSound("atroxiia_gungnir_stab");
     public static final Supplier<SoundEvent> ATROXIIA_PRECISE_STRIKE = registerSound("atroxiia_precise_strike");
     public static final Supplier<SoundEvent> ATROXIIA_DEVASTATING_SWEEP = registerSound("atroxiia_devastating_sweep");
     public static final Supplier<SoundEvent> ATROXIIA_HELHEIM_QUAKE_1 = registerSound("atroxiia_helheim_quake1");

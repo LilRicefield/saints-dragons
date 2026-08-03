@@ -10,9 +10,12 @@ import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
+import java.util.UUID;
 
 public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxiia> {
     public static final float CHASE_SPEED = 1.45F;
@@ -22,6 +25,14 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
     private static final double SWIPE_RANGE = 6.0D;
     private static final double PRECISE_STRIKE_MIN_RANGE = 3.0D;
     private static final double PRECISE_STRIKE_MAX_RANGE = 6.5D;
+    private static final double GUNGNIR_MIN_RANGE = 4.0D;
+    private static final double GUNGNIR_MAX_RANGE = 8.0D;
+    private static final double GUNGNIR_FACING_DOT = 0.82D;
+    private static final double GUNGNIR_MAX_LATERAL_SPEED = 0.16D;
+    private static final double GUNGNIR_RETREAT_SPEED = 0.04D;
+    private static final double GUNGNIR_LUNGE_DISTANCE = 8.0D;
+    private static final int GUNGNIR_PRESSURE_TRIGGER_TICKS = 12;
+    private static final int GUNGNIR_COMBO_WINDOW_TICKS = 100;
     private static final double DEVASTATING_SWEEP_POINT_BLANK_RANGE = 2.5D;
     private static final double QUAKE_RANGE = 18.0D;
     private static final int KITE_PRESSURE_TRIGGER_TICKS = 50;
@@ -31,6 +42,9 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
 
     private int decisionCooldown;
     private int kitePressureTicks;
+    private UUID gungnirComboTarget;
+    private boolean gungnirComboWaitingForQuake;
+    private int gungnirComboTicks;
     private CombatAction lastAction = CombatAction.NONE;
     private String lastDecision = "idle";
     private double lastGap = -1.0D;
@@ -63,12 +77,17 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
             return;
         }
 
-        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        boolean gungnirCommitted = dragon.isAbilityActive(ModAbilities.ATROXIIA_GUNGNIR_STAB);
+        if (!gungnirCommitted) {
+            dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+        }
         if (dragon.getActiveAbility() != null) {
             lastDecision = "committed:" + lastAction.debugName;
             claimStationaryMovement(context, "committed:" + lastAction.debugName);
             return;
         }
+
+        armGungnirComboAfterQuake(target);
 
         if (decisionCooldown > 0) {
             decisionCooldown--;
@@ -78,10 +97,13 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
         double gap = gapToTarget(dragon, target);
         lastGap = gap;
         updateKitePressure(gap, hasLineOfSight);
-        if (hasLineOfSight && gap <= SWIPE_RANGE) {
+        if (hasLineOfSight && gap <= GUNGNIR_MAX_RANGE) {
             turnTowardTarget(dragon, target);
         }
 
+        if (handleGungnirCombo(context, dragon, target, gap, hasLineOfSight)) {
+            return;
+        }
         if (!hasLineOfSight) {
             lastDecision = "closing:no-line-of-sight";
             return;
@@ -99,11 +121,18 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
                 isFacingTarget(dragon, target),
                 countEngagedEnemies(dragon, target, QUAKE_RANGE),
                 target.getHealth() / Math.max(1.0F, target.getMaxHealth()),
-                kitePressureTicks
+                kitePressureTicks,
+                targetRetreatSpeed(dragon, target),
+                targetLateralSpeed(dragon, target),
+                isGroundedTarget(target),
+                isFullyFrozen(target)
         );
         lastEngagedEnemies = snapshot.engagedEnemies;
         CombatAction action = selectAction(dragon, snapshot);
         if (action != CombatAction.NONE && startAction(dragon, action)) {
+            if (action == CombatAction.HELHEIM_QUAKE) {
+                reserveGungnirCombo(target);
+            }
             lastAction = action;
             lastDecision = "started:" + action.debugName;
             claimStationaryMovement(context, "started:" + action.debugName);
@@ -119,6 +148,7 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
         }
         decisionCooldown = 0;
         kitePressureTicks = 0;
+        clearGungnirCombo();
         lastAction = CombatAction.NONE;
         lastDecision = "stopped";
         lastGap = -1.0D;
@@ -174,6 +204,29 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
             }
         }
 
+        boolean gungnirPressure = snapshot.retreatSpeed >= GUNGNIR_RETREAT_SPEED
+                || snapshot.kitePressureTicks >= GUNGNIR_PRESSURE_TRIGGER_TICKS;
+        if (selected != CombatAction.HELHEIM_QUAKE
+                && snapshot.engagedEnemies == 1
+                && snapshot.target.getHealth() >= 12.0F
+                && snapshot.targetGrounded
+                && !snapshot.targetFullyFrozen
+                && snapshot.gap > GUNGNIR_MIN_RANGE
+                && snapshot.gap <= GUNGNIR_MAX_RANGE
+                && gungnirPressure
+                && snapshot.lateralSpeed <= GUNGNIR_MAX_LATERAL_SPEED
+                && isFacingTarget(dragon, snapshot.target, GUNGNIR_FACING_DOT)
+                && hasClearGungnirLane(dragon, snapshot.target, snapshot.gap)
+                && canUse(dragon, ModAbilities.ATROXIIA_GUNGNIR_STAB, true)) {
+            double score = 112.0D
+                    + Math.min(18.0D, snapshot.kitePressureTicks * 0.45D)
+                    + Math.max(0.0D, snapshot.retreatSpeed) * 40.0D;
+            if (score > bestScore) {
+                selected = CombatAction.GUNGNIR_STAB;
+                bestScore = score;
+            }
+        }
+
         boolean healthyTarget = snapshot.target.getHealth() >= 18.0F && snapshot.healthRatio >= 0.35F;
         if (snapshot.engagedEnemies == 1
                 && healthyTarget
@@ -216,6 +269,8 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
                     dragon, ModAbilities.ATROXIIA_DEVASTATING_SWEEP, true, 32, 240, 120, 240);
             case HELHEIM_QUAKE -> startAbility(
                     dragon, ModAbilities.ATROXIIA_HELHEIM_QUAKE, true, 50, 600, 240, 600);
+            case GUNGNIR_STAB -> startAbility(
+                    dragon, ModAbilities.ATROXIIA_GUNGNIR_STAB, true, 45, 400, 200, 400);
             case PRECISE_STRIKE -> startAbility(
                     dragon, ModAbilities.ATROXIIA_PRECISE_STRIKE, true, 110, 360, 180, 360);
             case SLAM -> startAbility(
@@ -248,6 +303,111 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
         );
     }
 
+    private void reserveGungnirCombo(LivingEntity target) {
+        gungnirComboTarget = target.getUUID();
+        gungnirComboWaitingForQuake = true;
+        gungnirComboTicks = 0;
+    }
+
+    private void armGungnirComboAfterQuake(LivingEntity target) {
+        if (!gungnirComboWaitingForQuake) {
+            return;
+        }
+        gungnirComboWaitingForQuake = false;
+        if (gungnirComboTarget != null
+                && gungnirComboTarget.equals(target.getUUID())
+                && isFullyFrozen(target)) {
+            gungnirComboTicks = GUNGNIR_COMBO_WINDOW_TICKS;
+        } else {
+            clearGungnirCombo();
+        }
+    }
+
+    private boolean handleGungnirCombo(DragonBrainContext<Atroxiia> context,
+                                        Atroxiia dragon,
+                                        LivingEntity target,
+                                        double gap,
+                                        boolean hasLineOfSight) {
+        if (gungnirComboTicks <= 0 || gungnirComboTarget == null) {
+            return false;
+        }
+        if (!gungnirComboTarget.equals(target.getUUID())
+                || !target.isAlive()
+                || !isFullyFrozen(target)) {
+            clearGungnirCombo();
+            return false;
+        }
+
+        gungnirComboTicks--;
+        if (gungnirComboTicks <= 0) {
+            clearGungnirCombo();
+            return false;
+        }
+        if (!hasLineOfSight) {
+            lastDecision = "combo:gungnir-no-line-of-sight";
+            return true;
+        }
+        if (!isGroundedTarget(target)) {
+            lastDecision = "combo:gungnir-waiting-for-landing";
+            return true;
+        }
+        if (gap <= GUNGNIR_MIN_RANGE) {
+            clearGungnirCombo();
+            return false;
+        }
+        if (gap > GUNGNIR_MAX_RANGE) {
+            lastDecision = "combo:gungnir-closing";
+            return true;
+        }
+        if (!isFacingTarget(dragon, target, GUNGNIR_FACING_DOT)) {
+            lastDecision = "combo:gungnir-aligning";
+            return true;
+        }
+        if (!hasClearGungnirLane(dragon, target, gap)) {
+            clearGungnirCombo();
+            return false;
+        }
+        if (!dragon.combatManager.canStart(ModAbilities.ATROXIIA_GUNGNIR_STAB)) {
+            lastDecision = "combo:gungnir-recovery";
+            return true;
+        }
+        if (!dragon.getAiCombatPacing().canUseMajorFollowup(ModAbilities.ATROXIIA_GUNGNIR_STAB)) {
+            lastDecision = "combo:gungnir-pacing";
+            return true;
+        }
+        if (!startGungnirCombo(dragon)) {
+            lastDecision = "combo:gungnir-waiting";
+            return true;
+        }
+
+        clearGungnirCombo();
+        lastAction = CombatAction.GUNGNIR_STAB;
+        lastDecision = "started:helheim-quake->gungnir-stab";
+        claimStationaryMovement(context, "started:helheim-quake->gungnir-stab");
+        return true;
+    }
+
+    private boolean startGungnirCombo(Atroxiia dragon) {
+        if (!dragon.combatManager.tryUseAbility(ModAbilities.ATROXIIA_GUNGNIR_STAB)) {
+            return false;
+        }
+        dragon.getAiCombatPacing().recordUse(
+                ModAbilities.ATROXIIA_GUNGNIR_STAB,
+                45,
+                400,
+                true,
+                200,
+                400
+        );
+        return true;
+    }
+
+    private void clearGungnirCombo() {
+        gungnirComboTarget = null;
+        gungnirComboWaitingForQuake = false;
+        gungnirComboTicks = 0;
+    }
+
     private void updateKitePressure(double gap, boolean hasLineOfSight) {
         if (hasLineOfSight && gap > SWIPE_RANGE + 1.5D) {
             kitePressureTicks = Math.min(KITE_PRESSURE_TRIGGER_TICKS * 2, kitePressureTicks + 1);
@@ -274,13 +434,69 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
     }
 
     private boolean isFacingTarget(Atroxiia dragon, LivingEntity target) {
+        return isFacingTarget(dragon, target, FACING_DOT);
+    }
+
+    private boolean isFacingTarget(Atroxiia dragon, LivingEntity target, double requiredDot) {
         Vec3 toTarget = target.getBoundingBox().getCenter().subtract(dragon.getBoundingBox().getCenter());
         Vec3 horizontalTarget = new Vec3(toTarget.x, 0.0D, toTarget.z);
         if (horizontalTarget.lengthSqr() < 1.0E-6D) {
             return true;
         }
         Vec3 look = Vec3.directionFromRotation(0.0F, dragon.getYRot());
-        return look.dot(horizontalTarget.normalize()) >= FACING_DOT;
+        return look.dot(horizontalTarget.normalize()) >= requiredDot;
+    }
+
+    private double targetRetreatSpeed(Atroxiia dragon, LivingEntity target) {
+        Vec3 toTarget = target.position().subtract(dragon.position()).multiply(1.0D, 0.0D, 1.0D);
+        if (toTarget.lengthSqr() < 1.0E-6D) {
+            return 0.0D;
+        }
+        Vec3 targetMotion = target.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D);
+        return targetMotion.dot(toTarget.normalize());
+    }
+
+    private double targetLateralSpeed(Atroxiia dragon, LivingEntity target) {
+        Vec3 toTarget = target.position().subtract(dragon.position()).multiply(1.0D, 0.0D, 1.0D);
+        if (toTarget.lengthSqr() < 1.0E-6D) {
+            return 0.0D;
+        }
+        Vec3 direction = toTarget.normalize();
+        Vec3 targetMotion = target.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D);
+        return targetMotion.subtract(direction.scale(targetMotion.dot(direction))).length();
+    }
+
+    private boolean isGroundedTarget(LivingEntity target) {
+        if (target.isPassenger()
+                || target.isInWaterOrBubble()
+                || target.getDeltaMovement().y > 0.08D
+                || (target instanceof Player player && player.getAbilities().flying)) {
+            return false;
+        }
+        return target.onGround()
+                || !target.level().noCollision(target, target.getBoundingBox().move(0.0D, -0.12D, 0.0D));
+    }
+
+    private boolean isFullyFrozen(LivingEntity target) {
+        return target.canFreeze() && target.getTicksFrozen() >= target.getTicksRequiredToFreeze();
+    }
+
+    private boolean hasClearGungnirLane(Atroxiia dragon, LivingEntity target, double gap) {
+        Vec3 toTarget = target.position().subtract(dragon.position()).multiply(1.0D, 0.0D, 1.0D);
+        if (toTarget.lengthSqr() < 1.0E-6D) {
+            return false;
+        }
+
+        Vec3 direction = toTarget.normalize();
+        double checkDistance = Math.min(GUNGNIR_LUNGE_DISTANCE, Math.max(0.0D, gap - 0.35D));
+        AABB body = dragon.getBoundingBox().inflate(-0.05D, -0.02D, -0.05D);
+        for (double distance = 1.0D; distance < checkDistance; distance += 1.0D) {
+            Vec3 offset = direction.scale(distance);
+            if (!dragon.level().noCollision(dragon, body.move(offset.x, 0.0D, offset.z))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void turnTowardTarget(Atroxiia dragon, LivingEntity target) {
@@ -319,7 +535,10 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
                 "last_action", lastAction.debugName,
                 "gap", lastGap < 0.0D ? "none" : Double.toString(Math.round(lastGap * 10.0D) / 10.0D),
                 "engaged", Integer.toString(lastEngagedEnemies),
-                "kite_ticks", Integer.toString(kitePressureTicks)
+                "kite_ticks", Integer.toString(kitePressureTicks),
+                "gungnir_combo", gungnirComboWaitingForQuake
+                        ? "quake"
+                        : gungnirComboTicks > 0 ? Integer.toString(gungnirComboTicks) : "none"
         );
     }
 
@@ -328,13 +547,18 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
                                   boolean facing,
                                   int engagedEnemies,
                                   float healthRatio,
-                                  int kitePressureTicks) {
+                                  int kitePressureTicks,
+                                  double retreatSpeed,
+                                  double lateralSpeed,
+                                  boolean targetGrounded,
+                                  boolean targetFullyFrozen) {
     }
 
     private enum CombatAction {
         NONE("none"),
         SWIPE("swipe"),
         SLAM("slam"),
+        GUNGNIR_STAB("gungnir-stab"),
         PRECISE_STRIKE("precise-strike"),
         DEVASTATING_SWEEP("devastating-sweep"),
         HELHEIM_QUAKE("helheim-quake");

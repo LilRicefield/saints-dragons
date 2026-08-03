@@ -106,9 +106,11 @@ public final class DragonRideInputHandler {
     private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
     private static long volitansPrimaryPressStartedAtMs = 0L;
     private static boolean volitansPoisonBallActive = false;
-    private static final long DUAL_PRIMARY_HOLD_MS = 180L;
+    private static final long DUAL_ABILITY_HOLD_MS = 180L;
     private static long ignivorusPrimaryPressStartedAtMs = 0L;
     private static boolean ignivorusFireballActive = false;
+    private static long atroxiiaTertiaryPressStartedAtMs = 0L;
+    private static boolean atroxiiaPreciseStrikeTriggered = false;
     private static int raevyxSecondaryHoldTicks = 0;
     private static boolean raevyxGroundRendTriggered = false;
     private static final int RAEVYX_SECONDARY_HOLD_TICKS = 6;
@@ -315,6 +317,8 @@ public final class DragonRideInputHandler {
 
         if (dragon instanceof Volitans) {
             handleVolitansDualTertiary(tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
+        } else if (dragon instanceof Atroxiia) {
+            handleAtroxiiaDualTertiary(tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
         } else {
             handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
         }
@@ -428,7 +432,7 @@ public final class DragonRideInputHandler {
             }
             if (!volitansPoisonBallActive
                     && volitansPrimaryPressStartedAtMs > 0L
-                    && now - volitansPrimaryPressStartedAtMs >= DUAL_PRIMARY_HOLD_MS) {
+                    && now - volitansPrimaryPressStartedAtMs >= DUAL_ABILITY_HOLD_MS) {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
                         ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
                 volitansPoisonBallActive = true;
@@ -442,7 +446,7 @@ public final class DragonRideInputHandler {
                         ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
             } else {
                 long heldMs = volitansPrimaryPressStartedAtMs > 0L ? now - volitansPrimaryPressStartedAtMs : 0L;
-                if (heldMs >= DUAL_PRIMARY_HOLD_MS) {
+                if (heldMs >= DUAL_ABILITY_HOLD_MS) {
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
                             ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
                     sendInput(false, false, DragonRiderAction.ABILITY_STOP,
@@ -470,7 +474,7 @@ public final class DragonRideInputHandler {
             }
             if (!ignivorusFireballActive
                     && ignivorusPrimaryPressStartedAtMs > 0L
-                    && now - ignivorusPrimaryPressStartedAtMs >= DUAL_PRIMARY_HOLD_MS) {
+                    && now - ignivorusPrimaryPressStartedAtMs >= DUAL_ABILITY_HOLD_MS) {
                 sendInput(false, false, DragonRiderAction.ABILITY_USE,
                         ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
                 ignivorusFireballActive = true;
@@ -484,7 +488,7 @@ public final class DragonRideInputHandler {
                         ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
             } else {
                 long heldMs = ignivorusPrimaryPressStartedAtMs > 0L ? now - ignivorusPrimaryPressStartedAtMs : 0L;
-                if (heldMs >= DUAL_PRIMARY_HOLD_MS) {
+                if (heldMs >= DUAL_ABILITY_HOLD_MS) {
                     sendInput(false, false, DragonRiderAction.ABILITY_USE,
                             ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
                     sendInput(false, false, DragonRiderAction.ABILITY_STOP,
@@ -498,6 +502,44 @@ public final class DragonRideInputHandler {
 
         ignivorusPrimaryPressStartedAtMs = 0L;
         ignivorusFireballActive = false;
+    }
+
+    private static void handleAtroxiiaDualTertiary(boolean currentDown,
+                                                   boolean previousDown,
+                                                   float forward,
+                                                   float strafe) {
+        long now = System.currentTimeMillis();
+        if (currentDown) {
+            if (!previousDown) {
+                atroxiiaTertiaryPressStartedAtMs = now;
+                atroxiiaPreciseStrikeTriggered = false;
+            } else if (atroxiiaTertiaryPressStartedAtMs == 0L) {
+                // The key was already held while controls were unavailable; consume that gesture.
+                atroxiiaPreciseStrikeTriggered = true;
+                return;
+            }
+            if (!atroxiiaPreciseStrikeTriggered
+                    && atroxiiaTertiaryPressStartedAtMs > 0L
+                    && now - atroxiiaTertiaryPressStartedAtMs >= DUAL_ABILITY_HOLD_MS) {
+                sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                        ModAbilities.ATROXIIA_PRECISE_STRIKE.getName(), forward, strafe);
+                atroxiiaPreciseStrikeTriggered = true;
+            }
+            return;
+        }
+
+        if (previousDown && !atroxiiaPreciseStrikeTriggered) {
+            long heldMs = atroxiiaTertiaryPressStartedAtMs > 0L
+                    ? now - atroxiiaTertiaryPressStartedAtMs
+                    : 0L;
+            String abilityName = heldMs >= DUAL_ABILITY_HOLD_MS
+                    ? ModAbilities.ATROXIIA_PRECISE_STRIKE.getName()
+                    : ModAbilities.ATROXIIA_GUNGNIR_STAB.getName();
+            sendInput(false, false, DragonRiderAction.ABILITY_USE, abilityName, forward, strafe);
+        }
+
+        atroxiiaTertiaryPressStartedAtMs = 0L;
+        atroxiiaPreciseStrikeTriggered = false;
     }
 
     private static void handleRaevyxDualSecondary(boolean currentDown,
@@ -621,6 +663,8 @@ public final class DragonRideInputHandler {
         volitansPoisonBallActive = false;
         ignivorusPrimaryPressStartedAtMs = 0L;
         ignivorusFireballActive = false;
+        atroxiiaTertiaryPressStartedAtMs = 0L;
+        atroxiiaPreciseStrikeTriggered = false;
         lastForward = 0f;
         lastStrafe = 0f;
         lastAscendDown = false;

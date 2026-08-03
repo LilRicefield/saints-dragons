@@ -60,6 +60,16 @@ public final class DragonAiCombatPacingComponent {
         return repeatLockouts.getOrDefault(abilityType, 0) <= 0;
     }
 
+    public boolean canUseMajorFollowup(DragonAbilityType<?, ?> abilityType) {
+        if (abilityType == null
+                || globalActionLockTicks > 0
+                || cadenceCooldownTicks > 0
+                || abilityCooldowns.getOrDefault(abilityType, 0) > 0) {
+            return false;
+        }
+        return repeatLockouts.getOrDefault(abilityType, 0) <= 0;
+    }
+
     public void recordUse(DragonAbilityType<?, ?> abilityType, int cadenceTicks, int abilityCooldownTicks) {
         recordUse(abilityType, cadenceTicks, abilityCooldownTicks, false, 0, 0);
     }

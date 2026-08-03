@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.HurtAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaDevastatingSweepAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaGungnirStabAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaHelheimQuakeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaPreciseStrikeAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaSlamAbility;
@@ -64,6 +65,7 @@ import net.minecraft.world.entity.LivingEntity;
 public final class ModAbilities {
     public static final DragonAbilityType<Atroxiia, AtroxiiaSlamAbility> ATROXIIA_SLAM = register("atroxiia_slam", AtroxiiaSlamAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaSwipeAbility> ATROXIIA_SWIPE = register("atroxiia_swipe", AtroxiiaSwipeAbility::new);
+    public static final DragonAbilityType<Atroxiia, AtroxiiaGungnirStabAbility> ATROXIIA_GUNGNIR_STAB = register("atroxiia_gungnir_stab", AtroxiiaGungnirStabAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaPreciseStrikeAbility> ATROXIIA_PRECISE_STRIKE = register("atroxiia_precise_strike", AtroxiiaPreciseStrikeAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaDevastatingSweepAbility> ATROXIIA_DEVASTATING_SWEEP = register("atroxiia_devastating_sweep", AtroxiiaDevastatingSweepAbility::new);
     public static final DragonAbilityType<Atroxiia, AtroxiiaHelheimQuakeAbility> ATROXIIA_HELHEIM_QUAKE = register("atroxiia_helheim_quake", AtroxiiaHelheimQuakeAbility::new);

@@ -315,6 +315,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         DragonAttributeConfig atroxiiaCurrent = loader.getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
         DragonAttributeConfig atroxiiaDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
         AtroxiiaAttributeBuffer atroxiiaBuffer = new AtroxiiaAttributeBuffer();
+        atroxiiaBuffer.gungnirStabDamage = atroxiiaCurrent.abilityDamage("gungnir_stab",
+                atroxiiaDefaults.abilityDamage("gungnir_stab", 40.0D));
         atroxiiaBuffer.aggressiveWild = atroxiiaCurrent.extraBoolean("aggressive_wild", false);
         atroxiiaBuffer.eggHatchTimeTicksNormal = atroxiiaCurrent.extraDouble("egg_hatch_time_ticks_normal",
                 atroxiiaDefaults.extraDouble("egg_hatch_time_ticks_normal", 24000.0D));
@@ -1742,6 +1744,14 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                        DragonAttributeConfig defaults) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
         entries.add(entryBuilder.startDoubleField(
+                        Component.translatable("config.saintsdragons.attributes.atroxiia.gungnir_stab_damage"),
+                        buffer.gungnirStabDamage)
+                .setDefaultValue(defaults.abilityDamage("gungnir_stab", 40.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.gungnirStabDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(
                         Component.translatable("config.saintsdragons.attributes.atroxiia.egg_hatch_time_ticks_normal"),
                         buffer.eggHatchTimeTicksNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_time_ticks_normal", 24000.0D))
@@ -2055,6 +2065,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
 
         DragonAttributeConfig atroxiiaCurrent = loader.getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        Map<String, DragonAbilityOverride> atroxiiaAbilities = new HashMap<>(atroxiiaCurrent.abilities());
+        atroxiiaAbilities.put("gungnir_stab", DragonAbilityOverride.ofDamage(atroxiiaBuffer.gungnirStabDamage));
         Map<String, Double> atroxiiaDoubles = new HashMap<>(atroxiiaCurrent.extraDoubles());
         atroxiiaDoubles.put("egg_hatch_time_ticks_normal", atroxiiaBuffer.eggHatchTimeTicksNormal);
         Map<String, Boolean> atroxiiaBooleans = new HashMap<>(atroxiiaCurrent.extraBooleans());
@@ -2063,7 +2075,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 atroxiiaCurrent.maxHealth(),
                 atroxiiaCurrent.armor(),
                 atroxiiaCurrent.flyingSpeed(),
-                new HashMap<>(atroxiiaCurrent.abilities()),
+                atroxiiaAbilities,
                 atroxiiaDoubles,
                 atroxiiaBooleans
         );
@@ -2261,6 +2273,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     }
 
     private static final class AtroxiiaAttributeBuffer {
+        double gungnirStabDamage;
         double eggHatchTimeTicksNormal;
         boolean aggressiveWild;
     }

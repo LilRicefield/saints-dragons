@@ -170,6 +170,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue ATROXIIA_SLAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_SWIPE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_UNDERWATER_BITE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_GUNGNIR_STAB_DAMAGE;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_PRECISE_STRIKE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_PRECISE_STRIKE_KNOCKBACK;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS;
@@ -372,6 +373,7 @@ public final class ForgeDragonAttributesConfig {
         ATROXIIA_SLAM_DAMAGE = builder.defineInRange("slam_damage", 16.0, 0.0, 100000.0);
         ATROXIIA_SWIPE_DAMAGE = builder.defineInRange("swipe_damage", 12.0, 0.0, 100000.0);
         ATROXIIA_UNDERWATER_BITE_DAMAGE = builder.defineInRange("underwater_bite_damage", 10.0, 0.0, 100000.0);
+        ATROXIIA_GUNGNIR_STAB_DAMAGE = builder.defineInRange("gungnir_stab_damage", 40.0, 0.0, 100000.0);
         ATROXIIA_PRECISE_STRIKE_DAMAGE = builder.defineInRange("precise_strike_damage", 9.0, 0.0, 100000.0);
         ATROXIIA_PRECISE_STRIKE_KNOCKBACK = builder.defineInRange("precise_strike_knockback", 0.75, 0.0, 1000.0);
         ATROXIIA_PRECISE_STRIKE_STUN_DURATION_TICKS = builder.defineInRange("precise_strike_stun_duration_ticks", 40.0, 0.0, 12000.0);
