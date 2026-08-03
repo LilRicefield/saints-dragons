@@ -37,9 +37,12 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.MEADOW);
 
         tag(ModTags.Biomes.HAS_IGNIVORUS)
+                .addOptionalTag(rl("c", "savanna"))
+                .addOptionalTag(rl("c", "desert"))
+                .addOptionalTag(rl("terralith", "volcanic"))
                 .add(Biomes.SAVANNA)
                 .add(Biomes.SAVANNA_PLATEAU)
-                .add(Biomes.WINDSWEPT_SAVANNA);
+                .add(Biomes.DESERT);
 
         tag(ModTags.Biomes.HAS_IVY_HOUSE)
                 .addOptionalTag(rl("c", "forest"))
