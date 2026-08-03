@@ -9,18 +9,29 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.HoneycombItem;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.CandleBlock;
 import net.minecraft.world.level.block.CandleCakeBlock;
+import net.minecraft.world.level.block.ButtonBlock;
+import net.minecraft.world.level.block.LeverBlock;
+import net.minecraft.world.level.block.LevelEvent;
+import net.minecraft.world.level.block.LightningRodBlock;
+import net.minecraft.world.level.block.RedStoneWireBlock;
+import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 public final class DragonUtilities {
@@ -138,6 +149,97 @@ public final class DragonUtilities {
             }
         }
         return extinguished;
+    }
+
+    public static Set<BlockPos> applyLightningBeamImpact(ServerLevel level, Vec3 start, Vec3 impact, double radius) {
+        Set<BlockPos> energizedWires = new HashSet<>();
+        Vec3 segment = impact.subtract(start);
+        double length = segment.length();
+        if (length < 1.0E-4D) {
+            return energizedWires;
+        }
+
+        double interactionRadius = Math.max(0.5D, radius);
+        int neighborRange = Math.max(1, (int) Math.ceil(interactionRadius));
+        int samples = Math.max(1, (int) Math.ceil(length / 0.5D));
+        Set<BlockPos> visited = new HashSet<>();
+
+        for (int sample = 0; sample <= samples; sample++) {
+            Vec3 point = start.add(segment.scale((double) sample / samples));
+            BlockPos center = BlockPos.containing(point);
+            for (int x = -neighborRange; x <= neighborRange; x++) {
+                for (int y = -neighborRange; y <= neighborRange; y++) {
+                    for (int z = -neighborRange; z <= neighborRange; z++) {
+                        BlockPos pos = center.offset(x, y, z);
+                        if (!visited.add(pos) || !level.isLoaded(pos)) {
+                            continue;
+                        }
+                        AABB interactionBounds = new AABB(pos).inflate(interactionRadius);
+                        if (interactionBounds.clip(start, impact).isEmpty()
+                                && !interactionBounds.contains(start)
+                                && !interactionBounds.contains(impact)) {
+                            continue;
+                        }
+                        if (applyLightningToBlock(level, pos)) {
+                            energizedWires.add(pos);
+                        }
+                    }
+                }
+            }
+        }
+        return energizedWires;
+    }
+
+    public static void refreshLightningBeamRedstone(ServerLevel level, Iterable<BlockPos> positions) {
+        for (BlockPos pos : positions) {
+            if (!level.isLoaded(pos)) {
+                continue;
+            }
+            BlockState state = level.getBlockState(pos);
+            if (!(state.getBlock() instanceof RedStoneWireBlock wire)) {
+                continue;
+            }
+            wire.neighborChanged(state, level, pos, wire, pos, false);
+            level.updateNeighborsAt(pos, wire);
+        }
+    }
+
+    private static boolean applyLightningToBlock(ServerLevel level, BlockPos pos) {
+        BlockState state = level.getBlockState(pos);
+        if (state.isAir()) {
+            return false;
+        }
+        Block unwaxedBlock = HoneycombItem.WAX_OFF_BY_BLOCK.get().get(state.getBlock());
+        boolean waxed = unwaxedBlock != null;
+        BlockState oxidationState = waxed ? unwaxedBlock.withPropertiesOf(state) : state;
+        BlockState cleanedState = WeatheringCopper.getFirst(oxidationState);
+        boolean removedOxidation = !cleanedState.equals(oxidationState);
+        if (removedOxidation) {
+            if (waxed) {
+                cleanedState = HoneycombItem.getWaxed(cleanedState).orElse(cleanedState);
+            }
+            level.setBlock(pos, cleanedState, 3);
+            level.levelEvent(LevelEvent.PARTICLES_SCRAPE, pos, 0);
+            state = cleanedState;
+        }
+
+        if (state.getBlock() instanceof RedStoneWireBlock) {
+            return true;
+        }
+
+        if (!state.hasProperty(BlockStateProperties.POWERED)
+                || state.getValue(BlockStateProperties.POWERED)) {
+            return false;
+        }
+
+        if (state.getBlock() instanceof ButtonBlock button) {
+            button.press(state, level, pos);
+        } else if (state.getBlock() instanceof LeverBlock lever) {
+            lever.pull(state, level, pos);
+        } else if (state.getBlock() instanceof LightningRodBlock lightningRod) {
+            lightningRod.onLightningStrike(state, level, pos);
+        }
+        return false;
     }
 
     public static void awardAdvancement(ServerPlayer player, String advancementId, String criterion) {

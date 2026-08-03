@@ -10,13 +10,19 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonRedstonePowerManager;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;
@@ -36,6 +42,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private boolean hasBeamFired = false;
     private boolean beamStartPlayed = false;
     private boolean beamLoopActive = false;
+    private final Set<BlockPos> energizedRedstoneWires = new HashSet<>();
     public RaevyxBeamAbility(DragonAbilityType<Raevyx, RaevyxBeamAbility> type, Raevyx user) {
         super(type, user, user.getControllingPassenger() != null ? RIDER_TRACK : AI_TRACK, 0);
     }
@@ -56,6 +63,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             beamStartPlayed = true;
             wyvern.setBeamGlowActive(true);
             wyvern.setBeaming(false);
+            releaseEnergizedRedstone(wyvern);
             wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beam_start");
             if (!wyvern.level().isClientSide) {
                 float pitch = 0.9f + wyvern.getRandom().nextFloat() * 0.2f;
@@ -84,6 +92,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             wyvern.setBeaming(false);
             wyvern.setBeamGlowActive(false);
             wyvern.clearBeamPath();
+            releaseEnergizedRedstone(wyvern);
             triggerBeamStop(wyvern);
             hasBeamFired = false;
         }
@@ -95,6 +104,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         wyvern.setBeaming(false);
         wyvern.setBeamGlowActive(false);
         wyvern.clearBeamPath();
+        releaseEnergizedRedstone(wyvern);
         triggerBeamStop(wyvern);
         hasBeamFired = false;
         super.interrupt();
@@ -132,6 +142,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
         BeamPath path = computeBeamPath(wyvern);
         if (path == null) {
+            releaseEnergizedRedstone(wyvern);
             return;
         }
         damageAlongBeam(wyvern, path.origin(), path.impact());
@@ -180,6 +191,17 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         final double radiusBase = riderControlled ? RIDER_BEAM_RADIUS : AI_BEAM_RADIUS;
         final double RADIUS = radiusBase;
         final float DAMAGE = configuredBaseDamage * wyvern.getDamageMultiplier();
+
+        Set<BlockPos> currentWires = DragonUtilities.applyLightningBeamImpact(server, start, end, RADIUS);
+        Set<BlockPos> releasedWires = new HashSet<>(energizedRedstoneWires);
+        releasedWires.removeAll(currentWires);
+        Set<BlockPos> affectedWires = new HashSet<>(currentWires);
+        affectedWires.addAll(releasedWires);
+        DragonRedstonePowerManager.update(server, wyvern.getUUID(), currentWires);
+        DragonUtilities.refreshLightningBeamRedstone(server, affectedWires);
+
+        energizedRedstoneWires.clear();
+        energizedRedstoneWires.addAll(currentWires);
 
         if (!riderControlled) {
             damageAiBeamTargetOnly(wyvern, start, end, DAMAGE, RADIUS);
@@ -256,6 +278,16 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
 
         return true;
+    }
+
+    private void releaseEnergizedRedstone(Raevyx wyvern) {
+        if (wyvern.level() instanceof ServerLevel server && !energizedRedstoneWires.isEmpty()) {
+            DragonRedstonePowerManager.clear(server, wyvern.getUUID());
+            DragonUtilities.refreshLightningBeamRedstone(server, energizedRedstoneWires);
+            energizedRedstoneWires.clear();
+        } else if (wyvern.level() instanceof ServerLevel server) {
+            DragonRedstonePowerManager.clear(server, wyvern.getUUID());
+        }
     }
 
     public static boolean isAtAiBeamMercyThreshold(LivingEntity target) {

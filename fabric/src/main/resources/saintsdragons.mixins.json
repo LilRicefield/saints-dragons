@@ -22,7 +22,8 @@
     "NameTagItemMixin",
     "LivingEntityMixin",
     "PathfinderMobMixin",
-    "PlayerMixin"
+    "PlayerMixin",
+    "RedStoneWireBlockMixin"
   ],
   "injectors": {
     "defaultRequire": 1

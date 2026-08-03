@@ -9,6 +9,7 @@
     "PathfinderMobMixin",
     "PlayerMixin",
     "RangedAttributeAccessor",
+    "RedStoneWireBlockMixin",
     "ServerboundInteractPacketAccessor",
     "ServerGamePacketListenerMixin"
   ],

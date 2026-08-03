@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -13,6 +14,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -20,7 +22,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LevelEvent;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,6 +88,10 @@ public class VolitansWaterBreathEntity extends Entity {
             if (!isPoisonMode() && level() instanceof ServerLevel serverLevel) {
                 Vec3 start = position();
                 Vec3 end = start.add(getDeltaMovement());
+                if (convertLavaToCobblestone(serverLevel, start, end)) {
+                    discard();
+                    return;
+                }
                 if (DragonUtilities.extinguishFire(serverLevel, start, end, 1.0D)
                         && getOwner() instanceof DragonEntity dragon) {
                     var player = DragonUtilities.resolveResponsiblePlayer(dragon);
@@ -99,6 +110,34 @@ public class VolitansWaterBreathEntity extends Entity {
         setPos(getX() + motion.x, getY() + motion.y, getZ() + motion.z);
         // Keep momentum strong so the stream reaches farther.
         setDeltaMovement(motion.scale(0.997D));
+    }
+
+    private boolean convertLavaToCobblestone(ServerLevel level, Vec3 start, Vec3 end) {
+        BlockPos startPos = BlockPos.containing(start);
+        if (level.getFluidState(startPos).is(FluidTags.LAVA)) {
+            return convertLavaBlock(level, startPos);
+        }
+
+        BlockHitResult hit = level.clip(new ClipContext(
+                start,
+                end,
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.ANY,
+                this));
+        if (hit.getType() == HitResult.Type.MISS
+                || !level.getFluidState(hit.getBlockPos()).is(FluidTags.LAVA)) {
+            return false;
+        }
+        return convertLavaBlock(level, hit.getBlockPos());
+    }
+
+    private boolean convertLavaBlock(ServerLevel level, BlockPos pos) {
+        if (!level.isLoaded(pos) || !level.getFluidState(pos).is(FluidTags.LAVA)) {
+            return false;
+        }
+        level.setBlock(pos, Blocks.COBBLESTONE.defaultBlockState(), 3);
+        level.levelEvent(LevelEvent.LAVA_FIZZ, pos, 0);
+        return true;
     }
 
     private boolean hitEntity() {
