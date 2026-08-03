@@ -261,6 +261,7 @@ public final class SaintsDragonVariantRegistry {
         add(defaults, "raevyx", 1, "night_gold", 10);
         add(defaults, "cindervane", 0, "default", 85);
         add(defaults, "cindervane", 1, "albino", 15);
+        add(defaults, "cindervane", 2, "piebald", 0);
         add(defaults, "ignivorus", 0, "default", 95);
         add(defaults, "ignivorus", 1, "crimson", 5);
         add(defaults, "volitans", 0, "default", 85);

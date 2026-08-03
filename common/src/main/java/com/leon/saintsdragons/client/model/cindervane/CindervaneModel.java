@@ -26,6 +26,8 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
 
     private static final ResourceLocation ALBINO_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino.png");
     private static final ResourceLocation ALBINO_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_albino_female.png");
+    private static final ResourceLocation PIEBALD_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_piebald.png");
+    private static final ResourceLocation PIEBALD_FEMALE_TEXTURE = SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_piebald_female.png");
 
     public CindervaneModel() {
         super("cindervane");
@@ -61,6 +63,9 @@ public class CindervaneModel extends DragonGeoModel<Cindervane> {
 
     @Override
     protected ResourceLocation getAdultTexture(Cindervane entity) {
+        if (entity.isPiebaldVariant()) {
+            return entity.isFemale() ? PIEBALD_FEMALE_TEXTURE : PIEBALD_TEXTURE;
+        }
         if (entity.hasCustomTextureVariant()) {
             return super.getAdultTexture(entity);
         }

@@ -125,11 +125,13 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_ALBINO = 1;
+    public static final int VARIANT_PIEBALD = 2;
     private static final double BABY_MAX_HEALTH = 40.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
             DragonVariant.of(VARIANT_DEFAULT, "default", 85),
-            DragonVariant.of(VARIANT_ALBINO, "albino", 15)
+            DragonVariant.of(VARIANT_ALBINO, "albino", 15),
+            DragonVariant.of(VARIANT_PIEBALD, "piebald", 0)
     );
 
     private static final EntityDataAccessor<Boolean> DATA_FIRE_BREATHING =
@@ -318,6 +320,10 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     public boolean isAlbinoVariant() {
         return getTextureVariant() == VARIANT_ALBINO;
+    }
+
+    public boolean isPiebaldVariant() {
+        return getTextureVariant() == VARIANT_PIEBALD;
     }
 
     private final Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();

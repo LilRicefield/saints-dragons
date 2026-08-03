@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -33,6 +34,8 @@ public class CindervaneEggBlock extends AbstractTimedDragonEggBlock<CindervaneEg
     public static final int MAX_EGGS = 3;
     public static final IntegerProperty EGGS = IntegerProperty.create("eggs", 1, MAX_EGGS);
     private static final int DEFAULT_HATCH_TICKS = 12000; // 10 minutes
+    private static final float MALE_PIEBALD_HATCH_CHANCE = 0.15F;
+    private static final float FEMALE_PIEBALD_HATCH_CHANCE = 0.08F;
 
     private static final VoxelShape ONE_EGG_SHAPE = Block.box(3.0D, 0.0D, 3.0D, 13.0D, 10.0D, 13.0D);
     private static final VoxelShape TWO_EGGS_SHAPE = Block.box(2.0D, 0.0D, 2.0D, 14.0D, 10.0D, 14.0D);
@@ -133,6 +136,19 @@ public class CindervaneEggBlock extends AbstractTimedDragonEggBlock<CindervaneEg
     @Override
     protected void applyBabyAttributes(DragonEntity baby) {
         ((Cindervane) baby).applyConfiguredAttributes();
+    }
+
+    @Override
+    protected void configureHatchedBabyVariant(ServerLevel level,
+                                               BlockPos pos,
+                                               CindervaneEggBlockEntity eggEntity,
+                                               DragonEntity baby) {
+        float piebaldChance = baby.getGender() == DragonGender.FEMALE
+                ? FEMALE_PIEBALD_HATCH_CHANCE
+                : MALE_PIEBALD_HATCH_CHANCE;
+        if (level.random.nextFloat() < piebaldChance) {
+            baby.setPendingAdultTextureVariant(Cindervane.VARIANT_PIEBALD);
+        }
     }
 
     @Override

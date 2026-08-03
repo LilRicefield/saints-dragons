@@ -112,7 +112,14 @@ public abstract class RideableDragonBase extends DragonEntity {
 
     @Override
     public Vec3 getClientLocatorPosition(String name) {
-        return name == null ? null : this.clientLocatorCache.get(name);
+        if (name == null) {
+            return null;
+        }
+        if (this.isInvisible()) {
+            this.clientLocatorCache.remove(name);
+            return null;
+        }
+        return this.clientLocatorCache.get(name);
     }
 
     public boolean canBeControlledBy(Player player) {

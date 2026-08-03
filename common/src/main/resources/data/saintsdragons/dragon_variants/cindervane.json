@@ -9,6 +9,11 @@
       "id": "saintsdragons:albino",
       "name": "albino",
       "weight": 15
+    },
+    {
+      "id": "saintsdragons:piebald",
+      "name": "piebald",
+      "weight": 0
     }
   ]
 }
