@@ -311,6 +311,10 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         NulljawAttributeBuffer nulljawBuffer = new NulljawAttributeBuffer();
         nulljawBuffer.maxHealth = nulljawCurrent.maxHealth();
         nulljawBuffer.armor = nulljawCurrent.armor();
+        nulljawBuffer.biteDamage = nulljawCurrent.abilityDamage("bite",
+                nulljawDefaults.abilityDamage("bite", 8.0D));
+        nulljawBuffer.invisibilityDurationTicks = nulljawCurrent.extraDouble("invisibility_duration_ticks",
+                nulljawDefaults.extraDouble("invisibility_duration_ticks", 6000.0D));
 
         DragonAttributeConfig atroxiiaCurrent = loader.getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
         DragonAttributeConfig atroxiiaDefaults = loader.getDefaultConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
@@ -1731,6 +1735,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.armor = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_damage"), buffer.biteDamage)
+                .setDefaultValue(defaults.abilityDamage("bite", 8.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.biteDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.nulljaw.invisibility_duration_ticks"), buffer.invisibilityDurationTicks)
+                .setDefaultValue(defaults.extraDouble("invisibility_duration_ticks", 6000.0D))
+                .setMin(1.0D)
+                .setMax(72000.0D)
+                .setSaveConsumer(value -> buffer.invisibilityDurationTicks = value)
+                .build());
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.nulljaw"), rawEntries)
@@ -2054,12 +2070,16 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         loader.overwriteConfig(DragonAttributeConfigLoader.VOLITANS_ID, updatedVolitans);
 
         DragonAttributeConfig nulljawCurrent = loader.getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
+        Map<String, DragonAbilityOverride> nulljawAbilities = new HashMap<>(nulljawCurrent.abilities());
+        nulljawAbilities.put("bite", DragonAbilityOverride.ofDamage(nulljawBuffer.biteDamage));
+        Map<String, Double> nulljawDoubles = new HashMap<>(nulljawCurrent.extraDoubles());
+        nulljawDoubles.put("invisibility_duration_ticks", nulljawBuffer.invisibilityDurationTicks);
         DragonAttributeConfig updatedNulljaw = new DragonAttributeConfig(
                 nulljawBuffer.maxHealth,
                 nulljawBuffer.armor,
                 nulljawCurrent.flyingSpeed(),
-                new HashMap<>(nulljawCurrent.abilities()),
-                new HashMap<>(nulljawCurrent.extraDoubles()),
+                nulljawAbilities,
+                nulljawDoubles,
                 new HashMap<>(nulljawCurrent.extraBooleans())
         );
         loader.overwriteConfig(DragonAttributeConfigLoader.NULLJAW_ID, updatedNulljaw);
@@ -2270,6 +2290,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final class NulljawAttributeBuffer {
         double maxHealth;
         double armor;
+        double biteDamage;
+        double invisibilityDurationTicks;
     }
 
     private static final class AtroxiiaAttributeBuffer {

@@ -1092,6 +1092,8 @@
   "config.saintsdragons.attributes.nulljaw": "Nulljaw",
   "config.saintsdragons.attributes.nulljaw.max_health": "Max Health",
   "config.saintsdragons.attributes.nulljaw.armor": "Armor",
+  "config.saintsdragons.attributes.nulljaw.bite_damage": "Bite Damage",
+  "config.saintsdragons.attributes.nulljaw.invisibility_duration_ticks": "Invisibility Duration (Ticks)",
   "config.saintsdragons.attributes.draconian_swarm": "Draconian Swarm",
   "config.saintsdragons.attributes.draconian_swarm.wave_1_count": "Wave 1 Swarm Count",
   "config.saintsdragons.attributes.draconian_swarm.wave_2_count": "Wave 2 Swarm Count",

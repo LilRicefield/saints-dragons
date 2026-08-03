@@ -45,6 +45,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -118,6 +120,10 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private static final double BABY_MAX_HEALTH = 70.0D;
     private static final double BABY_ARMOR = 4.0D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
+    private static final String CLOAK_ABILITY_ID = "nulljaw_cloak";
+    private static final String CLOAK_TICKS_TAG = "NulljawCloakTicks";
+    private static final String CLOAK_RIDER_TAG = "NulljawCloakRider";
+    private static final int DEFAULT_CLOAK_DURATION_TICKS = 20 * 60 * 5;
     private static final int MAX_PACK_SIZE = 4;
     private static final double PACK_SEARCH_RADIUS = 28.0D;
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
@@ -154,6 +160,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     private boolean combatAttackReserved;
     private boolean running;
     private boolean deathSoundQueued;
+    private int cloakTicksRemaining;
+    @Nullable
+    private UUID cloakedRiderUuid;
     public Nulljaw(EntityType<? extends Nulljaw> type, Level level) {
         super(type, level);
         this.movementController = new AnimationController<>(this, "movement", 2, animationHandler::movementPredicate);
@@ -300,12 +309,20 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        this.cloakTicksRemaining = Math.max(0, tag.getInt(CLOAK_TICKS_TAG));
+        this.cloakedRiderUuid = tag.hasUUID(CLOAK_RIDER_TAG) ? tag.getUUID(CLOAK_RIDER_TAG) : null;
         applyConfiguredAttributes();
     }
 
     @Override
     public void addAdditionalSaveData(@NotNull CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        if (this.cloakTicksRemaining > 0) {
+            tag.putInt(CLOAK_TICKS_TAG, this.cloakTicksRemaining);
+            if (this.cloakedRiderUuid != null) {
+                tag.putUUID(CLOAK_RIDER_TAG, this.cloakedRiderUuid);
+            }
+        }
     }
 
     @Override
@@ -400,6 +417,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
             this.tickAsyncFlightNavigation();
             this.maintainGroundClearance();
             this.tickAmbientVocals();
+            this.tickCloak();
         }
         if (!this.level().isClientSide) {
             this.tickAnimationStates();
@@ -867,7 +885,20 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
                 this.playSound(deathEntry.soundSupplier().get(), deathEntry.volume(), pitch);
             }
         }
+        if (!this.level().isClientSide) {
+            deactivateCloak();
+        }
         super.die(cause);
+    }
+
+    @Override
+    public void removePassenger(@NotNull Entity passenger) {
+        if (!this.level().isClientSide
+                && this.cloakTicksRemaining > 0
+                && passenger.getUUID().equals(this.cloakedRiderUuid)) {
+            deactivateCloak();
+        }
+        super.removePassenger(passenger);
     }
 
     @Override
@@ -1309,6 +1340,100 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return this.isBaby()
                 ? null
                 : new RiderAbilityBinding(ModAbilities.NULLJAW_FORWARD_TELEPORT.getName(), RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    public RiderAbilityBinding getSecondaryRiderAbility() {
+        return !this.isTame() || this.isBaby()
+                ? null
+                : new RiderAbilityBinding(CLOAK_ABILITY_ID, RiderAbilityBinding.Activation.PRESS);
+    }
+
+    @Override
+    protected void onRiderAbilityUse(Player player, String abilityName) {
+        if (CLOAK_ABILITY_ID.equals(abilityName)) {
+            toggleCloak(player);
+            return;
+        }
+        super.onRiderAbilityUse(player, abilityName);
+    }
+
+    private void toggleCloak(Player rider) {
+        if (this.level().isClientSide
+                || !this.isTame()
+                || this.isBaby()
+                || !this.isOwnedBy(rider)
+                || rider != this.getControllingPassenger()) {
+            return;
+        }
+
+        if (this.cloakTicksRemaining > 0) {
+            deactivateCloak();
+            return;
+        }
+
+        int duration = Mth.clamp(
+                (int)Math.round(getConfiguredDragonAttributes().extraDouble(
+                        "invisibility_duration_ticks",
+                        DEFAULT_CLOAK_DURATION_TICKS
+                )),
+                1,
+                72000
+        );
+        this.cloakTicksRemaining = duration;
+        this.cloakedRiderUuid = rider.getUUID();
+        applyCloakEffect(this, duration);
+        applyCloakEffect(rider, duration);
+    }
+
+    private void tickCloak() {
+        if (this.cloakTicksRemaining <= 0) {
+            return;
+        }
+
+        LivingEntity rider = this.getControllingPassenger();
+        if (!(rider instanceof Player player)
+                || !this.isTame()
+                || !this.isOwnedBy(player)
+                || !player.getUUID().equals(this.cloakedRiderUuid)) {
+            deactivateCloak();
+            return;
+        }
+
+        this.cloakTicksRemaining--;
+        if (this.cloakTicksRemaining <= 0) {
+            deactivateCloak();
+            return;
+        }
+
+        if (!this.hasEffect(MobEffects.INVISIBILITY)) {
+            applyCloakEffect(this, this.cloakTicksRemaining);
+        }
+        if (!player.hasEffect(MobEffects.INVISIBILITY)) {
+            applyCloakEffect(player, this.cloakTicksRemaining);
+        }
+    }
+
+    private void deactivateCloak() {
+        this.removeEffect(MobEffects.INVISIBILITY);
+
+        Player cloakedRider = null;
+        if (this.getControllingPassenger() instanceof Player player
+                && (this.cloakedRiderUuid == null || player.getUUID().equals(this.cloakedRiderUuid))) {
+            cloakedRider = player;
+        } else if (this.cloakedRiderUuid != null && this.level() instanceof ServerLevel serverLevel) {
+            cloakedRider = serverLevel.getPlayerByUUID(this.cloakedRiderUuid);
+        }
+        if (cloakedRider != null) {
+            cloakedRider.removeEffect(MobEffects.INVISIBILITY);
+        }
+
+        this.cloakTicksRemaining = 0;
+        this.cloakedRiderUuid = null;
+    }
+
+    private static void applyCloakEffect(LivingEntity entity, int duration) {
+        entity.addEffect(new MobEffectInstance(MobEffects.INVISIBILITY, duration, 0, false, false, true));
     }
 
     @Override

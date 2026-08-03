@@ -13,9 +13,9 @@ import java.util.Comparator;
 import java.util.Map;
 
 public final class NulljawTemptBehaviour extends DragonBehaviour<Nulljaw> {
-    private static final double START_RANGE = 10.0D;
-    private static final double CONTINUE_RANGE = 12.0D;
-    private static final double STOP_DISTANCE_SQR = 3.5D * 3.5D;
+    private static final double START_RANGE = 32.0D;
+    private static final double CONTINUE_RANGE = 34.0D;
+    private static final double STOP_DISTANCE_SQR = 5.0D * 5.0D;
     private static final double SPEED = 1.0D;
 
     @Nullable

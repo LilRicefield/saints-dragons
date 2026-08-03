@@ -163,6 +163,8 @@ public final class ForgeDragonAttributesConfig {
     // Nulljaw
     public static ForgeConfigSpec.DoubleValue NULLJAW_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue NULLJAW_ARMOR;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_BITE_DAMAGE;
+    public static ForgeConfigSpec.DoubleValue NULLJAW_INVISIBILITY_DURATION_TICKS;
 
     // Atroxiia
     public static ForgeConfigSpec.DoubleValue ATROXIIA_MAX_HEALTH;
@@ -365,6 +367,8 @@ public final class ForgeDragonAttributesConfig {
         builder.push("nulljaw");
         NULLJAW_MAX_HEALTH = builder.defineInRange("max_health", 70.0, 1.0, 100000.0);
         NULLJAW_ARMOR = builder.defineInRange("armor", 4.0, 0.0, 100000.0);
+        NULLJAW_BITE_DAMAGE = builder.defineInRange("bite_damage", 8.0, 0.0, 100000.0);
+        NULLJAW_INVISIBILITY_DURATION_TICKS = builder.defineInRange("invisibility_duration_ticks", 6000.0, 1.0, 72000.0);
         builder.pop();
 
         builder.push("atroxiia");

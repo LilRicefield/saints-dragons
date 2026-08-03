@@ -488,13 +488,15 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     private static DragonAttributeConfig nulljawDefaults() {
         double maxHealth = 70.0D;
         double armor = 4.0D;
+        double biteDamage = 8.0D;
+        double invisibilityDurationTicks = 6000.0D;
         if (IS_FORGE) {
             try {
                 Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
-                maxHealth = (double) configClass.getField("NULLJAW_MAX_HEALTH").get(null).getClass().getMethod("get")
-                        .invoke(configClass.getField("NULLJAW_MAX_HEALTH").get(null));
-                armor = (double) configClass.getField("NULLJAW_ARMOR").get(null).getClass().getMethod("get")
-                        .invoke(configClass.getField("NULLJAW_ARMOR").get(null));
+                maxHealth = forgeDouble(configClass, "NULLJAW_MAX_HEALTH");
+                armor = forgeDouble(configClass, "NULLJAW_ARMOR");
+                biteDamage = forgeDouble(configClass, "NULLJAW_BITE_DAMAGE");
+                invisibilityDurationTicks = forgeDouble(configClass, "NULLJAW_INVISIBILITY_DURATION_TICKS");
             } catch (Exception ignored) {
             }
         }
@@ -502,10 +504,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 maxHealth,
                 armor,
                 0.42D,
-                Map.of("bite", DragonAbilityOverride.ofDamage(8.0D)),
+                Map.of("bite", DragonAbilityOverride.ofDamage(biteDamage)),
                 Map.of(
                         "taming_chance_base", 20.0D,
-                        "wild_flying_speed_multiplier", 1.0D
+                        "wild_flying_speed_multiplier", 1.0D,
+                        "invisibility_duration_ticks", invisibilityDurationTicks
                 ),
                 Map.of(
                         "legacy_taming", true,

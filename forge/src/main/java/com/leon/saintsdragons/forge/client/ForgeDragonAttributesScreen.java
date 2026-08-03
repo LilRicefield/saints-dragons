@@ -645,6 +645,14 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.NULLJAW_ARMOR::get,
                 ForgeDragonAttributesConfig.NULLJAW_ARMOR::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.bite_damage"),
+                ForgeDragonAttributesConfig.NULLJAW_BITE_DAMAGE::get,
+                ForgeDragonAttributesConfig.NULLJAW_BITE_DAMAGE::set,
+                null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.nulljaw.invisibility_duration_ticks"),
+                ForgeDragonAttributesConfig.NULLJAW_INVISIBILITY_DURATION_TICKS::get,
+                ForgeDragonAttributesConfig.NULLJAW_INVISIBILITY_DURATION_TICKS::set,
+                null));
     }
 
     private void addAtroxiiaEntries(List<ConfigEntry> entries) {
@@ -1093,6 +1101,8 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             case NULLJAW -> {
                 ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.set(ForgeDragonAttributesConfig.NULLJAW_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.NULLJAW_ARMOR.set(ForgeDragonAttributesConfig.NULLJAW_ARMOR.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_BITE_DAMAGE.set(ForgeDragonAttributesConfig.NULLJAW_BITE_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.NULLJAW_INVISIBILITY_DURATION_TICKS.set(ForgeDragonAttributesConfig.NULLJAW_INVISIBILITY_DURATION_TICKS.getDefault());
             }
             case ATROXIIA -> {
                 ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH.set(ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH.getDefault());
