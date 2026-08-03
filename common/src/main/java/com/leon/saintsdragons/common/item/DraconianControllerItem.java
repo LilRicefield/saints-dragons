@@ -35,7 +35,7 @@ public class DraconianControllerItem extends Item {
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.empty());
         tooltip.add(Component.translatable("item.saintsdragons.draconian_controller.tooltip.passive.title")
-                .withStyle(ChatFormatting.DARK_PURPLE));
+                .withStyle(ChatFormatting.WHITE));
         tooltip.add(Component.translatable("item.saintsdragons.draconian_controller.tooltip.ability.description")
                 .withStyle(ChatFormatting.GRAY));
         tooltip.add(Component.translatable("item.saintsdragons.draconian_controller.tooltip.requirement")

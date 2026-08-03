@@ -66,6 +66,8 @@
   "item.saintsdragons.dragonlord_sword.tooltip.ability.title": "Worldscar",
   "item.saintsdragons.dragonlord_sword.tooltip.ability.description": "Press R to conjure 3 forward-facing magma pillars.",
   "item.saintsdragons.dragonlord_sword.tooltip.description": "\"The blade strikes not at its enemies, but at the world beneath them. Molten pillars erupt from the earth, marking the path of the Dragonlord's wrath.\"",
+  "item.saintsdragons.dragonlord_armor.tooltip.double_jump.title": "Double Jump",
+  "item.saintsdragons.dragonlord_armor.tooltip.double_jump.description": "Tap Spacebar two times for double-jumping.",
   "item.saintsdragons.dragonlord_armor.tooltip.dragonfall.title": "Dragonfall",
   "item.saintsdragons.dragonlord_armor.tooltip.dragonfall.description": "Upon landing, nearby entities take damage and are knocked into the air as a magma crater forms, dealing damage over time.",
   "item.saintsdragons.dragonlord_armor.tooltip.aerial_dominion.title": "Aerial Dominion",

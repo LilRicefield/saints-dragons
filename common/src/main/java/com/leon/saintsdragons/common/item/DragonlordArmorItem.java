@@ -155,6 +155,11 @@ public class DragonlordArmorItem extends ArmorItem implements GeoItem {
     public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, level, tooltip, flag);
         tooltip.add(Component.empty());
+        tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.double_jump.title")
+                .withStyle(ChatFormatting.GOLD));
+        tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.double_jump.description")
+                .withStyle(ChatFormatting.GRAY));
+        tooltip.add(Component.empty());
         tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.dragonfall.title")
                 .withStyle(ChatFormatting.GOLD));
         tooltip.add(Component.translatable("item.saintsdragons.dragonlord_armor.tooltip.dragonfall.description")
