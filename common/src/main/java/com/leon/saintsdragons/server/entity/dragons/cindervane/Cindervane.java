@@ -33,7 +33,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
-import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSaddleCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
@@ -92,6 +92,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -115,7 +116,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import javax.annotation.Nonnull;
 
 public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>,
-        DragonChestCarrier, DragonAirCombatSettingsProvider, DrinkingDragon {
+        DragonSaddleCarrier, DragonAirCombatSettingsProvider, DrinkingDragon {
     private static final CindervaneBrain DRAGON_BRAIN = new CindervaneBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -146,6 +147,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private static final EntityDataAccessor<Integer> DATA_SLASH_GRAB_PASSENGER_ID =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
             SynchedEntityData.defineId(Cindervane.class, EntityDataSerializers.BOOLEAN);
     private static final int LANDED_RECOVERY_TICKS = 34;
     public static final int TAKEOFF_ANIMATION_TICKS = 23;
@@ -429,6 +432,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_HAS_CHEST, false);
+        this.entityData.define(DATA_SADDLED, false);
     }
 
     @Override
@@ -827,12 +831,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     @Override
     protected boolean canAddPassenger(@NotNull Entity passenger) {
         if (passenger instanceof Player) {
-            return this.getPassengers().size() < getMaxPassengers();
+            return hasSaddle() && this.getPassengers().size() < getMaxPassengers();
         }
         if (passenger instanceof IvyTheDragonMerchant ivy
                 && ivy.isTame()
                 && java.util.Objects.equals(ivy.getOwnerUUID(), getOwnerUUID())) {
-            return this.getPassengers().size() < getMaxPassengers();
+            return hasSaddle() && this.getPassengers().size() < getMaxPassengers();
         }
         if (autoGrabPassengerMountAllowed && passenger instanceof LivingEntity) {
             return this.getPassengers().size() < getMaxPassengers();
@@ -1557,11 +1561,30 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
+    public boolean hasSaddle() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    @Override
+    public void setSaddle(boolean saddled) {
+        if (!saddled && hasAttachedChest()) {
+            return;
+        }
+        this.entityData.set(DATA_SADDLED, saddled);
+        if (!saddled && isVehicle()) {
+            ejectPassengers();
+        }
+    }
+
+    @Override
     public boolean hasAttachedChest() {
         return hasCindervaneChest();
     }
 
     public void setCindervaneChest(boolean value) {
+        if (value && !hasSaddle()) {
+            return;
+        }
         this.entityData.set(DATA_HAS_CHEST, value);
         if (!value) {
             cindervaneChestInventory.clearContent();
@@ -1589,8 +1612,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
-            DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
+        if (!level().isClientSide) {
+            dropEquipmentOnDeath();
+            if (getGender() == DragonGender.FEMALE) {
+                DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
+            }
         }
     }
 
@@ -1611,6 +1637,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             tag.putUUID("PackLeaderUuid", this.packLeaderUuid);
         }
         tag.putBoolean("CindervaneHasChest", hasCindervaneChest());
+        tag.putBoolean("CindervaneSaddled", hasSaddle());
         if (hasCindervaneChest()) {
             tag.put("CindervaneChestItems", cindervaneChestInventory.createTag());
         }
@@ -1638,7 +1665,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (tag.contains("FeedingCooldownTicks")) {
             this.entityData.set(DATA_FEEDING_COOLDOWN, Math.max(0, tag.getInt("FeedingCooldownTicks")));
         }
-        setCindervaneChest(tag.getBoolean("CindervaneHasChest"));
+        boolean restoredChest = tag.getBoolean("CindervaneHasChest");
+        boolean restoredSaddle = restoredChest
+                || tag.contains("CindervaneSaddled") && tag.getBoolean("CindervaneSaddled");
+        setSaddle(restoredSaddle);
+        setCindervaneChest(restoredChest);
         if (hasCindervaneChest() && tag.contains("CindervaneChestItems", Tag.TAG_LIST)) {
             cindervaneChestInventory.fromTag(tag.getList("CindervaneChestItems", Tag.TAG_COMPOUND));
         }
@@ -1647,6 +1678,18 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
 
         applyConfiguredAttributes();
+    }
+
+    private void dropEquipmentOnDeath() {
+        if (hasCindervaneChest()) {
+            dropCindervaneChestContents();
+            spawnAtLocation(Items.CHEST);
+            setCindervaneChest(false);
+        }
+        if (hasSaddle()) {
+            spawnAtLocation(Items.SADDLE);
+            setSaddle(false);
+        }
     }
 
     @Override

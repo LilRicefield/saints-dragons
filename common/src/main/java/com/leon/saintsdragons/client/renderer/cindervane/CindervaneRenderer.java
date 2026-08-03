@@ -3,10 +3,12 @@ package com.leon.saintsdragons.client.renderer.cindervane;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.layer.cindervane.CindervaneNightEmissiveLayer;
+import com.leon.saintsdragons.client.renderer.layer.DragonEquipmentLayer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -31,6 +33,16 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
 
     public CindervaneRenderer(EntityRendererProvider.Context context) {
         super(context, new CindervaneModel());
+        this.addRenderLayer(new DragonEquipmentLayer<>(
+                this,
+                Cindervane::hasSaddle,
+                SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_saddle_layer.png")
+        ));
+        this.addRenderLayer(new DragonEquipmentLayer<>(
+                this,
+                Cindervane::hasCindervaneChest,
+                SaintsDragonsCommon.rl("textures/entity/cindervane/cindervane_chest_layer.png")
+        ));
         this.addRenderLayer(new CindervaneNightEmissiveLayer(this));
     }
 

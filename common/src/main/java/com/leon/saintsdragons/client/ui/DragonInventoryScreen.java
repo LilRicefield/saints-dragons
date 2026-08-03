@@ -21,6 +21,8 @@ public class DragonInventoryScreen extends AbstractContainerScreen<DragonInvento
     private static final int CHEST_SLOTS_V = 166;
     private static final int CHEST_SLOT_U = 0;
     private static final int CHEST_SLOT_V = 220;
+    private static final int SADDLE_SLOT_U = 18;
+    private static final int SADDLE_SLOT_V = 220;
     private static final int PREVIEW_FRAME_X = 26;
     private static final int PREVIEW_FRAME_Y = 18;
     private static final int PREVIEW_FRAME_SIZE = 52;
@@ -51,7 +53,8 @@ public class DragonInventoryScreen extends AbstractContainerScreen<DragonInvento
         int y = this.topPos;
         guiGraphics.blit(TEXTURE, x, y, 0, 0, this.imageWidth, this.imageHeight, TEXTURE_WIDTH, TEXTURE_HEIGHT);
 
-        guiGraphics.blit(TEXTURE, x + 7, y + 17, CHEST_SLOT_U, CHEST_SLOT_V, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+        guiGraphics.blit(TEXTURE, x + 7, y + 17, SADDLE_SLOT_U, SADDLE_SLOT_V, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+        guiGraphics.blit(TEXTURE, x + 7, y + 39, CHEST_SLOT_U, CHEST_SLOT_V, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
         if (this.menu.hasChestInstalled()) {
             guiGraphics.blit(TEXTURE, x + 79, y + 17, CHEST_SLOTS_U, CHEST_SLOTS_V,
                     this.menu.getChestColumns() * 18, 54, TEXTURE_WIDTH, TEXTURE_HEIGHT);

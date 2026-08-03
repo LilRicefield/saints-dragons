@@ -2,7 +2,8 @@ package com.leon.saintsdragons.client.renderer.stegonaut;
 
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.stegonaut.StegonautModel;
-import com.leon.saintsdragons.client.renderer.layer.stegonaut.StegonautChestLayer;
+import com.leon.saintsdragons.client.renderer.layer.DragonEquipmentLayer;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
@@ -14,7 +15,16 @@ public class StegonautRenderer extends DragonGeoEntityRenderer<Stegonaut> {
     
     public StegonautRenderer(EntityRendererProvider.Context context) {
         super(context, new StegonautModel());
-        this.addRenderLayer(new StegonautChestLayer(this));
+        this.addRenderLayer(new DragonEquipmentLayer<>(
+                this,
+                Stegonaut::hasSaddle,
+                SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut_saddle_layer.png")
+        ));
+        this.addRenderLayer(new DragonEquipmentLayer<>(
+                this,
+                Stegonaut::hasStegonautChest,
+                SaintsDragonsCommon.rl("textures/entity/stegonaut/stegonaut_chest_layer.png")
+        ));
     }
 
     @Override

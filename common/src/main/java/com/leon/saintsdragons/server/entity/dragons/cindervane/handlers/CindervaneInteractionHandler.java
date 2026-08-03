@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonSaddleInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -104,6 +105,16 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
             }
             if (dragon.isFood(heldItem)) {
                 return handleFeeding(player, heldItem);
+            }
+            InteractionResult equipmentResult = DragonSaddleInteractionHelper.handle(
+                    dragon,
+                    dragon,
+                    player,
+                    hand,
+                    heldItem
+            );
+            if (equipmentResult != InteractionResult.PASS) {
+                return equipmentResult;
             }
             if (dragon.canOwnerCommand(player) && !dragon.isFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSaddleCarrier;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -260,6 +261,7 @@ public final class DragonRescueFallingOwnerBehaviour<T extends RideableFlyingDra
                 && !dragon.isDying()
                 && dragon.isTame()
                 && dragon.isOwnedBy(owner)
+                && (!(dragon instanceof DragonSaddleCarrier saddleCarrier) || saddleCarrier.hasSaddle())
                 && dragon.getCommand() == WANDERING_COMMAND
                 && dragon.canFly()
                 && !dragon.isBaby()

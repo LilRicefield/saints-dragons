@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonSaddleInteractionHelper;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -128,6 +129,17 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
 
         if (dragon.isFood(heldItem)) {
             return handleFeeding(player, heldItem);
+        }
+
+        InteractionResult equipmentResult = DragonSaddleInteractionHelper.handle(
+                dragon,
+                dragon,
+                player,
+                hand,
+                heldItem
+        );
+        if (equipmentResult != InteractionResult.PASS) {
+            return equipmentResult;
         }
 
         if (isOwner) {

@@ -18,7 +18,7 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.Stegonaut
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautSoundProfile;
 import com.leon.saintsdragons.server.entity.controller.stegonaut.StegonautRiderController;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
-import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSaddleCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
 import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
@@ -63,6 +63,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.Container;
@@ -74,7 +75,7 @@ import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen, DragonChestCarrier {
+public class Stegonaut extends RideableGroundDragon implements PackMember<Stegonaut>, ShakesScreen, DragonSaddleCarrier {
     private static final StegonautBrain DRAGON_BRAIN = new StegonautBrain();
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -82,6 +83,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.INT);
@@ -149,6 +152,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     @Override
     protected void defineRideableDragonData() {
         this.entityData.define(DATA_HAS_CHEST, false);
+        this.entityData.define(DATA_SADDLED, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
     }
@@ -379,8 +383,11 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
-            DragonLootTables.dropEntityLoot(this, DragonLootTables.STEGONAUT_FEMALE_DEATH, source);
+        if (!level().isClientSide) {
+            dropEquipmentOnDeath();
+            if (getGender() == DragonGender.FEMALE) {
+                DragonLootTables.dropEntityLoot(this, DragonLootTables.STEGONAUT_FEMALE_DEATH, source);
+            }
         }
     }
 
@@ -780,11 +787,30 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     }
 
     @Override
+    public boolean hasSaddle() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    @Override
+    public void setSaddle(boolean saddled) {
+        if (!saddled && hasAttachedChest()) {
+            return;
+        }
+        this.entityData.set(DATA_SADDLED, saddled);
+        if (!saddled && isVehicle()) {
+            ejectPassengers();
+        }
+    }
+
+    @Override
     public boolean hasAttachedChest() {
         return hasStegonautChest();
     }
 
     public void setStegonautChest(boolean value) {
+        if (value && !hasSaddle()) {
+            return;
+        }
         this.entityData.set(DATA_HAS_CHEST, value);
         if (!value) {
             stegonautChestInventory.clearContent();
@@ -832,6 +858,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             tag.putUUID("PackLeaderUuid", this.packLeaderUuid);
         }
         tag.putBoolean("StegonautHasChest", hasStegonautChest());
+        tag.putBoolean("StegonautSaddled", hasSaddle());
         if (hasStegonautChest()) {
             tag.put("StegonautChestItems", stegonautChestInventory.createTag());
         }
@@ -862,7 +889,11 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             this.packLeaderUuid = null;
         }
 
-        setStegonautChest(tag.getBoolean("StegonautHasChest"));
+        boolean restoredChest = tag.getBoolean("StegonautHasChest");
+        boolean restoredSaddle = restoredChest
+                || tag.contains("StegonautSaddled") && tag.getBoolean("StegonautSaddled");
+        setSaddle(restoredSaddle);
+        setStegonautChest(restoredChest);
         if (hasStegonautChest() && tag.contains("StegonautChestItems", Tag.TAG_LIST)) {
             stegonautChestInventory.fromTag(tag.getList("StegonautChestItems", Tag.TAG_COMPOUND));
         }
@@ -871,6 +902,23 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         }
         refreshCommandState();
         this.setOrderedToSit(restoredOrderedSit);
+    }
+
+    @Override
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        return hasSaddle() && super.canAddPassenger(passenger);
+    }
+
+    private void dropEquipmentOnDeath() {
+        if (hasStegonautChest()) {
+            dropStegonautChestContents();
+            spawnAtLocation(Items.CHEST);
+            setStegonautChest(false);
+        }
+        if (hasSaddle()) {
+            spawnAtLocation(Items.SADDLE);
+            setSaddle(false);
+        }
     }
 
     @Override

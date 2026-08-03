@@ -30,6 +30,7 @@ import com.leon.saintsdragons.server.entity.controller.DragonLookControl;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSaddleCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
@@ -2189,6 +2190,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public boolean canOwnerMount(Player player) {
         if (this.isBaby()) {
+            return false;
+        }
+        if (this instanceof DragonSaddleCarrier saddleCarrier && !saddleCarrier.hasSaddle()) {
             return false;
         }
         if (this.getHappiness() <= 30) {
