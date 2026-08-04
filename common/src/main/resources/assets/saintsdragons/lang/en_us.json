@@ -1077,6 +1077,7 @@
   "config.saintsdragons.attributes.volitans.aggressive_wild": "Aggressive Wild",
   "config.saintsdragons.attributes.atroxiia": "Atroxiia",
   "config.saintsdragons.attributes.atroxiia.max_health": "Max Health",
+  "config.saintsdragons.attributes.atroxiia.taming_stun_health": "Taming Stun Health",
   "config.saintsdragons.attributes.atroxiia.armor": "Armor",
   "config.saintsdragons.attributes.atroxiia.slam_damage": "Slam Damage",
   "config.saintsdragons.attributes.atroxiia.swipe_damage": "Swipe Damage",

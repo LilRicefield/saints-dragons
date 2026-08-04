@@ -168,6 +168,7 @@ public final class ForgeDragonAttributesConfig {
 
     // Atroxiia
     public static ForgeConfigSpec.DoubleValue ATROXIIA_MAX_HEALTH;
+    public static ForgeConfigSpec.DoubleValue ATROXIIA_TAMING_STUN_HEALTH;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_ARMOR;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_SLAM_DAMAGE;
     public static ForgeConfigSpec.DoubleValue ATROXIIA_SWIPE_DAMAGE;
@@ -373,6 +374,7 @@ public final class ForgeDragonAttributesConfig {
 
         builder.push("atroxiia");
         ATROXIIA_MAX_HEALTH = builder.defineInRange("max_health", 200.0, 1.0, 100000.0);
+        ATROXIIA_TAMING_STUN_HEALTH = builder.defineInRange("taming_stun_health", 60.0, 0.0, 100000.0);
         ATROXIIA_ARMOR = builder.defineInRange("armor", 10.0, 0.0, 100000.0);
         ATROXIIA_SLAM_DAMAGE = builder.defineInRange("slam_damage", 16.0, 0.0, 100000.0);
         ATROXIIA_SWIPE_DAMAGE = builder.defineInRange("swipe_damage", 12.0, 0.0, 100000.0);

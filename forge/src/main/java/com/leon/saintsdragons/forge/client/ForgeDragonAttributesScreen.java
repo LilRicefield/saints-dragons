@@ -661,6 +661,11 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH::get,
                 ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH::set,
                 null));
+        entries.add(new WarningEntry(Component.translatable("config.saintsdragons.attributes.taming_stun_health.warning")));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.taming_stun_health"),
+                ForgeDragonAttributesConfig.ATROXIIA_TAMING_STUN_HEALTH::get,
+                ForgeDragonAttributesConfig.ATROXIIA_TAMING_STUN_HEALTH::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.armor"),
                 ForgeDragonAttributesConfig.ATROXIIA_ARMOR::get,
                 ForgeDragonAttributesConfig.ATROXIIA_ARMOR::set,
@@ -1106,6 +1111,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
             }
             case ATROXIIA -> {
                 ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH.set(ForgeDragonAttributesConfig.ATROXIIA_MAX_HEALTH.getDefault());
+                ForgeDragonAttributesConfig.ATROXIIA_TAMING_STUN_HEALTH.set(ForgeDragonAttributesConfig.ATROXIIA_TAMING_STUN_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_ARMOR.set(ForgeDragonAttributesConfig.ATROXIIA_ARMOR.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_SLAM_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE.set(ForgeDragonAttributesConfig.ATROXIIA_SWIPE_DAMAGE.getDefault());

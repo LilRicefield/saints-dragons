@@ -530,6 +530,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
     private static DragonAttributeConfig atroxiiaDefaults() {
         double maxHealth = 200.0D;
+        double tamingStunHealth = 60.0D;
         double armor = 10.0D;
         double slamDamage = 16.0D;
         double swipeDamage = 12.0D;
@@ -552,6 +553,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             try {
                 Class<?> configClass = Class.forName("com.leon.saintsdragons.forge.platform.ForgeDragonAttributesConfig");
                 maxHealth = forgeDouble(configClass, "ATROXIIA_MAX_HEALTH");
+                tamingStunHealth = forgeDouble(configClass, "ATROXIIA_TAMING_STUN_HEALTH");
                 armor = forgeDouble(configClass, "ATROXIIA_ARMOR");
                 slamDamage = forgeDouble(configClass, "ATROXIIA_SLAM_DAMAGE");
                 swipeDamage = forgeDouble(configClass, "ATROXIIA_SWIPE_DAMAGE");
@@ -596,7 +598,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 Map.of(
                         "taming_chance_base", 20.0D,
                         "taming_chance_hearty", 33.3333D,
-                        "taming_stun_health", 60.0D,
+                        "taming_stun_health", tamingStunHealth,
                         "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal
                 ),
                 Map.of(

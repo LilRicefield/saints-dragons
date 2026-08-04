@@ -17,7 +17,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class BloodTempestAfterimagePlayerRendererMixin {
     @Inject(
             method = "render(Lnet/minecraft/client/player/AbstractClientPlayer;FFLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V",
-            at = @At("TAIL")
+            at = @At("TAIL"),
+            require = 0
     )
     private void saintsdragons$renderBloodTempestAfterimages(AbstractClientPlayer player, float entityYaw,
                                                              float partialTick, PoseStack poseStack,

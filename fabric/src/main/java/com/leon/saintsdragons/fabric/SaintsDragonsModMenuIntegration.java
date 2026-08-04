@@ -321,6 +321,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         AtroxiiaAttributeBuffer atroxiiaBuffer = new AtroxiiaAttributeBuffer();
         atroxiiaBuffer.gungnirStabDamage = atroxiiaCurrent.abilityDamage("gungnir_stab",
                 atroxiiaDefaults.abilityDamage("gungnir_stab", 40.0D));
+        atroxiiaBuffer.tamingStunHealth = atroxiiaCurrent.extraDouble("taming_stun_health",
+                atroxiiaDefaults.extraDouble("taming_stun_health", 60.0D));
         atroxiiaBuffer.aggressiveWild = atroxiiaCurrent.extraBoolean("aggressive_wild", false);
         atroxiiaBuffer.eggHatchTimeTicksNormal = atroxiiaCurrent.extraDouble("egg_hatch_time_ticks_normal",
                 atroxiiaDefaults.extraDouble("egg_hatch_time_ticks_normal", 24000.0D));
@@ -1809,6 +1811,17 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                                        AtroxiiaAttributeBuffer buffer,
                                        DragonAttributeConfig defaults) {
         List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+        entries.add(entryBuilder.startTextDescription(
+                Component.translatable("config.saintsdragons.attributes.taming_stun_health.warning")
+        ).setColor(0xFFFFAA00).build());
+        entries.add(entryBuilder.startDoubleField(
+                        Component.translatable("config.saintsdragons.attributes.atroxiia.taming_stun_health"),
+                        buffer.tamingStunHealth)
+                .setDefaultValue(defaults.extraDouble("taming_stun_health", 60.0D))
+                .setMin(0.0D)
+                .setMax(100000.0D)
+                .setSaveConsumer(value -> buffer.tamingStunHealth = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(
                         Component.translatable("config.saintsdragons.attributes.atroxiia.gungnir_stab_damage"),
                         buffer.gungnirStabDamage)
@@ -2138,6 +2151,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         Map<String, DragonAbilityOverride> atroxiiaAbilities = new HashMap<>(atroxiiaCurrent.abilities());
         atroxiiaAbilities.put("gungnir_stab", DragonAbilityOverride.ofDamage(atroxiiaBuffer.gungnirStabDamage));
         Map<String, Double> atroxiiaDoubles = new HashMap<>(atroxiiaCurrent.extraDoubles());
+        atroxiiaDoubles.put("taming_stun_health", atroxiiaBuffer.tamingStunHealth);
         atroxiiaDoubles.put("egg_hatch_time_ticks_normal", atroxiiaBuffer.eggHatchTimeTicksNormal);
         Map<String, Boolean> atroxiiaBooleans = new HashMap<>(atroxiiaCurrent.extraBooleans());
         atroxiiaBooleans.put("aggressive_wild", atroxiiaBuffer.aggressiveWild);
@@ -2346,6 +2360,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
     private static final class AtroxiiaAttributeBuffer {
         double gungnirStabDamage;
+        double tamingStunHealth;
         double eggHatchTimeTicksNormal;
         boolean aggressiveWild;
     }

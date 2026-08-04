@@ -16,6 +16,9 @@
     "emi": [
       "com.leon.saintsdragons.client.compat.emi.SaintsDragonsEmiPlugin"
     ],
+    "jei_mod_plugin": [
+      "com.leon.saintsdragons.client.compat.jei.SaintsDragonsJeiPlugin"
+    ],
     "jade": [
       "com.leon.saintsdragons.fabric.integration.jade.JadeDragonPlugin"
     ],
@@ -36,6 +39,7 @@
   },
   "suggests": {
     "cloth-config": ">=${cloth_config_version}",
-    "emi": "*"
+    "emi": "*",
+    "jei": "*"
   }
 }
