@@ -106,7 +106,6 @@ public class RaevyxEggBlock extends BaseEntityBlock {
 
             baby.setAge(-24000);
             baby.setBaby(true);
-            baby.skipRespawnTicks = 5;
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
             baby.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);

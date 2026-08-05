@@ -216,7 +216,6 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
             configureHatchedBabyVariant(level, pos, eggEntity, baby);
             baby.setAge(-24000);
             baby.setBaby(true);
-            baby.skipRespawnTicks = 5;
             applyBabyAttributes(baby);
             baby.setHealth(baby.getMaxHealth());
             positionBaby(level, pos, baby, i, eggCount);

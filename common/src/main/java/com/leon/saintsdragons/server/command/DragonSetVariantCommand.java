@@ -103,7 +103,7 @@ public final class DragonSetVariantCommand {
             throw ERROR_INVALID_VARIANT.create();
         }
 
-        ResourceLocation oldVariant = dragon.getTextureVariantId();
+        ResourceLocation oldVariant = dragon.getCodexTextureVariantId();
         dragon.setTextureVariantId(variant);
 
         // Send success message
