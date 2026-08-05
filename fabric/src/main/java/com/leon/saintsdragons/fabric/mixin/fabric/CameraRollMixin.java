@@ -86,7 +86,8 @@ public class CameraRollMixin {
                     target = "Lorg/joml/Quaternionf;rotationYXZ(FFF)Lorg/joml/Quaternionf;",
                     remap = false
             ),
-            index = 2
+            index = 2,
+            require = 0
     )
     private float saintsdragons$injectRollIntoCamera(float originalRoll) {
         float roll = this.saintsdragons$tempRoll;

@@ -81,6 +81,13 @@ public final class DragonRideInputHandler {
             KEY_CATEGORY
     );
 
+    public static final KeyMapping DRAGON_FLEX = new ControlChordKeyMapping(
+            "key.saintsdragons.flex",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_4,
+            KEY_CATEGORY
+    );
+
     private static final KeyMapping[] ALL_KEYS = {
             DRAGON_ASCEND,
             DRAGON_DESCEND,
@@ -88,7 +95,8 @@ public final class DragonRideInputHandler {
             DRAGON_TERTIARY_ABILITY,
             DRAGON_PRIMARY_ABILITY,
             DRAGON_SECONDARY_ABILITY,
-            DRAGON_TOGGLE_MELEE
+            DRAGON_TOGGLE_MELEE,
+            DRAGON_FLEX
     };
 
     private static boolean wasAscendPressed = false;
@@ -189,7 +197,7 @@ public final class DragonRideInputHandler {
         boolean secondaryDown = DRAGON_SECONDARY_ABILITY.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         boolean pitchLockDown = mc.options.keyUse.isDown();
-        boolean flexDown = isFlexDown(mc);
+        boolean flexDown = isFlexDown();
         boolean attackDown = mc.options.keyAttack.isDown();
         float forward = player.zza;
         float strafe = player.xxa;
@@ -576,7 +584,7 @@ public final class DragonRideInputHandler {
         boolean attackDown = mc.options.keyAttack.isDown();
         boolean toggleMeleeDown = DRAGON_TOGGLE_MELEE.isDown();
         boolean pitchLockDown = mc.options.keyUse.isDown();
-        boolean flexDown = isFlexDown(mc);
+        boolean flexDown = isFlexDown();
 
         if (dragon instanceof Volitans) {
             if (volitansBreathActive) {
@@ -683,15 +691,8 @@ public final class DragonRideInputHandler {
         raevyxGroundRendTriggered = false;
     }
 
-    private static boolean isCtrlDown(Minecraft mc) {
-        long window = mc.getWindow().getWindow();
-        return InputConstants.isKeyDown(window, InputConstants.KEY_LCONTROL)
-                || InputConstants.isKeyDown(window, InputConstants.KEY_RCONTROL);
-    }
-
-    private static boolean isFlexDown(Minecraft mc) {
-        long window = mc.getWindow().getWindow();
-        return isCtrlDown(mc) && InputConstants.isKeyDown(window, InputConstants.KEY_4);
+    private static boolean isFlexDown() {
+        return DRAGON_FLEX.isDown();
     }
 
     private static boolean supportsPitchLock(RideableDragonBase dragon) {

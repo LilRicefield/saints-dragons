@@ -131,6 +131,22 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
 
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
+        InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
+                player,
+                heldItem,
+                "entity.saintsdragons.atroxiia",
+                dragon.canFeed(),
+                Atroxiia.EAT_ANIMATION_TICKS,
+                () -> {
+                    dragon.triggerAnim(AnimationHelper.INTERACTION_CONTROLLER, AnimationHelper.EAT);
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown
+        );
+        if (growthStuntResult != InteractionResult.PASS) {
+            return growthStuntResult;
+        }
+
         if (!dragon.isBaby() && dragon.isOwnedBy(player) && player.isCrouching() && dragon.isFood(heldItem)) {
             return handleBreeding(player, heldItem);
         }

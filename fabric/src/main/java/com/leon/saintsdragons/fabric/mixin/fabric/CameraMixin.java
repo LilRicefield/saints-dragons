@@ -93,7 +93,7 @@ public abstract class CameraMixin implements CameraAccessor {
         return this.getYRot();
     }
 
-    @Inject(method = "setup", at = @At("HEAD"))
+    @Inject(method = "setup", at = @At("HEAD"), require = 0)
     private void saintsdragons$preSetupSyncRoll(
             BlockGetter area,
             Entity focusedEntity,
@@ -135,7 +135,7 @@ public abstract class CameraMixin implements CameraAccessor {
         DragonCameraState.setCurrentRoll(-rollDegrees + cameraTilt);
     }
 
-    @Inject(method = "setup", at = @At("RETURN"))
+    @Inject(method = "setup", at = @At("RETURN"), require = 0)
     private void saintsdragons$onCameraSetup(
             BlockGetter area,
             Entity focusedEntity,

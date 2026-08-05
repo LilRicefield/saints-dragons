@@ -7,22 +7,22 @@
       },
       "texts": [
         {
-          "text": "You again. Still not friendly, or was that just your opening act?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_rude.return_greeting.text.0"
         },
         {
-          "text": "Well, if it isn't the 'not friendly' person."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_rude.return_greeting.text.1"
         },
         {
-          "text": "Oh. It's you."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_rude.return_greeting.text.2"
         },
         {
-          "text": "Hi, 'friend.' Or maybe you're not friend?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_rude.return_greeting.text.3"
         }
       ],
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting_rude.return_greeting.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }

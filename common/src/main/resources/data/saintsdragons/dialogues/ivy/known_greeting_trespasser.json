@@ -7,19 +7,34 @@
       },
       "texts": [
         {
-      "text": "Hello again. Still not trespassing, before you ask."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_trespasser.return_greeting.text.0"
         },
         {
-          "text": "Hello there, *trespasser*. Heh. I'm kidding."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_trespasser.return_greeting.text.1",
+          "with": [
+            {
+              "translate": "dialogue.saintsdragons.ivy.known_greeting_trespasser.return_greeting.text.1.emphasis.0",
+              "italic": true
+            }
+          ]
         },
         {
-      "text": "Oh it's the trespass-- *ahem*, I mean, it's {name}! Hi."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_trespasser.return_greeting.text.2",
+          "with": [
+            {
+              "translate": "dialogue.saintsdragons.ivy.known_greeting_trespasser.return_greeting.text.2.emphasis.0",
+              "italic": true
+            },
+            {
+              "text": "{name}"
+            }
+          ]
         }
       ],
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting_trespasser.return_greeting.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }

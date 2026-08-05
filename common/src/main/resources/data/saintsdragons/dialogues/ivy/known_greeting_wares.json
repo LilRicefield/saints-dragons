@@ -7,19 +7,19 @@
       },
       "texts": [
         {
-          "text": "If you're here to make another joke, I reserve the right to charge extra."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_wares.return_greeting.text.0"
         },
         {
-          "text": "Really? My 'wares' wares? Reaaaaal funny."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_wares.return_greeting.text.1"
         },
         {
-          "text": "What a great first impression you've just left behind..."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting_wares.return_greeting.text.2"
         }
       ],
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting_wares.return_greeting.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }

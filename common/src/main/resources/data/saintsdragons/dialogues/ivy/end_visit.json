@@ -3,16 +3,16 @@
   "resume": {
     "texts": [
       {
-        "text": "Where was I? Ah, right."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.resume.0"
       },
       {
-        "text": "Back to what I was saying..."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.resume.1"
       },
       {
-        "text": "Now, where did I leave off...? Oh, yes."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.resume.2"
       },
       {
-        "text": "Right, we were talking about this..."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.resume.3"
       }
     ],
     "requires_all_flags": [
@@ -26,12 +26,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Hm... aside from the Endermen and the Ender Dragon? I quite like it here."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_1.choice.0"
           },
           "next": "end_thoughts_2"
         }
@@ -42,12 +42,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "As long as you don't look an Enderman in the eyes, you're fine. And after the Ender Dragon has been defeated, there's nothing to worry about."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_2.choice.0"
           },
           "next": "end_thoughts_3"
         }
@@ -58,12 +58,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I get to see the Nulljaws floating around, doing their own thing and minding their own business. I also get to try the 'local' cuisine, most notably Chorus Fruit."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_3.choice.0"
           },
           "next": "end_thoughts_4"
         }
@@ -74,12 +74,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I was teleported near the edge of the barrens when I bit into one! It would've been the end for me, pun intended, had a Nulljaw not saved me because it was attracted to the Chorus Fruit in my hand..."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_4.choice.0"
           },
           "next": "end_thoughts_5"
         }
@@ -90,12 +90,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And I've always wondered what would hatch from the Ender Dragon's egg. I think it'd look like a slimmer Ignivorus, don't you?"
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_5.choice.0"
           },
           "next": "end_thoughts_6"
         }
@@ -106,12 +106,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But... there's one thing I've got to tell you."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_6.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_6.choice.0"
           },
           "next": "end_thoughts_7"
         }
@@ -122,12 +122,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Recently, travelers in the End have seen... horrid creatures. Not Nulljaws, of course, but dark, ravenous beasts whose birthing sacks have mysteriously appeared."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_7.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_7.choice.0"
           },
           "next": "end_thoughts_8"
         }
@@ -138,12 +138,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Thankfully, they only seem to spawn when approached."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_8.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_8.choice.0"
           },
           "next": "end_thoughts_9"
         }
@@ -154,12 +154,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "However, their presence is quite concerning. I've only visited the End Barrens a few times, and I don't intend to venture there alone again."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_9.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_9.choice.0"
           },
           "next": "end_thoughts_10"
         }
@@ -170,12 +170,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "With your help, however, we may be able to weaken them."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_10.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_10.choice.0"
           },
           "next": "end_thoughts_11",
           "set_flag": "ivy_end_dialogue_done"
@@ -188,7 +188,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "As we travel through the End Barrens, you'll see what I mean."
+        "translate": "dialogue.saintsdragons.ivy.end_visit.end_thoughts_11.text"
       }
     }
   }

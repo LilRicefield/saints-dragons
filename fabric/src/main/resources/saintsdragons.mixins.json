@@ -12,6 +12,7 @@
     "RiderMixin",
     "BloodTempestAfterimagePlayerRendererMixin",
     "BloodTempestAfterimageLivingRendererMixin",
+    "BloodTempestAfterimageModelMixin",
     "LivingEntityRendererMixin",
     "EntityRendererMixin",
     "EntityTurnMixin",

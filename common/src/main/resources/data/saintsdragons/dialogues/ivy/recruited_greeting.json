@@ -7,43 +7,58 @@
       },
       "texts": [
         {
-          "text": "Hey there, {name}."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.0",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Hey-ho, {name}."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.1",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "What's on your mind?"
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.2"
         },
         {
-          "text": "Hey you."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.3"
         },
         {
-          "text": "Hey, friend."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.4"
         },
         {
-          "text": "Ah, my travelling companion."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.5"
         },
         {
-          "text": "You wish to speak?"
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.6"
         },
         {
-          "text": "Glad to have you with me."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.7"
         },
         {
-          "text": "Hi there."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.8"
         },
         {
-          "text": "Well met."
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.9"
         },
         {
-          "text": "Yes, {name}?"
+          "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.text.10",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         }
       ],
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.recruited_greeting.recruited_greeting.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }

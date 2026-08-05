@@ -7,32 +7,51 @@
       },
       "texts": [
         {
-      "text": "Back again? I was starting to think the woods scared you off."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.0"
         },
         {
-          "text": "Ah, hello there, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.1",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "{name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.2",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Ah, {name}! I thought I heard something walking around."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.3",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Careful, {name}. Keep showing up like this and I might think you enjoy my company."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.4",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Welcome back!"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.5"
         },
         {
-          "text": "Good to see you again! Try not to let that go to your head."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.text.6"
         }
-
       ],
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_greeting.choice.0"
           },
           "next": "return_prompt"
         }
@@ -44,44 +63,44 @@
       },
       "texts": [
         {
-          "text": "Need something?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.0"
         },
         {
-          "text": "What is it?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.1"
         },
         {
-          "text": "Something the matter?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.2"
         },
         {
-          "text": "Go on, I'm listening."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.3"
         },
         {
-          "text": "How can I help?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.4"
         },
         {
-          "text": "All's well I hope?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.5"
         },
         {
-          "text": "What do you need?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.text.6"
         }
       ],
       "choices": [
         {
           "text": {
-            "text": "I'd like to trade."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.0"
           },
           "next": "trade"
         },
         {
           "text": {
-            "text": "Can I check your inventory?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.1"
           },
           "next": "ivy_inventory",
           "requires_flag": "ivy_recruited"
         },
         {
           "text": {
-            "text": "What do I do if you can't get to me?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.2"
           },
           "next": "plushie_prepared",
           "requires_flag": "ivy_recruited",
@@ -89,7 +108,7 @@
         },
         {
           "text": {
-            "text": "What are your thoughts on the Nether, Ivy?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.3"
           },
           "next": "saintsdragons:ivy/nether_visit#nether_thoughts_1",
           "requires_all_flags": [
@@ -100,7 +119,7 @@
         },
         {
           "text": {
-            "text": "We're here in the End. What's on your mind?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.4"
           },
           "next": "saintsdragons:ivy/end_visit#end_thoughts_1",
           "requires_all_flags": [
@@ -111,7 +130,7 @@
         },
         {
           "text": {
-            "text": "What do you do out here?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.5"
           },
           "next": "saintsdragons:ivy/known_meeting_about_work#what_do_you_do",
           "hidden_if_flag": "known_work_done",
@@ -123,14 +142,14 @@
         },
         {
           "text": {
-            "text": "You know a lot about dragons?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.6"
           },
           "next": "saintsdragons:ivy/known_meeting_about_dragon#dragon_knowledge",
           "hidden_if_flag": "known_dragons_done"
         },
         {
           "text": {
-            "text": "Anything I can help with?"
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.7"
           },
           "next": "needs_help",
           "set_flag": "cindervane_request_asked",
@@ -142,7 +161,7 @@
         },
         {
           "text": {
-            "text": "About that request..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.8"
           },
           "next": "cindervane_request_followup",
           "requires_flag": "cindervane_request_asked",
@@ -154,7 +173,7 @@
         },
         {
           "text": {
-            "text": "About taming the Cindervane..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.9"
           },
           "next": "saintsdragons:ivy/quest_cindervane_complete#quest_check_in",
           "requires_flag": "cindervane_quest_started",
@@ -162,28 +181,28 @@
         },
         {
           "text": {
-            "text": "Goodbye."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.10"
           },
           "next": "goodbye",
           "hidden_if_flag": "ivy_recruited"
         },
         {
           "text": {
-            "text": "Goodbye."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.11"
           },
           "next": "recruited_goodbye",
           "requires_flag": "ivy_command_follow"
         },
         {
           "text": {
-            "text": "Goodbye."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.12"
           },
           "next": "recruited_goodbye_stay",
           "requires_flag": "ivy_command_stay"
         },
         {
           "text": {
-            "text": "Goodbye."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.13"
           },
           "next": "recruited_goodbye_wander",
           "requires_flag": "ivy_command_wander"
@@ -196,12 +215,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Of course. Take a look."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.trade.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.trade.choice.0"
           },
           "next": "return_greeting"
         }
@@ -214,23 +233,22 @@
       },
       "text": [
         {
-          "text": "Sure."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.ivy_inventory.text.0"
         },
         {
-          "text": "Mhm."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.ivy_inventory.text.1"
         },
         {
-          "text": "Okie-dokie."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.ivy_inventory.text.2"
         },
         {
-          "text": "All right."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.ivy_inventory.text.3"
         }
-
       ],
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.ivy_inventory.choice.0"
           },
           "next": "return_greeting"
         }
@@ -241,12 +259,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Oh, right! I'm glad you asked, actually. I almost forgot."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_prepared.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_prepared.choice.0"
           },
           "next": "plushie_important"
         }
@@ -257,12 +275,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I'll give you an item that will help you, and it is quite important to me. I trust you'll keep it safe."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_important.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_important.choice.0"
           },
           "next": "plushie_gift",
           "set_flag": "ivy_plushie_received"
@@ -275,12 +293,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Here it is."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_gift.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_gift.choice.0"
           },
           "next": "plushie_magic"
         }
@@ -291,12 +309,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Whenever I can't get to you, use this, and well, something magical will happen, for lack of a better explanation."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_magic.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_magic.choice.0"
           },
           "next": "plushie_appear"
         }
@@ -307,12 +325,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I will be able to appear near you. I'll get used to being transported suddenly."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_appear.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Thank you."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_appear.choice.0"
           },
           "next": "plushie_thanks"
         }
@@ -324,7 +342,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "You're welcome. Try not lose it, hm? You won't get a second one."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.plushie_thanks.text"
       }
     },
     "needs_help": {
@@ -332,12 +350,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Yes, actually."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.needs_help.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.needs_help.choice.0"
           },
           "next": "saintsdragons:ivy/quest_cindervane#cindervane_migration_1"
         }
@@ -348,12 +366,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ah, I see you've made up your mind."
+        "translate": "dialogue.saintsdragons.ivy.known_greeting.cindervane_request_followup.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.cindervane_request_followup.choice.0"
           },
           "next": "saintsdragons:ivy/quest_cindervane#cindervane_migration_2"
         }
@@ -366,21 +384,46 @@
       },
       "text": [
         {
-          "text": "Take care, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.goodbye.text.0",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "See you later, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.goodbye.text.1",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Goodbye, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.goodbye.text.2",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Alright, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.goodbye.text.3",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "See you around, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.goodbye.text.4",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         }
-        ]
+      ]
     },
     "recruited_goodbye": {
       "type": "end_dialogue",
@@ -389,25 +432,30 @@
       },
       "text": [
         {
-          "text": "Alright, {name}."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.0",
+          "with": [
+            {
+              "text": "{name}"
+            }
+          ]
         },
         {
-          "text": "Let's press on."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.1"
         },
         {
-          "text": "Onward, then."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.2"
         },
         {
-          "text": "Off we go, then."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.3"
         },
         {
-          "text": "Let's go."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.4"
         },
         {
-          "text": "Let's move."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.5"
         },
         {
-          "text": "Shall we?"
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye.text.6"
         }
       ]
     },
@@ -418,39 +466,39 @@
       },
       "text": [
         {
-          "text": "I'll stay here. Please don't die in your adventuring."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_stay.text.0"
         },
         {
-          "text": "Please don't go for too long."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_stay.text.1"
         },
         {
-          "text": "Remember to get me later."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_stay.text.2"
         },
         {
-          "text": "Don't you dare forget about me."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_stay.text.3"
         },
         {
-          "text": "I'll be here. Waiting."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_stay.text.4"
         },
         {
-          "text": "I'll be here eating dirt, then."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_stay.text.5"
         }
       ]
     },
-  "recruited_goodbye_wander": {
+    "recruited_goodbye_wander": {
       "type": "end_dialogue",
       "speaker": {
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": [
         {
-          "text": "I'll be wandering around until you come back."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_wander.text.0"
         },
         {
-          "text": "I'll be around here."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_wander.text.1"
         },
         {
-          "text": "I'll hanging about until you come back."
+          "translate": "dialogue.saintsdragons.ivy.known_greeting.recruited_goodbye_wander.text.2"
         }
       ]
     }

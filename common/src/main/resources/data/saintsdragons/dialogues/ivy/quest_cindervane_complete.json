@@ -6,25 +6,25 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Yes? Have you encountered any trouble?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.quest_check_in.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Can you go over it one more time?"
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.quest_check_in.choice.0"
           },
           "next": "repeat_intro"
         },
         {
           "text": {
-            "text": "I haven't done it yet."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.quest_check_in.choice.1"
           },
           "next": "not_done_1",
           "hidden_if_flag": "has_tamed_cindervane"
         },
         {
           "text": {
-            "text": "I did it. I've tamed a Cindervane."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.quest_check_in.choice.2"
           },
           "next": "did_it_1",
           "requires_flag": "has_tamed_cindervane"
@@ -36,12 +36,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Of course. It's better to ask twice than rush in unsure."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.repeat_intro.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.repeat_intro.choice.0"
           },
           "next": "saintsdragons:ivy/quest_cindervane#cindervane_taming_1"
         }
@@ -52,12 +52,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "...Something the matter? It's alright. Take your time."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_done_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_done_1.choice.0"
           },
           "next": "not_done_2"
         }
@@ -68,12 +68,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "You can do it. I'll be rooting for you."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_done_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_done_2.choice.0"
           },
           "next": "not_done_3"
         }
@@ -85,7 +85,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Now go and get your first dragon."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_done_3.text"
       }
     },
     "did_it_1": {
@@ -93,12 +93,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "You did? And you came back with all your limbs intact and not dead?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_1.choice.0"
           },
           "next": "did_it_2"
         }
@@ -109,12 +109,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "That's already better than most!"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_2.choice.0"
           },
           "next": "did_it_prompt"
         }
@@ -125,24 +125,24 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "How did it go?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_prompt.text"
       },
       "choices": [
         {
           "text": {
-            "text": "I followed your advice."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_prompt.choice.0"
           },
           "next": "followed_advice_1"
         },
         {
           "text": {
-            "text": "It wasn't that hard."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_prompt.choice.1"
           },
           "next": "not_hard_1"
         },
         {
           "text": {
-            "text": "It tried to burn me a little."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.did_it_prompt.choice.2"
           },
           "next": "burned_1"
         }
@@ -153,12 +153,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "That's good! I do take pride in my advice sometimes."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.followed_advice_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.followed_advice_1.choice.0"
           },
           "next": "followed_advice_2"
         }
@@ -169,12 +169,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Especially when dragons are involved."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.followed_advice_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.followed_advice_2.choice.0"
           },
           "next": "success_converge"
         }
@@ -185,12 +185,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ah-ah. Careful now."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_hard_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_hard_1.choice.0"
           },
           "next": "not_hard_2"
         }
@@ -201,12 +201,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Dragons hear arrogance better than commands. But I suppose you are right. Cindervanes are quite straightforward to deal with."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_hard_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_hard_2.choice.0"
           },
           "next": "not_hard_3"
         }
@@ -217,12 +217,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But... regardless, you did succeed. So, good job."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_hard_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.not_hard_3.choice.0"
           },
           "next": "success_converge"
         }
@@ -233,12 +233,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "...Didn't I tell you not to hit it?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.burned_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.burned_1.choice.0"
           },
           "next": "burned_2"
         }
@@ -249,12 +249,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Well, I'm still glad you didn't die. Good job."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.burned_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.burned_2.choice.0"
           },
           "next": "success_converge"
         }
@@ -265,24 +265,24 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Most people want dragons to obey. You let one choose. And that matters a lot to me. More than people think."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.success_converge.text"
       },
       "choices": [
         {
           "text": {
-            "text": "So, did I prove myself?"
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.success_converge.choice.0"
           },
           "next": "prove_router"
         },
         {
           "text": {
-            "text": "What now?"
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.success_converge.choice.1"
           },
           "next": "what_now_router"
         },
         {
           "text": {
-            "text": "You sound surprised."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.success_converge.choice.2"
           },
           "next": "surprised_router"
         }
@@ -293,19 +293,19 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "..."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_router.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_router.choice.0"
           },
           "next": "prove_advanced_1",
           "requires_flag": "has_advanced_dragon"
         },
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_router.choice.1"
           },
           "next": "prove_basic_1",
           "hidden_if_flag": "has_advanced_dragon"
@@ -317,12 +317,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Hah! Get a load of this... You're humble. I like it."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_advanced_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_advanced_1.choice.0"
           },
           "next": "prove_advanced_2"
         }
@@ -333,12 +333,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Come on, that Cindervane is child's play for someone like you."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_advanced_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_advanced_2.choice.0"
           },
           "next": "prove_converge"
         }
@@ -349,12 +349,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "A little. But don't let it inflate your head, ok?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_basic_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_basic_1.choice.0"
           },
           "next": "prove_basic_2"
         }
@@ -365,12 +365,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "You haven't seen what others can do. But if you had, then well, I hereby take everything back."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_basic_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_basic_2.choice.0"
           },
           "next": "prove_converge"
         }
@@ -381,12 +381,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But yes. You handled that well."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_converge.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.prove_converge.choice.0"
           },
           "next": "recruit_offer_1"
         }
@@ -397,19 +397,19 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "..."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_router.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_router.choice.0"
           },
           "next": "what_now_advanced",
           "requires_flag": "has_advanced_dragon"
         },
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_router.choice.1"
           },
           "next": "what_now_basic",
           "hidden_if_flag": "has_advanced_dragon"
@@ -421,12 +421,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Mm... now? Maybe having a companion like you wouldn't be a bad idea at all."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_advanced.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_advanced.choice.0"
           },
           "next": "recruit_offer_1"
         }
@@ -437,12 +437,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Now? Now I decide whether following you is brave, useful, or a terrible lapse in judgment. But it's possibly all three."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_basic.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.what_now_basic.choice.0"
           },
           "next": "recruit_offer_1"
         }
@@ -453,19 +453,19 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "..."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_router.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_router.choice.0"
           },
           "next": "surprised_advanced",
           "requires_flag": "has_advanced_dragon"
         },
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_router.choice.1"
           },
           "next": "surprised_basic",
           "hidden_if_flag": "has_advanced_dragon"
@@ -477,12 +477,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Well, I'm not, actually. I already know you can handle yourself pretty well."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_advanced.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_advanced.choice.0"
           },
           "next": "recruit_offer_1"
         }
@@ -493,12 +493,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I am. Not because I thought you'd fail. But because I've seen plenty of confident people fail loudly."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_basic.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.surprised_basic.choice.0"
           },
           "next": "recruit_offer_1"
         }
@@ -509,12 +509,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I've been thinking... staying here has its comforts, you know?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_1.choice.0"
           },
           "next": "recruit_offer_2"
         }
@@ -525,12 +525,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Quiet mornings. Familiar paths. Fewer things trying to bite me. No Mossbacks..."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_2.choice.0"
           },
           "next": "recruit_offer_3"
         }
@@ -541,12 +541,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But problems involving dragons rarely come knocking politely at my door."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_3.choice.0"
           },
           "next": "recruit_offer_4"
         }
@@ -557,24 +557,24 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "If I travel with you, maybe I can stop a few before they become tragedies. And... sightsee more. And dragonwatching. And... I'm gonna stop myself from rambling."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Come with me, then."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_4.choice.0"
           },
           "next": "come_with_me_1"
         },
         {
           "text": {
-            "text": "Only if you want to."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_4.choice.1"
           },
           "next": "if_you_want_1"
         },
         {
           "text": {
-            "text": "I could use your help."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_offer_4.choice.2"
           },
           "next": "use_help_1"
         }
@@ -585,12 +585,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Are you sure? Very well. Here to a bountiful future."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.come_with_me_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.come_with_me_1.choice.0"
           },
           "next": "join_confirm"
         }
@@ -601,12 +601,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I don't want to. What are you gonna do about it?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_1.choice.0"
           },
           "next": "if_you_want_2"
         }
@@ -617,12 +617,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "*Pfft--* I was just kidding! You should've seen the look on your face..."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_2.text",
+        "with": [
+          {
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_2.text.emphasis.0",
+            "italic": true
+          }
+        ]
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_2.choice.0"
           },
           "next": "if_you_want_3"
         }
@@ -633,12 +639,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Well... I didn't say that. But yes. I want to."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.if_you_want_3.choice.0"
           },
           "next": "join_confirm"
         }
@@ -649,12 +655,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Yes. And I could use yours."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.use_help_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.use_help_1.choice.0"
           },
           "next": "join_confirm"
         }
@@ -665,12 +671,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I'll come with you."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.join_confirm.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.join_confirm.choice.0"
           },
           "next": "promise_1"
         }
@@ -681,12 +687,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Just promise me one thing."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.promise_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "What?"
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.promise_1.choice.0"
           },
           "next": "recruit_ivy"
         }
@@ -698,12 +704,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Treat your dragons well."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_ivy.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruit_ivy.choice.0"
           },
           "next": "recruited_end",
           "set_flag": "cindervane_quest_completed"
@@ -716,7 +722,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Let's get going, {name}."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane_complete.recruited_end.text",
+        "with": [
+          {
+            "text": "{name}"
+          }
+        ]
       }
     }
   }

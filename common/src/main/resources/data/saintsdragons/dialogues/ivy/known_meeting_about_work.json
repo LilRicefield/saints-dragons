@@ -3,16 +3,16 @@
   "resume": {
     "texts": [
       {
-        "text": "Where was I? Ah, right."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.resume.0"
       },
       {
-        "text": "Back to what I was saying..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.resume.1"
       },
       {
-        "text": "Now, where did I leave off...? Oh, yes."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.resume.2"
       },
       {
-        "text": "Right, we were talking about this..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.resume.3"
       }
     ],
     "requires_all_flags": [
@@ -25,33 +25,33 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "A little trading, a little gardening, and a little making sure people don't do something ridiculous with dragons."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_you_do.text"
       },
       "choices": [
         {
           "text": {
-            "text": "People do ridiculous things with dragons?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_you_do.choice.0"
           },
           "next": "ridiculous_dragons_1",
           "hidden_if_flag": "work_dragons"
         },
         {
           "text": {
-            "text": "Gardening?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_you_do.choice.1"
           },
           "next": "gardening_1",
           "hidden_if_flag": "work_gardening"
         },
         {
           "text": {
-            "text": "So you're a dragon expert?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_you_do.choice.2"
           },
           "next": "dragon_expert_1",
           "hidden_if_flag": "work_expert"
         },
         {
           "text": {
-            "text": "That's all I need to know."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_you_do.choice.3"
           },
           "set_flag": "known_work_done",
           "next": "work_done"
@@ -63,33 +63,33 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Anything else?"
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_menu.text"
       },
       "choices": [
         {
           "text": {
-            "text": "People do ridiculous things with dragons?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_menu.choice.0"
           },
           "next": "ridiculous_dragons_1",
           "hidden_if_flag": "work_dragons"
         },
         {
           "text": {
-            "text": "Gardening?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_menu.choice.1"
           },
           "next": "gardening_1",
           "hidden_if_flag": "work_gardening"
         },
         {
           "text": {
-            "text": "So you're a dragon expert?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_menu.choice.2"
           },
           "next": "dragon_expert_1",
           "hidden_if_flag": "work_expert"
         },
         {
           "text": {
-            "text": "That's all I need to know."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.what_do_menu.choice.3"
           },
           "set_flag": "known_work_done",
           "next": "work_done"
@@ -101,12 +101,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Oh, you have no idea. People, especially the villagers, have grown quite fond of some dragon species."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_1.choice.0"
           },
           "next": "ridiculous_dragons_2"
         }
@@ -117,12 +117,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "There was a villager I knew named Nimriel who was bucked off a juvenile Varasuchus while trying to ride it, and apparently, he broke his hip after hitting the ground."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_2.choice.0"
           },
           "next": "ridiculous_dragons_3"
         }
@@ -133,12 +133,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And then someone fell off from a Cindervane, but luckily, they fell into a forest with dense trees."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_3.choice.0"
           },
           "next": "ridiculous_dragons_4"
         }
@@ -149,12 +149,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Hah! Trees are still trees. Unlucky individual."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_4.choice.0"
           },
           "next": "ridiculous_dragons_5"
         }
@@ -165,12 +165,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "And then ME, specifically. Have you even heard of a Mossback?? Actually, here's a better one: why does that thing exist?!"
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_5.choice.0"
           },
           "next": "ridiculous_dragons_6"
         }
@@ -181,12 +181,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I accidentally dropped one because it was slippery, and I got hit with a foul and overwhelming stench that blinded and POISONED me!"
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_6.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_6.choice.0"
           },
           "next": "ridiculous_dragons_7"
         }
@@ -197,12 +197,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "The audacity of those things. To have wings and cannot fly while being fat, and stinky?! Ugh..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_7.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_7.choice.0"
           },
           "next": "ridiculous_dragons_8"
         }
@@ -213,12 +213,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I had to wait it out. I was sweating the whole time like a sinner in a church pew while I was at it..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_8.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_8.choice.0"
           },
           "next": "ridiculous_dragons_9"
         }
@@ -229,12 +229,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "After the effects had worn off, it ran away, the little prick... funny thing is, they don't even react when you pick them up. And you can throw them."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_9.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_9.choice.0"
           },
           "next": "ridiculous_dragons_10"
         }
@@ -245,12 +245,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Don't even dare throw one at me, though. I'll hate you forever..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_10.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_10.choice.0"
           },
           "next": "ridiculous_dragons_11"
         }
@@ -261,12 +261,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "So yes. People do ridiculous things with dragons."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_11.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_11.choice.0"
           },
           "next": "ridiculous_dragons_12"
         }
@@ -277,12 +277,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Sometimes the dragons do ridiculous things back."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_12.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.ridiculous_dragons_12.choice.0"
           },
           "next": "what_do_menu",
           "set_flag": "work_dragons"
@@ -294,12 +294,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Mhm. Gardening."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_1.choice.0"
           },
           "next": "gardening_2"
         }
@@ -310,12 +310,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Plants are easier to negotiate with. Usually."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_2.choice.0"
           },
           "next": "gardening_3"
         }
@@ -326,12 +326,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I grow herbs, roots, flowers, a few things that are useful for medicine..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_3.choice.0"
           },
           "next": "gardening_4"
         }
@@ -342,12 +342,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "...and a few things that are useful when medicine is no longer the plan."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_4.choice.0"
           },
           "next": "gardening_5"
         }
@@ -358,12 +358,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Relax. I label the dangerous ones. Most of the time."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.gardening_5.choice.0"
           },
           "next": "what_do_menu",
           "set_flag": "work_gardening"
@@ -375,12 +375,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Well... not really. Expert is a dangerous word."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_1.choice.0"
           },
           "next": "dragon_expert_2"
         }
@@ -391,12 +391,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "People hear it and start assuming you know everything. I don't."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_2.choice.0"
           },
           "next": "dragon_expert_3"
         }
@@ -407,12 +407,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Villagers often ask me how to tame certain types of dragons. I teach them the proper methods, make sure they're prepared, and send them off with enough knowledge and equipment to not die immediately."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_3.choice.0"
           },
           "next": "dragon_expert_4"
         }
@@ -423,12 +423,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "A lot of the time, they still fail miserably."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_4.choice.0"
           },
           "next": "dragon_expert_5"
         }
@@ -439,12 +439,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Not because they're stupid. Well... not always."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_5.choice.0"
           },
           "next": "dragon_expert_6"
         }
@@ -455,12 +455,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Most just don't have the patience, caution, or nerve to deal with a wild dragon."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_6.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_6.choice.0"
           },
           "next": "dragon_expert_7"
         }
@@ -471,12 +471,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And then some ask me how to tame a Raevyx while looking like a tumbleweed with pockets."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_7.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_7.choice.0"
           },
           "next": "dragon_expert_8"
         }
@@ -487,12 +487,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Like, come on. You look like that and want to tame THE GRIM REAPER?! They can barely tame a Cindervane!"
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_8.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_8.choice.0"
           },
           "next": "dragon_expert_9"
         }
@@ -503,12 +503,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Ahem. Sorry. I didn't mean to yell."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_9.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_9.choice.0"
           },
           "next": "dragon_expert_10"
         }
@@ -519,12 +519,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Sometimes I think, 'Wouldn't it be easier to look for an egg and raise one from the start?'"
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_10.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_10.choice.0"
           },
           "next": "dragon_expert_11"
         }
@@ -535,12 +535,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But even that takes patience. And fish. An unreasonable amount of fish."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_11.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_11.choice.0"
           },
           "next": "dragon_expert_12"
         }
@@ -551,12 +551,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Anyway."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_12.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_12.choice.0"
           },
           "next": "dragon_expert_13"
         }
@@ -567,12 +567,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I know enough to stay humble. That's more than most experts can say."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_13.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_13.choice.0"
           },
           "next": "dragon_expert_14"
         }
@@ -583,12 +583,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "The moment someone says they understand dragons completely, I start looking for the nearest exit."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_14.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_14.choice.0"
           },
           "next": "dragon_expert_15"
         }
@@ -599,12 +599,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Or a shovel."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_15.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_15.choice.0"
           },
           "next": "dragon_expert_16"
         }
@@ -615,12 +615,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Depends how confident they sound."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_16.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.dragon_expert_16.choice.0"
           },
           "next": "what_do_menu",
           "set_flag": "work_expert"
@@ -632,12 +632,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Gotcha."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.work_done.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_work.work_done.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }

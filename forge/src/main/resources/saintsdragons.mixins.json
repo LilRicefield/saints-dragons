@@ -23,8 +23,8 @@
     "client.RiderMixin",
     "client.BloodTempestAfterimagePlayerRendererMixin",
     "client.BloodTempestAfterimageLivingRendererMixin",
+    "client.BloodTempestAfterimageModelMixin",
     "client.LivingEntityRendererMixin",
-    "client.EntityRendererMixin",
     "client.EntityTurnMixin"
   ],
   "server": [

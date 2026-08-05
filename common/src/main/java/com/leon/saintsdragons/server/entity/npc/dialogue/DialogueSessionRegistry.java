@@ -1,5 +1,9 @@
 package com.leon.saintsdragons.server.entity.npc.dialogue;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.leon.saintsdragons.common.network.MessageDialogueClose;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -526,11 +530,34 @@ public final class DialogueSessionRegistry {
     }
 
     private static Component resolveName(Component component, String chosenName) {
-        String text = component.getString();
-        if (!text.contains("{name}")) {
-            return component;
+        JsonElement resolvedJson = replaceNamePlaceholder(Component.Serializer.toJsonTree(component), chosenName);
+        Component resolved = Component.Serializer.fromJson(resolvedJson);
+        return resolved == null ? component : resolved;
+    }
+
+    private static JsonElement replaceNamePlaceholder(JsonElement element, String chosenName) {
+        if (element.isJsonPrimitive()) {
+            JsonPrimitive primitive = element.getAsJsonPrimitive();
+            if (primitive.isString() && primitive.getAsString().contains("{name}")) {
+                return new JsonPrimitive(primitive.getAsString().replace("{name}", chosenName));
+            }
+            return element;
         }
-        return Component.literal(text.replace("{name}", chosenName));
+        if (element.isJsonArray()) {
+            JsonArray resolved = new JsonArray();
+            for (JsonElement child : element.getAsJsonArray()) {
+                resolved.add(replaceNamePlaceholder(child, chosenName));
+            }
+            return resolved;
+        }
+        if (element.isJsonObject()) {
+            JsonObject resolved = new JsonObject();
+            for (Map.Entry<String, JsonElement> entry : element.getAsJsonObject().entrySet()) {
+                resolved.add(entry.getKey(), replaceNamePlaceholder(entry.getValue(), chosenName));
+            }
+            return resolved;
+        }
+        return element;
     }
 
     private static String sanitizeName(String rawName) {

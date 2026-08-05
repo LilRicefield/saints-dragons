@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client.event;
 
 import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
+import com.leon.saintsdragons.client.camera.DragonFovEffects;
 import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
@@ -26,6 +27,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ViewportEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = SaintsDragonsCommon.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.FORGE)
@@ -37,6 +39,11 @@ public class ClientEventHandler {
     private static net.minecraft.client.CameraType previousPerspective = null;
     private static float beamCameraForward = 0.0f;
     private static float beamCameraUp = 0.0f;
+
+    @SubscribeEvent(priority = EventPriority.LOWEST)
+    public static void onComputeFov(ViewportEvent.ComputeFov event) {
+        event.setFOV(DragonFovEffects.apply(event.getFOV(), (float) event.getPartialTick()));
+    }
 
     @SubscribeEvent
     public static void onComputeCamera(ViewportEvent.ComputeCameraAngles event) {

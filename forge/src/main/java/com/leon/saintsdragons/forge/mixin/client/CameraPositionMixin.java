@@ -42,7 +42,7 @@ public abstract class CameraPositionMixin {
     @Shadow
     public abstract void setPosition(Vec3 pos);
 
-    @Inject(method = "setup", at = @At("HEAD"))
+    @Inject(method = "setup", at = @At("HEAD"), require = 0)
     private void saintsdragons$preSetupSyncRoll(BlockGetter level, Entity entity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
         if (entity == null || detached || !isFirstPersonBankingCameraEnabled()) {
             DragonCameraState.clearRoll();
@@ -64,7 +64,7 @@ public abstract class CameraPositionMixin {
         DragonCameraState.setCurrentRoll(-rollDegrees);
     }
 
-    @Inject(method = "setup", at = @At("TAIL"))
+    @Inject(method = "setup", at = @At("TAIL"), require = 0)
     private void saintsdragons$postSetupSaddlePosition(BlockGetter level, Entity entity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
         if (entity == null || detached) {
             return;

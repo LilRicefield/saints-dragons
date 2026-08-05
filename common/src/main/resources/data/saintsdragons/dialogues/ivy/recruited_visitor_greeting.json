@@ -7,34 +7,34 @@
       },
       "texts": [
         {
-          "text": "I already have a travelling companion. But I can still trade with you."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.text.0"
         },
         {
-          "text": "I am spoken for, in the companion sense. The shop is still open, though."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.text.1"
         },
         {
-          "text": "Sorry. My companion and I travel together. That does not mean I have stopped being a trader."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.text.2"
         },
         {
-          "text": "There's little I can say to you, I'm afraid. We can still trade."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.text.3"
         },
         {
-          "text": "Sorry. There's only so much of me to go around. We can still trade."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.text.4"
         },
         {
-          "text": "You seem nice and all, but I've teamed up with someone else. We can still trade, though."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.text.5"
         }
       ],
       "choices": [
         {
           "text": {
-            "text": "I'd like to trade."
+            "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.choice.0"
           },
           "next": "trade"
         },
         {
           "text": {
-            "text": "Just saying hello."
+            "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.visitor_greeting.choice.1"
           },
           "next": "goodbye"
         }
@@ -46,12 +46,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Of course. Take a look."
+        "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.trade.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.trade.choice.0"
           },
           "next": "visitor_greeting"
         }
@@ -64,13 +64,13 @@
       },
       "texts": [
         {
-          "text": "No worries. Safe travels."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.goodbye.text.0"
         },
         {
-          "text": "Hello to you too. Take care."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.goodbye.text.1"
         },
         {
-          "text": "All right. Take care."
+          "translate": "dialogue.saintsdragons.ivy.recruited_visitor_greeting.goodbye.text.2"
         }
       ]
     }

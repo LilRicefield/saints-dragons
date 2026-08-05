@@ -3,16 +3,16 @@
   "resume": {
     "texts": [
       {
-        "text": "Where was I? Ah, right."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.resume.0"
       },
       {
-        "text": "Back to what I was saying..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.resume.1"
       },
       {
-        "text": "Now, where did I leave off...? Oh, yes."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.resume.2"
       },
       {
-        "text": "Right, we were talking about this..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.resume.3"
       }
     ],
     "requires_all_flags": [
@@ -25,12 +25,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "You can say that, sure."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge.choice.0"
           },
           "next": "dragon_knowledge_opener_2"
         }
@@ -41,12 +41,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But it's enough to know when someone is about to get killed. Which is, unfortunately, often."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge_opener_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge_opener_2.choice.0"
           },
           "next": "dragon_knowledge_opener_3"
         }
@@ -57,18 +57,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And it's enough to know people are usually wrong about them."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge_opener_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Wrong how?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge_opener_3.choice.0"
           },
           "next": "dragon_wrong_1"
         },
         {
           "text": {
-            "text": "Sounds complicated."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_knowledge_opener_3.choice.1"
           },
           "next": "dragon_complicated_1"
         }
@@ -79,12 +79,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Most people talk about dragons like they're all the same. Big wings, sharp teeth, bad temper. Blah, blah, blah."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_1.choice.0"
           },
           "next": "dragon_wrong_2"
         }
@@ -95,12 +95,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "That's like saying every person with a sword is a knight."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_2.choice.0"
           },
           "next": "dragon_wrong_3"
         }
@@ -111,12 +111,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Or like, if a cat suddenly makes barking-like sounds, it's a dog. Does that make sense? No? *Ahem*, anyway."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_3.text",
+        "with": [
+          {
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_3.text.emphasis.0",
+            "italic": true
+          }
+        ]
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrong_3.choice.0"
           },
           "next": "dragon_variety_1"
         }
@@ -127,12 +133,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Yep. I know. When it comes to dragons, it's not really a walk-in-the-park sort of situation."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_1.choice.0"
           },
           "next": "dragon_complicated_2"
         }
@@ -143,12 +149,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I did have help from a guy with the name that has something to do with your diaphragm involuntarily slamming downward super fast."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_2.choice.0"
           },
           "next": "dragon_complicated_3"
         }
@@ -159,12 +165,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And he had a really cute black dragon with him. Big green eyes. Almost like a cat. And it moved like one, too."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_3.choice.0"
           },
           "next": "dragon_complicated_4"
         }
@@ -175,12 +181,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I've spent a lot of time studying dragons. Especially the Raevyx. But, uh, let's not talk about that."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_4.choice.0"
           },
           "next": "dragon_complicated_5"
         }
@@ -191,12 +197,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Point is, dragons are more complicated than people want them to be."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_complicated_5.choice.0"
           },
           "next": "dragon_variety_1_b"
         }
@@ -207,12 +213,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Some are territorial. Some are curious. Some are clever enough to pretend they aren't."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_1.choice.0"
           },
           "next": "dragon_variety_2"
         }
@@ -223,12 +229,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And some... well. Some are best admired from a very safe distance and left alone."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "So dragons aren't just monsters?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_2.choice.0"
           },
           "next": "dragon_monsters_1"
         }
@@ -239,12 +245,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "No, for most of the time."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_1.choice.0"
           },
           "next": "dragon_monsters_2"
         }
@@ -255,12 +261,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But dangerous? Yes. Always."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_2.choice.0"
           },
           "next": "dragon_monsters_3"
         }
@@ -271,12 +277,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But monster is a word people use when they don't want to understand what they're afraid of."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_3.choice.0"
           },
           "next": "dragon_monsters_4"
         }
@@ -287,12 +293,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Except for... the damn *Volitans*. Eugh. Steer clear from those weird freaks."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_4.text",
+        "with": [
+          {
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_4.text.emphasis.0",
+            "italic": true
+          }
+        ]
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_4.choice.0"
           },
           "next": "dragon_monsters_5"
         }
@@ -303,12 +315,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_5.choice.0"
           },
           "next": "dragon_monsters_6"
         }
@@ -319,12 +331,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And I was lucky enough to gather a lot of spines for arrows when they shed."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_6.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_6.choice.0"
           },
           "next": "dragon_wrap_1"
         }
@@ -335,12 +347,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I could talk about dragons for hours, but that would be rude. Probably."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_1.choice.0"
           },
           "next": "dragon_wrap_2"
         }
@@ -351,12 +363,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_2.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt",
           "set_flag": "known_dragons_done"
@@ -368,12 +380,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Some are territorial. Some are curious. Some are clever enough to pretend they aren't."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_1_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_1_b.choice.0"
           },
           "next": "dragon_variety_2_b"
         }
@@ -384,12 +396,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And some... well. Some are best admired from a very safe distance and left alone."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_2_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "So dragons aren't just monsters?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_variety_2_b.choice.0"
           },
           "next": "dragon_monsters_1_b"
         }
@@ -400,12 +412,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "No, for most of the time."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_1_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_1_b.choice.0"
           },
           "next": "dragon_monsters_2_b"
         }
@@ -416,12 +428,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But dangerous? Yes. Always."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_2_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_2_b.choice.0"
           },
           "next": "dragon_monsters_3_b"
         }
@@ -432,12 +444,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But monster is a word people use when they don't want to understand what they're afraid of."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_3_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_3_b.choice.0"
           },
           "next": "dragon_monsters_4_b"
         }
@@ -448,12 +460,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Except for... the damn *Volitans*. Eugh. Steer clear from those weird freaks."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_4_b.text",
+        "with": [
+          {
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_4_b.text.emphasis.0",
+            "italic": true
+          }
+        ]
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_4_b.choice.0"
           },
           "next": "dragon_monsters_5_b"
         }
@@ -464,12 +482,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "They are extremely lethal and sneaky despite their appearances. I almost got jumped by one when I was looking for a trident underwater..."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_5_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_5_b.choice.0"
           },
           "next": "dragon_monsters_6_b"
         }
@@ -480,12 +498,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And I was lucky enough to gather a lot of spines for arrows when they shed."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_6_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_monsters_6_b.choice.0"
           },
           "next": "dragon_wrap_1_b"
         }
@@ -496,12 +514,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I could talk about dragons for hours, but that would be rude. Probably."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_1_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_1_b.choice.0"
           },
           "next": "dragon_wrap_2_b"
         }
@@ -512,18 +530,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Anyway. That's probably more dragon talk than you asked for. I hope you weren't overwhelmed."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_2_b.text"
       },
       "choices": [
         {
           "text": {
-            "text": "That rider you mentioned... who was he?"
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_2_b.choice.0"
           },
           "next": "dragon_rider_1"
         },
         {
           "text": {
-            "text": "That's all for now."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_wrap_2_b.choice.1"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt",
           "set_flag": "known_dragons_done"
@@ -535,12 +553,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ah, right. A strange young chief. Clever. Awkward in a way that somehow worked for him."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_1.choice.0"
           },
           "next": "dragon_rider_2"
         }
@@ -551,12 +569,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I couldn't help but notice the prosthetic first time I met him."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_2.choice.0"
           },
           "next": "dragon_rider_3"
         }
@@ -567,12 +585,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I didn't ask too many questions. Some are better remembered as stories."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_3.choice.0"
           },
           "next": "dragon_rider_4"
         }
@@ -583,12 +601,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "He had a black dragon with him. Big green eyes. Aerodynamic wings. Sleek body. Truly beautiful."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_4.choice.0"
           },
           "next": "dragon_rider_5"
         }
@@ -599,12 +617,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Moved like a cat. Looked at people like it knew exactly how stupid they were."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_5.choice.0"
           },
           "next": "dragon_rider_6"
         }
@@ -615,12 +633,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "That dragon wasn't young. Not old either. But it carried itself like something that had survived more than a few bad ideas. I wish I had known its name."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_6.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_6.choice.0"
           },
           "next": "dragon_rider_7"
         }
@@ -631,12 +649,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "But then the rider claimed his dragon was the fastest thing in the sky."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_7.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_7.choice.0"
           },
           "next": "dragon_rider_8"
         }
@@ -647,12 +665,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Which was rude, because my Raevyx was right there."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_8.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_8.choice.0"
           },
           "next": "dragon_rider_9"
         }
@@ -663,12 +681,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "So we raced."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_9.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_9.choice.0"
           },
           "next": "dragon_rider_10"
         }
@@ -679,12 +697,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "It was close. Almost a tie, actually."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_10.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_10.choice.0"
           },
           "next": "dragon_rider_11"
         }
@@ -695,12 +713,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Almost... I think he won. I don't know."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_11.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_11.choice.0"
           },
           "next": "dragon_rider_12"
         }
@@ -711,12 +729,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I would've liked to win, but... it was fun. Anyway, yeah, that's it. We exchanged goodbyes and that was that."
+        "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_12.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.known_meeting_about_dragon.dragon_rider_12.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt",
           "set_flag": "known_dragons_done"

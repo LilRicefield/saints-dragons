@@ -32,7 +32,8 @@ public abstract class GameRendererMixin {
                     value = "INVOKE",
                     target = "Lcom/mojang/math/Axis;rotationDegrees(F)Lorg/joml/Quaternionf;",
                     ordinal = 2
-            )
+            ),
+            require = 0
     )
     private void saintsdragons$applyDragonFirstPersonRoll(float partialTick, long finishNanoTime, PoseStack poseStack, CallbackInfo ci) {
         if (this.minecraft == null || this.minecraft.options == null) {
@@ -72,7 +73,8 @@ public abstract class GameRendererMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V"
-            )
+            ),
+            require = 0
     )
     private void saintsdragons$renderSpeedLinesWithHiddenGui(float partialTick, long nanoTime, boolean renderLevel, CallbackInfo ci) {
         if (!renderLevel

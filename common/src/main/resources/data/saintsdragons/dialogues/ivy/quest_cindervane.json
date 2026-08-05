@@ -6,12 +6,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Cindervanes are migrating this season, and that tends to make people reckless."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_migration_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_migration_1.choice.0"
           },
           "next": "cindervane_migration_2"
         }
@@ -22,18 +22,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "I want you to tame one. Properly, that is. Just to test your mettle."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_migration_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "How do I tame a Cindervane?"
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_migration_2.choice.0"
           },
           "next": "cindervane_taming_1"
         },
         {
           "text": {
-            "text": "No way. I'm out."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_migration_2.choice.1"
           },
           "next": "cindervane_refuse_1"
         }
@@ -44,12 +44,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I suggest you look for food items like cod, salmon, or raw chicken. Or everything. They are not picky when hungry."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_1.choice.0"
           },
           "next": "cindervane_taming_2"
         }
@@ -60,12 +60,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "If you want better odds, trade with me for fish and eggs. I can make you Hearty Dragon Meals."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_2.choice.0"
           },
           "next": "cindervane_taming_3"
         }
@@ -76,12 +76,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Once you have the food, look for Cindervanes in mountainous biomes, like Stony Peaks, Jagged Peaks, Frozen Peaks, Snowy Slopes, Groves, and even Meadows."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_3.choice.0"
           },
           "next": "cindervane_taming_4"
         }
@@ -92,12 +92,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "...And potentially other high-altitude areas from other 'biome mods' or whatever that means."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_4.choice.0"
           },
           "next": "cindervane_taming_5"
         }
@@ -108,12 +108,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Once you've found one, just approach it, and tame it like how you would tame a dog or a cat."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_5.choice.0"
           },
           "next": "cindervane_taming_6"
         }
@@ -124,12 +124,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Do NOT hit it. Please. If you've somehow made it mad, then it's best to run away, or chug a Fire Resistance Potion, or worse... kill it."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_6.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_6.choice.0"
           },
           "next": "cindervane_taming_7"
         }
@@ -140,12 +140,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "When you've tamed one, come back to me, then we'll see where things go."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_7.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_7.choice.0"
           },
           "next": "cindervane_taming_confirm"
         }
@@ -156,18 +156,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Is everything clear?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_confirm.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Can you go over it one more time?"
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_confirm.choice.0"
           },
           "next": "cindervane_repeat"
         },
         {
           "text": {
-            "text": "Crystal clear."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_confirm.choice.1"
           },
           "next": "cindervane_quest_started",
           "set_flag": "cindervane_quest_started",
@@ -175,7 +175,7 @@
         },
         {
           "text": {
-            "text": "I already tamed a Cindervane."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_taming_confirm.choice.2"
           },
           "next": "cindervane_already_tamed_1",
           "set_flag": "cindervane_quest_started",
@@ -188,12 +188,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "You... You already tamed one?"
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_already_tamed_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_already_tamed_1.choice.0"
           },
           "next": "cindervane_already_tamed_2"
         }
@@ -204,12 +204,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Well... That certainly makes this easier! I suppose I do not need to explain the dangerous part anymore."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_already_tamed_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_already_tamed_2.choice.0"
           },
           "next": "saintsdragons:ivy/quest_cindervane_complete#success_converge"
         }
@@ -220,12 +220,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Very well. I'll explain again. It's good to be thorough."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_repeat.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_repeat.choice.0"
           },
           "next": "cindervane_taming_1"
         }
@@ -237,7 +237,7 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Good. Come back once you've tamed one."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_quest_started.text"
       }
     },
     "cindervane_refuse_1": {
@@ -245,12 +245,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "...Very well. I understand why you are hesitant."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_refuse_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_refuse_1.choice.0"
           },
           "next": "cindervane_refuse_2"
         }
@@ -261,12 +261,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And honestly, that's one of the more reasonable answers I've heard."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_refuse_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_refuse_2.choice.0"
           },
           "next": "cindervane_refuse_3"
         }
@@ -277,12 +277,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "We'll revisit the matter later, if you want to, of course."
+        "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_refuse_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.quest_cindervane.cindervane_refuse_3.choice.0"
           },
           "next": "saintsdragons:ivy/known_greeting#return_prompt"
         }

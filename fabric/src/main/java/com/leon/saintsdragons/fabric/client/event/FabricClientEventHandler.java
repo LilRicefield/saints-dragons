@@ -22,9 +22,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.AABB;
 
-import java.lang.reflect.Method;
-
-
 public class FabricClientEventHandler {
     private static final double[] randomTremorOffsets = new double[3];
 
@@ -33,8 +30,6 @@ public class FabricClientEventHandler {
     private static net.minecraft.client.CameraType previousPerspective = null;
     private static float beamCameraForward = 0.0f;
     private static float beamCameraUp = 0.0f;
-    private static boolean zoomifyLookupResolved = false;
-    private static Method zoomifyDivisorMethod = null;
 
     /**
      * Initialize the client event handler.
@@ -146,7 +141,6 @@ public class FabricClientEventHandler {
         DragonRideCameraController.CameraOutput output = DragonRideCameraController.update(vehicle, partialTicks);
         CameraAccessor cameraAccessor = (CameraAccessor) camera;
         double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(output.zoom());
-        maxZoom = applyZoomifyCameraDistance(maxZoom, partialTicks);
         cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
         cameraAccessor.saintsdragons$invokeMove(0, output.verticalShift(), output.lateralShift());
 
@@ -193,38 +187,5 @@ public class FabricClientEventHandler {
         }
     }
 
-    private static double applyZoomifyCameraDistance(double maxZoom, float partialTicks) {
-        double zoomDivisor = getZoomifyZoomDivisor(partialTicks);
-        if (zoomDivisor <= 1.0D) {
-            return maxZoom;
-        }
-        return maxZoom / zoomDivisor;
-    }
-
-    private static double getZoomifyZoomDivisor(float partialTicks) {
-        if (!zoomifyLookupResolved) {
-            zoomifyLookupResolved = true;
-            try {
-                Class<?> zoomifyClass = Class.forName("dev.isxander.zoomify.Zoomify");
-                zoomifyDivisorMethod = zoomifyClass.getMethod("getZoomDivisor", float.class);
-            } catch (ReflectiveOperationException ignored) {
-                zoomifyDivisorMethod = null;
-            }
-        }
-
-        if (zoomifyDivisorMethod == null) {
-            return 1.0D;
-        }
-
-        try {
-            Object value = zoomifyDivisorMethod.invoke(null, partialTicks);
-            if (value instanceof Number number) {
-                return Math.max(1.0D, number.doubleValue());
-            }
-        } catch (ReflectiveOperationException ignored) {
-            zoomifyDivisorMethod = null;
-        }
-        return 1.0D;
-    }
 }
 

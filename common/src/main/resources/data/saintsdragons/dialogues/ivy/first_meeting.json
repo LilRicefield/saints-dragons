@@ -3,16 +3,16 @@
   "resume": {
     "texts": [
       {
-        "text": "Where was I? Ah, right."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.resume.0"
       },
       {
-        "text": "Back to what I was saying..."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.resume.1"
       },
       {
-        "text": "Now, where did I leave off...? Oh, yes."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.resume.2"
       },
       {
-        "text": "Right, we were talking about this..."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.resume.3"
       }
     ],
     "requires_all_flags": [
@@ -25,31 +25,31 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Oh, hi there. I didn't expect to see anyone here. Most people don't find this place by accident. You must love exploring, hm?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.intro.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Maybe I'm not most people."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.intro.choice.0"
           },
           "next": "a_confidence"
         },
         {
           "text": {
-            "text": "I'm sorry. Am I trespassing?"
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.intro.choice.1"
           },
           "impression": "trespasser",
           "next": "b_trespassing"
         },
         {
           "text": {
-            "text": "I was told a trader lived out here."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.intro.choice.2"
           },
           "next": "c_trader"
         },
         {
           "text": {
-            "text": "Who are you exactly?"
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.intro.choice.3"
           },
           "next": "d_who_are_you_1"
         }
@@ -60,18 +60,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Oh? That's either confidence or a warning. I haven't decided which. So... friendly or not?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.a_confidence.text"
       },
       "choices": [
         {
           "text": {
-            "text": "I'm friendly."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.a_confidence.choice.0"
           },
           "next": "a_friendly"
         },
         {
           "text": {
-            "text": "I'm not friendly."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.a_confidence.choice.1"
           },
           "impression": "rude",
           "next": "a_not_friendly"
@@ -83,12 +83,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I was hoping you'd say that... it's nice to make your acquaintance."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.a_friendly.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.a_friendly.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -99,12 +99,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Okaaay... Well, I was hoping you'd not say that..."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.a_not_friendly.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.a_not_friendly.choice.0"
           },
           "next": "anchor_intro_rude"
         }
@@ -115,12 +115,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "No, you are not. Why would you think that? Oh, wait, yeah. It'd make sense for you to think so... but no, *ahem*, you're not."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.b_trespassing.text",
+        "with": [
+          {
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.b_trespassing.text.emphasis.0",
+            "italic": true
+          }
+        ]
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.b_trespassing.choice.0"
           },
           "next": "b_home"
         }
@@ -131,12 +137,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Welcome to my home. Where I live alone and... peaceful."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.b_home.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.b_home.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -147,19 +153,19 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ah, hey-ho, stranger. Yes. You found her. Would you like to see my wares?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_trader.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Woah, what? Your 'wares' wares??"
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_trader.choice.0"
           },
           "impression": "wares",
           "next": "c_wares_misread"
         },
         {
           "text": {
-            "text": "Yes, I'd like to trade with you."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_trader.choice.1"
           },
           "next": "c_trade_straight"
         }
@@ -171,12 +177,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "...E-Excuse me? What--what was that supposed to mean? Was it such a good idea to say that to someone who you did not know?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_wares_misread.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Well, your fault for not specifying!"
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_wares_misread.choice.0"
           },
           "next": "c_your_fault"
         }
@@ -187,12 +193,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "WHAT?? Wha--you should've... you shouldn't even be thinking about that in the first place!"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault.choice.0"
           },
           "next": "c_your_fault_sigh"
         }
@@ -204,12 +210,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Ugh..."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault_sigh.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault_sigh.choice.0"
           },
           "next": "c_your_fault_trade_prompt"
         }
@@ -220,18 +226,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Then? Would you like to trade with me?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault_trade_prompt.text"
       },
       "choices": [
         {
           "text": {
-            "text": "See? That's so much better!"
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault_trade_prompt.choice.0"
           },
           "next": "c_dont_get_smart"
         },
         {
           "text": {
-            "text": "Yes, show me your wares."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_your_fault_trade_prompt.choice.1"
           },
           "next": "c_silent_trade"
         }
@@ -243,12 +249,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Don't get smart..."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_dont_get_smart.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_dont_get_smart.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -260,12 +266,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "..."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_silent_trade.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_silent_trade.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -277,12 +283,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Excellent. I have some good stuff you'd like to take a look at."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.c_trade_straight.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.c_trade_straight.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -294,12 +300,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "That's a fair question. A trader, mostly."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_1.choice.0"
           },
           "next": "d_who_are_you_2"
         }
@@ -311,12 +317,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Gardener when the weather cooperates."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_2.choice.0"
           },
           "next": "d_who_are_you_3"
         }
@@ -328,12 +334,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "And occasionally the person people bother when they need dragon-related advice."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_3.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_3.choice.0"
           },
           "next": "d_who_are_you_4"
         }
@@ -345,12 +351,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Though I suppose that doesn't really answer your question, does it?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_4.text"
       },
       "choices": [
         {
           "text": {
-            "text": "It's a start."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_4.choice.0"
           },
           "next": "d_progress"
         }
@@ -361,18 +367,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "With that being said, would you like to trade?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_5.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Yes, I'd like to trade with you."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_5.choice.0"
           },
           "next": "d_trade"
         },
         {
           "text": {
-            "text": "No, I'm good."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_who_are_you_5.choice.1"
           },
           "next": "d_no_trade"
         }
@@ -384,12 +390,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "I'll show you what I have."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_trade.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_trade.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -400,12 +406,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Ah, I see. No worries."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_no_trade.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_no_trade.choice.0"
           },
           "next": "anchor_intro"
         }
@@ -416,12 +422,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "Then we'll call it progress."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.d_progress.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.d_progress.choice.0"
           },
           "next": "d_who_are_you_5"
         }
@@ -432,30 +438,30 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Well, anyway. My name is Ivy. Ivy Oleander. The last name is kind of uncommon. Rare, even. But yeah, you?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Tell her your name."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro.choice.0"
           },
           "next": "anchor_name_select"
         },
         {
           "text": {
-            "text": "That's a pretty name."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro.choice.1"
           },
           "next": "anchor_pretty_name"
         },
         {
           "text": {
-            "text": "Oleander? Isn't that poisonous?"
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro.choice.2"
           },
           "next": "anchor_poisonous"
         },
         {
           "text": {
-            "text": "Never heard that name before."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro.choice.3"
           },
           "next": "anchor_never_heard_1"
         }
@@ -466,13 +472,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Just call me Ivy. Gonna tell me your name?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro_rude.text"
       },
-
       "choices": [
         {
           "text": {
-            "text": "Tell her your name."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_intro_rude.choice.0"
           },
           "next": "anchor_name_select_rude"
         }
@@ -483,12 +488,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "...Thank you. Most people just say it sounds like a plant. Which, well. It is. Two of them, actually."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_pretty_name.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_pretty_name.choice.0"
           },
           "next": "anchor_name_question"
         }
@@ -499,12 +504,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Most people don't catch that. You're more observant than you look."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_poisonous.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_poisonous.choice.0"
           },
           "next": "anchor_name_question"
         }
@@ -515,12 +520,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-      "text": "That's kind of the point, I think. My mother had a thing for unusual things."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_never_heard_1.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_never_heard_1.choice.0"
           },
           "next": "anchor_never_heard_2"
         }
@@ -531,12 +536,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Though if you've somehow met another Oleander, I'd be very interested to hear about it."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_never_heard_2.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_never_heard_2.choice.0"
           },
           "next": "anchor_name_question"
         }
@@ -547,12 +552,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Anyway. What's your name?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_question.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Tell her your name."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_question.choice.0"
           },
           "next": "anchor_name_select"
         }
@@ -563,18 +568,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "What would you like me to call you?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_select.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Use your Minecraft username."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_select.choice.0"
           },
           "next": "anchor_name_use_username"
         },
         {
           "text": {
-            "text": "Choose what Ivy calls you."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_select.choice.1"
           },
           "next": "anchor_name_input"
         }
@@ -586,12 +591,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": ""
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_use_username.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_use_username.choice.0"
           },
           "next": "anchor_name_answer"
         }
@@ -603,12 +608,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "What should I call you?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_input.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_input.choice.0"
           },
           "next": "anchor_name_answer"
         }
@@ -619,18 +624,18 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "What am I calling you, then?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_select_rude.text"
       },
       "choices": [
         {
           "text": {
-            "text": "Use your Minecraft username."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_select_rude.choice.0"
           },
           "next": "anchor_name_use_username_rude"
         },
         {
           "text": {
-            "text": "Choose what Ivy calls you."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_select_rude.choice.1"
           },
           "next": "anchor_name_input_rude"
         }
@@ -642,12 +647,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": ""
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_use_username_rude.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_use_username_rude.choice.0"
           },
           "next": "anchor_name_answer_rude"
         }
@@ -659,12 +664,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "What should I call you?"
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_input_rude.text"
       },
       "choices": [
         {
           "text": {
-            "text": "..."
+            "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_input_rude.choice.0"
           },
           "next": "anchor_name_answer_rude"
         }
@@ -676,7 +681,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "It's a pleasure meeting you, {name}. I'm sure we'll get along just fine."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_answer.text",
+        "with": [
+          {
+            "text": "{name}"
+          }
+        ]
       }
     },
     "anchor_name_answer_rude": {
@@ -685,7 +695,12 @@
         "translate": "entity.saintsdragons.ivy_oleander"
       },
       "text": {
-        "text": "Welp, not much of a pleasure, {name}. But better than nothing."
+        "translate": "dialogue.saintsdragons.ivy.first_meeting.anchor_name_answer_rude.text",
+        "with": [
+          {
+            "text": "{name}"
+          }
+        ]
       }
     }
   }

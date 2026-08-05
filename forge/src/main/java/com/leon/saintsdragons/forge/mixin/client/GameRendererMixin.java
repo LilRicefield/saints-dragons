@@ -21,7 +21,8 @@ public abstract class GameRendererMixin {
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V"
-            )
+            ),
+            require = 0
     )
     private void saintsdragons$renderSpeedLinesWithHiddenGui(float partialTick, long nanoTime, boolean renderLevel, CallbackInfo ci) {
         if (!renderLevel
