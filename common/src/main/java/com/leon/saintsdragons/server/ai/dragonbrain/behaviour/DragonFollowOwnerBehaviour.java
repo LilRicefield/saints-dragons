@@ -25,6 +25,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private static final double AIR_SPEED_EPSILON = 0.15D;
     private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
     private static final double AIR_CATCH_UP_MULTIPLIER = 1.35D;
+    private static final int FAILED_GROUND_PATH_RETRY_TICKS = 10;
 
     private final Config config;
     private final Consumer<T> takeoffStarter;
@@ -205,6 +206,12 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             groundRepathCooldown = 0;
             return;
         }
+        if (dragon.getAIMovement().hasFailed()) {
+            dragon.getAIMovement().stop();
+            rememberOwner(owner);
+            groundRepathCooldown = FAILED_GROUND_PATH_RETRY_TICKS;
+            return;
+        }
         boolean running = distance > config.runDistance;
         double baseSpeed = running ? config.runSpeed : config.walkSpeed;
         double speed = Math.min(
@@ -214,19 +221,16 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         if (groundRepathCooldown > 0) {
             groundRepathCooldown--;
         }
-        boolean idle = dragon.getAIMovement().hasArrived() || !dragon.getAIMovement().isPathing();
-        if (idle || ownerMoved(owner) || groundRepathCooldown <= 0) {
-            if (!dragon.getAIMovement().moveToGroundTarget(owner, speed, running)) {
-                dragon.getAIMovement().moveToGroundPosition(owner.position(), speed, running);
-            }
+        if (dragon.getAIMovement().hasArrived()) {
+            groundRepathCooldown = 0;
+        }
+        if (ownerMoved(owner) || groundRepathCooldown <= 0) {
+            boolean accepted = dragon.getAIMovement().moveToProgressiveGroundTarget(owner, speed, running);
             rememberOwner(owner);
             int baseCooldown = (int)Math.ceil(distance * (running ? 0.3D : 0.45D));
-            groundRepathCooldown = Mth.clamp(baseCooldown, running ? 4 : 6, running ? 18 : 24);
-        }
-        if (dragon.getAIMovement().hasFailed()) {
-            dragon.getJumpControl().jump();
-            dragon.getAIMovement().stop();
-            groundRepathCooldown = 0;
+            groundRepathCooldown = accepted
+                    ? Mth.clamp(baseCooldown, running ? 4 : 6, running ? 18 : 24)
+                    : FAILED_GROUND_PATH_RETRY_TICKS;
         }
     }
 

@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record AtroxiiaRiderController(Atroxiia dragon) {
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final double SEAT_BASE_FACTOR = 0.0D;
+    private static final double SEAT_BASE_FACTOR = 0.8D;
     private static final double SWIM_SPEED = 0.30D;
     private static final double SPRINT_SWIM_SPEED = 0.42D;
     private static final double SWIM_RESPONSE = 0.28D;

@@ -1,7 +1,5 @@
 package com.leon.saintsdragons.server.entity.controller.ignivorus;
 
-import com.leon.saintsdragons.server.entity.ability.DragonAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
@@ -151,7 +149,11 @@ public record IgnivorusRiderController(Ignivorus dragon) {
                     dragon,
                     player,
                     motion,
-                    getEffectivePitchRadians(player),
+                    DragonRiderControllerHelper.resolveRiderPitchRadians(
+                            dragon,
+                            player,
+                            Ignivorus.RIDER_KEY_PITCH_DEG
+                    ),
                     dragon.isRiderPitchKeyMode(),
                     flightSettings(),
                     isTakeoffWindowActive(),
@@ -176,16 +178,6 @@ public record IgnivorusRiderController(Ignivorus dragon) {
                 TERMINAL_VELOCITY,
                 ASCEND_THRUST * 0.65D
         );
-    }
-
-    private float getEffectivePitchRadians(Player player) {
-        DragonAbility<?> ability = dragon.getActiveAbility();
-        boolean lockPitch = dragon.isBreathingFire()
-                || (ability instanceof IgnivorusFireBreathAbility && ability.isUsing());
-        if (lockPitch) {
-            return 0.0f;
-        }
-        return DragonRiderControllerHelper.resolveRiderPitchRadians(dragon, player, Ignivorus.RIDER_KEY_PITCH_DEG);
     }
 
     public double getPassengersRidingOffset() {

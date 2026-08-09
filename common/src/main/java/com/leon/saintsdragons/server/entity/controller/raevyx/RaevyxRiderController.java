@@ -1,7 +1,5 @@
 package com.leon.saintsdragons.server.entity.controller.raevyx;
 
-import com.leon.saintsdragons.server.entity.ability.DragonAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
@@ -15,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record RaevyxRiderController(Raevyx wyvern) {
-    private static final double SEAT_BASE_FACTOR = 0.50D;
+    private static final double SEAT_BASE_FACTOR = 3.50D;
     private static final double SEAT_HEIGHT_ADJUST = 0.00D;
     private static final double BASE_FLIGHT_SPEED_MULT = 4.0;
     private static final double SPRINT_FLIGHT_SPEED_MULT = 6.0;
@@ -67,7 +65,11 @@ public record RaevyxRiderController(Raevyx wyvern) {
                     wyvern,
                     player,
                     motion,
-                    getEffectivePitchRadians(player),
+                    DragonRiderControllerHelper.resolveRiderPitchRadians(
+                            wyvern,
+                            player,
+                            Raevyx.RIDER_KEY_PITCH_DEG
+                    ),
                     wyvern.isRiderPitchKeyMode(),
                     flightSettings(),
                     wyvern.getRiderTakeoffTicks() > 0,
@@ -92,16 +94,6 @@ public record RaevyxRiderController(Raevyx wyvern) {
                 TERMINAL_VELOCITY,
                 ASCEND_THRUST
         );
-    }
-
-    private float getEffectivePitchRadians(Player player) {
-        DragonAbility<?> ability = wyvern.getActiveAbility();
-        boolean lockPitch = wyvern.isBeaming()
-                || (ability instanceof RaevyxBeamAbility && ability.isUsing());
-        if (lockPitch) {
-            return 0.0f;
-        }
-        return DragonRiderControllerHelper.resolveRiderPitchRadians(wyvern, player, Raevyx.RIDER_KEY_PITCH_DEG);
     }
 
     private double getMountedFlightBaseSpeed() {

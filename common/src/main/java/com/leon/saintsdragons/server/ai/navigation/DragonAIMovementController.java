@@ -83,6 +83,9 @@ public class DragonAIMovementController {
             if (reached) {
                 groundPathState = GroundPathState.ARRIVED;
                 currentWaypoint = null;
+            } else if (currentWaypoint != null
+                    && currentWaypoint.mode() == MovementMode.PROGRESSIVE_GROUND) {
+                completeProgressiveGroundSegment();
             } else {
                 recordGroundPathFailure(currentWaypoint != null ? currentWaypoint.target() : null);
             }
@@ -230,6 +233,10 @@ public class DragonAIMovementController {
         }
         ensureGroundNavigation();
         return startWaypoint(new QueuedWaypoint(target, speed, running, MovementMode.PROGRESSIVE_GROUND));
+    }
+
+    public boolean moveToProgressiveGroundTarget(LivingEntity target, double speed, boolean running) {
+        return target != null && moveToProgressiveGroundPosition(target.position(), speed, running);
     }
 
     public boolean requestGroundTransition(@Nullable LivingEntity target, double speed) {
@@ -815,9 +822,13 @@ public class DragonAIMovementController {
                         return;
                     }
 
-                    if (!path.canReach() && currentWaypoint.mode().requiresCompletePath()) {
-                        recordGroundPathFailure(currentWaypoint.target());
-                        return;
+                    if (!path.canReach()) {
+                        if (currentWaypoint.mode().requiresCompletePath()
+                                || (currentWaypoint.mode() == MovementMode.PROGRESSIVE_GROUND
+                                && !hasUsefulPartialGroundProgress(path, currentWaypoint.target()))) {
+                            recordGroundPathFailure(currentWaypoint.target());
+                            return;
+                        }
                     }
 
                     Path resolvedPath = path;
@@ -839,6 +850,33 @@ public class DragonAIMovementController {
                     groundPathState = GroundPathState.FOLLOWING;
                 }
         );
+    }
+
+    private boolean hasUsefulPartialGroundProgress(Path path, Vec3 target) {
+        if (path == null || path.getNodeCount() == 0 || target == null) {
+            return false;
+        }
+
+        Vec3 endpoint = path.getEntityPosAtNode(dragon, path.getNodeCount() - 1);
+        double progress = horizontalDistance(dragon.position(), target)
+                - horizontalDistance(endpoint, target);
+        double minimumProgress = Math.max(0.75D, Math.min(2.0D, dragon.getBbWidth() * 0.25D));
+        return progress >= minimumProgress;
+    }
+
+    private void completeProgressiveGroundSegment() {
+        currentWaypoint = null;
+        groundPathState = GroundPathState.ARRIVED;
+        groundPathFailureRetryTicks = 0;
+        lastFailedGroundTarget = null;
+        dragon.getNavigation().stop();
+        setGroundIdle();
+    }
+
+    private static double horizontalDistance(Vec3 first, Vec3 second) {
+        double dx = first.x - second.x;
+        double dz = first.z - second.z;
+        return Math.sqrt(dx * dx + dz * dz);
     }
 
     private void recordGroundPathFailure(@Nullable Vec3 target) {

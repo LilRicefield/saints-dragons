@@ -10,6 +10,8 @@ import net.minecraft.world.entity.LivingEntity;
 import java.util.Map;
 
 public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
+    private static final int FAILED_PATH_RETRY_TICKS = 10;
+
     private final Config config;
     private int repathCooldown;
     private double lastOwnerX = Double.NaN;
@@ -65,20 +67,23 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
             repathCooldown = 0;
             return;
         }
-        if (repathCooldown > 0) repathCooldown--;
-        boolean idle = dragon.getAIMovement().hasArrived() || !dragon.getAIMovement().isPathing();
-        if (idle || ownerMoved(owner) || repathCooldown <= 0) {
-            double speed = fast ? config.fastSpeed : config.speed;
-            if (!dragon.getAIMovement().moveToGroundTarget(owner, speed, fast)) {
-                dragon.getAIMovement().moveToGroundPosition(owner.position(), speed, fast);
-            }
-            remember(owner);
-            repathCooldown = Mth.clamp((int)Math.ceil(distance * 0.45D), 6, 24);
-        }
         if (dragon.getAIMovement().hasFailed()) {
-            dragon.getJumpControl().jump();
             dragon.getAIMovement().stop();
+            remember(owner);
+            repathCooldown = FAILED_PATH_RETRY_TICKS;
+            return;
+        }
+        if (repathCooldown > 0) repathCooldown--;
+        if (dragon.getAIMovement().hasArrived()) {
             repathCooldown = 0;
+        }
+        if (ownerMoved(owner) || repathCooldown <= 0) {
+            double speed = fast ? config.fastSpeed : config.speed;
+            boolean accepted = dragon.getAIMovement().moveToProgressiveGroundTarget(owner, speed, fast);
+            remember(owner);
+            repathCooldown = accepted
+                    ? Mth.clamp((int)Math.ceil(distance * 0.45D), 6, 24)
+                    : FAILED_PATH_RETRY_TICKS;
         }
     }
 

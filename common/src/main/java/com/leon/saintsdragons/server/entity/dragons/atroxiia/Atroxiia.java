@@ -62,6 +62,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -154,6 +155,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     public Atroxiia(EntityType<? extends TamableAnimal> type, Level level) {
         super(type, level);
         this.setMaxUpStep(MAX_UP_STEP);
+        this.setPathfindingMalus(BlockPathTypes.POWDER_SNOW, 0.0F);
+        this.setPathfindingMalus(BlockPathTypes.DANGER_POWDER_SNOW, 0.0F);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, 0.18F);
         seedAmbientSoundTimer(MIN_AMBIENT_DELAY, MAX_AMBIENT_DELAY, 80);
         if (!level.isClientSide) {
