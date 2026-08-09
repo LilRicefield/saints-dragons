@@ -27,6 +27,7 @@ import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
 import com.leon.saintsdragons.server.entity.controller.DragonLookControl;
+import com.leon.saintsdragons.server.entity.handler.CompanionCombatRules;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
@@ -73,7 +74,6 @@ import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -2253,35 +2253,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public boolean isAlly(Entity entity) {
-        if (entity == null) return false;
-
-        if (DragonTargetingHelper.isVillageDefender(entity)) {
-            return true;
-        }
-
-        if (entity instanceof Player player) {
-            return isPlayerAlly(player);
-        }
-
-        if (entity instanceof DragonEntity otherDragon && otherDragon.isTame()) {
-            LivingEntity otherOwner = otherDragon.getOwner();
-            return otherOwner instanceof Player otherPlayer && isPlayerAlly(otherPlayer);
-        }
-
-        if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
-            LivingEntity owner = tamable.getOwner();
-            return owner instanceof Player playerOwner && isPlayerAlly(playerOwner);
-        }
-
-        if (entity instanceof OwnableEntity ownable) {
-            LivingEntity owner = ownable.getOwner();
-            return owner instanceof Player playerOwner && isPlayerAlly(playerOwner);
-        }
-        return false;
+        return entity != null
+                && (DragonTargetingHelper.isVillageDefender(entity)
+                || CompanionCombatRules.isTrusted(entity, getOwnerUUID(), level())
+                || super.isAlliedTo(entity));
     }
 
-    private boolean isPlayerAlly(Player player) {
-        return player != null && ((this.isTame() && this.isOwnedBy(player)) || allyManager.isAlly(player));
+    @Override
+    public boolean isAlliedTo(@NotNull Entity entity) {
+        return isAlly(entity);
     }
 
     public boolean canTarget(Entity entity) {
@@ -2293,20 +2273,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
         if (isAlly(entity)) {
             return false;
-        }
-
-        if (entity instanceof TamableAnimal tamable && tamable.isTame()) {
-            LivingEntity owner = tamable.getOwner();
-            if (owner instanceof Player playerOwner && this.isTame() && this.isOwnedBy(playerOwner)) {
-                return false;
-            }
-        }
-
-        if (entity instanceof OwnableEntity ownable) {
-            LivingEntity owner = ownable.getOwner();
-            if (owner instanceof Player playerOwner && this.isTame() && this.isOwnedBy(playerOwner)) {
-                return false;
-            }
         }
 
         return true;
@@ -2321,7 +2287,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        if (target instanceof Player player && (player.isCreative() || player.isSpectator())) {
+        if (target != null && !canTarget(target)) {
             super.setTarget(null);
             setAggressive(false);
             return;

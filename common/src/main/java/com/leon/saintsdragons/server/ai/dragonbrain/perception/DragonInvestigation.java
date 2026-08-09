@@ -13,6 +13,9 @@ public final class DragonInvestigation {
     private static final double MIN_PROJECTILE_SEARCH_DISTANCE = 12.0D;
     private static final double OWNERLESS_SEARCH_RANGE_FACTOR = 0.75D;
     private static final double MIN_OWNER_TRAJECTORY_ALIGNMENT = 0.25D;
+    private static final long SAME_SOURCE_PROJECTILE_COALESCE_TICKS = 20L * 3L;
+    private static final long OWNERLESS_PROJECTILE_COALESCE_TICKS = 10L;
+    private static final double OWNERLESS_PROJECTILE_COALESCE_DISTANCE_SQR = 4.0D * 4.0D;
 
     private DragonInvestigation() {
     }
@@ -21,17 +24,44 @@ public final class DragonInvestigation {
         DragonSensoryObservation existing = dragon.getBrain()
                 .getMemory(DragonMemories.INVESTIGATION_TARGET)
                 .orElse(null);
+        DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
+        if (shouldCoalesce(existing, observation)) {
+            dragon.getBrain().setMemoryWithExpiry(
+                    DragonMemories.INVESTIGATION_TARGET,
+                    existing,
+                    profile.investigationMemoryTicks(dragon, observation.position())
+            );
+            return true;
+        }
         if (!shouldReplace(existing, observation)) {
             return false;
         }
 
-        DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
         dragon.getBrain().setMemoryWithExpiry(
                 DragonMemories.INVESTIGATION_TARGET,
                 observation,
                 profile.investigationMemoryTicks(dragon, observation.position())
         );
         return true;
+    }
+
+    private static boolean shouldCoalesce(DragonSensoryObservation existing,
+                                          DragonSensoryObservation candidate) {
+        if (existing == null
+                || existing.kind() != DragonSensoryObservation.Kind.PROJECTILE
+                || candidate.kind() != DragonSensoryObservation.Kind.PROJECTILE
+                || candidate.observedAt() < existing.observedAt()) {
+            return false;
+        }
+        long age = candidate.observedAt() - existing.observedAt();
+        if (existing.sourceUuid() != null && existing.sourceUuid().equals(candidate.sourceUuid())) {
+            return age <= SAME_SOURCE_PROJECTILE_COALESCE_TICKS;
+        }
+        return existing.sourceUuid() == null
+                && candidate.sourceUuid() == null
+                && age <= OWNERLESS_PROJECTILE_COALESCE_TICKS
+                && existing.position().distanceToSqr(candidate.position())
+                <= OWNERLESS_PROJECTILE_COALESCE_DISTANCE_SQR;
     }
 
     public static boolean rememberProjectileOrigin(DragonEntity dragon, Projectile projectile) {

@@ -89,16 +89,25 @@ public class AsyncFlightController {
         }
 
         if (this.state == PathState.FOLLOWING || this.state == PathState.CALCULATING) {
-            this.movementExecutor.executeMovement(
-                    this.state == PathState.CALCULATING
-                            ? this.currentWaypoint
-                            : this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead),
-                    this.currentWaypoint,
-                    this.speedModifier,
-                    arrivalDist,
-                    this.waypointQueue.isEmpty(),
-                    groundTransition
-            );
+            Vec3 movementTarget = this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead);
+            if (movementTarget == null) {
+                movementTarget = this.pathResolver.calculateSafeDirectLookAhead(
+                        this.currentWaypoint,
+                        this.flyingLookAhead
+                );
+            }
+            if (movementTarget != null) {
+                this.movementExecutor.executeMovement(
+                        movementTarget,
+                        this.currentWaypoint,
+                        this.speedModifier,
+                        arrivalDist,
+                        this.waypointQueue.isEmpty(),
+                        groundTransition
+                );
+            } else {
+                this.movementExecutor.applyIdleFriction();
+            }
         }
 
         if (this.stuckDetector.check(this.state, this.stuckMovementThreshold, this.stuckThresholdTicks)) {
@@ -108,7 +117,11 @@ public class AsyncFlightController {
             return;
         }
 
-        this.pathResolver.tickRecalc();
+        if (this.state == PathState.FOLLOWING && this.pathResolver.shouldExtendPartialPath()) {
+            this.pathResolver.forceRecalculatePath(this.currentWaypoint);
+        } else {
+            this.pathResolver.tickRecalc();
+        }
         if (this.pathResolver.getTicksSinceRecalc() >= this.recalculationInterval) {
             this.pathResolver.recalculatePath(this.currentWaypoint);
         }
@@ -142,10 +155,14 @@ public class AsyncFlightController {
         this.currentArrivalCallback = null;
         this.currentGroundTransition = false;
         this.speedModifier = speed;
-        this.state = PathState.FOLLOWING;
-        this.invalidatePathRequests();
-        this.pathResolver.clearPathNodes();
-        this.stuckDetector.reset();
+        if (this.pathResolver.needsRefresh(target, this.liveRetargetRefreshDistanceSq)) {
+            if (!this.pathResolver.hasActivePathRequest()) {
+                this.pathResolver.forceRecalculatePath(target);
+            }
+        } else if (!this.pathResolver.retargetPathEndpoint(target)
+                && !this.pathResolver.hasActivePathRequest()) {
+            this.pathResolver.forceRecalculatePath(target);
+        }
     }
 
     public void setWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
@@ -163,6 +180,10 @@ public class AsyncFlightController {
             this.speedModifier = speed;
             this.currentArrivalCallback = onArrival;
             this.currentGroundTransition = groundTransition;
+            if (this.state == PathState.FOLLOWING && !this.pathResolver.retargetPathEndpoint(target)
+                    && !this.pathResolver.hasActivePathRequest()) {
+                this.pathResolver.forceRecalculatePath(target);
+            }
             return;
         }
 
@@ -182,11 +203,13 @@ public class AsyncFlightController {
             this.speedModifier = speed;
             this.currentArrivalCallback = onArrival;
             this.currentGroundTransition = groundTransition;
-            if (forceRecalculate) {
-                this.resetPathingState();
+            if (forceRecalculate && !this.pathResolver.hasActivePathRequest()) {
                 this.pathResolver.forceRecalculatePath(target);
             } else if (this.state == PathState.FOLLOWING) {
-                this.pathResolver.retargetPathEndpoint(target);
+                if (!this.pathResolver.retargetPathEndpoint(target)
+                        && !this.pathResolver.hasActivePathRequest()) {
+                    this.pathResolver.forceRecalculatePath(target);
+                }
             }
             return;
         }
@@ -202,8 +225,8 @@ public class AsyncFlightController {
 
             Vec3 startPos = this.host.position();
             Vec3 direction = target.subtract(startPos).normalize();
-            int segments = (int) (distToTarget / this.maxSegmentDistance);
-            for (int i = 1; i <= segments; ++i) {
+            int segments = (int) Math.floor(distToTarget / this.maxSegmentDistance);
+            for (int i = 1; i <= segments && i * this.maxSegmentDistance < distToTarget; ++i) {
                 Vec3 segmentPos = startPos.add(direction.scale(i * this.maxSegmentDistance));
                 this.addWaypoint(segmentPos, speed, null, false);
             }
@@ -251,20 +274,23 @@ public class AsyncFlightController {
     }
 
     public void onArrived() {
+        this.invalidatePathRequests();
+        this.pathResolver.cancelActivePathRequest();
         this.pathResolver.clearPathNodes();
         this.state = PathState.ARRIVED;
-        if (this.currentArrivalCallback != null) {
+        WaypointArrivalCallback arrivalCallback = this.currentArrivalCallback;
+        this.currentArrivalCallback = null;
+        this.currentWaypoint = null;
+        this.currentGroundTransition = false;
+        if (arrivalCallback != null) {
             try {
-                this.currentArrivalCallback.onArrival(this.host);
+                arrivalCallback.onArrival(this.host);
             } catch (Exception exception) {
                 LOGGER.error("Async flight arrival callback failed for {}", this.host.getStringUUID(), exception);
             }
-            this.currentArrivalCallback = null;
         }
 
-        this.currentWaypoint = null;
-        this.currentGroundTransition = false;
-        if (!this.waypointQueue.isEmpty()) {
+        if (this.currentWaypoint == null && !this.waypointQueue.isEmpty()) {
             this.advanceToNextWaypoint();
         }
     }
@@ -293,6 +319,7 @@ public class AsyncFlightController {
             this.currentGroundTransition = false;
             this.waypointQueue.clear();
             this.invalidatePathRequests();
+            this.pathResolver.cancelActivePathRequest();
             this.pathResolver.clearPathNodes();
             this.movementExecutor.zeroVelocity();
         } else if (currentWaypoint != null) {
@@ -354,6 +381,10 @@ public class AsyncFlightController {
         return this.state == PathState.IDLE
                 || this.state == PathState.ARRIVED
                 || this.state == PathState.FAILED;
+    }
+
+    public boolean hasFailed() {
+        return this.state == PathState.FAILED;
     }
 
     public Vec3 getCurrentWaypoint() {

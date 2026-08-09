@@ -139,11 +139,9 @@ final class IvyCompanionController {
 
     private boolean canTargetForOwner(@Nullable LivingEntity target, LivingEntity owner) {
         return target != null
-                && target.isAlive()
+                && ivy.canTargetForCombat(target)
                 && target != ivy
                 && target != owner
-                && (!(target instanceof Player player) || (!player.isCreative() && !player.isSpectator()))
-                && !ivy.isOwnedBy(target)
                 && target.level().dimension() == ivy.level().dimension()
                 && ivy.distanceToSqr(target) <= OWNER_DEFENSE_RANGE_SQR;
     }

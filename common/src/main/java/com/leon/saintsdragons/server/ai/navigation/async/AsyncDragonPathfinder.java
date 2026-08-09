@@ -2,11 +2,11 @@ package com.leon.saintsdragons.server.ai.navigation.async;
 
 import com.leon.saintsdragons.server.ai.navigation.PathFinderGround;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
-import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebuggable;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonWalkNodeEvaluator;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -16,13 +16,15 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.WeakHashMap;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -34,23 +36,66 @@ import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.phys.Vec3;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class AsyncDragonPathfinder {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncDragonPathfinder.class);
     private static final int MAX_SWIM_ASTAR_VISITS = 50000;
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(2, runnable -> {
-        Thread thread = new Thread(runnable, "SaintsDragons-Async-Pathfinder");
-        thread.setDaemon(true);
-        return thread;
-    });
+    private static final int MAX_ASYNC_FLIGHT_ROUTE = 128;
+    private static final int WORKER_COUNT = 2;
+    private static final int MAX_QUEUED_PATHS = 32;
+    private static final AtomicInteger WORKER_NUMBER = new AtomicInteger();
+    private static final Map<MinecraftServer, Set<PathRequest>> ACTIVE_REQUESTS =
+            new ConcurrentHashMap<>();
+    private static final Set<MinecraftServer> STOPPING_SERVERS = Collections.synchronizedSet(
+            Collections.newSetFromMap(new WeakHashMap<>())
+    );
+    private static final Semaphore WORKER_CAPACITY = new Semaphore(WORKER_COUNT + MAX_QUEUED_PATHS);
+    private static final ThreadPoolExecutor EXECUTOR = new ThreadPoolExecutor(
+            WORKER_COUNT,
+            WORKER_COUNT,
+            0L,
+            TimeUnit.MILLISECONDS,
+            new ArrayBlockingQueue<>(MAX_QUEUED_PATHS),
+            runnable -> {
+                Thread thread = new Thread(
+                        runnable,
+                        "SaintsDragons-Async-Pathfinder-" + WORKER_NUMBER.incrementAndGet()
+                );
+                thread.setDaemon(true);
+                return thread;
+            },
+            new ThreadPoolExecutor.AbortPolicy()
+    );
 
     private AsyncDragonPathfinder() {
     }
 
-    public static void calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
-        calculateFlyingPathAsync(dragon, target, callback, false);
+    /**
+     * Cancels every queued or running path request owned by a server that is shutting down.
+     * The shared daemon executor intentionally survives integrated-server restarts.
+     */
+    public static void onServerStopping(MinecraftServer server) {
+        STOPPING_SERVERS.add(server);
+        Set<PathRequest> requests = ACTIVE_REQUESTS.remove(server);
+        if (requests != null) {
+            for (PathRequest request : requests) {
+                request.cancel(true);
+            }
+        }
+        EXECUTOR.purge();
+    }
+
+    public static Future<?> calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
+        return calculateFlyingPathAsyncInternal(dragon, target, callback);
     }
 
     public static Future<?> calculateGroundPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
+        MinecraftServer server = dragon.getServer();
+        if (server != null && !server.isSameThread()) {
+            return rejectOffThreadRequest(server, dragon, "ground path request", callback);
+        }
         int goalAccuracy = Math.max(1, Mth.floor(Math.max(1.5D, dragon.getBbWidth() * 0.75D)));
         return calculateGroundPathAsync(dragon, target, goalAccuracy, callback);
     }
@@ -67,191 +112,224 @@ public final class AsyncDragonPathfinder {
                                                       int goalAccuracy,
                                                       boolean avoidWater,
                                                       Consumer<Path> callback) {
+        MinecraftServer server = dragon.getServer();
+        if (server == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        if (!server.isSameThread()) {
+            return rejectOffThreadRequest(server, dragon, "ground path request", callback);
+        }
         if (dragon.level().isClientSide) {
             return CompletableFuture.completedFuture(null);
         }
-        MinecraftServer server = dragon.getServer();
-        if (server == null) {
-            callback.accept(null);
-            return CompletableFuture.completedFuture(null);
+
+        // Vanilla WalkNodeEvaluator and PathNavigationRegion both retain live world/entity state.
+        // Queue the complete calculation onto the server thread instead of reading either on a worker.
+        PathRequest request = newRequest(server);
+        if (request.isCancelled()) {
+            return request;
         }
-
-        BlockPos startPos = dragon.blockPosition();
-        BlockPos targetPos = BlockPos.containing(target);
-        boolean canPassThroughTrees = dragon instanceof DragonEntity dragonEntity
-                && dragon.level() instanceof ServerLevel serverLevel
-                && DragonDestructionManager.canApplyPassiveTreeDestruction(serverLevel, dragonEntity);
-        int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
-        double routeDistance = Math.sqrt(startPos.distSqr(targetPos));
-        int searchRange = Mth.clamp(Mth.ceil(routeDistance) + 24, 32, followRange);
-        int resolvedGoalAccuracy = Math.max(0, goalAccuracy);
-        int horizontalMargin = Math.max(16, Mth.ceil(dragon.getBbWidth()) + 8);
-        int verticalMargin = Math.max(12, Mth.ceil(dragon.getBbHeight()) + 6);
-        BlockPos minPos = new BlockPos(
-                Math.min(startPos.getX(), targetPos.getX()) - horizontalMargin,
-                Math.min(startPos.getY(), targetPos.getY()) - verticalMargin,
-                Math.min(startPos.getZ(), targetPos.getZ()) - horizontalMargin
-        );
-        BlockPos maxPos = new BlockPos(
-                Math.max(startPos.getX(), targetPos.getX()) + horizontalMargin,
-                Math.max(startPos.getY(), targetPos.getY()) + verticalMargin,
-                Math.max(startPos.getZ(), targetPos.getZ()) + horizontalMargin
-        );
-
-        PathNavigationRegion snapshot;
+        int requestTick = server.getTickCount();
         try {
-            snapshot = new PathNavigationRegion(dragon.level(), minPos, maxPos);
-        } catch (Exception exception) {
-            callback.accept(null);
-            return CompletableFuture.completedFuture(null);
-        }
-
-        return EXECUTOR.submit(() -> {
-            Path path;
-            try {
-                NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator(canPassThroughTrees, avoidWater);
-                nodeEvaluator.setCanPassDoors(true);
-                PathFinder pathFinder = new PathFinderGround(nodeEvaluator, 5000);
-                path = pathFinder.findPath(
-                        snapshot,
-                        dragon,
-                        Set.of(targetPos),
-                        (float) searchRange,
-                        resolvedGoalAccuracy,
-                        1.0F
-                );
-            } catch (Exception exception) {
-                path = null;
-            }
-
-            if (Thread.currentThread().isInterrupted() || server.isStopped() || dragon.isRemoved()) {
-                return;
-            }
-            Path resolvedPath = path;
-            server.execute(() -> {
-                if (server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
+            server.tell(new TickTask(requestTick, () -> {
+                if (request.isCancelled() || server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
+                    request.complete();
                     return;
                 }
-                callback.accept(resolvedPath);
-            });
-        });
-    }
 
-    public static void calculateSwarmFlyingPathAsync(Mob swarm, Vec3 target, Consumer<Path> callback) {
-        calculateFlyingPathAsync(swarm, target, callback, true);
-    }
-
-    private static void calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback,
-                                                  boolean useSwarmClearance) {
-        if (dragon.level().isClientSide) {
-            return;
-        }
-        MinecraftServer server = dragon.getServer();
-        if (server == null) {
-            return;
-        }
-
-        BlockPos startPos = dragon.blockPosition();
-        BlockPos targetPos = BlockPos.containing(target);
-        int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
-        int margin = Math.max(followRange, 32);
-
-        int minX = Math.min(startPos.getX() - margin, targetPos.getX() - 16);
-        int minY = Math.min(startPos.getY() - margin, targetPos.getY() - 16);
-        int minZ = Math.min(startPos.getZ() - margin, targetPos.getZ() - 16);
-        int maxX = Math.max(startPos.getX() + margin, targetPos.getX() + 16);
-        int maxY = Math.max(startPos.getY() + margin, targetPos.getY() + 16);
-        int maxZ = Math.max(startPos.getZ() + margin, targetPos.getZ() + 16);
-
-        PathNavigationRegion snapshot;
-        try {
-            snapshot = new PathNavigationRegion(dragon.level(), new BlockPos(minX, minY, minZ), new BlockPos(maxX, maxY, maxZ));
-        } catch (Exception exception) {
-            callback.accept(null);
-            return;
-        }
-
-        CompletableFuture
-                .supplyAsync(() -> {
-                    NodeEvaluator nodeEvaluator = useSwarmClearance
-                            ? new AsyncSwarmFlyNodeEvaluator()
-                            : new AsyncDragonFlyNodeEvaluator();
-                    DragonPathSearchDebug.NodeCollector debugCollector = DragonPathSearchDebug.beginNodeSearch(
-                            dragon,
-                            DragonPathSearchDebug.SearchType.AIR,
-                            target
+                Path path = null;
+                try {
+                    BlockPos startPos = dragon.blockPosition();
+                    BlockPos targetPos = BlockPos.containing(target);
+                    boolean canPassThroughTrees = dragon instanceof DragonEntity dragonEntity
+                            && dragon.level() instanceof ServerLevel serverLevel
+                            && DragonDestructionManager.canApplyPassiveTreeDestruction(serverLevel, dragonEntity);
+                    int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
+                    double routeDistance = Math.sqrt(startPos.distSqr(targetPos));
+                    int searchRange = Mth.clamp(Mth.ceil(routeDistance) + 24, 32, followRange);
+                    int resolvedGoalAccuracy = Math.max(0, goalAccuracy);
+                    int horizontalMargin = Math.max(16, Mth.ceil(dragon.getBbWidth()) + 8);
+                    int verticalMargin = Math.max(12, Mth.ceil(dragon.getBbHeight()) + 6);
+                    BlockPos minPos = new BlockPos(
+                            Math.min(startPos.getX(), targetPos.getX()) - horizontalMargin,
+                            Math.min(startPos.getY(), targetPos.getY()) - verticalMargin,
+                            Math.min(startPos.getZ(), targetPos.getZ()) - horizontalMargin
                     );
-                    if (nodeEvaluator instanceof DragonPathSearchDebuggable debuggable) {
-                        debuggable.setPathSearchDebugCollector(debugCollector);
-                    }
+                    BlockPos maxPos = new BlockPos(
+                            Math.max(startPos.getX(), targetPos.getX()) + horizontalMargin,
+                            Math.max(startPos.getY(), targetPos.getY()) + verticalMargin,
+                            Math.max(startPos.getZ(), targetPos.getZ()) + horizontalMargin
+                    );
+                    PathNavigationRegion region = new PathNavigationRegion(dragon.level(), minPos, maxPos);
+                    NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator(canPassThroughTrees, avoidWater);
+                    nodeEvaluator.setCanPassDoors(true);
+                    PathFinder pathFinder = new PathFinderGround(nodeEvaluator, 5000);
+                    path = pathFinder.findPath(
+                            region,
+                            dragon,
+                            Set.of(targetPos),
+                            (float) searchRange,
+                            resolvedGoalAccuracy,
+                            1.0F
+                    );
+                } catch (Exception exception) {
+                    LOGGER.warn("Server-thread ground path calculation failed for {}", dragon.getStringUUID(), exception);
+                }
 
-                    Path path;
-                    try {
-                        nodeEvaluator.setCanPassDoors(true);
-                        nodeEvaluator.setCanOpenDoors(true);
-                        nodeEvaluator.setCanFloat(true);
-                        PathFinder pathFinder = new PathFinder(nodeEvaluator, 5000);
-                        path = pathFinder.findPath(snapshot, dragon, Set.of(targetPos), (float) followRange, 1, 1.0f);
-                    } catch (Exception exception) {
-                        path = null;
-                    }
-
-                    if (debugCollector != null) {
-                        debugCollector.complete(path);
-                    }
-                    if (nodeEvaluator instanceof DragonPathSearchDebuggable debuggable) {
-                        debuggable.setPathSearchDebugCollector(null);
-                    }
-                    return path;
-                }, EXECUTOR)
-                .thenAccept(path -> {
-                    if (server.isStopped() || dragon.isRemoved()) {
-                        return;
-                    }
-                    server.execute(() -> {
-                        if (server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
-                            return;
-                        }
+                try {
+                    if (!request.isCancelled()) {
                         callback.accept(path);
-                    });
-                });
+                    }
+                } catch (Exception exception) {
+                    LOGGER.error("Ground path callback failed for {}", dragon.getStringUUID(), exception);
+                } finally {
+                    request.complete();
+                }
+            }));
+        } catch (RejectedExecutionException exception) {
+            request.complete();
+        }
+        return request;
     }
 
-    public static void calculateSwimPathAsync(Mob dragon, Vec3 target, Consumer<List<Vec3>> callback) {
-        if (dragon.level().isClientSide) {
-            return;
-        }
+    public static Future<?> calculateSwarmFlyingPathAsync(Mob swarm, Vec3 target, Consumer<Path> callback) {
+        return calculateFlyingPathAsyncInternal(swarm, target, callback);
+    }
+
+    private static Future<?> calculateFlyingPathAsyncInternal(Mob dragon,
+                                                               Vec3 target,
+                                                               Consumer<Path> callback) {
         MinecraftServer server = dragon.getServer();
         if (server == null) {
-            return;
+            return CompletableFuture.completedFuture(null);
+        }
+        if (!server.isSameThread()) {
+            return rejectOffThreadRequest(server, dragon, "air path request", callback);
+        }
+        if (dragon.level().isClientSide) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        if (!(dragon.level() instanceof ServerLevel serverLevel)) {
+            return completeOnServer(server, dragon, callback, null);
+        }
+
+        String dragonId = dragon.getStringUUID();
+        PathRequest request = tryNewWorkerRequest(server);
+        if (request == null) {
+            LOGGER.warn("Rejected air path calculation for {} because path capacity is full", dragonId);
+            return completeOnServer(server, dragon, callback, null);
+        }
+        if (request.isCancelled()) {
+            return request;
+        }
+        try {
+            Vec3 origin = dragon.position();
+            BlockPos startPos = dragon.blockPosition();
+            int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
+            double maximumRoute = Math.min(followRange, MAX_ASYNC_FLIGHT_ROUTE);
+            Vec3 route = target.subtract(origin);
+            Vec3 planningTarget = route.length() <= maximumRoute
+                    ? target
+                    : origin.add(route.normalize().scale(maximumRoute));
+            BlockPos planningTargetPos = BlockPos.containing(planningTarget);
+            int horizontalMargin = Math.max(12, Mth.ceil(dragon.getBbWidth()) + 6);
+            int verticalMargin = Math.max(8, Mth.ceil(dragon.getBbHeight()) + 4);
+            BlockPos minNode = new BlockPos(
+                    Math.min(startPos.getX(), planningTargetPos.getX()) - horizontalMargin,
+                    Math.max(serverLevel.getMinBuildHeight(),
+                            Math.min(startPos.getY(), planningTargetPos.getY()) - verticalMargin),
+                    Math.min(startPos.getZ(), planningTargetPos.getZ()) - horizontalMargin
+            );
+            BlockPos maxNode = new BlockPos(
+                    Math.max(startPos.getX(), planningTargetPos.getX()) + horizontalMargin,
+                    Math.min(serverLevel.getMaxBuildHeight() - 1,
+                            Math.max(startPos.getY(), planningTargetPos.getY()) + verticalMargin),
+                    Math.max(startPos.getZ(), planningTargetPos.getZ()) + horizontalMargin
+            );
+            int horizontalClearance = Mth.ceil(dragon.getBbWidth() * 0.5D) + 2;
+            int verticalClearance = Mth.ceil(dragon.getBbHeight()) + 2;
+            BlockPos captureMin = minNode.offset(-horizontalClearance, -2, -horizontalClearance);
+            BlockPos captureMax = maxNode.offset(horizontalClearance, verticalClearance, horizontalClearance);
+            ImmutableBlockSnapshot snapshot = ImmutableBlockSnapshot.capture(serverLevel, captureMin, captureMax);
+            net.minecraft.world.phys.AABB relativeBounds = dragon.getBoundingBox().move(
+                    -origin.x,
+                    -origin.y,
+                    -origin.z
+            );
+            UUID debugDragonId = DragonPathSearchDebug.isActive(dragon.getUUID()) ? dragon.getUUID() : null;
+
+            return submitWorker(
+                    request,
+                    server,
+                    dragon,
+                    "air path calculation for " + dragonId,
+                    cancelled -> new AsyncFlightPathSearch(
+                            snapshot,
+                            origin,
+                            planningTarget,
+                            target,
+                            relativeBounds,
+                            minNode,
+                            maxNode,
+                            cancelled
+                    ).findPath(debugDragonId),
+                    callback
+            );
+        } catch (Exception exception) {
+            LOGGER.warn("Failed to capture immutable air path region for {}", dragonId, exception);
+            return completeOnServer(request, server, dragon, callback, null);
+        }
+    }
+
+    public static Future<?> calculateSwimPathAsync(Mob dragon, Vec3 target, Consumer<List<Vec3>> callback) {
+        MinecraftServer server = dragon.getServer();
+        if (server == null) {
+            return CompletableFuture.completedFuture(null);
+        }
+        if (!server.isSameThread()) {
+            return rejectOffThreadRequest(server, dragon, "swim path request", callback);
+        }
+        if (dragon.level().isClientSide) {
+            return CompletableFuture.completedFuture(null);
+        }
+
+        String dragonId = dragon.getStringUUID();
+        PathRequest request = tryNewWorkerRequest(server);
+        if (request == null) {
+            LOGGER.warn("Rejected swim path calculation for {} because path capacity is full", dragonId);
+            return completeOnServer(server, dragon, callback, null);
+        }
+        if (request.isCancelled()) {
+            return request;
         }
 
         SwimPathSnapshot snapshot;
         try {
             snapshot = SwimPathSnapshot.capture(dragon, target);
         } catch (Exception exception) {
-            callback.accept(null);
-            return;
+            LOGGER.warn("Failed to capture swim path region for {}", dragonId, exception);
+            return completeOnServer(request, server, dragon, callback, null);
         }
 
         UUID debugDragonId = DragonPathSearchDebug.isActive(dragon.getUUID()) ? dragon.getUUID() : null;
-        CompletableFuture
-                .supplyAsync(() -> findSwimPath(snapshot, debugDragonId), EXECUTOR)
-                .thenAccept(path -> {
-                    if (server.isStopped() || dragon.isRemoved()) {
-                        return;
-                    }
-                    server.execute(() -> {
-                        if (server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
-                            return;
-                        }
-                        callback.accept(path);
-                    });
-                });
+        return submitWorker(
+                request,
+                server,
+                dragon,
+                "swim path calculation for " + dragonId,
+                cancelled -> findSwimPath(snapshot, debugDragonId, cancelled),
+                callback
+        );
     }
 
-    private static List<Vec3> findSwimPath(SwimPathSnapshot snapshot, UUID debugDragonId) {
+    private static List<Vec3> findSwimPath(SwimPathSnapshot snapshot,
+                                           UUID debugDragonId,
+                                           BooleanSupplier cancelled) {
         long startedNanos = System.nanoTime();
+        if (!snapshot.prepare(cancelled)) {
+            return null;
+        }
         int start = snapshot.index(snapshot.startX, snapshot.startY, snapshot.startZ);
         int goal = snapshot.index(snapshot.goalX, snapshot.goalY, snapshot.goalZ);
         if (!snapshot.isWaterIndex(start) || !snapshot.isWaterIndex(goal)) {
@@ -281,6 +359,9 @@ public final class AsyncDragonPathfinder {
         List<Vec3> path = null;
         int visited = 0;
         while (!open.isEmpty() && visited < MAX_SWIM_ASTAR_VISITS) {
+            if (cancelled.getAsBoolean()) {
+                return null;
+            }
             SwimNode current = open.poll();
             double currentScore = gScore.getOrDefault(current.index(), Double.POSITIVE_INFINITY);
             if (current.gScore() > currentScore || !closed.add(current.index())) {
@@ -293,6 +374,9 @@ public final class AsyncDragonPathfinder {
             }
 
             for (int neighbor : snapshot.neighbors(current.index())) {
+                if (cancelled.getAsBoolean()) {
+                    return null;
+                }
                 if (closed.contains(neighbor)) {
                     continue;
                 }
@@ -332,6 +416,271 @@ public final class AsyncDragonPathfinder {
         return path;
     }
 
+    private static <T> Future<?> submitWorker(PathRequest request,
+                                               MinecraftServer server,
+                                               Mob dragon,
+                                               String operation,
+                                               CancellableComputation<T> computation,
+                                               Consumer<T> callback) {
+        if (request.isCancelled()) {
+            return request;
+        }
+        int requestTick = server.getTickCount();
+        try {
+            Future<?> worker = EXECUTOR.submit(() -> {
+                if (request.isCancelled()) {
+                    request.complete();
+                    return;
+                }
+
+                T result = null;
+                try {
+                    result = computation.calculate(() -> request.isCancelled()
+                            || Thread.currentThread().isInterrupted());
+                } catch (Exception exception) {
+                    if (!request.isCancelled()) {
+                        LOGGER.warn("Async {} failed", operation, exception);
+                    }
+                } catch (Error error) {
+                    request.complete();
+                    throw error;
+                }
+
+                if (request.isCancelled()) {
+                    request.complete();
+                    return;
+                }
+                T resolvedResult = result;
+                try {
+                    server.tell(new TickTask(requestTick, () -> applyResult(
+                            request,
+                            server,
+                            dragon,
+                            operation,
+                            callback,
+                            resolvedResult
+                    )));
+                } catch (RejectedExecutionException exception) {
+                    request.complete();
+                }
+            });
+            request.attach(worker);
+        } catch (RejectedExecutionException exception) {
+            LOGGER.warn("Rejected {} because the bounded path queue is full", operation);
+            try {
+                server.tell(new TickTask(requestTick, () -> applyResult(
+                        request,
+                        server,
+                        dragon,
+                        operation,
+                        callback,
+                        null
+                )));
+            } catch (RejectedExecutionException schedulingException) {
+                request.complete();
+            }
+        }
+        return request;
+    }
+
+    private static <T> Future<?> completeOnServer(MinecraftServer server,
+                                                   Mob dragon,
+                                                   Consumer<T> callback,
+                                                   T result) {
+        PathRequest request = newRequest(server);
+        return completeOnServer(request, server, dragon, callback, result);
+    }
+
+    private static <T> Future<?> completeOnServer(PathRequest request,
+                                                   MinecraftServer server,
+                                                   Mob dragon,
+                                                   Consumer<T> callback,
+                                                   T result) {
+        if (request.isCancelled()) {
+            return request;
+        }
+        int requestTick = server.getTickCount();
+        try {
+            server.tell(new TickTask(requestTick, () -> applyResult(
+                    request,
+                    server,
+                    dragon,
+                    "path completion",
+                    callback,
+                    result
+            )));
+        } catch (RejectedExecutionException exception) {
+            request.complete();
+        }
+        return request;
+    }
+
+    private static <T> Future<?> rejectOffThreadRequest(MinecraftServer server,
+                                                         Mob dragon,
+                                                         String operation,
+                                                         Consumer<T> callback) {
+        LOGGER.error("Rejected {} because async path requests must originate on the server thread", operation);
+        PathRequest request = newRequest(server);
+        if (request.isCancelled()) {
+            return request;
+        }
+        try {
+            server.execute(() -> applyResult(request, server, dragon, operation, callback, null));
+        } catch (RejectedExecutionException exception) {
+            request.complete();
+        }
+        return request;
+    }
+
+    private static PathRequest newRequest(MinecraftServer server) {
+        return registerRequest(new PathRequest(server));
+    }
+
+    private static PathRequest tryNewWorkerRequest(MinecraftServer server) {
+        if (!WORKER_CAPACITY.tryAcquire()) {
+            return null;
+        }
+        return registerRequest(new PathRequest(server, WORKER_CAPACITY::release));
+    }
+
+    private static PathRequest registerRequest(PathRequest request) {
+        MinecraftServer server = request.server;
+        if (isServerStopping(server)) {
+            request.cancel(false);
+            return request;
+        }
+
+        ACTIVE_REQUESTS.compute(server, (ignored, requests) -> {
+            Set<PathRequest> active = requests == null ? ConcurrentHashMap.newKeySet() : requests;
+            active.add(request);
+            return active;
+        });
+
+        // Close the race where shutdown begins between the first check and registration.
+        if (isServerStopping(server)) {
+            request.cancel(true);
+        }
+        return request;
+    }
+
+    private static boolean isServerStopping(MinecraftServer server) {
+        return STOPPING_SERVERS.contains(server)
+                || (server.isSameThread() && server.isStopped());
+    }
+
+    private static void unregister(PathRequest request) {
+        ACTIVE_REQUESTS.computeIfPresent(request.server, (ignored, requests) -> {
+            requests.remove(request);
+            return requests.isEmpty() ? null : requests;
+        });
+    }
+
+    private static <T> void applyResult(PathRequest request,
+                                        MinecraftServer server,
+                                        Mob dragon,
+                                        String operation,
+                                        Consumer<T> callback,
+                                        T result) {
+        try {
+            if (!request.isCancelled()
+                    && !server.isStopped()
+                    && !dragon.isRemoved()
+                    && dragon.isAlive()) {
+                callback.accept(result);
+            }
+        } catch (Exception exception) {
+            LOGGER.error("Callback for {} failed", operation, exception);
+        } finally {
+            request.complete();
+        }
+    }
+
+    @FunctionalInterface
+    private interface CancellableComputation<T> {
+        T calculate(BooleanSupplier cancelled);
+    }
+
+    private static final class PathRequest implements Future<Void> {
+        private final MinecraftServer server;
+        private final Runnable releaseCapacity;
+        private final AtomicBoolean cancelled = new AtomicBoolean();
+        private final AtomicBoolean resourcesReleased = new AtomicBoolean();
+        private final CompletableFuture<Void> completion = new CompletableFuture<>();
+        private volatile Future<?> worker;
+
+        private PathRequest(MinecraftServer server) {
+            this(server, () -> {
+            });
+        }
+
+        private PathRequest(MinecraftServer server, Runnable releaseCapacity) {
+            this.server = server;
+            this.releaseCapacity = releaseCapacity;
+        }
+
+        void attach(Future<?> worker) {
+            this.worker = worker;
+            if (this.cancelled.get()) {
+                cancelWorker(worker, true);
+            }
+        }
+
+        synchronized void complete() {
+            if (this.completion.complete(null)) {
+                this.releaseResources();
+            }
+        }
+
+        @Override
+        public synchronized boolean cancel(boolean mayInterruptIfRunning) {
+            if (this.completion.isDone() || !this.cancelled.compareAndSet(false, true)) {
+                return false;
+            }
+            Future<?> activeWorker = this.worker;
+            if (activeWorker != null) {
+                cancelWorker(activeWorker, mayInterruptIfRunning);
+            }
+            this.completion.cancel(false);
+            this.releaseResources();
+            return true;
+        }
+
+        private void releaseResources() {
+            if (this.resourcesReleased.compareAndSet(false, true)) {
+                unregister(this);
+                this.releaseCapacity.run();
+            }
+        }
+
+        private static void cancelWorker(Future<?> worker, boolean mayInterruptIfRunning) {
+            worker.cancel(mayInterruptIfRunning);
+            if (worker instanceof Runnable queuedTask) {
+                EXECUTOR.remove(queuedTask);
+            }
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return this.cancelled.get();
+        }
+
+        @Override
+        public boolean isDone() {
+            return this.completion.isDone();
+        }
+
+        @Override
+        public Void get() throws ExecutionException, InterruptedException {
+            return this.completion.get();
+        }
+
+        @Override
+        public Void get(long timeout, TimeUnit unit)
+                throws ExecutionException, InterruptedException, TimeoutException {
+            return this.completion.get(timeout, unit);
+        }
+    }
+
     private record SwimNode(int index, double gScore, double fScore) {
     }
 
@@ -343,23 +692,39 @@ public final class AsyncDragonPathfinder {
         private static final int NEAREST_START_WATER_RADIUS = 6;
         private static final int NEAREST_GOAL_WATER_RADIUS = 32;
 
-        private final boolean[] water;
+        private final ImmutableBlockSnapshot blocks;
         private final int minX;
         private final int minY;
         private final int minZ;
         private final int sizeX;
         private final int sizeY;
         private final int sizeZ;
-        private final int startX;
-        private final int startY;
-        private final int startZ;
-        private final int goalX;
-        private final int goalY;
-        private final int goalZ;
+        private final int horizontalClearance;
+        private final int verticalClearance;
+        private boolean[] water;
+        private int startX;
+        private int startY;
+        private int startZ;
+        private int goalX;
+        private int goalY;
+        private int goalZ;
 
-        private SwimPathSnapshot(boolean[] water, int minX, int minY, int minZ, int sizeX, int sizeY, int sizeZ,
-                                 int startX, int startY, int startZ, int goalX, int goalY, int goalZ) {
-            this.water = water;
+        private SwimPathSnapshot(ImmutableBlockSnapshot blocks,
+                                 int minX,
+                                 int minY,
+                                 int minZ,
+                                 int sizeX,
+                                 int sizeY,
+                                 int sizeZ,
+                                 int startX,
+                                 int startY,
+                                 int startZ,
+                                 int goalX,
+                                 int goalY,
+                                 int goalZ,
+                                 int horizontalClearance,
+                                 int verticalClearance) {
+            this.blocks = blocks;
             this.minX = minX;
             this.minY = minY;
             this.minZ = minZ;
@@ -372,6 +737,8 @@ public final class AsyncDragonPathfinder {
             this.goalX = goalX;
             this.goalY = goalY;
             this.goalZ = goalZ;
+            this.horizontalClearance = horizontalClearance;
+            this.verticalClearance = verticalClearance;
         }
 
         static SwimPathSnapshot capture(Mob dragon, Vec3 target) {
@@ -406,79 +773,112 @@ public final class AsyncDragonPathfinder {
             int sizeX = maxX - minX + 1;
             int sizeY = maxY - minY + 1;
             int sizeZ = maxZ - minZ + 1;
-            boolean[] rawWater = new boolean[sizeX * sizeY * sizeZ];
-            boolean[] rawClear = new boolean[rawWater.length];
-            BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-            for (int x = 0; x < sizeX; x++) {
-                for (int z = 0; z < sizeZ; z++) {
-                    int worldX = minX + x;
-                    int worldZ = minZ + z;
-                    if (!dragon.level().hasChunkAt(new BlockPos(worldX, startPos.getY(), worldZ))) {
-                        continue;
-                    }
-                    for (int y = 0; y < sizeY; y++) {
-                        cursor.set(worldX, minY + y, worldZ);
-                        int index = index(x, y, z, sizeX, sizeY);
-                        BlockState state = dragon.level().getBlockState(cursor);
-                        rawWater[index] = state.getFluidState().is(FluidTags.WATER);
-                        rawClear[index] = state.getCollisionShape(dragon.level(), cursor).isEmpty();
-                    }
-                }
-            }
-
             int horizontalClearance = Math.max(0, Mth.ceil(dragon.getBbWidth() * 0.5F - 0.5F));
             int verticalClearance = Math.max(1, Mth.ceil(dragon.getBbHeight() + 0.5F));
-            boolean[] water = buildClearanceMap(
-                    rawWater,
-                    rawClear,
-                    sizeX,
-                    sizeY,
-                    sizeZ,
-                    horizontalClearance,
-                    verticalClearance
-            );
-
             int startX = Mth.clamp(startPos.getX() - minX, 0, sizeX - 1);
             int startY = Mth.clamp(startPos.getY() - minY, 0, sizeY - 1);
             int startZ = Mth.clamp(startPos.getZ() - minZ, 0, sizeZ - 1);
             int goalX = Mth.clamp(goalPos.getX() - minX, 0, sizeX - 1);
             int goalY = Mth.clamp(goalPos.getY() - minY, 0, sizeY - 1);
             int goalZ = Mth.clamp(goalPos.getZ() - minZ, 0, sizeZ - 1);
+            if (!(dragon.level() instanceof ServerLevel serverLevel)) {
+                throw new IllegalStateException("Swim path snapshots require a server level");
+            }
+            BlockPos captureMin = new BlockPos(
+                    minX - horizontalClearance - 1,
+                    minY - 1,
+                    minZ - horizontalClearance - 1
+            );
+            BlockPos captureMax = new BlockPos(
+                    maxX + horizontalClearance + 1,
+                    maxY + verticalClearance + 1,
+                    maxZ + horizontalClearance + 1
+            );
+            ImmutableBlockSnapshot blocks = ImmutableBlockSnapshot.capture(serverLevel, captureMin, captureMax);
 
-            int nearestStart = nearestWaterIndex(
-                    water,
+            return new SwimPathSnapshot(
+                    blocks,
+                    minX,
+                    minY,
+                    minZ,
                     sizeX,
                     sizeY,
                     sizeZ,
                     startX,
                     startY,
                     startZ,
-                    NEAREST_START_WATER_RADIUS
-            );
-            if (nearestStart >= 0) {
-                startX = nearestStart % sizeX;
-                startY = (nearestStart / sizeX) % sizeY;
-                startZ = nearestStart / (sizeX * sizeY);
-            }
-
-            int nearestGoal = nearestWaterIndex(
-                    water,
-                    sizeX,
-                    sizeY,
-                    sizeZ,
                     goalX,
                     goalY,
                     goalZ,
+                    horizontalClearance,
+                    verticalClearance
+            );
+        }
+
+        boolean prepare(BooleanSupplier cancelled) {
+            boolean[] rawWater = new boolean[this.sizeX * this.sizeY * this.sizeZ];
+            boolean[] rawClear = new boolean[rawWater.length];
+            BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+            for (int x = 0; x < this.sizeX; x++) {
+                for (int z = 0; z < this.sizeZ; z++) {
+                    for (int y = 0; y < this.sizeY; y++) {
+                        if (cancelled.getAsBoolean()) {
+                            return false;
+                        }
+                        cursor.set(this.minX + x, this.minY + y, this.minZ + z);
+                        int index = index(x, y, z, this.sizeX, this.sizeY);
+                        BlockState state = this.blocks.getBlockState(cursor);
+                        rawWater[index] = state.getFluidState().is(FluidTags.WATER);
+                        rawClear[index] = this.blocks.collisionBoxes(cursor).isEmpty();
+                    }
+                }
+            }
+
+            this.water = buildClearanceMap(
+                    rawWater,
+                    rawClear,
+                    this.sizeX,
+                    this.sizeY,
+                    this.sizeZ,
+                    this.horizontalClearance,
+                    this.verticalClearance
+            );
+            if (cancelled.getAsBoolean()) {
+                return false;
+            }
+
+            int nearestStart = nearestWaterIndex(
+                    this.water,
+                    this.sizeX,
+                    this.sizeY,
+                    this.sizeZ,
+                    this.startX,
+                    this.startY,
+                    this.startZ,
+                    NEAREST_START_WATER_RADIUS
+            );
+            if (nearestStart >= 0) {
+                this.startX = nearestStart % this.sizeX;
+                this.startY = (nearestStart / this.sizeX) % this.sizeY;
+                this.startZ = nearestStart / (this.sizeX * this.sizeY);
+            }
+
+            int nearestGoal = nearestWaterIndex(
+                    this.water,
+                    this.sizeX,
+                    this.sizeY,
+                    this.sizeZ,
+                    this.goalX,
+                    this.goalY,
+                    this.goalZ,
                     NEAREST_GOAL_WATER_RADIUS
             );
             if (nearestGoal >= 0) {
-                goalX = nearestGoal % sizeX;
-                goalY = (nearestGoal / sizeX) % sizeY;
-                goalZ = nearestGoal / (sizeX * sizeY);
+                this.goalX = nearestGoal % this.sizeX;
+                this.goalY = (nearestGoal / this.sizeX) % this.sizeY;
+                this.goalZ = nearestGoal / (this.sizeX * this.sizeY);
             }
-
-            return new SwimPathSnapshot(water, minX, minY, minZ, sizeX, sizeY, sizeZ,
-                    startX, startY, startZ, goalX, goalY, goalZ);
+            return true;
         }
 
         private static boolean[] buildClearanceMap(boolean[] rawWater,

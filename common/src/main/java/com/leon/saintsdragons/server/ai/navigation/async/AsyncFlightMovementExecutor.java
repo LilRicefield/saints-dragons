@@ -78,16 +78,6 @@ class AsyncFlightMovementExecutor {
 
         Vec3 desiredDirection = toTarget.normalize();
         double desiredVertical = Math.abs(toTarget.y) < VERTICAL_TARGET_DEADZONE && !landingTarget ? 0.0D : desiredDirection.y;
-        if (!landingTarget && toWaypoint.y > 1.0D) {
-            double waypointVertical = toWaypoint.normalize().y;
-            desiredVertical = Math.max(desiredVertical, waypointVertical);
-
-            // If the short look-ahead segment is flat but the final waypoint is still well above us,
-            // keep a minimum upward bias so the dragon continues climbing instead of skating forward.
-            if (desiredVertical < 0.12D) {
-                desiredVertical = Math.min(0.35D, Math.max(0.12D, toWaypoint.y * 0.08D));
-            }
-        }
         boolean atOrAboveLandingHeight = currentWaypoint.y <= dragonPos.y + VERTICAL_TARGET_DEADZONE;
         // The path owns the descent while distant; forcing it early makes large dragons meet terrain before the target.
         if (insideLandingApproach && atOrAboveLandingHeight) {
@@ -124,7 +114,6 @@ class AsyncFlightMovementExecutor {
         }
         boolean shouldPreserveVerticalMotion = landingTarget
                 || this.flightCapable.isTakeoff()
-                || Math.abs(toWaypoint.y) > 1.0D
                 || Math.abs(desiredVertical) > 0.1D;
         if (!shouldPreserveVerticalMotion && Math.abs(this.smoothedVelocity.y) < VERTICAL_SPEED_DEADZONE) {
             this.smoothedVelocity = new Vec3(this.smoothedVelocity.x, 0.0D, this.smoothedVelocity.z);

@@ -375,10 +375,10 @@ public class IvyCombatBrain {
         if (!wasHurt || ivy.isDownedOrArising() || ivy.level().isClientSide || !(source.getEntity() instanceof LivingEntity attacker) || attacker == ivy) {
             return;
         }
-        if (attacker instanceof Player) {
+        LivingEntity target = resolveReactiveTarget(attacker);
+        if (!isValidTarget(target)) {
             return;
         }
-        LivingEntity target = resolveReactiveTarget(attacker);
         ivy.setTarget(target);
         if (!(target instanceof Player)) {
             throwProjectilesRangePunishTicks = THROW_PROJECTILES_RANGE_PUNISH_TICKS;
@@ -400,6 +400,9 @@ public class IvyCombatBrain {
             return false;
         }
         LivingEntity target = resolveReactiveTarget(attacker);
+        if (!isValidTarget(target)) {
+            return false;
+        }
         if (isLikelyPlayerCritical(attacker)) {
             boolean dodged = ivy.getRandom().nextFloat() < REACTIVE_CRIT_DODGE_CHANCE;
             if (!dodged) {
@@ -452,6 +455,9 @@ public class IvyCombatBrain {
             return;
         }
         LivingEntity target = resolveReactiveTarget(attacker);
+        if (!isValidTarget(target)) {
+            return;
+        }
         ivy.setTarget(target);
         beginStance();
         lockSight(target);
@@ -605,7 +611,7 @@ public class IvyCombatBrain {
 
     private void applyRecoveryBackstep(LivingEntity target) {
         Vec3 away;
-        if (target != null && target.isAlive()) {
+        if (isValidTarget(target)) {
             away = ivy.position().subtract(target.position());
         } else {
             away = Vec3.directionFromRotation(0.0F, ivy.getYRot());
@@ -695,7 +701,7 @@ public class IvyCombatBrain {
             return;
         }
         LivingEntity target = ivy.getTarget();
-        if (target != null && target.isAlive()) {
+        if (isValidTarget(target)) {
             lockSight(target);
         }
     }
@@ -763,12 +769,12 @@ public class IvyCombatBrain {
         ivy.setBoxingStance(false);
     }
 
-    public void clearPlayerReaction() {
+    public void clearFriendlyReaction() {
         if (!isActive()) {
             return;
         }
         LivingEntity target = ivy.getTarget();
-        if (target == null || target instanceof Player) {
+        if (!isValidTarget(target)) {
             clear();
         }
     }
@@ -943,7 +949,8 @@ public class IvyCombatBrain {
             impactTargetId = -1;
             return;
         }
-        if (!target.isAlive() || !isInHitRange(target, hit)) {
+        if (!isValidTarget(target) || !isInHitRange(target, hit)) {
+            impactTargetId = -1;
             return;
         }
         if (hit.forwardNudge > 0.0D) {
@@ -987,14 +994,14 @@ public class IvyCombatBrain {
     }
 
     private void applyApproachNudge(double strength) {
-        if (strength <= 0.0D || impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+        if (strength <= 0.0D || impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !isValidTarget(target)) {
             return;
         }
         applyForwardNudge(target, strength);
     }
 
     private void applyComboRetreat() {
-        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !isValidTarget(target)) {
             return;
         }
 
@@ -1007,7 +1014,7 @@ public class IvyCombatBrain {
     }
 
     private void throwVenomArrowAtTarget() {
-        if (ivy.level().isClientSide || impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+        if (ivy.level().isClientSide || impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !isValidTarget(target)) {
             return;
         }
         if (!ivy.hasLineOfSight(target)) {
@@ -1041,7 +1048,7 @@ public class IvyCombatBrain {
     }
 
     private void applyProjectileDash() {
-        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !isValidTarget(target)) {
             return;
         }
 
@@ -1054,14 +1061,14 @@ public class IvyCombatBrain {
     }
 
     private void startProjectileDashAttack() {
-        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !isValidTarget(target)) {
             return;
         }
         startAttack(target, AttackType.DASH_FORWARD_RIGHT_CROSS);
     }
 
     private void applySwordDash() {
-        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !target.isAlive()) {
+        if (impactTargetId < 0 || !(ivy.level().getEntity(impactTargetId) instanceof LivingEntity target) || !isValidTarget(target)) {
             return;
         }
 
@@ -1488,7 +1495,7 @@ public class IvyCombatBrain {
         }
 
     private boolean canBox(@Nullable LivingEntity target) {
-        return target == null || !target.isAlive() || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation();
+        return !isValidTarget(target) || !ivy.isAlive() || ivy.isTrading() || !ivy.isReadyForCombatAnimation();
     }
 
     }
@@ -1524,7 +1531,7 @@ public class IvyCombatBrain {
         if (committedPillager != null) {
             return committedPillager;
         }
-        if (currentTarget instanceof Pillager pillager) {
+        if (currentTarget instanceof Pillager pillager && isValidTarget(pillager)) {
             commitPillager(pillager);
             return pillager;
         }
@@ -1558,7 +1565,7 @@ public class IvyCombatBrain {
         Evoker best = null;
         double bestDistance = Double.MAX_VALUE;
         for (Evoker evoker : ivy.level().getEntitiesOfClass(Evoker.class, ivy.getBoundingBox().inflate(16.0D))) {
-            if (!evoker.isAlive()) {
+            if (!isValidTarget(evoker)) {
                 continue;
             }
             double distance = ivy.distanceToSqr(evoker);
@@ -1660,7 +1667,7 @@ public class IvyCombatBrain {
     }
 
     private boolean isValidTarget(@Nullable LivingEntity target) {
-        return target != null && target.isAlive() && !target.isRemoved();
+        return ivy.canTargetForCombat(target);
     }
 
     @Nullable

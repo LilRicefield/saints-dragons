@@ -5,9 +5,10 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.TraceableEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.gameevent.EntityPositionSource;
 import net.minecraft.world.level.gameevent.GameEvent;
@@ -20,6 +21,8 @@ import java.util.UUID;
 
 public final class DragonHearingListener implements GameEventListener {
     private static final float MIN_CONFIDENCE = 0.08F;
+    private static final double MIN_PROJECTILE_DANGER_RADIUS = 6.0D;
+    private static final double PROJECTILE_DANGER_VERTICAL_RADIUS = 4.0D;
 
     private final DragonEntity dragon;
     private final PositionSource positionSource;
@@ -89,7 +92,9 @@ public final class DragonHearingListener implements GameEventListener {
         }
 
         Vec3 approximatePosition = addUncertainty(eventPosition, confidence);
-        UUID sourceUuid = source == null ? null : source.getUUID();
+        boolean unresolvedProjectile = stimulus.kind() == DragonSensoryObservation.Kind.PROJECTILE
+                && !(source instanceof LivingEntity);
+        UUID sourceUuid = unresolvedProjectile || source == null ? null : source.getUUID();
         DragonSensoryObservation observation = new DragonSensoryObservation(
                 approximatePosition,
                 sourceUuid,
@@ -99,12 +104,24 @@ public final class DragonHearingListener implements GameEventListener {
         );
 
         int ttl = Math.max(20, Math.round(profile.soundMemoryTicks() * stimulus.memoryMultiplier()));
+        DragonAwarenessMemory awareness = DragonAwarenessMemory.get(dragon);
+        if (event == GameEvent.PROJECTILE_LAND
+                && source instanceof LivingEntity
+                && sourceUuid != null
+                && isDangerousProjectileImpact(eventPosition)) {
+            UUID projectileUuid = eventSource != null && eventSource != source
+                    ? eventSource.getUUID()
+                    : null;
+            awareness.rememberProjectileImpact(sourceUuid, projectileUuid, level.getGameTime());
+        }
         boolean storedAmbient = storeObservation(DragonMemories.HEARD_STIMULUS, observation, ttl, level.getGameTime());
         LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         boolean threatening = source instanceof LivingEntity living
-                && (living == target || living == dragon.getLastHurtByMob());
+                && (living == target
+                || living == dragon.getLastHurtByMob()
+                || awareness.isProjectileThreat(sourceUuid, level.getGameTime()));
         if (storedAmbient) {
-            DragonAwarenessMemory.get(dragon).rememberSound(observation, threatening, level.getGameTime());
+            awareness.rememberSound(observation, threatening, level.getGameTime());
         }
         boolean storedTarget = target != null
                 && sourceUuid != null
@@ -119,14 +136,38 @@ public final class DragonHearingListener implements GameEventListener {
     }
 
     private static boolean canInvestigate(Stimulus stimulus, Entity source) {
+        if (stimulus.kind() == DragonSensoryObservation.Kind.PROJECTILE) {
+            return source instanceof LivingEntity;
+        }
         return stimulus.kind() != DragonSensoryObservation.Kind.BLOCK || source != null;
     }
 
+    private boolean isDangerousProjectileImpact(Vec3 eventPosition) {
+        double horizontalRadius = Math.max(MIN_PROJECTILE_DANGER_RADIUS, dragon.getBbWidth());
+        return dragon.getBoundingBox()
+                .inflate(horizontalRadius, PROJECTILE_DANGER_VERTICAL_RADIUS, horizontalRadius)
+                .contains(eventPosition);
+    }
+
     private Entity perceivedSource(Entity source) {
-        if (source instanceof Projectile projectile && projectile.getOwner() != null) {
-            return projectile.getOwner();
+        Entity current = source;
+        for (int depth = 0; current != null && depth < 3; depth++) {
+            if (current instanceof LivingEntity) {
+                return current;
+            }
+            Entity owner = null;
+            if (current instanceof TraceableEntity traceable) {
+                owner = traceable.getOwner();
+            }
+            if (owner == null && current instanceof OwnableEntity ownable) {
+                owner = ownable.getOwner();
+            }
+            if (owner == null || owner == current) {
+                break;
+            }
+            current = owner;
         }
-        return source;
+        return current;
     }
 
     private boolean storeObservation(MemoryModuleType<DragonSensoryObservation> memory,

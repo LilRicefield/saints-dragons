@@ -2,10 +2,12 @@ package com.leon.saintsdragons.server.ai.navigation.async;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class AsyncSwarmFlightController {
     private static final int PATH_RECALC_INTERVAL = 35;
@@ -13,7 +15,6 @@ public class AsyncSwarmFlightController {
     private static final double STUCK_DISTANCE_SQ = 0.04D;
     private static final double LOOK_AHEAD_DISTANCE = 4.0D;
     private static final double NODE_REACHED_DISTANCE = 1.25D;
-    private static final double COLLISION_SAMPLE_STEP = 0.4D;
 
     private final Mob mob;
     private final AsyncSwarmFlightMovementExecutor movementExecutor;
@@ -27,6 +28,8 @@ public class AsyncSwarmFlightController {
     private int recalcTicks;
     private int stuckTicks;
     private long pathGeneration;
+    private @Nullable Future<?> activePathRequest;
+    private @Nullable Vec3 requestedTarget;
 
     public AsyncSwarmFlightController(Mob mob) {
         this.mob = mob;
@@ -50,8 +53,14 @@ public class AsyncSwarmFlightController {
             return;
         }
 
-        Vec3 lookAhead = this.state == State.FOLLOWING ? calculateLookAheadPoint() : this.waypoint;
-        this.movementExecutor.executeMovement(lookAhead, this.waypoint, this.speed, arrivalDistance, this.pathNodes.isEmpty());
+        Vec3 lookAhead = this.pathNodes.isEmpty()
+                ? calculateSafeDirectLookAhead(this.waypoint)
+                : calculateLookAheadPoint();
+        if (lookAhead != null) {
+            this.movementExecutor.executeMovement(lookAhead, this.waypoint, this.speed, arrivalDistance, this.pathNodes.isEmpty());
+        } else {
+            this.movementExecutor.applyIdleFriction();
+        }
 
         if (isStuck()) {
             requestPath(this.waypoint);
@@ -91,6 +100,7 @@ public class AsyncSwarmFlightController {
         this.recalcTicks = 0;
         this.stuckTicks = 0;
         this.pathGeneration++;
+        cancelActivePathRequest();
     }
 
     public void clearWaypoint() {
@@ -105,6 +115,7 @@ public class AsyncSwarmFlightController {
         this.recalcTicks = 0;
         this.stuckTicks = 0;
         this.pathGeneration++;
+        cancelActivePathRequest();
         if (zeroVelocity) {
             this.movementExecutor.zeroVelocity();
         }
@@ -122,14 +133,26 @@ public class AsyncSwarmFlightController {
         if (target == null || this.mob.level().isClientSide) {
             return;
         }
+        if (this.activePathRequest != null) {
+            if (this.requestedTarget != null && this.requestedTarget.distanceToSqr(target) < 1.0D) {
+                return;
+            }
+            this.activePathRequest.cancel(true);
+        }
 
-        this.state = State.CALCULATING;
+        if (this.pathNodes.isEmpty()) {
+            this.state = State.CALCULATING;
+        }
         this.recalcTicks = 0;
+        this.requestedTarget = target;
         long generation = ++this.pathGeneration;
-        AsyncDragonPathfinder.calculateSwarmFlyingPathAsync(this.mob, target, path -> {
+        this.activePathRequest = AsyncDragonPathfinder.calculateSwarmFlyingPathAsync(this.mob, target, path -> {
             if (generation != this.pathGeneration || this.mob.isRemoved() || !this.mob.isAlive()) {
                 return;
             }
+            this.activePathRequest = null;
+            this.requestedTarget = null;
+            this.recalcTicks = 0;
 
             if (path == null || path.getNodeCount() == 0) {
                 this.pathNodes.clear();
@@ -150,8 +173,9 @@ public class AsyncSwarmFlightController {
             Node node = path.getNode(i);
             this.pathNodes.add(new Vec3(node.x + 0.5D, node.y + 0.5D, node.z + 0.5D));
         }
-        if (canReach && (this.pathNodes.isEmpty()
-                || this.pathNodes.get(this.pathNodes.size() - 1).distanceToSqr(target) > 1.0D)) {
+        if (canReach && !this.pathNodes.isEmpty()
+                && this.pathNodes.get(this.pathNodes.size() - 1).distanceToSqr(target) > 1.0D
+                && isSegmentClear(this.pathNodes.get(this.pathNodes.size() - 1), target)) {
             this.pathNodes.add(target);
         }
     }
@@ -169,6 +193,9 @@ public class AsyncSwarmFlightController {
         }
 
         int visibleIndex = this.pathIndex;
+        if (!isSegmentClear(pos, this.pathNodes.get(visibleIndex))) {
+            return null;
+        }
         for (int candidate = this.pathIndex + 1; candidate < this.pathNodes.size(); candidate++) {
             Vec3 candidateNode = this.pathNodes.get(candidate);
             if (pos.distanceToSqr(candidateNode) > LOOK_AHEAD_DISTANCE * LOOK_AHEAD_DISTANCE
@@ -182,20 +209,35 @@ public class AsyncSwarmFlightController {
     }
 
     private boolean isSegmentClear(Vec3 start, Vec3 end) {
-        Vec3 offset = end.subtract(start);
+        Vec3 movement = end.subtract(start);
+        Vec3 boxOffset = start.subtract(this.mob.position());
+        return VoxelAabbSweeper.isClear(
+                this.mob.level(),
+                this.mob,
+                this.mob.getBoundingBox().move(boxOffset),
+                movement
+        );
+    }
+
+    private @Nullable Vec3 calculateSafeDirectLookAhead(Vec3 target) {
+        Vec3 position = this.mob.position();
+        Vec3 offset = target.subtract(position);
         double distance = offset.length();
         if (distance < 1.0E-4D) {
-            return true;
+            return target;
         }
+        Vec3 localTarget = distance <= LOOK_AHEAD_DISTANCE
+                ? target
+                : position.add(offset.scale(LOOK_AHEAD_DISTANCE / distance));
+        return isSegmentClear(position, localTarget) ? localTarget : null;
+    }
 
-        int samples = Math.max(1, (int) Math.ceil(distance / COLLISION_SAMPLE_STEP));
-        for (int sample = 1; sample <= samples; sample++) {
-            Vec3 step = offset.scale((double) sample / samples);
-            if (!this.mob.level().noCollision(this.mob, this.mob.getBoundingBox().move(step))) {
-                return false;
-            }
+    private void cancelActivePathRequest() {
+        if (this.activePathRequest != null) {
+            this.activePathRequest.cancel(true);
+            this.activePathRequest = null;
         }
-        return true;
+        this.requestedTarget = null;
     }
 
     private double calculateArrivalDistance() {

@@ -12,7 +12,6 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -58,7 +57,7 @@ public class ArrowOfVenomEntity extends AbstractArrow implements GeoEntity {
 
     @Override
     protected void onHitEntity(EntityHitResult result) {
-        if (shouldIgnorePlayerHit(result)) {
+        if (shouldIgnoreFriendlyHit(result)) {
             discard();
             return;
         }
@@ -110,12 +109,12 @@ public class ArrowOfVenomEntity extends AbstractArrow implements GeoEntity {
         entityData.set(IMPACTED, true);
     }
 
-    private boolean shouldIgnorePlayerHit(EntityHitResult result) {
-        if (!(result.getEntity() instanceof Player)) {
+    private boolean shouldIgnoreFriendlyHit(EntityHitResult result) {
+        if (!(result.getEntity() instanceof LivingEntity target)) {
             return false;
         }
         Entity owner = getOwner();
-        return owner instanceof IvyTheDragonMerchant ivy && ivy.isTame();
+        return owner instanceof IvyTheDragonMerchant ivy && !ivy.canTargetForCombat(target);
     }
 
     @Override

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.Future;
 
 public class AsyncSwimController {
     private static final int PATH_RECALC_COOLDOWN_TICKS = 20;
@@ -36,6 +37,8 @@ public class AsyncSwimController {
     private int recalcCooldown;
     private boolean calculating;
     private long pathRequestGeneration;
+    private @Nullable Future<?> activePathRequest;
+    private @Nullable Vec3 requestedPathTarget;
     private Vec3 lastStuckCheckPosition;
     private int stuckCheckTimer;
     private int stuckTicks;
@@ -79,8 +82,8 @@ public class AsyncSwimController {
         this.pathNodes.clear();
         this.pathTarget = null;
         this.currentPathIndex = 0;
-        this.calculating = false;
         this.pathRequestGeneration++;
+        cancelActivePathRequest();
         return true;
     }
 
@@ -134,8 +137,8 @@ public class AsyncSwimController {
         this.pathNodes.clear();
         this.pathTarget = null;
         this.currentPathIndex = 0;
-        this.calculating = false;
         this.pathRequestGeneration++;
+        cancelActivePathRequest();
         resetStuckDetector();
         this.steering.slow(0.8D);
     }
@@ -150,8 +153,8 @@ public class AsyncSwimController {
         this.pathNodes.clear();
         this.pathTarget = null;
         this.currentPathIndex = 0;
-        this.calculating = false;
         this.pathRequestGeneration++;
+        cancelActivePathRequest();
         this.recalcCooldown = 0;
         this.pathRetries = 0;
         this.retryTarget = null;
@@ -199,7 +202,10 @@ public class AsyncSwimController {
     }
 
     private boolean shouldRepath(Vec3 newTarget) {
-        if (calculating || recalcCooldown > 0) {
+        if (calculating) {
+            return requestedPathTarget == null || requestedPathTarget.distanceToSqr(newTarget) > 9.0D;
+        }
+        if (recalcCooldown > 0) {
             return false;
         }
         if (pathNodes.isEmpty()) {
@@ -223,13 +229,17 @@ public class AsyncSwimController {
     }
 
     private void requestPath(Vec3 requestedTarget) {
+        cancelActivePathRequest();
         this.calculating = true;
         this.recalcCooldown = PATH_RECALC_COOLDOWN_TICKS;
+        this.requestedPathTarget = requestedTarget;
         long requestGeneration = ++this.pathRequestGeneration;
-        AsyncDragonPathfinder.calculateSwimPathAsync(this.host, requestedTarget, path -> {
+        this.activePathRequest = AsyncDragonPathfinder.calculateSwimPathAsync(this.host, requestedTarget, path -> {
             if (requestGeneration != this.pathRequestGeneration) {
                 return;
             }
+            this.activePathRequest = null;
+            this.requestedPathTarget = null;
             this.calculating = false;
             if (path != null && !path.isEmpty()) {
                 this.pathNodes.clear();
@@ -244,6 +254,15 @@ public class AsyncSwimController {
                 recordPathFailure(requestedTarget);
             }
         });
+    }
+
+    private void cancelActivePathRequest() {
+        if (this.activePathRequest != null) {
+            this.activePathRequest.cancel(true);
+            this.activePathRequest = null;
+        }
+        this.requestedPathTarget = null;
+        this.calculating = false;
     }
 
     private Vec3 getCurrentLookAhead() {
@@ -332,12 +351,20 @@ public class AsyncSwimController {
             return true;
         }
 
+        Vec3 boxOffset = start.subtract(this.host.position());
+        if (!VoxelAabbSweeper.isClear(
+                this.host.level(),
+                this.host,
+                this.host.getBoundingBox().move(boxOffset),
+                offset
+        )) {
+            return false;
+        }
+
         int samples = Math.max(1, (int)Math.ceil(distance / COLLISION_SAMPLE_STEP));
         for (int sampleIndex = 1; sampleIndex <= samples; sampleIndex++) {
             Vec3 sample = start.add(offset.scale((double)sampleIndex / samples));
-            Vec3 movement = sample.subtract(start);
-            if (!host.level().getFluidState(BlockPos.containing(sample)).is(FluidTags.WATER)
-                    || !host.level().noCollision(host, host.getBoundingBox().move(movement))) {
+            if (!host.level().getFluidState(BlockPos.containing(sample)).is(FluidTags.WATER)) {
                 return false;
             }
         }

@@ -50,6 +50,12 @@ public class DragonAIMovementController {
         if (groundPathFailureRetryTicks > 0) {
             groundPathFailureRetryTicks--;
         }
+        if (currentWaypoint != null
+                && !currentWaypoint.mode().usesWater()
+                && shouldUseWaterMovement()
+                && !handoffCurrentWaypointToWater()) {
+            return;
+        }
         if (currentWaypoint != null && currentWaypoint.mode().usesWater()) {
             if (!shouldUseWaterMovement()) {
                 dragon.getAiSwimController().stop();
@@ -294,6 +300,21 @@ public class DragonAIMovementController {
         return null;
     }
 
+    public @Nullable Vec3 findGroundWaypointBelow(Vec3 target) {
+        if (target == null) {
+            return null;
+        }
+        BlockPos column = BlockPos.containing(target);
+        if (!dragon.level().hasChunkAt(column)) {
+            return null;
+        }
+        BlockPos ground = findLandingGround(dragon, column, dragon.getBlockY());
+        if (ground == null || !isValidLandingSurface(dragon, ground)) {
+            return null;
+        }
+        return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
+    }
+
     public @Nullable Vec3 findTacticalGroundTransitionTarget(LivingEntity target,
                                                               int maxSearchRadius,
                                                               double maxVerticalDelta) {
@@ -468,6 +489,11 @@ public class DragonAIMovementController {
     }
 
     public boolean hasArrived() {
+        if (currentWaypoint != null
+                && dragon instanceof RideableFlyingDragon flyingDragon
+                && flyingDragon.isFlightControllerFailed()) {
+            return false;
+        }
         if (currentWaypoint != null && currentWaypoint.mode().usesWater()) {
             double arrivalDistance = waterArrivalDistance();
             return dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
@@ -497,6 +523,11 @@ public class DragonAIMovementController {
     }
 
     public boolean hasFailed() {
+        if (currentWaypoint != null
+                && dragon instanceof RideableFlyingDragon flyingDragon
+                && flyingDragon.isFlightControllerFailed()) {
+            return true;
+        }
         if (groundPathState == GroundPathState.FAILED) {
             return true;
         }
@@ -561,6 +592,38 @@ public class DragonAIMovementController {
         }
         lastWaterControllerTick = dragon.tickCount;
         dragon.getAiSwimController().serverTick();
+    }
+
+    private boolean handoffCurrentWaypointToWater() {
+        QueuedWaypoint previousWaypoint = this.currentWaypoint;
+        if (previousWaypoint == null) {
+            return false;
+        }
+
+        resetGroundPathState();
+        dragon.getNavigation().stop();
+        if (dragon instanceof RideableFlyingDragon flyingDragon) {
+            flyingDragon.completeAiWaterHandoff();
+        }
+
+        this.currentWaypoint = new QueuedWaypoint(
+                previousWaypoint.target(),
+                previousWaypoint.speed(),
+                false,
+                MovementMode.WATER
+        );
+        boolean accepted = dragon.getAiSwimController().trackTarget(
+                previousWaypoint.target(),
+                previousWaypoint.speed(),
+                WATER_TURN_SPEED
+        );
+        if (!accepted) {
+            dragon.getAiSwimController().stop();
+            this.currentWaypoint = null;
+            return false;
+        }
+        tickWaterController();
+        return true;
     }
 
     private double waterArrivalDistance() {

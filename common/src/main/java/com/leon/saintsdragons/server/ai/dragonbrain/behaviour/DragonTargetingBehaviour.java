@@ -8,8 +8,10 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +19,9 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
+    private static final String PROJECTILE_THREAT_SOURCE = "projectile_threat";
+    private static final int PROJECTILE_THREAT_PRIORITY = 4;
+
     private final DragonPursuitSafety pursuitSafety = new DragonPursuitSafety();
     private String source = "none";
     private int sourcePriority = Integer.MAX_VALUE;
@@ -99,16 +104,24 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         }
 
         TargetChoice choice = findPriorityTarget(context);
+        TargetChoice projectileThreat = findProjectileThreat(context);
+        if (projectileThreat != null
+                && (choice == null || projectileThreat.priority() < choice.priority())) {
+            choice = projectileThreat;
+        }
         if (choice != null
                 && !pursuitSafety.canReacquire(dragon, choice.target(), context.gameTime())) {
             choice = null;
         }
         if (choice != null) {
-            if (isUsableTarget(dragon, current)
-                    && canRetainTarget(dragon, current, source)
-                    && choice.priority() > sourcePriority) {
-                syncTarget(context, current);
-                return;
+            if (isUsableTarget(dragon, current) && canRetainTarget(dragon, current, source)) {
+                boolean keepProjectileCommitment = PROJECTILE_THREAT_SOURCE.equals(source)
+                        && PROJECTILE_THREAT_SOURCE.equals(choice.source())
+                        && choice.target() != current;
+                if (keepProjectileCommitment || choice.priority() > sourcePriority) {
+                    syncTarget(context, current);
+                    return;
+                }
             }
             setTarget(context, choice.target(), choice.source(), choice.priority());
             return;
@@ -175,6 +188,22 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
 
     protected final TargetChoice targetChoice(LivingEntity target, String source, int priority) {
         return new TargetChoice(target, source, priority);
+    }
+
+    @Nullable
+    private TargetChoice findProjectileThreat(DragonBrainContext<T> context) {
+        DragonAwarenessMemory awareness = DragonAwarenessMemory.get(context.dragon());
+        java.util.UUID sourceUuid = awareness.projectileThreatSource(context.gameTime());
+        if (sourceUuid == null) {
+            return null;
+        }
+        Entity sourceEntity = context.level().getEntity(sourceUuid);
+        if (!(sourceEntity instanceof LivingEntity source)
+                || !isUsableTarget(context.dragon(), source)) {
+            awareness.consumeProjectileThreat(sourceUuid);
+            return null;
+        }
+        return targetChoice(source, PROJECTILE_THREAT_SOURCE, PROJECTILE_THREAT_PRIORITY);
     }
 
     private void setTarget(DragonBrainContext<T> context,

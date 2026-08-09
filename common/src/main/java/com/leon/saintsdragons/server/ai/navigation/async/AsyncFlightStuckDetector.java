@@ -28,6 +28,7 @@ class AsyncFlightStuckDetector {
             this.stuckTicks++;
         } else {
             this.stuckTicks = 0;
+            this.retryCount = 0;
             this.lastStuckCheckPosition = currentPos;
         }
         return this.stuckTicks >= stuckThresholdTicks;

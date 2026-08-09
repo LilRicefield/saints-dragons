@@ -5,8 +5,10 @@ package com.leon.saintsdragons.server.entity.npc;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.handler.CompanionCombatRules;
 import com.leon.saintsdragons.server.entity.handler.HumanSoundHandler;
 import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueDefinition;
@@ -1505,10 +1507,22 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             if (hurt && isTame() && isOwnedBy(player) && isAlive()) {
                 speakOwnerHurtChatter(player);
             }
-            if (getTarget() instanceof Player) {
+            if (canTargetForCombat(player)) {
+                getBoxingCombat().onHurt(source, hurt);
+            } else {
+                if (getTarget() == player) {
+                    setTarget(null);
+                }
+                getBoxingCombat().clearFriendlyReaction();
+            }
+            return hurt;
+        }
+        if (source.getEntity() instanceof LivingEntity attacker && isCombatFriendly(attacker)) {
+            boolean hurt = super.hurt(source, amount);
+            if (getTarget() == attacker) {
                 setTarget(null);
             }
-            getBoxingCombat().clearPlayerReaction();
+            getBoxingCombat().clearFriendlyReaction();
             return hurt;
         }
         if (isBlockedHostileDamage(source)) {
@@ -1812,11 +1826,40 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
             getBoxingCombat().clear();
             return;
         }
-        if (target instanceof Player || (isTame() && isOwnedBy(target))) {
+        if (target != null && !canTargetForCombat(target)) {
             super.setTarget(null);
             return;
         }
         super.setTarget(target);
+    }
+
+    public boolean canTargetForCombat(@Nullable LivingEntity target) {
+        if (target == null
+                || !target.isAlive()
+                || target.isRemoved()
+                || target == this
+                || isCombatFriendly(target)) {
+            return false;
+        }
+        if (target instanceof Player player) {
+            return isTame() && !player.isCreative() && !player.isSpectator();
+        }
+        return true;
+    }
+
+    public boolean isCombatFriendly(@Nullable Entity entity) {
+        if (entity == null) {
+            return false;
+        }
+        return entity == this
+                || CompanionCombatRules.isTrusted(entity, getOwnerUUID(), level())
+                || DragonTargetingHelper.isVillageDefender(entity)
+                || super.isAlliedTo(entity);
+    }
+
+    @Override
+    public boolean isAlliedTo(@NotNull Entity entity) {
+        return isCombatFriendly(entity);
     }
 
     private boolean isBlockedHostileDamage(DamageSource source) {

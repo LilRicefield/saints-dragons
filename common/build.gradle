@@ -40,4 +40,11 @@ dependencies {
 
     // JSR305 for @Nullable/@Nonnull annotations
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
+
+    testImplementation platform("org.junit:junit-bom:5.10.2")
+    testImplementation "org.junit.jupiter:junit-jupiter"
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
 }

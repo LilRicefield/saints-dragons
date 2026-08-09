@@ -640,8 +640,22 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     protected void onExitLocomotionMode(DragonLocomotionMode previousMode, DragonLocomotionMode nextMode) {
         super.onExitLocomotionMode(previousMode, nextMode);
         if (previousMode == DragonLocomotionMode.AIR && nextMode != DragonLocomotionMode.AIR) {
-            this.asyncAirController.clearAllWaypoints();
+            if (!level().isClientSide
+                    && nextMode == DragonLocomotionMode.WATER
+                    && !isVehicle()) {
+                completeAiWaterHandoff();
+            } else {
+                this.asyncAirController.clearAllWaypoints();
+            }
         }
+    }
+
+    public void completeAiWaterHandoff() {
+        if (level().isClientSide || isVehicle()) {
+            return;
+        }
+        this.asyncAirController.clearAllWaypoints();
+        forceClearAerialStateForRiderWaterHandoff();
     }
 
     @Override
@@ -1147,7 +1161,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     public boolean isFlightControllerFailed() {
         return isUsingAirNavigation()
-                && this.asyncAirController.getState() == AsyncFlightController.PathState.FAILED;
+                && this.asyncAirController.hasFailed();
     }
 
     protected void tickAsyncFlightNavigation() {

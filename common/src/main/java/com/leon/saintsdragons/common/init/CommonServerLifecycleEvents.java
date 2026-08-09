@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncDragonPathfinder;
 import com.leon.saintsdragons.server.data.WikiReminderSavedData;
 import com.leon.saintsdragons.server.debug.DragonPathDebugTracker;
 import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.StegonautBuffAbility;
@@ -54,6 +55,8 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onServerStopping(MinecraftServer server) {
+        AsyncDragonPathfinder.onServerStopping(server);
+
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             DragonlordArmorSetBonus.saveHealthForReload(player);
             onPlayerDisconnect(player);

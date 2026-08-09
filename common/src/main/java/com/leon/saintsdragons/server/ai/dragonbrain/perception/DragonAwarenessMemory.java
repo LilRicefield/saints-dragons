@@ -16,6 +16,10 @@ public final class DragonAwarenessMemory {
     private static final long PASSIVE_QUIET_RESET_TICKS = 20L * 30L;
     private static final long PRUNE_INTERVAL_TICKS = 20L * 10L;
     private static final float ATTENTION_SWITCH_MARGIN = 0.12F;
+    private static final long PROJECTILE_PRESSURE_WINDOW_TICKS = 20L * 3L;
+    private static final long PROJECTILE_THREAT_TICKS = 20L * 10L;
+    private static final int PROJECTILE_THREAT_IMPACTS = 2;
+    private static final int MAX_RECENT_PROJECTILES_PER_SOURCE = 8;
 
     private final Map<UUID, Familiarity> familiarity =
             new LinkedHashMap<>(MAX_FAMILIAR_SOURCES, 0.75F, true);
@@ -24,6 +28,9 @@ public final class DragonAwarenessMemory {
 
     @Nullable
     private Attention attention;
+    @Nullable
+    private UUID projectileThreatSource;
+    private long projectileThreatUntil = Long.MIN_VALUE;
     private long lastPrunedAt = Long.MIN_VALUE;
 
     public static DragonAwarenessMemory get(DragonEntity dragon) {
@@ -103,6 +110,63 @@ public final class DragonAwarenessMemory {
         trimOldestSources();
     }
 
+    public void rememberProjectileImpact(UUID sourceUuid,
+                                         @Nullable UUID projectileUuid,
+                                         long gameTime) {
+        Familiarity record = familiarity.computeIfAbsent(sourceUuid, ignored -> new Familiarity());
+        trimOldestSources();
+        if (projectileUuid != null) {
+            record.recentProjectileImpacts.entrySet().removeIf(
+                    entry -> gameTime - entry.getValue() > PROJECTILE_PRESSURE_WINDOW_TICKS
+            );
+            if (record.recentProjectileImpacts.putIfAbsent(projectileUuid, gameTime) != null) {
+                return;
+            }
+            while (record.recentProjectileImpacts.size() > MAX_RECENT_PROJECTILES_PER_SOURCE) {
+                Iterator<UUID> oldest = record.recentProjectileImpacts.keySet().iterator();
+                oldest.next();
+                oldest.remove();
+            }
+        } else if (record.lastProjectileImpactAt != Long.MIN_VALUE
+                && gameTime - record.lastProjectileImpactAt <= 3L) {
+            return;
+        }
+        if (record.projectilePressureStartedAt == Long.MIN_VALUE
+                || gameTime - record.projectilePressureStartedAt > PROJECTILE_PRESSURE_WINDOW_TICKS) {
+            record.projectilePressureStartedAt = gameTime;
+            record.projectileImpacts = 0;
+        }
+        record.lastProjectileImpactAt = gameTime;
+        record.lastObservedAt = gameTime;
+        record.projectileImpacts++;
+        if (record.projectileImpacts >= PROJECTILE_THREAT_IMPACTS) {
+            expireProjectileThreat(gameTime);
+            if (projectileThreatSource == null || sourceUuid.equals(projectileThreatSource)) {
+                projectileThreatSource = sourceUuid;
+                projectileThreatUntil = gameTime + PROJECTILE_THREAT_TICKS;
+            }
+            rememberThreat(sourceUuid, gameTime);
+        }
+    }
+
+    public boolean isProjectileThreat(@Nullable UUID sourceUuid, long gameTime) {
+        expireProjectileThreat(gameTime);
+        return sourceUuid != null && sourceUuid.equals(projectileThreatSource);
+    }
+
+    @Nullable
+    public UUID projectileThreatSource(long gameTime) {
+        expireProjectileThreat(gameTime);
+        return projectileThreatSource;
+    }
+
+    public void consumeProjectileThreat(UUID sourceUuid) {
+        if (sourceUuid.equals(projectileThreatSource)) {
+            projectileThreatSource = null;
+            projectileThreatUntil = Long.MIN_VALUE;
+        }
+    }
+
     @Nullable
     public DragonSensoryObservation attention(long gameTime) {
         if (attention == null) {
@@ -166,6 +230,7 @@ public final class DragonAwarenessMemory {
     }
 
     private void prune(long gameTime) {
+        expireProjectileThreat(gameTime);
         if (lastPrunedAt != Long.MIN_VALUE && gameTime - lastPrunedAt < PRUNE_INTERVAL_TICKS) {
             return;
         }
@@ -178,6 +243,13 @@ public final class DragonAwarenessMemory {
             }
         }
         trimOldestSources();
+    }
+
+    private void expireProjectileThreat(long gameTime) {
+        if (projectileThreatSource != null && gameTime >= projectileThreatUntil) {
+            projectileThreatSource = null;
+            projectileThreatUntil = Long.MIN_VALUE;
+        }
     }
 
     private void trimOldestSources() {
@@ -255,6 +327,10 @@ public final class DragonAwarenessMemory {
         private long lastObservedAt = Long.MIN_VALUE;
         private long nextPassiveAttentionAt = Long.MIN_VALUE;
         private int harmlessObservations;
+        private long projectilePressureStartedAt = Long.MIN_VALUE;
+        private long lastProjectileImpactAt = Long.MIN_VALUE;
+        private final Map<UUID, Long> recentProjectileImpacts = new LinkedHashMap<>();
+        private int projectileImpacts;
     }
 
     private record Attention(DragonSensoryObservation observation, long endsAt, float score) {
