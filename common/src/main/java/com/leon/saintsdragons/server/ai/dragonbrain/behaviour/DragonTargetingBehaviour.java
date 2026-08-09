@@ -7,24 +7,32 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private static final String PROJECTILE_THREAT_SOURCE = "projectile_threat";
     private static final int PROJECTILE_THREAT_PRIORITY = 4;
+    private static final String DRACONIAN_SWARM_SOURCE = "draconian_swarm";
+    private static final int DRACONIAN_SWARM_PRIORITY = 3;
+    private static final int DRACONIAN_SWARM_POLL_INTERVAL_TICKS = 10;
 
     private final DragonPursuitSafety pursuitSafety = new DragonPursuitSafety();
     private String source = "none";
     private int sourcePriority = Integer.MAX_VALUE;
+    private int draconianSwarmPollCooldown;
 
     protected DragonTargetingBehaviour() {
         super(false);
@@ -104,6 +112,11 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         }
 
         TargetChoice choice = findPriorityTarget(context);
+        TargetChoice draconianSwarm = findDraconianSwarmTarget(context);
+        if (draconianSwarm != null
+                && (choice == null || draconianSwarm.priority() < choice.priority())) {
+            choice = draconianSwarm;
+        }
         TargetChoice projectileThreat = findProjectileThreat(context);
         if (projectileThreat != null
                 && (choice == null || projectileThreat.priority() < choice.priority())) {
@@ -204,6 +217,41 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             return null;
         }
         return targetChoice(source, PROJECTILE_THREAT_SOURCE, PROJECTILE_THREAT_PRIORITY);
+    }
+
+    @Nullable
+    private TargetChoice findDraconianSwarmTarget(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        double range = Math.max(32.0D, dragon.getAttributeValue(Attributes.FOLLOW_RANGE));
+        double rangeSqr = range * range;
+        LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        if (current instanceof AbstractDraconianSwarmEntity
+                && isUsableTarget(dragon, current)
+                && dragon.distanceToSqr(current) <= rangeSqr) {
+            return targetChoice(current, DRACONIAN_SWARM_SOURCE, DRACONIAN_SWARM_PRIORITY);
+        }
+
+        if (draconianSwarmPollCooldown > 0) {
+            draconianSwarmPollCooldown--;
+            return null;
+        }
+        draconianSwarmPollCooldown = DRACONIAN_SWARM_POLL_INTERVAL_TICKS;
+
+        List<AbstractDraconianSwarmEntity> candidates = context.level().getEntitiesOfClass(
+                AbstractDraconianSwarmEntity.class,
+                dragon.getBoundingBox().inflate(range),
+                candidate -> isUsableTarget(dragon, candidate)
+                        && dragon.distanceToSqr(candidate) <= rangeSqr
+                        && dragon.getSensing().hasLineOfSight(candidate)
+        );
+        return candidates.stream()
+                .min(Comparator.comparingDouble(dragon::distanceToSqr))
+                .map(target -> targetChoice(
+                        target,
+                        DRACONIAN_SWARM_SOURCE,
+                        DRACONIAN_SWARM_PRIORITY
+                ))
+                .orElse(null);
     }
 
     private void setTarget(DragonBrainContext<T> context,
