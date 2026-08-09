@@ -2,6 +2,8 @@ package com.leon.saintsdragons.server.ai.navigation;
 
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncDragonPathfinder;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonLandingPlan;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonLandingPlanner;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -21,6 +23,7 @@ import java.util.concurrent.Future;
 public class DragonAIMovementController {
     private static final int GROUND_PATH_FAILURE_RETRY_TICKS = 20;
     private static final int REPEATED_GROUND_PATH_FAILURE_THRESHOLD = 3;
+    private static final int LANDING_PLAN_FAILURE_RETRY_TICKS = 20;
     private static final float WATER_TURN_SPEED = 8.0F;
 
     private final RideableDragonBase dragon;
@@ -33,6 +36,8 @@ public class DragonAIMovementController {
     private @Nullable Vec3 lastFailedGroundTarget;
     private int consecutiveGroundPathFailures;
     private @Nullable Vec3 groundPathFailureOrigin;
+    private int landingPlanRetryTicks;
+    private @Nullable DragonLandingPlan pendingLandingPlan;
     private int lastWaterControllerTick = Integer.MIN_VALUE;
 
     public DragonAIMovementController(RideableDragonBase dragon) {
@@ -49,6 +54,9 @@ public class DragonAIMovementController {
         }
         if (groundPathFailureRetryTicks > 0) {
             groundPathFailureRetryTicks--;
+        }
+        if (landingPlanRetryTicks > 0) {
+            landingPlanRetryTicks--;
         }
         if (currentWaypoint != null
                 && !currentWaypoint.mode().usesWater()
@@ -236,12 +244,21 @@ public class DragonAIMovementController {
             }
             return false;
         }
-
-        Vec3 landingTarget = findGroundTransitionTarget(target);
-        if (landingTarget == null) {
+        if (hasActiveLandingTransition()) {
+            return true;
+        }
+        if (landingPlanRetryTicks > 0) {
             return false;
         }
-        return beginGroundTransition(landingTarget, speed, flightCapable);
+
+        this.pendingLandingPlan = null;
+        DragonLandingPlan landingPlan = DragonLandingPlanner.findPlan(dragon, target);
+        if (landingPlan == null) {
+            landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
+            return false;
+        }
+        landingPlanRetryTicks = 0;
+        return beginGroundTransition(landingPlan, speed);
     }
 
     public boolean requestGroundTransition(@Nullable Vec3 landingTarget, double speed) {
@@ -256,48 +273,66 @@ public class DragonAIMovementController {
             }
             return false;
         }
-        return beginGroundTransition(landingTarget, speed, flightCapable);
-    }
-
-    private boolean beginGroundTransition(@Nullable Vec3 landingTarget,
-                                          double speed,
-                                          DragonFlightCapable flightCapable) {
+        if (hasActiveLandingTransition()) {
+            return true;
+        }
+        if (landingPlanRetryTicks > 0) {
+            return false;
+        }
         if (landingTarget == null) {
             return false;
         }
+        DragonLandingPlan landingPlan = this.pendingLandingPlan;
+        this.pendingLandingPlan = null;
+        if (landingPlan == null
+                || landingPlan.touchdown().distanceToSqr(landingTarget) >= 1.0D) {
+            landingPlan = DragonLandingPlanner.findPlanNear(dragon, landingTarget);
+        }
+        if (landingPlan == null) {
+            landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
+            return false;
+        }
+        landingPlanRetryTicks = 0;
+        return beginGroundTransition(landingPlan, speed);
+    }
 
-        flightCapable.beginAiLanding();
-        return startWaypoint(new QueuedWaypoint(landingTarget, speed, false, MovementMode.LANDING));
+    private boolean hasActiveLandingTransition() {
+        if (currentWaypoint == null || currentWaypoint.mode() != MovementMode.LANDING) {
+            return false;
+        }
+        if (dragon instanceof RideableFlyingDragon flyingDragon
+                && flyingDragon.isFlightControllerFailed()) {
+            currentWaypoint = null;
+            return false;
+        }
+        return true;
+    }
+
+    private boolean beginGroundTransition(@Nullable DragonLandingPlan landingPlan, double speed) {
+        if (landingPlan == null) {
+            return false;
+        }
+        this.pendingLandingPlan = null;
+        return startWaypoint(new QueuedWaypoint(
+                landingPlan.touchdown(),
+                speed,
+                false,
+                MovementMode.LANDING,
+                landingPlan,
+                Double.NaN
+        ));
     }
 
     public @Nullable Vec3 findGroundTransitionTarget(@Nullable LivingEntity target) {
-        BlockPos origin = target != null && target.isAlive() ? target.blockPosition() : dragon.blockPosition();
-        double currentAltitude = Math.max(0.0D, dragon.getY()
-                - dragon.level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, dragon.getBlockX(), dragon.getBlockZ()));
-        double minHorizontalDistanceSqr = currentAltitude > 6.0D
-                ? 6.0D * 6.0D
-                : 0.0D;
-
-        for (int radius = 0; radius <= 32; radius += 8) {
-            for (int attempt = 0; attempt < 14; attempt++) {
-                int dx = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
-                int dz = radius == 0 ? 0 : dragon.getRandom().nextInt(radius * 2 + 1) - radius;
-                if (dx * dx + dz * dz < minHorizontalDistanceSqr) {
-                    continue;
-                }
-
-                BlockPos column = origin.offset(dx, 0, dz);
-                if (!dragon.level().hasChunkAt(column)) {
-                    continue;
-                }
-
-                BlockPos ground = findLandingGround(dragon, column, origin.getY());
-                if (ground != null && isValidLandingSurface(dragon, ground)) {
-                    return new Vec3(column.getX() + 0.5D, ground.getY() + 1.0D, column.getZ() + 0.5D);
-                }
-            }
+        if (landingPlanRetryTicks > 0) {
+            return null;
         }
-        return null;
+        DragonLandingPlan plan = DragonLandingPlanner.findPlan(dragon, target);
+        this.pendingLandingPlan = plan;
+        if (plan == null) {
+            landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
+        }
+        return plan == null ? null : plan.touchdown();
     }
 
     public @Nullable Vec3 findGroundWaypointBelow(Vec3 target) {
@@ -381,6 +416,7 @@ public class DragonAIMovementController {
     public void clearAllWaypoints() {
         invalidateMovementCommand();
         currentWaypoint = null;
+        pendingLandingPlan = null;
         resetGroundPathState();
         dragon.getNavigation().stop();
         dragon.getAiSwimController().clear();
@@ -720,7 +756,10 @@ public class DragonAIMovementController {
             resetGroundPathState();
             if (dragon instanceof RideableFlyingDragon flyingDragon) {
                 if (waypoint.mode() == MovementMode.LANDING) {
-                    flyingDragon.pathAiGroundTransitionTo(waypoint.target(), waypoint.speed());
+                    if (waypoint.landingPlan() == null) {
+                        return false;
+                    }
+                    flyingDragon.pathAiLandingPlan(waypoint.landingPlan(), waypoint.speed());
                 } else if (waypoint.mode() == MovementMode.AIR) {
                     flyingDragon.pathAiFlightTo(waypoint.target(), waypoint.speed());
                 } else {
@@ -927,9 +966,18 @@ public class DragonAIMovementController {
                                   double speed,
                                   boolean running,
                                   MovementMode mode,
+                                  @Nullable DragonLandingPlan landingPlan,
                                   double groundArrivalTolerance) {
         private QueuedWaypoint(Vec3 target, double speed, boolean running, MovementMode mode) {
-            this(target, speed, running, mode, Double.NaN);
+            this(target, speed, running, mode, null, Double.NaN);
+        }
+
+        private QueuedWaypoint(Vec3 target,
+                               double speed,
+                               boolean running,
+                               MovementMode mode,
+                               double groundArrivalTolerance) {
+            this(target, speed, running, mode, null, groundArrivalTolerance);
         }
 
         private boolean hasPreciseGroundArrival() {

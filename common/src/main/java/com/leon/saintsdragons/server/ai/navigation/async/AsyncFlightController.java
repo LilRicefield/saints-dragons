@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 
 public class AsyncFlightController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncFlightController.class);
+    private static final double MIN_LANDING_SPEED_MODIFIER = 1.0D;
+    private static final double LANDING_SPEED_BOOST = 1.15D;
 
     private final Mob host;
     private final DragonFlightCapable flightCapable;
@@ -21,6 +23,9 @@ public class AsyncFlightController {
     private Vec3 currentWaypoint;
     private WaypointArrivalCallback currentArrivalCallback;
     private boolean currentGroundTransition;
+    private @Nullable DragonLandingPlan landingPlan;
+    private LandingPhase landingPhase = LandingPhase.NONE;
+    private double landingSpeed = 1.0D;
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
     private long pathRequestGeneration = 0L;
@@ -75,26 +80,44 @@ public class AsyncFlightController {
             return;
         }
 
+        LandingPhase activeLandingPhase = this.landingPhase;
         boolean groundTransition = this.currentGroundTransition;
-        if (groundTransition && this.flightCapable.isLanding() && this.movementExecutor.hasLandingContact()) {
+        if (activeLandingPhase.isCommitted()
+                && this.flightCapable.isLanding()
+                && (this.host.onGround()
+                    || (activeLandingPhase == LandingPhase.TOUCHDOWN
+                        && this.movementExecutor.hasLandingContact()))) {
             this.clearAllWaypoints();
             this.flightCapable.markLandedNow();
             return;
         }
-        double arrivalDist = this.calculateArrivalDistance(groundTransition);
+        double arrivalDist = this.calculateArrivalDistance(activeLandingPhase, groundTransition);
         double distSq = this.host.position().distanceToSqr(this.currentWaypoint);
-        if (this.hasReachedWaypoint(distSq, arrivalDist, groundTransition)) {
-            this.onArrived();
+        if (this.hasReachedWaypoint(distSq, arrivalDist, activeLandingPhase, groundTransition)) {
+            if (activeLandingPhase.advancesLandingPlan()) {
+                this.advanceLandingPhase();
+            } else {
+                this.onArrived();
+            }
             return;
         }
 
         if (this.state == PathState.FOLLOWING || this.state == PathState.CALCULATING) {
-            Vec3 movementTarget = this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead);
-            if (movementTarget == null) {
-                movementTarget = this.pathResolver.calculateSafeDirectLookAhead(
-                        this.currentWaypoint,
-                        this.flyingLookAhead
-                );
+            Vec3 movementTarget;
+            if (activeLandingPhase.usesDirectCorridor()) {
+                if (!this.isCurrentLandingSegmentClear()) {
+                    this.beginLandingGoAround();
+                    return;
+                }
+                movementTarget = this.currentWaypoint;
+            } else {
+                movementTarget = this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead);
+                if (movementTarget == null) {
+                    movementTarget = this.pathResolver.calculateSafeDirectLookAhead(
+                            this.currentWaypoint,
+                            this.flyingLookAhead
+                    );
+                }
             }
             if (movementTarget != null) {
                 this.movementExecutor.executeMovement(
@@ -103,7 +126,7 @@ public class AsyncFlightController {
                         this.speedModifier,
                         arrivalDist,
                         this.waypointQueue.isEmpty(),
-                        groundTransition
+                        activeLandingPhase
                 );
             } else {
                 this.movementExecutor.applyIdleFriction();
@@ -111,12 +134,19 @@ public class AsyncFlightController {
         }
 
         if (this.stuckDetector.check(this.state, this.stuckMovementThreshold, this.stuckThresholdTicks)) {
-            this.handleStuck(this.currentWaypoint);
+            if (activeLandingPhase.isCommitted()) {
+                this.beginLandingGoAround();
+            } else {
+                this.handleStuck(this.currentWaypoint);
+            }
         }
         if (this.state == PathState.FAILED) {
             return;
         }
 
+        if (activeLandingPhase.usesDirectCorridor()) {
+            return;
+        }
         if (this.state == PathState.FOLLOWING && this.pathResolver.shouldExtendPartialPath()) {
             this.pathResolver.forceRecalculatePath(this.currentWaypoint);
         } else {
@@ -136,10 +166,36 @@ public class AsyncFlightController {
     }
 
     public void setGroundTransitionWaypoint(Vec3 target, double speed) {
-        this.setWaypoint(target, speed, null, true);
+        DragonLandingPlan plan = DragonLandingPlanner.findPlanNear(this.host, target);
+        if (plan != null) {
+            this.setLandingPlan(plan, speed);
+        }
+    }
+
+    public void setLandingPlan(DragonLandingPlan plan, double speed) {
+        if (plan == null) {
+            return;
+        }
+
+        this.waypointQueue.clear();
+        this.invalidatePathRequests();
+        this.pathResolver.cancelActivePathRequest();
+        this.pathResolver.clearPathNodes();
+        this.landingPlan = plan;
+        this.landingPhase = LandingPhase.APPROACH;
+        this.landingSpeed = Math.max(MIN_LANDING_SPEED_MODIFIER, speed * LANDING_SPEED_BOOST);
+        this.currentWaypoint = plan.approach();
+        this.currentArrivalCallback = null;
+        this.currentGroundTransition = false;
+        this.speedModifier = this.landingSpeed;
+        this.state = PathState.CALCULATING;
+        this.stuckDetector.reset();
+        this.flightCapable.beginAiFlight();
+        this.pathResolver.startPathing(this.currentWaypoint);
     }
 
     public void trackMovingWaypoint(Vec3 target, double speed) {
+        this.cancelLandingPlanForNewFlightCommand();
         if (this.currentWaypoint == null
                 || this.state == PathState.IDLE
                 || this.state == PathState.ARRIVED
@@ -166,6 +222,7 @@ public class AsyncFlightController {
     }
 
     public void setWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
+        this.cancelLandingPlanForNewFlightCommand();
         this.setWaypoint(target, speed, onArrival, false);
     }
 
@@ -243,6 +300,7 @@ public class AsyncFlightController {
     }
 
     public void addWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
+        this.cancelLandingPlanForNewFlightCommand();
         this.addWaypoint(target, speed, onArrival, false);
     }
 
@@ -266,11 +324,115 @@ public class AsyncFlightController {
         this.currentWaypoint = null;
         this.currentArrivalCallback = null;
         this.currentGroundTransition = false;
+        this.clearLandingPlanState();
         this.state = PathState.IDLE;
         this.invalidatePathRequests();
         this.pathResolver.clearPathNodes();
         this.resetPathingState();
         this.movementExecutor.zeroVelocity();
+    }
+
+    private void advanceLandingPhase() {
+        if (this.landingPlan == null
+                || !DragonLandingPlanner.isTouchdownStillValid(this.host, this.landingPlan)) {
+            this.beginLandingGoAround();
+            return;
+        }
+
+        switch (this.landingPhase) {
+            case APPROACH -> {
+                this.flightCapable.beginAiLanding();
+                this.beginDirectLandingPhase(LandingPhase.GLIDE, this.landingPlan.glide());
+            }
+            case GLIDE -> this.beginDirectLandingPhase(LandingPhase.FLARE, this.landingPlan.flare());
+            case FLARE -> this.beginDirectLandingPhase(LandingPhase.TOUCHDOWN, this.landingPlan.touchdown());
+            default -> this.beginLandingGoAround();
+        }
+    }
+
+    private void beginDirectLandingPhase(LandingPhase phase, Vec3 target) {
+        this.invalidatePathRequests();
+        this.pathResolver.cancelActivePathRequest();
+        this.pathResolver.clearPathNodes();
+        this.landingPhase = phase;
+        this.currentWaypoint = target;
+        this.currentArrivalCallback = null;
+        this.currentGroundTransition = phase == LandingPhase.TOUCHDOWN;
+        this.speedModifier = this.landingSpeed;
+        this.state = PathState.FOLLOWING;
+        this.stuckDetector.reset();
+    }
+
+    private void beginLandingGoAround() {
+        Vec3 horizontalVelocity = this.host.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D);
+        Vec3 heading;
+        if (horizontalVelocity.lengthSqr() > 0.04D) {
+            heading = horizontalVelocity.normalize();
+        } else {
+            double yawRadians = Math.toRadians(this.host.getYRot());
+            heading = new Vec3(-Math.sin(yawRadians), 0.0D, Math.cos(yawRadians));
+        }
+
+        double climbDistance = Math.max(8.0D, this.host.getBbWidth() * 2.0D);
+        double climbHeight = Math.max(6.0D, this.host.getBbHeight() * 1.5D);
+        Vec3 climbTarget = this.host.position()
+                .add(heading.scale(climbDistance))
+                .add(0.0D, climbHeight, 0.0D);
+
+        this.invalidatePathRequests();
+        this.pathResolver.cancelActivePathRequest();
+        this.pathResolver.clearPathNodes();
+        this.landingPlan = null;
+        this.landingPhase = LandingPhase.GO_AROUND;
+        this.currentWaypoint = climbTarget;
+        this.currentGroundTransition = false;
+        this.speedModifier = Math.max(0.8D, this.landingSpeed);
+        this.currentArrivalCallback = dragon -> {
+            this.clearLandingPlanState();
+            this.flightCapable.beginAiFlight();
+            this.state = PathState.FAILED;
+        };
+        this.state = PathState.CALCULATING;
+        this.stuckDetector.reset();
+        this.pathResolver.startPathing(climbTarget);
+    }
+
+    private boolean isCurrentLandingSegmentClear() {
+        if (this.currentWaypoint == null) {
+            return false;
+        }
+        return VoxelAabbSweeper.isClear(
+                this.host.level(),
+                this.host,
+                this.host.getBoundingBox(),
+                this.currentWaypoint.subtract(this.host.position())
+        );
+    }
+
+    private void cancelLandingPlanForNewFlightCommand() {
+        if (this.landingPhase == LandingPhase.NONE) {
+            return;
+        }
+
+        this.waypointQueue.clear();
+        this.currentWaypoint = null;
+        this.currentArrivalCallback = null;
+        this.currentGroundTransition = false;
+        this.state = PathState.IDLE;
+        this.invalidatePathRequests();
+        this.pathResolver.cancelActivePathRequest();
+        this.pathResolver.clearPathNodes();
+        this.stuckDetector.reset();
+        this.clearLandingPlanState();
+        if (this.flightCapable.isLanding()) {
+            this.flightCapable.beginAiFlight();
+        }
+    }
+
+    private void clearLandingPlanState() {
+        this.landingPlan = null;
+        this.landingPhase = LandingPhase.NONE;
+        this.landingSpeed = 1.0D;
     }
 
     public void onArrived() {
@@ -313,15 +475,20 @@ public class AsyncFlightController {
     public void handleStuck(Vec3 currentWaypoint) {
         AsyncFlightStuckDetector.StuckAction action = this.stuckDetector.handleStuck(this.maxRetries);
         if (action == AsyncFlightStuckDetector.StuckAction.FAILED) {
+            boolean abandonedLanding = this.landingPhase != LandingPhase.NONE;
             this.state = PathState.FAILED;
             this.currentWaypoint = null;
             this.currentArrivalCallback = null;
             this.currentGroundTransition = false;
+            this.clearLandingPlanState();
             this.waypointQueue.clear();
             this.invalidatePathRequests();
             this.pathResolver.cancelActivePathRequest();
             this.pathResolver.clearPathNodes();
             this.movementExecutor.zeroVelocity();
+            if (abandonedLanding && this.flightCapable.isLanding()) {
+                this.flightCapable.beginAiFlight();
+            }
         } else if (currentWaypoint != null) {
             this.state = PathState.STUCK;
             this.pathResolver.clearPathNodes();
@@ -350,6 +517,15 @@ public class AsyncFlightController {
         return Math.max(0.75D, this.baseArrivalDistance * widthScale);
     }
 
+    private double calculateArrivalDistance(LandingPhase phase, boolean groundTransition) {
+        return switch (phase) {
+            case GLIDE -> Math.max(1.5D, this.host.getBbWidth() * 0.5D);
+            case FLARE -> Math.max(0.9D, this.host.getBbWidth() * 0.3D);
+            case TOUCHDOWN -> 1.0D;
+            default -> this.calculateArrivalDistance(groundTransition);
+        };
+    }
+
     public PathState getState() {
         return this.state;
     }
@@ -359,6 +535,16 @@ public class AsyncFlightController {
             return this.host.onGround();
         }
         return distSq <= arrivalDist * arrivalDist;
+    }
+
+    private boolean hasReachedWaypoint(double distSq,
+                                       double arrivalDist,
+                                       LandingPhase phase,
+                                       boolean groundTransition) {
+        if (phase == LandingPhase.TOUCHDOWN) {
+            return this.host.onGround();
+        }
+        return this.hasReachedWaypoint(distSq, arrivalDist, groundTransition);
     }
 
     void setState(PathState state) {
@@ -459,5 +645,36 @@ public class AsyncFlightController {
         ARRIVED,
         STUCK,
         FAILED
+    }
+
+    public enum LandingPhase {
+        NONE(false, false, false),
+        APPROACH(false, false, true),
+        GLIDE(true, true, true),
+        FLARE(true, true, true),
+        TOUCHDOWN(true, true, false),
+        GO_AROUND(false, false, false);
+
+        private final boolean committed;
+        private final boolean directCorridor;
+        private final boolean advancesLandingPlan;
+
+        LandingPhase(boolean committed, boolean directCorridor, boolean advancesLandingPlan) {
+            this.committed = committed;
+            this.directCorridor = directCorridor;
+            this.advancesLandingPlan = advancesLandingPlan;
+        }
+
+        public boolean isCommitted() {
+            return this.committed;
+        }
+
+        public boolean usesDirectCorridor() {
+            return this.directCorridor;
+        }
+
+        public boolean advancesLandingPlan() {
+            return this.advancesLandingPlan;
+        }
     }
 }

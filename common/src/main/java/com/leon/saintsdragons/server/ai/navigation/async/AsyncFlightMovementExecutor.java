@@ -10,16 +10,20 @@ class AsyncFlightMovementExecutor {
     private static final double VERTICAL_SPEED_DEADZONE = 0.04D;
     private static final double HORIZONTAL_VELOCITY_LERP = 0.18D;
     private static final double VERTICAL_VELOCITY_LERP = 0.10D;
-    private static final double LANDING_HORIZONTAL_VELOCITY_LERP = 0.28D;
-    private static final double LANDING_VERTICAL_VELOCITY_LERP = 0.36D;
-    private static final double LANDING_APPROACH_MIN_DISTANCE = 8.0D;
-    private static final double LANDING_APPROACH_WIDTH_SCALE = 2.0D;
-    private static final double LANDING_FLARE_MIN_DISTANCE = 3.0D;
-    private static final double LANDING_FLARE_WIDTH_SCALE = 0.75D;
-    private static final double LANDING_APPROACH_SPEED_FLOOR = 0.35D;
-    private static final double LANDING_MIN_DESCENT_SPEED = 0.75;
-    private static final double LANDING_MAX_FORCED_DESCENT_SPEED = 1.50D;
-    private static final double LANDING_FLARE_MAX_DESCENT_SPEED = 0.20D;
+    private static final double LANDING_HORIZONTAL_VELOCITY_LERP = 0.32D;
+    private static final double GLIDE_VERTICAL_VELOCITY_LERP = 0.30D;
+    private static final double FLARE_VERTICAL_VELOCITY_LERP = 0.48D;
+    private static final double TOUCHDOWN_VERTICAL_VELOCITY_LERP = 0.62D;
+    private static final double GLIDE_SPEED_SCALE = 0.95D;
+    private static final double FLARE_SPEED_SCALE = 0.75D;
+    private static final double TOUCHDOWN_SPEED_SCALE = 0.50D;
+    private static final double GLIDE_MAX_DESCENT_SPEED = 0.68D;
+    private static final double FLARE_MAX_DESCENT_SPEED = 0.32D;
+    private static final double GLIDE_MAX_ACTUAL_DESCENT_SPEED = 0.72D;
+    private static final double FLARE_MAX_ACTUAL_DESCENT_SPEED = 0.38D;
+    private static final double TOUCHDOWN_MAX_ACTUAL_DESCENT_SPEED = 0.28D;
+    private static final double TOUCHDOWN_MIN_DESCENT_SPEED = 0.11D;
+    private static final double TOUCHDOWN_MAX_DESCENT_SPEED = 0.28D;
     private static final float MAX_YAW_STEP = 5.0f;
     private static final float MAX_PITCH_STEP = 2.5f;
     private static final float PITCH_DEADZONE_DEGREES = 3.5f;
@@ -34,18 +38,25 @@ class AsyncFlightMovementExecutor {
         this.flightCapable = flightCapable;
     }
 
-    public void executeMovement(Vec3 lookAheadTarget, Vec3 currentWaypoint, double speedModifier, double arrivalDist,
-                                boolean queueEmpty, boolean landingTarget) {
+    public void executeMovement(Vec3 lookAheadTarget,
+                                Vec3 currentWaypoint,
+                                double speedModifier,
+                                double arrivalDist,
+                                boolean queueEmpty,
+                                AsyncFlightController.LandingPhase landingPhase) {
         Vec3 dragonPos = this.dragon.position();
         Vec3 currentVelocity = this.dragon.getDeltaMovement();
-        if (landingTarget && this.hasLandingContact()) {
+        boolean landingTarget = landingPhase.isCommitted();
+        if (landingTarget
+                && (this.dragon.onGround()
+                    || (landingPhase == AsyncFlightController.LandingPhase.TOUCHDOWN
+                        && this.hasLandingContact()))) {
             this.zeroVelocity();
             return;
         }
 
         Vec3 target = lookAheadTarget != null ? lookAheadTarget : currentWaypoint;
         Vec3 toTarget = target.subtract(dragonPos);
-        Vec3 toWaypoint = currentWaypoint.subtract(dragonPos);
         double distToTarget = toTarget.length();
         if (distToTarget < 0.1) {
             return;
@@ -53,58 +64,33 @@ class AsyncFlightMovementExecutor {
 
         double desiredSpeed = Math.max(0.0, this.flightCapable.getFlightSpeed()) * speedModifier;
         double distToFinalWaypoint = dragonPos.distanceTo(currentWaypoint);
-        double horizontalDistToWaypoint = Math.sqrt(toWaypoint.x * toWaypoint.x + toWaypoint.z * toWaypoint.z);
-        double landingApproachDistance = Math.max(
-                LANDING_APPROACH_MIN_DISTANCE,
-                this.dragon.getBbWidth() * LANDING_APPROACH_WIDTH_SCALE
-        );
-        double landingFlareDistance = Math.max(
-                LANDING_FLARE_MIN_DISTANCE,
-                this.dragon.getBbWidth() * LANDING_FLARE_WIDTH_SCALE
-        );
-        double altitudeToLanding = Math.max(0.0D, dragonPos.y - currentWaypoint.y);
-        double landingFlareAltitude = Math.max(2.0D, this.dragon.getBbHeight() * 0.5D);
-        boolean insideLandingApproach = landingTarget && horizontalDistToWaypoint <= landingApproachDistance;
-        boolean insideLandingFlare = landingTarget
-                && horizontalDistToWaypoint <= landingFlareDistance
-                && altitudeToLanding <= landingFlareAltitude;
         double decelStartDist = arrivalDist * 2.0;
-        if (insideLandingApproach) {
-            double approachProgress = Mth.clamp(horizontalDistToWaypoint / landingApproachDistance, 0.0D, 1.0D);
-            desiredSpeed *= Mth.lerp(approachProgress, LANDING_APPROACH_SPEED_FLOOR, 1.0D);
-        } else if (distToFinalWaypoint < decelStartDist && queueEmpty) {
+        desiredSpeed *= switch (landingPhase) {
+            case GLIDE -> GLIDE_SPEED_SCALE;
+            case FLARE -> FLARE_SPEED_SCALE;
+            case TOUCHDOWN -> TOUCHDOWN_SPEED_SCALE;
+            default -> 1.0D;
+        };
+        boolean ordinaryFinalWaypoint = landingPhase == AsyncFlightController.LandingPhase.NONE
+                || landingPhase == AsyncFlightController.LandingPhase.GO_AROUND;
+        if (ordinaryFinalWaypoint && distToFinalWaypoint < decelStartDist && queueEmpty) {
             desiredSpeed *= Math.max(0.3, distToFinalWaypoint / decelStartDist);
         }
 
         Vec3 desiredDirection = toTarget.normalize();
         double desiredVertical = Math.abs(toTarget.y) < VERTICAL_TARGET_DEADZONE && !landingTarget ? 0.0D : desiredDirection.y;
-        boolean atOrAboveLandingHeight = currentWaypoint.y <= dragonPos.y + VERTICAL_TARGET_DEADZONE;
-        // The path owns the descent while distant; forcing it early makes large dragons meet terrain before the target.
-        if (insideLandingApproach && atOrAboveLandingHeight) {
-            double minimumDescentDirection = Math.min(0.35D, Math.max(0.08D, altitudeToLanding * 0.04D));
-            desiredVertical = Math.min(desiredVertical, -minimumDescentDirection);
-        }
         Vec3 targetVelocity = new Vec3(
                 desiredDirection.x * desiredSpeed,
                 desiredVertical * desiredSpeed,
                 desiredDirection.z * desiredSpeed
         );
-        if (insideLandingApproach && atOrAboveLandingHeight) {
-            double minimumDescentSpeed = Math.min(
-                    LANDING_MAX_FORCED_DESCENT_SPEED,
-                    Math.max(LANDING_MIN_DESCENT_SPEED, altitudeToLanding * 0.04D)
-            );
-            double landingVertical = Math.min(targetVelocity.y, -minimumDescentSpeed);
-            if (insideLandingFlare) {
-                landingVertical = Math.max(landingVertical, -LANDING_FLARE_MAX_DESCENT_SPEED);
-            }
-            targetVelocity = new Vec3(targetVelocity.x, landingVertical, targetVelocity.z);
-        }
+        targetVelocity = this.shapeLandingVelocity(landingPhase, targetVelocity, dragonPos, currentWaypoint);
         Vec3 velocityBaseline = this.smoothedVelocity;
         if (velocityBaseline.lengthSqr() < 1.0E-4 && currentVelocity.lengthSqr() > 1.0E-4) {
             velocityBaseline = currentVelocity;
         }
-        this.smoothedVelocity = lerpVelocity(velocityBaseline, targetVelocity, landingTarget);
+        this.smoothedVelocity = lerpVelocity(velocityBaseline, targetVelocity, landingPhase);
+        this.smoothedVelocity = limitLandingMomentum(landingPhase, this.smoothedVelocity);
         if (this.flightCapable.isTakeoff() && currentVelocity.y > 0.0D) {
             this.smoothedVelocity = new Vec3(
                     this.smoothedVelocity.x,
@@ -121,6 +107,36 @@ class AsyncFlightMovementExecutor {
         this.dragon.setDeltaMovement(this.smoothedVelocity);
         this.dragon.hasImpulse = true;
         this.updateRotation();
+    }
+
+    private Vec3 shapeLandingVelocity(AsyncFlightController.LandingPhase phase,
+                                      Vec3 targetVelocity,
+                                      Vec3 dragonPosition,
+                                      Vec3 phaseTarget) {
+        return switch (phase) {
+            case GLIDE -> new Vec3(
+                    targetVelocity.x,
+                    Math.max(targetVelocity.y, -GLIDE_MAX_DESCENT_SPEED),
+                    targetVelocity.z
+            );
+            case FLARE -> new Vec3(
+                    targetVelocity.x,
+                    Mth.clamp(targetVelocity.y, -FLARE_MAX_DESCENT_SPEED, 0.08D),
+                    targetVelocity.z
+            );
+            case TOUCHDOWN -> {
+                double altitude = dragonPosition.y - phaseTarget.y;
+                double descentSpeed = altitude >= -VERTICAL_TARGET_DEADZONE
+                        ? Mth.clamp(
+                                Math.max(0.0D, altitude) * 0.20D,
+                                TOUCHDOWN_MIN_DESCENT_SPEED,
+                                TOUCHDOWN_MAX_DESCENT_SPEED
+                        )
+                        : 0.0D;
+                yield new Vec3(targetVelocity.x, -descentSpeed, targetVelocity.z);
+            }
+            default -> targetVelocity;
+        };
     }
 
     public void updateRotation() {
@@ -188,13 +204,37 @@ class AsyncFlightMovementExecutor {
         );
     }
 
-    private static Vec3 lerpVelocity(Vec3 from, Vec3 to, boolean landingTarget) {
-        double horizontalLerp = landingTarget ? LANDING_HORIZONTAL_VELOCITY_LERP : HORIZONTAL_VELOCITY_LERP;
-        double verticalLerp = landingTarget ? LANDING_VERTICAL_VELOCITY_LERP : VERTICAL_VELOCITY_LERP;
+    private static Vec3 lerpVelocity(Vec3 from,
+                                     Vec3 to,
+                                     AsyncFlightController.LandingPhase landingPhase) {
+        double horizontalLerp = landingPhase.isCommitted()
+                ? LANDING_HORIZONTAL_VELOCITY_LERP
+                : HORIZONTAL_VELOCITY_LERP;
+        double verticalLerp = switch (landingPhase) {
+            case GLIDE -> GLIDE_VERTICAL_VELOCITY_LERP;
+            case FLARE -> FLARE_VERTICAL_VELOCITY_LERP;
+            case TOUCHDOWN -> TOUCHDOWN_VERTICAL_VELOCITY_LERP;
+            default -> VERTICAL_VELOCITY_LERP;
+        };
         return new Vec3(
                 Mth.lerp(horizontalLerp, from.x, to.x),
                 Mth.lerp(verticalLerp, from.y, to.y),
                 Mth.lerp(horizontalLerp, from.z, to.z)
         );
+    }
+
+    private static Vec3 limitLandingMomentum(AsyncFlightController.LandingPhase phase, Vec3 velocity) {
+        return switch (phase) {
+            case GLIDE -> withVerticalFloor(velocity, -GLIDE_MAX_ACTUAL_DESCENT_SPEED);
+            case FLARE -> withVerticalFloor(velocity, -FLARE_MAX_ACTUAL_DESCENT_SPEED);
+            case TOUCHDOWN -> withVerticalFloor(velocity, -TOUCHDOWN_MAX_ACTUAL_DESCENT_SPEED);
+            default -> velocity;
+        };
+    }
+
+    private static Vec3 withVerticalFloor(Vec3 velocity, double minimumVerticalSpeed) {
+        return velocity.y >= minimumVerticalSpeed
+                ? velocity
+                : new Vec3(velocity.x, minimumVerticalSpeed, velocity.z);
     }
 }
