@@ -9,13 +9,13 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 /** Continuous swept-AABB collision queries for both live and snapshotted voxel worlds. */
-final class VoxelAabbSweeper {
+public final class VoxelAabbSweeper {
     private static final double EPSILON = 1.0E-7D;
 
     private VoxelAabbSweeper() {
     }
 
-    static boolean isClear(CollisionGetter level, Entity entity, AABB startBox, Vec3 movement) {
+    public static boolean isClear(CollisionGetter level, Entity entity, AABB startBox, Vec3 movement) {
         AABB broadPhase = sweptBounds(startBox, movement);
         return isClear(startBox, movement, level.getCollisions(entity, broadPhase));
     }

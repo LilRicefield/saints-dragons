@@ -31,7 +31,6 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     private static final RawAnimation SPRINT_FLAP = RawAnimation.begin().thenLoop("animation.raevyx.sprint_flap");
     private static final RawAnimation LANDING = RawAnimation.begin().thenPlay("animation.raevyx.landing");
     private static final RawAnimation LANDED = RawAnimation.begin().thenPlay("animation.raevyx.landed");
-    private static final RawAnimation DODGE = RawAnimation.begin().thenPlay("animation.raevyx.dodge");
     private static final RawAnimation DASH_FORWARD_RIGHT = RawAnimation.begin().thenPlay("animation.raevyx.dash_forward_right");
     private static final RawAnimation DASH_FORWARD_LEFT = RawAnimation.begin().thenPlay("animation.raevyx.dash_forward_left");
     private static final RawAnimation SIT_DOWN = RawAnimation.begin().thenPlay("animation.raevyx.down");
@@ -209,9 +208,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
                 return null;
             }
             if (dragon.isDodging()) {
-                state.getController().transitionLength(transitions.moving());
-                state.setAndContinue(DODGE);
-                return PlayState.CONTINUE;
+                return PlayState.STOP;
             }
             if (dragon.isGroundRending()) {
                 return PlayState.STOP;

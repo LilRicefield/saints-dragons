@@ -16,6 +16,7 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.RaevyxBrain;
+import com.leon.saintsdragons.server.ai.navigation.async.VoxelAabbSweeper;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
@@ -1212,6 +1213,64 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
     }
 
+    public boolean canStartAiAirDodge() {
+        return !level().isClientSide
+                && !isVehicle()
+                && isAlive()
+                && !isDying()
+                && (isFlying() || isHovering())
+                && !isLanding()
+                && !isTakeoff()
+                && !isInWaterOrBubble()
+                && !isInLava()
+                && !isDodging()
+                && !isDashing()
+                && !isGroundRending()
+                && !dashDodgeNudge.isActive()
+                && aiDodgeCooldownTicks <= 0
+                && (!isTamingStunned() || isTame());
+    }
+
+    public Vec3 getAiAirDodgeDisplacement(boolean isLeft) {
+        double distance = DODGE_DISTANCE_BLOCKS * AIR_DODGE_DISTANCE_MULTIPLIER;
+        return DragonMotionMath.horizontalRight(getYRot()).scale(isLeft ? distance : -distance);
+    }
+
+    public boolean tryAiAirDodge(boolean isLeft) {
+        if (!canStartAiAirDodge()) {
+            return false;
+        }
+
+        boolean dodgeLeft = isLeft;
+        Vec3 displacement = getAiAirDodgeDisplacement(dodgeLeft);
+        if (!VoxelAabbSweeper.isClear(level(), this, getBoundingBox(), displacement)) {
+            dodgeLeft = !dodgeLeft;
+            displacement = getAiAirDodgeDisplacement(dodgeLeft);
+            if (!VoxelAabbSweeper.isClear(level(), this, getBoundingBox(), displacement)) {
+                return false;
+            }
+        }
+        double perTickSpeed = constantNudgeSpeed(displacement.length(), DODGE_DURATION_TICKS);
+        if (perTickSpeed <= 0.0D || displacement.lengthSqr() < 1.0E-6D) {
+            return false;
+        }
+
+        getAIMovement().stop();
+        beginDodge(displacement.normalize().scale(perTickSpeed), DODGE_DURATION_TICKS);
+        if (!isDodging()) {
+            return false;
+        }
+
+        aiDodgeCooldownTicks = AI_DODGE_COOLDOWN_TICKS;
+        dodgeIFramesTicks = DODGE_IFRAMES_TICKS;
+        if (dodgeLeft) {
+            animationHandler.triggerDodgeAirLeftAnimation();
+        } else {
+            animationHandler.triggerDodgeAirRightAnimation();
+        }
+        return true;
+    }
+
     public boolean tryAIGroundDodge(@Nullable LivingEntity threat) {
         if (isFlying() || isInWaterOrBubble() || isDodging() || (isTamingStunned() && !isTame())) {
             return false;
@@ -1281,7 +1340,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (this.getRandom().nextFloat() >= REACTIVE_HIT_DODGE_CHANCE) {
             return false;
         }
-        if (!tryAIGroundDodge(attacker)) {
+        boolean dodged = isAerial()
+                ? tryAiAirDodge(this.getRandom().nextBoolean())
+                : tryAIGroundDodge(attacker);
+        if (!dodged) {
             return false;
         }
 
