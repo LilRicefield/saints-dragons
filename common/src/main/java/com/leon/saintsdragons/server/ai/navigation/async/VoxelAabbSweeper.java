@@ -4,9 +4,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.CollisionGetter;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+
+import java.util.function.Predicate;
 
 /** Continuous swept-AABB collision queries for both live and snapshotted voxel worlds. */
 public final class VoxelAabbSweeper {
@@ -21,6 +24,13 @@ public final class VoxelAabbSweeper {
     }
 
     static boolean isClear(ImmutableBlockSnapshot snapshot, AABB startBox, Vec3 movement) {
+        return isClear(snapshot, startBox, movement, state -> false);
+    }
+
+    static boolean isClear(ImmutableBlockSnapshot snapshot,
+                           AABB startBox,
+                           Vec3 movement,
+                           Predicate<BlockState> ignoredBlocks) {
         AABB broadPhase = sweptBounds(startBox, movement);
         int minX = Mth.floor(broadPhase.minX + EPSILON);
         int minY = Mth.floor(broadPhase.minY + EPSILON);
@@ -34,6 +44,9 @@ public final class VoxelAabbSweeper {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     cursor.set(x, y, z);
+                    if (ignoredBlocks.test(snapshot.getBlockState(cursor))) {
+                        continue;
+                    }
                     for (AABB obstacle : snapshot.collisionBoxes(cursor)) {
                         if (collidesDuringSweep(startBox, movement, obstacle)) {
                             return false;

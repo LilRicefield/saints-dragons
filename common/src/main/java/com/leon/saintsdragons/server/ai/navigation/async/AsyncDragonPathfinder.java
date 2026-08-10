@@ -1,13 +1,13 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
-import com.leon.saintsdragons.server.ai.navigation.PathFinderGround;
+import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
-import com.leon.saintsdragons.server.ai.pathfinding.DragonWalkNodeEvaluator;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -29,11 +29,10 @@ import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.level.PathNavigationRegion;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.NodeEvaluator;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
-import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +40,7 @@ import org.slf4j.LoggerFactory;
 public final class AsyncDragonPathfinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncDragonPathfinder.class);
     private static final int MAX_SWIM_ASTAR_VISITS = 50000;
+    private static final int MAX_ASYNC_GROUND_ROUTE = 128;
     private static final int MAX_ASYNC_FLIGHT_ROUTE = 128;
     private static final int WORKER_COUNT = 2;
     private static final int MAX_QUEUED_PATHS = 32;
@@ -122,73 +122,115 @@ public final class AsyncDragonPathfinder {
             return CompletableFuture.completedFuture(null);
         }
 
-        // Vanilla WalkNodeEvaluator and PathNavigationRegion both retain live world/entity state.
-        // Queue the complete calculation onto the server thread instead of reading either on a worker.
-        PathRequest request = newRequest(server);
+        if (!(dragon.level() instanceof ServerLevel serverLevel)) {
+            return completeOnServer(server, dragon, callback, null);
+        }
+
+        String dragonId = dragon.getStringUUID();
+        PathRequest request = tryNewWorkerRequest(server);
+        if (request == null) {
+            LOGGER.warn("Rejected ground path calculation for {} because path capacity is full", dragonId);
+            return completeOnServer(server, dragon, callback, null);
+        }
         if (request.isCancelled()) {
             return request;
         }
-        int requestTick = server.getTickCount();
+
         try {
-            server.tell(new TickTask(requestTick, () -> {
-                if (request.isCancelled() || server.isStopped() || dragon.isRemoved() || !dragon.isAlive()) {
-                    request.complete();
-                    return;
-                }
+            Vec3 origin = dragon.position();
+            BlockPos startPos = dragon.blockPosition();
+            int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
+            double maximumRoute = Math.min(followRange, MAX_ASYNC_GROUND_ROUTE);
+            Vec3 route = target.subtract(origin);
+            Vec3 planningTarget = route.length() <= maximumRoute
+                    ? target
+                    : origin.add(route.normalize().scale(maximumRoute));
+            BlockPos planningTargetPos = BlockPos.containing(planningTarget);
+            int footprintSize = Math.max(1, Mth.floor(dragon.getBbWidth() + 1.0F));
+            int footprintOffset = footprintSize / 2;
+            BlockPos startNode = new BlockPos(
+                    startPos.getX() - footprintOffset,
+                    startPos.getY(),
+                    startPos.getZ() - footprintOffset
+            );
+            BlockPos planningTargetNode = new BlockPos(
+                    planningTargetPos.getX() - footprintOffset,
+                    planningTargetPos.getY(),
+                    planningTargetPos.getZ() - footprintOffset
+            );
+            int maxStepUp = Mth.floor(Math.max(1.0F, dragon.maxUpStep()));
+            int maxDropDown = Math.max(1, dragon.getMaxFallDistance());
+            int searchRange = Mth.clamp(
+                    Mth.ceil(origin.distanceTo(planningTarget)) + 24,
+                    32,
+                    (int) maximumRoute
+            );
+            int horizontalMargin = Math.max(8, Mth.ceil(dragon.getBbWidth()) + 4);
+            int verticalMargin = Math.max(8, Mth.ceil(dragon.getBbHeight()) + maxDropDown + 2);
+            BlockPos minNode = new BlockPos(
+                    Math.min(startNode.getX(), planningTargetNode.getX()) - horizontalMargin,
+                    Math.max(serverLevel.getMinBuildHeight(),
+                            Math.min(startNode.getY(), planningTargetNode.getY()) - verticalMargin),
+                    Math.min(startNode.getZ(), planningTargetNode.getZ()) - horizontalMargin
+            );
+            BlockPos maxNode = new BlockPos(
+                    Math.max(startNode.getX(), planningTargetNode.getX()) + horizontalMargin,
+                    Math.min(serverLevel.getMaxBuildHeight() - 1,
+                            Math.max(startNode.getY(), planningTargetNode.getY()) + verticalMargin),
+                    Math.max(startNode.getZ(), planningTargetNode.getZ()) + horizontalMargin
+            );
+            int horizontalClearance = Mth.ceil(dragon.getBbWidth()) + 2;
+            int verticalClearance = Mth.ceil(dragon.getBbHeight()) + 2;
+            BlockPos captureMin = minNode.offset(-2, -1, -2);
+            BlockPos captureMax = maxNode.offset(horizontalClearance, verticalClearance, horizontalClearance);
+            ImmutableBlockSnapshot snapshot = ImmutableBlockSnapshot.capture(serverLevel, captureMin, captureMax);
+            AABB relativeBounds = dragon.getBoundingBox().move(-origin.x, -origin.y, -origin.z);
+            boolean canPassThroughTrees = dragon instanceof DragonEntity dragonEntity
+                    && DragonDestructionManager.canApplyPassiveTreeDestruction(serverLevel, dragonEntity);
+            float configuredWaterMalus = dragon.getPathfindingMalus(BlockPathTypes.WATER);
+            boolean waterEntryAllowed = dragon.isInWaterOrBubble()
+                    || dragon.getNavigation() instanceof PathNavigateGround navigation
+                    && navigation.isWaterEntryAllowed();
+            boolean allowWater = !avoidWater
+                    && waterEntryAllowed
+                    && (configuredWaterMalus >= 0.0F || dragon.isInWaterOrBubble());
+            Map<BlockPathTypes, Float> pathMalus = new EnumMap<>(BlockPathTypes.class);
+            for (BlockPathTypes pathType : BlockPathTypes.values()) {
+                pathMalus.put(pathType, dragon.getPathfindingMalus(pathType));
+            }
+            DragonPathSearchDebug.SearchSession debugSession =
+                    DragonPathSearchDebug.beginGridSearch(dragon.getUUID());
 
-                Path path = null;
-                try {
-                    BlockPos startPos = dragon.blockPosition();
-                    BlockPos targetPos = BlockPos.containing(target);
-                    boolean canPassThroughTrees = dragon instanceof DragonEntity dragonEntity
-                            && dragon.level() instanceof ServerLevel serverLevel
-                            && DragonDestructionManager.canApplyPassiveTreeDestruction(serverLevel, dragonEntity);
-                    int followRange = Math.max((int) dragon.getAttributeValue(Attributes.FOLLOW_RANGE), 128);
-                    double routeDistance = Math.sqrt(startPos.distSqr(targetPos));
-                    int searchRange = Mth.clamp(Mth.ceil(routeDistance) + 24, 32, followRange);
-                    int resolvedGoalAccuracy = Math.max(0, goalAccuracy);
-                    int horizontalMargin = Math.max(16, Mth.ceil(dragon.getBbWidth()) + 8);
-                    int verticalMargin = Math.max(12, Mth.ceil(dragon.getBbHeight()) + 6);
-                    BlockPos minPos = new BlockPos(
-                            Math.min(startPos.getX(), targetPos.getX()) - horizontalMargin,
-                            Math.min(startPos.getY(), targetPos.getY()) - verticalMargin,
-                            Math.min(startPos.getZ(), targetPos.getZ()) - horizontalMargin
-                    );
-                    BlockPos maxPos = new BlockPos(
-                            Math.max(startPos.getX(), targetPos.getX()) + horizontalMargin,
-                            Math.max(startPos.getY(), targetPos.getY()) + verticalMargin,
-                            Math.max(startPos.getZ(), targetPos.getZ()) + horizontalMargin
-                    );
-                    PathNavigationRegion region = new PathNavigationRegion(dragon.level(), minPos, maxPos);
-                    NodeEvaluator nodeEvaluator = new DragonWalkNodeEvaluator(canPassThroughTrees, avoidWater);
-                    nodeEvaluator.setCanPassDoors(true);
-                    PathFinder pathFinder = new PathFinderGround(nodeEvaluator, 5000);
-                    path = pathFinder.findPath(
-                            region,
-                            dragon,
-                            Set.of(targetPos),
-                            (float) searchRange,
-                            resolvedGoalAccuracy,
-                            1.0F
-                    );
-                } catch (Exception exception) {
-                    LOGGER.warn("Server-thread ground path calculation failed for {}", dragon.getStringUUID(), exception);
-                }
-
-                try {
-                    if (!request.isCancelled()) {
-                        callback.accept(path);
-                    }
-                } catch (Exception exception) {
-                    LOGGER.error("Ground path callback failed for {}", dragon.getStringUUID(), exception);
-                } finally {
-                    request.complete();
-                }
-            }));
-        } catch (RejectedExecutionException exception) {
-            request.complete();
+            return submitWorker(
+                    request,
+                    server,
+                    dragon,
+                    "ground path calculation for " + dragonId,
+                    cancelled -> new AsyncGroundPathSearch(
+                            snapshot,
+                            origin,
+                            planningTarget,
+                            target,
+                            relativeBounds,
+                            minNode,
+                            maxNode,
+                            footprintSize,
+                            maxStepUp,
+                            maxDropDown,
+                            goalAccuracy,
+                            searchRange,
+                            allowWater,
+                            configuredWaterMalus,
+                            canPassThroughTrees,
+                            pathMalus,
+                            cancelled
+                    ).findPath(debugSession),
+                    callback
+            );
+        } catch (Exception exception) {
+            LOGGER.warn("Failed to capture immutable ground path region for {}", dragonId, exception);
+            return completeOnServer(request, server, dragon, callback, null);
         }
-        return request;
     }
 
     public static Future<?> calculateSwarmFlyingPathAsync(Mob swarm, Vec3 target, Consumer<Path> callback) {

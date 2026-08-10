@@ -11,6 +11,7 @@ run-data/
 gradle.properties/
 **/gradle.properties/
 common/build/
+common/logs/
 fabric/build/
 forge/build/
 bin/

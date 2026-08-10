@@ -88,7 +88,7 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
 
         LivingEntity target = dragon.getTarget();
         if (target != null && target.isAlive()) {
-            dragon.getNavigation().moveTo(target, 1.0D);
+            dragon.getAIMovement().moveToGroundTarget(target, 1.0D, false);
             dragon.setGroundMoveStateFromAI(1);
         } else {
             dragon.setGroundMoveStateFromAI(0);
