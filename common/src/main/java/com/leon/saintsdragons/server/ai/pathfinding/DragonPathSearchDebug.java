@@ -8,8 +8,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,8 +22,10 @@ public final class DragonPathSearchDebug {
     private static final int MAX_OPEN_NODES = 192;
     private static final int MAX_CANDIDATE_NODES = 192;
 
-    private static volatile Set<UUID> activeDragons = Set.of();
+    private static final Object TRACKING_LOCK = new Object();
+    private static volatile Map<UUID, Long> activeSearchSessions = Map.of();
     private static final ConcurrentHashMap<UUID, Snapshot> SNAPSHOTS = new ConcurrentHashMap<>();
+    private static final AtomicLong NEXT_TRACKING_SESSION_ID = new AtomicLong();
     private static final AtomicLong NEXT_SEARCH_ID = new AtomicLong();
 
     private DragonPathSearchDebug() {
@@ -29,12 +33,28 @@ public final class DragonPathSearchDebug {
 
     public static void setActiveDragons(Collection<UUID> dragonIds) {
         Set<UUID> updated = Set.copyOf(dragonIds);
-        activeDragons = updated;
-        SNAPSHOTS.keySet().removeIf(id -> !updated.contains(id));
+        synchronized (TRACKING_LOCK) {
+            Map<UUID, Long> previousSessions = activeSearchSessions;
+            Map<UUID, Long> updatedSessions = new HashMap<>();
+            for (UUID dragonId : updated) {
+                Long sessionId = previousSessions.get(dragonId);
+                if (sessionId == null) {
+                    sessionId = NEXT_TRACKING_SESSION_ID.incrementAndGet();
+                }
+                updatedSessions.put(dragonId, sessionId);
+            }
+            activeSearchSessions = Map.copyOf(updatedSessions);
+            SNAPSHOTS.keySet().removeIf(id -> !updated.contains(id));
+        }
     }
 
     public static boolean isActive(UUID dragonId) {
-        return activeDragons.contains(dragonId);
+        return activeSearchSessions.containsKey(dragonId);
+    }
+
+    public static @Nullable SearchSession beginGridSearch(UUID dragonId) {
+        Long sessionId = activeSearchSessions.get(dragonId);
+        return sessionId == null ? null : new SearchSession(dragonId, sessionId);
     }
 
     public static @Nullable Snapshot getSnapshot(UUID dragonId) {
@@ -42,13 +62,14 @@ public final class DragonPathSearchDebug {
     }
 
     public static @Nullable NodeCollector beginNodeSearch(Mob mob, SearchType type, Vec3 target) {
-        if (!isActive(mob.getUUID())) {
+        SearchSession session = beginGridSearch(mob.getUUID());
+        if (session == null) {
             return null;
         }
-        return new NodeCollector(mob.getUUID(), type, mob.position(), target, mob.getBbWidth());
+        return new NodeCollector(session, type, mob.position(), target, mob.getBbWidth());
     }
 
-    public static void publishGridSearch(UUID dragonId,
+    public static void publishGridSearch(SearchSession session,
                                          SearchType type,
                                          Vec3 start,
                                          Vec3 target,
@@ -58,7 +79,7 @@ public final class DragonPathSearchDebug {
                                          boolean reached,
                                          long startedNanos) {
         publish(
-                dragonId,
+                session,
                 type,
                 start,
                 target,
@@ -70,7 +91,7 @@ public final class DragonPathSearchDebug {
         );
     }
 
-    private static void publish(UUID dragonId,
+    private static void publish(SearchSession session,
                                 SearchType type,
                                 Vec3 start,
                                 Vec3 target,
@@ -79,11 +100,11 @@ public final class DragonPathSearchDebug {
                                 Collection<Vec3> candidateNodes,
                                 boolean reached,
                                 long startedNanos) {
-        if (!isActive(dragonId)) {
+        if (!isCurrent(session)) {
             return;
         }
 
-        SNAPSHOTS.put(dragonId, new Snapshot(
+        Snapshot snapshot = new Snapshot(
                 NEXT_SEARCH_ID.incrementAndGet(),
                 type,
                 start,
@@ -96,7 +117,17 @@ public final class DragonPathSearchDebug {
                 candidateNodes.size(),
                 reached,
                 Math.max(0L, (System.nanoTime() - startedNanos) / 1_000L)
-        ));
+        );
+        synchronized (TRACKING_LOCK) {
+            if (isCurrent(session)) {
+                SNAPSHOTS.put(session.dragonId(), snapshot);
+            }
+        }
+    }
+
+    private static boolean isCurrent(SearchSession session) {
+        Long activeSessionId = activeSearchSessions.get(session.dragonId());
+        return activeSessionId != null && activeSessionId == session.sessionId();
     }
 
     private static List<Vec3> sample(Collection<Vec3> positions, int limit) {
@@ -136,8 +167,11 @@ public final class DragonPathSearchDebug {
                            long durationMicros) {
     }
 
+    public record SearchSession(UUID dragonId, long sessionId) {
+    }
+
     public static final class NodeCollector {
-        private final UUID dragonId;
+        private final SearchSession session;
         private final SearchType type;
         private final Vec3 start;
         private final Vec3 target;
@@ -145,8 +179,8 @@ public final class DragonPathSearchDebug {
         private final long startedNanos = System.nanoTime();
         private final Set<Node> nodes = new LinkedHashSet<>();
 
-        private NodeCollector(UUID dragonId, SearchType type, Vec3 start, Vec3 target, float mobWidth) {
-            this.dragonId = dragonId;
+        private NodeCollector(SearchSession session, SearchType type, Vec3 start, Vec3 target, float mobWidth) {
+            this.session = session;
             this.type = type;
             this.start = start;
             this.target = target;
@@ -184,7 +218,7 @@ public final class DragonPathSearchDebug {
             }
 
             publish(
-                    this.dragonId,
+                    this.session,
                     this.type,
                     this.start,
                     this.target,

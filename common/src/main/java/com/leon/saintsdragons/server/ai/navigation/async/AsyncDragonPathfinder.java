@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -257,7 +256,8 @@ public final class AsyncDragonPathfinder {
                     -origin.y,
                     -origin.z
             );
-            UUID debugDragonId = DragonPathSearchDebug.isActive(dragon.getUUID()) ? dragon.getUUID() : null;
+            DragonPathSearchDebug.SearchSession debugSession =
+                    DragonPathSearchDebug.beginGridSearch(dragon.getUUID());
 
             return submitWorker(
                     request,
@@ -273,7 +273,7 @@ public final class AsyncDragonPathfinder {
                             minNode,
                             maxNode,
                             cancelled
-                    ).findPath(debugDragonId),
+                    ).findPath(debugSession),
                     callback
             );
         } catch (Exception exception) {
@@ -312,19 +312,20 @@ public final class AsyncDragonPathfinder {
             return completeOnServer(request, server, dragon, callback, null);
         }
 
-        UUID debugDragonId = DragonPathSearchDebug.isActive(dragon.getUUID()) ? dragon.getUUID() : null;
+        DragonPathSearchDebug.SearchSession debugSession =
+                DragonPathSearchDebug.beginGridSearch(dragon.getUUID());
         return submitWorker(
                 request,
                 server,
                 dragon,
                 "swim path calculation for " + dragonId,
-                cancelled -> findSwimPath(snapshot, debugDragonId, cancelled),
+                cancelled -> findSwimPath(snapshot, debugSession, cancelled),
                 callback
         );
     }
 
     private static List<Vec3> findSwimPath(SwimPathSnapshot snapshot,
-                                           UUID debugDragonId,
+                                           DragonPathSearchDebug.SearchSession debugSession,
                                            BooleanSupplier cancelled) {
         long startedNanos = System.nanoTime();
         if (!snapshot.prepare(cancelled)) {
@@ -333,9 +334,9 @@ public final class AsyncDragonPathfinder {
         int start = snapshot.index(snapshot.startX, snapshot.startY, snapshot.startZ);
         int goal = snapshot.index(snapshot.goalX, snapshot.goalY, snapshot.goalZ);
         if (!snapshot.isWaterIndex(start) || !snapshot.isWaterIndex(goal)) {
-            if (debugDragonId != null) {
+            if (debugSession != null) {
                 DragonPathSearchDebug.publishGridSearch(
-                        debugDragonId,
+                        debugSession,
                         DragonPathSearchDebug.SearchType.SWIM,
                         snapshot.toWorld(start),
                         snapshot.toWorld(goal),
@@ -352,7 +353,7 @@ public final class AsyncDragonPathfinder {
         PriorityQueue<SwimNode> open = new PriorityQueue<>(Comparator.comparingDouble(SwimNode::fScore));
         Map<Integer, Integer> cameFrom = new HashMap<>();
         Map<Integer, Double> gScore = new HashMap<>();
-        Set<Integer> closed = debugDragonId == null ? new HashSet<>() : new LinkedHashSet<>();
+        Set<Integer> closed = debugSession == null ? new HashSet<>() : new LinkedHashSet<>();
         gScore.put(start, 0.0D);
         open.add(new SwimNode(start, 0.0D, snapshot.heuristic(start, goal)));
 
@@ -395,14 +396,14 @@ public final class AsyncDragonPathfinder {
             }
         }
 
-        if (debugDragonId != null) {
+        if (debugSession != null) {
             List<Vec3> closedPositions = closed.stream().map(snapshot::toWorld).toList();
             List<Vec3> openPositions = gScore.keySet().stream()
                     .filter(index -> !closed.contains(index))
                     .map(snapshot::toWorld)
                     .toList();
             DragonPathSearchDebug.publishGridSearch(
-                    debugDragonId,
+                    debugSession,
                     DragonPathSearchDebug.SearchType.SWIM,
                     snapshot.toWorld(start),
                     snapshot.toWorld(goal),

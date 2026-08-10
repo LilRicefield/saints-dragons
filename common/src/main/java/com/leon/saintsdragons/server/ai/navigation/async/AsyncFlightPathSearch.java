@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
-import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.pathfinder.Node;
@@ -102,7 +101,7 @@ final class AsyncFlightPathSearch {
     }
 
     @Nullable
-    Path findPath(@Nullable UUID debugDragonId) {
+    Path findPath(@Nullable DragonPathSearchDebug.SearchSession debugSession) {
         long startedNanos = System.nanoTime();
         long startKey = this.startNode.asLong();
         PriorityQueue<OpenNode> open = new PriorityQueue<>(
@@ -111,7 +110,7 @@ final class AsyncFlightPathSearch {
         );
         Map<Long, Long> cameFrom = new HashMap<>();
         Map<Long, Double> gScore = new HashMap<>();
-        Set<Long> closed = debugDragonId == null ? new HashSet<>() : new LinkedHashSet<>();
+        Set<Long> closed = debugSession == null ? new HashSet<>() : new LinkedHashSet<>();
         Map<Long, Boolean> clearNodes = new HashMap<>();
         Set<EdgeKey> blockedEdges = new HashSet<>();
 
@@ -195,14 +194,14 @@ final class AsyncFlightPathSearch {
 
         boolean reachedRequestedTarget = reached && this.completeRoute;
         Path path = buildPath(cameFrom, bestKey, reachedRequestedTarget);
-        if (debugDragonId != null && !this.cancelled.getAsBoolean()) {
+        if (debugSession != null && !this.cancelled.getAsBoolean()) {
             List<Vec3> closedPositions = closed.stream().map(AsyncFlightPathSearch::nodeCenter).toList();
             List<Vec3> openPositions = gScore.keySet().stream()
                     .filter(key -> !closed.contains(key))
                     .map(AsyncFlightPathSearch::nodeCenter)
                     .toList();
             DragonPathSearchDebug.publishGridSearch(
-                    debugDragonId,
+                    debugSession,
                     DragonPathSearchDebug.SearchType.AIR,
                     this.origin,
                     this.requestedTarget,
