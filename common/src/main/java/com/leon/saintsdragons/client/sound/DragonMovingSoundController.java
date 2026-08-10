@@ -3,28 +3,40 @@ package com.leon.saintsdragons.client.sound;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.entity.Entity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.UUID;
 
 @Environment(EnvType.CLIENT)
 public final class DragonMovingSoundController {
     private static final Logger LOGGER = LoggerFactory.getLogger(DragonMovingSoundController.class);
-    private static final Map<String, ActiveEntry> ACTIVE_SOUNDS = new HashMap<>();
-    private static final long DUPLICATE_SIGNAL_WINDOW_TICKS = 2L;
+    private static final Map<SourceSoundKey, ActiveEntry> ACTIVE_SOUNDS = new HashMap<>();
+    private static ClientLevel activeLevel;
 
     private DragonMovingSoundController() {
     }
 
-    public static void play(int entityId, String soundId, float volume, float pitch, int durationTicks) {
+    public static void play(
+            UUID playbackId,
+            int entityId,
+            UUID entityUuid,
+            String soundId,
+            float volume,
+            float pitch,
+            int durationTicks
+    ) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.level == null) {
+        updateLevel(minecraft);
+        if (minecraft.level == null || playbackId == null || entityUuid == null) {
             return;
         }
 
@@ -45,45 +57,50 @@ public final class DragonMovingSoundController {
 
         long now = minecraft.level.getGameTime();
         int safeDuration = Math.max(1, durationTicks);
-        String key = entityId + "|" + soundId;
+        SourceSoundKey key = new SourceSoundKey(entityUuid, soundId);
         ActiveEntry existing = ACTIVE_SOUNDS.get(key);
-        if (existing != null && existing.endTick > now) {
-            boolean duplicateBurst = (now - existing.lastSignalTick) <= DUPLICATE_SIGNAL_WINDOW_TICKS;
-            existing.lastSignalTick = now;
-            existing.endTick = now + safeDuration;
+        if (existing != null && existing.playbackId.equals(playbackId)) {
             existing.volume = volume;
             existing.pitch = pitch;
             existing.sound = sound;
-            if (existing.instance == null || existing.instance.isStopped()) {
-                existing.instance = null;
+            if (!existing.started) {
                 tryStart(existing, minecraft, now);
-            } else {
+            } else if (existing.instance != null && !existing.instance.isStopped()) {
                 existing.instance.updateMix(volume, pitch);
-                if (!duplicateBurst) {
-                    minecraft.getSoundManager().stop(existing.instance);
-                    existing.instance = null;
-                    tryStart(existing, minecraft, now);
-                }
             }
             return;
         }
 
-        ActiveEntry entry = new ActiveEntry(entityId, soundId, sound, volume, pitch, now + safeDuration, now);
+        if (existing != null && existing.instance != null) {
+            minecraft.getSoundManager().stop(existing.instance);
+        }
+        ActiveEntry entry = new ActiveEntry(
+                playbackId,
+                entityId,
+                entityUuid,
+                sound,
+                volume,
+                pitch,
+                now + safeDuration
+        );
         ACTIVE_SOUNDS.put(key, entry);
         tryStart(entry, minecraft, now);
     }
 
     public static void tick(Minecraft minecraft) {
-        if (minecraft == null || minecraft.isPaused()) {
+        if (minecraft == null) {
             return;
         }
+        updateLevel(minecraft);
         if (minecraft.level == null) {
-            stopAll(minecraft);
+            return;
+        }
+        if (minecraft.isPaused()) {
             return;
         }
 
         long now = minecraft.level.getGameTime();
-        Iterator<Map.Entry<String, ActiveEntry>> iterator = ACTIVE_SOUNDS.entrySet().iterator();
+        Iterator<Map.Entry<SourceSoundKey, ActiveEntry>> iterator = ACTIVE_SOUNDS.entrySet().iterator();
         while (iterator.hasNext()) {
             ActiveEntry entry = iterator.next().getValue();
             if (entry == null || now >= entry.endTick) {
@@ -93,27 +110,53 @@ public final class DragonMovingSoundController {
                 iterator.remove();
                 continue;
             }
-            if (entry.instance == null || entry.instance.isStopped()) {
-                entry.instance = null;
+            if (!entry.started) {
                 tryStart(entry, minecraft, now);
+                continue;
+            }
+            if (entry.instance == null || entry.instance.isStopped()) {
+                iterator.remove();
             }
         }
     }
 
     private static void tryStart(ActiveEntry entry, Minecraft minecraft, long now) {
+        if (entry.started || minecraft.level == null) {
+            return;
+        }
+        Entity entity = minecraft.level.getEntity(entry.entityId);
+        if (entity == null
+                || !entry.entityUuid.equals(entity.getUUID())
+                || entity.isRemoved()
+                || !entity.isAlive()
+                || entity.isSilent()) {
+            return;
+        }
         int remainingTicks = (int) Math.max(1L, entry.endTick - now);
         DragonMovingOneShotSound movingSound = new DragonMovingOneShotSound(
                 entry.entityId,
+                entry.entityUuid,
                 entry.sound,
                 entry.volume,
                 entry.pitch,
                 remainingTicks
         );
+        entry.started = true;
         entry.instance = movingSound;
         minecraft.getSoundManager().play(movingSound);
-        if (movingSound.isStopped()) {
-            entry.instance = null;
+    }
+
+    private static void updateLevel(Minecraft minecraft) {
+        ClientLevel currentLevel = minecraft != null ? minecraft.level : null;
+        if (activeLevel == currentLevel) {
+            return;
         }
+        if (minecraft != null) {
+            stopAll(minecraft);
+        } else {
+            ACTIVE_SOUNDS.clear();
+        }
+        activeLevel = currentLevel;
     }
 
     private static void stopAll(Minecraft minecraft) {
@@ -125,24 +168,36 @@ public final class DragonMovingSoundController {
         ACTIVE_SOUNDS.clear();
     }
 
+    private record SourceSoundKey(UUID entityUuid, String soundId) {
+    }
+
     private static final class ActiveEntry {
+        final UUID playbackId;
         final int entityId;
-        final String soundId;
+        final UUID entityUuid;
         SoundEvent sound;
         float volume;
         float pitch;
         long endTick;
-        long lastSignalTick;
+        boolean started;
         DragonMovingOneShotSound instance;
 
-        private ActiveEntry(int entityId, String soundId, SoundEvent sound, float volume, float pitch, long endTick, long lastSignalTick) {
+        private ActiveEntry(
+                UUID playbackId,
+                int entityId,
+                UUID entityUuid,
+                SoundEvent sound,
+                float volume,
+                float pitch,
+                long endTick
+        ) {
+            this.playbackId = playbackId;
             this.entityId = entityId;
-            this.soundId = soundId;
+            this.entityUuid = entityUuid;
             this.sound = sound;
             this.volume = volume;
             this.pitch = pitch;
             this.endTick = endTick;
-            this.lastSignalTick = lastSignalTick;
         }
     }
 }

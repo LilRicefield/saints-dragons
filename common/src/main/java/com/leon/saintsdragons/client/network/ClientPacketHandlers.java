@@ -104,7 +104,9 @@ public final class ClientPacketHandlers {
 
     public static void handleDragonMovingSound(MessageDragonMovingSound message) {
         DragonSoundRuntime.playMoving(
+                message.playbackId(),
                 message.entityId(),
+                message.entityUuid(),
                 message.soundId(),
                 message.volume(),
                 message.pitch(),

@@ -18,6 +18,7 @@ import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.constant.DataTickets;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
@@ -26,7 +27,9 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class MossbackItem extends Item implements GeoItem {
+    private static final String BABY_TAG = "BabyMossback";
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.mossback.idle");
+    private static final RawAnimation BABY_IDLE = RawAnimation.begin().thenLoop("baby_mossback.animation.idle");
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
     private final Supplier<Object> renderProvider = this::createFabricRenderProvider;
 
@@ -41,6 +44,7 @@ public class MossbackItem extends Item implements GeoItem {
         if (level instanceof ServerLevel serverLevel) {
             Mossback mossback = ModEntities.MOSSBACK.get().create(serverLevel);
             if (mossback != null) {
+                mossback.setBaby(isBaby(stack));
                 Vec3 look = player.getLookAngle();
                 Vec3 spawn = player.getEyePosition().add(look.scale(0.65D));
                 mossback.moveTo(spawn.x, spawn.y - 0.25D, spawn.z, player.getYRot(), 0.0F);
@@ -58,9 +62,28 @@ public class MossbackItem extends Item implements GeoItem {
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>(this, "idle", 4, state -> {
-            state.setAndContinue(IDLE);
+            ItemStack stack = state.getData(DataTickets.ITEMSTACK);
+            state.setAndContinue(isBaby(stack) ? BABY_IDLE : IDLE);
             return PlayState.CONTINUE;
         }));
+    }
+
+    public static boolean isBaby(ItemStack stack) {
+        return stack != null && stack.hasTag() && stack.getTag().getBoolean(BABY_TAG);
+    }
+
+    public static void setBaby(ItemStack stack, boolean baby) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        if (baby) {
+            stack.getOrCreateTag().putBoolean(BABY_TAG, true);
+        } else if (stack.hasTag()) {
+            stack.getTag().remove(BABY_TAG);
+            if (stack.getTag().isEmpty()) {
+                stack.setTag(null);
+            }
+        }
     }
 
     @Override

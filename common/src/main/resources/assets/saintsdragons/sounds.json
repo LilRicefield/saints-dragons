@@ -2267,6 +2267,17 @@
       }
     ]
   },
+  "atroxiia_slither": {
+    "subtitle": "subtitles.saintsdragons.atroxiia_slither",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/atroxiia/atroxiia_slither",
+        "volume": 1.4,
+        "pitch": 1.0,
+        "attenuation_distance": 32
+      }
+    ]
+  },
   "atroxiia_devastating_sweep": {
     "subtitle": "subtitles.saintsdragons.atroxiia_devastating_sweep",
     "sounds": [

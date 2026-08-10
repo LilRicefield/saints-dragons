@@ -9,15 +9,26 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 
+import java.util.UUID;
+
 @Environment(EnvType.CLIENT)
 public class DragonMovingOneShotSound extends AbstractTickableSoundInstance {
     private final int entityId;
+    private final UUID entityUuid;
     private final int maxLifeTicks;
     private int lifeTicks;
 
-    public DragonMovingOneShotSound(int entityId, SoundEvent sound, float volume, float pitch, int durationTicks) {
+    public DragonMovingOneShotSound(
+            int entityId,
+            UUID entityUuid,
+            SoundEvent sound,
+            float volume,
+            float pitch,
+            int durationTicks
+    ) {
         super(sound, SoundSource.NEUTRAL, SoundInstance.createUnseededRandom());
         this.entityId = entityId;
+        this.entityUuid = entityUuid;
         this.maxLifeTicks = Math.max(1, durationTicks);
         this.looping = false;
         this.delay = 0;
@@ -35,7 +46,7 @@ public class DragonMovingOneShotSound extends AbstractTickableSoundInstance {
             return false;
         }
         Entity entity = minecraft.level.getEntity(entityId);
-        return entity != null && entity.isAlive() && !entity.isSilent();
+        return isExpectedEntity(entity) && entity.isAlive() && !entity.isSilent();
     }
 
     @Override
@@ -61,13 +72,17 @@ public class DragonMovingOneShotSound extends AbstractTickableSoundInstance {
             return false;
         }
         Entity entity = minecraft.level.getEntity(entityId);
-        if (entity == null || entity.isRemoved() || !entity.isAlive()) {
+        if (!isExpectedEntity(entity) || entity.isRemoved() || !entity.isAlive()) {
             return false;
         }
         this.x = entity.getX();
         this.y = entity.getY() + entity.getBbHeight() * 0.65D;
         this.z = entity.getZ();
         return true;
+    }
+
+    private boolean isExpectedEntity(Entity entity) {
+        return entity != null && entityUuid.equals(entity.getUUID());
     }
 
     public void updateMix(float volume, float pitch) {

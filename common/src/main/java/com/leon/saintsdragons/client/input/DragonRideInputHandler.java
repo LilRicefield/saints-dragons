@@ -292,6 +292,7 @@ public final class DragonRideInputHandler {
 
         if (dragon instanceof Ignivorus ||
             dragon instanceof Raevyx ||
+            dragon instanceof Atroxiia ||
             dragon instanceof Varasuchus ||
             dragon instanceof Volitans) {
             boolean forwardDown = mc.options.keyUp.isDown();

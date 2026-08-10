@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.renderer.mossback;
 
 import com.leon.saintsdragons.client.model.mossback.MossbackModel;
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.Mossback;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.resources.ResourceLocation;
@@ -21,6 +20,6 @@ public class MossbackRenderer extends GeoEntityRenderer<Mossback> {
 
     @Override
     public @NotNull ResourceLocation getTextureLocation(@NotNull Mossback entity) {
-        return SaintsDragonsCommon.rl("textures/entity/mossback/mossback.png");
+        return getGeoModel().getTextureResource(entity);
     }
 }

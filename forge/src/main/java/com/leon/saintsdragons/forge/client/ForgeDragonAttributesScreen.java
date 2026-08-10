@@ -686,6 +686,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.ATROXIIA_GUNGNIR_STAB_DAMAGE::get,
                 ForgeDragonAttributesConfig.ATROXIIA_GUNGNIR_STAB_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.slither_damage"),
+                ForgeDragonAttributesConfig.ATROXIIA_SLITHER_DAMAGE::get,
+                ForgeDragonAttributesConfig.ATROXIIA_SLITHER_DAMAGE::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.atroxiia.precise_strike_damage"),
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE::get,
                 ForgeDragonAttributesConfig.ATROXIIA_PRECISE_STRIKE_DAMAGE::set,

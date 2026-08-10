@@ -9,6 +9,8 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.UUID;
+
 public final class DragonSoundOrchestrator {
     private static final Logger LOGGER = LoggerFactory.getLogger(DragonSoundOrchestrator.class);
 
@@ -52,13 +54,15 @@ public final class DragonSoundOrchestrator {
             return;
         }
         MessageDragonMovingSound packet = new MessageDragonMovingSound(
+                UUID.randomUUID(),
                 dragon.getId(),
+                dragon.getUUID(),
                 soundId.toString(),
                 spec.volume(),
                 spec.pitch(),
                 spec.durationTicks()
         );
-        // Tracking already includes nearby rider/owner and avoids duplicate client restarts.
+        // A playback ID makes packet handling idempotent without suppressing a later use of the same sound.
         NetworkHandler.sendToTracking(dragon, packet);
     }
 }

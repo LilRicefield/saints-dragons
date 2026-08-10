@@ -17,14 +17,21 @@ import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import software.bernie.geckolib.renderer.GeoItemRenderer;
+import software.bernie.geckolib.model.GeoModel;
 
 public class MossbackItemRenderer extends GeoItemRenderer<MossbackItem> {
     private static final ResourceLocation GUI_TEXTURE =
             new ResourceLocation("saintsdragons", "item/mossback/mossback");
     private static final RenderType GUI_RENDER_TYPE = RenderType.entityCutoutNoCull(InventoryMenu.BLOCK_ATLAS);
+    private final MossbackItemModel babyModel = new MossbackItemModel(true);
 
     public MossbackItemRenderer() {
         super(new MossbackItemModel());
+    }
+
+    @Override
+    public GeoModel<MossbackItem> getGeoModel() {
+        return MossbackItem.isBaby(getCurrentItemStack()) ? babyModel : super.getGeoModel();
     }
 
     @Override

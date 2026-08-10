@@ -17,6 +17,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.atroxiia.AtroxiiaH
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
+import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
@@ -86,6 +87,14 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_PRECISE_STRIKE_NUDGE_Z =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_SLITHERING =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Integer> DATA_SLITHER_MOVEMENT_TICKS =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Float> DATA_SLITHER_MOVEMENT_X =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Float> DATA_SLITHER_MOVEMENT_Z =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_PITCH_KEY_MODE =
@@ -116,6 +125,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final float MAX_UP_STEP = 1.25F;
     public static final double RIDER_WALK_SPEED = 0.12D;
     public static final double RIDER_RUN_SPEED = 0.28D;
+    private static final double SLITHER_NUDGE_DISTANCE = 24.0D;
+    private static final double SLITHER_AUTO_MOVE_SPEED = RIDER_RUN_SPEED * 4.0D;
     private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
     private static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
@@ -146,6 +157,46 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private final AtroxiiaInteractionHandler interactionHandler = new AtroxiiaInteractionHandler(this);
     private final AtroxiiaTamingHandler tamingController = new AtroxiiaTamingHandler(this);
     private final ScreenShakeComponent screenShakeComponent;
+    private final DragonForwardMovementComponent slitherMovement = new DragonForwardMovementComponent(
+            this,
+            new DragonForwardMovementComponent.StateAccess() {
+                @Override
+                public void start(int ticks, Vec3 velocity, boolean dashing, boolean dodging, double horizontalDrag) {
+                    entityData.set(DATA_SLITHER_MOVEMENT_TICKS, Math.max(1, ticks));
+                    setSlitherMovementVelocity(velocity);
+                }
+
+                @Override
+                public int ticks() {
+                    return entityData.get(DATA_SLITHER_MOVEMENT_TICKS);
+                }
+
+                @Override
+                public void setTicks(int ticks) {
+                    entityData.set(DATA_SLITHER_MOVEMENT_TICKS, Math.max(0, ticks));
+                }
+
+                @Override
+                public Vec3 velocity() {
+                    return getSlitherMovementVelocity();
+                }
+
+                @Override
+                public void setVelocity(Vec3 velocity) {
+                    setSlitherMovementVelocity(velocity);
+                }
+
+                @Override
+                public double horizontalDrag() {
+                    return 1.0D;
+                }
+
+                @Override
+                public void clear() {
+                    clearSlitherMovementState();
+                }
+            }
+    );
     private boolean nextMeleeRightSide = true;
     private float swimPitchRad;
     private float previousSwimPitchRad;
@@ -182,6 +233,10 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_TICKS, 0);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_X, 0.0F);
         this.entityData.define(DATA_PRECISE_STRIKE_NUDGE_Z, 0.0F);
+        this.entityData.define(DATA_SLITHERING, false);
+        this.entityData.define(DATA_SLITHER_MOVEMENT_TICKS, 0);
+        this.entityData.define(DATA_SLITHER_MOVEMENT_X, 0.0F);
+        this.entityData.define(DATA_SLITHER_MOVEMENT_Z, 0.0F);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_SWIM_PITCH_RAD, 0.0F);
@@ -248,7 +303,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case ABILITY_USE, ABILITY_STOP -> true;
+            case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -372,6 +427,17 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             if (this.getNavigation().getPath() != null) {
                 this.getNavigation().stop();
             }
+            if (isSlithering()) {
+                travelStandardRiddenGround(player, Vec3.ZERO, riderController.getRiddenSpeed(player));
+                if (slitherMovement.isActive()) {
+                    slitherMovement.steerHorizontal(DragonMotionMath.horizontalForward(getYRot()));
+                    slitherMovement.applyContinuousTravelMotion();
+                } else {
+                    Vec3 current = getDeltaMovement();
+                    setDeltaMovement(0.0D, current.y, 0.0D);
+                }
+                return;
+            }
             Vec3 input = getRiddenInput(player, motion);
             if (isInWaterOrBubble()) {
                 riderController.handleRiddenSwimming(player, input);
@@ -419,6 +485,79 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
                 && target != null
                 && isTargetValid(target)
                 && canTarget(target);
+    }
+
+    @Override
+    protected void onRiderDash(Player player) {
+        if (isSlithering() || !canUseGroundCombatAbility()) {
+            return;
+        }
+        useRidingAbility(ModAbilities.ATROXIIA_SLITHER.getName());
+    }
+
+    public boolean isSlithering() {
+        return this.entityData.get(DATA_SLITHERING);
+    }
+
+    public void startSlitherAnimation() {
+        this.entityData.set(DATA_SLITHERING, true);
+        this.getNavigation().stop();
+        setLastRiderForward(0.0F);
+        setLastRiderStrafe(0.0F);
+        triggerAnim(AtroxiiaAnimationHandler.MOVEMENT_CONTROLLER, "slither");
+    }
+
+    public void startSlitherNudge(int durationTicks) {
+        double speed = SLITHER_NUDGE_DISTANCE / Math.max(1, durationTicks);
+        setSlitherMovement(speed, durationTicks);
+    }
+
+    public void startSlitherAutoMove(int durationTicks) {
+        setSlitherMovement(SLITHER_AUTO_MOVE_SPEED, durationTicks);
+    }
+
+    private void setSlitherMovement(double speed, int durationTicks) {
+        if (level().isClientSide || !isSlithering()) {
+            return;
+        }
+        Vec3 velocity = DragonMotionMath.horizontalForward(getYRot()).scale(speed);
+        if (slitherMovement.isActive()) {
+            slitherMovement.updateContinuous(velocity, durationTicks);
+        } else {
+            slitherMovement.startContinuous(velocity, durationTicks);
+        }
+    }
+
+    public void stopSlitherMovement() {
+        slitherMovement.cancelActive();
+        Vec3 current = getDeltaMovement();
+        setDeltaMovement(0.0D, current.y, 0.0D);
+        hasImpulse = true;
+        hurtMarked = true;
+    }
+
+    public void finishSlitherAnimation() {
+        stopSlitherMovement();
+        this.entityData.set(DATA_SLITHERING, false);
+    }
+
+    private Vec3 getSlitherMovementVelocity() {
+        return new Vec3(
+                this.entityData.get(DATA_SLITHER_MOVEMENT_X),
+                0.0D,
+                this.entityData.get(DATA_SLITHER_MOVEMENT_Z)
+        );
+    }
+
+    private void setSlitherMovementVelocity(Vec3 velocity) {
+        this.entityData.set(DATA_SLITHER_MOVEMENT_X, (float) velocity.x);
+        this.entityData.set(DATA_SLITHER_MOVEMENT_Z, (float) velocity.z);
+    }
+
+    private void clearSlitherMovementState() {
+        this.entityData.set(DATA_SLITHER_MOVEMENT_TICKS, 0);
+        this.entityData.set(DATA_SLITHER_MOVEMENT_X, 0.0F);
+        this.entityData.set(DATA_SLITHER_MOVEMENT_Z, 0.0F);
     }
 
     @Override
@@ -480,6 +619,12 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     @Override
     protected boolean handleCustomRiderAction(ServerPlayer player, DragonRiderAction action,
                                               String abilityName, boolean locked) {
+        if (action == DragonRiderAction.DOUBLE_TAP_W) {
+            if (!locked) {
+                onRiderDash(player);
+            }
+            return true;
+        }
         if (action == DragonRiderAction.ABILITY_USE
                 && ModAbilities.ATROXIIA_HELHEIM_QUAKE.getName().equals(abilityName)) {
             var active = combatManager.getActiveAbility();
@@ -504,7 +649,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
                 || abilityType == ModAbilities.ATROXIIA_GUNGNIR_STAB
                 || abilityType == ModAbilities.ATROXIIA_PRECISE_STRIKE
                 || abilityType == ModAbilities.ATROXIIA_DEVASTATING_SWEEP
-                || abilityType == ModAbilities.ATROXIIA_HELHEIM_QUAKE;
+                || abilityType == ModAbilities.ATROXIIA_HELHEIM_QUAKE
+                || abilityType == ModAbilities.ATROXIIA_SLITHER;
     }
 
     @Override
@@ -542,6 +688,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         tickPreciseStrikeNudge();
         tickSwimPitchVisual();
         if (!level().isClientSide) {
+            slitherMovement.tickServerState();
             tamingController.tickServer();
             if (isTamingStunned()) {
                 tamingController.enforceGroundingTick();

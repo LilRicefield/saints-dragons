@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons;
 
+import com.leon.saintsdragons.common.item.MossbackItem;
+import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -27,10 +29,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.goal.FloatGoal;
+import net.minecraft.world.entity.ai.goal.BreedGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.RandomLookAroundGoal;
@@ -38,6 +42,7 @@ import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.state.BlockState;
@@ -53,6 +58,9 @@ import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class Mossback extends Animal implements GeoEntity {
+    private static final double ADULT_MAX_HEALTH = 10.0D;
+    private static final double BABY_MAX_HEALTH = 1.0D;
+    private static final double MOSSBACK_ARMOR = 0.0D;
     private static final int TOXIN_EFFECT_TICKS = 20 * 10;
     private static final double TOXIN_RADIUS = 3.25D;
     private static final int TOXIN_PARTICLES = 36;
@@ -72,6 +80,10 @@ public class Mossback extends Animal implements GeoEntity {
     private static final RawAnimation WALK = RawAnimation.begin().thenLoop("animation.mossback.walk");
     private static final RawAnimation THROWN = RawAnimation.begin().thenLoop("animation.mossback.thrown");
     private static final RawAnimation LANDED = RawAnimation.begin().thenLoop("animation.mossback.landed");
+    private static final RawAnimation BABY_IDLE = RawAnimation.begin().thenLoop("baby_mossback.animation.idle");
+    private static final RawAnimation BABY_WALK = RawAnimation.begin().thenLoop("baby_mossback.animation.walk");
+    private static final RawAnimation BABY_THROWN = RawAnimation.begin().thenLoop("baby_mossback.animation.thrown");
+    private static final RawAnimation BABY_LANDED = RawAnimation.begin().thenLoop("baby_mossback.animation.landed");
 
     private final AnimatableInstanceCache animationCache = GeckoLibUtil.createInstanceCache(this);
 
@@ -91,7 +103,8 @@ public class Mossback extends Animal implements GeoEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 10.0D)
+                .add(Attributes.MAX_HEALTH, ADULT_MAX_HEALTH)
+                .add(Attributes.ARMOR, MOSSBACK_ARMOR)
                 .add(Attributes.MOVEMENT_SPEED, 0.15D);
     }
 
@@ -113,6 +126,7 @@ public class Mossback extends Animal implements GeoEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new PanicGoal(this, 1.3D));
+        this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 0.8D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 6.0F));
         this.goalSelector.addGoal(6, new RandomLookAroundGoal(this));
@@ -146,6 +160,10 @@ public class Mossback extends Animal implements GeoEntity {
             setLandedTicks(12);
             spawnLandingEffects();
             releaseToxin();
+            if (isBaby()) {
+                setHealth(0.0F);
+                die(this.damageSources().fall());
+            }
         }
     }
 
@@ -248,6 +266,7 @@ public class Mossback extends Animal implements GeoEntity {
 
         if (!this.level().isClientSide) {
             ItemStack mossback = new ItemStack(ModItems.MOSSBACK.get());
+            MossbackItem.setBaby(mossback, isBaby());
             if (!player.getInventory().add(mossback)) {
                 player.drop(mossback, false);
             }
@@ -267,14 +286,56 @@ public class Mossback extends Animal implements GeoEntity {
     }
 
     @Override
+    protected void dropFromLootTable(@NotNull DamageSource source, boolean recentlyHit) {
+        if (!isBaby()) {
+            super.dropFromLootTable(source, recentlyHit);
+        }
+    }
+
+    @Override
+    public int getExperienceReward() {
+        return isBaby() ? 0 : super.getExperienceReward();
+    }
+
+    @Override
     public boolean isFood(@NotNull ItemStack stack) {
-        return false;
+        return stack.is(Items.PUFFERFISH);
     }
 
     @Nullable
     @Override
     public AgeableMob getBreedOffspring(@NotNull ServerLevel level, @NotNull AgeableMob otherParent) {
-        return null;
+        Mossback baby = ModEntities.MOSSBACK.get().create(level);
+        if (baby != null) {
+            baby.setBaby(true);
+        }
+        return baby;
+    }
+
+    @Override
+    public void setAge(int age) {
+        boolean wasBaby = isBaby();
+        super.setAge(age);
+        boolean isNowBaby = isBaby();
+        if (!level().isClientSide && wasBaby != isNowBaby) {
+            applyAgeAttributes(wasBaby && !isNowBaby);
+        }
+    }
+
+    private void applyAgeAttributes(boolean fullyHeal) {
+        AttributeInstance maxHealth = getAttribute(Attributes.MAX_HEALTH);
+        if (maxHealth != null) {
+            maxHealth.setBaseValue(isBaby() ? BABY_MAX_HEALTH : ADULT_MAX_HEALTH);
+        }
+        AttributeInstance armor = getAttribute(Attributes.ARMOR);
+        if (armor != null) {
+            armor.setBaseValue(MOSSBACK_ARMOR);
+        }
+        if (fullyHeal) {
+            setHealth(getMaxHealth());
+        } else if (getHealth() > getMaxHealth()) {
+            setHealth(getMaxHealth());
+        }
     }
 
     @Override
@@ -288,6 +349,9 @@ public class Mossback extends Animal implements GeoEntity {
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (!level().isClientSide) {
+            applyAgeAttributes(false);
+        }
         setThrown(tag.getBoolean("Thrown"));
         setThrownAirborne(tag.getBoolean("ThrownAirborne"));
         setLandedTicks(tag.getInt("LandedTicks"));
@@ -297,7 +361,7 @@ public class Mossback extends Animal implements GeoEntity {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         var thrownController = new AnimationController<>(this, "thrown", 1, state -> {
             if (isThrown() || isThrownAirborne()) {
-                state.setAndContinue(THROWN);
+                state.setAndContinue(isBaby() ? BABY_THROWN : THROWN);
                 return PlayState.CONTINUE;
             }
             return PlayState.STOP;
@@ -305,7 +369,7 @@ public class Mossback extends Animal implements GeoEntity {
 
         var landedController = new AnimationController<>(this, "landed", 1, state -> {
             if (getLandedTicks() > 0) {
-                state.setAndContinue(LANDED);
+                state.setAndContinue(isBaby() ? BABY_LANDED : LANDED);
                 return PlayState.CONTINUE;
             }
             return PlayState.STOP;
@@ -319,9 +383,9 @@ public class Mossback extends Animal implements GeoEntity {
                 return PlayState.STOP;
             }
             if (state.isMoving()) {
-                AnimationHelper.setAndContinue(state, WALK);
+                AnimationHelper.setAndContinue(state, isBaby() ? BABY_WALK : WALK);
             } else {
-                AnimationHelper.setAndContinue(state, IDLE);
+                AnimationHelper.setAndContinue(state, isBaby() ? BABY_IDLE : IDLE);
             }
             return PlayState.CONTINUE;
         });

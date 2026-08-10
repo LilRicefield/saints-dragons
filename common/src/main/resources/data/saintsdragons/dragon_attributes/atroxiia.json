@@ -11,6 +11,9 @@
     "underwater_bite": {
       "damage": 10.0
     },
+    "slither": {
+      "damage": 5.0
+    },
     "precise_strike": {
       "damage": 9.0,
       "knockback": 0.75,
