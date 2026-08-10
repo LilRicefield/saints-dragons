@@ -6,12 +6,9 @@ import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.Camera;
 import net.minecraft.util.Mth;
@@ -50,7 +47,7 @@ public abstract class CameraPositionMixin {
         }
 
         Entity vehicle = entity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !usesSeatAnchoredCameraPath(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
             DragonCameraState.clearRoll();
             return;
         }
@@ -71,11 +68,12 @@ public abstract class CameraPositionMixin {
         }
 
         Entity vehicle = entity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !usesSeatAnchoredCameraPath(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
             return;
         }
 
-        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon.getId(), getSeatIndex(dragon, entity));
+        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(
+                dragon.getId(), DragonSeatAnchoredCamera.getSeatIndex(dragon, entity));
         if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
             return;
         }
@@ -95,23 +93,6 @@ public abstract class CameraPositionMixin {
                 leanY,
                 leanZ
         ));
-    }
-
-    private static int getSeatIndex(RideableDragonBase dragon, Entity rider) {
-        if (dragon instanceof Cindervane) {
-            return Math.max(dragon.getPassengers().indexOf(rider), 0);
-        }
-        return 0;
-    }
-
-    private static boolean usesSeatAnchoredCameraPath(RideableDragonBase dragon) {
-        return dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Varasuchus
-                || dragon instanceof Stegonaut
-                || dragon instanceof Volitans
-                || dragon instanceof Atroxiia;
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {

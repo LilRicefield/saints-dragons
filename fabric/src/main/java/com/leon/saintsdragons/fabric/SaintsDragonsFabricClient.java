@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
+import com.leon.saintsdragons.client.compat.RealCameraCompatibility;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.client.model.block.DraconianNucleusModel;
@@ -25,6 +26,7 @@ public final class SaintsDragonsFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        RealCameraCompatibility.register();
         CommonClientModEvents.registerEntityRenderers(EntityRendererRegistry::register);
         CommonClientModEvents.registerMenuScreens();
         BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.DRACONIAN_NUCLEUS.get(), RenderType.translucent());

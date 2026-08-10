@@ -3,6 +3,13 @@ package com.leon.saintsdragons.client.renderer;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
+import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -20,6 +27,23 @@ public final class DragonSeatAnchoredCamera {
                 && Math.abs(offset.x) < MAX_REASONABLE_OFFSET
                 && Math.abs(offset.y) < MAX_REASONABLE_OFFSET
                 && Math.abs(offset.z) < MAX_REASONABLE_OFFSET;
+    }
+
+    public static int getSeatIndex(RideableDragonBase dragon, Entity rider) {
+        if (dragon instanceof Cindervane) {
+            return Math.max(dragon.getPassengers().indexOf(rider), 0);
+        }
+        return 0;
+    }
+
+    public static boolean supports(RideableDragonBase dragon) {
+        return dragon instanceof Raevyx
+                || dragon instanceof Cindervane
+                || dragon instanceof Ignivorus
+                || dragon instanceof Varasuchus
+                || dragon instanceof Stegonaut
+                || dragon instanceof Volitans
+                || dragon instanceof Atroxiia;
     }
 
     public static Vec3 computePivot(RideableDragonBase dragon,

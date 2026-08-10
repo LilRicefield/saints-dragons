@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge;
 
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
+import com.leon.saintsdragons.client.compat.RealCameraCompatibility;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
@@ -50,6 +51,7 @@ public final class SaintsDragonsForgeClient {
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             EpicFightRenderCompatibility.register();
+            RealCameraCompatibility.register();
             CommonClientModEvents.registerMenuScreens();
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.DRACONIAN_PELLUCIDA.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.DRACONIAN_NUCLEUS.get(), RenderType.translucent());

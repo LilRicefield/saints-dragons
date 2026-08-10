@@ -8,12 +8,9 @@ import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.client.event.FabricClientEventHandler;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
-import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.Camera;
 import net.minecraft.util.Mth;
@@ -108,7 +105,7 @@ public abstract class CameraMixin implements CameraAccessor {
         }
 
         Entity vehicle = focusedEntity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !saintsdragons$usesSeatAnchoredCameraPath(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
             DragonCameraState.clearRoll();
             CameraLeanData.reset();
             return;
@@ -150,7 +147,7 @@ public abstract class CameraMixin implements CameraAccessor {
         }
 
         Entity vehicle = focusedEntity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !saintsdragons$usesSeatAnchoredCameraPath(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
             return;
         }
 
@@ -158,7 +155,8 @@ public abstract class CameraMixin implements CameraAccessor {
             return;
         }
 
-        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon.getId(), saintsdragons$getSeatIndex(dragon, focusedEntity));
+        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(
+                dragon.getId(), DragonSeatAnchoredCamera.getSeatIndex(dragon, focusedEntity));
         if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
             return;
         }
@@ -178,23 +176,6 @@ public abstract class CameraMixin implements CameraAccessor {
                 leanY,
                 leanZ
         ));
-    }
-
-    private static int saintsdragons$getSeatIndex(RideableDragonBase dragon, Entity rider) {
-        if (dragon instanceof Cindervane) {
-            return Math.max(dragon.getPassengers().indexOf(rider), 0);
-        }
-        return 0;
-    }
-
-    private static boolean saintsdragons$usesSeatAnchoredCameraPath(RideableDragonBase dragon) {
-        return dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Varasuchus
-                || dragon instanceof Stegonaut
-                || dragon instanceof Volitans
-                || dragon instanceof Atroxiia;
     }
 
     private static boolean saintsdragons$usesAerialBankingCamera(RideableDragonBase dragon) {
