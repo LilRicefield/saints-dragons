@@ -7,6 +7,7 @@
     "BrewingStandBlockEntityMixin",
     "IgnivorusPartLifecycleMixin",
     "PotionBrewingMixin",
+    "PlayerDefaultAttributesMixin",
     "RangedAttributeAccessor",
     "ServerboundInteractPacketIdAccessor",
     "MultipartInteractionBridgeMixin"

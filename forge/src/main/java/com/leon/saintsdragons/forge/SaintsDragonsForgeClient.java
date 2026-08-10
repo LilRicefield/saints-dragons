@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModRecipes;
+import com.leon.saintsdragons.forge.compat.EpicFightRenderCompatibility;
 import com.leon.saintsdragons.client.model.block.DraconianNucleusModel;
 import com.leon.saintsdragons.client.renderer.block.DraconianNucleusRenderer;
 import com.leon.saintsdragons.client.model.block.DraconicCrucibleEntity;
@@ -48,6 +49,7 @@ public final class SaintsDragonsForgeClient {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            EpicFightRenderCompatibility.register();
             CommonClientModEvents.registerMenuScreens();
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.DRACONIAN_PELLUCIDA.get(), RenderType.translucent());
             ItemBlockRenderTypes.setRenderLayer(ModBlocks.DRACONIAN_NUCLEUS.get(), RenderType.translucent());

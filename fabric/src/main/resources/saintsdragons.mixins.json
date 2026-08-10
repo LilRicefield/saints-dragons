@@ -13,6 +13,7 @@
     "BloodTempestAfterimagePlayerRendererMixin",
     "BloodTempestAfterimageLivingRendererMixin",
     "BloodTempestAfterimageModelMixin",
+    "BloodTempestAfterimageItemRendererMixin",
     "LivingEntityRendererMixin",
     "EntityRendererMixin",
     "EntityTurnMixin",

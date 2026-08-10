@@ -2,8 +2,6 @@ package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonModEvents;
-import com.leon.saintsdragons.common.registry.ModAttributes;
-import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModPotionItems;
 import com.leon.saintsdragons.common.registry.ModPotions;
 import com.leon.saintsdragons.fabric.entity.part.FabricPartEntities;
@@ -34,7 +32,6 @@ import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.attributes.RangedAttribute;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.Potion;
@@ -65,10 +62,6 @@ public final class SaintsDragonsFabric implements ModInitializer {
         ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(new FabricDraconicCrucibleThermalReloadListener());
         FabricServerEvents.init();
         FabricLootTableModifier.register();
-        FabricDefaultAttributeRegistry.register(EntityType.PLAYER, Player.createAttributes()
-                .add(ModAttributes.DOUBLE_JUMP.get())
-                .add(ModAttributes.FIRE_RESISTANCE.get())
-                .add(ModAttributes.BLAST_RESISTANCE.get()));
         CommonModEvents.registerEntityAttributes(SaintsDragonsFabric::registerDefaultAttributes);
         CommonModEvents.registerSpawnPlacements(SpawnPlacements::register);
         Spawns.register();
