@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ final class ImmutableBlockSnapshot implements BlockGetter {
             new ConcurrentHashMap<>();
 
     private final Map<Long, PalettedContainer<BlockState>> sections;
-    private final Map<Long, List<AABB>> collisionBoxCache = new ConcurrentHashMap<>();
+    private final Long2ObjectOpenHashMap<List<AABB>> collisionBoxCache = new Long2ObjectOpenHashMap<>();
     private final int minX;
     private final int minY;
     private final int minZ;
@@ -47,7 +48,7 @@ final class ImmutableBlockSnapshot implements BlockGetter {
     private final int height;
 
     private ImmutableBlockSnapshot(Map<Long, PalettedContainer<BlockState>> sections,
-                                   Map<Long, List<AABB>> dynamicCollisionBoxes,
+                                   Long2ObjectOpenHashMap<List<AABB>> dynamicCollisionBoxes,
                                    int minX,
                                    int minY,
                                    int minZ,
@@ -83,7 +84,7 @@ final class ImmutableBlockSnapshot implements BlockGetter {
         int maxZ = Math.max(requestedMin.getZ(), requestedMax.getZ());
 
         Map<Long, PalettedContainer<BlockState>> sections = new HashMap<>();
-        Map<Long, List<AABB>> dynamicCollisionBoxes = new HashMap<>();
+        Long2ObjectOpenHashMap<List<AABB>> dynamicCollisionBoxes = new Long2ObjectOpenHashMap<>();
         if (minY <= maxY) {
             int minChunkX = SectionPos.blockToSectionCoord(minX);
             int maxChunkX = SectionPos.blockToSectionCoord(maxX);
@@ -150,7 +151,7 @@ final class ImmutableBlockSnapshot implements BlockGetter {
                                                       int maxX,
                                                       int maxY,
                                                       int maxZ,
-                                                      Map<Long, List<AABB>> destination) {
+                                                      Long2ObjectOpenHashMap<List<AABB>> destination) {
         if (!states.maybeHas(state -> state.getBlock().hasDynamicShape())) {
             return;
         }
@@ -191,8 +192,14 @@ final class ImmutableBlockSnapshot implements BlockGetter {
 
     List<AABB> collisionBoxes(BlockPos pos) {
         long key = pos.asLong();
-        BlockPos immutablePos = pos.immutable();
-        return this.collisionBoxCache.computeIfAbsent(key, ignored -> this.computeCollisionBoxes(immutablePos));
+        List<AABB> cached = this.collisionBoxCache.get(key);
+        if (cached != null) {
+            return cached;
+        }
+
+        List<AABB> computed = this.computeCollisionBoxes(pos.immutable());
+        this.collisionBoxCache.put(key, computed);
+        return computed;
     }
 
     private List<AABB> computeCollisionBoxes(BlockPos pos) {

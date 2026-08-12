@@ -1659,11 +1659,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         float xRotOffset = (float) Math.toRadians((getRandom().nextDouble() - 0.5D) * 20.0D);
         Vec3 targetVec = getLookAngle().scale(range).yRot(yRotOffset).xRot(xRotOffset);
         Vec3 candidate = dragonPos.add(targetVec);
-        candidate = new Vec3(candidate.x, findStandardSafeFlightHeight(candidate.x, candidate.z, maxHeightAboveGround), candidate.z);
-
-        if (!level().isLoaded(BlockPos.containing(candidate))) {
+        if (!level().hasChunkAt(BlockPos.containing(candidate))) {
             return null;
         }
+
+        candidate = new Vec3(candidate.x, findStandardSafeFlightHeight(candidate.x, candidate.z, maxHeightAboveGround), candidate.z);
         return candidate;
     }
 
@@ -1679,7 +1679,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     public boolean isValidStandardFlightTarget(@Nullable Vec3 target) {
-        if (target == null) {
+        if (target == null || !isStandardFlightSegmentLoaded(target)) {
             return false;
         }
 
@@ -1698,6 +1698,40 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         double distanceToHit = result.getLocation().distanceTo(position());
         double distanceToTarget = target.distanceTo(position());
         return distanceToHit > distanceToTarget * 0.95D;
+    }
+
+    private boolean isStandardFlightSegmentLoaded(Vec3 target) {
+        Vec3 start = getEyePosition();
+        double deltaX = target.x - start.x;
+        double deltaY = target.y - start.y;
+        double deltaZ = target.z - start.z;
+        int samples = Math.max(1, Mth.ceil(Math.max(Math.abs(deltaX), Math.abs(deltaZ)) / 8.0D));
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int lastChunkX = Integer.MIN_VALUE;
+        int lastChunkZ = Integer.MIN_VALUE;
+
+        for (int sample = 0; sample <= samples; sample++) {
+            double progress = (double) sample / samples;
+            cursor.set(
+                    Mth.floor(start.x + deltaX * progress),
+                    Mth.floor(start.y + deltaY * progress),
+                    Mth.floor(start.z + deltaZ * progress)
+            );
+
+            int chunkX = cursor.getX() >> 4;
+            int chunkZ = cursor.getZ() >> 4;
+            if (chunkX == lastChunkX && chunkZ == lastChunkZ) {
+                continue;
+            }
+            if (!level().hasChunkAt(cursor)) {
+                return false;
+            }
+
+            lastChunkX = chunkX;
+            lastChunkZ = chunkZ;
+        }
+
+        return true;
     }
 
     public boolean hasStandardTakeoffClearance(int checkHeight) {
