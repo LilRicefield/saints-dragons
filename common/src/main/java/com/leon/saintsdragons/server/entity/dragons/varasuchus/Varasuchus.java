@@ -255,7 +255,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return SCENT_ASSESSMENT_ANIMATION_TICKS;
     }
 
-    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VarasuchusAnimationHandler animationHandler = new VarasuchusAnimationHandler(this);
     private final VarasuchusInteractionHandler interactionHandler = new VarasuchusInteractionHandler(this);
     private final VarasuchusRiderController riderController;

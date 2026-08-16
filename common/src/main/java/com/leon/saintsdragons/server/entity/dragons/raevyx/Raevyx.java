@@ -199,7 +199,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             .build();
 
     private final ScreenShakeComponent screenShakeComponent;
-    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     public int timeFlying = 0;
     public boolean landingFlag = false;
     public boolean landedFlag = false;

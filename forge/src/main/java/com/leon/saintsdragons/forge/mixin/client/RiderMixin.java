@@ -11,6 +11,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector3f;
@@ -44,19 +45,8 @@ public abstract class RiderMixin {
             return;
         }
 
-        long now = System.currentTimeMillis();
-        long lastRender = RiderBullcrap.getLastRenderTime(dragon.getId());
-        if (now - lastRender > riderSpec.staleMs) {
-            return;
-        }
-
-        Matrix4f viewMatrix = RiderBullcrap.get(dragon.getId(), seatIndex);
+        Matrix4f viewMatrix = RiderBullcrap.getMatrix(dragon, seatIndex, riderSpec.staleMs);
         if (viewMatrix == null) {
-            return;
-        }
-
-        long lastUpdate = RiderBullcrap.getTimestamp(dragon.getId(), seatIndex);
-        if (now - lastUpdate > riderSpec.staleMs) {
             return;
         }
 
@@ -68,6 +58,7 @@ public abstract class RiderMixin {
         Matrix4f playerMatrix = new Matrix4f((Matrix4fc) viewMatrix);
         playerMatrix.normalize3x3();
         poseStack.last().pose().set((Matrix4fc) playerMatrix);
+        poseStack.last().normal().set(new Matrix3f(playerMatrix));
 
         poseStack.translate(seatOffsetX, seatOffsetY, seatOffsetZ);
         float dragonYaw = Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot);

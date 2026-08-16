@@ -44,6 +44,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
 
     private final Config adultConfig;
     private final Consumer<T> takeoffStarter;
+    private final DragonOwnerFollowWaterHandoff waterHandoff = new DragonOwnerFollowWaterHandoff();
     private int groundRepathCooldown;
     private int airRefreshCooldown;
     private double lastOwnerX = Double.NaN;
@@ -126,6 +127,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         }
 
         if (dragon.isLanding()) {
+            waterHandoff.release();
             mode = "landing";
             if (!dragon.getAIMovement().isPathing()) {
                 context.memories().set(
@@ -134,6 +136,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 );
             }
         } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
+            waterHandoff.release();
             followInAir(context, dragon, owner, ownerAirborne, config);
         } else {
             followOnGround(dragon, owner, distance, config);
@@ -145,6 +148,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         context.memories().erase(DragonMemories.MOVEMENT_INTENT);
         context.dragon().setAccelerating(false);
         context.dragon().getAIMovement().stop();
+        waterHandoff.release();
         mode = "idle";
         resetTracking();
     }
@@ -242,6 +246,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
 
     private void followOnGround(T dragon, LivingEntity owner, double distance, Config config) {
         mode = "ground";
+        waterHandoff.activate(dragon);
         if (distance <= config.stopDistance) {
             dragon.setAccelerating(false);
             dragon.getAIMovement().stop();
@@ -396,7 +401,8 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 "mode", mode,
                 "ground_repath", Integer.toString(groundRepathCooldown),
                 "air_refresh", Integer.toString(airRefreshCooldown),
-                "air_target", lastAirTarget == null ? "none" : lastAirTarget.toString()
+                "air_target", lastAirTarget == null ? "none" : lastAirTarget.toString(),
+                "water_handoff", Boolean.toString(waterHandoff.isActive())
         );
     }
 

@@ -18,6 +18,7 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 
 public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     private static final float PASSENGER_SEAT0_X = 0.0f, PASSENGER_SEAT0_Y = -3.0f, PASSENGER_SEAT0_Z = 0.0f;
@@ -29,7 +30,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     private static final float AUTO_MOUNT_OFFSET_Z = 0.0f;
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0;
-    private final Map<Integer, Integer> lastBoneSnapshotHashes = new HashMap<>();
+    private final Map<Cindervane, Integer> lastBoneSnapshotHashes = new WeakHashMap<>();
 
     public CindervaneRenderer(EntityRendererProvider.Context context) {
         super(context, new CindervaneModel());
@@ -120,7 +121,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
         }
 
         int snapshotHash = computeSnapshotHash(positions);
-        Integer previousHash = lastBoneSnapshotHashes.put(entity.getId(), snapshotHash);
+        Integer previousHash = lastBoneSnapshotHashes.put(entity, snapshotHash);
         if (previousHash != null && previousHash == snapshotHash) {
             return;
         }

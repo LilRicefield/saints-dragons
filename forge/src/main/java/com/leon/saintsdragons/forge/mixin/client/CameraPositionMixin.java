@@ -2,6 +2,7 @@ package com.leon.saintsdragons.forge.mixin.client;
 
 import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.forge.client.camera.CameraLeanData;
 import com.leon.saintsdragons.forge.client.camera.DragonCameraState;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
@@ -72,8 +73,15 @@ public abstract class CameraPositionMixin {
             return;
         }
 
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
+        if (riderSpec == null) {
+            return;
+        }
         Vec3 saddleOffset = RiderBullcrap.getCameraOffset(
-                dragon.getId(), DragonSeatAnchoredCamera.getSeatIndex(dragon, entity));
+                dragon,
+                DragonSeatAnchoredCamera.getSeatIndex(dragon, entity),
+                riderSpec.staleMs
+        );
         if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
             return;
         }

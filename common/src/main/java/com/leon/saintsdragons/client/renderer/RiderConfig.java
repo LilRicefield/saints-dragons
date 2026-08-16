@@ -15,11 +15,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class RiderConfig {
+
     // ===== RAEVYX TUNING =====
     public static final String RAEVYX_BONE = "passengerBone";
     public static final float RAEVYX_SEAT_X = 0.0f;
-    public static final float RAEVYX_SEAT_Y = 3.53f;
-    public static final float RAEVYX_SEAT_Z = -2.5f;
+    public static final float RAEVYX_SEAT_Y = -0.595f;
+    public static final float RAEVYX_SEAT_Z = 0.59375f;
     public static final float RAEVYX_FIRST_PERSON_X = 0.0f;
     public static final float RAEVYX_FIRST_PERSON_Y = 1.2f;
     public static final float RAEVYX_FIRST_PERSON_Z = 0.0f;
@@ -29,9 +30,9 @@ public final class RiderConfig {
 
     // ===== IGNIVORUS TUNING =====
     public static final String IGNIVORUS_BONE = "passengerBone";
-    public static final float IGNIVORUS_SEAT_X = 0.0f;
-    public static final float IGNIVORUS_SEAT_Y = 5.20f;
-    public static final float IGNIVORUS_SEAT_Z = -12.5f;
+    public static final float IGNIVORUS_SEAT_X = -0.004126875f;
+    public static final float IGNIVORUS_SEAT_Y = -0.703125f;
+    public static final float IGNIVORUS_SEAT_Z = 0.690625f;
     public static final float IGNIVORUS_FIRST_PERSON_X = 0.0f;
     public static final float IGNIVORUS_FIRST_PERSON_Y = 2.0f;
     public static final float IGNIVORUS_FIRST_PERSON_Z = 0.0f;
@@ -43,11 +44,11 @@ public final class RiderConfig {
     public static final String CINDERVANE_SEAT0_BONE = "passengerBone1";
     public static final String CINDERVANE_SEAT1_BONE = "passengerBone2";
     public static final float CINDERVANE_SEAT0_X = 0.0f;
-    public static final float CINDERVANE_SEAT0_Y = 2.0f;
-    public static final float CINDERVANE_SEAT0_Z = -1.0f;
+    public static final float CINDERVANE_SEAT0_Y = -0.5194225f;
+    public static final float CINDERVANE_SEAT0_Z = 0.45941937f;
     public static final float CINDERVANE_SEAT1_X = 0.0f;
-    public static final float CINDERVANE_SEAT1_Y = 2.0f;
-    public static final float CINDERVANE_SEAT1_Z = 0.25f;
+    public static final float CINDERVANE_SEAT1_Y = -0.5194225f;
+    public static final float CINDERVANE_SEAT1_Z = 0.9131694f;
     public static final float CINDERVANE_SEAT0_FIRST_PERSON_X = 0.0f;
     public static final float CINDERVANE_SEAT0_FIRST_PERSON_Y = 1.5f;
     public static final float CINDERVANE_SEAT0_FIRST_PERSON_Z = 0.0f;
@@ -62,8 +63,8 @@ public final class RiderConfig {
     // ===== STEGONAUT TUNING =====
     public static final String STEGONAUT_BONE = "passengerBone";
     public static final float STEGONAUT_SEAT_X = 0.0f;
-    public static final float STEGONAUT_SEAT_Y = 1.55f;
-    public static final float STEGONAUT_SEAT_Z = -1.75f;
+    public static final float STEGONAUT_SEAT_Y = -0.575f;
+    public static final float STEGONAUT_SEAT_Z = 0.0625f;
     public static final float STEGONAUT_FIRST_PERSON_X = 0.0f;
     public static final float STEGONAUT_FIRST_PERSON_Y = 1.0f;
     public static final float STEGONAUT_FIRST_PERSON_Z = 0.0f;
@@ -74,8 +75,8 @@ public final class RiderConfig {
     // ===== VOLITANS TUNING =====
     public static final String VOLITANS_BONE = "passengerBone";
     public static final float VOLITANS_SEAT_X = 0.0f;
-    public static final float VOLITANS_SEAT_Y = 2.40f;
-    public static final float VOLITANS_SEAT_Z = -2.15f;
+    public static final float VOLITANS_SEAT_Y = -0.5375f;
+    public static final float VOLITANS_SEAT_Z = 0.725f;
     public static final float VOLITANS_FIRST_PERSON_X = 0.0f;
     public static final float VOLITANS_FIRST_PERSON_Y = 1.4f;
     public static final float VOLITANS_FIRST_PERSON_Z = 0.0f;
@@ -86,8 +87,8 @@ public final class RiderConfig {
     // ===== NULLJAW TUNING =====
     public static final String NULLJAW_BONE = "passengerBone";
     public static final float NULLJAW_SEAT_X = 0.0f;
-    public static final float NULLJAW_SEAT_Y = -2.0f;
-    public static final float NULLJAW_SEAT_Z = -0.2f;
+    public static final float NULLJAW_SEAT_Y = -0.9f;
+    public static final float NULLJAW_SEAT_Z = 0.14375f;
     public static final float NULLJAW_FIRST_PERSON_X = 0.0f;
     public static final float NULLJAW_FIRST_PERSON_Y = 0.0f;
     public static final float NULLJAW_FIRST_PERSON_Z = 0.0f;
@@ -98,8 +99,8 @@ public final class RiderConfig {
     // ===== VARASUCHUS TUNING =====
     public static final String VARASUCHUS_BONE = "passengerBone";
     public static final float VARASUCHUS_SEAT_X = 0.0f;
-    public static final float VARASUCHUS_SEAT_Y = 2.78f;
-    public static final float VARASUCHUS_SEAT_Z = -3.25f;
+    public static final float VARASUCHUS_SEAT_Y = -0.568065f;
+    public static final float VARASUCHUS_SEAT_Z = 0.231365f;
     public static final float VARASUCHUS_FIRST_PERSON_X = 0.0f;
     public static final float VARASUCHUS_FIRST_PERSON_Y = 1.1f;
     public static final float VARASUCHUS_FIRST_PERSON_Z = -3.0f;
@@ -110,8 +111,8 @@ public final class RiderConfig {
     // ===== ATROXIIA TUNING =====
     public static final String ATROXIIA_BONE = "passengerBone";
     public static final float ATROXIIA_SEAT_X = 0.0f;
-    public static final float ATROXIIA_SEAT_Y = 3.8f;
-    public static final float ATROXIIA_SEAT_Z = -0.55f;
+    public static final float ATROXIIA_SEAT_Y = -0.66875f;
+    public static final float ATROXIIA_SEAT_Z = 0.2625f;
     public static final float ATROXIIA_FIRST_PERSON_X = 0.0f;
     public static final float ATROXIIA_FIRST_PERSON_Y = 1.0f;
     public static final float ATROXIIA_FIRST_PERSON_Z = 0.0f;
@@ -119,17 +120,13 @@ public final class RiderConfig {
     public static final double ATROXIIA_CAPTURE_DISTANCE = 80.0;
     public static final float ATROXIIA_YAW_OFFSET_DEG = -180.0f;
 
-    private static Map<Class<?>, RiderSpec> riderConfigs;
+    private static final Map<Class<?>, RiderSpec> RIDER_CONFIGS = createConfigs();
 
     private RiderConfig() {
     }
 
-    private static void initializeConfigs() {
-        if (riderConfigs != null) {
-            return;
-        }
-
-        riderConfigs = new HashMap<>();
+    private static Map<Class<?>, RiderSpec> createConfigs() {
+        Map<Class<?>, RiderSpec> riderConfigs = new HashMap<>();
         riderConfigs.put(Raevyx.class, new RiderSpec(
                 RAEVYX_BONE,
                 new Vector3f(RAEVYX_SEAT_X, RAEVYX_SEAT_Y, RAEVYX_SEAT_Z),
@@ -201,6 +198,7 @@ public final class RiderConfig {
                 ATROXIIA_CAPTURE_DISTANCE,
                 ATROXIIA_YAW_OFFSET_DEG
         ));
+        return Map.copyOf(riderConfigs);
     }
 
     @Nullable
@@ -208,8 +206,7 @@ public final class RiderConfig {
         if (dragon == null) {
             return null;
         }
-        initializeConfigs();
-        return riderConfigs.get(dragon.getClass());
+        return RIDER_CONFIGS.get(dragon.getClass());
     }
 
     public static RiderSpec getOrDefaultSpec(Object dragon) {
@@ -239,8 +236,8 @@ public final class RiderConfig {
 
     public static final class RiderSpec {
         public final String boneName;
-        public final Vector3f offset;
-        public final Vector3f firstPersonOffset;
+        private final Vector3f offset;
+        private final Vector3f firstPersonOffset;
         public final long staleMs;
         public final double maxCaptureDistance;
         public final float yawOffsetDeg;
@@ -264,24 +261,20 @@ public final class RiderConfig {
             this(boneName, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 200L, 80.0, -180.0f);
         }
 
-        public SeatSpec getSeatSpec(int seatIndex) {
+        private SeatSpec getSeatSpec(int seatIndex) {
             return seatSpecs.getOrDefault(seatIndex, seatSpecs.get(0));
         }
 
-        public void setSeat(int seatIndex, SeatSpec spec) {
+        private void setSeat(int seatIndex, SeatSpec spec) {
             seatSpecs.put(seatIndex, spec);
-        }
-
-        Map<Integer, SeatSpec> getSeatSpecs() {
-            return seatSpecs;
         }
     }
 
     public static final class SeatSpec {
-        public final String boneName;
-        public final Vector3f offset;
-        public final float yawOffsetDeg;
-        public final Vector3f firstPersonOffset;
+        private final String boneName;
+        private final Vector3f offset;
+        private final float yawOffsetDeg;
+        private final Vector3f firstPersonOffset;
 
 
         public SeatSpec(String boneName, Vector3f offset, float yawOffsetDeg, Vector3f firstPersonOffset) {

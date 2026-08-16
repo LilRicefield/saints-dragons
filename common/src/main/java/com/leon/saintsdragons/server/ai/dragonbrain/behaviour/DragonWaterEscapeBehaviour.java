@@ -8,6 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -156,6 +157,11 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
 
     @Nullable
     private EscapeTarget findEscapeTarget(T dragon) {
+        EscapeTarget ownerSideShore = findOwnerSideShoreTarget(dragon);
+        if (ownerSideShore != null) {
+            return ownerSideShore;
+        }
+
         BlockPos origin = dragon.blockPosition();
         EscapeTarget targetInColumn = findShoreTargetInColumn(dragon, origin.getX(), origin.getZ(), origin.getY());
         if (targetInColumn != null) {
@@ -176,6 +182,28 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
             }
         }
         return findRandomWaterRoamTarget(dragon, origin);
+    }
+
+    @Nullable
+    private EscapeTarget findOwnerSideShoreTarget(T dragon) {
+        if (!DragonFollowOwnerBehaviour.hasOwnerFollowPriority(dragon)) {
+            return null;
+        }
+        LivingEntity owner = dragon.getOwner();
+        if (owner == null || owner.isInWaterOrBubble()) {
+            return null;
+        }
+
+        BlockPos ownerPosition = owner.blockPosition();
+        EscapeTarget adjacentShore = findShoreTargetInColumn(
+                dragon,
+                ownerPosition.getX(),
+                ownerPosition.getZ(),
+                ownerPosition.getY()
+        );
+        return adjacentShore != null
+                ? adjacentShore
+                : findNearestShoreTargetByRings(dragon, ownerPosition);
     }
 
     private void updateShoreLock(T dragon) {

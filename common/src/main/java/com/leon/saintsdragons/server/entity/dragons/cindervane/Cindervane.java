@@ -195,7 +195,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                     .add("cindervane_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.cindervane.die", ModSounds.CINDERVANE_DIE, 1.5f, 1.0f, 0.0f, false, false, false)
                     .build();
 
-    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final CindervaneAnimationHandler animationHandler = new CindervaneAnimationHandler(this);
     private final CindervaneInteractionHandler interactionHandler = new CindervaneInteractionHandler(this);
     private final CindervaneRiderController riderController;

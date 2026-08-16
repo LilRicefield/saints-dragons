@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
 import com.leon.saintsdragons.fabric.client.camera.CameraLeanData;
 import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
@@ -155,8 +156,15 @@ public abstract class CameraMixin implements CameraAccessor {
             return;
         }
 
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
+        if (riderSpec == null) {
+            return;
+        }
         Vec3 saddleOffset = RiderBullcrap.getCameraOffset(
-                dragon.getId(), DragonSeatAnchoredCamera.getSeatIndex(dragon, focusedEntity));
+                dragon,
+                DragonSeatAnchoredCamera.getSeatIndex(dragon, focusedEntity),
+                riderSpec.staleMs
+        );
         if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
             return;
         }

@@ -288,7 +288,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                             false, true, true)
                     .build();
 
-    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final IgnivorusAnimationHandler animationHandler = new IgnivorusAnimationHandler(this);
     private final IgnivorusRiderController riderController;
     private final AnimationController<Ignivorus> movementController;

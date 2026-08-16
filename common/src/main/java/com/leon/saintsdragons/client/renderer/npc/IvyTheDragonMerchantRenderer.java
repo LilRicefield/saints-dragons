@@ -13,8 +13,8 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragonMerchant> {
@@ -22,7 +22,7 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
     private static final float CHATTER_Y_OFFSET = 0.15F;
     private static final long CHATTER_TYPE_INTERVAL_MS = 42L;
     private static final long VOICE_BLIP_INTERVAL_MS = 34L;
-    private final Map<Integer, ChatterRenderState> chatterStates = new HashMap<>();
+    private final Map<IvyTheDragonMerchant, ChatterRenderState> chatterStates = new WeakHashMap<>();
 
     @Override
     public float getMotionAnimThreshold(IvyTheDragonMerchant animatable) {
@@ -57,7 +57,7 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
             return;
         }
         chatter = resolveChatterText(entity, chatter);
-        ChatterRenderState state = getChatterState(entity.getId(), chatter);
+        ChatterRenderState state = getChatterState(entity, chatter);
         String visibleChatter = state.visibleText();
         if (visibleChatter.isEmpty()) {
             return;
@@ -74,11 +74,11 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
         poseStack.popPose();
     }
 
-    private ChatterRenderState getChatterState(int entityId, String text) {
-        ChatterRenderState state = chatterStates.get(entityId);
+    private ChatterRenderState getChatterState(IvyTheDragonMerchant entity, String text) {
+        ChatterRenderState state = chatterStates.get(entity);
         if (state == null || !state.text.equals(text)) {
             state = new ChatterRenderState(text);
-            chatterStates.put(entityId, state);
+            chatterStates.put(entity, state);
         }
         return state;
     }

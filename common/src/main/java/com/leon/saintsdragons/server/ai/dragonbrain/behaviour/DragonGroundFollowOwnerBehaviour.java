@@ -22,6 +22,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     );
 
     private final Config adultConfig;
+    private final DragonOwnerFollowWaterHandoff waterHandoff = new DragonOwnerFollowWaterHandoff();
     private int repathCooldown;
     private double lastOwnerX = Double.NaN;
     private double lastOwnerY = Double.NaN;
@@ -52,6 +53,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     @Override
     protected void start(DragonBrainContext<T> context) {
         resetTracking();
+        waterHandoff.activate(context.dragon());
     }
 
     @Override
@@ -59,6 +61,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
         if (owner == null) return;
+        waterHandoff.activate(dragon);
 
         Config config = configFor(dragon);
         double distance = dragon.distanceTo(owner);
@@ -103,6 +106,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     protected void stop(DragonBrainContext<T> context) {
         context.dragon().getAIMovement().stop();
         context.dragon().setAccelerating(false);
+        waterHandoff.release();
         resetTracking();
     }
 
@@ -141,7 +145,10 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
-        return Map.of("repath_cooldown", Integer.toString(repathCooldown));
+        return Map.of(
+                "repath_cooldown", Integer.toString(repathCooldown),
+                "water_handoff", Boolean.toString(waterHandoff.isActive())
+        );
     }
 
     public record Config(double startDistance,

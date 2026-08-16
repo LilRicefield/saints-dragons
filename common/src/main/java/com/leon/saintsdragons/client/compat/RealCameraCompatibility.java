@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.compat;
 
 import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -76,7 +77,11 @@ public final class RealCameraCompatibility {
         }
 
         int seatIndex = DragonSeatAnchoredCamera.getSeatIndex(dragon, rider);
-        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon.getId(), seatIndex);
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(dragon);
+        if (riderSpec == null) {
+            return emptyResult;
+        }
+        Vec3 saddleOffset = RiderBullcrap.getCameraOffset(dragon, seatIndex, riderSpec.staleMs);
         if (!DragonSeatAnchoredCamera.isValidSeatOffset(saddleOffset)) {
             return emptyResult;
         }

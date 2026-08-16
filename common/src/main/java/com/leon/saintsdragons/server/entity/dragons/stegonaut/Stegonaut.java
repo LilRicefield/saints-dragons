@@ -118,7 +118,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private boolean boundToBinder = false;
     @Nullable
     private UUID packLeaderUuid;
-    public AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final StegonautAnimationHandler animationController = new StegonautAnimationHandler(this);
     private final StegonautInteractionHandler interactionHandler = new StegonautInteractionHandler(this);
     private final StegonautRiderController riderController = new StegonautRiderController(this);

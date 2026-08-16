@@ -13,7 +13,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
-@Environment(EnvType.CLIENT)
+import java.util.Map;
+import java.util.WeakHashMap;
+
 public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     private static final float PASSENGER_X = 0.0f;
     private static final float PASSENGER_Y = -3.0f;
@@ -21,7 +23,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     private static final String PASSENGER_BONE = "passengerBone";
     private static final String BREATH_BONE = "breathBone";
     private static final int SYNC_INTERVAL_TICKS = 2;
-    private final java.util.Map<Integer, Integer> lastBreathSnapshotHashes = new java.util.HashMap<>();
+    private final Map<Volitans, Integer> lastBreathSnapshotHashes = new WeakHashMap<>();
 
     public VolitansRenderer(EntityRendererProvider.Context context) {
         super(context, new VolitansModel());
@@ -88,7 +90,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
         }
 
         int snapshotHash = computeSnapshotHash(positions);
-        Integer previousHash = lastBreathSnapshotHashes.put(entity.getId(), snapshotHash);
+        Integer previousHash = lastBreathSnapshotHashes.put(entity, snapshotHash);
         if (previousHash != null && previousHash == snapshotHash) {
             return;
         }

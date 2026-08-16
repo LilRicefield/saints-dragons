@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.mixin.client;
 
+import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.ui.SpeedLineOverlay;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
 import net.minecraft.client.Minecraft;
@@ -15,6 +16,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class GameRendererMixin {
     @Shadow
     private Minecraft minecraft;
+
+    @Inject(method = "render", at = @At("HEAD"), require = 0)
+    private void saintsdragons$beginRiderRenderFrame(float partialTick, long nanoTime, boolean renderLevel,
+                                                      CallbackInfo ci) {
+        RiderBullcrap.beginRenderFrame(this.minecraft.level);
+    }
 
     @Inject(
             method = "render",

@@ -13,6 +13,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
     private static final String FIRE_BONE = "fireBone";
@@ -34,7 +37,7 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final String RIGHT_BACK_LEG_BONE = "rightbackleg";
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0D;
-    private final java.util.Map<Integer, Integer> lastBoneSnapshotHashes = new java.util.HashMap<>();
+    private final Map<Ignivorus, Integer> lastBoneSnapshotHashes = new WeakHashMap<>();
 
     public IgnivorusRenderer(EntityRendererProvider.Context context) {
         super(context, new IgnivorusModel());
@@ -136,7 +139,7 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
         }
 
         int snapshotHash = computeSnapshotHash(positions);
-        Integer previousHash = lastBoneSnapshotHashes.put(entity.getId(), snapshotHash);
+        Integer previousHash = lastBoneSnapshotHashes.put(entity, snapshotHash);
         if (previousHash != null && previousHash == snapshotHash) {
             return;
         }

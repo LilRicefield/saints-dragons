@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
+import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
@@ -25,11 +26,13 @@ import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.core.animatable.model.CoreGeoBone;
 import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
+import software.bernie.geckolib.util.RenderUtils;
 
 public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> extends GeoEntityRenderer<T> {
     private static final double DIVE_TRAIL_RENDER_DISTANCE = 256.0D;
     private static final double DIVE_TRAIL_CULL_PADDING = 48.0D;
     protected BakedGeoModel lastBakedModel;
+    private boolean renderedModelThisPass;
 
     protected DragonGeoEntityRenderer(EntityRendererProvider.Context context, GeoModel<T> model) {
         super(context, model);
@@ -94,19 +97,31 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
     @Override
     public void render(@NotNull T entity, float entityYaw, float partialTick,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
-
-        RenderPassContext.beginExtraction(entity.getId());
-        RiderBullcrap.notifyRendered(entity.getId());
+        this.lastBakedModel = null;
+        this.renderedModelThisPass = false;
+        boolean extractWorldRenderData = !DraconicCodexScreen.RENDERING_IN_GUI.get();
         try {
-            super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
-        } finally {
-            RenderPassContext.endExtraction();
-            getGeoModel().getAnimationProcessor().getRegisteredBones()
-                    .forEach(CoreGeoBone::resetStateChanges);
-        }
+            if (extractWorldRenderData) {
+                RenderPassContext.beginExtraction(entity.getId());
+            }
+            try {
+                super.render(entity, entityYaw, partialTick, poseStack, bufferSource, packedLight);
+            } finally {
+                if (extractWorldRenderData) {
+                    RenderPassContext.endExtraction();
+                }
+                getGeoModel().getAnimationProcessor().getRegisteredBones()
+                        .forEach(CoreGeoBone::resetStateChanges);
+            }
 
-        sampleLocators(entity);
-        afterDragonRender(entity, poseStack, bufferSource, partialTick);
+            if (extractWorldRenderData && this.renderedModelThisPass) {
+                sampleLocators(entity);
+                afterDragonRender(entity, poseStack, bufferSource, partialTick);
+            }
+        } finally {
+            this.lastBakedModel = null;
+            this.renderedModelThisPass = false;
+        }
     }
 
     @Override
@@ -123,7 +138,27 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         super.renderRecursively(poseStack, animatable, bone, renderType, bufferSource, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
 
-        captureRiderCameraIfNeeded(poseStack, animatable, bone);
+        if (isReRender) {
+            return;
+        }
+
+        this.renderedModelThisPass = true;
+
+        // GeckoLib restores the pose stack before returning from its recursive call. Reapply the
+        // same transform stage it uses for tracked bone matrices so the rider origin remains at
+        // the actual .geo.json pivot, including animation-authored position, rotation, and scale.
+        // Deliberately do not translate away from the pivot: that would move the origin back into
+        // parent space before rendering this bone's cubes and children.
+        poseStack.pushPose();
+        try {
+            RenderUtils.translateMatrixToBone(poseStack, bone);
+            RenderUtils.translateToPivotPoint(poseStack, bone);
+            RenderUtils.rotateMatrixAroundBone(poseStack, bone);
+            RenderUtils.scaleMatrixForBone(poseStack, bone);
+            captureRiderCameraIfNeeded(poseStack, animatable, bone);
+        } finally {
+            poseStack.popPose();
+        }
     }
 
     protected float getRenderScale(T entity) {
@@ -211,11 +246,10 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         if (viewSpaceDistance >= riderSpec.maxCaptureDistance) {
             return;
         }
-        if (!RiderBullcrap.tryLockForFrame(animatable.getId(), seatIndex)) {
+        if (!RiderBullcrap.tryLockForFrame(animatable, seatIndex)) {
             return;
         }
 
-        RiderBullcrap.store(animatable.getId(), seatIndex, viewMatrix);
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
         Vec3 cameraWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
         if (!usesGroundedRawFirstPersonBoneAnchor(animatable)) {
@@ -230,7 +264,12 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
                 cameraWorldPos = offsetWorldPos;
             }
         }
-        RiderBullcrap.storeCameraOffset(animatable.getId(), seatIndex, cameraWorldPos.subtract(animatable.position()));
+        RiderBullcrap.store(
+                animatable,
+                seatIndex,
+                viewMatrix,
+                cameraWorldPos.subtract(animatable.position())
+        );
     }
 
     private boolean usesGroundedRawFirstPersonBoneAnchor(T animatable) {
