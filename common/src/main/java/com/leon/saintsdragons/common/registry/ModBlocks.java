@@ -84,10 +84,11 @@ public class ModBlocks {
 
     public static final Supplier<Block> DRACONIAN_PELLUCIDA =
             REGISTER.register("draconian_pellucida",
-                    () -> new Block(BlockBehaviour.Properties.of()
+                    () -> new DraconianPellucidaBlock(BlockBehaviour.Properties.of()
                             .mapColor(MapColor.COLOR_PURPLE)
                             .strength(0.0F)
                             .sound(SoundType.SLIME_BLOCK)
+                            .dynamicShape()
                             .noOcclusion()));
 
     public static final Supplier<Block> DRACONIAN_NUCLEUS =

@@ -12,7 +12,9 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
@@ -40,6 +42,7 @@ final class AsyncFlightPathSearch {
     private final BooleanSupplier cancelled;
 
     AsyncFlightPathSearch(ImmutableBlockSnapshot blocks,
+                          Predicate<BlockState> ignoredBlocks,
                           Vec3 origin,
                           Vec3 target,
                           Vec3 requestedTarget,
@@ -48,7 +51,7 @@ final class AsyncFlightPathSearch {
                           BlockPos maxNode,
                           BooleanSupplier cancelled) {
         this(
-                (startBox, movement) -> VoxelAabbSweeper.isClear(blocks, startBox, movement),
+                (startBox, movement) -> VoxelAabbSweeper.isClear(blocks, startBox, movement, ignoredBlocks),
                 origin,
                 target,
                 requestedTarget,

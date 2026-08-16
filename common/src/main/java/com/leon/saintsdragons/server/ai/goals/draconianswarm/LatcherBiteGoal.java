@@ -7,7 +7,6 @@ import net.minecraft.world.entity.ai.goal.Goal;
 public class LatcherBiteGoal extends Goal {
     private static final int DAMAGE_TICK = 2;
     private static final int ATTACK_INTERVAL = 12;
-    private static final double EXTRA_REACH = 1.25D;
 
     private final Latcher latcher;
     private int attackTick = -1;
@@ -23,7 +22,7 @@ public class LatcherBiteGoal extends Goal {
         return target != null
                 && target.isAlive()
                 && this.latcher.canStartCombatAttack()
-                && isInBiteRange(target)
+                && this.latcher.isInBiteRange(target)
                 && this.latcher.tryClaimCombatAttack();
     }
 
@@ -52,7 +51,7 @@ public class LatcherBiteGoal extends Goal {
 
         if (this.attackTick >= 0) {
             this.attackTick++;
-            if (this.attackTick == DAMAGE_TICK && isInBiteRange(target)) {
+            if (this.attackTick == DAMAGE_TICK && this.latcher.isInBiteRange(target)) {
                 this.latcher.doHurtTarget(target);
             }
             if (this.attackTick >= ATTACK_INTERVAL) {
@@ -61,15 +60,10 @@ public class LatcherBiteGoal extends Goal {
             return;
         }
 
-        if (this.cooldown == 0 && isInBiteRange(target)) {
+        if (this.cooldown == 0 && this.latcher.isInBiteRange(target)) {
             this.attackTick = 0;
             this.cooldown = ATTACK_INTERVAL;
             this.latcher.performBiteAnimation(this.latcher.isMovingForAnimation());
         }
-    }
-
-    private boolean isInBiteRange(LivingEntity target) {
-        double reach = this.latcher.getBbWidth() * 0.5D + target.getBbWidth() * 0.5D + EXTRA_REACH;
-        return this.latcher.distanceToSqr(target) <= reach * reach;
     }
 }

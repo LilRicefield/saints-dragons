@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.LatcherBiteGoal;
 import com.leon.saintsdragons.server.ai.goals.draconianswarm.LatcherPursuitGoal;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -16,6 +17,7 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 
 public class Latcher extends AbstractDraconianSwarmEntity {
+    private static final double BITE_EXTRA_REACH = 1.25D;
     private static final String MOVEMENT_CONTROLLER = "movement";
     public static final String ACTION_CONTROLLER = "action";
     public static final String BITE_TRIGGER = "bite";
@@ -114,6 +116,11 @@ public class Latcher extends AbstractDraconianSwarmEntity {
     public void performBiteAnimation(boolean moving) {
         triggerAnim(ACTION_CONTROLLER, moving ? BITE_MOVE_TRIGGER : BITE_TRIGGER);
         playSound(ModSounds.LATCHER_BITE.get(), 1.0F, 0.95F + getRandom().nextFloat() * 0.1F);
+    }
+
+    public boolean isInBiteRange(LivingEntity target) {
+        double reach = getBbWidth() * 0.5D + target.getBbWidth() * 0.5D + BITE_EXTRA_REACH;
+        return distanceToSqr(target) <= reach * reach;
     }
 
     @Override

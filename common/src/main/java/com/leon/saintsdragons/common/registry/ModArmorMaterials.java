@@ -11,14 +11,14 @@ import java.util.function.Supplier;
 public enum ModArmorMaterials implements ArmorMaterial {
     DRACONIAN_FLESH(
             "draconian_armor",
-            6,
-            1,
-            4,
+            25,
             3,
-            1,
+            7,
+            5,
+            3,
             18,
             SoundEvents.ARMOR_EQUIP_LEATHER,
-            0.0F,
+            1.0F,
             0.0F,
             () -> Ingredient.of(ModItems.DRACONIAN_FLESH.get())
     ),

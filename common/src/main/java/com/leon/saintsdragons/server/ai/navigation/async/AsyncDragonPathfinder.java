@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
+import com.leon.saintsdragons.common.block.DraconianPellucidaBlock;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -21,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.TickTask;
@@ -87,7 +89,7 @@ public final class AsyncDragonPathfinder {
     }
 
     public static Future<?> calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
-        return calculateFlyingPathAsyncInternal(dragon, target, callback);
+        return calculateFlyingPathAsyncInternal(dragon, target, state -> false, callback);
     }
 
     public static Future<?> calculateGroundPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
@@ -234,11 +236,17 @@ public final class AsyncDragonPathfinder {
     }
 
     public static Future<?> calculateSwarmFlyingPathAsync(Mob swarm, Vec3 target, Consumer<Path> callback) {
-        return calculateFlyingPathAsyncInternal(swarm, target, callback);
+        return calculateFlyingPathAsyncInternal(
+                swarm,
+                target,
+                state -> state.getBlock() instanceof DraconianPellucidaBlock,
+                callback
+        );
     }
 
     private static Future<?> calculateFlyingPathAsyncInternal(Mob dragon,
                                                                Vec3 target,
+                                                               Predicate<BlockState> ignoredBlocks,
                                                                Consumer<Path> callback) {
         MinecraftServer server = dragon.getServer();
         if (server == null) {
@@ -308,6 +316,7 @@ public final class AsyncDragonPathfinder {
                     "air path calculation for " + dragonId,
                     cancelled -> new AsyncFlightPathSearch(
                             snapshot,
+                            ignoredBlocks,
                             origin,
                             planningTarget,
                             target,

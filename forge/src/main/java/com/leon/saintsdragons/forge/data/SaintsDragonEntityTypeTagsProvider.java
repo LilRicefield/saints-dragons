@@ -24,6 +24,7 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
         tag(ModTags.EntityTypes.DRAGONS)
+                .add(ModEntities.ATROXIIA.get())
                 .add(ModEntities.CINDERVANE.get())
                 .add(ModEntities.IGNIVORUS.get())
                 .add(ModEntities.NULLJAW.get())
@@ -43,6 +44,7 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
                 .add(ModEntities.VOLITANS.get());
 
         tag(ModTags.EntityTypes.GROUNDED_DRAGONS)
+                .add(ModEntities.ATROXIIA.get())
                 .add(ModEntities.STEGONAUT.get())
                 .add(ModEntities.VARASUCHUS.get());
 
