@@ -108,9 +108,7 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
-        if (!dragon.isOwnedBy(player)) {
-            return InteractionResult.PASS;
-        }
+        boolean isOwner = dragon.isOwnedBy(player);
         InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
                 player,
                 heldItem,
@@ -127,12 +125,15 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
             return growthStuntResult;
         }
 
-        if (player.isCrouching() && isVarasuchusFood(heldItem)) {
-            return handleBreeding(player, heldItem);
+        if (dragon.canReceiveFoodFrom(player) && isVarasuchusFood(heldItem)) {
+            if (player.isCrouching()) {
+                return handleBreeding(player, heldItem);
+            }
+            return handleFeeding(player, heldItem, false);
         }
 
-        if (isVarasuchusFood(heldItem)) {
-            return handleFeeding(player, heldItem, false);
+        if (!isOwner) {
+            return InteractionResult.PASS;
         }
 
         if (dragon.canOwnerCommand(player) && !isVarasuchusFood(heldItem) && hand == InteractionHand.MAIN_HAND) {

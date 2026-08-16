@@ -26,6 +26,9 @@ public final class DragonBreedingInteractionHelper {
                                                    Runnable eatFeedback,
                                                    IntConsumer feedingCooldownSetter) {
         boolean client = dragon.level().isClientSide;
+        if (!dragon.canReceiveFoodFrom(player)) {
+            return InteractionResult.PASS;
+        }
         if (!client && !DragonBreedingRules.checkEnabled(player)) {
             return InteractionResult.CONSUME;
         }

@@ -132,10 +132,14 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         if (growthStuntResult != InteractionResult.PASS) {
             return growthStuntResult;
         }
-        if (isOwner) {
-            if (player.isCrouching() && isIgnivorusFood(itemstack)) {
+        if (dragon.canReceiveFoodFrom(player) && isIgnivorusFood(itemstack)) {
+            if (player.isCrouching()) {
                 return handleBreeding(player, itemstack);
             }
+            return handleFeeding(player, itemstack);
+        }
+
+        if (isOwner) {
             if (player.isCrouching() && !isIgnivorusFood(itemstack) && hand == InteractionHand.MAIN_HAND) {
                 return handleCommandCycling(player);
             }
@@ -143,10 +147,6 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 return handleMounting(player);
             }
         }
-        if (isIgnivorusFood(itemstack)) {
-            return handleFeeding(player, itemstack);
-        }
-
         return InteractionResult.PASS;
     }
 

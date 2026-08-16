@@ -147,11 +147,12 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
             return growthStuntResult;
         }
 
-        if (!dragon.isBaby() && dragon.isOwnedBy(player) && player.isCrouching() && dragon.isFood(heldItem)) {
+        if (!dragon.isBaby() && dragon.canReceiveFoodFrom(player)
+                && player.isCrouching() && dragon.isFood(heldItem)) {
             return handleBreeding(player, heldItem);
         }
 
-        if (dragon.isFood(heldItem)) {
+        if (dragon.canReceiveFoodFrom(player) && dragon.isFood(heldItem)) {
             return handleFeeding(player, heldItem);
         }
 

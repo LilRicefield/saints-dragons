@@ -625,7 +625,11 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
         if (heldItem.is(ModTags.Items.NULLJAW_FOODS)) {
             if (this.isTame()) {
-                if (player.isCrouching() && this.isOwnedBy(player)) {
+                if (!this.canReceiveFoodFrom(player)) {
+                    return InteractionResult.PASS;
+                }
+
+                if (player.isCrouching()) {
                     return handleBreeding(player, heldItem);
                 }
 

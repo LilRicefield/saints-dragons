@@ -132,8 +132,8 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             return growthStuntResult;
         }
 
-        if (isVolitansFood(itemstack)) {
-            if (player.isCrouching() && isOwner) {
+        if (dragon.canReceiveFoodFrom(player) && isVolitansFood(itemstack)) {
+            if (player.isCrouching()) {
                 return handleBreeding(player, itemstack);
             }
             return handleFeeding(player, itemstack);

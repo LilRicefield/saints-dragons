@@ -171,8 +171,8 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
         }
 
         // Handle feeding for healing
-        if (dragon.isFood(itemstack)) {
-            if (player.isCrouching() && isOwner) {
+        if (dragon.canReceiveFoodFrom(player) && dragon.isFood(itemstack)) {
+            if (player.isCrouching()) {
                 return handleBreeding(player, itemstack);
             }
             return handleFeeding(player, itemstack);

@@ -2218,6 +2218,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return player != null && player.isCrouching() && this.isOwnedBy(player);
     }
 
+    public boolean canReceiveFoodFrom(Player player) {
+        return player != null && !player.isSpectator() && this.isTame();
+    }
+
     public boolean canOwnerMount(Player player) {
         if (this.isBaby()) {
             return false;

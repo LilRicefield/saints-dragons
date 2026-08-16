@@ -99,13 +99,14 @@ public class CindervaneInteractionHandler extends AbstractDragonInteractionHandl
         if (growthStuntResult != InteractionResult.PASS) {
             return growthStuntResult;
         }
-        if (isOwner) {
-            if (player.isCrouching() && dragon.isFood(heldItem)) {
+        if (dragon.canReceiveFoodFrom(player) && dragon.isFood(heldItem)) {
+            if (player.isCrouching()) {
                 return handleBreeding(player, heldItem);
             }
-            if (dragon.isFood(heldItem)) {
-                return handleFeeding(player, heldItem);
-            }
+            return handleFeeding(player, heldItem);
+        }
+
+        if (isOwner) {
             InteractionResult equipmentResult = DragonSaddleInteractionHelper.handle(
                     dragon,
                     dragon,

@@ -123,11 +123,11 @@ public final class StegonautInteractionHandler extends AbstractDragonInteraction
             return growthStuntResult;
         }
 
-        if (isOwner && player.isCrouching() && dragon.isFood(heldItem)) {
+        if (dragon.canReceiveFoodFrom(player) && player.isCrouching() && dragon.isFood(heldItem)) {
             return handleBreeding(player, heldItem);
         }
 
-        if (dragon.isFood(heldItem)) {
+        if (dragon.canReceiveFoodFrom(player) && dragon.isFood(heldItem)) {
             return handleFeeding(player, heldItem);
         }
 
