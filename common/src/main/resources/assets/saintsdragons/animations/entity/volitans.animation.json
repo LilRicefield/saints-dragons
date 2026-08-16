@@ -239681,11 +239681,6 @@
 						}
 					}
 				}
-			},
-			"sound_effects": {
-				"0.0": {
-					"effect": "volitans_investigating"
-				}
 			}
 		}
 	}

@@ -65,6 +65,7 @@ public final class DragonScentAssessmentBehaviour<T extends DragonEntity> extend
         clearExistingMovement(context);
         claimMovement(context);
         context.dragon().setScentAssessing(true);
+        context.dragon().getSoundHandler().playVocal("investigating");
     }
 
     @Override

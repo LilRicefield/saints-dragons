@@ -2004,11 +2004,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     @Override
-    protected boolean isStandardPitchActionBlocked() {
-        return isBeaming();
-    }
-
-    @Override
     protected float getStandardAiLandingPitchDegrees() {
         return 24.0F;
     }

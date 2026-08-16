@@ -25,17 +25,16 @@ public final class AtroxiiaSoundProfile implements DragonSoundProfile {
     @Override
     public boolean handleAnimationSound(DragonSoundHandler handler, DragonEntity dragon,
                                         String key, String locator) {
-        if ("atroxiia_investigating".equals(key)) {
-            handler.playClientSound(
-                    dragon,
-                    dragon.position(),
-                    ModSounds.ATROXIIA_INVESTIGATING.get(),
-                    1.0F,
-                    1.0F
-            );
-            return true;
-        }
         return "atroxiia_flex".equals(key);
+    }
+
+    @Override
+    public boolean handleVocal(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        if (!"investigating".equals(key)) {
+            return false;
+        }
+        handler.playWorldSound(ModSounds.ATROXIIA_INVESTIGATING.get(), 1.0F, 1.0F);
+        return true;
     }
 
     @Override

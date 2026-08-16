@@ -20,6 +20,7 @@ import java.util.Map;
 public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
     public static final double BITE_ONLY_PREY_RANGE = 1.35D;
     public static final double GORE_RANGE = 4.5D;
+    public static final float CHASE_SPEED = 1.45F;
 
     private static final double BITE_RANGE = 3.0D;
     private static final double GROUND_REND_RANGE = 8.5D;

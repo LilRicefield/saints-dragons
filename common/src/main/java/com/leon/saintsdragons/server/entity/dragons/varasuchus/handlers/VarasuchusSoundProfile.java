@@ -38,17 +38,18 @@ public final class VarasuchusSoundProfile implements DragonSoundProfile {
         if (dragon.isBaby() && key.startsWith("varasuchus_") && !BABY_ALLOWED_KEYS.containsKey(key)) {
             return true;
         }
-        if ("varasuchus_investigating".equals(key)) {
-            handler.playClientSound(
-                    dragon,
-                    dragon.position(),
-                    ModSounds.VARASUCHUS_INVESTIGATING.get(),
-                    1.0F,
-                    1.0F
-            );
-            return true;
-        }
         return key.startsWith("varasuchus_");
+    }
+
+    @Override
+    public boolean handleVocal(DragonSoundHandler handler, DragonEntity dragon, String key) {
+        if (!"investigating".equals(key)) {
+            return false;
+        }
+        if (!dragon.isBaby()) {
+            handler.playWorldSound(ModSounds.VARASUCHUS_INVESTIGATING.get(), 1.0F, 1.0F);
+        }
+        return true;
     }
 
     @Override

@@ -78,7 +78,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                 ),
                                 new RaevyxAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<Raevyx>(
-                                        0.8F,
+                                        RaevyxGroundCombatBehaviour.CHASE_SPEED,
                                         (dragon, target) ->
                                                 RaevyxGroundCombatBehaviour.meleeStopRange(dragon, target)
                                                         + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
@@ -127,7 +127,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                         ),
                                         new DragonDrinkBehaviour<>(DragonDrinkBehaviour.Config.standard()),
                                         new RaevyxAutonomousFlightBehaviour(),
-                                        new DragonGroundWanderBehaviour<>(0.6D, 60)
+                                        new DragonGroundWanderBehaviour<>(0.9D, 60)
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)

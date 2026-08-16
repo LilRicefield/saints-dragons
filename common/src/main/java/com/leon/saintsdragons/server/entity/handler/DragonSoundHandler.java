@@ -102,6 +102,16 @@ public class DragonSoundHandler {
         );
     }
 
+    public void playWorldSound(SoundEvent sound, float volume, float pitch) {
+        if (sound == null) {
+            return;
+        }
+        DragonSoundOrchestrator.play(
+                dragon,
+                DragonSoundSpec.world(sound, SoundSource.NEUTRAL, volume, pitch)
+        );
+    }
+
 
     public void playClientSound(DragonEntity dragon, Vec3 position, SoundEvent sound, float volume, float pitch) {
         double x = position != null ? position.x : dragon.getX();

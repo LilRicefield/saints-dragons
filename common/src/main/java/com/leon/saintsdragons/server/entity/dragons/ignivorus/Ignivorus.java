@@ -2548,11 +2548,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     @Override
-    protected boolean isStandardPitchActionBlocked() {
-        return isBreathingFire();
-    }
-
-    @Override
     protected float getStandardAiLandingPitchDegrees() {
         return 32.0F;
     }
