@@ -183,6 +183,23 @@ public final class AnimationHelper {
         }
     }
 
+    public static boolean holdTriggeredAnimation(AnimationState<?> state,
+                                                 int transitionTicks,
+                                                 RawAnimation... acceleratedAnimations) {
+        RawAnimation triggeredAnimation = state.getController().getTriggeredAnimation();
+        if (triggeredAnimation == null) {
+            return false;
+        }
+
+        for (RawAnimation animation : acceleratedAnimations) {
+            if (triggeredAnimation.equals(animation)) {
+                state.getController().transitionLength(Math.max(0, transitionTicks));
+                break;
+            }
+        }
+        return true;
+    }
+
     public static <T extends DragonEntity> void registerFlight(AnimationController<T> controller,
                                                               String trigger,
                                                               RawAnimation animation) {

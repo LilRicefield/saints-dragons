@@ -54,6 +54,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_LOOP, WAKE_UP, SWIM_MOVE, null, JUMP);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 3, 4, 4, 4, 4, 4, 4);
+    private static final int JUMP_TRANSITION_TICKS = 1;
     private static final int ACTION_TRANSITION_TICKS = 4;
     private static final int FAST_ACTION_TRANSITION_TICKS = 1;
 
@@ -67,6 +68,10 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
     public PlayState movementPredicate(AnimationState<Varasuchus> state) {
         if (drake.isDying()) {
             return PlayState.STOP;
+        }
+        if (AnimationHelper.holdTriggeredAnimation(
+                state, JUMP_TRANSITION_TICKS, JUMP, JUMP_LANDED, JUMP2, JUMP_LANDED2)) {
+            return PlayState.CONTINUE;
         }
         var controller = state.getController();
         controller.setAnimationSpeed(1.0F);
@@ -150,6 +155,7 @@ public record VarasuchusAnimationHandler(Varasuchus drake) {
         return PlayState.STOP;
     }
     public void setupMovementController(AnimationController<Varasuchus> controller) {
+        controller.receiveTriggeredAnimations();
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "sit_down2", SIT_DOWN2);
         AnimationHelper.register(controller, "sit_up2", SIT_UP2);

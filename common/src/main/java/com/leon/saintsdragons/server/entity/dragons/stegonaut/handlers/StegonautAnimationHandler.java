@@ -33,6 +33,7 @@ public class StegonautAnimationHandler {
             new AnimationHelper.Animations(IDLE_ANIM, WALK_ANIM, RUN_ANIM, SIT_ANIM, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP_ANIM, WAKE_UP, SWIM_ANIM, null, JUMP_ANIM);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
+    private static final int JUMP_TRANSITION_TICKS = 1;
     private static final int ACTION_TRANSITION_TICKS = 5;
     
     public StegonautAnimationHandler(Stegonaut drake) {
@@ -56,6 +57,10 @@ public class StegonautAnimationHandler {
     }
 
     public PlayState handleMovementAnimation(AnimationState<Stegonaut> state) {
+        if (AnimationHelper.holdTriggeredAnimation(
+                state, JUMP_TRANSITION_TICKS, JUMP_ANIM, JUMP_LANDED_ANIM)) {
+            return PlayState.CONTINUE;
+        }
         if (drake.isInWaterOrBubble()) {
             state.getController().transitionLength(GROUND_TRANSITIONS.water());
             state.setAndContinue(SWIM_ANIM);
@@ -97,6 +102,7 @@ public class StegonautAnimationHandler {
     }
 
     public void setupMovementController(AnimationController<Stegonaut> controller) {
+        controller.receiveTriggeredAnimations();
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "ground_slam", GROUND_SLAM);
         AnimationHelper.register(controller, "ground_slam2", GROUND_SLAM2);

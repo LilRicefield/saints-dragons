@@ -46,8 +46,13 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
             new AnimationHelper.Animations(IDLE, WALK, RUN, SIT, SIT_DOWN, SIT_UP, FALL_ASLEEP, SLEEP, WAKE_UP, null, STUNNED, null);
     private static final AnimationHelper.Transitions GROUND_TRANSITIONS =
             new AnimationHelper.Transitions(4, 4, 4, 4, 4, 4, 4, 4);
+    private static final int JUMP_TRANSITION_TICKS = 1;
 
     public PlayState movementPredicate(AnimationState<Atroxiia> state) {
+        if (AnimationHelper.holdTriggeredAnimation(
+                state, JUMP_TRANSITION_TICKS, JUMP, JUMP_LANDED)) {
+            return PlayState.CONTINUE;
+        }
         if (dragon.isTamingStunned()) {
             state.getController().transitionLength(GROUND_TRANSITIONS.stunned());
             state.setAndContinue(STUNNED);
@@ -86,6 +91,7 @@ public record AtroxiiaAnimationHandler(Atroxiia dragon) {
     }
 
     public void setupMovementController(AnimationController<Atroxiia> controller) {
+        controller.receiveTriggeredAnimations();
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, "slam_right", SLAM_RIGHT);
         AnimationHelper.register(controller, "slam_left", SLAM_LEFT);
