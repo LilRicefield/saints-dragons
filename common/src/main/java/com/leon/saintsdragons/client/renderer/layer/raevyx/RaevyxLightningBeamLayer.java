@@ -1,11 +1,9 @@
 package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -14,7 +12,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector4f;
@@ -25,14 +22,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
-    private static final ResourceLocation INNER_TEX = SaintsDragonsCommon.rl("textures/entity/raevyx/lightning_beam_inner.png");
-    private static final ResourceLocation OUTER_TEX = SaintsDragonsCommon.rl("textures/entity/raevyx/lightning_beam_outer.png");
-    private static final ResourceLocation GOLDEN_INNER_TEX = SaintsDragonsCommon.rl("textures/entity/raevyx/golden_lightning_beam_inner.png");
-    private static final ResourceLocation GOLDEN_OUTER_TEX = SaintsDragonsCommon.rl("textures/entity/raevyx/golden_lightning_beam_outer.png");
-    private static final float BASE_BEAM_WIDTH = 0.45F;
-    private static final float OUTER_BEAM_BONUS = 0.15F;
-    private static final float INNER_SPEED_MULTIPLIER = 0.25F;
-    private static final float OUTER_SPEED_MULTIPLIER = 0.25F;
     private static final float BEAM_SHAKE_INTENSITY = 0.01F;
 
     private static final class BeamState {
@@ -121,55 +110,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float visScale = beaming ? easeOutCubic(state.appear) : (1f - state.disappear);
         visScale = Mth.clamp(visScale, 0f, 1f);
         float scaledLength = Math.max(0.001f, length * visScale);
-        float scaledWidth = Math.max(0.001f, BASE_BEAM_WIDTH * (0.75f + 0.25f * visScale));
         boolean isNightGold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
-        ResourceLocation innerTex = isNightGold ? GOLDEN_INNER_TEX : INNER_TEX;
-        ResourceLocation outerTex = isNightGold ? GOLDEN_OUTER_TEX : OUTER_TEX;
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, true, innerTex);
-        renderBeam(animatable, poseStack, bufferSource, partialTick, scaledWidth, scaledLength, false, outerTex);
-        poseStack.popPose();
-    }
-
-    private void renderBeam(Raevyx entity, PoseStack poseStack, MultiBufferSource source, float partialTicks, float width, float length, boolean inner, ResourceLocation texture) {
-        poseStack.pushPose();
-        int vertices;
-        VertexConsumer vertexconsumer;
-        float speed;
-        float startAlpha = 1.0F;
-        float endAlpha = 1.0F;
-        if (inner) {
-            vertices = 4;
-            vertexconsumer = source.getBuffer(RenderType.entityTranslucent(texture));
-            speed = INNER_SPEED_MULTIPLIER;
-        } else {
-            vertices = 8;
-            vertexconsumer = source.getBuffer(RenderType.entityTranslucent(texture));
-            width += OUTER_BEAM_BONUS;
-            speed = OUTER_SPEED_MULTIPLIER;
-            endAlpha = 0.0F;
-        }
-
-        float v = ((float) entity.tickCount + partialTicks) * -0.25F * speed;
-        float v1 = v + length * (0.5F);
-        float f4 = -width;
-        float f5 = 0;
-        float f6 = 0.0F;
-        PoseStack.Pose posestack$pose = poseStack.last();
-        Matrix4f matrix4f = posestack$pose.pose();
-        
-        for (int j = 0; j <= vertices; ++j) {
-            Matrix3f matrix3f = posestack$pose.normal();
-            float f7 = Mth.cos((float) Math.PI + (float) j * ((float) Math.PI * 2F) / (float) vertices) * width;
-            float f8 = Mth.sin((float) Math.PI + (float) j * ((float) Math.PI * 2F) / (float) vertices) * width;
-            float f9 = (float) j + 1;
-            vertexconsumer.vertex(matrix4f, f4 * 0.55F, f5 * 0.55F, 0.0F).color(1.0F, 1.0F, 1.0F, startAlpha).uv(f6, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1.0F, 0.0F).endVertex();
-            vertexconsumer.vertex(matrix4f, f4, f5, length).color(1.0F, 1.0F, 1.0F, endAlpha).uv(f6, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1F, 0.0F).endVertex();
-            vertexconsumer.vertex(matrix4f, f7, f8, length).color(1.0F, 1.0F, 1.0F, endAlpha).uv(f9, v1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1F, 0.0F).endVertex();
-            vertexconsumer.vertex(matrix4f, f7 * 0.55F, f8 * 0.55F, 0.0F).color(1.0F, 1.0F, 1.0F, startAlpha).uv(f9, v).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(240).normal(matrix3f, 0.0F, -1.0F, 0.0F).endVertex();
-            f4 = f7;
-            f5 = f8;
-            f6 = f9;
-        }
+        RaevyxBeamLightningRenderer.render(animatable, poseStack, bufferSource,
+                scaledLength, visScale, isNightGold);
         poseStack.popPose();
     }
 

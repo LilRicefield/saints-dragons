@@ -5,13 +5,19 @@ import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.culling.Frustum;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxLightningBeamLayer;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.raevyx.RaevyxNightEmissiveLayer;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
+    private static final double BEAM_CULL_PADDING = 2.0D;
+    private static final double BEAM_RENDER_DISTANCE = 256.0D;
     private static final String PASSENGER_BONE = "passengerBone";
     private static final String BEAM_BONE = "beamBone";
     private static final float PASSENGER_X = 0.0f;
@@ -48,6 +54,32 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
                         "passengerLocator", "passengerSeat0"),
                 new LocatorSpec(BEAM_BONE, 0.0f, 0.0f, 0.0f, "beamBoneOrigin")
         };
+    }
+
+    @Override
+    public boolean shouldRender(@NotNull Raevyx entity, @NotNull Frustum frustum,
+                                double camX, double camY, double camZ) {
+        if (super.shouldRender(entity, frustum, camX, camY, camZ)) {
+            return true;
+        }
+        if (!entity.isBeaming()) {
+            return false;
+        }
+
+        double dx = entity.getX() - camX;
+        double dy = entity.getY() - camY;
+        double dz = entity.getZ() - camZ;
+        if (dx * dx + dy * dy + dz * dz > BEAM_RENDER_DISTANCE * BEAM_RENDER_DISTANCE) {
+            return false;
+        }
+
+        Vec3 end = entity.getBeamEndPosition();
+        if (end == null) {
+            return false;
+        }
+        Vec3 start = entity.getBeamStartAnchor(1.0F);
+        AABB beamBounds = new AABB(start, end).inflate(BEAM_CULL_PADDING);
+        return frustum.isVisible(beamBounds);
     }
 
     @Override
