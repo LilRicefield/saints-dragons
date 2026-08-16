@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommi
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalProfile;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -319,6 +320,10 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         if (dragon.isPassenger()) return "passenger";
         if (dragon.isOrderedToSit()) return "ordered-sit";
         if (dragon.isSleeping() || dragon.isSleepTransitioning()) return "sleeping";
+        if (dragon instanceof RideableDragonBase rideable
+                && DragonFollowOwnerBehaviour.hasOwnerFollowPriority(rideable)) {
+            return "following-owner";
+        }
         return null;
     }
 

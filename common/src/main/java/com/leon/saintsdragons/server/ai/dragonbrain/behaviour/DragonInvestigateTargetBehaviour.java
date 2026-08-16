@@ -369,11 +369,14 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
 
     private boolean canInvestigate(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        if (!(dragon instanceof RideableDragonBase rideable)
+                || DragonFollowOwnerBehaviour.hasOwnerFollowPriority(rideable)) {
+            return false;
+        }
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         boolean targetVisible = target != null
                 && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
-        return dragon instanceof RideableDragonBase
-                && (target == null || target.isAlive())
+        return (target == null || target.isAlive())
                 && !targetVisible
                 && context.memories().has(DragonMemories.INVESTIGATION_TARGET)
                 && !dragon.isVehicle()

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerTeleport;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.core.BlockPos;
@@ -132,8 +133,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     }
 
     private boolean canFollow(T dragon, @Nullable LivingEntity owner) {
-        return dragon.isTame()
-                && dragon.getCommand() == 0
+        return hasOwnerFollowPriority(dragon)
                 && !dragon.isOrderedToSit()
                 && !dragon.isInLove()
                 && !dragon.isVehicle()
@@ -144,6 +144,17 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 && owner != null
                 && owner.isAlive()
                 && owner.level() == dragon.level();
+    }
+
+    static boolean hasOwnerFollowPriority(RideableDragonBase dragon) {
+        LivingEntity owner = dragon.getOwner();
+        LivingEntity target = dragon.getTarget();
+        return dragon.isTame()
+                && dragon.getCommand() == 0
+                && owner != null
+                && owner.isAlive()
+                && owner.level() == dragon.level()
+                && (target == null || !target.isAlive());
     }
 
     private boolean updateFlightState(DragonBrainContext<T> context,

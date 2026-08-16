@@ -51,13 +51,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
             return;
         }
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (dragon.isAerial()
-                && dragon.isLanding()
-                && !dragon.isVehicle()
-                && !dragon.isPassenger()
-                && !dragon.isOrderedToSit()) {
-            brain.setActiveActivityIfPossible(Activity.FIGHT);
-        } else if (canFight(dragon, target)) {
+        if (canFight(dragon, target)) {
             brain.setActiveActivityIfPossible(Activity.FIGHT);
         } else {
             brain.useDefaultActivity();

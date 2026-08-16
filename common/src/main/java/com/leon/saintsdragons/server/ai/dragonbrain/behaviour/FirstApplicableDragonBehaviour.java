@@ -89,6 +89,9 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
 
     private boolean controlReservedByState(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        boolean unseenInvestigation = context.memories().has(DragonMemories.INVESTIGATION_TARGET)
+                && !DragonFollowOwnerBehaviour.hasOwnerFollowPriority(dragon)
+                && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
         return dragon.isSleeping()
                 || dragon.isSleepTransitioning()
                 || dragon.isOrderedToSit()
@@ -96,8 +99,7 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
                 || dragon.isInSitTransition()
                 || dragon.isHuntFoodPursuitActive()
                 || context.memories().has(DragonMemories.SCENT_CANDIDATE)
-                || context.memories().has(DragonMemories.INVESTIGATION_TARGET)
-                && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
+                || unseenInvestigation;
     }
 
     private boolean tryStartReservedBreeding(DragonBrainContext<T> context) {
