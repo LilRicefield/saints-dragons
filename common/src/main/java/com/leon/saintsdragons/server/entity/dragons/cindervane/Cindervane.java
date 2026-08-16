@@ -128,6 +128,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public static final int VARIANT_PIEBALD = 2;
     private static final double BABY_MAX_HEALTH = 40.0D;
     private static final double BABY_ARMOR = 0.0D;
+    private static final double GROUND_MOVEMENT_SPEED = 0.30D;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
             DragonVariant.of(VARIANT_DEFAULT, "default", 85),
             DragonVariant.of(VARIANT_ALBINO, "albino", 15),
@@ -394,6 +395,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
         applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         clampHealthToMax();
     }
 
@@ -401,7 +403,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.CINDERVANE_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.45D)
+                .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.ARMOR, config.armor());

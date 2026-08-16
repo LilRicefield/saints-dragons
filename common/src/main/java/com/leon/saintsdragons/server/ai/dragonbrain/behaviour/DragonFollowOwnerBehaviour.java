@@ -27,8 +27,22 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
     private static final double AIR_CATCH_UP_MULTIPLIER = 1.35D;
     private static final int FAILED_GROUND_PATH_RETRY_TICKS = 10;
+    private static final Config BABY_CONFIG = new Config(
+            DragonBabyOwnerFollowTuning.START_DISTANCE,
+            DragonBabyOwnerFollowTuning.STOP_DISTANCE,
+            DragonBabyOwnerFollowTuning.TELEPORT_DISTANCE,
+            DragonBabyOwnerFollowTuning.RUN_DISTANCE,
+            24.0D,
+            10.0D,
+            2.5D,
+            DragonBabyOwnerFollowTuning.WALK_SPEED,
+            DragonBabyOwnerFollowTuning.RUN_SPEED,
+            DragonBabyOwnerFollowTuning.MAX_WALK_SPEED,
+            DragonBabyOwnerFollowTuning.MAX_RUN_SPEED,
+            4.0D
+    );
 
-    private final Config config;
+    private final Config adultConfig;
     private final Consumer<T> takeoffStarter;
     private int groundRepathCooldown;
     private int airRefreshCooldown;
@@ -42,7 +56,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
 
     public DragonFollowOwnerBehaviour(Config config, Consumer<T> takeoffStarter) {
         super(Map.of(DragonMemories.MOVEMENT_INTENT, MemoryStatus.REGISTERED));
-        this.config = Objects.requireNonNull(config);
+        this.adultConfig = Objects.requireNonNull(config);
         this.takeoffStarter = Objects.requireNonNull(takeoffStarter);
     }
 
@@ -50,6 +64,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     protected boolean canStart(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
+        Config config = configFor(dragon);
         return canFollow(dragon, owner)
                 && dragon.distanceToSqr(owner) > config.startDistance * config.startDistance;
     }
@@ -58,6 +73,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     protected boolean canContinue(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
+        Config config = configFor(dragon);
         if (!canFollow(dragon, owner)) {
             return false;
         }
@@ -86,12 +102,13 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             airRefreshCooldown--;
         }
 
+        Config config = configFor(dragon);
         double distance = dragon.distanceTo(owner);
         if (distance > config.teleportDistance && dragon.isGroundedForTeleport()) {
             if (!DragonOwnerTeleport.attempt(dragon, owner)) {
                 dragon.teleportTo(owner.getX(), owner.getY() + 3.0D, owner.getZ());
             }
-            if (dragon.canTakeoff()) {
+            if (!dragon.isBaby() && dragon.canTakeoff()) {
                 dragon.beginAiFlight();
             } else {
                 dragon.clearAerialState();
@@ -102,8 +119,8 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
 
         dragon.getLookControl().setLookAt(owner, 10.0F, 10.0F);
         boolean ownerAirborne = isOwnerAirborne(dragon, owner);
-        boolean shouldFly = shouldFly(dragon, owner, distance, ownerAirborne);
-        if (updateFlightState(context, dragon, owner, ownerAirborne, shouldFly)) {
+        boolean shouldFly = shouldFly(dragon, owner, distance, ownerAirborne, config);
+        if (updateFlightState(context, dragon, owner, ownerAirborne, shouldFly, config)) {
             mode = "landing";
             return;
         }
@@ -117,9 +134,9 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 );
             }
         } else if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
-            followInAir(context, dragon, owner, ownerAirborne);
+            followInAir(context, dragon, owner, ownerAirborne, config);
         } else {
-            followOnGround(dragon, owner, distance);
+            followOnGround(dragon, owner, distance, config);
         }
     }
 
@@ -161,7 +178,20 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                                       T dragon,
                                       LivingEntity owner,
                                       boolean ownerAirborne,
-                                      boolean shouldFly) {
+                                      boolean shouldFly,
+                                      Config config) {
+        if (dragon.isBaby() && dragon.isAerial()) {
+            if (dragon.onGround()) {
+                dragon.clearAerialState();
+            } else {
+                context.memories().set(
+                        DragonMemories.MOVEMENT_INTENT,
+                        DragonMovementIntent.transitionToGround(owner, config.flightSpeed)
+                );
+            }
+            resetTracking();
+            return true;
+        }
         if (shouldFly && !dragon.isFlying() && !dragon.isTakeoff()) {
             takeoffStarter.accept(dragon);
             resetTracking();
@@ -190,9 +220,10 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private void followInAir(DragonBrainContext<T> context,
                              T dragon,
                              LivingEntity owner,
-                             boolean ownerAirborne) {
+                             boolean ownerAirborne,
+                             Config config) {
         mode = "air";
-        Vec3 target = flightTarget(dragon, owner, ownerAirborne);
+        Vec3 target = flightTarget(dragon, owner, ownerAirborne, config);
         boolean catchUp = dragon.distanceToSqr(target) > AIR_CATCH_UP_DISTANCE * AIR_CATCH_UP_DISTANCE;
         double speed = catchUp ? config.flightSpeed * AIR_CATCH_UP_MULTIPLIER : config.flightSpeed;
         dragon.setAccelerating(catchUp);
@@ -209,10 +240,10 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         }
     }
 
-    private void followOnGround(T dragon, LivingEntity owner, double distance) {
+    private void followOnGround(T dragon, LivingEntity owner, double distance, Config config) {
         mode = "ground";
-        dragon.setAccelerating(false);
         if (distance <= config.stopDistance) {
+            dragon.setAccelerating(false);
             dragon.getAIMovement().stop();
             groundRepathCooldown = 0;
             return;
@@ -224,6 +255,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             return;
         }
         boolean running = distance > config.runDistance;
+        dragon.setAccelerating(running);
         double baseSpeed = running ? config.runSpeed : config.walkSpeed;
         double speed = Math.min(
                 baseSpeed * (1.0D + distance / 50.0D),
@@ -248,7 +280,11 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private boolean shouldFly(T dragon,
                               LivingEntity owner,
                               double distance,
-                              boolean ownerAirborne) {
+                              boolean ownerAirborne,
+                              Config config) {
+        if (dragon.isBaby()) {
+            return false;
+        }
         if (dragon.isFlying() || dragon.isTakeoff() || dragon.isHovering()) {
             if (ownerAirborne) {
                 return true;
@@ -303,7 +339,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         return vehicle != null ? vehicle.onGround() : owner.onGround();
     }
 
-    private Vec3 flightTarget(T dragon, LivingEntity owner, boolean ownerAirborne) {
+    private Vec3 flightTarget(T dragon, LivingEntity owner, boolean ownerAirborne, Config config) {
         double targetY = ownerAirborne
                 ? owner.getY() + owner.getBbHeight() + config.hoverHeight
                 : owner.getY() + owner.getBbHeight() * 0.5D;
@@ -322,6 +358,10 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 || airRefreshCooldown <= 0
                 || target.distanceToSqr(lastAirTarget) > AIR_TARGET_EPSILON_SQR
                 || Math.abs(speed - lastAirSpeed) > AIR_SPEED_EPSILON;
+    }
+
+    private Config configFor(T dragon) {
+        return dragon.isBaby() ? BABY_CONFIG : adultConfig;
     }
 
     private boolean ownerMoved(LivingEntity owner) {
@@ -373,30 +413,38 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                          double maxRunSpeed,
                          double flightSpeed) {
         public static Config raevyx() {
-            return new Config(
-                    20.0D, 5.0D, 64.0D, 12.0D, 30.0D, 10.0D,
-                    2.5D, 0.45D, 0.95D, 0.65D, 1.2D, 4.0D
-            );
+            return withStandardGround(30.0D, 10.0D, 2.5D, 4.0D);
         }
 
         public static Config cindervane() {
-            return new Config(
-                    20.0D, 8.0D, 64.0D, 15.0D, 30.0D, 10.0D,
-                    2.5D, 0.7D, 1.1D, 1.0D, 1.6D, 4.0D
-            );
+            return withStandardGround(30.0D, 10.0D, 2.5D, 4.0D);
         }
 
         public static Config ignivorus() {
-            return new Config(
-                    20.0D, 8.0D, 128.0D, 25.0D, 20.0D, 10.0D,
-                    2.5D, 0.8D, 1.5D, 1.2D, 2.5D, 4.0D
-            );
+            return withStandardGround(20.0D, 10.0D, 2.5D, 4.0D);
         }
 
         public static Config volitans() {
+            return withStandardGround(24.0D, 10.0D, 2.5D, 4.0D);
+        }
+
+        private static Config withStandardGround(double flightTriggerDistance,
+                                                 double landingDistance,
+                                                 double hoverHeight,
+                                                 double flightSpeed) {
             return new Config(
-                    20.0D, 8.0D, 64.0D, 10.0D, 24.0D, 10.0D,
-                    2.5D, 0.7D, 1.1D, 1.0D, 1.6D, 4.0D
+                    DragonAdultOwnerFollowTuning.START_DISTANCE,
+                    DragonAdultOwnerFollowTuning.STOP_DISTANCE,
+                    DragonAdultOwnerFollowTuning.TELEPORT_DISTANCE,
+                    DragonAdultOwnerFollowTuning.RUN_DISTANCE,
+                    flightTriggerDistance,
+                    landingDistance,
+                    hoverHeight,
+                    DragonAdultOwnerFollowTuning.WALK_SPEED,
+                    DragonAdultOwnerFollowTuning.RUN_SPEED,
+                    DragonAdultOwnerFollowTuning.MAX_WALK_SPEED,
+                    DragonAdultOwnerFollowTuning.MAX_RUN_SPEED,
+                    flightSpeed
             );
         }
     }

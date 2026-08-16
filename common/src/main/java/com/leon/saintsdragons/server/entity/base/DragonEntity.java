@@ -2102,6 +2102,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             if (sleepComponent != null) {
                 sleepComponent.tick();
             }
+            clearStaleSittingPoseForMovement();
             boolean careComponentsActive = !this.isBoundInBinder();
             if (careComponentsActive && hungerComponent != null) {
                 hungerComponent.tick();
@@ -2203,10 +2204,25 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     public void applyCommandState(int command) {
         switch (command) {
-            case 0, 2 -> this.setOrderedToSit(false);
+            case 0, 2 -> {
+                this.setOrderedToSit(false);
+                this.clearStaleSittingPoseForMovement();
+            }
             case 1 -> this.setOrderedToSit(true);
             default -> {
             }
+        }
+    }
+
+    public void clearStaleSittingPoseForMovement() {
+        if (this.isTame()
+                && this.isInSittingPose()
+                && this.getCommand() != 1
+                && !this.isOrderedToSit()
+                && !this.isSleeping()
+                && !this.isSleepTransitioning()
+                && !this.isInSitTransition()) {
+            this.setInSittingPose(false);
         }
     }
 

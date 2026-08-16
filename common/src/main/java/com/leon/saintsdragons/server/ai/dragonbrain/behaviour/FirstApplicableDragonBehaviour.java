@@ -89,8 +89,10 @@ public final class FirstApplicableDragonBehaviour<T extends RideableDragonBase> 
 
     private boolean controlReservedByState(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        dragon.clearStaleSittingPoseForMovement();
+        boolean ownerFollowPriority = DragonFollowOwnerBehaviour.hasOwnerFollowPriority(dragon);
         boolean unseenInvestigation = context.memories().has(DragonMemories.INVESTIGATION_TARGET)
-                && !DragonFollowOwnerBehaviour.hasOwnerFollowPriority(dragon)
+                && !ownerFollowPriority
                 && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
         return dragon.isSleeping()
                 || dragon.isSleepTransitioning()

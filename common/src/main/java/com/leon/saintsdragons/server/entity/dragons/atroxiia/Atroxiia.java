@@ -120,6 +120,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     public static final int EAT_SOUND_TICKS = 60;
     private static final double BABY_MAX_HEALTH = 30.0D;
     private static final double BABY_ARMOR = 0.0D;
+    private static final double GROUND_MOVEMENT_SPEED = 0.33D;
     private static final double RIDER_JUMP_STRENGTH = 1.15D;
     private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
     private static final float MAX_UP_STEP = 1.25F;
@@ -275,7 +276,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.28D)
+                .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, config.armor())
@@ -285,6 +286,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
         applyConfiguredHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         clampHealthToMax();
     }
 
@@ -1173,6 +1175,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             setFeedingCooldown(tag.getInt("FeedingCooldownTicks"));
         }
         tamingController.load(tag);
+        applyConfiguredAttributes();
     }
 
     @Override

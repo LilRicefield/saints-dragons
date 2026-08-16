@@ -185,6 +185,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private static final double BABY_MAX_HEALTH = 60.0D;
+    private static final double GROUND_MOVEMENT_SPEED = 0.30D;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
@@ -518,7 +519,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.55D)
+                .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 64.0D)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
@@ -2155,7 +2156,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
         applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, 0.0D);
-
+        setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         clampHealthToMax();
     }
 

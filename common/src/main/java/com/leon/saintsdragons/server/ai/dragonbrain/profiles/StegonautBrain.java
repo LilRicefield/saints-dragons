@@ -96,9 +96,9 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
                                         new DragonBreedBehaviour<>(1.0D, Stegonaut.class,
                                                 BREED_PARTNER_RANGE, BREED_DISTANCE_SQR),
                                         new DragonGroundFollowOwnerBehaviour<>(
-                                                DragonGroundFollowOwnerBehaviour.Config.stegonaut()),
+                                                DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
                                         new DragonGroundPackFollowBehaviour<>(
-                                                Stegonaut.class, 0.75D, 16.0D, 8.0D),
+                                                Stegonaut.class, 16.0D, 8.0D),
                                         new DragonGroundWanderBehaviour<>(0.35D, 120)
                                 )
                         )

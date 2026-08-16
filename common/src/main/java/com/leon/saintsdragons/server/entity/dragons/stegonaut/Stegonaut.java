@@ -94,6 +94,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     private static final int MAX_AMBIENT_DELAY = 600;
     private static final double BABY_MAX_HEALTH = 50.0D;
     private static final double BABY_ARMOR = 5.0D;
+    private static final double GROUND_MOVEMENT_SPEED = 0.28D;
     private static final float BABY_HITBOX_SCALE = 0.65F;
     private static final float MAX_UP_STEP = 1.25F;
     private static final double RIDER_JUMP_STRENGTH = 0.75D;
@@ -190,7 +191,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         return Mob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 100.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-                .add(Attributes.MOVEMENT_SPEED, 0.50D)
+                .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
                 .add(Attributes.ATTACK_DAMAGE, 2.0D)
                 .add(Attributes.ARMOR, 15.0D)
                 .add(Attributes.FOLLOW_RANGE, 32.0D);
@@ -468,6 +469,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
         applyConfiguredHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         clampHealthToMax();
     }
 
@@ -902,6 +904,7 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
         }
         refreshCommandState();
         this.setOrderedToSit(restoredOrderedSit);
+        applyConfiguredAttributes();
     }
 
     @Override

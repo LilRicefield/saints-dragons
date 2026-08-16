@@ -261,6 +261,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
+    private static final double GROUND_MOVEMENT_SPEED = 0.30D;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new DragonEntity.VocalEntryBuilder()
@@ -468,7 +469,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         double attackDamage = config.abilityDamage("bite", 15.0D);
         return createMobAttributes()
             .add(Attributes.MAX_HEALTH, config.maxHealth())
-            .add(Attributes.MOVEMENT_SPEED, 0.3D)
+            .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
             .add(Attributes.FLYING_SPEED, config.flyingSpeed())
             .add(Attributes.ATTACK_DAMAGE, attackDamage)
             .add(Attributes.FOLLOW_RANGE, 64.0D)
@@ -2082,6 +2083,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         double attackDamage = config.abilityDamage("bite", 15.0D);
 
         applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
+        setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         setAttributeBase(Attributes.ATTACK_DAMAGE, isBaby() ? 0.0D : attackDamage);
         clampHealthToMax();
     }

@@ -141,15 +141,27 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
     }
 
     private double startDistance(T dragon, LivingEntity target) {
+        if (isBabyFollowingOwner(dragon, target)) {
+            return DragonBabyOwnerFollowTuning.START_DISTANCE
+                    * DragonBabyOwnerFollowTuning.START_DISTANCE;
+        }
         return dragon.isBaby() && dragonClass.isInstance(target) && !dragonClass.cast(target).isBaby()
                 ? BABY_START_DISTANCE_SQR
                 : startDistanceSqr;
     }
 
     private double stopDistance(T dragon, LivingEntity target) {
+        if (isBabyFollowingOwner(dragon, target)) {
+            return DragonBabyOwnerFollowTuning.STOP_DISTANCE
+                    * DragonBabyOwnerFollowTuning.STOP_DISTANCE;
+        }
         return dragon.isBaby() && dragonClass.isInstance(target) && !dragonClass.cast(target).isBaby()
                 ? BABY_STOP_DISTANCE_SQR
                 : stopDistanceSqr;
+    }
+
+    private boolean isBabyFollowingOwner(T dragon, LivingEntity target) {
+        return dragon.isBaby() && dragon.isTame() && target == dragon.getOwner();
     }
 
     @Override

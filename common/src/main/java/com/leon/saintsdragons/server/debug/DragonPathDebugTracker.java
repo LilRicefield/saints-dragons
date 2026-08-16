@@ -152,7 +152,7 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} drinking={} rescue={} wildAggressive={} "
+                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
                         + "onGround={} verticalCollision={} velocity={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
@@ -183,6 +183,7 @@ public final class DragonPathDebugTracker {
                 logState.sleep,
                 logState.drinking,
                 logState.rescue,
+                logState.ownerFollow,
                 dragon.isWildAggressionEnabled(),
                 dragon.onGround(),
                 dragon.verticalCollision,
@@ -441,6 +442,7 @@ public final class DragonPathDebugTracker {
                             String sleep,
                             String drinking,
                             String rescue,
+                            String ownerFollow,
                             String perception,
                             String tactical,
                             String pursuit,
@@ -483,6 +485,7 @@ public final class DragonPathDebugTracker {
                     sleepSummary(dragon),
                     drinkingSummary(dragon),
                     rescueSummary(dragon),
+                    ownerFollowSummary(dragon),
                     perceptionSummary(dragon),
                     tacticalSummary(dragon),
                     pursuitSummary(dragon),
@@ -491,6 +494,56 @@ public final class DragonPathDebugTracker {
                     runningBehaviours(dragon)
             );
         }
+    }
+
+    private static String ownerFollowSummary(DragonEntity dragon) {
+        if (!(dragon instanceof RideableDragonBase rideable)) {
+            return "unsupported";
+        }
+        LivingEntity owner = rideable.getOwner();
+        String ownerSummary = owner == null
+                ? "none"
+                : owner.getName().getString() + "@"
+                + String.format(java.util.Locale.ROOT, "%.2f", rideable.distanceTo(owner));
+        LivingEntity target = rideable.getTarget();
+        boolean ownerPriority = rideable.isTame()
+                && rideable.getCommand() == 0
+                && owner != null
+                && owner.isAlive()
+                && owner.level() == rideable.level()
+                && (target == null || !target.isAlive());
+        String reservation = "none";
+        if (rideable.isSleeping()) {
+            reservation = "sleeping";
+        } else if (rideable.isSleepTransitioning()) {
+            reservation = "sleep-transition";
+        } else if (rideable.isOrderedToSit()) {
+            reservation = "ordered-sit";
+        } else if (rideable.isInSittingPose()) {
+            reservation = "sitting-pose";
+        } else if (rideable.isInSitTransition()) {
+            reservation = "sit-transition";
+        } else if (rideable.isHuntFoodPursuitActive()) {
+            reservation = "hunt-food";
+        } else if (rideable.getBrain().hasMemoryValue(DragonMemories.SCENT_CANDIDATE)) {
+            reservation = "scent";
+        } else if (rideable.getBrain().hasMemoryValue(DragonMemories.INVESTIGATION_TARGET)
+                && !ownerPriority
+                && !rideable.getBrain().getMemory(DragonMemories.TARGET_VISIBLE).orElse(false)) {
+            reservation = "unseen-investigation";
+        }
+        return "baby=" + rideable.isBaby()
+                + ",tame=" + rideable.isTame()
+                + ",owner=" + ownerSummary
+                + ",command=" + rideable.getCommand()
+                + ",priority=" + ownerPriority
+                + ",reserved=" + reservation
+                + ",sitDown=" + rideable.isSittingDownAnimation()
+                + ",love=" + rideable.isInLove()
+                + ",vehicle=" + rideable.isVehicle()
+                + ",passenger=" + rideable.isPassenger()
+                + ",water=" + rideable.isInWaterOrBubble()
+                + ",target=" + (target == null ? "none" : target.getName().getString() + "/" + target.isAlive());
     }
 
     private static String sleepSummary(DragonEntity dragon) {

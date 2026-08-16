@@ -89,7 +89,7 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
                                         new DragonBreedBehaviour<>(1.0D, Atroxiia.class,
                                                 Atroxiia.BREED_PARTNER_RANGE, Atroxiia.BREED_DISTANCE_SQR),
                                         new DragonGroundFollowOwnerBehaviour<>(
-                                                DragonGroundFollowOwnerBehaviour.Config.atroxiia()),
+                                                DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
                                         new DragonGroundWanderBehaviour<>(IDLE_WANDER_SPEED, 100)
                                 )
                         )

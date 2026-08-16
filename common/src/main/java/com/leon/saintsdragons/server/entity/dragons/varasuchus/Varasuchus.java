@@ -233,6 +233,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 70;
     private static final double BABY_MAX_HEALTH = 80.0D;
     private static final double BABY_ARMOR = 0.0D;
+    private static final double GROUND_MOVEMENT_SPEED = 0.33D;
     private static final float BABY_HITBOX_SCALE = 0.5F;
     private static final double LEAP_HORIZONTAL_DRAG = 0.92D;
     private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
@@ -595,7 +596,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.28D)
+                .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
                 .add(Attributes.FOLLOW_RANGE, 32.0D)
                 .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
                 .add(Attributes.ARMOR, 8.0D)
@@ -872,7 +873,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public void applyConfiguredAttributes() {
         DragonAttributeConfig config = getConfiguredDragonAttributes();
         applyConfiguredHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
-
+        setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         clampHealthToMax();
     }
 

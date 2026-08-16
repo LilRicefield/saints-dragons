@@ -18,7 +18,9 @@ import java.util.UUID;
 public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase & PackMember<T>>
         extends DragonBehaviour<T> {
     private final Class<T> memberClass;
-    private final double followSpeed;
+    private final double walkSpeed;
+    private final double runSpeed;
+    private final double runDistanceSq;
     private final double startDistanceSq;
     private final double stopDistanceSq;
     @Nullable
@@ -28,13 +30,17 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
     private double lastLeaderX = Double.NaN;
     private double lastLeaderY = Double.NaN;
     private double lastLeaderZ = Double.NaN;
+    private boolean running;
+    private boolean movementModeInitialized;
 
     public DragonGroundPackFollowBehaviour(Class<T> memberClass,
-                                           double followSpeed,
                                            double startDistance,
                                            double stopDistance) {
         this.memberClass = memberClass;
-        this.followSpeed = followSpeed;
+        this.walkSpeed = DragonAdultOwnerFollowTuning.WALK_SPEED;
+        this.runSpeed = DragonAdultOwnerFollowTuning.RUN_SPEED;
+        this.runDistanceSq = DragonAdultOwnerFollowTuning.RUN_DISTANCE
+                * DragonAdultOwnerFollowTuning.RUN_DISTANCE;
         this.startDistanceSq = startDistance * startDistance;
         this.stopDistanceSq = stopDistance * stopDistance;
     }
@@ -76,14 +82,25 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
         member.getLookControl().setLookAt(leader, 20.0F, 20.0F);
         double distance = member.distanceTo(leader);
         if (distance * distance <= stopDistanceSq) {
+            member.setAccelerating(false);
             member.getAIMovement().stop();
             repathCooldown = 0;
+            movementModeInitialized = false;
             return;
         }
+        boolean shouldRun = distance * distance > runDistanceSq;
+        boolean movementModeChanged = !movementModeInitialized || running != shouldRun;
+        member.setAccelerating(shouldRun);
         if (repathCooldown > 0) repathCooldown--;
         boolean idle = member.getAIMovement().hasArrived() || !member.getAIMovement().isPathing();
-        if (idle || leaderMoved(leader) || repathCooldown <= 0) {
-            member.getAIMovement().setGroundWaypoint(leader, followSpeed);
+        if (idle || movementModeChanged || leaderMoved(leader) || repathCooldown <= 0) {
+            member.getAIMovement().moveToGroundTarget(
+                    leader,
+                    shouldRun ? runSpeed : walkSpeed,
+                    shouldRun
+            );
+            running = shouldRun;
+            movementModeInitialized = true;
             remember(leader);
             repathCooldown = Mth.clamp((int)Math.ceil(distance * 0.4D), 5, 22);
         }
@@ -92,6 +109,7 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
     @Override
     protected void stop(DragonBrainContext<T> context) {
         context.dragon().getAIMovement().stop();
+        context.dragon().setAccelerating(false);
         leader = null;
         repathCooldown = 0;
         resetTracking();
@@ -187,10 +205,15 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
 
     private void resetTracking() {
         lastLeaderX = lastLeaderY = lastLeaderZ = Double.NaN;
+        running = false;
+        movementModeInitialized = false;
     }
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
-        return Map.of("leader", leader == null ? "none" : leader.getName().getString());
+        return Map.of(
+                "leader", leader == null ? "none" : leader.getName().getString(),
+                "pace", movementModeInitialized ? running ? "run" : "walk" : "idle"
+        );
     }
 }

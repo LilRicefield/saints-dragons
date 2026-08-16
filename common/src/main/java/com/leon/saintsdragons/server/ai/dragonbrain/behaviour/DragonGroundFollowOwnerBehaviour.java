@@ -11,21 +11,31 @@ import java.util.Map;
 
 public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private static final int FAILED_PATH_RETRY_TICKS = 10;
+    private static final Config BABY_CONFIG = new Config(
+            DragonBabyOwnerFollowTuning.START_DISTANCE,
+            DragonBabyOwnerFollowTuning.STOP_DISTANCE,
+            DragonBabyOwnerFollowTuning.TELEPORT_DISTANCE,
+            DragonBabyOwnerFollowTuning.WALK_SPEED,
+            1.0D,
+            DragonBabyOwnerFollowTuning.RUN_DISTANCE,
+            DragonBabyOwnerFollowTuning.RUN_SPEED
+    );
 
-    private final Config config;
+    private final Config adultConfig;
     private int repathCooldown;
     private double lastOwnerX = Double.NaN;
     private double lastOwnerY = Double.NaN;
     private double lastOwnerZ = Double.NaN;
 
     public DragonGroundFollowOwnerBehaviour(Config config) {
-        this.config = config;
+        this.adultConfig = config;
     }
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
+        Config config = configFor(dragon);
         return canFollow(dragon, owner)
                 && dragon.distanceToSqr(owner) > config.startDistance * config.startDistance;
     }
@@ -34,6 +44,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     protected boolean canContinue(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
+        Config config = configFor(dragon);
         return canFollow(dragon, owner)
                 && dragon.distanceToSqr(owner) > config.stopDistance * config.stopDistance;
     }
@@ -49,6 +60,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         LivingEntity owner = dragon.getOwner();
         if (owner == null) return;
 
+        Config config = configFor(dragon);
         double distance = dragon.distanceTo(owner);
         boolean fast = distance > config.fastDistance;
         dragon.setAccelerating(fast);
@@ -112,6 +124,10 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         return dx * dx + dy * dy + dz * dz > 1.0D;
     }
 
+    private Config configFor(T dragon) {
+        return dragon.isBaby() ? BABY_CONFIG : adultConfig;
+    }
+
     private void remember(LivingEntity owner) {
         lastOwnerX = owner.getX();
         lastOwnerY = owner.getY();
@@ -135,19 +151,16 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
                          double fallbackTeleportYOffset,
                          double fastDistance,
                          double fastSpeed) {
-        public static Config stegonaut() {
-            return new Config(12.0D, 8.0D, 32.0D, 0.8D, 1.0D,
-                    Double.POSITIVE_INFINITY, 0.8D);
-        }
-
-        public static Config atroxiia() {
-            return new Config(12.0D, 8.0D, 32.0D, 0.95D, 1.0D,
-                    16.0D, 1.25D);
-        }
-
-        public static Config varasuchus() {
-            return new Config(20.0D, 16.0D, 32.0D, 0.85D, 0.0D,
-                    25.0D, 1.35D);
+        public static Config standardAdult() {
+            return new Config(
+                    DragonAdultOwnerFollowTuning.START_DISTANCE,
+                    DragonAdultOwnerFollowTuning.STOP_DISTANCE,
+                    DragonAdultOwnerFollowTuning.TELEPORT_DISTANCE,
+                    DragonAdultOwnerFollowTuning.WALK_SPEED,
+                    DragonAdultOwnerFollowTuning.FALLBACK_TELEPORT_Y_OFFSET,
+                    DragonAdultOwnerFollowTuning.RUN_DISTANCE,
+                    DragonAdultOwnerFollowTuning.RUN_SPEED
+            );
         }
     }
 }

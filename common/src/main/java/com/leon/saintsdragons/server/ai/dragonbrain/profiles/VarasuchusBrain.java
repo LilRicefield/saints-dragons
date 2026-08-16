@@ -147,7 +147,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                                         ),
                                         new DragonFindWaterBehaviour<>(1.0D),
                                         new DragonGroundFollowOwnerBehaviour<>(
-                                                DragonGroundFollowOwnerBehaviour.Config.varasuchus()),
+                                                DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
                                         new DragonSwimFollowBehaviour<>(
                                                 Varasuchus.class, 8.0F, 0.25D, 20.0D, 16.0D),
                                         new DragonSwimWanderBehaviour<>(
