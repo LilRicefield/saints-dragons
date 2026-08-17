@@ -13,7 +13,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class RaevyxBeamLightningRenderer {
-    private static final RenderType BEAM_RENDER_TYPE = BeamRenderType.INSTANCE;
+    private static final RenderType GLOW_RENDER_TYPE = BeamRenderType.TRANSLUCENT;
+    private static final RenderType CORE_RENDER_TYPE = BeamRenderType.OPAQUE;
     private static final long PHASE_SEED = 0x9E3779B97F4A7C15L;
     private static final long SECONDARY_SEED = 0x632BE59BD9B4E019L;
     private static final long BRANCH_SEED = 0xD1B54A32D192ED03L;
@@ -24,7 +25,8 @@ public final class RaevyxBeamLightningRenderer {
     }
 
     public static void render(Raevyx raevyx, PoseStack poseStack, MultiBufferSource bufferSource,
-                              float beamLength, float visibility, float ageInTicks, boolean nightGold) {
+                              float beamLength, float visibility, float ageInTicks,
+                              boolean nightGold, boolean ending) {
         if (raevyx == null || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
@@ -32,13 +34,13 @@ public final class RaevyxBeamLightningRenderer {
         long entitySeed = raevyx.getUUID().getMostSignificantBits()
                 ^ raevyx.getUUID().getLeastSignificantBits();
         renderLightning(poseStack, bufferSource, beamLength, visibility,
-                ageInTicks, entitySeed, nightGold);
+                ageInTicks, entitySeed, nightGold, ending);
     }
 
     private static void renderLightning(PoseStack poseStack, MultiBufferSource bufferSource,
                                         float beamLength,
                                         float visibility, float ageInTicks,
-                                        long entitySeed, boolean nightGold) {
+                                        long entitySeed, boolean nightGold, boolean ending) {
         float phaseTime = ageInTicks * BOLT_MORPHS_PER_TICK;
         long phase = Mth.floor(phaseTime);
         float morph = smoothStep(phaseTime - Mth.floor(phaseTime));
@@ -53,28 +55,42 @@ public final class RaevyxBeamLightningRenderer {
                 ? new BoltStyle(0.96F, 0.54F, 0.025F, 0.74F * visibility, 0.19F)
                 : new BoltStyle(0.82F, 0.085F, 0.035F, 0.76F * visibility, 0.19F);
         BoltStyle core = nightGold
-                ? new BoltStyle(1.0F, 0.86F, 0.28F, 0.96F * visibility, 0.065F)
-                : new BoltStyle(1.0F, 0.50F, 0.36F, 0.96F * visibility, 0.065F);
+                ? new BoltStyle(1.0F, 0.86F, 0.28F, 1.0F, 0.065F)
+                : new BoltStyle(1.0F, 0.50F, 0.36F, 1.0F, 0.065F);
         BoltStyle crawler = nightGold
                 ? new BoltStyle(1.0F, 0.70F, 0.065F, 0.62F * visibility, 0.055F)
                 : new BoltStyle(0.92F, 0.16F, 0.075F, 0.64F * visibility, 0.055F);
 
-        VertexConsumer consumer = bufferSource.getBuffer(BEAM_RENDER_TYPE);
         Matrix4f matrix = poseStack.last().pose();
+        float coreCoverage = ending ? visibility : 1.0F;
 
-        // The broad glow and hot filament share one centerline, keeping the bolt crisp.
-        renderMorphingBolt(matrix, consumer, BOLT_START, end, seed, nextSeed,
-                morph, segments, spread, glow, true);
-        renderMorphingBolt(matrix, consumer, BOLT_START, end, seed, nextSeed,
-                morph, segments, spread, core, true);
+        // Shader packs may heavily attenuate their translucent entity pass against an HDR sky.
+        // Keep the broad energy there, then draw a narrow opaque core as a reliable anchor.
+        VertexConsumer glowConsumer = bufferSource.getBuffer(GLOW_RENDER_TYPE);
+        renderMorphingBolt(matrix, glowConsumer, BOLT_START, end, seed, nextSeed,
+                morph, segments, spread, glow, true, 1.0F, entitySeed ^ PHASE_SEED);
 
         // A separate thin filament crawls around the primary bolt.
-        renderMorphingBolt(matrix, consumer, BOLT_START, end,
+        renderMorphingBolt(matrix, glowConsumer, BOLT_START, end,
                 seed ^ SECONDARY_SEED, nextSeed ^ SECONDARY_SEED,
-                morph, segments, spread * 1.35F, crawler, false);
+                morph, segments, spread * 1.35F, crawler, false,
+                1.0F, entitySeed ^ SECONDARY_SEED);
 
-        renderImpactArcs(matrix, consumer, end, seed ^ BRANCH_SEED,
-                beamLength, visibility, glow, core);
+        BoltStyle impactGlow = new BoltStyle(glow.red(), glow.green(), glow.blue(),
+                glow.alpha() * 0.78F, glow.width() * 0.72F);
+        renderImpactArcs(matrix, glowConsumer, end, seed ^ BRANCH_SEED,
+                beamLength, visibility, impactGlow, 1.0F, entitySeed ^ BRANCH_SEED);
+
+        VertexConsumer coreConsumer = bufferSource.getBuffer(CORE_RENDER_TYPE);
+        renderMorphingBolt(matrix, coreConsumer, BOLT_START, end, seed, nextSeed,
+                morph, segments, spread, core, true,
+                coreCoverage, entitySeed ^ BRANCH_SEED);
+
+        BoltStyle impactCore = new BoltStyle(core.red(), core.green(), core.blue(),
+                1.0F, core.width() * 0.76F);
+        renderImpactArcs(matrix, coreConsumer, end, seed ^ BRANCH_SEED,
+                beamLength, visibility, impactCore, coreCoverage,
+                entitySeed ^ SECONDARY_SEED);
     }
 
     private static float smoothStep(float value) {
@@ -84,7 +100,7 @@ public final class RaevyxBeamLightningRenderer {
 
     private static void renderImpactArcs(Matrix4f matrix, VertexConsumer consumer, Vec3 impact,
                                          long seed, float beamLength, float visibility,
-                                         BoltStyle glow, BoltStyle core) {
+                                         BoltStyle style, float coverage, long dissolveSeed) {
         RandomSource random = RandomSource.create(seed);
         int arcCount = 5;
         double impactScale = Mth.clamp(beamLength * 0.018D, 0.50D, 1.30D)
@@ -102,14 +118,8 @@ public final class RaevyxBeamLightningRenderer {
             float arcSpread = 0.10F + random.nextFloat() * 0.07F;
             long arcSeed = random.nextLong();
 
-            BoltStyle arcGlow = new BoltStyle(glow.red(), glow.green(), glow.blue(),
-                    glow.alpha() * 0.78F, glow.width() * 0.72F);
-            BoltStyle arcCore = new BoltStyle(core.red(), core.green(), core.blue(),
-                    core.alpha() * 0.88F, core.width() * 0.76F);
             renderStaticBolt(matrix, consumer, impact, arcEnd, arcSeed,
-                    arcSegments, arcSpread, arcGlow);
-            renderStaticBolt(matrix, consumer, impact, arcEnd, arcSeed,
-                    arcSegments, arcSpread, arcCore);
+                    arcSegments, arcSpread, style, coverage, dissolveSeed ^ arcSeed);
         }
     }
 
@@ -117,9 +127,10 @@ public final class RaevyxBeamLightningRenderer {
                                             Vec3 start, Vec3 end,
                                             long seed, long nextSeed, float morph,
                                             int segments, float spread,
-                                            BoltStyle style, boolean allowBranch) {
+                                            BoltStyle style, boolean allowBranch,
+                                            float coverage, long dissolveSeed) {
         Vec3[] points = generateMorphingCenterline(start, end, segments, spread, seed, nextSeed, morph);
-        renderPrism(matrix, consumer, points, style);
+        renderPrism(matrix, consumer, points, style, coverage, dissolveSeed);
 
         if (!allowBranch || segments < 6) {
             return;
@@ -146,18 +157,23 @@ public final class RaevyxBeamLightningRenderer {
                     2.20D
             );
             Vec3 branchEnd = branchStart.add(branchDirection.scale(branchLength));
+            float branchAlpha = style.alpha() >= 0.999F
+                    ? 1.0F
+                    : style.alpha() * 0.72F;
             BoltStyle branchStyle = new BoltStyle(style.red(), style.green(), style.blue(),
-                    style.alpha() * 0.72F, style.width() * 0.62F);
+                    branchAlpha, style.width() * 0.62F);
             renderStaticBolt(matrix, consumer, branchStart, branchEnd, random.nextLong(),
-                    Mth.clamp(segments / 2, 4, 8), Math.max(0.10F, spread * 0.68F), branchStyle);
+                    Mth.clamp(segments / 2, 4, 8), Math.max(0.10F, spread * 0.68F),
+                    branchStyle, coverage, dissolveSeed ^ branch);
         }
     }
 
     private static void renderStaticBolt(Matrix4f matrix, VertexConsumer consumer,
                                          Vec3 start, Vec3 end, long seed,
-                                         int segments, float spread, BoltStyle style) {
+                                         int segments, float spread, BoltStyle style,
+                                         float coverage, long dissolveSeed) {
         Vec3[] points = generateCenterline(start, end, segments, spread, RandomSource.create(seed));
-        renderPrism(matrix, consumer, points, style);
+        renderPrism(matrix, consumer, points, style, coverage, dissolveSeed);
     }
 
     private static Vec3[] generateMorphingCenterline(Vec3 start, Vec3 end, int segments,
@@ -194,7 +210,8 @@ public final class RaevyxBeamLightningRenderer {
     }
 
     private static void renderPrism(Matrix4f matrix, VertexConsumer consumer,
-                                    Vec3[] points, BoltStyle style) {
+                                    Vec3[] points, BoltStyle style,
+                                    float coverage, long dissolveSeed) {
         int segmentCount = points.length - 1;
         Vec3[][] rings = new Vec3[points.length][4];
         Vec3 previousAxis = null;
@@ -219,6 +236,9 @@ public final class RaevyxBeamLightningRenderer {
         }
 
         for (int i = 0; i < segmentCount; i++) {
+            if (!isSegmentVisible(coverage, dissolveSeed, i)) {
+                continue;
+            }
             for (int face = 0; face < 4; face++) {
                 int nextFace = (face + 1) & 3;
                 vertex(matrix, consumer, rings[i][face], style);
@@ -227,6 +247,22 @@ public final class RaevyxBeamLightningRenderer {
                 vertex(matrix, consumer, rings[i][nextFace], style);
             }
         }
+    }
+
+    private static boolean isSegmentVisible(float coverage, long seed, int segment) {
+        if (coverage >= 0.999F) {
+            return true;
+        }
+        if (coverage <= 0.001F) {
+            return false;
+        }
+
+        long mixed = seed + PHASE_SEED * (segment + 1L);
+        mixed = (mixed ^ (mixed >>> 30)) * 0xBF58476D1CE4E5B9L;
+        mixed = (mixed ^ (mixed >>> 27)) * 0x94D049BB133111EBL;
+        mixed ^= mixed >>> 31;
+        double sample = (mixed >>> 11) * 0x1.0p-53;
+        return sample < coverage;
     }
 
     private static Vec3 centerlineTangent(Vec3[] points, int index) {
@@ -291,8 +327,8 @@ public final class RaevyxBeamLightningRenderer {
     }
 
     private static final class BeamRenderType extends RenderType {
-        private static final RenderType INSTANCE = create(
-                "saintsdragons_raevyx_beam",
+        private static final RenderType TRANSLUCENT = create(
+                "saintsdragons_raevyx_beam_glow",
                 DefaultVertexFormat.POSITION_COLOR,
                 VertexFormat.Mode.QUADS,
                 2048,
@@ -305,6 +341,23 @@ public final class RaevyxBeamLightningRenderer {
                         .setCullState(NO_CULL)
                         .setWriteMaskState(COLOR_WRITE)
                         .setOutputState(TRANSLUCENT_TARGET)
+                        .createCompositeState(false)
+        );
+
+        private static final RenderType OPAQUE = create(
+                "saintsdragons_raevyx_beam_core",
+                DefaultVertexFormat.POSITION_COLOR,
+                VertexFormat.Mode.QUADS,
+                1024,
+                false,
+                false,
+                CompositeState.builder()
+                        .setShaderState(POSITION_COLOR_SHADER)
+                        .setTransparencyState(NO_TRANSPARENCY)
+                        .setDepthTestState(LEQUAL_DEPTH_TEST)
+                        .setCullState(NO_CULL)
+                        .setWriteMaskState(COLOR_DEPTH_WRITE)
+                        .setOutputState(MAIN_TARGET)
                         .createCompositeState(false)
         );
 

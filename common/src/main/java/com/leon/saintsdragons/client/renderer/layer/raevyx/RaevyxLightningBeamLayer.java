@@ -120,7 +120,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
                 : length;
         boolean isNightGold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         RaevyxBeamLightningRenderer.render(animatable, poseStack, bufferSource,
-                renderLength, visScale, ageInTicks, isNightGold);
+                renderLength, visScale, ageInTicks, isNightGold, !beaming);
         poseStack.popPose();
     }
 
