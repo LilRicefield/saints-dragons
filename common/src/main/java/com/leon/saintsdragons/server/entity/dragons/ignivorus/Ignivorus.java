@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
 import com.mojang.serialization.Dynamic;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -38,6 +39,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
+import com.leon.saintsdragons.server.entity.component.DragonRoostComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
@@ -47,6 +49,7 @@ import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -73,6 +76,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
@@ -80,6 +84,7 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.util.Mth;
 import net.minecraft.nbt.CompoundTag;
@@ -105,6 +110,10 @@ import java.util.function.Supplier;
 public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
         PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon {
     private static final IgnivorusBrain DRAGON_BRAIN = new IgnivorusBrain();
+    private static final ResourceKey<Structure> IGNIVORUS_ROOST_STRUCTURE = ResourceKey.create(
+            Registries.STRUCTURE,
+            SaintsDragonsCommon.rl("ignivorus_roost")
+    );
 
     @Override
     protected ResourceLocation getDragonAttributesId() {
@@ -262,6 +271,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final double BABY_MAX_HEALTH = 90.0D;
     private static final double BABY_ARMOR = 0.0D;
     private static final double GROUND_MOVEMENT_SPEED = 0.30D;
+    public static final double ROOST_SLEEP_RADIUS = 6.0D;
+    public static final double ROOST_TERRITORY_RADIUS = 64.0D;
+    public static final double ROOST_TERRITORY_RETURN_RADIUS = 48.0D;
+    public static final double ROOST_WANDER_RADIUS = 56.0D;
+    private static final int ROOST_SLEEP_SETTLE_TICKS = 60;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new DragonEntity.VocalEntryBuilder()
@@ -380,6 +394,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     );
     private long lastAiLandedAnimTick = -40L;
     private final ScreenShakeComponent screenShakeComponent;
+    private final DragonRoostComponent roostComponent = new DragonRoostComponent(
+            this,
+            IGNIVORUS_ROOST_STRUCTURE,
+            ROOST_SLEEP_RADIUS,
+            ROOST_TERRITORY_RADIUS,
+            ROOST_SLEEP_SETTLE_TICKS
+    );
     private float cinematicZoomProgress = 0.0F;
     private float prevCinematicZoomProgress = 0.0F;
     private static final int MIN_AMBIENT_DELAY = 180;
@@ -494,6 +515,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                                                  @Nullable SpawnGroupData spawnData,
                                                  @Nullable CompoundTag dataTag) {
         SpawnGroupData data = super.finalizeSpawn(level, difficulty, spawnType, spawnData, dataTag);
+        roostComponent.initializeHomeFromSpawn(level, spawnType);
         applyConfiguredAttributes();
         this.setHealth(this.getMaxHealth());
 
@@ -502,6 +524,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public void tick() {
+        if (!level().isClientSide) {
+            roostComponent.tick();
+        }
         super.tick();
 
         if (level() instanceof ServerLevel serverLevel) {
@@ -1443,7 +1468,33 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             var owner = getOwner();
             ownerSleeping = owner instanceof Player player && player.isSleeping();
         }
-        return !DragonEntity.DragonSleepPreferences.isNaturalDay(level()) || ownerSleeping;
+        return (!DragonEntity.DragonSleepPreferences.isNaturalDay(level()) || ownerSleeping)
+                && roostComponent.canSleepAtRoost();
+    }
+
+    @Override
+    public boolean wantsToReturnToSleepSite() {
+        return roostComponent.wantsToReturnToSleepSite();
+    }
+
+    public boolean hasRoostTerritory() {
+        return roostComponent.hasTerritory();
+    }
+
+    public boolean isWithinRoostTerritory(Vec3 position) {
+        return roostComponent.isWithinTerritory(position);
+    }
+
+    public boolean isWithinRoostWanderArea(Vec3 position) {
+        return roostComponent.isWithinTerritory(position, ROOST_WANDER_RADIUS);
+    }
+
+    public boolean isOutsideRoostTerritory() {
+        return roostComponent.isOutsideTerritory();
+    }
+
+    public boolean shouldSuspendRoostWandering() {
+        return roostComponent.shouldSuspendWandering();
     }
 
     @Override
@@ -2956,6 +3007,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (!level().isClientSide) {
+            roostComponent.restoreMemories();
+        }
         loadRideableData(tag);
         this.timeFlying = tag.getInt("TimeFlying");
         this.combatManager.loadFromNBT(tag);
