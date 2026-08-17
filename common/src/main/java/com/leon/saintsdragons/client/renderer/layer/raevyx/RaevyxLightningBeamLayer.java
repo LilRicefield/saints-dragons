@@ -25,8 +25,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final float BEAM_SHAKE_INTENSITY = 0.01F;
 
     private static final class BeamState {
-        float appear;
-        float disappear;
+        float visibility;
+        float lastRenderTime = Float.NaN;
         net.minecraft.world.phys.Vec3 lastMouth;
         net.minecraft.world.phys.Vec3 lastEnd;
         net.minecraft.world.phys.Vec3 smoothedEnd;
@@ -44,13 +44,19 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
         BeamState state = STATES.computeIfAbsent(animatable, k -> new BeamState());
         boolean beaming = animatable.isBeaming();
+        float ageInTicks = animatable.tickCount + partialTick;
+        float elapsedTicks = elapsedTicks(state, ageInTicks);
+
+        if (beaming) {
+            state.visibility = Mth.clamp(state.visibility + elapsedTicks / APPEAR_TICKS, 0.0F, 1.0F);
+        } else {
+            state.visibility = Mth.clamp(state.visibility - elapsedTicks / DISAPPEAR_TICKS, 0.0F, 1.0F);
+        }
 
         Vec3 mouthWorld;
         Vec3 end;
 
         if (beaming) {
-            state.disappear = 0f;
-            state.appear = Mth.clamp(state.appear + (1f / APPEAR_TICKS), 0f, 1f);
             Vec3 bonePos = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
             Vec3 computedPos = animatable.computeBeamStartFallback(partialTick);
             mouthWorld = bonePos != null ? bonePos : computedPos;
@@ -69,18 +75,19 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
                 state.smoothedEnd = targetEnd;
             }
 
-            float smoothFactor = isRiding ? 0.3f : 0.65f;
+            float smoothFactor = timeAdjustedSmoothing(isRiding ? 0.48F : 0.72F, elapsedTicks);
             state.smoothedEnd = lerpVec(state.smoothedEnd, targetEnd, smoothFactor);
             end = state.smoothedEnd;
 
             state.lastMouth = mouthWorld;
             state.lastEnd = end;
         } else {
-            if (state.lastMouth == null || state.lastEnd == null || (state.appear <= 0f && state.disappear >= 1f)) {
+            if (state.lastMouth == null || state.lastEnd == null || state.visibility <= 0.001F) {
+                state.lastMouth = null;
+                state.lastEnd = null;
+                state.smoothedEnd = null;
                 return;
             }
-            state.disappear = Mth.clamp(state.disappear + (1f / DISAPPEAR_TICKS), 0f, 1f);
-            state.appear = 0f;
             mouthWorld = state.lastMouth;
             end = state.lastEnd;
         }
@@ -95,7 +102,6 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 vec3 = rawBeamPosition.normalize();
         float xRot = (float) Math.acos(vec3.y);
         float yRot = (float) Math.atan2(vec3.z, vec3.x);
-        float ageInTicks = animatable.tickCount + partialTick;
         float shakeByX = (float) Math.sin(ageInTicks * 4F) * BEAM_SHAKE_INTENSITY;
         float shakeByY = (float) Math.sin(ageInTicks * 4F + 1.2F) * BEAM_SHAKE_INTENSITY;
         float shakeByZ = (float) Math.sin(ageInTicks * 4F + 2.4F) * BEAM_SHAKE_INTENSITY;
@@ -107,13 +113,33 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         poseStack.mulPose(Axis.YP.rotationDegrees(((Mth.PI / 2F) - yRot) * Mth.RAD_TO_DEG));
         poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
         poseStack.mulPose(Axis.ZP.rotationDegrees(45));
-        float visScale = beaming ? easeOutCubic(state.appear) : (1f - state.disappear);
+        float visScale = beaming ? easeOutCubic(state.visibility) : state.visibility;
         visScale = Mth.clamp(visScale, 0f, 1f);
-        float scaledLength = Math.max(0.001f, length * visScale);
+        float renderLength = beaming
+                ? Math.max(0.001F, length * visScale)
+                : length;
         boolean isNightGold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         RaevyxBeamLightningRenderer.render(animatable, poseStack, bufferSource,
-                scaledLength, visScale, isNightGold);
+                renderLength, visScale, ageInTicks, isNightGold);
         poseStack.popPose();
+    }
+
+    private static float elapsedTicks(BeamState state, float renderTime) {
+        if (Float.isNaN(state.lastRenderTime) || renderTime < state.lastRenderTime) {
+            state.lastRenderTime = renderTime;
+            return 0.0F;
+        }
+
+        float elapsed = Mth.clamp(renderTime - state.lastRenderTime, 0.0F, 20.0F);
+        state.lastRenderTime = renderTime;
+        return elapsed;
+    }
+
+    private static float timeAdjustedSmoothing(float smoothingPerTick, float elapsedTicks) {
+        if (elapsedTicks <= 0.0F) {
+            return 0.0F;
+        }
+        return 1.0F - (float) Math.pow(1.0F - smoothingPerTick, elapsedTicks);
     }
 
 
