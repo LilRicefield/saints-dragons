@@ -44,6 +44,7 @@ public final class AsyncDragonPathfinder {
     private static final int MAX_SWIM_ASTAR_VISITS = 50000;
     private static final int MAX_ASYNC_GROUND_ROUTE = 128;
     private static final int MAX_ASYNC_FLIGHT_ROUTE = 128;
+    private static final int MAX_GROUND_DETOUR_ALLOWANCE = 48;
     private static final int WORKER_COUNT = 2;
     private static final int MAX_QUEUED_PATHS = 32;
     private static final AtomicInteger WORKER_NUMBER = new AtomicInteger();
@@ -113,6 +114,15 @@ public final class AsyncDragonPathfinder {
                                                       int goalAccuracy,
                                                       boolean avoidWater,
                                                       Consumer<Path> callback) {
+        return calculateGroundPathAsync(dragon, target, goalAccuracy, avoidWater, 0, callback);
+    }
+
+    public static Future<?> calculateGroundPathAsync(Mob dragon,
+                                                      Vec3 target,
+                                                      int goalAccuracy,
+                                                      boolean avoidWater,
+                                                      int detourAllowance,
+                                                      Consumer<Path> callback) {
         MinecraftServer server = dragon.getServer();
         if (server == null) {
             return CompletableFuture.completedFuture(null);
@@ -160,14 +170,21 @@ public final class AsyncDragonPathfinder {
                     planningTargetPos.getY(),
                     planningTargetPos.getZ() - footprintOffset
             );
-            int maxStepUp = Mth.floor(Math.max(1.0F, dragon.maxUpStep()));
+            double maxStepHeight = Math.max(0.0D, dragon.maxUpStep());
+            int maxStepUp = Mth.floor(Math.max(1.0D, maxStepHeight));
             int maxDropDown = Math.max(1, dragon.getMaxFallDistance());
+            int boundedDetourAllowance = Mth.clamp(
+                    detourAllowance,
+                    0,
+                    MAX_GROUND_DETOUR_ALLOWANCE
+            );
             int searchRange = Mth.clamp(
-                    Mth.ceil(origin.distanceTo(planningTarget)) + 24,
+                    Mth.ceil(origin.distanceTo(planningTarget)) + 24 + boundedDetourAllowance,
                     32,
                     (int) maximumRoute
             );
-            int horizontalMargin = Math.max(8, Mth.ceil(dragon.getBbWidth()) + 4);
+            int horizontalMargin = Math.max(8, Mth.ceil(dragon.getBbWidth()) + 4)
+                    + boundedDetourAllowance;
             int verticalMargin = Math.max(8, Mth.ceil(dragon.getBbHeight()) + maxDropDown + 2);
             BlockPos minNode = new BlockPos(
                     Math.min(startNode.getX(), planningTargetNode.getX()) - horizontalMargin,
@@ -218,6 +235,7 @@ public final class AsyncDragonPathfinder {
                             maxNode,
                             footprintSize,
                             maxStepUp,
+                            maxStepHeight,
                             maxDropDown,
                             goalAccuracy,
                             searchRange,

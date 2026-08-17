@@ -1,18 +1,6 @@
 {
   "parent": "minecraft:recipes/root",
   "criteria": {
-    "has_minecraft_iron_ingot": {
-      "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "minecraft:iron_ingot"
-            ]
-          }
-        ]
-      }
-    },
     "has_saintsdragons_worldroot_ingot": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
@@ -28,7 +16,6 @@
   },
   "requirements": [
     [
-      "has_minecraft_iron_ingot",
       "has_saintsdragons_worldroot_ingot"
     ]
   ],

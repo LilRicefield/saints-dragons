@@ -112,8 +112,6 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
             if (focus != null) {
                 addCombatPlans(context, evaluation, target, focus, targetVisible, profile);
             }
-        } else if (investigation == null && context.memories().has(DragonMemories.HOME)) {
-            evaluation.add(DragonTactic.GUARD, 20, null, null, "home-available");
         }
 
         boolean sleepIntent = context.memories().get(DragonMemories.SLEEP_INTENT).orElse(false);

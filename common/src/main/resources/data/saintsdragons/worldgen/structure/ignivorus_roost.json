@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:jigsaw",
+  "start_pool": "saintsdragons:igni_roost_top_left",
+  "size": 3,
+  "max_distance_from_center": 80,
+  "terrain_adaptation": "beard_box",
+  "start_height": {
+    "absolute": 0
+  },
+  "project_start_to_heightmap": "WORLD_SURFACE_WG",
+  "start_jigsaw_name": "saintsdragons:igni_roost_top_left_east",
+  "use_expansion_hack": false,
+  "biomes": "#saintsdragons:has_igni_roost",
+  "step": "surface_structures",
+  "spawn_overrides": {}
+}

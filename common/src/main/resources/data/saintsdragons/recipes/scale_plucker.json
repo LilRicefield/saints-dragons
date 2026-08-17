@@ -1,15 +1,12 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " C ",
-    "C C",
-    "IC "
+    "   ",
+    " W ",
+    "W  "
   ],
   "key": {
-    "I": {
-      "item": "minecraft:iron_ingot"
-    },
-    "C": {
+    "W": {
       "item": "saintsdragons:worldroot_ingot"
     }
   },

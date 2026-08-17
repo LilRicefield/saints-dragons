@@ -10,9 +10,11 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehavio
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ReturnToRoostBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
+import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
@@ -21,6 +23,7 @@ import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -30,6 +33,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.level.pathfinder.Path;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +42,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 
@@ -152,8 +157,8 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
-                        + "onGround={} verticalCollision={} velocity={} "
+                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} roost={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
+                        + "onGround={} horizontalCollision={} verticalCollision={} fallDistance={} velocity={} groundNav={} groundPath={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
                         + "perception={} tactical={} pursuit={} coordination={} activity={} behaviours={}",
@@ -181,13 +186,20 @@ public final class DragonPathDebugTracker {
                 DragonEntity.HUNGER_MAX,
                 dragon.isHuntFoodPursuitActive(),
                 logState.sleep,
+                logState.roost,
                 logState.drinking,
                 logState.rescue,
                 logState.ownerFollow,
                 dragon.isWildAggressionEnabled(),
                 dragon.onGround(),
+                dragon.horizontalCollision,
                 dragon.verticalCollision,
+                dragon.fallDistance,
                 dragon.getDeltaMovement(),
+                groundNavigationSummary(dragon),
+                dragon instanceof RideableDragonBase rideable
+                        ? rideable.getAIMovement().getDebugGroundPathDetails()
+                        : "unsupported",
                 dragon.getNavigation().isDone(),
                 dragon.getNavigation().isStuck(),
                 snapshot.searchType(),
@@ -307,6 +319,71 @@ public final class DragonPathDebugTracker {
 
     private static @Nullable BlockPos blockPosition(@Nullable Vec3 position) {
         return position == null ? null : BlockPos.containing(position);
+    }
+
+    private static String groundNavigationSummary(DragonEntity dragon) {
+        Path path = dragon.getNavigation().getPath();
+        String nodeSummary = "none";
+        if (path != null && path.getNextNodeIndex() < path.getNodeCount()) {
+            int index = path.getNextNodeIndex();
+            var node = path.getNode(index);
+            Vec3 waypoint = path.getEntityPosAtNode(dragon, index);
+            Vec3 delta = waypoint.subtract(dragon.position());
+            nodeSummary = index + "@" + node.x + "," + node.y + "," + node.z
+                    + " waypoint=" + vectorSummary(waypoint)
+                    + " delta=" + vectorSummary(delta);
+        }
+
+        String navigationState = "gate=unknown,skipped=0,stall=0,issued=unknown";
+        if (dragon.getNavigation() instanceof PathNavigateGround groundNavigation) {
+            PathNavigateGround.DebugSnapshot debug = groundNavigation.getDebugSnapshot();
+            String issued = debug.moveCommandIssued()
+                    ? vectorSummary(debug.moveTarget()) + "@" + decimalSummary(debug.moveSpeed())
+                    : "none";
+            String finalTolerance = Float.isFinite(debug.finalWaypointTolerance())
+                    ? decimalSummary(debug.finalWaypointTolerance())
+                    : "default";
+            String ascentAssist = debug.blockedAscentJumpCount() > 0
+                    ? debug.blockedAscentJumpCount() + "@" + debug.lastBlockedAscentNode()
+                            + "/cd" + debug.blockedAscentJumpCooldown()
+                    : "none";
+            navigationState = "active=" + debug.pathActive()
+                    + ",gate=" + (debug.canUpdatePath() ? "open" : "blocked")
+                    + ",skipped=" + debug.skippedFollowTicks()
+                    + ",stall=" + debug.nodeStallTicks()
+                    + ",issued=" + issued
+                    + ",finalTol=" + finalTolerance
+                    + ",ascentAssist=" + ascentAssist;
+        }
+
+        AABB bounds = dragon.getBoundingBox();
+        double inset = Math.min(0.05D, Math.max(0.0D, dragon.getBbWidth() * 0.1D));
+        AABB supportProbe = new AABB(
+                bounds.minX + inset,
+                bounds.minY - 0.08D,
+                bounds.minZ + inset,
+                bounds.maxX - inset,
+                bounds.minY + 0.01D,
+                bounds.maxZ - inset
+        );
+        boolean hasSupport = !dragon.level().noCollision(dragon, supportProbe);
+        boolean bodyClear = dragon.level().noCollision(dragon, bounds.deflate(0.01D));
+        return navigationState
+                + ",node=" + nodeSummary
+                + ",support=" + hasSupport
+                + ",bodyClear=" + bodyClear
+                + ",noPhysics=" + dragon.noPhysics;
+    }
+
+    private static String vectorSummary(@Nullable Vec3 vector) {
+        if (vector == null) {
+            return "none";
+        }
+        return String.format(Locale.ROOT, "(%.2f,%.2f,%.2f)", vector.x, vector.y, vector.z);
+    }
+
+    private static String decimalSummary(double value) {
+        return String.format(Locale.ROOT, "%.2f", value);
     }
 
     private static List<String> runningBehaviours(DragonEntity dragon) {
@@ -436,10 +513,12 @@ public final class DragonPathDebugTracker {
                             int hunger,
                             boolean huntFoodPursuit,
                             boolean onGround,
+                            boolean horizontalCollision,
                             boolean verticalCollision,
                             boolean navigationDone,
                             boolean navigationStuck,
                             String sleep,
+                            String roost,
                             String drinking,
                             String rescue,
                             String ownerFollow,
@@ -479,10 +558,12 @@ public final class DragonPathDebugTracker {
                     dragon.getHunger(),
                     dragon.isHuntFoodPursuitActive(),
                     dragon.onGround(),
+                    dragon.horizontalCollision,
                     dragon.verticalCollision,
                     dragon.getNavigation().isDone(),
                     dragon.getNavigation().isStuck(),
                     sleepSummary(dragon),
+                    roostSummary(dragon),
                     drinkingSummary(dragon),
                     rescueSummary(dragon),
                     ownerFollowSummary(dragon),
@@ -558,6 +639,45 @@ public final class DragonPathDebugTracker {
                 + ",disturbance=" + disturbance + "/" + wakeDisturbance
                 + ",cause=" + dragon.getSleepDisturbanceCause()
                 + ",decision=" + dragon.getSleepDecision();
+    }
+
+    private static String roostSummary(DragonEntity dragon) {
+        ReturnToRoostBehaviour<?> roost = null;
+        for (DragonBrainDiagnostics.RegisteredBehaviour registered
+                : DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (registered.behaviour() instanceof ReturnToRoostBehaviour<?> returnToRoost) {
+                roost = returnToRoost;
+                break;
+            }
+            if (registered.behaviour() instanceof FirstApplicableDragonBehaviour<?> firstApplicable) {
+                for (var child : firstApplicable.childBehaviours()) {
+                    if (child instanceof ReturnToRoostBehaviour<?> returnToRoost) {
+                        roost = returnToRoost;
+                        break;
+                    }
+                }
+            }
+            if (roost != null) {
+                break;
+            }
+        }
+        if (roost == null) {
+            return "disabled";
+        }
+
+        Map<String, String> details = roost.getDragonBrainDebugDetails();
+        boolean ready = roost.cooldownRemaining(dragon.level().getGameTime()) == 0L;
+        GlobalPos home = dragon.getBrain().getMemory(DragonMemories.HOME).orElse(null);
+        GlobalPos sleepSite = dragon.getBrain().getMemory(DragonMemories.ROOST_SLEEP_POSITION).orElse(null);
+        return "phase=" + details.getOrDefault("phase", "unknown")
+                + ",reason=" + details.getOrDefault("reason", "unknown")
+                + ",retry=" + details.getOrDefault("route_retry", "false")
+                + ",failures=" + details.getOrDefault("ground_failures", "0")
+                + ",site=" + (sleepSite == null ? "none" : sleepSite.pos().toShortString())
+                + ",siteSource=" + (sleepSite == null
+                ? "none"
+                : sleepSite.equals(home) ? "home-fallback" : "dedicated")
+                + ",cooldown=" + (ready ? "ready" : "waiting");
     }
 
     private static String tacticalSummary(DragonEntity dragon) {

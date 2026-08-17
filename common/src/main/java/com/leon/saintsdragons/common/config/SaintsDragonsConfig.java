@@ -23,10 +23,6 @@ public final class SaintsDragonsConfig {
     public static final int CINDERVANE_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int CINDERVANE_MAX_GROUP_SIZE_DEFAULT = 3;
 
-    public static final int IGNIVORUS_SPAWN_WEIGHT_DEFAULT = 1;
-    public static final int IGNIVORUS_MIN_GROUP_SIZE_DEFAULT = 1;
-    public static final int IGNIVORUS_MAX_GROUP_SIZE_DEFAULT = 1;
-
     public static final int ATROXIIA_SPAWN_WEIGHT_DEFAULT = 1;
     public static final int ATROXIIA_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int ATROXIIA_MAX_GROUP_SIZE_DEFAULT = 1;
@@ -71,10 +67,6 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue CINDERVANE_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue CINDERVANE_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue CINDERVANE_MAX_GROUP_SIZE;
-
-    public static ConfigHelper.IntValue IGNIVORUS_SPAWN_WEIGHT;
-    public static ConfigHelper.IntValue IGNIVORUS_MIN_GROUP_SIZE;
-    public static ConfigHelper.IntValue IGNIVORUS_MAX_GROUP_SIZE;
 
     public static ConfigHelper.IntValue ATROXIIA_SPAWN_WEIGHT;
     public static ConfigHelper.IntValue ATROXIIA_MIN_GROUP_SIZE;
@@ -150,11 +142,6 @@ public final class SaintsDragonsConfig {
         CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", CINDERVANE_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         CINDERVANE_MIN_GROUP_SIZE = builder.defineInt("cindervaneMinGroupSize", CINDERVANE_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", CINDERVANE_MAX_GROUP_SIZE_DEFAULT, 1, 10);
-
-        builder.comment("Ignivorus spawn settings");
-        IGNIVORUS_SPAWN_WEIGHT = builder.defineInt("ignivorusSpawnWeight", IGNIVORUS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
-        IGNIVORUS_MIN_GROUP_SIZE = builder.defineInt("ignivorusMinGroupSize", IGNIVORUS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
-        IGNIVORUS_MAX_GROUP_SIZE = builder.defineInt("ignivorusMaxGroupSize", IGNIVORUS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Atroxiia spawn settings");
         ATROXIIA_SPAWN_WEIGHT = builder.defineInt("atroxiiaSpawnWeight", ATROXIIA_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);

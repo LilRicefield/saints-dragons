@@ -1,0 +1,15 @@
+{
+  "name": "saintsdragons:igni_roost_bottom_right",
+  "fallback": "minecraft:empty",
+  "elements": [
+    {
+      "weight": 1,
+      "element": {
+        "element_type": "minecraft:single_pool_element",
+        "location": "saintsdragons:igni_roost_bottom_right",
+        "processors": "minecraft:empty",
+        "projection": "rigid"
+      }
+    }
+  ]
+}

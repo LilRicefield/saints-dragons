@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,12 +41,14 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
     private static final double MAX_SHORE_HOME_DETOUR = 2.0D;
     private static final double MIN_SHORE_APPROACH_PROGRESS = 0.75D;
 
+    private final double arrivalRadius;
     private final double arrivalRadiusSqr;
     private final double territoryRadiusSqr;
     private final double territoryReturnRadiusSqr;
     private final float groundSpeedModifier;
     private final double swimSpeedModifier;
     private final float swimTurnSpeed;
+    private final double airSpeedModifier;
     @Nullable
     private ShoreTarget shoreTarget;
     private final Set<BlockPos> rejectedShoreTargets = new HashSet<>();
@@ -71,17 +74,37 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
                                   float groundSpeedModifier,
                                   double swimSpeedModifier,
                                   float swimTurnSpeed) {
+        this(
+                arrivalRadius,
+                territoryRadius,
+                territoryReturnRadius,
+                groundSpeedModifier,
+                swimSpeedModifier,
+                swimTurnSpeed,
+                groundSpeedModifier
+        );
+    }
+
+    public ReturnToRoostBehaviour(double arrivalRadius,
+                                  double territoryRadius,
+                                  double territoryReturnRadius,
+                                  float groundSpeedModifier,
+                                  double swimSpeedModifier,
+                                  float swimTurnSpeed,
+                                  double airSpeedModifier) {
         super(Map.of(
                 DragonMemories.HOME, MemoryStatus.VALUE_PRESENT,
                 DragonMemories.ROOST_SLEEP_POSITION, MemoryStatus.REGISTERED,
                 DragonMemories.MOVEMENT_INTENT, MemoryStatus.REGISTERED
         ));
+        this.arrivalRadius = arrivalRadius;
         this.arrivalRadiusSqr = arrivalRadius * arrivalRadius;
         this.territoryRadiusSqr = territoryRadius * territoryRadius;
         this.territoryReturnRadiusSqr = territoryReturnRadius * territoryReturnRadius;
         this.groundSpeedModifier = groundSpeedModifier;
         this.swimSpeedModifier = swimSpeedModifier;
         this.swimTurnSpeed = swimTurnSpeed;
+        this.airSpeedModifier = airSpeedModifier;
     }
 
     @Override
@@ -106,7 +129,9 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         if (!returningToTerritory && isOutsideTerritory(context, territoryRadiusSqr)) {
             returningToTerritory = true;
         }
-        return returningToTerritory && isOutsideTerritory(context, territoryReturnRadiusSqr);
+        return returningToTerritory
+                && (context.dragon().isAerial()
+                || isOutsideTerritory(context, territoryReturnRadiusSqr));
     }
 
     @Override
@@ -142,14 +167,16 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
 
     @Override
     protected void stop(DragonBrainContext<T> context) {
-        boolean returningForSleep = shouldReturnForSleep(context);
-        setReturnPhase(
-                context,
-                ReturnPhase.INACTIVE,
-                "behaviour-stopped",
-                returningForSleep,
-                getDestination(context, returningForSleep)
-        );
+        if (!routeRetryRequested) {
+            boolean returningForSleep = shouldReturnForSleep(context);
+            setReturnPhase(
+                    context,
+                    ReturnPhase.INACTIVE,
+                    "behaviour-stopped",
+                    returningForSleep,
+                    getDestination(context, returningForSleep)
+            );
+        }
         stopReturnMovement(context);
     }
 
@@ -184,6 +211,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
     private boolean needsSleepReturnMovement(DragonBrainContext<T> context) {
         GlobalPos destination = getDestination(context, true);
         return context.dragon().isInWaterOrBubble()
+                || context.dragon().isAerial()
                 || destination.pos().distSqr(context.dragon().blockPosition()) > arrivalRadiusSqr;
     }
 
@@ -202,6 +230,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         boolean needsMovement = returningForSleep
                 ? needsSleepReturnMovement(context)
                 : dragon.isInWaterOrBubble()
+                        || dragon.isAerial()
                         || isOutsideTerritory(context, territoryReturnRadiusSqr);
         if (!needsMovement) {
             setReturnPhase(
@@ -358,6 +387,28 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         approachingShore = false;
         dragon.getAiSwimController().stop();
 
+        if (dragon instanceof RideableFlyingDragon && dragon.isAerial()) {
+            Vec3 landingTarget = Vec3.atBottomCenterOf(destination.pos());
+            if (returnPhase != ReturnPhase.AIR_ROUTE) {
+                clearGroundReturnMovement(context);
+            }
+            if (shouldIssueRouteIntent(context, ReturnPhase.AIR_ROUTE)) {
+                context.memories().set(
+                        DragonMemories.MOVEMENT_INTENT,
+                        DragonMovementIntent.transitionToGround(landingTarget, airSpeedModifier)
+                );
+            }
+            setReturnPhase(
+                    context,
+                    ReturnPhase.AIR_ROUTE,
+                    "flight-to-final-destination",
+                    returningForSleep,
+                    destination
+            );
+            logReturnState(context, returningForSleep, destination, false);
+            return;
+        }
+
         if (waterEntryTarget != null) {
             Vec3 waterEntryLand = waterEntryTarget.landPosition();
             if (dragon.getAIMovement().hasFailed()) {
@@ -403,11 +454,11 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
                 return;
             }
 
-            context.memories().erase(DragonMemories.WALK_TARGET);
-            beginGroundAttempt(dragon, waterEntryLand);
-            context.memories().set(
-                    DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.progressiveGround(waterEntryLand, groundSpeedModifier, false)
+            issueProgressiveGroundRouteIfNeeded(
+                    context,
+                    waterEntryLand,
+                    ReturnPhase.WATER_ENTRY_ROUTE,
+                    Double.NaN
             );
             setReturnPhase(
                     context,
@@ -450,11 +501,11 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
             return;
         }
 
-        context.memories().erase(DragonMemories.WALK_TARGET);
-        beginGroundAttempt(dragon, finalGroundTarget);
-        context.memories().set(
-                DragonMemories.MOVEMENT_INTENT,
-                DragonMovementIntent.progressiveGround(finalGroundTarget, groundSpeedModifier, false)
+        issueProgressiveGroundRouteIfNeeded(
+                context,
+                finalGroundTarget,
+                ReturnPhase.GROUND_ROUTE,
+                arrivalRadius
         );
         setReturnPhase(
                 context,
@@ -503,7 +554,9 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         shoreRescanTicks = 0;
         resetShoreApproachProgress();
         waterEntryTransitionTicks = 0;
-        groundRouteFailures = 0;
+        if (!routeRetryRequested) {
+            groundRouteFailures = 0;
+        }
         groundAttemptStartDistance = Double.NaN;
         exitingWater = false;
         approachingShore = false;
@@ -553,6 +606,33 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         if (Double.isNaN(groundAttemptStartDistance)) {
             groundAttemptStartDistance = Math.sqrt(dragon.position().distanceToSqr(target));
         }
+    }
+
+    private void issueProgressiveGroundRouteIfNeeded(DragonBrainContext<T> context,
+                                                     Vec3 target,
+                                                     ReturnPhase phase,
+                                                     double arrivalTolerance) {
+        if (!shouldIssueRouteIntent(context, phase)) {
+            return;
+        }
+
+        context.memories().erase(DragonMemories.WALK_TARGET);
+        beginGroundAttempt(context.dragon(), target);
+        DragonMovementIntent intent = Double.isFinite(arrivalTolerance) && arrivalTolerance > 0.0D
+                ? DragonMovementIntent.progressiveGround(
+                        target,
+                        groundSpeedModifier,
+                        false,
+                        arrivalTolerance
+                )
+                : DragonMovementIntent.progressiveGround(target, groundSpeedModifier, false);
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, intent);
+    }
+
+    private boolean shouldIssueRouteIntent(DragonBrainContext<T> context, ReturnPhase phase) {
+        return returnPhase != phase
+                || (!context.dragon().getAIMovement().isPathing()
+                && !context.memories().has(DragonMemories.MOVEMENT_INTENT));
     }
 
     private boolean retryGroundSegmentAfterProgress(DragonBrainContext<T> context,
@@ -1094,7 +1174,8 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
                 "exiting_water", Boolean.toString(exitingWater),
                 "approaching_shore", Boolean.toString(approachingShore),
                 "shore_target", shoreTarget == null ? "none" : shoreTarget.waterApproach().toString(),
-                "route_retry", Boolean.toString(routeRetryRequested)
+                "route_retry", Boolean.toString(routeRetryRequested),
+                "ground_failures", Integer.toString(groundRouteFailures)
         );
     }
 
@@ -1106,6 +1187,7 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
         SHORE_TRANSITION,
         WATER_ENTRY_ROUTE,
         WATER_ENTRY_TRANSITION,
+        AIR_ROUTE,
         GROUND_ROUTE,
         ROUTE_FAILED,
         ARRIVED

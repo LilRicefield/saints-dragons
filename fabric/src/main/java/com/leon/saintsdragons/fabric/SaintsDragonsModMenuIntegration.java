@@ -406,15 +406,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     null, null, true,
                     3, 1, 3);
 
-            addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.ignivorus"),
-                    () -> config.ignivorusSpawnWeight, value -> config.ignivorusSpawnWeight = value,
-                    () -> config.ignivorusMinGroupSize, value -> config.ignivorusMinGroupSize = value,
-                    () -> config.ignivorusMaxGroupSize, value -> config.ignivorusMaxGroupSize = value,
-                    null, null, true,
-                    SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT,
-                    SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT,
-                    SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
-
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.atroxiia"),
                     () -> config.atroxiiaSpawnWeight, value -> config.atroxiiaSpawnWeight = value,
                     () -> config.atroxiiaMinGroupSize, value -> config.atroxiiaMinGroupSize = value,

@@ -29,6 +29,7 @@ import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
+import com.leon.saintsdragons.server.entity.component.DragonRoostComponent;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers.*;
 import com.leon.saintsdragons.server.entity.ability.abilities.varasuchus.VarasuchusTailguardAbility;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -44,8 +45,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -72,7 +71,6 @@ import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -102,7 +100,13 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public static final double ROOST_TERRITORY_RADIUS = 48.0D;
     public static final double ROOST_TERRITORY_RETURN_RADIUS = 32.0D;
     private static final int ROOST_SLEEP_SETTLE_TICKS = 60;
-    private int roostSleepSettleTicks;
+    private final DragonRoostComponent roostComponent = new DragonRoostComponent(
+            this,
+            VARASUCHUS_ROOST_STRUCTURE,
+            ROOST_SLEEP_RADIUS,
+            ROOST_TERRITORY_RADIUS,
+            ROOST_SLEEP_SETTLE_TICKS
+    );
     public Varasuchus(EntityType<? extends Varasuchus> type, Level level) {
         super(type, level);
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
@@ -110,8 +114,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
         this.setMaxUpStep(1.4F);
         this.groundNavigation = new PathNavigateGround(this, level);
-        this.landMoveControl = new RiftDrakeMoveControl(this);
-        this.landLookControl = new RiftDrakeLookController(this);
+        this.landMoveControl = new MoveControl(this);
+        this.landLookControl = new VarasuchusLookController(this);
         this.swimSteering = new GenericSwimSteeringController(this);
         this.asyncSwimController = new AsyncSwimController(this, this.swimSteering);
         this.navigation = this.groundNavigation;
@@ -166,39 +170,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
                                                  @Nullable SpawnGroupData spawnData,
                                                  @Nullable CompoundTag spawnTag) {
         SpawnGroupData data = super.finalizeSpawn(levelAccessor, difficulty, reason, spawnData, spawnTag);
-        if (reason == MobSpawnType.STRUCTURE) {
-            this.setPersistenceRequired();
-            GlobalPos home = GlobalPos.of(levelAccessor.getLevel().dimension(), this.blockPosition());
-            this.getBrain().setMemory(
-                    DragonMemories.HOME,
-                    home
-            );
-            ensureRoostSleepPosition(home);
-        }
+        roostComponent.initializeHomeFromSpawn(levelAccessor, reason);
         return data;
-    }
-
-    private void ensureRoostSleepPosition(GlobalPos home) {
-        Direction inwardDirection = this.getDirection().getClockWise();
-        GlobalPos existingPosition = getBrain().getMemory(DragonMemories.ROOST_SLEEP_POSITION)
-                .filter(position -> position.dimension().equals(home.dimension()))
-                .orElse(null);
-        if (existingPosition != null) {
-            int offsetX = existingPosition.pos().getX() - home.pos().getX();
-            int offsetZ = existingPosition.pos().getZ() - home.pos().getZ();
-            if (Math.abs(offsetX) >= Math.abs(offsetZ) && offsetX != 0) {
-                inwardDirection = offsetX > 0 ? Direction.EAST : Direction.WEST;
-            } else if (offsetZ != 0) {
-                inwardDirection = offsetZ > 0 ? Direction.SOUTH : Direction.NORTH;
-            }
-        }
-        getBrain().setMemory(
-                DragonMemories.ROOST_SLEEP_POSITION,
-                GlobalPos.of(
-                        home.dimension(),
-                        home.pos().relative(inwardDirection, 0)
-                )
-        );
     }
 
     private static final EntityDataAccessor<Boolean> DATA_SWIMMING = SynchedEntityData.defineId(Varasuchus.class, EntityDataSerializers.BOOLEAN);
@@ -266,7 +239,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private final AnimationController<Varasuchus> interactionController;
     private final PathNavigation groundNavigation;
     private final MoveControl landMoveControl;
-    private final RiftDrakeLookController landLookControl;
+    private final VarasuchusLookController landLookControl;
     private final GenericSwimSteeringController swimSteering;
     private final AsyncSwimController asyncSwimController;
     private boolean swimming;
@@ -685,6 +658,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public void tick() {
+        if (!level().isClientSide) {
+            roostComponent.tick();
+        }
         super.tick();
 
         if (level() instanceof ServerLevel serverLevel) {
@@ -701,7 +677,6 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
 
         if (!level().isClientSide) {
-            tickRoostSleepReadiness();
             tickLeapState();
             handleAmbientSounds();
             tickRiderControlLock();
@@ -1500,22 +1475,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.entityData.set(DATA_GOING_DOWN, goingDown);
     }
 
-    private static class RiftDrakeMoveControl extends MoveControl {
-
-        public RiftDrakeMoveControl(Varasuchus drake) {
-            super(drake);
-        }
-
-        @Override
-        public void tick() {
-            super.tick();
-        }
-    }
-
-    public static class RiftDrakeLookController extends LookControl {
+    public static class VarasuchusLookController extends LookControl {
         private final Varasuchus dragon;
 
-        public RiftDrakeLookController(Varasuchus dragon) {
+        public VarasuchusLookController(Varasuchus dragon) {
             super(dragon);
             this.dragon = dragon;
         }
@@ -1937,101 +1900,35 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public boolean wantsToReturnToSleepSite() {
-        return wantsToSleep()
-                || (!isTame()
-                        && hasRoostTerritory()
-                        && getSleepPreferences().canSleepDuringConditions(level()));
+        return roostComponent.wantsToReturnToSleepSite();
     }
 
     private boolean canSleepAtRoost() {
-        if (isTame()) {
-            return true;
-        }
-        GlobalPos sleepPosition = getRoostSleepPosition();
-        if (sleepPosition == null) {
-            return true;
-        }
-        boolean insideRoost = sleepPosition.dimension().equals(level().dimension())
-                && sleepPosition.pos().distSqr(blockPosition()) <= ROOST_SLEEP_RADIUS * ROOST_SLEEP_RADIUS;
-        return insideRoost
-                && (isSleeping() || isSleepTransitioning()
-                || roostSleepSettleTicks >= ROOST_SLEEP_SETTLE_TICKS);
-    }
-
-    private void tickRoostSleepReadiness() {
-        if (isTame()) {
-            roostSleepSettleTicks = 0;
-            return;
-        }
-
-        GlobalPos sleepPosition = getRoostSleepPosition();
-        boolean insideRoost = sleepPosition != null
-                && sleepPosition.dimension().equals(level().dimension())
-                && sleepPosition.pos().distSqr(blockPosition()) <= ROOST_SLEEP_RADIUS * ROOST_SLEEP_RADIUS;
-        if (insideRoost && (isSleeping() || isSleepTransitioning())) {
-            roostSleepSettleTicks = ROOST_SLEEP_SETTLE_TICKS;
-            return;
-        }
-
-        boolean settled = insideRoost
-                && getSleepPreferences().canSleepDuringConditions(level())
-                && onGround()
-                && !isInWaterOrBubble()
-                && getTarget() == null
-                && getActiveAbility() == null;
-        roostSleepSettleTicks = settled
-                ? Math.min(ROOST_SLEEP_SETTLE_TICKS, roostSleepSettleTicks + 1)
-                : 0;
+        return roostComponent.canSleepAtRoost();
     }
 
     public int getRoostSleepSettleTicks() {
-        return roostSleepSettleTicks;
-    }
-
-    @Nullable
-    private GlobalPos getRoostSleepPosition() {
-        return getBrain().getMemory(DragonMemories.ROOST_SLEEP_POSITION)
-                .orElseGet(() -> getBrain().getMemory(DragonMemories.HOME).orElse(null));
+        return roostComponent.getSleepSettleTicks();
     }
 
     public boolean hasRoostTerritory() {
-        GlobalPos home = getBrain().getMemory(DragonMemories.HOME).orElse(null);
-        return !isTame()
-                && home != null
-                && home.dimension().equals(level().dimension());
+        return roostComponent.hasTerritory();
     }
 
     public boolean isWithinRoostTerritory(Vec3 position) {
-        GlobalPos home = getBrain().getMemory(DragonMemories.HOME).orElse(null);
-        if (isTame() || home == null || !home.dimension().equals(level().dimension())) {
-            return true;
-        }
-        double dx = position.x - (home.pos().getX() + 0.5D);
-        double dz = position.z - (home.pos().getZ() + 0.5D);
-        return dx * dx + dz * dz <= ROOST_TERRITORY_RADIUS * ROOST_TERRITORY_RADIUS;
+        return roostComponent.isWithinTerritory(position);
     }
 
     public boolean isInsideRoostStructure(Vec3 position) {
-        if (!hasRoostTerritory()
-                || !isWithinRoostTerritory(position)
-                || !(level() instanceof ServerLevel serverLevel)) {
-            return false;
-        }
-        StructureStart roost = serverLevel.structureManager().getStructureWithPieceAt(
-                BlockPos.containing(position),
-                VARASUCHUS_ROOST_STRUCTURE
-        );
-        return roost != null && roost.isValid();
+        return roostComponent.isInsideStructure(position);
     }
 
     public boolean isOutsideRoostTerritory() {
-        return hasRoostTerritory() && !isWithinRoostTerritory(position());
+        return roostComponent.isOutsideTerritory();
     }
 
     public boolean shouldSuspendRoostWandering() {
-        return hasRoostTerritory()
-                && (isOutsideRoostTerritory()
-                || getSleepPreferences().canSleepDuringConditions(level()));
+        return roostComponent.shouldSuspendWandering();
     }
 
     private void tickScreenShake() {
@@ -2090,7 +1987,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public void readAdditionalSaveData(@NotNull CompoundTag tag) {
         super.readAdditionalSaveData(tag);
         if (!level().isClientSide) {
-            getBrain().getMemory(DragonMemories.HOME).ifPresent(this::ensureRoostSleepPosition);
+            roostComponent.restoreMemories();
         }
         loadRideableData(tag);
         if (tag.contains("FeedingCooldownTicks")) {

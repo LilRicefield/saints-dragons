@@ -1,0 +1,15 @@
+{
+  "structures": [
+    { 
+      "structure": "saintsdragons:ignivorus_roost", 
+      "weight": 1 
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 60,
+    "separation": 20,
+    "spread_type": "linear",
+    "salt": 14739282
+  }
+}

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBe
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Ignivorus> {
     public IgnivorusAutonomousFlightBehaviour() {
@@ -16,6 +17,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
                 || dragon.isTame()
                 || dragon.isAiSpecialCombatActive()
                 || dragon.isPhase2Active()
+                || dragon.shouldSuspendRoostWandering()
                 || dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava()) {
@@ -31,6 +33,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
                 || dragon.isTame()
                 || dragon.isAiSpecialCombatActive()
                 || dragon.isPhase2Active()
+                || dragon.shouldSuspendRoostWandering()
                 || dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava()) {
@@ -44,6 +47,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
     protected boolean shouldLandWhenAutonomousFlightBlocked(Ignivorus dragon) {
         return dragon.isTame()
                 || dragon.isPhase2Active()
+                || dragon.shouldSuspendRoostWandering()
                 || dragon.isInWater()
                 || dragon.isInWaterOrBubble()
                 || dragon.isInLava();
@@ -51,16 +55,26 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
 
     @Override
     protected double getCruiseMinRange(Ignivorus dragon) {
-        return 50.0D;
+        return 16.0D;
     }
 
     @Override
     protected double getCruiseExtraRange(Ignivorus dragon) {
-        return 70.0D;
+        return Ignivorus.ROOST_WANDER_RADIUS - getCruiseMinRange(dragon);
     }
 
     @Override
     protected double getMaxHeightAboveGround(Ignivorus dragon) {
         return 60.0D;
+    }
+
+    @Override
+    protected int getCruiseTargetAttempts(Ignivorus dragon) {
+        return 10;
+    }
+
+    @Override
+    protected boolean isCruiseTargetAllowed(Ignivorus dragon, Vec3 cruiseTarget) {
+        return dragon.isWithinRoostWanderArea(cruiseTarget);
     }
 }

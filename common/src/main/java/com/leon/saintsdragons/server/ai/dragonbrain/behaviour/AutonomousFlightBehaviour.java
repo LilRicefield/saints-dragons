@@ -201,25 +201,41 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     }
 
     protected Vec3 findCruiseTarget(T dragon) {
-        currentCruiseDive = false;
-        Vec3 cruiseTarget = dragon.findStandardAiFlightTarget(
-                getCruiseTurnDegrees(dragon),
-                getCruiseMinRange(dragon),
-                getCruiseExtraRange(dragon),
-                getMaxHeightAboveGround(dragon),
-                dragon.isFlightControllerStuck()
-        );
-        if (cruiseTarget == null || !shouldUseAutonomousDiveTarget(dragon, cruiseTarget)) {
-            return adjustCruiseTarget(dragon, cruiseTarget);
+        int attempts = Math.max(1, getCruiseTargetAttempts(dragon));
+        for (int attempt = 0; attempt < attempts; attempt++) {
+            currentCruiseDive = false;
+            Vec3 cruiseTarget = dragon.findStandardAiFlightTarget(
+                    getCruiseTurnDegrees(dragon),
+                    getCruiseMinRange(dragon),
+                    getCruiseExtraRange(dragon),
+                    getMaxHeightAboveGround(dragon),
+                    dragon.isFlightControllerStuck()
+            );
+            Vec3 target = adjustCruiseTarget(dragon, cruiseTarget);
+            if (cruiseTarget != null && shouldUseAutonomousDiveTarget(dragon, cruiseTarget)) {
+                Vec3 diveTarget = buildAutonomousDiveTarget(dragon, cruiseTarget);
+                currentCruiseDive = diveTarget != cruiseTarget;
+                target = adjustCruiseTarget(dragon, diveTarget);
+            }
+            if (target != null && isCruiseTargetAllowed(dragon, target)) {
+                return target;
+            }
         }
 
-        Vec3 diveTarget = buildAutonomousDiveTarget(dragon, cruiseTarget);
-        currentCruiseDive = diveTarget != cruiseTarget;
-        return adjustCruiseTarget(dragon, diveTarget);
+        currentCruiseDive = false;
+        return null;
     }
 
     protected Vec3 adjustCruiseTarget(T dragon, Vec3 cruiseTarget) {
         return cruiseTarget;
+    }
+
+    protected int getCruiseTargetAttempts(T dragon) {
+        return 1;
+    }
+
+    protected boolean isCruiseTargetAllowed(T dragon, Vec3 cruiseTarget) {
+        return true;
     }
 
     protected double getCruiseSpeed(Vec3 targetPosition) {

@@ -21,7 +21,9 @@ import java.util.function.Predicate;
 
 public final class DragonSwimWanderBehaviour<T extends RideableDragonBase & SemiAquaticDragon>
         extends DragonBehaviour<T> {
-    private static final int TARGET_ATTEMPTS = 6;
+    private static final int TARGET_ATTEMPTS_PER_RANGE = 6;
+    private static final int[] TARGET_SEARCH_RANGES = {96, 64, 40, 24, 12};
+    private static final int TARGET_VERTICAL_SEARCH = 12;
 
     private final float turnSpeed;
     private final double speedModifier;
@@ -128,48 +130,59 @@ public final class DragonSwimWanderBehaviour<T extends RideableDragonBase & Semi
     @Nullable
     private Vec3 findTarget(T dragon) {
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        for (int attempt = 0; attempt < TARGET_ATTEMPTS; attempt++) {
-            double angle = dragon.getRandom().nextDouble() * Math.PI * 2.0D;
-            double distance = 32.0D + dragon.getRandom().nextDouble() * 64.0D;
-            int x = Mth.floor(dragon.getX() + Math.cos(angle) * distance);
-            int z = Mth.floor(dragon.getZ() + Math.sin(angle) * distance);
-            int startY = Mth.floor(dragon.getY());
-            if (!areaLoaded(dragon, x, z, x, z)) {
-                continue;
-            }
-
-            cursor.set(x, startY, z);
-            int surfaceY = startY;
-            while (cursor.getY() < dragon.level().getMaxBuildHeight()
-                    && dragon.level().getFluidState(cursor).is(FluidTags.WATER)) {
-                surfaceY = cursor.getY();
-                cursor.move(0, 1, 0);
-            }
-            cursor.setY(startY);
-            int bottomY = startY;
-            while (cursor.getY() > dragon.level().getMinBuildHeight()
-                    && dragon.level().getFluidState(cursor).is(FluidTags.WATER)) {
-                bottomY = cursor.getY();
-                cursor.move(0, -1, 0);
-            }
-            int minY = bottomY + 3;
-            int maxY = surfaceY - 1;
-            if (minY >= maxY) {
-                continue;
-            }
-            int y = dragon.getRandom().nextFloat() < 0.25F
-                    ? Math.max(minY, maxY - 2)
-                    : minY + dragon.getRandom().nextInt(maxY - minY + 1);
-            cursor.set(x, y, z);
-            if (!dragon.level().getFluidState(cursor).is(FluidTags.WATER)) {
-                continue;
-            }
-            Vec3 candidate = new Vec3(x + 0.5D, y, z + 0.5D);
-            if (targetFilter.test(dragon, candidate)) {
-                return candidate;
+        int startY = Mth.floor(dragon.getY());
+        for (int maxDistance : TARGET_SEARCH_RANGES) {
+            double minDistance = Math.max(4.0D, maxDistance * 0.5D);
+            for (int attempt = 0; attempt < TARGET_ATTEMPTS_PER_RANGE; attempt++) {
+                double angle = dragon.getRandom().nextDouble() * Math.PI * 2.0D;
+                double distance = minDistance
+                        + dragon.getRandom().nextDouble() * (maxDistance - minDistance);
+                int x = Mth.floor(dragon.getX() + Math.cos(angle) * distance);
+                int z = Mth.floor(dragon.getZ() + Math.sin(angle) * distance);
+                Vec3 candidate = findWaterTargetInColumn(dragon, cursor, x, z, startY);
+                if (candidate != null && targetFilter.test(dragon, candidate)) {
+                    return candidate;
+                }
             }
         }
         return null;
+    }
+
+    @Nullable
+    private Vec3 findWaterTargetInColumn(T dragon,
+                                         BlockPos.MutableBlockPos cursor,
+                                         int x,
+                                         int z,
+                                         int startY) {
+        if (!areaLoaded(dragon, x, z, x, z)) {
+            return null;
+        }
+
+        int minY = Math.max(dragon.level().getMinBuildHeight() + 1, startY - TARGET_VERTICAL_SEARCH);
+        int maxY = Math.min(dragon.level().getMaxBuildHeight() - 2, startY + TARGET_VERTICAL_SEARCH);
+        int topWaterY = Integer.MIN_VALUE;
+        int bottomWaterY = Integer.MIN_VALUE;
+        for (int y = maxY; y >= minY; y--) {
+            cursor.set(x, y, z);
+            boolean usableWater = dragon.level().getFluidState(cursor).is(FluidTags.WATER)
+                    && dragon.level().getBlockState(cursor)
+                    .getCollisionShape(dragon.level(), cursor).isEmpty();
+            if (usableWater) {
+                if (topWaterY == Integer.MIN_VALUE) {
+                    topWaterY = y;
+                }
+                bottomWaterY = y;
+            } else if (topWaterY != Integer.MIN_VALUE) {
+                break;
+            }
+        }
+        if (topWaterY == Integer.MIN_VALUE) {
+            return null;
+        }
+
+        int lowerTargetY = Math.max(bottomWaterY, topWaterY - 2);
+        int targetY = lowerTargetY + dragon.getRandom().nextInt(topWaterY - lowerTargetY + 1);
+        return new Vec3(x + 0.5D, targetY + 0.5D, z + 0.5D);
     }
 
     private boolean isObstructed(T dragon, Vec3 from, Vec3 to) {

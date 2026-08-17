@@ -56,6 +56,7 @@ final class AsyncGroundPathSearch {
     private final BlockPos maxNode;
     private final double pathOffset;
     private final int maxStepUp;
+    private final double maxStepHeight;
     private final int maxDropDown;
     private final int goalAccuracy;
     private final double maxRange;
@@ -74,6 +75,7 @@ final class AsyncGroundPathSearch {
                           BlockPos maxNode,
                           int footprintSize,
                           int maxStepUp,
+                          double maxStepHeight,
                           int maxDropDown,
                           int goalAccuracy,
                           double maxRange,
@@ -92,6 +94,7 @@ final class AsyncGroundPathSearch {
                 maxNode,
                 footprintSize,
                 maxStepUp,
+                maxStepHeight,
                 maxDropDown,
                 goalAccuracy,
                 maxRange,
@@ -110,6 +113,7 @@ final class AsyncGroundPathSearch {
                           BlockPos maxNode,
                           int footprintSize,
                           int maxStepUp,
+                          double maxStepHeight,
                           int maxDropDown,
                           int goalAccuracy,
                           double maxRange,
@@ -137,6 +141,7 @@ final class AsyncGroundPathSearch {
                 targetPos.getZ() - footprintOffset
         );
         this.maxStepUp = Math.max(0, maxStepUp);
+        this.maxStepHeight = Math.max(0.0D, maxStepHeight);
         this.maxDropDown = Math.max(1, maxDropDown);
         this.goalAccuracy = Math.max(0, goalAccuracy);
         this.maxRange = Math.max(1.0D, maxRange);
@@ -262,7 +267,10 @@ final class AsyncGroundPathSearch {
             return;
         }
         NodeEvaluation evaluation = evaluateNode(neighbor);
-        double verticalDifference = neighbor.getY() - currentPos.getY();
+        double verticalDifference = standingEntityPosition(neighbor, evaluation).y
+                - (current.key() == startKey
+                ? this.origin.y
+                : standingEntityPosition(currentPos, evaluateNode(currentPos)).y);
         double stepCost = diagonal ? SQRT_TWO : 1.0D;
         if (verticalDifference > 0.0D) {
             stepCost += verticalDifference * 0.75D;
@@ -358,13 +366,22 @@ final class AsyncGroundPathSearch {
                                       long currentKey,
                                       BlockPos current,
                                       BlockPos candidate) {
-        Vec3 from = currentKey == startKey ? this.origin : entityPosition(current);
-        Vec3 to = entityPosition(candidate);
+        NodeEvaluation candidateEvaluation = evaluateNode(candidate);
+        if (!candidateEvaluation.usable()) {
+            return false;
+        }
+        Vec3 from = currentKey == startKey
+                ? this.origin
+                : standingEntityPosition(current, evaluateNode(current));
+        Vec3 to = standingEntityPosition(candidate, candidateEvaluation);
         AABB startBox = this.relativeBounds.move(from);
         double dy = to.y - from.y;
         Vec3 horizontal = new Vec3(to.x - from.x, 0.0D, to.z - from.z);
 
         if (dy > 1.0E-7D) {
+            if (dy > this.maxStepHeight + SUPPORT_EPSILON) {
+                return false;
+            }
             Vec3 lift = new Vec3(0.0D, dy, 0.0D);
             return this.terrain.isClear(startBox, lift)
                     && this.terrain.isClear(startBox.move(lift), horizontal);
@@ -378,22 +395,35 @@ final class AsyncGroundPathSearch {
 
     private NodeEvaluation evaluateNode(BlockPos node) {
         return this.nodeEvaluations.computeIfAbsent(node.asLong(), ignored -> {
-            AABB body = bodyAt(node);
+            AABB nominalBody = bodyAt(node);
+            if (!this.terrain.isClear(nominalBody, Vec3.ZERO)
+                    || this.terrain.intersectsLava(nominalBody)) {
+                return NodeEvaluation.BLOCKED;
+            }
+            boolean nominalWater = this.terrain.intersectsWater(nominalBody);
+            double supportHeight = nominalWater
+                    ? Double.NEGATIVE_INFINITY
+                    : this.terrain.supportHeight(nominalBody);
+            boolean climbable = this.terrain.isClimbable(nominalBody);
+            double standingOffset = Double.isFinite(supportHeight)
+                    ? supportHeight - nominalBody.minY
+                    : 0.0D;
+            AABB body = nominalBody.move(0.0D, standingOffset, 0.0D);
             if (!this.terrain.isClear(body, Vec3.ZERO) || this.terrain.intersectsLava(body)) {
                 return NodeEvaluation.BLOCKED;
             }
-            boolean water = this.terrain.intersectsWater(body);
+            boolean water = nominalWater || this.terrain.intersectsWater(body);
             if (water && !this.allowWater) {
                 return NodeEvaluation.BLOCKED;
             }
-            if (!water && !this.terrain.hasSupport(body) && !this.terrain.isClimbable(body)) {
+            if (!water && !Double.isFinite(supportHeight) && !climbable) {
                 return NodeEvaluation.BLOCKED;
             }
             double malus = this.terrain.malus(body) + (water ? this.waterMalus : 0.0D);
             if (!Double.isFinite(malus)) {
                 return NodeEvaluation.BLOCKED;
             }
-            return new NodeEvaluation(true, water, malus);
+            return new NodeEvaluation(true, water, malus, standingOffset);
         });
     }
 
@@ -481,6 +511,10 @@ final class AsyncGroundPathSearch {
         return new Vec3(node.getX() + this.pathOffset, node.getY(), node.getZ() + this.pathOffset);
     }
 
+    private Vec3 standingEntityPosition(BlockPos node, NodeEvaluation evaluation) {
+        return entityPosition(node).add(0.0D, evaluation.standingOffset(), 0.0D);
+    }
+
     private AABB bodyAt(BlockPos node) {
         return this.relativeBounds.move(entityPosition(node));
     }
@@ -488,7 +522,7 @@ final class AsyncGroundPathSearch {
     interface TerrainView {
         boolean isClear(AABB startBox, Vec3 movement);
 
-        boolean hasSupport(AABB body);
+        double supportHeight(AABB body);
 
         boolean intersectsWater(AABB body);
 
@@ -522,7 +556,7 @@ final class AsyncGroundPathSearch {
         }
 
         @Override
-        public boolean hasSupport(AABB body) {
+        public double supportHeight(AABB body) {
             int minX = floorInside(body.minX);
             int maxX = floorInside(body.maxX - SUPPORT_EPSILON);
             int minY = floorInside(body.minY - MAX_SUPPORT_GAP);
@@ -530,6 +564,7 @@ final class AsyncGroundPathSearch {
             int minZ = floorInside(body.minZ);
             int maxZ = floorInside(body.maxZ - SUPPORT_EPSILON);
             BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+            double highestSupport = Double.NEGATIVE_INFINITY;
             for (int x = minX; x <= maxX; x++) {
                 for (int y = minY; y <= maxY; y++) {
                     for (int z = minZ; z <= maxZ; z++) {
@@ -542,13 +577,13 @@ final class AsyncGroundPathSearch {
                             if (gap >= -SUPPORT_EPSILON
                                     && gap <= MAX_SUPPORT_GAP
                                     && overlapsHorizontally(body, obstacle)) {
-                                return true;
+                                highestSupport = Math.max(highestSupport, obstacle.maxY);
                             }
                         }
                     }
                 }
             }
-            return false;
+            return highestSupport;
         }
 
         @Override
@@ -641,8 +676,11 @@ final class AsyncGroundPathSearch {
         }
     }
 
-    private record NodeEvaluation(boolean usable, boolean water, double malus) {
-        private static final NodeEvaluation BLOCKED = new NodeEvaluation(false, false, 0.0D);
+    private record NodeEvaluation(boolean usable,
+                                  boolean water,
+                                  double malus,
+                                  double standingOffset) {
+        private static final NodeEvaluation BLOCKED = new NodeEvaluation(false, false, 0.0D, 0.0D);
     }
 
     private record OpenNode(long key, double gScore, double hScore, double fScore) {

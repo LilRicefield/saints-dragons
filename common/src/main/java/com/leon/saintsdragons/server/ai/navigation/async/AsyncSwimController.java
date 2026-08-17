@@ -141,6 +141,7 @@ public class AsyncSwimController {
         cancelActivePathRequest();
         resetStuckDetector();
         this.steering.slow(0.8D);
+        this.steering.resetFromMob();
     }
 
     public void pause() {

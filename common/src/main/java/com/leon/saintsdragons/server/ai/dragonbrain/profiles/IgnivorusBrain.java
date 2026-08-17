@@ -5,22 +5,7 @@ import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ApplyMovementIntentBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AsyncWaterChaseTargetBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowOwnerBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonGroundWanderBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.LookAtAttackTargetBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.MoveToGroundWalkTargetBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.*;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus.IgnivorusAirCombatBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus.IgnivorusAutonomousFlightBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus.IgnivorusGroundCombatBehaviour;
@@ -117,6 +102,15 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                 Ignivorus.BREED_PARTNER_RANGE,
                                                 Ignivorus.BREED_DISTANCE_SQR
                                         ),
+                                        new ReturnToRoostBehaviour<>(
+                                                Ignivorus.ROOST_SLEEP_RADIUS,
+                                                Ignivorus.ROOST_TERRITORY_RADIUS,
+                                                Ignivorus.ROOST_TERRITORY_RETURN_RADIUS,
+                                                1.0F,
+                                                0.25D,
+                                                8.0F,
+                                                1.5D
+                                        ),
                                         new DragonFollowOwnerBehaviour<Ignivorus>(
                                                 DragonFollowOwnerBehaviour.Config.ignivorus(),
                                                 dragon -> dragon.startTakeoffSequence(
@@ -129,7 +123,14 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                 DragonDrinkBehaviour.Config.standard().withSearchRadius(20)
                                         ),
                                         new IgnivorusAutonomousFlightBehaviour(),
-                                        new DragonGroundWanderBehaviour<>(1.0D, 120)
+                                        new DragonGroundWanderBehaviour<>(
+                                                1.0D,
+                                                120,
+                                                10,
+                                                dragon -> !dragon.isInWaterOrBubble()
+                                                        && !dragon.shouldSuspendRoostWandering(),
+                                                Ignivorus::isWithinRoostWanderArea
+                                        )
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)

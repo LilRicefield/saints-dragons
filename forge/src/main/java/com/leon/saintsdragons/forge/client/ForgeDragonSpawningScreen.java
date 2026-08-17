@@ -35,7 +35,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             case STEGONAUT -> addStegonautEntries(entries);
             case CINDERVANE -> addCindervaneEntries(entries);
             case NULLJAW -> addNulljawEntries(entries);
-            case IGNIVORUS -> addIgnivorusEntries(entries);
             case VOLITANS -> addVolitansEntries(entries);
             case ATROXIIA -> addAtroxiiaEntries(entries);
             case OTHER -> addOtherEntries(entries);
@@ -186,23 +185,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE::save));
     }
 
-    private void addIgnivorusEntries(List<ConfigEntry> entries) {
-        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.ignivorus")));
-        entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
-        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.weight"),
-                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT::get,
-                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT::set,
-                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT::save));
-        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.min_group"),
-                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE::get,
-                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE::set,
-                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE::save));
-        entries.add(new IntEntry(Component.translatable("config.saintsdragons.spawn.max_group"),
-                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE::get,
-                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE::set,
-                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE::save));
-    }
-
     private void addNulljawEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.nulljaw")));
         entries.add(new SectionEntry(Component.translatable("config.saintsdragons.spawn.note.common")));
@@ -327,14 +309,7 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
                 SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.save();
                 SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.save();
             }
-            case IGNIVORUS -> {
-                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.set(SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT_DEFAULT);
-                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.set(SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE_DEFAULT);
-                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.set(SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE_DEFAULT);
-                SaintsDragonsConfig.IGNIVORUS_SPAWN_WEIGHT.save();
-                SaintsDragonsConfig.IGNIVORUS_MIN_GROUP_SIZE.save();
-                SaintsDragonsConfig.IGNIVORUS_MAX_GROUP_SIZE.save();
-            }
+
             case VOLITANS -> {
                 SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.set(SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT);
                 SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.set(SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT_DEFAULT);
