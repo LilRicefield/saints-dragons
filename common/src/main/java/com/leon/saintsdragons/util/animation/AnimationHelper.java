@@ -110,6 +110,12 @@ public final class AnimationHelper {
             return PlayState.STOP;
         }
 
+        if (specialStates.tamingStunned(dragon)) {
+            controller.transitionLength(transitions.idle());
+            setAndContinue(state, animations.stunned());
+            return PlayState.CONTINUE;
+        }
+
         if (specialStates.riderControlsLocked(dragon)) {
             return PlayState.STOP;
         }
@@ -157,12 +163,6 @@ public final class AnimationHelper {
         if (specialStates.falling(dragon)) {
             controller.transitionLength(transitions.falling());
             setAndContinue(state, animations.falling());
-            return PlayState.CONTINUE;
-        }
-
-        if (specialStates.tamingStunned(dragon)) {
-            controller.transitionLength(transitions.idle());
-            setAndContinue(state, animations.stunned());
             return PlayState.CONTINUE;
         }
 

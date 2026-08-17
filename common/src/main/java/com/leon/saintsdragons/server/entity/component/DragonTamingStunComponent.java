@@ -1,10 +1,12 @@
 package com.leon.saintsdragons.server.entity.component;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -20,6 +22,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
     private int stunTimeoutTicks = 0;
 
     private static final int STUN_TIMEOUT = 20 * 30; // 30 seconds
+    private static final double FORCED_DESCENT_PER_TICK = 0.42D;
 
     protected DragonTamingStunComponent(T dragon) {
         this.dragon = dragon;
@@ -145,14 +148,29 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         }
     }
 
-    /**
-     * Extra per-tick grounding guard for callers that want guaranteed airborne-drop behavior.
-     */
     public void enforceGroundingTick() {
         if (dragon.level().isClientSide || !isTamingStunned()) {
             return;
         }
-        enforceGroundedStunPhysics();
+
+        boolean descending = enforceGroundedStunPhysics();
+        Vec3 requestedMovement = Vec3.ZERO;
+        if (descending) {
+            requestedMovement = new Vec3(0.0D, -FORCED_DESCENT_PER_TICK, 0.0D);
+            dragon.setDeltaMovement(requestedMovement);
+            dragon.move(MoverType.SELF, requestedMovement);
+
+            if (dragon.onGround()) {
+                dragon.setDeltaMovement(Vec3.ZERO);
+            } else {
+                dragon.setDeltaMovement(requestedMovement);
+            }
+            dragon.hasImpulse = true;
+            dragon.hurtMarked = true;
+        } else {
+            dragon.setDeltaMovement(Vec3.ZERO);
+        }
+
     }
 
     private void tickRecovery() {
@@ -234,15 +252,9 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         }
 
         boolean airborne = enforceGroundedStunPhysics();
-        // Keep AI unlocked while airborne so physics integration can move the dragon downward.
-        // Lock AI only once grounded to hold the stunned/downed posture.
+
         if (!dragon.level().isClientSide) {
-            if (airborne) {
-                if (aiLocked) {
-                    dragon.setNoAi(false);
-                    aiLocked = false;
-                }
-            } else if (!aiLocked) {
+            if (!aiLocked) {
                 dragon.setNoAi(true);
                 aiLocked = true;
             }
@@ -280,15 +292,20 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
 
         clearAerialStateForStun();
         stopActiveAbilitiesForStun();
+        stopMovementControllersForStun();
 
-        Vec3 currentVel = dragon.getDeltaMovement();
-        dragon.setDeltaMovement(
-                currentVel.x * 0.35D,
-                Math.min(currentVel.y, -0.42D),
-                currentVel.z * 0.35D
-        );
+        dragon.setDeltaMovement(0.0D, -FORCED_DESCENT_PER_TICK, 0.0D);
         dragon.hasImpulse = true;
         return true;
+    }
+
+    private void stopMovementControllersForStun() {
+        if (dragon instanceof RideableDragonBase rideableDragon) {
+            rideableDragon.getAIMovement().stopAndClearAllMovement();
+        } else {
+            dragon.getNavigation().stop();
+            dragon.getAiSwimController().clear();
+        }
     }
 
     private boolean canUseTamingStun() {
