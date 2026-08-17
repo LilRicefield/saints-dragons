@@ -315,7 +315,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private boolean phase2RiderTakeoffActive = false;
     private boolean useRightWingSwipe = true;
     private boolean phase2WasVehicle = false;
-    private boolean wildPhase2UltimateTriggered = false;
+    private boolean wildLowHealthUltimateTriggered = false;
     private boolean aiSpecialCombatActive = false;
     private boolean leaping = false;
     private boolean leapWasVehicle = false;
@@ -911,7 +911,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             if (phase2CooldownTicks > 0) {
                 phase2CooldownTicks--;
             }
-            if (phase2Active && wildPhase2UltimateTriggered && !isTame()) {
+            if (phase2Active && wildLowHealthUltimateTriggered && !isTame()) {
                 LivingEntity target = getTarget();
                 if (target == null || !target.isAlive() || target.isRemoved()) {
                     exitPhase2(true);
@@ -940,7 +940,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
 
         boolean wildTransitionUltimate = !isTame()
-                && !wildPhase2UltimateTriggered
+                && !wildLowHealthUltimateTriggered
                 && isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE);
         boolean shouldExtendRange = !isTame() && (phase2Active || wildTransitionUltimate);
         boolean hasModifier = followRange.getModifier(PHASE2_FOLLOW_RANGE_MODIFIER_UUID) != null;
@@ -1804,12 +1804,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return level().isClientSide ? this.entityData.get(DATA_PHASE2) : phase2Active;
     }
 
-    public boolean hasTriggeredWildPhase2Ultimate() {
-        return wildPhase2UltimateTriggered;
-    }
-
     public boolean shouldTriggerWildUltimateAtCurrentHealth() {
-        if (isPhase2Active() || wildPhase2UltimateTriggered || isTame()) {
+        if (isPhase2Active() || wildLowHealthUltimateTriggered || isTame()) {
             return false;
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
@@ -1822,11 +1818,17 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return healthFraction > 0.0D && getHealth() <= getMaxHealth() * healthFraction;
     }
 
+    public void markWildLowHealthUltimateTriggered() {
+        if (!level().isClientSide && !isTame() && !isBaby()) {
+            wildLowHealthUltimateTriggered = true;
+        }
+    }
+
     public void completeWildPhase2Transition() {
         if (level().isClientSide || isTame() || isBaby()) {
             return;
         }
-        wildPhase2UltimateTriggered = true;
+        wildLowHealthUltimateTriggered = true;
         phase2Active = true;
         this.entityData.set(DATA_PHASE2, true);
         phase2CooldownTicks = 0;
@@ -1870,7 +1872,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
         phase2WasVehicle = false;
         phase2CooldownTicks = 0;
-        wildPhase2UltimateTriggered = false;
+        wildLowHealthUltimateTriggered = false;
 
         combatManager.clearAllStates();
         getAiCombatPacing().reset();
@@ -2944,7 +2946,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tag.putInt("BulldozeCooldownTicks", Math.max(0, bulldozeCooldownTicks));
         tag.putBoolean("Phase2Active", phase2Active);
         tag.putInt("Phase2CooldownTicks", Math.max(0, phase2CooldownTicks));
-        tag.putBoolean("WildPhase2UltimateTriggered", wildPhase2UltimateTriggered);
+        tag.putBoolean("WildLowHealthUltimateTriggered", wildLowHealthUltimateTriggered);
         tag.putInt("LeapCooldownTicks", Math.max(0, leapCooldownTicks));
         tag.putFloat("FireBreathEnergy", getFireBreathEnergy());
         tag.putBoolean("FireBreathDepleted", isFireBreathDepleted());
@@ -2971,9 +2973,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             phase2Active = tag.getBoolean("Phase2Active");
             this.entityData.set(DATA_PHASE2, phase2Active);
         }
-        wildPhase2UltimateTriggered = tag.contains("WildPhase2UltimateTriggered")
-                ? tag.getBoolean("WildPhase2UltimateTriggered")
-                : phase2Active;
+        if (tag.contains("WildLowHealthUltimateTriggered")) {
+            wildLowHealthUltimateTriggered = tag.getBoolean("WildLowHealthUltimateTriggered");
+        } else if (tag.contains("WildPhase2UltimateTriggered")) {
+            wildLowHealthUltimateTriggered = tag.getBoolean("WildPhase2UltimateTriggered");
+        } else {
+            wildLowHealthUltimateTriggered = phase2Active;
+        }
         if (tag.contains("Phase2CooldownTicks")) {
             phase2CooldownTicks = Math.max(0, tag.getInt("Phase2CooldownTicks"));
         }

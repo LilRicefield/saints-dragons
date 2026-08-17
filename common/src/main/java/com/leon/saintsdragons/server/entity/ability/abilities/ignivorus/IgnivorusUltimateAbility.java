@@ -99,14 +99,16 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         if (section.sectionType == STARTUP) {
             boolean isAirborne = dragon.isAerial();
-            boolean wildPhase1Transition = !dragon.isTame()
-                    && !dragon.isPhase2Active()
-                    && !dragon.hasTriggeredWildPhase2Ultimate()
+            boolean wildLowHealthUltimate = dragon.shouldTriggerWildUltimateAtCurrentHealth();
+            boolean wildPhase1Transition = wildLowHealthUltimate
                     && !isAirborne
                     && dragon.isGroundedForAction();
             isAirborneMode = isAirborne;
             isPhase2GroundMode = dragon.isPhase2Active() && !isAirborne;
             transitionsToPhase2 = wildPhase1Transition;
+            if (wildLowHealthUltimate && isAirborne) {
+                dragon.markWildLowHealthUltimateTriggered();
+            }
 
             if (isPhase2GroundMode) {
                 dragon.lockRiderControls(ULTIMATE_LOOP_TICKS);
