@@ -1,8 +1,10 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
@@ -11,6 +13,7 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class RaevyxBeamLightningRenderer {
+    private static final RenderType BEAM_RENDER_TYPE = BeamRenderType.INSTANCE;
     private static final long PHASE_SEED = 0x9E3779B97F4A7C15L;
     private static final long SECONDARY_SEED = 0x632BE59BD9B4E019L;
     private static final long BRANCH_SEED = 0xD1B54A32D192ED03L;
@@ -47,16 +50,16 @@ public final class RaevyxBeamLightningRenderer {
 
         // Width stays fixed while alpha falls; shutdown should dissolve, not thin out.
         BoltStyle glow = nightGold
-                ? new BoltStyle(1.0F, 0.42F, 0.025F, 0.70F * visibility, 0.19F)
-                : new BoltStyle(1.0F, 0.035F, 0.012F, 0.72F * visibility, 0.19F);
+                ? new BoltStyle(0.96F, 0.54F, 0.025F, 0.74F * visibility, 0.19F)
+                : new BoltStyle(0.82F, 0.085F, 0.035F, 0.76F * visibility, 0.19F);
         BoltStyle core = nightGold
-                ? new BoltStyle(1.0F, 1.0F, 0.70F, 0.98F * visibility, 0.065F)
-                : new BoltStyle(1.0F, 0.80F, 0.72F, 0.98F * visibility, 0.065F);
+                ? new BoltStyle(1.0F, 0.86F, 0.28F, 0.96F * visibility, 0.065F)
+                : new BoltStyle(1.0F, 0.50F, 0.36F, 0.96F * visibility, 0.065F);
         BoltStyle crawler = nightGold
-                ? new BoltStyle(1.0F, 0.72F, 0.08F, 0.58F * visibility, 0.055F)
-                : new BoltStyle(1.0F, 0.16F, 0.055F, 0.60F * visibility, 0.055F);
+                ? new BoltStyle(1.0F, 0.70F, 0.065F, 0.62F * visibility, 0.055F)
+                : new BoltStyle(0.92F, 0.16F, 0.075F, 0.64F * visibility, 0.055F);
 
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.lightning());
+        VertexConsumer consumer = bufferSource.getBuffer(BEAM_RENDER_TYPE);
         Matrix4f matrix = poseStack.last().pose();
 
         // The broad glow and hot filament share one centerline, keeping the bolt crisp.
@@ -285,6 +288,32 @@ public final class RaevyxBeamLightningRenderer {
             );
         } while (vector.lengthSqr() < 1.0E-6D);
         return vector.normalize();
+    }
+
+    private static final class BeamRenderType extends RenderType {
+        private static final RenderType INSTANCE = create(
+                "saintsdragons_raevyx_beam",
+                DefaultVertexFormat.POSITION_COLOR,
+                VertexFormat.Mode.QUADS,
+                2048,
+                false,
+                true,
+                CompositeState.builder()
+                        .setShaderState(POSITION_COLOR_SHADER)
+                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                        .setDepthTestState(LEQUAL_DEPTH_TEST)
+                        .setCullState(NO_CULL)
+                        .setWriteMaskState(COLOR_WRITE)
+                        .setOutputState(TRANSLUCENT_TARGET)
+                        .createCompositeState(false)
+        );
+
+        private BeamRenderType(String name, VertexFormat format, VertexFormat.Mode mode,
+                               int bufferSize, boolean affectsCrumbling, boolean sortOnUpload,
+                               Runnable setupState, Runnable clearState) {
+            super(name, format, mode, bufferSize, affectsCrumbling, sortOnUpload,
+                    setupState, clearState);
+        }
     }
 
     private record BoltStyle(float red, float green, float blue, float alpha, float width) {
