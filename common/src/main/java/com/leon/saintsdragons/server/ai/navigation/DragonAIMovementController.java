@@ -756,9 +756,17 @@ public class DragonAIMovementController {
         if (!waypoint.mode().usesAir()
                 && !waypoint.mode().usesWater()
                 && !shouldUseAirMovement()
-                && groundPathFailureRetryTicks > 0
-                && lastFailedGroundTarget != null
-                && lastFailedGroundTarget.distanceToSqr(waypoint.target()) < 1.0D) {
+                && groundPathFailureRetryTicks > 0) {
+            return false;
+        }
+        if (!waypoint.mode().usesAir()
+                && !waypoint.mode().usesWater()
+                && !shouldUseAirMovement()
+                && !dragon.level().noCollision(
+                        dragon,
+                        dragon.getBoundingBox().deflate(1.0E-3D)
+                )) {
+            recordGroundPathFailure(waypoint.target(), "invalid-start-body");
             return false;
         }
         if (!waypoint.mode().usesAir()

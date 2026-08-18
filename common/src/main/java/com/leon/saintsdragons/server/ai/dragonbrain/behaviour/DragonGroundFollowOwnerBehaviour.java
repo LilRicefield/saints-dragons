@@ -40,11 +40,16 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
         Config config = configFor(dragon);
-        return canFollow(dragon, owner)
-                && dragon.distanceToSqr(DragonOwnerFollowTarget.groundTarget(dragon, owner))
-                > DragonOwnerFollowTarget.startDistanceSqr(
+        if (!canFollow(dragon, owner)) {
+            return false;
+        }
+        Vec3 followTarget = DragonOwnerFollowTarget.groundTarget(dragon, owner);
+        return DragonOwnerFollowTarget.groundFollowDistanceToSqr(dragon, owner, followTarget)
+                > DragonOwnerFollowTarget.groundStartDistanceSqr(
+                        dragon,
                         owner,
-                        config.startDistance * config.startDistance
+                        config.startDistance,
+                        config.stopDistance
                 );
     }
 
@@ -53,9 +58,17 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
         Config config = configFor(dragon);
-        return canFollow(dragon, owner)
-                && dragon.distanceToSqr(DragonOwnerFollowTarget.groundTarget(dragon, owner))
-                > config.stopDistance * config.stopDistance;
+        if (!canFollow(dragon, owner)) {
+            return false;
+        }
+        Vec3 followTarget = DragonOwnerFollowTarget.groundTarget(dragon, owner);
+        double stopDistance = DragonOwnerFollowTarget.groundStopDistance(
+                dragon,
+                owner,
+                config.stopDistance
+        );
+        return DragonOwnerFollowTarget.groundFollowDistanceToSqr(dragon, owner, followTarget)
+                > stopDistance * stopDistance;
     }
 
     @Override
@@ -73,19 +86,21 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
 
         Config config = configFor(dragon);
         Vec3 followTarget = DragonOwnerFollowTarget.groundTarget(dragon, owner);
-        double distance = Math.sqrt(dragon.distanceToSqr(followTarget));
+        double distance = Math.sqrt(
+                DragonOwnerFollowTarget.groundFollowDistanceToSqr(dragon, owner, followTarget)
+        );
+        double stopDistance = DragonOwnerFollowTarget.groundStopDistance(
+                dragon,
+                owner,
+                config.stopDistance
+        );
         lastFollowTarget = followTarget;
         mountedOwner = DragonOwnerFollowTarget.isMounted(owner);
         boolean fast = distance > config.fastDistance;
         dragon.setAccelerating(fast);
-        if (distance > config.teleportDistance && dragon.isGroundedForTeleport()) {
-            if (!DragonOwnerTeleport.attempt(dragon, owner)) {
-                dragon.teleportTo(
-                        followTarget.x,
-                        followTarget.y + config.fallbackTeleportYOffset,
-                        followTarget.z
-                );
-            }
+        if (distance > config.teleportDistance
+                && dragon.isGroundedForTeleport()
+                && DragonOwnerTeleport.attempt(dragon, owner)) {
             dragon.getAIMovement().stop();
             resetTracking();
             return;
@@ -99,7 +114,7 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
                 10.0F,
                 dragon.getMaxHeadXRot()
         );
-        if (distance <= config.stopDistance) {
+        if (distance <= stopDistance) {
             dragon.getAIMovement().stop();
             repathCooldown = 0;
             return;
@@ -115,11 +130,18 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         }
         if (repathCooldown <= 0) {
             double speed = fast ? config.fastSpeed : config.speed;
-            boolean accepted = dragon.getAIMovement().moveToProgressiveGroundPosition(
-                    followTarget,
-                    speed,
-                    fast
-            );
+            boolean accepted = mountedOwner
+                    ? dragon.getAIMovement().moveToProgressiveGroundPosition(
+                            followTarget,
+                            speed,
+                            fast,
+                            1.0D
+                    )
+                    : dragon.getAIMovement().moveToProgressiveGroundPosition(
+                            followTarget,
+                            speed,
+                            fast
+                    );
             repathCooldown = accepted
                     ? Mth.clamp((int)Math.ceil(distance * 0.45D), 6, 24)
                     : FAILED_PATH_RETRY_TICKS;

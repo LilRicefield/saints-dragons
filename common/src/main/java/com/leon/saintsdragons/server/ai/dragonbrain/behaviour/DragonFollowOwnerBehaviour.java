@@ -27,6 +27,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private static final double AIR_SPEED_EPSILON = 0.15D;
     private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
     private static final double AIR_CATCH_UP_MULTIPLIER = 1.35D;
+    private static final double OWNER_AIRBORNE_CLEARANCE = 4.0D;
     private static final int FAILED_GROUND_PATH_RETRY_TICKS = 10;
     private static final Config BABY_CONFIG = new Config(
             DragonBabyOwnerFollowTuning.START_DISTANCE,
@@ -66,12 +67,21 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         T dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
         Config config = configFor(dragon);
-        return canFollow(dragon, owner)
-                && DragonOwnerFollowTarget.anchorDistanceToSqr(dragon, owner)
-                > DragonOwnerFollowTarget.startDistanceSqr(
+        if (!canFollow(dragon, owner)) {
+            return false;
+        }
+        double startDistanceSqr = dragon.isAerial()
+                ? DragonOwnerFollowTarget.startDistanceSqr(
                         owner,
                         config.startDistance * config.startDistance
+                )
+                : DragonOwnerFollowTarget.groundStartDistanceSqr(
+                        dragon,
+                        owner,
+                        config.startDistance,
+                        config.stopDistance
                 );
+        return DragonOwnerFollowTarget.anchorDistanceToSqr(dragon, owner) > startDistanceSqr;
     }
 
     @Override
@@ -88,8 +98,15 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         if (dragon.isAerial() && ownerGrounded(owner)) {
             return true;
         }
+        double stopDistance = dragon.isAerial()
+                ? config.stopDistance
+                : DragonOwnerFollowTarget.groundStopDistance(
+                        dragon,
+                        owner,
+                        config.stopDistance
+                );
         return DragonOwnerFollowTarget.anchorDistanceToSqr(dragon, owner)
-                > config.stopDistance * config.stopDistance;
+                > stopDistance * stopDistance;
     }
 
     @Override
@@ -110,11 +127,9 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
 
         Config config = configFor(dragon);
         double distance = Math.sqrt(DragonOwnerFollowTarget.anchorDistanceToSqr(dragon, owner));
-        if (distance > config.teleportDistance && dragon.isGroundedForTeleport()) {
-            if (!DragonOwnerTeleport.attempt(dragon, owner)) {
-                Vec3 anchor = DragonOwnerFollowTarget.anchorPosition(owner);
-                dragon.teleportTo(anchor.x, anchor.y + 3.0D, anchor.z);
-            }
+        if (distance > config.teleportDistance
+                && dragon.isGroundedForTeleport()
+                && DragonOwnerTeleport.attempt(dragon, owner)) {
             if (!dragon.isBaby() && dragon.canTakeoff()) {
                 dragon.beginAiFlight();
             } else {
@@ -132,7 +147,7 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 10.0F,
                 10.0F
         );
-        boolean ownerAirborne = isOwnerAirborne(dragon, owner);
+        boolean ownerAirborne = isOwnerAirborne(owner);
         boolean shouldFly = shouldFly(dragon, owner, distance, ownerAirborne, config);
         if (updateFlightState(context, dragon, owner, ownerAirborne, shouldFly, config)) {
             mode = "landing";
@@ -269,8 +284,15 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         waterHandoff.activate(dragon);
         Vec3 followTarget = DragonOwnerFollowTarget.groundTarget(dragon, owner);
         lastGroundTarget = followTarget;
-        double distance = Math.sqrt(dragon.distanceToSqr(followTarget));
-        if (distance <= config.stopDistance) {
+        double distance = Math.sqrt(
+                DragonOwnerFollowTarget.groundFollowDistanceToSqr(dragon, owner, followTarget)
+        );
+        double stopDistance = DragonOwnerFollowTarget.groundStopDistance(
+                dragon,
+                owner,
+                config.stopDistance
+        );
+        if (distance <= stopDistance) {
             dragon.setAccelerating(false);
             dragon.getAIMovement().stop();
             groundRepathCooldown = 0;
@@ -295,11 +317,18 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             groundRepathCooldown = 0;
         }
         if (groundRepathCooldown <= 0) {
-            boolean accepted = dragon.getAIMovement().moveToProgressiveGroundPosition(
-                    followTarget,
-                    speed,
-                    running
-            );
+            boolean accepted = DragonOwnerFollowTarget.isMounted(owner)
+                    ? dragon.getAIMovement().moveToProgressiveGroundPosition(
+                            followTarget,
+                            speed,
+                            running,
+                            1.0D
+                    )
+                    : dragon.getAIMovement().moveToProgressiveGroundPosition(
+                            followTarget,
+                            speed,
+                            running
+                    );
             int baseCooldown = (int)Math.ceil(distance * (running ? 0.3D : 0.45D));
             groundRepathCooldown = accepted
                     ? Mth.clamp(baseCooldown, running ? 4 : 6, running ? 18 : 24)
@@ -338,35 +367,35 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 && dragon.getActiveAbility() == null;
     }
 
-    private boolean isOwnerAirborne(T dragon, LivingEntity owner) {
-        Entity vehicle = owner.getVehicle();
-        if (vehicle != null) {
-            if (vehicle instanceof DragonFlightCapable flightCapable) {
-                return flightCapable.isFlying()
-                        || flightCapable.isTakeoff()
-                        || flightCapable.isHovering()
-                        || flightCapable.isLanding() && !vehicle.onGround();
-            }
-            return !vehicle.onGround();
+    private boolean isOwnerAirborne(LivingEntity owner) {
+        Entity anchor = DragonOwnerFollowTarget.anchor(owner);
+        if (anchor instanceof DragonFlightCapable flightCapable) {
+            return flightCapable.isFlying()
+                    || flightCapable.isTakeoff()
+                    || flightCapable.isHovering()
+                    || flightCapable.isLanding() && isSubstantiallyAirborne(anchor);
         }
-        if (owner.onGround()) {
-            return false;
-        }
-        BlockPos position = owner.blockPosition();
-        int groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, position).getY();
-        return owner.getY() - groundY > 4.0D;
+        return isSubstantiallyAirborne(anchor);
     }
 
     private boolean ownerGrounded(LivingEntity owner) {
-        Entity vehicle = owner.getVehicle();
-        if (vehicle instanceof DragonFlightCapable flightCapable) {
-            return vehicle.onGround()
-                    && !flightCapable.isFlying()
-                    && !flightCapable.isTakeoff()
-                    && !flightCapable.isHovering()
-                    && !flightCapable.isLanding();
+        Entity anchor = DragonOwnerFollowTarget.anchor(owner);
+        if (anchor instanceof DragonFlightCapable flightCapable
+                && (flightCapable.isFlying()
+                || flightCapable.isTakeoff()
+                || flightCapable.isHovering())) {
+            return false;
         }
-        return vehicle != null ? vehicle.onGround() : owner.onGround();
+        return !isSubstantiallyAirborne(anchor);
+    }
+
+    private boolean isSubstantiallyAirborne(Entity entity) {
+        if (entity.onGround() || entity.isInWaterOrBubble()) {
+            return false;
+        }
+        BlockPos position = entity.blockPosition();
+        int groundY = entity.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, position).getY();
+        return entity.getY() - groundY > OWNER_AIRBORNE_CLEARANCE;
     }
 
     private Vec3 flightTarget(T dragon, LivingEntity owner, boolean ownerAirborne, Config config) {
