@@ -2,10 +2,13 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerTeleport;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -24,9 +27,9 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
     private final Config adultConfig;
     private final DragonOwnerFollowWaterHandoff waterHandoff = new DragonOwnerFollowWaterHandoff();
     private int repathCooldown;
-    private double lastOwnerX = Double.NaN;
-    private double lastOwnerY = Double.NaN;
-    private double lastOwnerZ = Double.NaN;
+    @Nullable
+    private Vec3 lastFollowTarget;
+    private boolean mountedOwner;
 
     public DragonGroundFollowOwnerBehaviour(Config config) {
         this.adultConfig = config;
@@ -38,7 +41,11 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         LivingEntity owner = dragon.getOwner();
         Config config = configFor(dragon);
         return canFollow(dragon, owner)
-                && dragon.distanceToSqr(owner) > config.startDistance * config.startDistance;
+                && dragon.distanceToSqr(DragonOwnerFollowTarget.groundTarget(dragon, owner))
+                > DragonOwnerFollowTarget.startDistanceSqr(
+                        owner,
+                        config.startDistance * config.startDistance
+                );
     }
 
     @Override
@@ -47,7 +54,8 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         LivingEntity owner = dragon.getOwner();
         Config config = configFor(dragon);
         return canFollow(dragon, owner)
-                && dragon.distanceToSqr(owner) > config.stopDistance * config.stopDistance;
+                && dragon.distanceToSqr(DragonOwnerFollowTarget.groundTarget(dragon, owner))
+                > config.stopDistance * config.stopDistance;
     }
 
     @Override
@@ -64,19 +72,33 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         waterHandoff.activate(dragon);
 
         Config config = configFor(dragon);
-        double distance = dragon.distanceTo(owner);
+        Vec3 followTarget = DragonOwnerFollowTarget.groundTarget(dragon, owner);
+        double distance = Math.sqrt(dragon.distanceToSqr(followTarget));
+        lastFollowTarget = followTarget;
+        mountedOwner = DragonOwnerFollowTarget.isMounted(owner);
         boolean fast = distance > config.fastDistance;
         dragon.setAccelerating(fast);
         if (distance > config.teleportDistance && dragon.isGroundedForTeleport()) {
             if (!DragonOwnerTeleport.attempt(dragon, owner)) {
-                dragon.teleportTo(owner.getX(), owner.getY() + config.fallbackTeleportYOffset, owner.getZ());
+                dragon.teleportTo(
+                        followTarget.x,
+                        followTarget.y + config.fallbackTeleportYOffset,
+                        followTarget.z
+                );
             }
             dragon.getAIMovement().stop();
             resetTracking();
             return;
         }
 
-        dragon.getLookControl().setLookAt(owner, 10.0F, dragon.getMaxHeadXRot());
+        Vec3 lookTarget = DragonOwnerFollowTarget.groundLookTarget(dragon, owner, followTarget);
+        dragon.getLookControl().setLookAt(
+                lookTarget.x,
+                lookTarget.y,
+                lookTarget.z,
+                10.0F,
+                dragon.getMaxHeadXRot()
+        );
         if (distance <= config.stopDistance) {
             dragon.getAIMovement().stop();
             repathCooldown = 0;
@@ -84,7 +106,6 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         }
         if (dragon.getAIMovement().hasFailed()) {
             dragon.getAIMovement().stop();
-            remember(owner);
             repathCooldown = FAILED_PATH_RETRY_TICKS;
             return;
         }
@@ -92,10 +113,13 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         if (dragon.getAIMovement().hasArrived()) {
             repathCooldown = 0;
         }
-        if (ownerMoved(owner) || repathCooldown <= 0) {
+        if (repathCooldown <= 0) {
             double speed = fast ? config.fastSpeed : config.speed;
-            boolean accepted = dragon.getAIMovement().moveToProgressiveGroundTarget(owner, speed, fast);
-            remember(owner);
+            boolean accepted = dragon.getAIMovement().moveToProgressiveGroundPosition(
+                    followTarget,
+                    speed,
+                    fast
+            );
             repathCooldown = accepted
                     ? Mth.clamp((int)Math.ceil(distance * 0.45D), 6, 24)
                     : FAILED_PATH_RETRY_TICKS;
@@ -120,33 +144,22 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
         return owner != null && owner.isAlive() && owner.level() == dragon.level();
     }
 
-    private boolean ownerMoved(LivingEntity owner) {
-        if (Double.isNaN(lastOwnerX)) return true;
-        double dx = owner.getX() - lastOwnerX;
-        double dy = owner.getY() - lastOwnerY;
-        double dz = owner.getZ() - lastOwnerZ;
-        return dx * dx + dy * dy + dz * dz > 1.0D;
-    }
-
     private Config configFor(T dragon) {
         return dragon.isBaby() ? BABY_CONFIG : adultConfig;
     }
 
-    private void remember(LivingEntity owner) {
-        lastOwnerX = owner.getX();
-        lastOwnerY = owner.getY();
-        lastOwnerZ = owner.getZ();
-    }
-
     private void resetTracking() {
         repathCooldown = 0;
-        lastOwnerX = lastOwnerY = lastOwnerZ = Double.NaN;
+        lastFollowTarget = null;
+        mountedOwner = false;
     }
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         return Map.of(
                 "repath_cooldown", Integer.toString(repathCooldown),
+                "target", lastFollowTarget == null ? "none" : lastFollowTarget.toString(),
+                "mounted_owner", Boolean.toString(mountedOwner),
                 "water_handoff", Boolean.toString(waterHandoff.isActive())
         );
     }

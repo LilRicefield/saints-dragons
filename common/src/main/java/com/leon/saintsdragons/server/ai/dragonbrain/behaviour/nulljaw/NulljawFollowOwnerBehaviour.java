@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBabyOwnerFollowTuning;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.world.entity.LivingEntity;
@@ -33,14 +34,17 @@ public final class NulljawFollowOwnerBehaviour extends DragonBehaviour<Nulljaw> 
     protected boolean canStart(DragonBrainContext<Nulljaw> context) {
         Nulljaw dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
-        return canFollow(dragon, owner) && dragon.distanceToSqr(owner) > startDistanceSqr(dragon);
+        return canFollow(dragon, owner)
+                && DragonOwnerFollowTarget.anchorDistanceToSqr(dragon, owner)
+                > DragonOwnerFollowTarget.startDistanceSqr(owner, startDistanceSqr(dragon));
     }
 
     @Override
     protected boolean canContinue(DragonBrainContext<Nulljaw> context) {
         Nulljaw dragon = context.dragon();
         LivingEntity owner = dragon.getOwner();
-        return canFollow(dragon, owner) && dragon.distanceToSqr(owner) > stopDistanceSqr(dragon);
+        return canFollow(dragon, owner)
+                && DragonOwnerFollowTarget.anchorDistanceToSqr(dragon, owner) > stopDistanceSqr(dragon);
     }
 
     @Override
@@ -57,17 +61,23 @@ public final class NulljawFollowOwnerBehaviour extends DragonBehaviour<Nulljaw> 
         if (owner == null) {
             return;
         }
-        dragon.getLookControl().setLookAt(owner, 10.0F, 10.0F);
+        Vec3 lookTarget = DragonOwnerFollowTarget.visualTarget(owner);
+        dragon.getLookControl().setLookAt(
+                lookTarget.x,
+                lookTarget.y,
+                lookTarget.z,
+                10.0F,
+                10.0F
+        );
         if (refreshCooldown > 0) {
             refreshCooldown--;
         }
 
-        Vec3 look = owner.getLookAngle();
-        Vec3 target = new Vec3(
-                owner.getX() - look.x * 3.0D,
-                owner.getY() + owner.getBbHeight() + 2.5D
-                        + Math.sin(dragon.tickCount * 0.2D) * 0.3D,
-                owner.getZ() - look.z * 3.0D
+        Vec3 target = DragonOwnerFollowTarget.airFormationTarget(
+                owner,
+                2.5D,
+                3.0D,
+                Math.sin(dragon.tickCount * 0.2D) * 0.3D
         );
         boolean catchUp = dragon.distanceToSqr(target) > catchUpDistanceSqr(dragon);
         double speed = catchUp ? FLIGHT_SPEED * 1.35D : FLIGHT_SPEED;

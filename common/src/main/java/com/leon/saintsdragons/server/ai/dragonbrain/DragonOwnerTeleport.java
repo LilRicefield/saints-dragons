@@ -14,7 +14,7 @@ public final class DragonOwnerTeleport {
         if (owner == null || dragon.level() != owner.level()) {
             return false;
         }
-        BlockPos ownerPos = owner.blockPosition();
+        BlockPos ownerPos = BlockPos.containing(DragonOwnerFollowTarget.groundTarget(dragon, owner));
         for (int attempt = 0; attempt < 8; attempt++) {
             BlockPos candidate = ownerPos.offset(
                     dragon.getRandom().nextInt(7) - 3, 0,

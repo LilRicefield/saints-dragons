@@ -839,6 +839,10 @@ public class DragonAIMovementController {
 
     private void startGroundPathAsync(QueuedWaypoint waypoint) {
         ensureGroundNavigation();
+        if (groundPathRequest != null) {
+            groundPathRequest.cancel(true);
+            groundPathRequest = null;
+        }
         int detourAllowance = groundPathDetourAllowance(waypoint.target());
         boolean replacingActivePath = groundPathState == GroundPathState.FOLLOWING
                 && !dragon.getNavigation().isDone();

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.core.BlockPos;
@@ -190,11 +191,13 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
             return null;
         }
         LivingEntity owner = dragon.getOwner();
-        if (owner == null || owner.isInWaterOrBubble()) {
+        if (owner == null || DragonOwnerFollowTarget.anchor(owner).isInWaterOrBubble()) {
             return null;
         }
 
-        BlockPos ownerPosition = owner.blockPosition();
+        BlockPos ownerPosition = BlockPos.containing(
+                DragonOwnerFollowTarget.groundTarget(dragon, owner)
+        );
         EscapeTarget adjacentShore = findShoreTargetInColumn(
                 dragon,
                 ownerPosition.getX(),

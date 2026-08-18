@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
@@ -582,10 +583,15 @@ public final class DragonPathDebugTracker {
             return "unsupported";
         }
         LivingEntity owner = rideable.getOwner();
+        Entity ownerAnchor = owner == null ? null : DragonOwnerFollowTarget.anchor(owner);
         String ownerSummary = owner == null
                 ? "none"
                 : owner.getName().getString() + "@"
-                + String.format(java.util.Locale.ROOT, "%.2f", rideable.distanceTo(owner));
+                + String.format(
+                        java.util.Locale.ROOT,
+                        "%.2f",
+                        Math.sqrt(DragonOwnerFollowTarget.anchorDistanceToSqr(rideable, owner))
+                );
         LivingEntity target = rideable.getTarget();
         boolean ownerPriority = rideable.isTame()
                 && rideable.getCommand() == 0
@@ -616,6 +622,9 @@ public final class DragonPathDebugTracker {
         return "baby=" + rideable.isBaby()
                 + ",tame=" + rideable.isTame()
                 + ",owner=" + ownerSummary
+                + ",mount=" + (ownerAnchor == null || ownerAnchor == owner
+                ? "none"
+                : ownerAnchor.getType().getDescriptionId() + "@" + ownerAnchor.blockPosition())
                 + ",command=" + rideable.getCommand()
                 + ",priority=" + ownerPriority
                 + ",reserved=" + reservation

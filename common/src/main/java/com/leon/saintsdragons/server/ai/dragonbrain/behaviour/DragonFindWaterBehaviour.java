@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
@@ -116,7 +117,7 @@ public final class DragonFindWaterBehaviour<T extends RideableDragonBase & SemiA
         return owner != null
                 && owner.isAlive()
                 && owner.level() == dragon.level()
-                && !owner.isInWaterOrBubble();
+                && !DragonOwnerFollowTarget.anchor(owner).isInWaterOrBubble();
     }
 
     @Override

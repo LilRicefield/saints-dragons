@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
@@ -60,7 +61,7 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
         if (followTarget == null) {
             return false;
         }
-        return dragon.distanceToSqr(followTarget) > startDistance(dragon, followTarget);
+        return followDistanceToSqr(dragon, followTarget) > startDistance(dragon, followTarget);
     }
 
     @Override
@@ -70,7 +71,7 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
                 && followTarget != null
                 && followTarget.isAlive()
                 && followTarget.level() == dragon.level()
-                && dragon.distanceToSqr(followTarget) > stopDistance(dragon, followTarget);
+                && followDistanceToSqr(dragon, followTarget) > stopDistance(dragon, followTarget);
     }
 
     @Override
@@ -85,9 +86,9 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
             return;
         }
         dragon.getNavigation().stop();
-        Vec3 position = followTarget.position().add(0.0D, followTarget.getEyeHeight() * 0.5D, 0.0D);
+        Vec3 position = followPosition(dragon, followTarget);
         double speed = dragon.getSwimSpeed() * speedModifier;
-        if (dragon.distanceToSqr(followTarget) > 15.0D * 15.0D) {
+        if (dragon.distanceToSqr(position) > 15.0D * 15.0D) {
             speed *= 1.5D;
         }
         AsyncSwimController controller = dragon.getAiSwimController();
@@ -141,13 +142,18 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
     }
 
     private double startDistance(T dragon, LivingEntity target) {
+        double configuredDistance;
         if (isBabyFollowingOwner(dragon, target)) {
-            return DragonBabyOwnerFollowTuning.START_DISTANCE
+            configuredDistance = DragonBabyOwnerFollowTuning.START_DISTANCE
                     * DragonBabyOwnerFollowTuning.START_DISTANCE;
+        } else {
+            configuredDistance = dragon.isBaby() && dragonClass.isInstance(target) && !dragonClass.cast(target).isBaby()
+                    ? BABY_START_DISTANCE_SQR
+                    : startDistanceSqr;
         }
-        return dragon.isBaby() && dragonClass.isInstance(target) && !dragonClass.cast(target).isBaby()
-                ? BABY_START_DISTANCE_SQR
-                : startDistanceSqr;
+        return dragon.isTame() && target == dragon.getOwner()
+                ? DragonOwnerFollowTarget.startDistanceSqr(target, configuredDistance)
+                : configuredDistance;
     }
 
     private double stopDistance(T dragon, LivingEntity target) {
@@ -162,6 +168,17 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
 
     private boolean isBabyFollowingOwner(T dragon, LivingEntity target) {
         return dragon.isBaby() && dragon.isTame() && target == dragon.getOwner();
+    }
+
+    private Vec3 followPosition(T dragon, LivingEntity target) {
+        if (dragon.isTame() && target == dragon.getOwner()) {
+            return DragonOwnerFollowTarget.swimTarget(dragon, target);
+        }
+        return target.position().add(0.0D, target.getEyeHeight() * 0.5D, 0.0D);
+    }
+
+    private double followDistanceToSqr(T dragon, LivingEntity target) {
+        return dragon.distanceToSqr(followPosition(dragon, target));
     }
 
     @Override
