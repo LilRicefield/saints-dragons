@@ -1,11 +1,11 @@
 {
   "values": [
-    "saintsdragons:atroxiia_egg",
-    "saintsdragons:stegonaut_egg",
-    "saintsdragons:varasuchus_egg",
-    "saintsdragons:ignivorus_egg",
-    "saintsdragons:volitans_egg",
-    "saintsdragons:cindervane_egg",
-    "saintsdragons:raevyx_egg"
+    "#saintsdragons:eggs/atroxiia",
+    "#saintsdragons:eggs/cindervane",
+    "#saintsdragons:eggs/ignivorus",
+    "#saintsdragons:eggs/raevyx",
+    "#saintsdragons:eggs/stegonaut",
+    "#saintsdragons:eggs/varasuchus",
+    "#saintsdragons:eggs/volitans"
   ]
 }

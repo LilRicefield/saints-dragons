@@ -3,9 +3,11 @@
   "__comment" : "Resists IaF's Gorgon.",
   "values": [
     "saintsdragons:raevyx",
-    "saintsdragons:varasuchus",
     "saintsdragons:cindervane",
+    "saintsdragons:varasuchus",
     "saintsdragons:ignivorus",
-    "saintsdragons:stegonaut"
+    "saintsdragons:stegonaut",
+    "saintsdragons:atroxiia",
+    "saintsdragons:volitans"
   ]
 }

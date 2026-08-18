@@ -1,11 +1,13 @@
 package com.leon.saintsdragons.forge.data;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.EntityTypeTagsProvider;
+import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.world.entity.EntityType;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import org.jetbrains.annotations.NotNull;
@@ -18,20 +20,15 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
             CompletableFuture<HolderLookup.Provider> lookupProvider,
             ExistingFileHelper existingFileHelper
     ) {
-        super(output, lookupProvider);
+        super(output, lookupProvider, SaintsDragonsCommon.MOD_ID, existingFileHelper);
     }
 
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
-        tag(ModTags.EntityTypes.DRAGONS)
-                .add(ModEntities.ATROXIIA.get())
-                .add(ModEntities.CINDERVANE.get())
-                .add(ModEntities.IGNIVORUS.get())
-                .add(ModEntities.NULLJAW.get())
-                .add(ModEntities.RAEVYX.get())
-                .add(ModEntities.STEGONAUT.get())
-                .add(ModEntities.VARASUCHUS.get())
-                .add(ModEntities.VOLITANS.get());
+        var dragons = tag(ModTags.EntityTypes.DRAGONS);
+        for (Dragons dragon : Dragons.values()) {
+            dragons.add(dragon.getEntityTypeValue());
+        }
 
         tag(ModTags.EntityTypes.RIDEABLE_DRAGONS).addTag(ModTags.EntityTypes.DRAGONS);
         tag(ModTags.EntityTypes.TAMEABLE_DRAGONS).addTag(ModTags.EntityTypes.DRAGONS);
@@ -92,10 +89,11 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
                 .add(EntityType.SALMON)
                 .add(EntityType.TROPICAL_FISH);
 
-        tag(ModTags.EntityTypes.STEGONAUT_TARGETS);
-
         tag(ModTags.EntityTypes.IMMUNE_TO_ELECTRICITY);
         tag(ModTags.EntityTypes.IMMUNE_TO_FIRE);
         tag(ModTags.EntityTypes.IMMUNE_TO_POISON);
+
+        tag(EntityTypeTags.POWDER_SNOW_WALKABLE_MOBS)
+                .add(ModEntities.ATROXIIA.get());
     }
 }

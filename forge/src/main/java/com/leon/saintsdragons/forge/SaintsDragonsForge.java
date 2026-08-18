@@ -212,7 +212,7 @@ public final class SaintsDragonsForge {
         generator.addProvider(event.includeServer(),
                 new SaintsDragonEntityTypeTagsProvider(output, lookupProvider, existingFileHelper));
         generator.addProvider(event.includeServer(),
-                new SaintsDragonBiomeTagsProvider(output, lookupProvider));
+                new SaintsDragonBiomeTagsProvider(output, lookupProvider, existingFileHelper));
         generator.addProvider(event.includeServer(),
                 SaintsDragonLootTableProvider.create(output));
     }

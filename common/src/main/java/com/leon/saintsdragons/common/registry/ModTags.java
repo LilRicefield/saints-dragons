@@ -26,7 +26,6 @@ public final class ModTags {
         public static final TagKey<EntityType<?>> RAEVYX_HUNT_PREY = tag("hunt_prey/raevyx");
         public static final TagKey<EntityType<?>> VARASUCHUS_HUNT_PREY = tag("hunt_prey/varasuchus");
         public static final TagKey<EntityType<?>> VOLITANS_HUNT_PREY = tag("hunt_prey/volitans");
-        public static final TagKey<EntityType<?>> STEGONAUT_TARGETS = tag("targets/stegonaut");
         public static final TagKey<EntityType<?>> IMMUNE_TO_ELECTRICITY = tag("immune_to/electricity");
         public static final TagKey<EntityType<?>> IMMUNE_TO_FIRE = tag("immune_to/fire");
         public static final TagKey<EntityType<?>> IMMUNE_TO_POISON = tag("immune_to/poison");
@@ -42,6 +41,13 @@ public final class ModTags {
     public static final class Items {
         public static final TagKey<Item> DRAGON_FOODS = tag("dragon_foods");
         public static final TagKey<Item> DRAGON_EGGS = tag("dragon_eggs");
+        public static final TagKey<Item> ATROXIIA_EGGS = tag("eggs/atroxiia");
+        public static final TagKey<Item> CINDERVANE_EGGS = tag("eggs/cindervane");
+        public static final TagKey<Item> IGNIVORUS_EGGS = tag("eggs/ignivorus");
+        public static final TagKey<Item> RAEVYX_EGGS = tag("eggs/raevyx");
+        public static final TagKey<Item> STEGONAUT_EGGS = tag("eggs/stegonaut");
+        public static final TagKey<Item> VARASUCHUS_EGGS = tag("eggs/varasuchus");
+        public static final TagKey<Item> VOLITANS_EGGS = tag("eggs/volitans");
         public static final TagKey<Item> DRAGON_BINDERS = tag("dragon_binders");
         public static final TagKey<Item> DRAGON_BRUSHES = tag("dragon_brushes");
         public static final TagKey<Item> DRAGON_PARTS = tag("dragon_parts");
@@ -104,6 +110,8 @@ public final class ModTags {
         public static final TagKey<Biome> HAS_MOOP = tag("has_moop");
         public static final TagKey<Biome> HAS_MOSSBACK = tag("has_mossback");
         public static final TagKey<Biome> HAS_DRAGONHEART_ORE = tag("has_dragonheart_ore");
+        public static final TagKey<Biome> HAS_IGNIVORUS_ROOST = tag("has_igni_roost");
+        public static final TagKey<Biome> HAS_VARASUCHUS_ROOST = tag("has_varasuchus_roost");
 
         private Biomes() {
         }

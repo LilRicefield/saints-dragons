@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.stegonaut;
 
-import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
@@ -31,7 +30,6 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
     private int packPollCooldown;
     private int raidPollCooldown;
     private int playerPollCooldown;
-    private int huntPollCooldown;
     private boolean protectingBabies;
 
     @Nullable
@@ -103,17 +101,6 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
             }
         }
 
-        if (huntPollCooldown-- <= 0) {
-            huntPollCooldown = 80;
-            if (canHunt(dragon)) {
-                LivingEntity prey = nearest(context.level(), dragon, LivingEntity.class,
-                        candidate -> DragonTargetingHelper.isTaggedHuntTarget(
-                                candidate, ModTags.EntityTypes.STEGONAUT_TARGETS));
-                if (prey != null) {
-                    return choice(prey, Source.HUNT);
-                }
-            }
-        }
         return null;
     }
 
@@ -129,10 +116,6 @@ public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<
 
     private boolean canDefendRaid(Stegonaut dragon) {
         return !dragon.isBaby();
-    }
-
-    private boolean canHunt(Stegonaut dragon) {
-        return !dragon.isTame() && !dragon.isBaby();
     }
 
     @Nullable

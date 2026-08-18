@@ -1,12 +1,19 @@
 package com.leon.saintsdragons.forge.data;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.ConventionalTags;
+import com.leon.saintsdragons.common.registry.ModArmors;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModTags;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.data.tags.TagsProvider;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
@@ -15,25 +22,38 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CompletableFuture;
 
 public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
+    private static final TagKey<Item> MINECRAFT_EGGS = TagKey.create(
+            Registries.ITEM,
+            ResourceLocation.fromNamespaceAndPath("minecraft", "eggs")
+    );
+
     public SaintsDragonItemTagsProvider(
             PackOutput output,
             CompletableFuture<HolderLookup.Provider> lookupProvider,
             CompletableFuture<TagsProvider.TagLookup<Block>> blockTags,
             ExistingFileHelper existingFileHelper
     ) {
-        super(output, lookupProvider, blockTags);
+        super(output, lookupProvider, blockTags, SaintsDragonsCommon.MOD_ID, existingFileHelper);
     }
 
     @Override
     protected void addTags(@NotNull HolderLookup.Provider provider) {
+        copy(ModTags.Blocks.ATROXIIA_EGGS, ModTags.Items.ATROXIIA_EGGS);
+        copy(ModTags.Blocks.CINDERVANE_EGGS, ModTags.Items.CINDERVANE_EGGS);
+        copy(ModTags.Blocks.IGNIVORUS_EGGS, ModTags.Items.IGNIVORUS_EGGS);
+        copy(ModTags.Blocks.RAEVYX_EGGS, ModTags.Items.RAEVYX_EGGS);
+        copy(ModTags.Blocks.STEGONAUT_EGGS, ModTags.Items.STEGONAUT_EGGS);
+        copy(ModTags.Blocks.VARASUCHUS_EGGS, ModTags.Items.VARASUCHUS_EGGS);
+        copy(ModTags.Blocks.VOLITANS_EGGS, ModTags.Items.VOLITANS_EGGS);
+
         tag(ModTags.Items.DRAGON_EGGS)
-                .add(ModItems.ATROXIIA_EGG.get())
-                .add(ModItems.STEGONAUT_EGG.get())
-                .add(ModItems.VARASUCHUS_EGG.get())
-                .add(ModItems.IGNIVORUS_EGG.get())
-                .add(ModItems.VOLITANS_EGG.get())
-                .add(ModItems.CINDERVANE_EGG.get())
-                .add(ModItems.RAEVYX_EGG.get());
+                .addTag(ModTags.Items.ATROXIIA_EGGS)
+                .addTag(ModTags.Items.CINDERVANE_EGGS)
+                .addTag(ModTags.Items.IGNIVORUS_EGGS)
+                .addTag(ModTags.Items.RAEVYX_EGGS)
+                .addTag(ModTags.Items.STEGONAUT_EGGS)
+                .addTag(ModTags.Items.VARASUCHUS_EGGS)
+                .addTag(ModTags.Items.VOLITANS_EGGS);
 
         tag(ModTags.Items.DRAGON_BINDERS)
                 .add(ModItems.ATROXIIA_BINDER.get())
@@ -98,6 +118,20 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .add(ModItems.VOLITANS_SPAWN_EGG.get())
                 .add(ModItems.MOSSBACK_SPAWN_EGG.get())
                 .add(ModItems.ATROXIIA_SPAWN_EGG.get());
+
+        tag(ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_1)
+                .add(Items.COAL)
+                .add(Items.CHARCOAL);
+
+        tag(ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_2)
+                .add(Items.BLAZE_POWDER)
+                .add(ModItems.SEARING_COAL.get());
+
+        tag(ModTags.Items.DRACONIC_CRUCIBLE_FUEL_LEVEL_3)
+                .add(ModItems.IGNIVORUS_HEART.get())
+                .add(Items.DRAGON_BREATH);
+
+        tag(ModTags.Items.DRACONIC_CRUCIBLE_VANILLA_SMELTING_BLACKLIST);
 
         tag(ModTags.Items.ATROXIIA_FOODS)
                 .add(Items.BEEF)
@@ -164,5 +198,37 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
                 .addTag(ModTags.Items.STEGONAUT_FOODS)
                 .addTag(ModTags.Items.VARASUCHUS_FOODS)
                 .addTag(ModTags.Items.VOLITANS_FOODS);
+
+        tag(ItemTags.ARROWS).add(ModItems.ARROW_OF_VENOM.get());
+        tag(MINECRAFT_EGGS).addTag(ModTags.Items.DRAGON_EGGS);
+        tag(ItemTags.FISHES).add(ModItems.RAW_MOOP.get());
+        tag(ItemTags.MUSIC_DISCS).add(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
+        tag(ItemTags.TRIMMABLE_ARMOR)
+                .add(ModArmors.DRACONIAN_HELMET.get())
+                .add(ModArmors.DRACONIAN_CHESTPLATE.get())
+                .add(ModArmors.DRACONIAN_LEGGINGS.get())
+                .add(ModArmors.DRACONIAN_BOOTS.get());
+
+        tag(ConventionalTags.Items.ARMOR_HELMETS)
+                .add(ModArmors.DRACONIAN_HELMET.get())
+                .add(ModArmors.BLOOD_TEMPEST_HELMET.get())
+                .add(ModArmors.DRAGONLORD_HELMET.get());
+        tag(ConventionalTags.Items.ARMOR_CHESTPLATES)
+                .add(ModArmors.DRACONIAN_CHESTPLATE.get())
+                .add(ModArmors.BLOOD_TEMPEST_CHESTPLATE.get())
+                .add(ModArmors.DRAGONLORD_CHESTPLATE.get());
+        tag(ConventionalTags.Items.ARMOR_LEGGINGS)
+                .add(ModArmors.DRACONIAN_LEGGINGS.get())
+                .add(ModArmors.BLOOD_TEMPEST_LEGGINGS.get())
+                .add(ModArmors.DRAGONLORD_LEGGINGS.get());
+        tag(ConventionalTags.Items.ARMOR_BOOTS)
+                .add(ModArmors.DRACONIAN_BOOTS.get())
+                .add(ModArmors.BLOOD_TEMPEST_BOOTS.get())
+                .add(ModArmors.DRAGONLORD_BOOTS.get());
+        tag(ConventionalTags.Items.ARMORS)
+                .addTag(ConventionalTags.Items.ARMOR_HELMETS)
+                .addTag(ConventionalTags.Items.ARMOR_CHESTPLATES)
+                .addTag(ConventionalTags.Items.ARMOR_LEGGINGS)
+                .addTag(ConventionalTags.Items.ARMOR_BOOTS);
     }
 }

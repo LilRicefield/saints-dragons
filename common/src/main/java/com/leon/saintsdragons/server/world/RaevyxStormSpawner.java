@@ -1,15 +1,13 @@
 package com.leon.saintsdragons.server.world;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.MobSpawnType;
@@ -25,11 +23,6 @@ import java.util.Map;
 import java.util.Set;
 
 public final class RaevyxStormSpawner {
-    private static final TagKey<Biome> DEFAULT_RAEVYX_BIOME_TAG = TagKey.create(
-            Registries.BIOME,
-            SaintsDragonsCommon.rl("has_raevyx")
-    );
-
     private static final int CHECK_INTERVAL = 120;
     private static final int HORIZONTAL_RADIUS = 96;
     private static final int SEARCH_ATTEMPTS = 24;
@@ -224,6 +217,6 @@ public final class RaevyxStormSpawner {
     }
 
     private static boolean isRaevyxBiomeAllowed(Holder<Biome> biome) {
-        return DragonBiomeMatcher.isAllowed(biome, DEFAULT_RAEVYX_BIOME_TAG);
+        return DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_RAEVYX);
     }
 }

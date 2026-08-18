@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.forge.data;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.ConventionalTags;
 import com.leon.saintsdragons.common.registry.ModTags;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -7,14 +9,18 @@ import net.minecraft.data.tags.BiomeTagsProvider;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
+import net.minecraftforge.common.data.ExistingFileHelper;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
-    public SaintsDragonBiomeTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider) {
-        super(output, lookupProvider);
+    public SaintsDragonBiomeTagsProvider(
+            PackOutput output,
+            CompletableFuture<HolderLookup.Provider> lookupProvider,
+            ExistingFileHelper existingFileHelper
+    ) {
+        super(output, lookupProvider, SaintsDragonsCommon.MOD_ID, existingFileHelper);
     }
 
     @Override
@@ -138,9 +144,35 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.JUNGLE)
                 .add(Biomes.SPARSE_JUNGLE)
                 .add(Biomes.BAMBOO_JUNGLE);
+
+        tag(ModTags.Biomes.HAS_IGNIVORUS_ROOST)
+                .add(Biomes.PLAINS)
+                .add(Biomes.SAVANNA)
+                .add(Biomes.MEADOW)
+                .add(Biomes.WINDSWEPT_HILLS)
+                .add(Biomes.WINDSWEPT_FOREST)
+                .add(Biomes.DESERT);
+
+        tag(ModTags.Biomes.HAS_VARASUCHUS_ROOST)
+                .add(Biomes.BEACH)
+                .add(Biomes.STONY_SHORE)
+                .addOptional(rl("terralith", "gravel_beach"))
+                .addOptionalTag(rl("forge", "is_beach"));
+
+        tag(ModTags.Biomes.HAS_DRAGONHEART_ORE)
+                .add(Biomes.END_BARRENS)
+                .add(Biomes.END_MIDLANDS)
+                .add(Biomes.END_HIGHLANDS);
+
+        tag(ConventionalTags.Biomes.JUNGLE)
+                .add(Biomes.JUNGLE)
+                .add(Biomes.SPARSE_JUNGLE)
+                .add(Biomes.BAMBOO_JUNGLE);
+        tag(ConventionalTags.Biomes.IS_JUNGLE)
+                .addTag(ConventionalTags.Biomes.JUNGLE);
     }
 
     private static ResourceLocation rl(String namespace, String path) {
-        return Objects.requireNonNull(ResourceLocation.tryParse(namespace + ":" + path));
+        return ResourceLocation.fromNamespaceAndPath(namespace, path);
     }
 }

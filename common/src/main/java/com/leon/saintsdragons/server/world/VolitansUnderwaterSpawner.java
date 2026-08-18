@@ -1,15 +1,13 @@
 package com.leon.saintsdragons.server.world;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.world.DragonBiomeMatcher;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.MobSpawnType;
@@ -24,11 +22,6 @@ import java.util.Map;
 import java.util.Set;
 
 public final class VolitansUnderwaterSpawner {
-    private static final TagKey<Biome> DEFAULT_VOLITANS_BIOME_TAG = TagKey.create(
-            Registries.BIOME,
-            SaintsDragonsCommon.rl("has_volitans")
-    );
-
     private static final int CHECK_INTERVAL = 300;
     private static final int HORIZONTAL_RADIUS = 96;
     private static final int SEARCH_ATTEMPTS = 64;
@@ -266,6 +259,6 @@ public final class VolitansUnderwaterSpawner {
     }
 
     private static boolean isVolitansBiomeAllowed(Holder<Biome> biome) {
-        return DragonBiomeMatcher.isAllowed(biome, DEFAULT_VOLITANS_BIOME_TAG);
+        return DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_VOLITANS);
     }
 }

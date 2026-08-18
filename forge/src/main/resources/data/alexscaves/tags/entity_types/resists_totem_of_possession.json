@@ -1,12 +1,13 @@
 {
+  "replace": false,
+  "__comment": "Nope. No mind control either.",
   "values": [
     "saintsdragons:raevyx",
     "saintsdragons:cindervane",
     "saintsdragons:varasuchus",
+    "saintsdragons:ignivorus",
     "saintsdragons:stegonaut",
-    "saintsdragons:volitans",
-    "saintsdragons:nulljaw",
     "saintsdragons:atroxiia",
-    "saintsdragons:ignivorus"
+    "saintsdragons:volitans"
   ]
 }
