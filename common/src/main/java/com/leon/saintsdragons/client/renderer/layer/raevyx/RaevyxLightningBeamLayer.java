@@ -27,9 +27,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final class BeamState {
         float visibility;
         float lastRenderTime = Float.NaN;
-        net.minecraft.world.phys.Vec3 lastMouth;
-        net.minecraft.world.phys.Vec3 lastEnd;
-        net.minecraft.world.phys.Vec3 smoothedEnd;
+        Vec3 lastMouth;
+        Vec3 lastEnd;
+        Vec3 smoothedEnd;
     }
     private static final Map<Raevyx, BeamState> STATES = new WeakHashMap<>();
     private static final float APPEAR_TICKS = 5f;

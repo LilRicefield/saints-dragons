@@ -2,6 +2,14 @@ plugins {
     id 'com.gradleup.shadow'
 }
 
+sourceSets {
+    dataGenerator {
+        java.srcDir 'src/datagen/java'
+        compileClasspath = sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath = output + compileClasspath + sourceSets.main.runtimeClasspath
+    }
+}
+
 loom {
     forge {
         mixinConfig "saintsdragons.mixins.json"
@@ -26,6 +34,8 @@ loom {
         }
         data {
             data()
+            source sourceSets.dataGenerator
+            mainClass.set("com.leon.saintsdragons.forge.datagen.ForgeDataGenBootstrap")
             setConfigName("Forge Data")
             ideConfigGenerated(true)
             runDir("../run-data")
