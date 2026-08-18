@@ -7,6 +7,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.ConfigStorageLayout;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -52,10 +54,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
 
     private DragonAttributeConfigLoader() {
         super(GSON, "dragon_attributes");
+        ConfigStorageLayout.migrateLegacyFiles();
         this.configDirectory = Services.PLATFORM.getConfigDirectory()
-                .resolve(SaintsDragonsCommon.MOD_ID)
-                .resolve("server")
-                .resolve("dragon_attributes");
+                .resolve(SaintsDragonsConfig.DRAGON_ATTRIBUTES_CONFIG_FOLDER);
         this.defaults = ImmutableMap.copyOf(buildDefaultConfigs());
         this.configs = IS_FORGE ? ImmutableMap.copyOf(buildDefaultConfigs()) : this.defaults;
     }

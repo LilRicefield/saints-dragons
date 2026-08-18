@@ -1,10 +1,12 @@
 package com.leon.saintsdragons.fabric;
 
+import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAbilityOverride;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.client.ui.config.ConfigNavigationScreen;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -51,12 +53,95 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     private static final Component SPAWN_CATEGORY = Component.translatable("config.saintsdragons.category.spawning");
     private static final Component ATTRIBUTES_CATEGORY = Component.translatable("config.saintsdragons.category.attributes");
     private static final Component TOOLS_ARMOR_CATEGORY = Component.translatable("config.saintsdragons.category.tools_armor");
-    private static final Component OTHERS_CATEGORY = Component.translatable("config.saintsdragons.category.others");
+    private static final Component CLIENT_COMMON_CATEGORY = Component.translatable("saintsdragons.config_screen.client_common");
+    private static final Component RIDER_CAMERA_CATEGORY = Component.translatable("saintsdragons.config_screen.dragon_rider_camera");
+    private static final Component GAMEPLAY_CATEGORY = Component.translatable("saintsdragons.config_screen.gameplay");
+    private static final Component DRAGON_NEEDS_CATEGORY = Component.translatable("saintsdragons.config_screen.dragon_needs");
+    private static final Component NPCS_CATEGORY = Component.translatable("saintsdragons.config_screen.npcs");
+
+    private enum Page {
+        CLIENT_COMMON,
+        CLIENT_RIDER_CAMERA,
+        SERVER_GAMEPLAY,
+        SERVER_DRAGON_NEEDS,
+        SERVER_SPAWNING,
+        SERVER_TOOLS_ARMOR,
+        SERVER_NPCS,
+        DRAGON_ATTRIBUTES
+    }
+
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
-        return this::createScreen;
+        return this::createRootScreen;
     }
-    private Screen createScreen(Screen parent) {
+
+    private Screen createRootScreen(Screen parent) {
+        return new ConfigNavigationScreen(parent, TITLE, List.of(
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.client"),
+                        this::createClientMenu
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.server"),
+                        this::createServerMenu,
+                        () -> !isRemoteServerSession(),
+                        Component.translatable("saintsdragons.config_screen.server.remote_disabled")
+                )
+        ));
+    }
+
+    private Screen createClientMenu(Screen parent) {
+        return new ConfigNavigationScreen(parent, Component.translatable("saintsdragons.config_screen.client"), List.of(
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.client_common"),
+                        screen -> createConfigScreen(screen, Page.CLIENT_COMMON)
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.dragon_rider_camera"),
+                        screen -> createConfigScreen(screen, Page.CLIENT_RIDER_CAMERA)
+                )
+        ));
+    }
+
+    private Screen createServerMenu(Screen parent) {
+        return new ConfigNavigationScreen(parent, Component.translatable("saintsdragons.config_screen.server"), List.of(
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.server_common"),
+                        this::createServerCommonMenu
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.attributes"),
+                        screen -> createConfigScreen(screen, Page.DRAGON_ATTRIBUTES)
+                )
+        ));
+    }
+
+    private Screen createServerCommonMenu(Screen parent) {
+        return new ConfigNavigationScreen(parent, Component.translatable("saintsdragons.config_screen.server_common"), List.of(
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.gameplay"),
+                        screen -> createConfigScreen(screen, Page.SERVER_GAMEPLAY)
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.dragon_needs"),
+                        screen -> createConfigScreen(screen, Page.SERVER_DRAGON_NEEDS)
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.spawning"),
+                        screen -> createConfigScreen(screen, Page.SERVER_SPAWNING)
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.tools_armor"),
+                        screen -> createConfigScreen(screen, Page.SERVER_TOOLS_ARMOR)
+                ),
+                new ConfigNavigationScreen.Destination(
+                        Component.translatable("saintsdragons.config_screen.npcs"),
+                        screen -> createConfigScreen(screen, Page.SERVER_NPCS)
+                )
+        ));
+    }
+
+    private Screen createConfigScreen(Screen parent, Page page) {
         ConfigHolder<SaintsDragonsFabricSpawnConfig> holder = AutoConfig.getConfigHolder(SaintsDragonsFabricSpawnConfig.class);
         ConfigHolder<SaintsDragonsFabricServerConfig> serverHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricServerConfig.class);
         ConfigHolder<SaintsDragonsFabricClientConfig> clientHolder = AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class);
@@ -352,36 +437,26 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
-                .setTitle(TITLE);
+                .setTitle(pageTitle(page));
         builder.setTransparentBackground(true);
         builder.setSavingRunnable(() -> {
-            clientHolder.save();
-            if (!remoteServer) {
-                holder.save();
-                serverHolder.save();
-                toolsArmorHolder.save();
-                SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED.save();
-                SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED.save();
-                SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED.save();
-                SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.save();
-                SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED.save();
-                SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.save();
-                SaintsDragonsConfig.BARREL_ROLL_ENABLED.save();
-                SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.save();
-                SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.save();
-                SaintsDragonsConfig.HUNGER_DECAY_ENABLED.save();
-                SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.save();
-                SaintsDragonsConfig.WIKI_REMINDER_ENABLED.save();
-                SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.save();
-                persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer,
-                        ignivorusBuffer, volitansBuffer, nulljawBuffer, atroxiiaBuffer, swarmBuffer);
-                refreshLoadedDragonAttributesOnIntegratedServer();
+            switch (page) {
+                case CLIENT_COMMON -> clientHolder.save();
+                case CLIENT_RIDER_CAMERA -> DragonRideCameraTuning.save();
+                case SERVER_SPAWNING -> holder.save();
+                case SERVER_TOOLS_ARMOR -> toolsArmorHolder.save();
+                case SERVER_GAMEPLAY, SERVER_DRAGON_NEEDS, SERVER_NPCS -> serverHolder.save();
+                case DRAGON_ATTRIBUTES -> {
+                    persistDragonAttributes(cindervaneBuffer, stegonautBuffer, raevyxBuffer, varasuchusBuffer,
+                            ignivorusBuffer, volitansBuffer, nulljawBuffer, atroxiiaBuffer, swarmBuffer);
+                    refreshLoadedDragonAttributesOnIntegratedServer();
+                }
             }
         });
 
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-        if (!remoteServer) {
+        if (!remoteServer && page == Page.SERVER_SPAWNING) {
             ConfigCategory spawning = builder.getOrCreateCategory(SPAWN_CATEGORY);
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.raevyx"),
                 () -> config.raevyxSpawnWeight, value -> config.raevyxSpawnWeight = value,
@@ -439,7 +514,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     4, 4, 4);
 
             addOtherSpawnEntries(spawning, entryBuilder, config);
+        }
 
+        if (!remoteServer && page == Page.DRAGON_ATTRIBUTES) {
             ConfigCategory attributes = builder.getOrCreateCategory(ATTRIBUTES_CATEGORY);
             addCindervaneAttributes(attributes, entryBuilder, cindervaneBuffer, cindervaneDefaults);
             addStegonautAttributes(attributes, entryBuilder, stegonautBuffer, stegonautDefaults);
@@ -450,78 +527,119 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             addNulljawAttributes(attributes, entryBuilder, nulljawBuffer, nulljawDefaults);
             addAtroxiiaAttributes(attributes, entryBuilder, atroxiiaBuffer, atroxiiaDefaults);
             addDraconianSwarmAttributes(attributes, entryBuilder, swarmBuffer, swarmDefaults);
+        }
 
+        if (!remoteServer && page == Page.SERVER_TOOLS_ARMOR) {
             ConfigCategory toolsArmor = builder.getOrCreateCategory(TOOLS_ARMOR_CATEGORY);
             addToolsArmorEntries(toolsArmor, entryBuilder);
         }
 
-        ConfigCategory others = builder.getOrCreateCategory(OTHERS_CATEGORY);
-        if (!remoteServer) {
-            others.addEntry(entryBuilder.startBooleanToggle(
+        if (!remoteServer && page == Page.SERVER_GAMEPLAY) {
+            ConfigCategory gameplay = builder.getOrCreateCategory(GAMEPLAY_CATEGORY);
+            List<AbstractConfigListEntry<?>> worldEntries = new ArrayList<>();
+            List<AbstractConfigListEntry<?>> ridingEntries = new ArrayList<>();
+            List<AbstractConfigListEntry<?>> dragonEntries = new ArrayList<>();
+            List<AbstractConfigListEntry<?>> notificationEntries = new ArrayList<>();
+            worldEntries.add(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.dragon_griefing"),
                     SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_griefing.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_GRIEFING_ENABLED.set(value))
              .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
+            worldEntries.add(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.fire_dragon_block_ignition"),
                     SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.fire_dragon_block_ignition.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.FIRE_DRAGON_BLOCK_IGNITION_ENABLED.set(value))
              .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
+            ridingEntries.add(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.screen_shake"),
                     SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.SCREEN_SHAKE_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.screen_shake.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.SCREEN_SHAKE_ENABLED.set(value))
               .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
+            ridingEntries.add(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.barrel_roll"),
                     SaintsDragonsConfig.BARREL_ROLL_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.BARREL_ROLL_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.barrel_roll.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.BARREL_ROLL_ENABLED.set(value))
               .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
+            dragonEntries.add(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.dragon_breeding"),
                     SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.DRAGON_BREEDING_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.dragon_breeding.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.DRAGON_BREEDING_ENABLED.set(value))
               .build());
+            dragonEntries.add(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
+                    SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.set(value))
+             .build());
+            notificationEntries.add(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.wiki_reminder"),
+                    SaintsDragonsConfig.WIKI_REMINDER_ENABLED.get()
+            ).setDefaultValue(SaintsDragonsConfig.WIKI_REMINDER_ENABLED_DEFAULT)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.wiki_reminder.tooltip"))
+             .setSaveConsumer(value -> SaintsDragonsConfig.WIKI_REMINDER_ENABLED.set(value))
+             .build());
+            addSubCategory(gameplay, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.gameplay.world"), worldEntries);
+            addSubCategory(gameplay, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.gameplay.riding_effects"), ridingEntries);
+            addSubCategory(gameplay, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.gameplay.dragons"), dragonEntries);
+            addSubCategory(gameplay, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.gameplay.notifications"), notificationEntries);
         }
-        others.addEntry(entryBuilder.startBooleanToggle(
+
+        if (page == Page.CLIENT_COMMON) {
+            ConfigCategory clientCommon = builder.getOrCreateCategory(CLIENT_COMMON_CATEGORY);
+            List<AbstractConfigListEntry<?>> cameraEntries = new ArrayList<>();
+            List<AbstractConfigListEntry<?>> visualEntries = new ArrayList<>();
+            List<AbstractConfigListEntry<?>> audioEntries = new ArrayList<>();
+            cameraEntries.add(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
                 clientConfig.firstPersonBankingCameraEnabled
         ).setDefaultValue(true)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera.tooltip"))
          .setSaveConsumer(value -> clientConfig.firstPersonBankingCameraEnabled = value)
           .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
+            cameraEntries.add(entryBuilder.startBooleanToggle(
+                Component.translatable("saintsdragons.config_screen.others.third_person_banking_camera"),
+                clientConfig.thirdPersonBankingCameraEnabled
+        ).setDefaultValue(true)
+         .setTooltip(Component.translatable("saintsdragons.config_screen.others.third_person_banking_camera.tooltip"))
+         .setSaveConsumer(value -> clientConfig.thirdPersonBankingCameraEnabled = value)
+          .build());
+            cameraEntries.add(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.dive_camera_wobble"),
                 clientConfig.diveCameraWobbleEnabled
         ).setDefaultValue(true)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.dive_camera_wobble.tooltip"))
          .setSaveConsumer(value -> clientConfig.diveCameraWobbleEnabled = value)
           .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
+            visualEntries.add(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.dive_speed_lines"),
                 clientConfig.diveSpeedLinesEnabled
         ).setDefaultValue(true)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.dive_speed_lines.tooltip"))
          .setSaveConsumer(value -> clientConfig.diveSpeedLinesEnabled = value)
           .build());
-        others.addEntry(entryBuilder.startBooleanToggle(
+            audioEntries.add(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.generic_dive_loop"),
                 clientConfig.genericDiveLoopEnabled
         ).setDefaultValue(true)
          .setTooltip(Component.translatable("saintsdragons.config_screen.others.generic_dive_loop.tooltip"))
          .setSaveConsumer(value -> clientConfig.genericDiveLoopEnabled = value)
           .build());
-        others.addEntry(entryBuilder.startIntSlider(
+            audioEntries.add(entryBuilder.startIntSlider(
                 Component.translatable("saintsdragons.config_screen.others.swarm_battle_music_volume"),
                 clientConfig.swarmBattleMusicVolume,
                 0,
@@ -531,29 +649,40 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
          .setTextGetter(value -> Component.literal(value + "%"))
          .setSaveConsumer(value -> clientConfig.swarmBattleMusicVolume = value)
          .build());
-        if (!remoteServer) {
-            others.addEntry(entryBuilder.startBooleanToggle(
+            addSubCategory(clientCommon, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.client.camera_riding"), cameraEntries);
+            addSubCategory(clientCommon, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.client.visual_effects"), visualEntries);
+            addSubCategory(clientCommon, entryBuilder,
+                    Component.translatable("saintsdragons.config_screen.client.audio"), audioEntries);
+        }
+
+        if (page == Page.CLIENT_RIDER_CAMERA) {
+            ConfigCategory riderCamera = builder.getOrCreateCategory(RIDER_CAMERA_CATEGORY);
+            addRiderCameraEntries(riderCamera, entryBuilder);
+        }
+
+        if (!remoteServer && page == Page.SERVER_DRAGON_NEEDS) {
+            ConfigCategory dragonNeeds = builder.getOrCreateCategory(DRAGON_NEEDS_CATEGORY);
+            dragonNeeds.addEntry(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.hunger_decay"),
                     SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.HUNGER_DECAY_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.hunger_decay.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.HUNGER_DECAY_ENABLED.set(value))
               .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
+            dragonNeeds.addEntry(entryBuilder.startBooleanToggle(
                     Component.translatable("saintsdragons.config_screen.others.happiness_decay"),
                     SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()
             ).setDefaultValue(SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED_DEFAULT)
              .setTooltip(Component.translatable("saintsdragons.config_screen.others.happiness_decay.tooltip"))
              .setSaveConsumer(value -> SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.set(value))
               .build());
-            others.addEntry(entryBuilder.startBooleanToggle(
-                    Component.translatable("saintsdragons.config_screen.others.wiki_reminder"),
-                    SaintsDragonsConfig.WIKI_REMINDER_ENABLED.get()
-            ).setDefaultValue(SaintsDragonsConfig.WIKI_REMINDER_ENABLED_DEFAULT)
-             .setTooltip(Component.translatable("saintsdragons.config_screen.others.wiki_reminder.tooltip"))
-             .setSaveConsumer(value -> SaintsDragonsConfig.WIKI_REMINDER_ENABLED.set(value))
-              .build());
-            others.addEntry(entryBuilder.startIntSlider(
+        }
+
+        if (!remoteServer && page == Page.SERVER_NPCS) {
+            ConfigCategory npcs = builder.getOrCreateCategory(NPCS_CATEGORY);
+            npcs.addEntry(entryBuilder.startIntSlider(
                     Component.translatable("saintsdragons.config_screen.others.ivy.restock_interval"),
                     SaintsDragonsConfig.IVY_RESTOCK_INTERVAL.get(),
                     20,
@@ -565,6 +694,59 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         }
 
         return builder.build();
+    }
+
+    private static void addRiderCameraEntries(ConfigCategory category, ConfigEntryBuilder entryBuilder) {
+        DragonRideCameraTuning.bootstrap();
+        for (String dragonKey : DragonRideCameraTuning.getConfigurableProfileKeys()) {
+            DragonRideCameraTuning.CameraProfile current = DragonRideCameraTuning.getProfile(dragonKey);
+            DragonRideCameraTuning.CameraProfile defaults = DragonRideCameraTuning.getDefaultProfile(dragonKey);
+            List<AbstractConfigListEntry<?>> entries = new ArrayList<>();
+            entries.add(entryBuilder.startDoubleField(
+                            Component.translatable("saintsdragons.config_screen.dragon_rider_camera.grounded_distance"),
+                            (double) current.groundedDistance())
+                    .setDefaultValue((double) defaults.groundedDistance())
+                    .setMin(DragonRideCameraTuning.MIN_CAMERA_DISTANCE)
+                    .setMax(DragonRideCameraTuning.MAX_CAMERA_DISTANCE)
+                    .setTooltip(Component.translatable(
+                            "saintsdragons.config_screen.dragon_rider_camera.grounded_distance.tooltip"))
+                    .setSaveConsumer(value -> DragonRideCameraTuning.setGroundedDistance(dragonKey, value))
+                    .build());
+            entries.add(entryBuilder.startDoubleField(
+                            Component.translatable("saintsdragons.config_screen.dragon_rider_camera.air_or_water_distance"),
+                            (double) current.airOrWaterDistance())
+                    .setDefaultValue((double) defaults.airOrWaterDistance())
+                    .setMin(DragonRideCameraTuning.MIN_CAMERA_DISTANCE)
+                    .setMax(DragonRideCameraTuning.MAX_CAMERA_DISTANCE)
+                    .setTooltip(Component.translatable(
+                            "saintsdragons.config_screen.dragon_rider_camera.air_or_water_distance.tooltip"))
+                    .setSaveConsumer(value -> DragonRideCameraTuning.setAirOrWaterDistance(dragonKey, value))
+                    .build());
+            addSubCategory(category, entryBuilder,
+                    Component.translatable("config.saintsdragons.attributes." + dragonKey), entries);
+        }
+    }
+
+    private static Component pageTitle(Page page) {
+        return switch (page) {
+            case CLIENT_COMMON -> Component.translatable("saintsdragons.config_screen.client_common");
+            case CLIENT_RIDER_CAMERA -> Component.translatable("saintsdragons.config_screen.dragon_rider_camera");
+            case SERVER_GAMEPLAY -> Component.translatable("saintsdragons.config_screen.gameplay");
+            case SERVER_DRAGON_NEEDS -> Component.translatable("saintsdragons.config_screen.dragon_needs");
+            case SERVER_SPAWNING -> Component.translatable("saintsdragons.config_screen.spawning");
+            case SERVER_TOOLS_ARMOR -> Component.translatable("saintsdragons.config_screen.tools_armor");
+            case SERVER_NPCS -> Component.translatable("saintsdragons.config_screen.npcs");
+            case DRAGON_ATTRIBUTES -> Component.translatable("saintsdragons.config_screen.attributes");
+        };
+    }
+
+    private static void addSubCategory(ConfigCategory category, ConfigEntryBuilder entryBuilder,
+                                       Component title, List<AbstractConfigListEntry<?>> entries) {
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        List<AbstractConfigListEntry> rawEntries = (List) entries;
+        category.addEntry(entryBuilder.startSubCategory(title, rawEntries)
+                .setExpanded(true)
+                .build());
     }
 
     private void addToolsArmorEntries(ConfigCategory category, ConfigEntryBuilder entryBuilder) {
@@ -1075,14 +1257,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setDefaultValue(defaults.extraBoolean("aggressive_wild", false))
                 .setSaveConsumer(value -> buffer.aggressiveWild = value)
                 .build());
-        entries.add(entryBuilder.startBooleanToggle(
-                        Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs"),
-                        SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.get())
-                .setDefaultValue(SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED_DEFAULT)
-                .setTooltip(Component.translatable("saintsdragons.config_screen.others.stegonaut_buffs.tooltip"))
-                .setSaveConsumer(value -> SaintsDragonsConfig.STEGONAUT_BUFFS_ENABLED.set(value))
-                .build());
-
         @SuppressWarnings({"rawtypes", "unchecked"})
         List<AbstractConfigListEntry> rawEntries = (List) entries;
         category.addEntry(entryBuilder.startSubCategory(Component.translatable("config.saintsdragons.attributes.stegonaut"), rawEntries)

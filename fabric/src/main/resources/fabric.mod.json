@@ -6,6 +6,9 @@
   "description": "i can write whatever i want. what are you gonna do? throw shoes at me?",
   "license": "MIT",
   "icon": "assets/saintsdragons/saintsdragons.png",
+  "contact": {
+    "homepage": "https://raevyx.miraheze.org/wiki/Main_Page"
+  },
   "entrypoints": {
     "main": [
       "com.leon.saintsdragons.fabric.SaintsDragonsFabric"

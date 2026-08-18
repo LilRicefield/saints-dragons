@@ -5,6 +5,9 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.ConfigStorageLayout;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -24,12 +27,28 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class DragonRideCameraTuning {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final long RELOAD_POLL_INTERVAL_MS = 500L;
     private static final String FILE_NAME = "camera_tuning.json";
+    private static final String CONFIG_NOTE = "Client-side dragon rider camera distances. Edit them here or in the in-game config screen.";
+
+    public static final double MIN_CAMERA_DISTANCE = 0.0D;
+    public static final double MAX_CAMERA_DISTANCE = 100.0D;
+    private static final List<String> CONFIGURABLE_PROFILE_KEYS = List.of(
+            "cindervane",
+            "raevyx",
+            "stegonaut",
+            "varasuchus",
+            "ignivorus",
+            "volitans",
+            "nulljaw",
+            "atroxiia"
+    );
 
     public static final CameraProfile RAEVYX = new CameraProfile(15.0f, 22.0f, 5.5f, 0.075f, 0.15, 0.12, 1.55, 8.0, 0.0f, 6.0f, 0.15f);
     public static final CameraProfile CINDERVANE = new CameraProfile(7.0f, 25.0f, 5.5f, 0.075f, 0.15, 0.12, 2.4, 9.0, 0.0f, 10.0f, 0.15f);
@@ -41,7 +60,7 @@ public final class DragonRideCameraTuning {
     public static final CameraProfile ATROXIIA = new CameraProfile(10.0f, 10.0f, 0.0f, 0.05f, 0.15, 0.12, 1.0, 1.0, 0.0f, 0.0f, 0.15f);
     public static final CameraProfile DEFAULT = new CameraProfile(15.0f, 15.0f, 5.5f, 0.05f, 0.15, 0.12, 0.0, 0.0, 0.0f, 0.0f, 0.15f);
 
-    private static final Map<String, CameraProfile> DEFAULT_PROFILES = new HashMap<>();
+    private static final Map<String, CameraProfile> DEFAULT_PROFILES = new LinkedHashMap<>();
     private static final Map<Class<?>, String> PROFILE_KEYS = new HashMap<>();
     private static Map<String, CameraProfile> activeProfiles = new HashMap<>();
     private static Path configPath;
@@ -53,11 +72,11 @@ public final class DragonRideCameraTuning {
     }
 
     static {
-        DEFAULT_PROFILES.put("raevyx", RAEVYX);
         DEFAULT_PROFILES.put("cindervane", CINDERVANE);
-        DEFAULT_PROFILES.put("ignivorus", IGNIVORUS);
-        DEFAULT_PROFILES.put("varasuchus", VARASUCHUS);
+        DEFAULT_PROFILES.put("raevyx", RAEVYX);
         DEFAULT_PROFILES.put("stegonaut", STEGONAUT);
+        DEFAULT_PROFILES.put("varasuchus", VARASUCHUS);
+        DEFAULT_PROFILES.put("ignivorus", IGNIVORUS);
         DEFAULT_PROFILES.put("volitans", VOLITANS);
         DEFAULT_PROFILES.put("nulljaw", NULLJAW);
         DEFAULT_PROFILES.put("atroxiia", ATROXIIA);
@@ -117,6 +136,41 @@ public final class DragonRideCameraTuning {
         return activeProfiles.getOrDefault(key, DEFAULT_PROFILES.getOrDefault(key, DEFAULT));
     }
 
+    public static List<String> getConfigurableProfileKeys() {
+        return CONFIGURABLE_PROFILE_KEYS;
+    }
+
+    public static CameraProfile getProfile(String key) {
+        ensureInitialized();
+        return activeProfiles.getOrDefault(key, DEFAULT_PROFILES.getOrDefault(key, DEFAULT));
+    }
+
+    public static CameraProfile getDefaultProfile(String key) {
+        return DEFAULT_PROFILES.getOrDefault(key, DEFAULT);
+    }
+
+    public static void setGroundedDistance(String key, double distance) {
+        ensureInitialized();
+        CameraProfile current = getProfile(key);
+        activeProfiles.put(key, withDistances(current, clampDistance(distance), current.airOrWaterDistance()));
+    }
+
+    public static void setAirOrWaterDistance(String key, double distance) {
+        ensureInitialized();
+        CameraProfile current = getProfile(key);
+        activeProfiles.put(key, withDistances(current, current.groundedDistance(), clampDistance(distance)));
+    }
+
+    public static void save() {
+        ensureInitialized();
+        try {
+            writeConfig(activeProfiles);
+            lastKnownModifiedTime = Files.getLastModifiedTime(configPath).toMillis();
+        } catch (IOException exception) {
+            SaintsDragonsCommon.LOGGER.warn("Could not save dragon rider camera config {}", configPath, exception);
+        }
+    }
+
     public static void maybeReloadFromDisk() {
         ensureInitialized();
         if (configPath == null) {
@@ -147,8 +201,9 @@ public final class DragonRideCameraTuning {
         }
         initialized = true;
         activeProfiles = new HashMap<>(DEFAULT_PROFILES);
+        ConfigStorageLayout.migrateLegacyFiles();
         configPath = Services.PLATFORM.getConfigDirectory()
-                .resolve("saintsdragons")
+                .resolve(SaintsDragonsConfig.DRAGON_RIDER_CAMERA_CONFIG_FOLDER)
                 .resolve(FILE_NAME);
         try {
             Files.createDirectories(configPath.getParent());
@@ -168,38 +223,64 @@ public final class DragonRideCameraTuning {
             return;
         }
 
-        Map<String, CameraProfile> mergedProfiles = new HashMap<>(DEFAULT_PROFILES);
-        boolean missingDefaultProfile = false;
+        JsonObject root;
         try (BufferedReader reader = Files.newBufferedReader(configPath, StandardCharsets.UTF_8)) {
             JsonElement element = JsonParser.parseReader(reader);
-            JsonObject root = GsonHelper.convertToJsonObject(element, FILE_NAME);
-            for (Map.Entry<String, CameraProfile> entry : DEFAULT_PROFILES.entrySet()) {
-                String key = entry.getKey();
+            root = GsonHelper.convertToJsonObject(element, FILE_NAME);
+        } catch (Exception exception) {
+            activeProfiles = new HashMap<>(DEFAULT_PROFILES);
+            SaintsDragonsCommon.LOGGER.warn("Could not load dragon rider camera config {}", configPath, exception);
+            return;
+        }
+
+        Map<String, CameraProfile> mergedProfiles = new HashMap<>(DEFAULT_PROFILES);
+        boolean needsRewrite = false;
+        try {
+            if (!root.has("_note") || !CONFIG_NOTE.equals(GsonHelper.getAsString(root, "_note", ""))) {
+                needsRewrite = true;
+            }
+            for (String key : CONFIGURABLE_PROFILE_KEYS) {
+                CameraProfile fallback = DEFAULT_PROFILES.get(key);
                 if (!root.has(key) || !root.get(key).isJsonObject()) {
-                    root.add(key, writeProfile(entry.getValue()));
-                    missingDefaultProfile = true;
+                    needsRewrite = true;
                     continue;
                 }
                 JsonObject profileJson = GsonHelper.convertToJsonObject(root.get(key), key);
-                mergedProfiles.put(key, readProfile(profileJson, entry.getValue()));
+                mergedProfiles.put(key, readProfile(profileJson, fallback));
+                if (!isOfficialProfile(profileJson)) {
+                    needsRewrite = true;
+                }
             }
-            if (missingDefaultProfile) {
-                try (BufferedWriter writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
-                    writer.write(GSON.toJson(root));
+            for (String key : root.keySet()) {
+                if (!"_note".equals(key) && !CONFIGURABLE_PROFILE_KEYS.contains(key)) {
+                    needsRewrite = true;
+                    break;
                 }
             }
             activeProfiles = mergedProfiles;
+            if (needsRewrite) {
+                try {
+                    writeConfig(activeProfiles);
+                } catch (IOException exception) {
+                    SaintsDragonsCommon.LOGGER.warn("Could not rewrite legacy dragon rider camera config {}", configPath, exception);
+                }
+            }
             lastKnownModifiedTime = Files.getLastModifiedTime(configPath).toMillis();
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
             activeProfiles = new HashMap<>(DEFAULT_PROFILES);
+            SaintsDragonsCommon.LOGGER.warn("Could not load dragon rider camera config {}", configPath, exception);
         }
     }
 
     private static void writeDefaultConfig() throws IOException {
+        writeConfig(DEFAULT_PROFILES);
+    }
+
+    private static void writeConfig(Map<String, CameraProfile> profiles) throws IOException {
         JsonObject root = new JsonObject();
-        root.addProperty("_note", "Edit camera values here. In development, this file hot-reloads while the game is running.");
-        for (Map.Entry<String, CameraProfile> entry : DEFAULT_PROFILES.entrySet()) {
-            root.add(entry.getKey(), writeProfile(entry.getValue()));
+        root.addProperty("_note", CONFIG_NOTE);
+        for (String key : CONFIGURABLE_PROFILE_KEYS) {
+            root.add(key, writeProfile(profiles.getOrDefault(key, DEFAULT_PROFILES.get(key))));
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
@@ -211,31 +292,44 @@ public final class DragonRideCameraTuning {
         JsonObject json = new JsonObject();
         json.addProperty("grounded_distance", profile.groundedDistance());
         json.addProperty("air_or_water_distance", profile.airOrWaterDistance());
-        json.addProperty("bank_shift_max", profile.bankShiftMax());
-        json.addProperty("zoom_smoothing", profile.zoomSmoothing());
-        json.addProperty("lateral_shift_smoothing", profile.lateralShiftSmoothing());
-        json.addProperty("vertical_shift_smoothing", profile.verticalShiftSmoothing());
-        json.addProperty("grounded_vertical_shift", profile.groundedVerticalShift());
-        json.addProperty("air_or_water_vertical_shift", profile.airOrWaterVerticalShift());
-        json.addProperty("grounded_pitch_offset", profile.groundedPitchOffset());
-        json.addProperty("air_or_water_pitch_offset", profile.airOrWaterPitchOffset());
-        json.addProperty("pitch_smoothing", profile.pitchSmoothing());
         return json;
     }
 
     private static CameraProfile readProfile(JsonObject json, CameraProfile fallback) {
+        return withDistances(
+                fallback,
+                clampDistance(GsonHelper.getAsDouble(json, "grounded_distance", fallback.groundedDistance())),
+                clampDistance(GsonHelper.getAsDouble(json, "air_or_water_distance", fallback.airOrWaterDistance()))
+        );
+    }
+
+    private static boolean isOfficialProfile(JsonObject json) {
+        return json.size() == 2
+                && json.has("grounded_distance")
+                && json.has("air_or_water_distance");
+    }
+
+    private static float clampDistance(double distance) {
+        if (!Double.isFinite(distance)) {
+            return 0.0F;
+        }
+        return (float) Math.max(MIN_CAMERA_DISTANCE, Math.min(MAX_CAMERA_DISTANCE, distance));
+    }
+
+    private static CameraProfile withDistances(CameraProfile profile, float groundedDistance,
+                                               float airOrWaterDistance) {
         return new CameraProfile(
-                GsonHelper.getAsFloat(json, "grounded_distance", fallback.groundedDistance()),
-                GsonHelper.getAsFloat(json, "air_or_water_distance", fallback.airOrWaterDistance()),
-                GsonHelper.getAsFloat(json, "bank_shift_max", fallback.bankShiftMax()),
-                GsonHelper.getAsFloat(json, "zoom_smoothing", fallback.zoomSmoothing()),
-                GsonHelper.getAsDouble(json, "lateral_shift_smoothing", fallback.lateralShiftSmoothing()),
-                GsonHelper.getAsDouble(json, "vertical_shift_smoothing", fallback.verticalShiftSmoothing()),
-                GsonHelper.getAsDouble(json, "grounded_vertical_shift", fallback.groundedVerticalShift()),
-                GsonHelper.getAsDouble(json, "air_or_water_vertical_shift", fallback.airOrWaterVerticalShift()),
-                GsonHelper.getAsFloat(json, "grounded_pitch_offset", fallback.groundedPitchOffset()),
-                GsonHelper.getAsFloat(json, "air_or_water_pitch_offset", fallback.airOrWaterPitchOffset()),
-                GsonHelper.getAsFloat(json, "pitch_smoothing", fallback.pitchSmoothing())
+                groundedDistance,
+                airOrWaterDistance,
+                profile.bankShiftMax(),
+                profile.zoomSmoothing(),
+                profile.lateralShiftSmoothing(),
+                profile.verticalShiftSmoothing(),
+                profile.groundedVerticalShift(),
+                profile.airOrWaterVerticalShift(),
+                profile.groundedPitchOffset(),
+                profile.airOrWaterPitchOffset(),
+                profile.pitchSmoothing()
         );
     }
 

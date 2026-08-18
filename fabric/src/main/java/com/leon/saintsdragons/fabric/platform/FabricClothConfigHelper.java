@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.ConfigStorageLayout;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.fabric.config.SaintsDragonsFabricClientConfig;
@@ -96,6 +97,7 @@ final class FabricClothConfigHelper implements ConfigHelper {
     }
 
     private static void ensureRegistered() {
+        ConfigStorageLayout.migrateLegacyFiles();
         spawnHolder();
         serverHolder();
         toolsArmorHolder();

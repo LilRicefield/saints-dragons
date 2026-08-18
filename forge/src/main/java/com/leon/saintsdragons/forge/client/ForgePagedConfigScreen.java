@@ -310,6 +310,8 @@ public abstract class ForgePagedConfigScreen extends Screen {
         private final DoubleConsumer setter;
         private final Runnable saver;
         private final DoubleSupplier defaultGetter;
+        private final double min;
+        private final double max;
         private String value;
         private EditBox editBox;
         private Button resetButton;
@@ -320,11 +322,18 @@ public abstract class ForgePagedConfigScreen extends Screen {
 
         protected DoubleEntry(Component label, DoubleSupplier getter, DoubleConsumer setter, Runnable saver,
                               DoubleSupplier defaultGetter) {
+            this(label, getter, setter, saver, defaultGetter, -Double.MAX_VALUE, Double.MAX_VALUE);
+        }
+
+        protected DoubleEntry(Component label, DoubleSupplier getter, DoubleConsumer setter, Runnable saver,
+                              DoubleSupplier defaultGetter, double min, double max) {
             super(label);
             this.getter = getter;
             this.setter = setter;
             this.saver = saver;
             this.defaultGetter = defaultGetter;
+            this.min = min;
+            this.max = max;
             this.value = formatDouble(getter.getAsDouble());
         }
 
@@ -394,8 +403,12 @@ public abstract class ForgePagedConfigScreen extends Screen {
                 return;
             }
             try {
-                double parsed = Double.parseDouble(value);
+                double parsed = Math.max(min, Math.min(max, Double.parseDouble(value)));
                 setter.accept(parsed);
+                value = formatDouble(parsed);
+                if (editBox != null) {
+                    editBox.setValue(value);
+                }
                 if (saver != null) {
                     saver.run();
                 }

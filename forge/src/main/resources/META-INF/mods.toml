@@ -7,6 +7,7 @@ logoFile="assets/saintsdragons/saintsdragons.png"
 modId="saintsdragons"
 version="${version}"
 displayName="Saint's Dragons"
+displayURL="https://raevyx.miraheze.org/wiki/Main_Page"
 description='''
 i can write whatever i want. what are you gonna do? throw shoes at me?
 '''

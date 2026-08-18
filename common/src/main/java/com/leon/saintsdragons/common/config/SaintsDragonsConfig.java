@@ -7,8 +7,12 @@ public final class SaintsDragonsConfig {
     public static final String CONFIG_FOLDER = "saintsdragons";
     public static final String CLIENT_CONFIG_FOLDER = CONFIG_FOLDER + "/client";
     public static final String SERVER_CONFIG_FOLDER = CONFIG_FOLDER + "/server";
+    public static final String CLIENT_COMMON_CONFIG_FILE = CLIENT_CONFIG_FOLDER + "/clientcommon.toml";
+    public static final String DRAGON_RIDER_CAMERA_CONFIG_FOLDER = CLIENT_CONFIG_FOLDER + "/dragon_rider_camera";
     public static final String SPAWNING_CONFIG_FILE = SERVER_CONFIG_FOLDER + "/spawning.toml";
     public static final String SERVER_CONFIG_FILE = SERVER_CONFIG_FOLDER + "/servercommon.toml";
+    public static final String DRAGON_ATTRIBUTES_CONFIG_FILE = SERVER_CONFIG_FOLDER + "/attributes.toml";
+    public static final String DRAGON_ATTRIBUTES_CONFIG_FOLDER = SERVER_CONFIG_FOLDER + "/dragon_attributes";
 
     public static final int SPAWN_WEIGHT_MAX = 5000;
     public static final int RAEVYX_SPAWN_WEIGHT_DEFAULT = 10;

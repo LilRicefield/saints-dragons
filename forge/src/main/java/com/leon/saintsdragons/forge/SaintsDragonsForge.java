@@ -2,6 +2,7 @@ package com.leon.saintsdragons.forge;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.common.config.ConfigStorageLayout;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.block.crucible.DraconicCrucibleThermalReloadListener;
 import com.leon.saintsdragons.server.entity.variant.DragonVariantReloadListener;
@@ -76,8 +77,8 @@ import java.util.Map;
 @Mod(SaintsDragonsCommon.MOD_ID)
 public final class SaintsDragonsForge {
     private static final double ATTRIBUTE_CAP = 100000.0D;
-    private static final String FORGE_ATTRIBUTES_CONFIG_FILE = SaintsDragonsConfig.SERVER_CONFIG_FOLDER + "/attributes.toml";
-    private static final String FORGE_CLIENT_CONFIG_FILE = SaintsDragonsConfig.CLIENT_CONFIG_FOLDER + "/clientcommon.toml";
+    private static final String FORGE_ATTRIBUTES_CONFIG_FILE = SaintsDragonsConfig.DRAGON_ATTRIBUTES_CONFIG_FILE;
+    private static final String FORGE_CLIENT_CONFIG_FILE = SaintsDragonsConfig.CLIENT_COMMON_CONFIG_FILE;
     private static final DeferredRegister<Codec<? extends BiomeModifier>> BIOME_MODIFIERS =
             DeferredRegister.create(ForgeRegistries.Keys.BIOME_MODIFIER_SERIALIZERS, SaintsDragonsCommon.MOD_ID);
 
@@ -89,6 +90,7 @@ public final class SaintsDragonsForge {
 
     public SaintsDragonsForge() {
         var modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+        ConfigStorageLayout.migrateLegacyFiles();
         raiseVanillaMaxHealthCap();
         BIOME_MODIFIERS.register(modEventBus);
         ModLootModifiers.register(modEventBus);

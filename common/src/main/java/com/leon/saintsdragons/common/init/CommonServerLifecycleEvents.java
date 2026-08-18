@@ -22,7 +22,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 public final class CommonServerLifecycleEvents {
-    private static final String WIKI_URL = "https://raevyx.miraheze.org/";
+    private static final String WIKI_URL = "https://raevyx.miraheze.org/wiki/Main_Page";
 
     private CommonServerLifecycleEvents() {
     }

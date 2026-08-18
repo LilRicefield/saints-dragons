@@ -168,7 +168,8 @@ public class ClientEventHandler {
         DragonRideCameraController.CameraOutput output =
                 DragonRideCameraController.update(vehicle, (float) event.getPartialTick());
         event.getCamera().move(-event.getCamera().getMaxZoom(output.zoom()), 0, 0);
-        event.getCamera().move(0, output.verticalShift(), output.lateralShift());
+        double lateralShift = isThirdPersonBankingCameraEnabled() ? output.lateralShift() : 0.0D;
+        event.getCamera().move(0, output.verticalShift(), lateralShift);
         event.setPitch(Mth.clamp(event.getPitch() + output.pitchOffset(), -90.0f, 90.0f));
         return true;
     }
@@ -261,6 +262,11 @@ public class ClientEventHandler {
     private static boolean isFirstPersonBankingCameraEnabled() {
         return ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED == null
                 || ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED.get();
+    }
+
+    private static boolean isThirdPersonBankingCameraEnabled() {
+        return ForgeClientConfig.THIRD_PERSON_BANKING_CAMERA_ENABLED == null
+                || ForgeClientConfig.THIRD_PERSON_BANKING_CAMERA_ENABLED.get();
     }
 
     private static boolean usesAerialBankingCamera(RideableDragonBase dragon) {

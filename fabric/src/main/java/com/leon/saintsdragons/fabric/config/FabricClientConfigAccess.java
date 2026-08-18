@@ -16,6 +16,16 @@ public final class FabricClientConfigAccess {
         }
     }
 
+    public static boolean isThirdPersonBankingCameraEnabled() {
+        try {
+            return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)
+                    .getConfig()
+                    .thirdPersonBankingCameraEnabled;
+        } catch (RuntimeException ignored) {
+            return true;
+        }
+    }
+
     public static boolean isDiveCameraWobbleEnabled() {
         try {
             return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)

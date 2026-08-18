@@ -142,7 +142,10 @@ public class FabricClientEventHandler {
         CameraAccessor cameraAccessor = (CameraAccessor) camera;
         double maxZoom = cameraAccessor.saintsdragons$invokeGetMaxZoom(output.zoom());
         cameraAccessor.saintsdragons$invokeMove(-maxZoom, 0, 0);
-        cameraAccessor.saintsdragons$invokeMove(0, output.verticalShift(), output.lateralShift());
+        double lateralShift = FabricClientConfigAccess.isThirdPersonBankingCameraEnabled()
+                ? output.lateralShift()
+                : 0.0D;
+        cameraAccessor.saintsdragons$invokeMove(0, output.verticalShift(), lateralShift);
 
         float currentYaw = cameraAccessor.saintsdragons$invokeGetYRot();
         float currentPitch = cameraAccessor.saintsdragons$invokeGetXRot();
