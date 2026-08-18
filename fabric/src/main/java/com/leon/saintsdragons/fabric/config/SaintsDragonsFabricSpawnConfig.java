@@ -34,17 +34,17 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int stegonautSpawnWeight = 5;
+    public int stegonautSpawnWeight = SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int stegonautMinGroupSize = 1;
+    public int stegonautMinGroupSize = SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int stegonautMaxGroupSize = 4;
+    public int stegonautMaxGroupSize = SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -54,27 +54,12 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int cindervaneMinGroupSize = 1;
+    public int cindervaneMinGroupSize = SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int cindervaneMaxGroupSize = 3;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int ignivorusSpawnWeight = 1;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int ignivorusMinGroupSize = 1;
-
-    @ConfigEntry.Category("spawning")
-    @ConfigEntry.Gui.Tooltip
-    @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int ignivorusMaxGroupSize = 1;
+    public int cindervaneMaxGroupSize = SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -94,17 +79,17 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int volitansSpawnWeight = 1;
+    public int volitansSpawnWeight = SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int volitansMinGroupSize = 1;
+    public int volitansMinGroupSize = SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int volitansMaxGroupSize = 1;
+    public int volitansMaxGroupSize = SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip

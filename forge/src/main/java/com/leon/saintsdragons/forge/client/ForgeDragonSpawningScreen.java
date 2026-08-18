@@ -15,7 +15,6 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
         STEGONAUT,
         CINDERVANE,
         NULLJAW,
-        IGNIVORUS,
         VOLITANS,
         ATROXIIA,
         OTHER
@@ -77,37 +76,30 @@ public final class ForgeDragonSpawningScreen extends ForgePagedConfigScreen {
             }
         }).bounds(startTopX + (buttonWidth + spacing) * 3, yTop, buttonWidth, 20).build());
 
-        int totalBottomWidth = buttonWidth * 4 + spacing * 3;
+        int totalBottomWidth = buttonWidth * 3 + spacing * 2;
         int startBottomX = (width - totalBottomWidth) / 2;
         int yBottom = yTop + 24;
-
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.ignivorus"), button -> {
-            if (section != Section.IGNIVORUS) {
-                section = Section.IGNIVORUS;
-                rebuildWidgets();
-            }
-        }).bounds(startBottomX, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.volitans"), button -> {
             if (section != Section.VOLITANS) {
                 section = Section.VOLITANS;
                 rebuildWidgets();
             }
-        }).bounds(startBottomX + (buttonWidth + spacing), yBottom, buttonWidth, 20).build());
+        }).bounds(startBottomX, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.atroxiia"), button -> {
             if (section != Section.ATROXIIA) {
                 section = Section.ATROXIIA;
                 rebuildWidgets();
             }
-        }).bounds(startBottomX + (buttonWidth + spacing) * 2, yBottom, buttonWidth, 20).build());
+        }).bounds(startBottomX + (buttonWidth + spacing), yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.spawn.other"), button -> {
             if (section != Section.OTHER) {
                 section = Section.OTHER;
                 rebuildWidgets();
             }
-        }).bounds(startBottomX + (buttonWidth + spacing) * 3, yBottom, buttonWidth, 20).build());
+        }).bounds(startBottomX + (buttonWidth + spacing) * 2, yBottom, buttonWidth, 20).build());
 
         addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();

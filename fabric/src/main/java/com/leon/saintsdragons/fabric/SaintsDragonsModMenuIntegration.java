@@ -399,14 +399,18 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.stegonautMaxGroupSize, value -> config.stegonautMaxGroupSize = value,
                     SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED::set,
                     SaintsDragonsConfig.STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT,
-                    5, 1, 4);
+                    SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT_DEFAULT,
+                    SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE_DEFAULT,
+                    SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE_DEFAULT);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.cindervane"),
                     () -> config.cindervaneSpawnWeight, value -> config.cindervaneSpawnWeight = value,
                     () -> config.cindervaneMinGroupSize, value -> config.cindervaneMinGroupSize = value,
                     () -> config.cindervaneMaxGroupSize, value -> config.cindervaneMaxGroupSize = value,
                     null, null, true,
-                    SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT_DEFAULT, 1, 3);
+                    SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT_DEFAULT,
+                    SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE_DEFAULT,
+                    SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE_DEFAULT);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.atroxiia"),
                     () -> config.atroxiiaSpawnWeight, value -> config.atroxiiaSpawnWeight = value,
@@ -423,7 +427,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.volitansMaxGroupSize, value -> config.volitansMaxGroupSize = value,
                     SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED::set,
                     SaintsDragonsConfig.VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT,
-                    1, 1, 1);
+                    SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT_DEFAULT,
+                    SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE_DEFAULT,
+                    SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE_DEFAULT);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.nulljaw"),
                     () -> config.nulljawSpawnWeight, value -> config.nulljawSpawnWeight = value,

@@ -183,9 +183,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "cindervaneSpawnWeight" -> () -> spawnHolder().getConfig().cindervaneSpawnWeight;
             case "cindervaneMinGroupSize" -> () -> spawnHolder().getConfig().cindervaneMinGroupSize;
             case "cindervaneMaxGroupSize" -> () -> spawnHolder().getConfig().cindervaneMaxGroupSize;
-            case "ignivorusSpawnWeight" -> () -> spawnHolder().getConfig().ignivorusSpawnWeight;
-            case "ignivorusMinGroupSize" -> () -> spawnHolder().getConfig().ignivorusMinGroupSize;
-            case "ignivorusMaxGroupSize" -> () -> spawnHolder().getConfig().ignivorusMaxGroupSize;
             case "atroxiiaSpawnWeight" -> () -> spawnHolder().getConfig().atroxiiaSpawnWeight;
             case "atroxiiaMinGroupSize" -> () -> spawnHolder().getConfig().atroxiiaMinGroupSize;
             case "atroxiiaMaxGroupSize" -> () -> spawnHolder().getConfig().atroxiiaMaxGroupSize;
@@ -224,9 +221,6 @@ final class FabricClothConfigHelper implements ConfigHelper {
             case "cindervaneSpawnWeight" -> value -> spawnHolder().getConfig().cindervaneSpawnWeight = value;
             case "cindervaneMinGroupSize" -> value -> spawnHolder().getConfig().cindervaneMinGroupSize = value;
             case "cindervaneMaxGroupSize" -> value -> spawnHolder().getConfig().cindervaneMaxGroupSize = value;
-            case "ignivorusSpawnWeight" -> value -> spawnHolder().getConfig().ignivorusSpawnWeight = value;
-            case "ignivorusMinGroupSize" -> value -> spawnHolder().getConfig().ignivorusMinGroupSize = value;
-            case "ignivorusMaxGroupSize" -> value -> spawnHolder().getConfig().ignivorusMaxGroupSize = value;
             case "atroxiiaSpawnWeight" -> value -> spawnHolder().getConfig().atroxiiaSpawnWeight = value;
             case "atroxiiaMinGroupSize" -> value -> spawnHolder().getConfig().atroxiiaMinGroupSize = value;
             case "atroxiiaMaxGroupSize" -> value -> spawnHolder().getConfig().atroxiiaMaxGroupSize = value;
