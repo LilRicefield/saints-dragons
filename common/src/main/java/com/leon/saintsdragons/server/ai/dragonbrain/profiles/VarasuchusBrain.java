@@ -36,7 +36,6 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
-    private static final int RECENT_ATTACKER_PRIORITY_TICKS = 20 * 30;
 
     @Override
     public List<SensorType<? extends Sensor<? super Varasuchus>>> getDragonBrainSensors() {
@@ -69,7 +68,6 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                 && !defendingAgainstRecentAttacker
                 && !defendingRoostIntruder) {
             DragonTargetLifecycle.clearCombatTarget(brain, dragon, true);
-            target = null;
         }
 
         if (dragon.isOutsideRoostTerritory()) {
@@ -101,14 +99,14 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                         .build(),
                 DragonBehaviourGroup.<Varasuchus>activity(Activity.FIGHT)
                         .behaviours(
-                                new SetWalkTargetToAttackTargetBehaviour<Varasuchus>(
+                                new SetWalkTargetToAttackTargetBehaviour<>(
                                         VarasuchusCombatBehaviour.CHASE_SPEED,
                                         (dragon, target) ->
                                                 groundStopRange(dragon, target)
                                                         + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> combat.isMovementLocked()
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<Varasuchus>(
+                                new AsyncWaterChaseTargetBehaviour<>(
                                         (dragon, target) -> 0.30D,
                                         8.0F,
                                         (dragon, target) -> combat.isMovementLocked()
@@ -139,7 +137,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                                                 0.25D,
                                                 8.0F
                                         ),
-                                        new DragonWaterEscapeBehaviour<Varasuchus>(
+                                        new DragonWaterEscapeBehaviour<>(
                                                 8.0F,
                                                 0.30D,
                                                 Varasuchus::shouldLeaveWater,
@@ -159,7 +157,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                                         ),
                                         new DragonFollowParentBehaviour<>(Varasuchus.class, 1.1D),
                                         new DragonGroundWanderBehaviour<>(
-                                                1.0D,
+                                                0.85D,
                                                 100,
                                                 10,
                                                 dragon -> !dragon.isInWaterOrBubble()
@@ -174,16 +172,12 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
 
     private boolean canFight(Varasuchus dragon) {
         LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (target == null
-                || !DragonTargetLifecycle.isValidTarget(dragon, target)
-                || dragon.isBaby()
-                || dragon.isVehicle()
-                || dragon.isOrderedToSit()
-                || (dragon.hasRoostTerritory()
-                        && !dragon.isWithinRoostTerritory(target.position()))) {
-            return false;
-        }
-        return true;
+        return DragonTargetLifecycle.isValidTarget(dragon, target)
+                && !dragon.isBaby()
+                && !dragon.isVehicle()
+                && !dragon.isOrderedToSit()
+                && (!dragon.hasRoostTerritory()
+                || dragon.isWithinRoostTerritory(target.position()));
     }
 
     private boolean wantsRoostSleep(Varasuchus dragon) {
@@ -214,7 +208,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
         int ticksSinceAttack = dragon.tickCount - attackTick;
         return attackTick > 0
                 && ticksSinceAttack >= 0
-                && ticksSinceAttack < RECENT_ATTACKER_PRIORITY_TICKS;
+                && ticksSinceAttack < Varasuchus.RECENT_ATTACKER_PRIORITY_TICKS;
     }
 
     private static double groundStopRange(Varasuchus dragon, LivingEntity target) {

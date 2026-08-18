@@ -11,7 +11,7 @@ public final class SaintsDragonsConfig {
     public static final String SERVER_CONFIG_FILE = SERVER_CONFIG_FOLDER + "/servercommon.toml";
 
     public static final int SPAWN_WEIGHT_MAX = 5000;
-    public static final int RAEVYX_SPAWN_WEIGHT_DEFAULT = 1;
+    public static final int RAEVYX_SPAWN_WEIGHT_DEFAULT = 10;
     public static final int RAEVYX_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int RAEVYX_MAX_GROUP_SIZE_DEFAULT = 2;
 
@@ -19,7 +19,7 @@ public final class SaintsDragonsConfig {
     public static final int STEGONAUT_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int STEGONAUT_MAX_GROUP_SIZE_DEFAULT = 4;
 
-    public static final int CINDERVANE_SPAWN_WEIGHT_DEFAULT = 3;
+    public static final int CINDERVANE_SPAWN_WEIGHT_DEFAULT = 14;
     public static final int CINDERVANE_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int CINDERVANE_MAX_GROUP_SIZE_DEFAULT = 3;
 
@@ -124,7 +124,8 @@ public final class SaintsDragonsConfig {
         builder.comment("Note: spawn weights are relative per biome/category roll.");
         builder.comment("Final spawn frequency also depends on each entity's spawn predicate and placement checks.");
         builder.comment("Natural wild dragon spawns are also filtered by shared density rules to stop creature-category dragons from piling up.");
-        builder.comment("Raevyx additionally requires a thunderstorm for natural/chunk-generation spawning.");
+        builder.comment("With custom spawning enabled, Raevyx spawns are driven by thunderstorms.");
+        builder.comment("Disabling custom spawning restores vanilla biome spawning for Raevyx.");
 
         builder.comment("Raevyx spawn settings");
         RAEVYX_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("raevyxCustomSpawningEnabled", RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT);

@@ -1,5 +1,34 @@
 {
   "values": [
-    "minecraft:lush_caves"
+    "#minecraft:is_jungle",
+    {
+      "id": "#c:jungle",
+      "required": false
+    },
+    {
+      "id": "#c:is_jungle",
+      "required": false
+    },
+    {
+      "id": "#forge:is_jungle",
+      "required": false
+    },
+    {
+      "id": "#c:plains",
+      "required": false
+    },
+    {
+      "id": "#c:is_plains",
+      "required": false
+    },
+    {
+      "id": "#forge:is_plains",
+      "required": false
+    },
+    "minecraft:plains",
+    "minecraft:sunflower_plains",
+    "minecraft:jungle",
+    "minecraft:sparse_jungle",
+    "minecraft:flower_forest"
   ]
 }

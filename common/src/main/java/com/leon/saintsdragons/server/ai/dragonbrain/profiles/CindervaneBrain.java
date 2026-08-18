@@ -79,7 +79,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                         CindervaneGroundCombatBehaviour::isMovementCommitted
                                 ),
                                 new CindervaneAirCombatMovementBehaviour(),
-                                new SetWalkTargetToAttackTargetBehaviour<Cindervane>(
+                                new SetWalkTargetToAttackTargetBehaviour<>(
                                         CindervaneGroundCombatBehaviour.CHASE_SPEED,
                                         CindervaneGroundCombatBehaviour::groundStopRange,
                                         (dragon, target) -> CindervaneGroundCombatBehaviour.isMovementCommitted(dragon)
@@ -116,7 +116,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                         ),
                                         new DragonPackFollowBehaviour<>(Cindervane.class, 1.0D, 20.0D, 10.0D),
                                         new DragonFollowParentBehaviour<>(Cindervane.class, 1.15D),
-                                        new DragonFollowOwnerBehaviour<Cindervane>(
+                                        new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.cindervane(),
                                                 dragon -> dragon.startTakeoffSequence(
                                                         0.12D,
@@ -125,7 +125,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                         ),
                                         new DragonDrinkBehaviour<>(DragonDrinkBehaviour.Config.standard()),
                                         new CindervaneAutonomousFlightBehaviour(),
-                                        new DragonGroundWanderBehaviour<>(0.6D, 160)
+                                        new DragonGroundWanderBehaviour<>(1.0D, 160)
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)

@@ -40,7 +40,7 @@ public final class DragonSpawnRegistry {
         add(entries,
                 SaintsDragonsCommon.rl("stegonaut"),
                 ModEntities.STEGONAUT,
-                ModTags.Biomes.HAS_STEGONAUT_FALLBACK,
+                ModTags.Biomes.HAS_STEGONAUT,
                 MobCategory.CREATURE,
                 () -> SaintsDragonsConfig.isStegonautCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.get(),

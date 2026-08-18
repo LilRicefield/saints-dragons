@@ -226,7 +226,7 @@ public final class StegonautLushCaveSpawner {
     }
 
     private static boolean isStegonautBiomeAllowed(Holder<Biome> biome) {
-        return DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_STEGONAUT);
+        return DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_STEGONAUT_CAVES);
     }
 
 }

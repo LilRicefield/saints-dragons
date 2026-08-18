@@ -90,6 +90,8 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.FLOAT);
+    public static final double BREED_PARTNER_RANGE = 20.0D;
+    public static final double BREED_DISTANCE_SQR = 2500.0D;
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
     private static final double BABY_MAX_HEALTH = 50.0D;

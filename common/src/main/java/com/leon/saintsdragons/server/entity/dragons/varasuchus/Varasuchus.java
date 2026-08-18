@@ -196,6 +196,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             .add("varasuchus_hurt", AnimationHelper.INTERACTION_CONTROLLER, "animation.varasuchus.hurt", ModSounds.VARASUCHUS_HURT, 1.1f, 0.95f, 0.1f, false, true, true)
             .add("varasuchus_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.varasuchus.die", ModSounds.VARASUCHUS_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
             .build();
+    public static final int RECENT_ATTACKER_PRIORITY_TICKS = 20 * 30;
     public static final double RIDER_WALK_SPEED = 0.15D;
     public static final double RIDER_RUN_SPEED = 0.30D;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;

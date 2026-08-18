@@ -1,60 +1,75 @@
 {
   "values": [
-    {
-      "id": "#c:mountain",
-      "required": false
-    },
-    {
-      "id": "#c:mountain_peak",
-      "required": false
-    },
-    {
-      "id": "#c:mountain_slope",
-      "required": false
-    },
-    {
-      "id": "#c:is_mountain",
-      "required": false
-    },
-    {
-      "id": "#c:is_plains",
-      "required": false
-    },
-    {
-      "id": "#c:plains",
-      "required": false
-    },
-    {
-      "id": "#c:climate_temperate",
-      "required": false
-    },
-    {
-      "id": "#forge:is_plains",
-      "required": false
-    },
-    {
-      "id": "#forge:is_mountain",
-      "required": false
-    },
-    {
-      "id": "#forge:is_peak",
-      "required": false
-    },
-    {
-      "id": "#forge:is_slope",
-      "required": false
-    },
-    {
-      "id": "#c:is_temperate/overworld",
-      "required": false
-    },
-    "minecraft:plains",
     "minecraft:meadow",
     "minecraft:windswept_hills",
-    "minecraft:sunflower_plains",
     "minecraft:cherry_grove",
     "minecraft:windswept_forest",
-    "minecraft:stony_peaks",
-    "minecraft:jagged_peaks"
+    "minecraft:grove",
+    "minecraft:snowy_plains",
+    "minecraft:savanna_plateau",
+    {
+      "id": "natures_spirit:windswept_sugi_forest",
+      "required": false
+    },
+    {
+      "id": "natures_spirit:sugi_forest",
+      "required": false
+    },
+    {
+      "id": "regions_unexplored:pine_slopes",
+      "required": false
+    },
+    {
+      "id": "terralith:yosemite_lowlands",
+      "required": false
+    },
+    {
+      "id": "terralith:highlands",
+      "required": false
+    },
+    {
+      "id": "terralith:amethyst_canyon",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:moor",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:highland",
+      "required": false
+    },
+    {
+      "id": "terralith:gravel_desert",
+      "required": false
+    },
+    {
+      "id": "terralith:volcanic_crater",
+      "required": false
+    },
+    {
+      "id": "terralith:caldera",
+      "required": false
+    },
+    {
+      "id": "terralith:ashen_savanna",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wasteland_steppe",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:wasteland",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:volcanic_plains",
+      "required": false
+    },
+    {
+      "id": "biomesoplenty:dead_forest",
+      "required": false
+    }
   ]
 }

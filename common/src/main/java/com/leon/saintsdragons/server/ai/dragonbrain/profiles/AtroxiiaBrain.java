@@ -30,7 +30,6 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
-    private static final double IDLE_WANDER_SPEED = 0.80D;
 
     @Override
     public List<SensorType<? extends Sensor<? super Atroxiia>>> getDragonBrainSensors() {
@@ -66,12 +65,12 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
                         .build(),
                 DragonBehaviourGroup.<Atroxiia>activity(Activity.FIGHT)
                         .behaviours(
-                                new SetWalkTargetToAttackTargetBehaviour<Atroxiia>(
+                                new SetWalkTargetToAttackTargetBehaviour<>(
                                         AtroxiiaGroundCombatBehaviour.CHASE_SPEED,
                                         AtroxiiaGroundCombatBehaviour::meleeStopRange,
                                         (dragon, target) -> AtroxiiaGroundCombatBehaviour.isMovementCommitted(dragon)
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<Atroxiia>(0.30D, 8.0F),
+                                new AsyncWaterChaseTargetBehaviour<>(0.30D, 8.0F),
                                 new AtroxiiaGroundCombatBehaviour(),
                                 new AtroxiiaWaterCombatBehaviour()
                         )
@@ -90,7 +89,7 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
                                                 Atroxiia.BREED_PARTNER_RANGE, Atroxiia.BREED_DISTANCE_SQR),
                                         new DragonGroundFollowOwnerBehaviour<>(
                                                 DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
-                                        new DragonGroundWanderBehaviour<>(IDLE_WANDER_SPEED, 100)
+                                        new DragonGroundWanderBehaviour<>(1.0D, 100)
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)
@@ -99,8 +98,7 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
     }
 
     private boolean canFight(Atroxiia dragon, LivingEntity target) {
-        return target != null
-                && DragonTargetLifecycle.isValidTarget(dragon, target)
+        return DragonTargetLifecycle.isValidTarget(dragon, target)
                 && dragon.canTarget(target)
                 && !dragon.isBaby()
                 && !dragon.isTamingStunned()

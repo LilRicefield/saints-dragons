@@ -65,7 +65,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                         dragon -> false
                                 ),
                                 new IgnivorusAirCombatBehaviour(),
-                                new SetWalkTargetToAttackTargetBehaviour<Ignivorus>(
+                                new SetWalkTargetToAttackTargetBehaviour<>(
                                         IgnivorusGroundCombatBehaviour.CHASE_SPEED,
                                         (dragon, targetEntity) ->
                                                 IgnivorusGroundCombatBehaviour.MELEE_ENGAGE_RANGE
@@ -111,7 +111,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                 8.0F,
                                                 1.5D
                                         ),
-                                        new DragonFollowOwnerBehaviour<Ignivorus>(
+                                        new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.ignivorus(),
                                                 dragon -> dragon.startTakeoffSequence(
                                                         0.12D,

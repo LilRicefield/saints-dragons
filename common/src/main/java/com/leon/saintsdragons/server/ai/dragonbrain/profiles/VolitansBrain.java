@@ -84,14 +84,14 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                                 || !dragon.getTarget().isInWaterOrBubble()
                                 ),
                                 new VolitansAirCombatBehaviour(),
-                                new SetWalkTargetToAttackTargetBehaviour<Volitans>(
+                                new SetWalkTargetToAttackTargetBehaviour<>(
                                         VolitansGroundCombatBehaviour.CHASE_SPEED,
                                         (dragon, target) ->
                                                 VolitansGroundCombatBehaviour.CHASE_STOP_RANGE
                                                         + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> groundCombat.isGroundMovementLocked()
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<Volitans>(
+                                new AsyncWaterChaseTargetBehaviour<>(
                                         (dragon, target) -> 0.28D,
                                         8.0F,
                                         (dragon, target) -> groundCombat.isGroundMovementLocked()
@@ -125,14 +125,14 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                                 Volitans.BREED_DISTANCE_SQR
                                         ),
                                         new VolitansFindSleepDepthBehaviour(6.0F, 0.16D),
-                                        new DragonWaterEscapeBehaviour<Volitans>(
+                                        new DragonWaterEscapeBehaviour<>(
                                                 8.0F,
                                                 0.28D,
                                                 Volitans::shouldLeaveWater,
                                                 VolitansBrain::canContinueLeavingWater
                                         ),
                                         new DragonFindWaterBehaviour<>(1.0D),
-                                        new DragonFollowOwnerBehaviour<Volitans>(
+                                        new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.volitans(),
                                                 dragon -> dragon.startTakeoffSequence(
                                                         0.12D,
@@ -148,7 +148,7 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                                 dragon -> !dragon.isSleepLocked()
                                         ),
                                         new VolitansAutonomousFlightBehaviour(),
-                                        new DragonGroundWanderBehaviour<Volitans>(
+                                        new DragonGroundWanderBehaviour<>(
                                                 0.9D,
                                                 70,
                                                 10,

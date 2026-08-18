@@ -19,17 +19,17 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int raevyxSpawnWeight = 1;
+    public int raevyxSpawnWeight = SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int raevyxMinGroupSize = 1;
+    public int raevyxMinGroupSize = SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 1, max = 10)
-    public int raevyxMaxGroupSize = 2;
+    public int raevyxMaxGroupSize = SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
@@ -49,7 +49,7 @@ public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip
     @ConfigEntry.BoundedDiscrete(min = 0, max = 5000)
-    public int cindervaneSpawnWeight = 3;
+    public int cindervaneSpawnWeight = SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT_DEFAULT;
 
     @ConfigEntry.Category("spawning")
     @ConfigEntry.Gui.Tooltip

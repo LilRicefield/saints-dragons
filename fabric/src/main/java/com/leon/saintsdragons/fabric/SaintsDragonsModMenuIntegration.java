@@ -389,7 +389,9 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 () -> config.raevyxMaxGroupSize, value -> config.raevyxMaxGroupSize = value,
                 SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::get, SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED::set,
                 SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT,
-                1, 1, 2);
+                SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT_DEFAULT,
+                SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE_DEFAULT,
+                SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE_DEFAULT);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.stegonaut"),
                     () -> config.stegonautSpawnWeight, value -> config.stegonautSpawnWeight = value,
@@ -404,7 +406,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     () -> config.cindervaneMinGroupSize, value -> config.cindervaneMinGroupSize = value,
                     () -> config.cindervaneMaxGroupSize, value -> config.cindervaneMaxGroupSize = value,
                     null, null, true,
-                    3, 1, 3);
+                    SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT_DEFAULT, 1, 3);
 
             addSpawnEntries(spawning, entryBuilder, Component.translatable("config.saintsdragons.spawn.atroxiia"),
                     () -> config.atroxiiaSpawnWeight, value -> config.atroxiiaSpawnWeight = value,

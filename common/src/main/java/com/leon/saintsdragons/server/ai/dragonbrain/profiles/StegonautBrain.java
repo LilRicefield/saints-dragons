@@ -32,8 +32,7 @@ import java.util.List;
 
 public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
     private static final float GROUND_CHASE_SPEED = 0.75F;
-    private static final double BREED_PARTNER_RANGE = 20.0D;
-    private static final double BREED_DISTANCE_SQR = 2500.0D;
+
 
     @Override
     public List<SensorType<? extends Sensor<? super Stegonaut>>> getDragonBrainSensors() {
@@ -71,7 +70,7 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
                         .build(),
                 DragonBehaviourGroup.<Stegonaut>activity(Activity.FIGHT)
                         .behaviours(
-                                new SetWalkTargetToAttackTargetBehaviour<Stegonaut>(
+                                new SetWalkTargetToAttackTargetBehaviour<>(
                                         GROUND_CHASE_SPEED,
                                         (dragon, target) ->
                                                 StegonautGroundCombatBehaviour.GROUND_ATTACK_RANGE
@@ -93,13 +92,15 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
                                 new FirstApplicableDragonBehaviour<>(
                                         new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
                                         new DragonFollowParentBehaviour<>(Stegonaut.class, 0.70D),
-                                        new DragonBreedBehaviour<>(1.0D, Stegonaut.class,
-                                                BREED_PARTNER_RANGE, BREED_DISTANCE_SQR),
+                                        new DragonBreedBehaviour<>(1.0D,
+                                                Stegonaut.class,
+                                                Stegonaut.BREED_PARTNER_RANGE,
+                                                Stegonaut.BREED_DISTANCE_SQR),
                                         new DragonGroundFollowOwnerBehaviour<>(
                                                 DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
                                         new DragonGroundPackFollowBehaviour<>(
                                                 Stegonaut.class, 16.0D, 8.0D),
-                                        new DragonGroundWanderBehaviour<>(0.35D, 120)
+                                        new DragonGroundWanderBehaviour<>(0.80D, 120)
                                 )
                         )
                         .build()
@@ -108,8 +109,7 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
 
     private boolean canFight(Stegonaut dragon) {
         LivingEntity target = dragon.getTarget();
-        return target != null
-                && DragonTargetLifecycle.isValidTarget(dragon, target)
+        return DragonTargetLifecycle.isValidTarget(dragon, target)
                 && dragon.canTarget(target)
                 && !dragon.isVehicle()
                 && !dragon.isOrderedToSit()
