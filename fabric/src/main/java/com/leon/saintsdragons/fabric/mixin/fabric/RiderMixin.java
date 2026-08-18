@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
+import com.leon.saintsdragons.client.renderer.EntityPreviewRenderContext;
 import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
@@ -41,6 +42,9 @@ public abstract class RiderMixin {
     private void saintsdragons$transformRiderOnDragon(AbstractClientPlayer player, float entityYaw, float partialTick,
                                                        PoseStack poseStack, MultiBufferSource buffer, int packedLight,
                                                        CallbackInfo ci) {
+        if (EntityPreviewRenderContext.isRendering()) {
+            return;
+        }
         Entity entity = player.getVehicle();
         if (!(entity instanceof RideableDragonBase dragon)) {
             return;

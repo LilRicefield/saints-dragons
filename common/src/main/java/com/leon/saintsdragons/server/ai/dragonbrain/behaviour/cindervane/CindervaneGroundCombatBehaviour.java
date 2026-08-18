@@ -340,7 +340,7 @@ public final class CindervaneGroundCombatBehaviour extends DragonBehaviour<Cinde
             case SLASH_GRAB -> startAbility(dragon, ModAbilities.CINDERVANE_SLASH_GRAB,
                     true, 40, 140, 90, 120);
             case MAGMA_VOLLEY -> startAbility(dragon, ModAbilities.CINDERVANE_MAGMA_VOLLEY,
-                    true, 55, 200, 140, 180);
+                    true, 55, 400, 140, 180);
             case NONE -> false;
         };
     }

@@ -22,7 +22,7 @@ public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
     private static final int BLOCKS_PER_VOLLEY = 3;
     private static final int VOLLEY_INTERVAL_TICKS = 10;
     private static final int ACTIVE_DURATION_TICKS = VOLLEY_INTERVAL_TICKS * (MAX_VOLLEYS - 1) + 1;
-    private static final int COOLDOWN_TICKS = 5;
+    private static final int COOLDOWN_TICKS = 20 * 20;
     private static final int MAGMA_BLOCK_LIFETIME = 200;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {

@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.renderer;
 
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
-import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
@@ -99,7 +98,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         this.lastBakedModel = null;
         this.renderedModelThisPass = false;
-        boolean extractWorldRenderData = !DraconicCodexScreen.RENDERING_IN_GUI.get();
+        boolean extractWorldRenderData = !EntityPreviewRenderContext.isRendering();
         try {
             if (extractWorldRenderData) {
                 RenderPassContext.beginExtraction(entity.getId());

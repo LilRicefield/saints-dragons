@@ -15,6 +15,7 @@
     "BloodTempestAfterimageModelMixin",
     "BloodTempestAfterimageItemRendererMixin",
     "LivingEntityRendererMixin",
+    "InventoryScreenMixin",
     "EntityRendererMixin",
     "EntityTurnMixin",
     "EntityRenderDispatcherMixin",
