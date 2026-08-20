@@ -3,11 +3,16 @@
   "id": "saintsdragons",
   "version": "${version}",
   "name": "Saint's Dragons",
+  "authors": [
+    "Leon Saint"
+  ],
   "description": "i can write whatever i want. what are you gonna do? throw shoes at me?",
   "license": "MIT",
   "icon": "assets/saintsdragons/saintsdragons.png",
   "contact": {
-    "homepage": "https://raevyx.miraheze.org/wiki/Main_Page"
+    "homepage": "https://raevyx.miraheze.org/wiki/Main_Page",
+    "sources": "https://github.com/LilRicefield/saints-dragons",
+    "issues": "https://github.com/LilRicefield/saints-dragons/issues"
   },
   "entrypoints": {
     "main": [
