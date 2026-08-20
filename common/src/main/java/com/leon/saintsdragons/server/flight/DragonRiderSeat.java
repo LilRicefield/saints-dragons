@@ -21,6 +21,54 @@ public final class DragonRiderSeat {
         moveFunction.accept(passenger, x, y, z);
     }
 
+    /**
+     * Positions a passenger at a stable entity-local seat anchor, rotated with the mount's yaw.
+     */
+    public static void positionLocalRider(Entity mount,
+                                          Entity passenger,
+                                          Entity.MoveFunction moveFunction,
+                                          Vec3 localSeatOffset) {
+        if (passenger == null || localSeatOffset == null || !mount.hasPassenger(passenger)) {
+            return;
+        }
+
+        double yawRad = Math.toRadians(mount.getYRot());
+        double cosYaw = Math.cos(yawRad);
+        double sinYaw = Math.sin(yawRad);
+        double worldX = localSeatOffset.x * cosYaw - localSeatOffset.z * sinYaw;
+        double worldZ = localSeatOffset.x * sinYaw + localSeatOffset.z * cosYaw;
+
+        moveFunction.accept(
+                passenger,
+                mount.getX() + worldX,
+                mount.getY() + localSeatOffset.y + passenger.getMyRidingOffset(),
+                mount.getZ() + worldZ
+        );
+    }
+
+    /**
+     * Uses an animated client locator when GeckoLib has sampled one, while retaining a stable
+     * entity-local fallback for the server and for the first client render frame.
+     */
+    public static void positionAnimatedRider(Entity mount,
+                                             Entity passenger,
+                                             Entity.MoveFunction moveFunction,
+                                             Vec3 logicalSeatOffset,
+                                             Vec3 locatorWorldPos) {
+        if (locatorWorldPos == null) {
+            positionLocalRider(mount, passenger, moveFunction, logicalSeatOffset);
+            return;
+        }
+
+        positionLocatorRider(
+                mount,
+                passenger,
+                moveFunction,
+                logicalSeatOffset == null ? 0.0D : logicalSeatOffset.y,
+                locatorWorldPos
+        );
+    }
+
     public static void positionLocatorRider(Entity mount,
                                             Entity passenger,
                                             Entity.MoveFunction moveFunction,

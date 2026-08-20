@@ -2,16 +2,14 @@ package com.leon.saintsdragons.server.entity.controller.stegonaut;
 
 import com.leon.saintsdragons.server.entity.controller.GroundDragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-
 public record StegonautRiderController(Stegonaut drake) {
-    private static final double SEAT_BASE_FACTOR = 0.0D;
-
     @Nullable
     public Player getRidingPlayer() {
         return GroundDragonRiderControllerHelper.getRidingPlayer(drake);
@@ -31,11 +29,12 @@ public record StegonautRiderController(Stegonaut drake) {
     }
 
     public double getPassengersRidingOffset() {
-        return (drake.getBbHeight() * SEAT_BASE_FACTOR);
+        return DragonRiderSeatOffsets.STEGONAUT.y;
     }
 
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-        GroundDragonRiderControllerHelper.positionLocatorRider(drake, passenger, moveFunction, getPassengersRidingOffset());
+        GroundDragonRiderControllerHelper.positionAnimatedRider(
+                drake, passenger, moveFunction, DragonRiderSeatOffsets.STEGONAUT);
     }
 
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {

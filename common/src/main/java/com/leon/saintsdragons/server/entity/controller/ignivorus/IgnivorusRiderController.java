@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 public record IgnivorusRiderController(Ignivorus dragon) {
 
-    private static final double SEAT_BASE_FACTOR = 0.50D;
     private static final double LANDING_HEIGHT_TRIGGER = 4.0D;
     private static final int MAX_GROUND_CHECK_DISTANCE = 10;
     private static final double BASE_FLIGHT_SPEED_MULT = 3.95;
@@ -181,16 +181,16 @@ public record IgnivorusRiderController(Ignivorus dragon) {
     }
 
     public double getPassengersRidingOffset() {
-        return (double) dragon.getBbHeight() * SEAT_BASE_FACTOR;
+        return DragonRiderSeatOffsets.IGNIVORUS.y;
     }
 
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
         if (!dragon.hasPassenger(passenger)) return;
-        DragonRiderSeat.positionLocatorRider(
+        DragonRiderSeat.positionAnimatedRider(
                 dragon,
                 passenger,
                 moveFunction,
-                getPassengersRidingOffset(),
+                DragonRiderSeatOffsets.IGNIVORUS,
                 dragon.level().isClientSide ? dragon.getClientLocatorPosition("passengerLocator") : null
         );
     }

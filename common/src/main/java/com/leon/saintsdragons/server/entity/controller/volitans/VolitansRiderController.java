@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 
 public final class VolitansRiderController {
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final double SEAT_BASE_FACTOR = 0.45D;
     private static final double BASE_FLIGHT_SPEED_MULT = 4.0;
     private static final double SPRINT_FLIGHT_SPEED_MULT = 5.0;
     private static final double STRAFE_POWER = 0.4;
@@ -80,16 +80,16 @@ public final class VolitansRiderController {
     }
 
     public double getPassengersRidingOffset() {
-        return dragon.getBbHeight() * SEAT_BASE_FACTOR;
+        return DragonRiderSeatOffsets.VOLITANS.y;
     }
 
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
-        DragonRiderSeat.positionLocatorRider(
+        DragonRiderSeat.positionAnimatedRider(
                 dragon,
                 passenger,
                 moveFunction,
-                getPassengersRidingOffset(),
-                dragon.getClientLocatorPosition("passengerLocator")
+                DragonRiderSeatOffsets.VOLITANS,
+                dragon.level().isClientSide ? dragon.getClientLocatorPosition("passengerLocator") : null
         );
     }
 

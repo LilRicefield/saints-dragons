@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.controller.atroxiia;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.controller.GroundDragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
@@ -12,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 public record AtroxiiaRiderController(Atroxiia dragon) {
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final double SEAT_BASE_FACTOR = 0.8D;
     private static final double SWIM_SPEED = 0.30D;
     private static final double SPRINT_SWIM_SPEED = 0.42D;
     private static final double SWIM_RESPONSE = 0.28D;
@@ -98,11 +98,12 @@ public record AtroxiiaRiderController(Atroxiia dragon) {
     }
 
     public double getPassengersRidingOffset() {
-        return dragon.getBbHeight() * SEAT_BASE_FACTOR;
+        return DragonRiderSeatOffsets.ATROXIIA.y;
     }
 
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-        GroundDragonRiderControllerHelper.positionLocatorRider(dragon, passenger, moveFunction, getPassengersRidingOffset());
+        GroundDragonRiderControllerHelper.positionAnimatedRider(
+                dragon, passenger, moveFunction, DragonRiderSeatOffsets.ATROXIIA);
     }
 
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.controller.varasuchus;
 
 import com.leon.saintsdragons.server.entity.controller.GroundDragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -9,8 +10,6 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public record VarasuchusRiderController(Varasuchus drake) {
-    private static final double SEAT_BASE_FACTOR = 0.45D; // 0.0..1.0 of bbHeight
-
     @Nullable
     public Player getRidingPlayer() {
         return GroundDragonRiderControllerHelper.getRidingPlayer(drake);
@@ -45,11 +44,12 @@ public record VarasuchusRiderController(Varasuchus drake) {
         }
     }
     public double getPassengersRidingOffset() {
-        return drake.getBbHeight() * SEAT_BASE_FACTOR;
+        return DragonRiderSeatOffsets.VARASUCHUS.y;
     }
 
     public void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
-        GroundDragonRiderControllerHelper.positionLocatorRider(drake, passenger, moveFunction, getPassengersRidingOffset());
+        GroundDragonRiderControllerHelper.positionAnimatedRider(
+                drake, passenger, moveFunction, DragonRiderSeatOffsets.VARASUCHUS);
     }
 
     public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {

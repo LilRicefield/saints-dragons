@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -13,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record RaevyxRiderController(Raevyx wyvern) {
-    private static final double SEAT_BASE_FACTOR = 3.50D;
-    private static final double SEAT_HEIGHT_ADJUST = 0.00D;
     private static final double BASE_FLIGHT_SPEED_MULT = 4.0;
     private static final double SPRINT_FLIGHT_SPEED_MULT = 6.0;
     private static final double DRAG_NO_INPUT = 0.5;
@@ -101,16 +100,16 @@ public record RaevyxRiderController(Raevyx wyvern) {
     }
     
     public double getPassengersRidingOffset() {
-        return (double) wyvern.getBbHeight() * SEAT_BASE_FACTOR;
+        return DragonRiderSeatOffsets.RAEVYX.y;
     }
     
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
-        DragonRiderSeat.positionLocatorRider(
+        DragonRiderSeat.positionAnimatedRider(
                 wyvern,
                 passenger,
                 moveFunction,
-                getPassengersRidingOffset() + SEAT_HEIGHT_ADJUST,
-                wyvern.getClientLocatorPosition("passengerLocator")
+                DragonRiderSeatOffsets.RAEVYX,
+                wyvern.level().isClientSide ? wyvern.getClientLocatorPosition("passengerLocator") : null
         );
     }
     

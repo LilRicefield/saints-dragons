@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelp
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
+import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 public record CindervaneRiderController(Cindervane dragon) {
 
-    private static final double SEAT_BASE_FACTOR = 0.05D;
+    private static final double AUTO_GRAB_BASE_FACTOR = 0.05D;
     private static final double SEAT0_HEIGHT_ADJUST = 0.00D;
     private static final double SEAT1_HEIGHT_ADJUST = 0.00D;
     private static final double AUTO_GRAB_HEIGHT_ADJUST = 0.00D;
@@ -98,7 +99,11 @@ public record CindervaneRiderController(Cindervane dragon) {
     }
 
     public double getPassengersRidingOffset() {
-        return (double) dragon.getBbHeight() * SEAT_BASE_FACTOR;
+        return DragonRiderSeatOffsets.cindervane(0).y;
+    }
+
+    private double getAutoGrabRidingOffset() {
+        return (double) dragon.getBbHeight() * AUTO_GRAB_BASE_FACTOR;
     }
     
     public void positionRider(@NotNull Entity passenger, Entity.@NotNull MoveFunction moveFunction) {
@@ -113,7 +118,7 @@ public record CindervaneRiderController(Cindervane dragon) {
                         dragon,
                         passenger,
                         moveFunction,
-                        getPassengersRidingOffset() + AUTO_GRAB_HEIGHT_ADJUST,
+                        getAutoGrabRidingOffset() + AUTO_GRAB_HEIGHT_ADJUST,
                         passengerLoc,
                         AUTO_GRAB_HEIGHT_ADJUST
                 );
@@ -125,7 +130,7 @@ public record CindervaneRiderController(Cindervane dragon) {
                 double worldZ = localX * Math.sin(yawRad) + localZ * Math.cos(yawRad);
 
                 double x = dragon.getX() + worldX;
-                double y = dragon.getY() + getPassengersRidingOffset() + AUTO_GRAB_HEIGHT_ADJUST + passenger.getMyRidingOffset();
+                double y = dragon.getY() + getAutoGrabRidingOffset() + AUTO_GRAB_HEIGHT_ADJUST + passenger.getMyRidingOffset();
                 double z = dragon.getZ() + worldZ;
                 moveFunction.accept(passenger, x, y, z);
             }
@@ -136,38 +141,24 @@ public record CindervaneRiderController(Cindervane dragon) {
         int seatIndex = passengers.indexOf(passenger);
 
         if (seatIndex == -1) return; // Passenger not found
-        final String locatorName = seatIndex == 0 ? "passengerSeat0" : "passengerSeat1";
         final double seatHeightAdjust = seatIndex == 0 ? SEAT0_HEIGHT_ADJUST : SEAT1_HEIGHT_ADJUST;
         Vec3 passengerLoc = null;
         if (dragon.level().isClientSide) {
-            passengerLoc = dragon.getClientLocatorPosition(locatorName);
+            passengerLoc = dragon.getClientLocatorPosition(seatIndex == 0 ? "passengerSeat0" : "passengerSeat1");
             if (passengerLoc == null && seatIndex == 0) {
-                // Compatibility fallback for packs/older renders using single-seat locator.
                 passengerLoc = dragon.getClientLocatorPosition("passengerLocator");
             }
+            if (passengerLoc != null && seatHeightAdjust != 0.0D) {
+                passengerLoc = passengerLoc.add(0.0D, seatHeightAdjust, 0.0D);
+            }
         }
-
-        if (passengerLoc != null) {
-            DragonRiderSeat.positionLocatorRider(
-                    dragon,
-                    passenger,
-                    moveFunction,
-                    getPassengersRidingOffset() + seatHeightAdjust,
-                    passengerLoc,
-                    seatHeightAdjust
-            );
-        } else {
-            float yawRad = (float) Math.toRadians(dragon.getYRot());
-            double localX = seatIndex == 0 ? -0.45D : 0.45D;
-            double localZ = 0.05D;
-            double worldX = localX * Math.cos(yawRad) - localZ * Math.sin(yawRad);
-            double worldZ = localX * Math.sin(yawRad) + localZ * Math.cos(yawRad);
-
-            double x = dragon.getX() + worldX;
-            double y = dragon.getY() + getPassengersRidingOffset() + seatHeightAdjust + passenger.getMyRidingOffset();
-            double z = dragon.getZ() + worldZ;
-            moveFunction.accept(passenger, x, y, z);
-        }
+        DragonRiderSeat.positionAnimatedRider(
+                dragon,
+                passenger,
+                moveFunction,
+                DragonRiderSeatOffsets.cindervane(seatIndex).add(0.0D, seatHeightAdjust, 0.0D),
+                passengerLoc
+        );
     }
     
     public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
@@ -182,7 +173,7 @@ public record CindervaneRiderController(Cindervane dragon) {
             double worldZ = localX * Math.sin(yawRad) + localZ * Math.cos(yawRad);
             return new Vec3(
                     base.x + worldX,
-                    base.y + getPassengersRidingOffset() + 0.2D,
+                    base.y + getAutoGrabRidingOffset() + 0.2D,
                     base.z + worldZ
             );
         }

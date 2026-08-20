@@ -51,16 +51,16 @@ public final class GroundDragonRiderControllerHelper {
         dragon.setXRot(0.0F);
     }
 
-    public static void positionLocatorRider(RideableDragonBase dragon, Entity passenger,
-                                            Entity.MoveFunction moveFunction, double ridingOffset) {
+    public static void positionAnimatedRider(RideableDragonBase dragon, Entity passenger,
+                                             Entity.MoveFunction moveFunction, Vec3 logicalSeatOffset) {
         if (passenger == null) {
             return;
         }
-        DragonRiderSeat.positionLocatorRider(
+        DragonRiderSeat.positionAnimatedRider(
                 dragon,
                 passenger,
                 moveFunction,
-                ridingOffset,
+                logicalSeatOffset,
                 dragon.level().isClientSide ? dragon.getClientLocatorPosition("passengerLocator") : null
         );
     }
