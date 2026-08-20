@@ -44,12 +44,14 @@ public abstract class CameraPositionMixin {
     private void saintsdragons$preSetupSyncRoll(BlockGetter level, Entity entity, boolean detached, boolean thirdPersonReverse, float partialTick, CallbackInfo ci) {
         if (entity == null || detached || !isFirstPersonBankingCameraEnabled()) {
             DragonCameraState.clearRoll();
+            CameraLeanData.reset();
             return;
         }
 
         Entity vehicle = entity.getVehicle();
         if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
             DragonCameraState.clearRoll();
+            CameraLeanData.reset();
             return;
         }
         if (!usesAerialBankingCamera(dragon)) {
@@ -57,9 +59,20 @@ public abstract class CameraPositionMixin {
             CameraLeanData.reset();
             return;
         }
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+            DragonCameraState.clearRoll();
+            CameraLeanData.reset();
+            return;
+        }
 
         float rollDegrees = getBodyRollDegrees(dragon, partialTick);
-        DragonCameraState.setCurrentRoll(-rollDegrees);
+        float pitchDegrees = Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot());
+        float yawSpeed = Mth.wrapDegrees(dragon.yBodyRot - dragon.yBodyRotO);
+        CameraLeanData.updateTarget(rollDegrees, pitchDegrees, yawSpeed, 1.0f);
+        CameraLeanData.update();
+
+        float cameraTilt = (float) CameraLeanData.getCameraTilt();
+        DragonCameraState.setCurrentRoll(-rollDegrees + cameraTilt);
     }
 
     @Inject(method = "setup", at = @At("TAIL"), require = 0)
@@ -70,6 +83,9 @@ public abstract class CameraPositionMixin {
 
         Entity vehicle = entity.getVehicle();
         if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
+            return;
+        }
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
             return;
         }
 

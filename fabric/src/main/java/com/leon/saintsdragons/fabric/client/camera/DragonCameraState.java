@@ -6,6 +6,7 @@ public final class DragonCameraState {
     private static float stableYaw = 0.0f;
     private static float stablePitch = 0.0f;
     private static float stableRoll = 0.0f;
+    private static float currentDiveRoll = 0.0f;
 
     private DragonCameraState() {
     }
@@ -16,6 +17,18 @@ public final class DragonCameraState {
 
     public static float getCurrentRoll() {
         return hasStableAngles ? stableRoll : currentDragonRoll;
+    }
+
+    public static void setDiveRoll(float roll) {
+        currentDiveRoll = roll;
+    }
+
+    public static float getDiveRoll() {
+        return currentDiveRoll;
+    }
+
+    public static void clearDiveRoll() {
+        currentDiveRoll = 0.0f;
     }
 
     public static void setStableAngles(float yaw, float pitch, float roll) {

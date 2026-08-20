@@ -35,14 +35,8 @@ public abstract class GameRendererMixin {
             ),
             require = 0
     )
-    private void saintsdragons$applyDragonFirstPersonRoll(float partialTick, long finishNanoTime, PoseStack poseStack, CallbackInfo ci) {
+    private void saintsdragons$applyDragonCameraRoll(float partialTick, long finishNanoTime, PoseStack poseStack, CallbackInfo ci) {
         if (this.minecraft == null || this.minecraft.options == null) {
-            return;
-        }
-        if (this.minecraft.options.getCameraType() != CameraType.FIRST_PERSON) {
-            return;
-        }
-        if (!FabricClientConfigAccess.isFirstPersonBankingCameraEnabled()) {
             return;
         }
 
@@ -52,7 +46,7 @@ public abstract class GameRendererMixin {
         }
 
         Entity vehicle = cameraEntity.getVehicle();
-        if (!(vehicle instanceof RideableDragonBase dragon) || !saintsdragons$usesFirstPersonDragonRoll(dragon)) {
+        if (!(vehicle instanceof RideableDragonBase dragon)) {
             return;
         }
 
@@ -60,7 +54,12 @@ public abstract class GameRendererMixin {
             return;
         }
 
-        float roll = DragonCameraState.getCurrentRoll();
+        float roll = DragonCameraState.getDiveRoll();
+        if (this.minecraft.options.getCameraType() == CameraType.FIRST_PERSON
+                && FabricClientConfigAccess.isFirstPersonBankingCameraEnabled()
+                && saintsdragons$usesFirstPersonDragonRoll(dragon)) {
+            roll += DragonCameraState.getCurrentRoll();
+        }
         if (Math.abs(roll) < 0.01f) {
             return;
         }

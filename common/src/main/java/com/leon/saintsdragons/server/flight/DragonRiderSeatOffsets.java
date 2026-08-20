@@ -6,7 +6,6 @@ import net.minecraft.world.phys.Vec3;
  * Stable neutral rider anchors for server side positioning (raevyx's rider got shot up 9 blocks above lmao)
  */
 
-
 public final class DragonRiderSeatOffsets {
     // passengerBone pivot 0, 66, -49.5 plus RiderConfig correction 0, -0.595, 0.59375
     public static final Vec3 RAEVYX = fromGeckoModelSpace(0.0D, 3.53D, -2.5D);

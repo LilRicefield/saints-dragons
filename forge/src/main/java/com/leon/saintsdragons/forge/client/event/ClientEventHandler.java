@@ -107,6 +107,9 @@ public class ClientEventHandler {
         if (!ForgeClientConfig.DIVE_CAMERA_WOBBLE_ENABLED.get()) {
             return;
         }
+        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()) {
+            return;
+        }
 
         DragonDiveCameraWobble.Output wobble = DragonDiveCameraWobble.get(vehicle, (float) event.getPartialTick());
         if (!wobble.active()) {
@@ -210,26 +213,7 @@ public class ClientEventHandler {
             return true;
         }
 
-        DragonCameraState.clearRoll();
-
-        float partialTick = (float) event.getPartialTick();
-        float rollDegrees = getBodyRollDegrees(dragon, partialTick);
-        float pitchDegrees = Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot());
-        float yawSpeed = Mth.wrapDegrees(dragon.yBodyRot - dragon.yBodyRotO);
-        float yawLeanScale = 1.0f;
-
-        CameraLeanData.updateTarget(rollDegrees, pitchDegrees, yawSpeed, yawLeanScale);
-        CameraLeanData.update();
-
-        float cameraTilt = (float) CameraLeanData.getCameraTilt();
-        event.setRoll(event.getRoll() - rollDegrees + cameraTilt);
-
-        double leanX = CameraLeanData.getLeanX();
-        double leanY = CameraLeanData.getLeanY();
-        double leanZ = CameraLeanData.getLeanZ();
-        if (Math.abs(leanX) > 0.001 || Math.abs(leanY) > 0.001 || Math.abs(leanZ) > 0.001) {
-            event.getCamera().move(leanZ, leanY, leanX);
-        }
+        event.setRoll(event.getRoll() + DragonCameraState.getCurrentRoll());
         return true;
     }
 
@@ -241,22 +225,6 @@ public class ClientEventHandler {
                 || dragon instanceof Stegonaut
                 || dragon instanceof Volitans
                 || dragon instanceof Atroxiia;
-    }
-
-    private static float getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {
-        if (dragon instanceof Raevyx raevyx) {
-            return raevyx.getBankAngleDegrees(partialTick) + raevyx.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        if (dragon instanceof Cindervane cindervane) {
-            return cindervane.getBankAngleDegrees(partialTick) + cindervane.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        if (dragon instanceof Ignivorus ignivorus) {
-            return ignivorus.getBankAngleDegrees(partialTick) + ignivorus.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        if (dragon instanceof Volitans volitans) {
-            return volitans.getBankAngleDegrees(partialTick) + volitans.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
-        }
-        return 0.0f;
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {

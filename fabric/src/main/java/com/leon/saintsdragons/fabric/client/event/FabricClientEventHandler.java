@@ -5,6 +5,7 @@ import com.leon.saintsdragons.client.camera.DragonRideCameraController;
 import com.leon.saintsdragons.client.camera.DragonDiveCameraWobble;
 import com.leon.saintsdragons.client.init.CommonClientLifecycleEvents;
 import com.leon.saintsdragons.fabric.client.accessor.CameraAccessor;
+import com.leon.saintsdragons.fabric.client.camera.DragonCameraState;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -43,10 +44,11 @@ public class FabricClientEventHandler {
     }
 
     /**
-     * Called from CameraMixin to apply camera adjustments.
-     * This is the Fabric equivalent of Forge's ViewportEvent.ComputeCameraAngles.
+     * Applies rotation and mode-specific movement before the first-person seat
+     * anchor is resolved.
      */
-    public static void onComputeCamera(Camera camera, float partialTicks) {
+    public static void onComputeCameraBeforeSeatAnchor(Camera camera, float partialTicks) {
+        DragonCameraState.clearDiveRoll();
         Entity player = Minecraft.getInstance().getCameraEntity();
         if (player == null) return;
 
@@ -62,8 +64,15 @@ public class FabricClientEventHandler {
         }
 
         applyDiveCameraWobble(camera, vehicle, partialTicks);
+    }
 
-        // Screen shake detection and application
+    /**
+     * Applies transient offsets after the seat anchor so they are not overwritten.
+     */
+    public static void onComputeCameraAfterSeatAnchor(Camera camera, float partialTicks) {
+        Entity player = Minecraft.getInstance().getCameraEntity();
+        if (player == null) return;
+
         applyScreenShake(camera, player, partialTicks);
 
         ClientCameraImpulse.Offset impulse = ClientCameraImpulse.sample(partialTicks);
@@ -77,6 +86,9 @@ public class FabricClientEventHandler {
         if (!FabricClientConfigAccess.isDiveCameraWobbleEnabled()) {
             return;
         }
+        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()) {
+            return;
+        }
 
         DragonDiveCameraWobble.Output wobble = DragonDiveCameraWobble.get(vehicle, partialTicks);
         if (!wobble.active()) {
@@ -87,6 +99,7 @@ public class FabricClientEventHandler {
         float yaw = cameraAccessor.saintsdragons$invokeGetYRot() + wobble.yawDegrees();
         float pitch = Mth.clamp(cameraAccessor.saintsdragons$invokeGetXRot() + wobble.pitchDegrees(), -90.0F, 90.0F);
         cameraAccessor.saintsdragons$invokeSetRotation(yaw, pitch);
+        DragonCameraState.setDiveRoll(wobble.rollDegrees());
     }
 
     private static void handleRaevyxBeamCamera(Camera camera, Entity vehicle) {

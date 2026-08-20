@@ -141,8 +141,12 @@ public abstract class CameraMixin implements CameraAccessor {
             boolean inverseView,
             float partialTick,
             CallbackInfo ci) {
-        FabricClientEventHandler.onComputeCamera((Camera) (Object) this, partialTick);
+        FabricClientEventHandler.onComputeCameraBeforeSeatAnchor((Camera) (Object) this, partialTick);
+        saintsdragons$applySeatAnchor(focusedEntity, thirdPerson, partialTick);
+        FabricClientEventHandler.onComputeCameraAfterSeatAnchor((Camera) (Object) this, partialTick);
+    }
 
+    private void saintsdragons$applySeatAnchor(Entity focusedEntity, boolean thirdPerson, float partialTick) {
         if (focusedEntity == null || thirdPerson) {
             return;
         }
