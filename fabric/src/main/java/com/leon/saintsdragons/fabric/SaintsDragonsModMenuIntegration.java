@@ -167,6 +167,8 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 cindervaneDefaults.abilityDamage("slash_grab_hit2", 7.0D));
         cindervaneBuffer.volleyDamage = cindervaneCurrent.abilityDamage("magma_volley",
                 cindervaneDefaults.abilityDamage("magma_volley", 20.0D));
+        cindervaneBuffer.magmaVolleyCooldownSeconds = cindervaneCurrent.extraDouble("magma_volley_cooldown_seconds",
+                cindervaneDefaults.extraDouble("magma_volley_cooldown_seconds", 20.0D));
         cindervaneBuffer.fireBodyDamage = cindervaneCurrent.abilityDamage("fire_body",
                 cindervaneDefaults.abilityDamage("fire_body", 3.0D));
         cindervaneBuffer.tamingChanceBase = cindervaneCurrent.extraDouble("taming_chance_base", 25.0);
@@ -1109,6 +1111,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMin(0.0D)
                 .setMax(100000.0D)
                 .setSaveConsumer(value -> buffer.volleyDamage = value)
+                .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.magma_volley_cooldown_seconds"), buffer.magmaVolleyCooldownSeconds)
+                .setDefaultValue(defaults.extraDouble("magma_volley_cooldown_seconds", 20.0D))
+                .setMin(0.0D)
+                .setMax(6000.0D)
+                .setSaveConsumer(value -> buffer.magmaVolleyCooldownSeconds = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_damage"), buffer.fireBodyDamage)
                 .setDefaultValue(defaults.abilityDamage("fire_body", 3.0D))
@@ -2180,6 +2188,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                         "taming_chance_chicken", cindervaneBuffer.tamingChanceChicken,
                         "taming_chance_hearty", cindervaneBuffer.tamingChanceHearty,
                         "egg_hatch_time_ticks_normal", cindervaneBuffer.eggHatchChanceNormal,
+                        "magma_volley_cooldown_seconds", cindervaneBuffer.magmaVolleyCooldownSeconds,
                         "fire_body_explosion_damage", cindervaneBuffer.fireBodyExplosionDamage,
                         "fire_body_self_damage_on_crash", cindervaneBuffer.fireBodySelfDamageOnCrash,
                         "wild_flying_speed_multiplier", cindervaneBuffer.wildFlyingSpeedMultiplier
@@ -2388,6 +2397,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double slashGrabHit1Damage;
         double slashGrabHit2Damage;
         double volleyDamage;
+        double magmaVolleyCooldownSeconds;
         double fireBodyDamage;
         double tamingChanceBase;
         double tamingChanceChicken;

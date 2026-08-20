@@ -22,7 +22,8 @@ public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
     private static final int BLOCKS_PER_VOLLEY = 3;
     private static final int VOLLEY_INTERVAL_TICKS = 10;
     private static final int ACTIVE_DURATION_TICKS = VOLLEY_INTERVAL_TICKS * (MAX_VOLLEYS - 1) + 1;
-    private static final int COOLDOWN_TICKS = 20 * 20;
+    private static final double DEFAULT_COOLDOWN_SECONDS = 20.0D;
+    private static final double TICKS_PER_SECOND = 20.0D;
     private static final int MAGMA_BLOCK_LIFETIME = 200;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
@@ -43,7 +44,16 @@ public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
 
     public CindervaneMagmaVolleyAbility(DragonAbilityType<Cindervane, CindervaneMagmaVolleyAbility> type,
                                         Cindervane user) {
-        super(type, user, TRACK, COOLDOWN_TICKS);
+        super(type, user, TRACK, 0);
+    }
+
+    @Override
+    public int getMaxCooldown() {
+        double seconds = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.CINDERVANE_ID)
+                .extraDouble("magma_volley_cooldown_seconds", DEFAULT_COOLDOWN_SECONDS);
+        long ticks = Math.round(seconds * TICKS_PER_SECOND);
+        return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, ticks));
     }
 
     @Override

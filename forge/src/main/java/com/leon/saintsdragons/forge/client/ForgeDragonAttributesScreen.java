@@ -224,6 +224,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.magma_volley_cooldown_seconds"),
+                ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_COOLDOWN_SECONDS::get,
+                ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_COOLDOWN_SECONDS::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.cindervane.fire_body_damage"),
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE::get,
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE::set,
@@ -961,6 +965,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT1_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_SLASH_GRAB_HIT2_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_DAMAGE.getDefault());
+                ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_COOLDOWN_SECONDS.set(ForgeDragonAttributesConfig.CINDERVANE_MAGMA_VOLLEY_COOLDOWN_SECONDS.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE.set(ForgeDragonAttributesConfig.CINDERVANE_FIRE_BODY_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_BASE.getDefault());
                 ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.set(ForgeDragonAttributesConfig.CINDERVANE_TAMING_CHANCE_CHICKEN.getDefault());

@@ -872,6 +872,7 @@
   "config.saintsdragons.attributes.cindervane.slash_grab_hit1_damage": "爪击第一击伤害",
   "config.saintsdragons.attributes.cindervane.slash_grab_hit2_damage": "爪击第二击伤害",
   "config.saintsdragons.attributes.cindervane.volley_damage": "熔岩齐射伤害",
+  "config.saintsdragons.attributes.cindervane.magma_volley_cooldown_seconds": "熔岩齐射冷却时间（秒）",
   "config.saintsdragons.attributes.cindervane.fire_body_damage": "烈焰之躯气场伤害",
   "config.saintsdragons.attributes.cindervane.taming_base": "驯服概率%（基础食物）",
   "config.saintsdragons.attributes.cindervane.taming_chicken": "驯服概率%（生鸡肉）",

@@ -70,6 +70,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double slashGrabHit1Damage = 5.0D;
         double slashGrabHit2Damage = 7.0D;
         double magmaVolleyDamage = 20.0D;
+        double magmaVolleyCooldownSeconds = 20.0D;
         double fireBodyDamage = 3.0D;
         double tamingChanceBase = 25.0D;
         double tamingChanceChicken = 33.3333D;
@@ -91,6 +92,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 slashGrabHit1Damage = (double) configClass.getField("CINDERVANE_SLASH_GRAB_HIT1_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SLASH_GRAB_HIT1_DAMAGE").get(null));
                 slashGrabHit2Damage = (double) configClass.getField("CINDERVANE_SLASH_GRAB_HIT2_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_SLASH_GRAB_HIT2_DAMAGE").get(null));
                 magmaVolleyDamage = (double) configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_MAGMA_VOLLEY_DAMAGE").get(null));
+                magmaVolleyCooldownSeconds = (double) configClass.getField("CINDERVANE_MAGMA_VOLLEY_COOLDOWN_SECONDS").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_MAGMA_VOLLEY_COOLDOWN_SECONDS").get(null));
                 fireBodyDamage = (double) configClass.getField("CINDERVANE_FIRE_BODY_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_FIRE_BODY_DAMAGE").get(null));
                 tamingChanceBase = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_BASE").get(null));
                 tamingChanceChicken = (double) configClass.getField("CINDERVANE_TAMING_CHANCE_CHICKEN").get(null).getClass().getMethod("get").invoke(configClass.getField("CINDERVANE_TAMING_CHANCE_CHICKEN").get(null));
@@ -121,6 +123,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         "taming_chance_chicken", tamingChanceChicken,
                         "taming_chance_hearty", tamingChanceHearty,
                         "egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal,
+                        "magma_volley_cooldown_seconds", magmaVolleyCooldownSeconds,
                         "fire_body_explosion_damage", fireBodyExplosionDamage,
                         "fire_body_self_damage_on_crash", fireBodySelfDamageOnCrash,
                         "wild_flying_speed_multiplier", wildFlyingSpeedMultiplier
@@ -907,7 +910,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillTamingStunHealth(path, entry.getKey(), entry.getValue());
                 backfillPreyTamingChances(path, entry.getKey(), entry.getValue());
                 backfillAtroxiiaAbilityTuning(path, entry.getKey(), entry.getValue());
-                backfillCindervaneFireBodyExplosionDamage(path, entry.getKey(), entry.getValue());
+                backfillCindervaneAbilityTuning(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
                 continue;
             }
@@ -1353,7 +1356,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
     }
 
-    private void backfillCindervaneFireBodyExplosionDamage(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
+    private void backfillCindervaneAbilityTuning(Path path, ResourceLocation id, DragonAttributeConfig mergedConfig) {
         if (!id.equals(CINDERVANE_ID)) {
             return;
         }
@@ -1372,12 +1375,17 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                         mergedConfig.extraDouble("fire_body_self_damage_on_crash", 40.0D));
                 updated = true;
             }
+            if (!extra.has("magma_volley_cooldown_seconds")) {
+                extra.addProperty("magma_volley_cooldown_seconds",
+                        mergedConfig.extraDouble("magma_volley_cooldown_seconds", 20.0D));
+                updated = true;
+            }
             if (updated) {
                 json.add("extra", extra);
                 writeConfigFile(path, json);
             }
         } catch (Exception e) {
-            SaintsDragonsCommon.LOGGER.warn("Failed to backfill cindervane fire body explosion damage at {}", path, e);
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill cindervane ability tuning at {}", path, e);
         }
     }
 

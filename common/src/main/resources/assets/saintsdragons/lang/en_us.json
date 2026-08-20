@@ -933,6 +933,7 @@
   "config.saintsdragons.attributes.cindervane.slash_grab_hit1_damage": "Slash Grab Hit 1 Damage",
   "config.saintsdragons.attributes.cindervane.slash_grab_hit2_damage": "Slash Grab Hit 2 Damage",
   "config.saintsdragons.attributes.cindervane.volley_damage": "Magma Volley Damage",
+  "config.saintsdragons.attributes.cindervane.magma_volley_cooldown_seconds": "Magma Volley Cooldown (Seconds)",
   "config.saintsdragons.attributes.cindervane.fire_body_damage": "Fire Body Aura Damage",
   "config.saintsdragons.attributes.cindervane.taming_base": "Taming Chance % (Raw Fish)",
   "config.saintsdragons.attributes.cindervane.taming_chicken": "Taming Chance % (Raw Chicken)",
