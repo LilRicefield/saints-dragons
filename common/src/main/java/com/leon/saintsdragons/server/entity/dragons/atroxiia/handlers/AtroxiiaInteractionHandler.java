@@ -41,13 +41,14 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         if (!dragon.isFood(heldItem)) {
             return InteractionResult.PASS;
         }
-        if (dragon.isBaby()) {
-            return handleFeeding(player, heldItem);
-        }
 
         boolean client = dragon.level().isClientSide;
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID);
+        if (dragon.isBaby()) {
+            return handleBabyTaming(player, heldItem, config);
+        }
+
         boolean legacyTaming = config.extraBoolean("legacy_taming", false);
 
         if (!legacyTaming && dragon.isTamingStunned() && !dragon.isReadyForTamingFeed()) {
@@ -115,6 +116,44 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         }
 
         return InteractionResult.sidedSuccess(client);
+    }
+
+    private InteractionResult handleBabyTaming(Player player,
+                                               ItemStack heldItem,
+                                               DragonAttributeConfig config) {
+        var baby = dragon.getBabyComponent();
+        boolean heartyMeal = heldItem.is(ModItems.HEARTY_DRAGON_MEAL.get());
+        boolean validFood = dragon.isFood(heldItem);
+        if (baby == null) {
+            return validFood
+                    ? InteractionResult.sidedSuccess(dragon.level().isClientSide)
+                    : InteractionResult.PASS;
+        }
+
+        double tameChance = heartyMeal
+                ? config.extraDouble("taming_chance_hearty", 33.3333D)
+                : config.extraDouble("taming_chance_base", 20.0D);
+        return baby.tryHandleBabyFoodTaming(
+                player,
+                heldItem,
+                "entity.saintsdragons.atroxiia",
+                validFood,
+                dragon.canFeed(),
+                Atroxiia.EAT_ANIMATION_TICKS,
+                heartyMeal,
+                () -> {
+                    dragon.triggerAnim(AnimationHelper.INTERACTION_CONTROLLER, AnimationHelper.EAT);
+                    dragon.playEatMovingSound();
+                },
+                dragon::setFeedingCooldown,
+                tameChance,
+                () -> {
+                    dragon.tame(player);
+                    dragon.setOrderedToSit(true);
+                    dragon.setCommand(1);
+                    awardTamingAdvancement(player);
+                }
+        );
     }
 
     private void awardTamingAdvancement(Player player) {

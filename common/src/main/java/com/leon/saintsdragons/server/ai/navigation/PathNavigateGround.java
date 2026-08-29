@@ -3,6 +3,8 @@ package com.leon.saintsdragons.server.ai.navigation;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonWalkNodeEvaluator;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -13,6 +15,7 @@ import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +152,7 @@ public class PathNavigateGround extends GroundPathNavigation {
             return;
         }
 
-        Vec3 waypoint = path.getNextEntityPos(this.mob);
+        Vec3 waypoint = this.getNextGroundedPathPosition(path);
         double rise = waypoint.y - this.mob.getY();
         double dx = waypoint.x - this.mob.getX();
         double dz = waypoint.z - this.mob.getZ();
@@ -193,17 +196,20 @@ public class PathNavigateGround extends GroundPathNavigation {
     protected void followThePath() {
         Path path = Objects.requireNonNull(this.path);
         Vec3 entityPos = this.getTempMobPos();
+        Vec3 actualEntityPos = this.mob.position();
         int pathLength = path.getNodeCount();
-        
-        // Find the end of the current horizontal plane to avoid unnecessary vertical checks
+
+        // Use the current path-node plane instead of the mob's rounded Y. Thin
+        // supports place the mob below the raw node plane without creating a climb.
+        int currentNodeY = path.getNode(path.getNextNodeIndex()).y;
         for (int i = path.getNextNodeIndex(); i < path.getNodeCount(); i++) {
-            if (path.getNode(i).y != Math.floor(entityPos.y)) {
+            if (path.getNode(i).y != currentNodeY) {
                 pathLength = i;
                 break;
             }
         }
-        
-        final Vec3 base = entityPos.add(-this.mob.getBbWidth() * 0.5F, 0.0F, -this.mob.getBbWidth() * 0.5F);
+
+        final Vec3 base = actualEntityPos.add(-this.mob.getBbWidth() * 0.5F, 0.0F, -this.mob.getBbWidth() * 0.5F);
         final Vec3 max = base.add(this.mob.getBbWidth(), this.mob.getBbHeight(), this.mob.getBbWidth());
         float waypointTolerance = this.mob.getBbWidth() > 0.75F
                 ? this.mob.getBbWidth() * 0.5F
@@ -214,7 +220,7 @@ public class PathNavigateGround extends GroundPathNavigation {
         }
         
         // Try to shortcut to later path nodes for smoother movement
-        if (this.tryShortcut(path, new Vec3(this.mob.getX(), this.mob.getY(), this.mob.getZ()), pathLength, base, max)) {
+        if (this.tryShortcut(path, actualEntityPos, pathLength, base, max)) {
             if (this.isAt(path, waypointTolerance)
                     || this.atElevationChange(path)
                     && this.isAt(path, Math.min(this.mob.getBbWidth() * 0.5F, waypointTolerance))) {
@@ -225,7 +231,7 @@ public class PathNavigateGround extends GroundPathNavigation {
     }
 
     private boolean isAt(Path path, float threshold) {
-        final Vec3 pathPos = path.getNextEntityPos(this.mob);
+        final Vec3 pathPos = this.getNextGroundedPathPosition(path);
         final double verticalOffset = this.mob.getY() - pathPos.y;
         final boolean reachedAscendingElevation = verticalOffset >= 0.0D
                 || this.mob.onGround()
@@ -250,7 +256,7 @@ public class PathNavigateGround extends GroundPathNavigation {
 
     private boolean tryShortcut(Path path, Vec3 entityPos, int pathLength, Vec3 base, Vec3 max) {
         for (int i = pathLength; --i > path.getNextNodeIndex(); ) {
-            final Vec3 vec = path.getEntityPosAtNode(this.mob, i).subtract(entityPos);
+            final Vec3 vec = this.getGroundedPathPosition(path, i).subtract(entityPos);
             if (vec.lengthSqr() > MAX_SHORTCUT_DISTANCE * MAX_SHORTCUT_DISTANCE) {
                 continue;
             }
@@ -260,6 +266,46 @@ public class PathNavigateGround extends GroundPathNavigation {
             }
         }
         return true; // No shortcut found, continue normally
+    }
+
+    private Vec3 getNextGroundedPathPosition(Path path) {
+        return this.getGroundedPathPosition(path, path.getNextNodeIndex());
+    }
+
+    private Vec3 getGroundedPathPosition(Path path, int nodeIndex) {
+        Vec3 pathPos = path.getEntityPosAtNode(this.mob, nodeIndex);
+        return new Vec3(pathPos.x, this.getGroundY(pathPos), pathPos.z);
+    }
+
+    @Override
+    protected double getGroundY(Vec3 pathPos) {
+        double centerGroundY = super.getGroundY(pathPos);
+        double halfWidth = this.mob.getBbWidth() * 0.5D;
+        double edgeInset = 1.0E-5D;
+        int minX = Mth.floor(pathPos.x - halfWidth + edgeInset);
+        int maxX = Mth.floor(pathPos.x + halfWidth - edgeInset);
+        int minZ = Mth.floor(pathPos.z - halfWidth + edgeInset);
+        int maxZ = Mth.floor(pathPos.z + halfWidth - edgeInset);
+        int supportY = Mth.floor(pathPos.y) - 1;
+        double highestSurfaceY = Double.NEGATIVE_INFINITY;
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int z = minZ; z <= maxZ; z++) {
+                cursor.set(x, supportY, z);
+                VoxelShape collision = this.level.getBlockState(cursor).getCollisionShape(this.level, cursor);
+                if (collision.isEmpty()) {
+                    continue;
+                }
+
+                double surfaceY = supportY + collision.max(Direction.Axis.Y);
+                if (surfaceY <= pathPos.y + edgeInset) {
+                    highestSurfaceY = Math.max(highestSurfaceY, surfaceY);
+                }
+            }
+        }
+
+        return Double.isFinite(highestSurfaceY) ? highestSurfaceY : centerGroundY;
     }
 
     private boolean sweep(Vec3 vec, Vec3 base, Vec3 max) {

@@ -719,7 +719,7 @@ public class DragonAIMovementController {
             return false;
         }
         if (!currentWaypoint.hasPreciseGroundArrival()) {
-            double arrivalDistance = Math.max(1.5D, dragon.getBbWidth() * 0.75D);
+            double arrivalDistance = groundArrivalDistance(currentWaypoint);
             return dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
         }
 
@@ -727,7 +727,7 @@ public class DragonAIMovementController {
         double dx = dragon.getX() - target.x;
         double dz = dragon.getZ() - target.z;
         double verticalOffset = dragon.getY() - target.y;
-        double arrivalTolerance = currentWaypoint.groundArrivalTolerance();
+        double arrivalTolerance = groundArrivalDistance(currentWaypoint);
         return dx * dx + dz * dz <= arrivalTolerance * arrivalTolerance
                 && verticalOffset > -1.0D
                 && verticalOffset <= 1.5D;
@@ -862,9 +862,7 @@ public class DragonAIMovementController {
         groundPathDebugReason = detourAllowance > 0
                 ? "calculating-detour-" + detourAllowance
                 : "calculating";
-        double radialArrivalDistance = waypoint.hasPreciseGroundArrival()
-                ? waypoint.groundArrivalTolerance()
-                : Math.max(1.5D, dragon.getBbWidth() * 0.75D);
+        double radialArrivalDistance = groundArrivalDistance(waypoint);
         int goalAccuracy = Math.max(0, Mth.floor(radialArrivalDistance / Math.sqrt(2.0D)));
         groundPathRequest = AsyncDragonPathfinder.calculateGroundPathAsync(
                 dragon,
@@ -981,9 +979,14 @@ public class DragonAIMovementController {
     }
 
     private void configureFinalGroundWaypointTolerance(Path path, QueuedWaypoint waypoint) {
-        if (!waypoint.hasPreciseGroundArrival()
-                || path.getNodeCount() == 0
+        if (path.getNodeCount() == 0
                 || !(dragon.getNavigation() instanceof PathNavigateGround groundNavigation)) {
+            return;
+        }
+
+        if (!waypoint.hasPreciseGroundArrival()
+                && waypoint.mode() == MovementMode.PROGRESSIVE_GROUND
+                && !path.canReach()) {
             return;
         }
 
@@ -991,10 +994,15 @@ public class DragonAIMovementController {
         double endpointOffset = horizontalDistance(endpoint, waypoint.target());
         double remainingArrivalRadius = Math.max(
                 0.05D,
-                waypoint.groundArrivalTolerance() - endpointOffset
+                groundArrivalDistance(waypoint) - endpointOffset
         );
-        // Path goal accuracy and navigator tolerance share one radial arrival budget.
         groundNavigation.setFinalWaypointTolerance(remainingArrivalRadius / Math.sqrt(2.0D));
+    }
+
+    private double groundArrivalDistance(QueuedWaypoint waypoint) {
+        return waypoint.hasPreciseGroundArrival()
+                ? waypoint.groundArrivalTolerance()
+                : Math.max(1.5D, dragon.getBbWidth() * 0.75D);
     }
 
     private static double horizontalDistance(Vec3 first, Vec3 second) {

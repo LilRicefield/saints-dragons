@@ -186,6 +186,11 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return EnumSet.of(DragonMovementCapability.FLY);
     }
 
+    @Override
+    protected boolean breaksWaterliliesOnContact() {
+        return false;
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         return TamableAnimal.createMobAttributes()

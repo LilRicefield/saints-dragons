@@ -38,6 +38,7 @@ import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
 import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import java.util.Collections;
@@ -222,6 +223,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public EnumSet<DragonMovementCapability> movementCapabilities() {
         return EnumSet.of(DragonMovementCapability.WALK);
+    }
+
+    protected boolean breaksWaterliliesOnContact() {
+        return true;
     }
 
     public AsyncSwimController getAiSwimController() {
@@ -2097,6 +2102,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         this.soundHandler.tick();
         tickAbilities();
         if (!level().isClientSide) {
+            if (breaksWaterliliesOnContact() && level() instanceof ServerLevel serverLevel) {
+                DragonDestructionManager.applyWaterlilyContactDestruction(serverLevel, this);
+            }
             tickLocomotionMode();
             aiCombatPacing.tick();
             if (sleepComponent != null) {

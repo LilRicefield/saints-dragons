@@ -9,6 +9,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.WaterlilyBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
@@ -49,6 +50,39 @@ public final class DragonDestructionManager {
 
     public static boolean isPassivelyBreakableTreeBlock(BlockState state) {
         return state.is(BlockTags.LOGS) || isNaturalTreeLeaf(state, 0);
+    }
+
+    public static void applyWaterlilyContactDestruction(ServerLevel level, DragonEntity dragon) {
+        if (level == null
+                || dragon == null
+                || !dragon.isAlive()
+                || dragon.isBaby()
+                || !DragonGriefingRules.canDestroyBlocks(level)) {
+            return;
+        }
+
+        AABB bounds = dragon.getBoundingBox();
+        double edgeInset = 1.0E-5D;
+        int minX = Mth.floor(bounds.minX + edgeInset);
+        int maxX = Mth.floor(bounds.maxX - edgeInset);
+        int minY = Mth.floor(bounds.minY + edgeInset);
+        int maxY = Mth.floor(bounds.maxY - edgeInset);
+        int minZ = Mth.floor(bounds.minZ + edgeInset);
+        int maxZ = Mth.floor(bounds.maxZ - edgeInset);
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+
+        for (int x = minX; x <= maxX; x++) {
+            for (int y = minY; y <= maxY; y++) {
+                for (int z = minZ; z <= maxZ; z++) {
+                    cursor.set(x, y, z);
+                    if (!level.isLoaded(cursor)
+                            || !(level.getBlockState(cursor).getBlock() instanceof WaterlilyBlock)) {
+                        continue;
+                    }
+                    level.destroyBlock(cursor, true, dragon);
+                }
+            }
+        }
     }
 
     public static void applyPassiveTreeDestruction(ServerLevel level, DragonEntity dragon) {

@@ -71,6 +71,7 @@ import net.minecraft.world.entity.monster.Vindicator;
 import net.minecraft.world.entity.monster.Vex;
 import net.minecraft.world.entity.monster.Witch;
 import net.minecraft.world.entity.monster.Zombie;
+import net.minecraft.world.entity.monster.ZombifiedPiglin;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
@@ -652,7 +653,12 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Vex.class, true));
         targetSelector.addGoal(5, new NearestAttackableTargetGoal<>(this, Vindicator.class, true));
         targetSelector.addGoal(6, new NearestAttackableTargetGoal<>(this, Witch.class, true));
-        targetSelector.addGoal(7, new NearestAttackableTargetGoal<>(this, Zombie.class, true));
+        targetSelector.addGoal(7, new NearestAttackableTargetGoal<>(
+                this,
+                Zombie.class,
+                true,
+                target -> !(target instanceof ZombifiedPiglin)
+        ));
     }
 
     @Override
