@@ -29,6 +29,7 @@ public final class StegonautLushCaveSpawner {
     private static final int SEARCH_ATTEMPTS = 24;
     private static final int CLUSTER_SIZE = 128;
     private static final int NEARBY_SEARCH_RADIUS = 96;
+    private static final double MIN_PLAYER_DISTANCE = 24.0D;
 
     private static final Map<ResourceLocation, Integer> tickCounters = new HashMap<>();
     private static final Map<ResourceLocation, Set<Long>> activeClusters = new HashMap<>();
@@ -123,6 +124,9 @@ public final class StegonautLushCaveSpawner {
                 if (level.canSeeSky(pos)) {
                     continue;
                 }
+                if (!hasPlayerClearance(level, pos)) {
+                    continue;
+                }
                 if (!DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)) {
                     continue;
                 }
@@ -168,6 +172,10 @@ public final class StegonautLushCaveSpawner {
     }
 
     private static boolean spawnOne(ServerLevel level, BlockPos pos, MobSpawnType spawnType) {
+        if (!hasPlayerClearance(level, pos)) {
+            return false;
+        }
+
         Stegonaut stegonaut = ModEntities.STEGONAUT.get().create(level);
         if (stegonaut == null) {
             return false;
@@ -193,7 +201,9 @@ public final class StegonautLushCaveSpawner {
                 if (!isStegonautBiomeAllowed(level.getBiome(pos))) {
                     continue;
                 }
-                if (DragonSpawnRules.hasCaveGroundSpawnSpace(level, pos) && canFitStegonautAt(level, pos)) {
+                if (hasPlayerClearance(level, pos)
+                        && DragonSpawnRules.hasCaveGroundSpawnSpace(level, pos)
+                        && canFitStegonautAt(level, pos)) {
                     return pos;
                 }
             }
@@ -209,6 +219,15 @@ public final class StegonautLushCaveSpawner {
         probe.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
         AABB box = probe.getBoundingBox();
         return level.noCollision(probe, box);
+    }
+
+    private static boolean hasPlayerClearance(ServerLevel level, BlockPos pos) {
+        return !level.hasNearbyAlivePlayer(
+                pos.getX() + 0.5D,
+                pos.getY(),
+                pos.getZ() + 0.5D,
+                MIN_PLAYER_DISTANCE
+        );
     }
 
     private static boolean hasStegonautNearby(ServerLevel level, BlockPos center) {

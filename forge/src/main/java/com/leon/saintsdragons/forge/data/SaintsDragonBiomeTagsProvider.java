@@ -64,16 +64,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
             rl("biomesoplenty", "dead_forest")
     };
 
-    private static final ResourceLocation[] STEGONAUT_CAVE_COMPAT_BIOMES = {
-            rl("biomeswevegone", "fragment_jungle"),
-            rl("biomeswevegone", "crag_gardens"),
-            rl("biomesoplenty", "rocky_rainforest"),
-            rl("terralith", "white_cliffs"),
-            rl("biomeswevegone", "lush_stacks"),
-            rl("regions_unexplored", "chalk_cliffs"),
-            rl("natures_spirit", "white_cliffs")
-    };
-
     private static final ResourceLocation[] IGNIVORUS_ROOST_COMPAT_BIOMES = {
             rl("regions_unexplored", "ashen_woodland"),
             rl("regions_unexplored", "gravel_beach"),
@@ -131,7 +121,7 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
     protected void addTags(@NotNull HolderLookup.Provider provider) {
         tag(ModTags.Biomes.HAS_ATROXIIA)
                 .addOptionalTag(rl("c", "is_cold/overworld"))
-                .addOptionalTag(rl("forge", "is_cold"))
+                .addOptionalTag(rl("forge", "is_cold/overworld"))
                 .add(Biomes.SNOWY_PLAINS)
                 .add(Biomes.ICE_SPIKES);
 
@@ -211,13 +201,8 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.SPARSE_JUNGLE)
                 .add(Biomes.FLOWER_FOREST);
 
-        var stegonautCaveBiomes = tag(ModTags.Biomes.HAS_STEGONAUT_CAVES)
-                .addTag(ModTags.Biomes.HAS_STEGONAUT)
-                .addOptionalTag(rl("forge", "is_lush"))
+        tag(ModTags.Biomes.HAS_STEGONAUT_CAVES)
                 .add(Biomes.LUSH_CAVES);
-        for (ResourceLocation biome : STEGONAUT_CAVE_COMPAT_BIOMES) {
-            stegonautCaveBiomes.addOptional(biome);
-        }
 
         tag(ModTags.Biomes.HAS_VOLITANS)
                 .addOptionalTag(rl("c", "ocean"))

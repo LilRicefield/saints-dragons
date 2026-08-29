@@ -1,38 +1,5 @@
 {
   "values": [
-    "#saintsdragons:has_stegonaut",
-    {
-      "id": "#forge:is_lush",
-      "required": false
-    },
-    "minecraft:lush_caves",
-    {
-      "id": "biomeswevegone:fragment_jungle",
-      "required": false
-    },
-    {
-      "id": "biomeswevegone:crag_gardens",
-      "required": false
-    },
-    {
-      "id": "biomesoplenty:rocky_rainforest",
-      "required": false
-    },
-    {
-      "id": "terralith:white_cliffs",
-      "required": false
-    },
-    {
-      "id": "biomeswevegone:lush_stacks",
-      "required": false
-    },
-    {
-      "id": "regions_unexplored:chalk_cliffs",
-      "required": false
-    },
-    {
-      "id": "natures_spirit:white_cliffs",
-      "required": false
-    }
+    "minecraft:lush_caves"
   ]
 }

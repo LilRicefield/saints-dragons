@@ -5,7 +5,7 @@
       "required": false
     },
     {
-      "id": "#forge:is_cold",
+      "id": "#forge:is_cold/overworld",
       "required": false
     },
     "minecraft:snowy_plains",
