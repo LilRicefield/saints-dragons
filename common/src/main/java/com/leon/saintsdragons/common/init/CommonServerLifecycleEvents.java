@@ -42,13 +42,16 @@ public final class CommonServerLifecycleEvents {
         }
 
         for (ServerLevel level : server.getAllLevels()) {
-            if (SaintsDragonsConfig.isRaevyxCustomSpawningEnabled()) {
+            if (SaintsDragonsConfig.isRaevyxSpawningEnabled()
+                    && SaintsDragonsConfig.isRaevyxCustomSpawningEnabled()) {
                 RaevyxStormSpawner.tick(level);
             }
-            if (SaintsDragonsConfig.isStegonautCustomSpawningEnabled()) {
+            if (SaintsDragonsConfig.isStegonautSpawningEnabled()
+                    && SaintsDragonsConfig.isStegonautCustomSpawningEnabled()) {
                 StegonautLushCaveSpawner.tick(level);
             }
-            if (SaintsDragonsConfig.isVolitansCustomSpawningEnabled()) {
+            if (SaintsDragonsConfig.isVolitansSpawningEnabled()
+                    && SaintsDragonsConfig.isVolitansCustomSpawningEnabled()) {
                 VolitansUnderwaterSpawner.tick(level);
             }
         }

@@ -48,10 +48,15 @@ public final class Spawns {
             );
         }
 
+        if (SaintsDragonsConfig.isMoopSpawningEnabled()) {
+            registerMoopSpawn();
+        }
+        if (SaintsDragonsConfig.isMossbackSpawningEnabled()) {
+            registerMossbackSpawn();
+        }
+
         registerDeepslateWorldrootOre();
         registerDragonheartOre();
-        registerMoopSpawn();
-        registerMossbackSpawn();
     }
 
     private static void registerMoopSpawn() {

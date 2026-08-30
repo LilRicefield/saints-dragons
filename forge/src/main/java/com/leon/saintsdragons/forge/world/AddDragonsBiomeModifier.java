@@ -49,7 +49,8 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                     );
                 }
             }
-            if (DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOOP)) {
+            if (SaintsDragonsConfig.isMoopSpawningEnabled()
+                    && DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOOP)) {
                 addSpawn(
                         builder,
                         MobCategory.WATER_AMBIENT,
@@ -59,7 +60,8 @@ public final class AddDragonsBiomeModifier implements BiomeModifier {
                         SaintsDragonsConfig.MOOP_MAX_GROUP_SIZE.get()
                 );
             }
-            if (DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOSSBACK)) {
+            if (SaintsDragonsConfig.isMossbackSpawningEnabled()
+                    && DragonBiomeMatcher.isAllowed(biome, ModTags.Biomes.HAS_MOSSBACK)) {
                 addSpawn(
                         builder,
                         MobCategory.CREATURE,

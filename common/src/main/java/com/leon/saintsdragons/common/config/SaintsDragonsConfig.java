@@ -46,6 +46,17 @@ public final class SaintsDragonsConfig {
     public static final int MOSSBACK_SPAWN_WEIGHT_DEFAULT = 10;
     public static final int MOSSBACK_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int MOSSBACK_MAX_GROUP_SIZE_DEFAULT = 2;
+    public static final boolean RAEVYX_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean STEGONAUT_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean CINDERVANE_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean IGNIVORUS_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean VARASUCHUS_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean ATROXIIA_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean VOLITANS_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean NULLJAW_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean MOOP_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean MOSSBACK_SPAWNING_ENABLED_DEFAULT = true;
+    public static final boolean IVY_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
     public static final boolean VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT = true;
@@ -92,6 +103,17 @@ public final class SaintsDragonsConfig {
     public static ConfigHelper.IntValue MOSSBACK_MIN_GROUP_SIZE;
     public static ConfigHelper.IntValue MOSSBACK_MAX_GROUP_SIZE;
 
+    public static ConfigHelper.BooleanValue RAEVYX_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue STEGONAUT_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue CINDERVANE_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue IGNIVORUS_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue VARASUCHUS_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue ATROXIIA_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue VOLITANS_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue NULLJAW_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue MOOP_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue MOSSBACK_SPAWNING_ENABLED;
+    public static ConfigHelper.BooleanValue IVY_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue RAEVYX_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue STEGONAUT_CUSTOM_SPAWNING_ENABLED;
     public static ConfigHelper.BooleanValue VOLITANS_CUSTOM_SPAWNING_ENABLED;
@@ -130,49 +152,68 @@ public final class SaintsDragonsConfig {
         builder.comment("Natural wild dragon spawns are also filtered by shared density rules to stop creature-category dragons from piling up.");
         builder.comment("With custom spawning enabled, Raevyx spawns are driven by thunderstorms.");
         builder.comment("Disabling custom spawning restores vanilla biome spawning for Raevyx.");
-
+        builder.comment("Each species has an automatic spawning toggle. Disabling it does not remove existing entities or block spawn eggs, commands, or breeding.");
+        builder.comment("Disabling Ignivorus, Varasuchus, or Ivy also stops their structures in newly generated chunks. Existing structures are not modified.");
+        builder.comment("Restart the client for singleplayer, or the server for multiplayer, after changing a spawning toggle.");
         builder.comment("Raevyx spawn settings");
+        RAEVYX_SPAWNING_ENABLED = builder.defineBoolean("raevyxSpawningEnabled", RAEVYX_SPAWNING_ENABLED_DEFAULT);
         RAEVYX_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("raevyxCustomSpawningEnabled", RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT);
         RAEVYX_SPAWN_WEIGHT = builder.defineInt("raevyxSpawnWeight", RAEVYX_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         RAEVYX_MIN_GROUP_SIZE = builder.defineInt("raevyxMinGroupSize", RAEVYX_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         RAEVYX_MAX_GROUP_SIZE = builder.defineInt("raevyxMaxGroupSize", RAEVYX_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Stegonaut spawn settings");
+        STEGONAUT_SPAWNING_ENABLED = builder.defineBoolean("stegonautSpawningEnabled", STEGONAUT_SPAWNING_ENABLED_DEFAULT);
         STEGONAUT_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("stegonautCustomSpawningEnabled", STEGONAUT_CUSTOM_SPAWNING_ENABLED_DEFAULT);
         STEGONAUT_SPAWN_WEIGHT = builder.defineInt("stegonautSpawnWeight", STEGONAUT_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         STEGONAUT_MIN_GROUP_SIZE = builder.defineInt("stegonautMinGroupSize", STEGONAUT_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         STEGONAUT_MAX_GROUP_SIZE = builder.defineInt("stegonautMaxGroupSize", STEGONAUT_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Cindervane spawn settings");
+        CINDERVANE_SPAWNING_ENABLED = builder.defineBoolean("cindervaneSpawningEnabled", CINDERVANE_SPAWNING_ENABLED_DEFAULT);
         CINDERVANE_SPAWN_WEIGHT = builder.defineInt("cindervaneSpawnWeight", CINDERVANE_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         CINDERVANE_MIN_GROUP_SIZE = builder.defineInt("cindervaneMinGroupSize", CINDERVANE_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         CINDERVANE_MAX_GROUP_SIZE = builder.defineInt("cindervaneMaxGroupSize", CINDERVANE_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
+        builder.comment("Ignivorus structure spawn settings");
+        IGNIVORUS_SPAWNING_ENABLED = builder.defineBoolean("ignivorusSpawningEnabled", IGNIVORUS_SPAWNING_ENABLED_DEFAULT);
+
+        builder.comment("Varasuchus structure spawn settings");
+        VARASUCHUS_SPAWNING_ENABLED = builder.defineBoolean("varasuchusSpawningEnabled", VARASUCHUS_SPAWNING_ENABLED_DEFAULT);
+
         builder.comment("Atroxiia spawn settings");
+        ATROXIIA_SPAWNING_ENABLED = builder.defineBoolean("atroxiiaSpawningEnabled", ATROXIIA_SPAWNING_ENABLED_DEFAULT);
         ATROXIIA_SPAWN_WEIGHT = builder.defineInt("atroxiiaSpawnWeight", ATROXIIA_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         ATROXIIA_MIN_GROUP_SIZE = builder.defineInt("atroxiiaMinGroupSize", ATROXIIA_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         ATROXIIA_MAX_GROUP_SIZE = builder.defineInt("atroxiiaMaxGroupSize", ATROXIIA_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Volitans spawn settings (custom underwater spawner for ocean/wetland habitats)");
+        VOLITANS_SPAWNING_ENABLED = builder.defineBoolean("volitansSpawningEnabled", VOLITANS_SPAWNING_ENABLED_DEFAULT);
         VOLITANS_CUSTOM_SPAWNING_ENABLED = builder.defineBoolean("volitansCustomSpawningEnabled", VOLITANS_CUSTOM_SPAWNING_ENABLED_DEFAULT);
         VOLITANS_SPAWN_WEIGHT = builder.defineInt("volitansSpawnWeight", VOLITANS_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         VOLITANS_MIN_GROUP_SIZE = builder.defineInt("volitansMinGroupSize", VOLITANS_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         VOLITANS_MAX_GROUP_SIZE = builder.defineInt("volitansMaxGroupSize", VOLITANS_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Nulljaw spawn settings (End-floating dragon)");
+        NULLJAW_SPAWNING_ENABLED = builder.defineBoolean("nulljawSpawningEnabled", NULLJAW_SPAWNING_ENABLED_DEFAULT);
         NULLJAW_SPAWN_WEIGHT = builder.defineInt("nulljawSpawnWeight", NULLJAW_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         NULLJAW_MIN_GROUP_SIZE = builder.defineInt("nulljawMinGroupSize", NULLJAW_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         NULLJAW_MAX_GROUP_SIZE = builder.defineInt("nulljawMaxGroupSize", NULLJAW_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Moop spawn settings");
+        MOOP_SPAWNING_ENABLED = builder.defineBoolean("moopSpawningEnabled", MOOP_SPAWNING_ENABLED_DEFAULT);
         MOOP_SPAWN_WEIGHT = builder.defineInt("moopSpawnWeight", MOOP_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         MOOP_MIN_GROUP_SIZE = builder.defineInt("moopMinGroupSize", MOOP_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         MOOP_MAX_GROUP_SIZE = builder.defineInt("moopMaxGroupSize", MOOP_MAX_GROUP_SIZE_DEFAULT, 1, 10);
 
         builder.comment("Mossback spawn settings");
+        MOSSBACK_SPAWNING_ENABLED = builder.defineBoolean("mossbackSpawningEnabled", MOSSBACK_SPAWNING_ENABLED_DEFAULT);
         MOSSBACK_SPAWN_WEIGHT = builder.defineInt("mossbackSpawnWeight", MOSSBACK_SPAWN_WEIGHT_DEFAULT, 0, SPAWN_WEIGHT_MAX);
         MOSSBACK_MIN_GROUP_SIZE = builder.defineInt("mossbackMinGroupSize", MOSSBACK_MIN_GROUP_SIZE_DEFAULT, 1, 10);
         MOSSBACK_MAX_GROUP_SIZE = builder.defineInt("mossbackMaxGroupSize", MOSSBACK_MAX_GROUP_SIZE_DEFAULT, 1, 10);
+
+        builder.comment("Ivy structure spawn settings");
+        IVY_SPAWNING_ENABLED = builder.defineBoolean("ivySpawningEnabled", IVY_SPAWNING_ENABLED_DEFAULT);
 
         builder.pop();
         builder.build();
@@ -224,6 +265,50 @@ public final class SaintsDragonsConfig {
 
     public static boolean isWikiReminderEnabled() {
         return WIKI_REMINDER_ENABLED == null || WIKI_REMINDER_ENABLED.get();
+    }
+
+    public static boolean isRaevyxSpawningEnabled() {
+        return RAEVYX_SPAWNING_ENABLED == null || RAEVYX_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isStegonautSpawningEnabled() {
+        return STEGONAUT_SPAWNING_ENABLED == null || STEGONAUT_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isCindervaneSpawningEnabled() {
+        return CINDERVANE_SPAWNING_ENABLED == null || CINDERVANE_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isIgnivorusSpawningEnabled() {
+        return IGNIVORUS_SPAWNING_ENABLED == null || IGNIVORUS_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isVarasuchusSpawningEnabled() {
+        return VARASUCHUS_SPAWNING_ENABLED == null || VARASUCHUS_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isAtroxiiaSpawningEnabled() {
+        return ATROXIIA_SPAWNING_ENABLED == null || ATROXIIA_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isVolitansSpawningEnabled() {
+        return VOLITANS_SPAWNING_ENABLED == null || VOLITANS_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isNulljawSpawningEnabled() {
+        return NULLJAW_SPAWNING_ENABLED == null || NULLJAW_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isMoopSpawningEnabled() {
+        return MOOP_SPAWNING_ENABLED == null || MOOP_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isMossbackSpawningEnabled() {
+        return MOSSBACK_SPAWNING_ENABLED == null || MOSSBACK_SPAWNING_ENABLED.get();
+    }
+
+    public static boolean isIvySpawningEnabled() {
+        return IVY_SPAWNING_ENABLED == null || IVY_SPAWNING_ENABLED.get();
     }
 
     public static boolean isRaevyxCustomSpawningEnabled() {

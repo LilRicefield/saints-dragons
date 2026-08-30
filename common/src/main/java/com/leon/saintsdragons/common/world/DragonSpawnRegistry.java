@@ -33,7 +33,9 @@ public final class DragonSpawnRegistry {
                 ModEntities.RAEVYX,
                 ModTags.Biomes.HAS_RAEVYX,
                 MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.isRaevyxCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
+                () -> !SaintsDragonsConfig.isRaevyxSpawningEnabled()
+                        || SaintsDragonsConfig.isRaevyxCustomSpawningEnabled()
+                        ? 0 : SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.RAEVYX_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.RAEVYX_MAX_GROUP_SIZE.get());
 
@@ -42,7 +44,9 @@ public final class DragonSpawnRegistry {
                 ModEntities.STEGONAUT,
                 ModTags.Biomes.HAS_STEGONAUT,
                 MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.isStegonautCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
+                () -> !SaintsDragonsConfig.isStegonautSpawningEnabled()
+                        || SaintsDragonsConfig.isStegonautCustomSpawningEnabled()
+                        ? 0 : SaintsDragonsConfig.STEGONAUT_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.STEGONAUT_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.STEGONAUT_MAX_GROUP_SIZE.get());
 
@@ -51,7 +55,8 @@ public final class DragonSpawnRegistry {
                 ModEntities.CINDERVANE,
                 ModTags.Biomes.HAS_CINDERVANE,
                 MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.isCindervaneSpawningEnabled()
+                        ? SaintsDragonsConfig.CINDERVANE_SPAWN_WEIGHT.get() : 0,
                 () -> SaintsDragonsConfig.CINDERVANE_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.CINDERVANE_MAX_GROUP_SIZE.get());
 
@@ -60,7 +65,8 @@ public final class DragonSpawnRegistry {
                 ModEntities.ATROXIIA,
                 ModTags.Biomes.HAS_ATROXIIA,
                 MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.isAtroxiiaSpawningEnabled()
+                        ? SaintsDragonsConfig.ATROXIIA_SPAWN_WEIGHT.get() : 0,
                 () -> SaintsDragonsConfig.ATROXIIA_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.ATROXIIA_MAX_GROUP_SIZE.get());
 
@@ -69,7 +75,9 @@ public final class DragonSpawnRegistry {
                 ModEntities.VOLITANS,
                 ModTags.Biomes.HAS_VOLITANS_FALLBACK,
                 MobCategory.CREATURE,
-                () -> SaintsDragonsConfig.isVolitansCustomSpawningEnabled() ? 0 : SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.get(),
+                () -> !SaintsDragonsConfig.isVolitansSpawningEnabled()
+                        || SaintsDragonsConfig.isVolitansCustomSpawningEnabled()
+                        ? 0 : SaintsDragonsConfig.VOLITANS_SPAWN_WEIGHT.get(),
                 () -> SaintsDragonsConfig.VOLITANS_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.VOLITANS_MAX_GROUP_SIZE.get());
 
@@ -78,7 +86,8 @@ public final class DragonSpawnRegistry {
                 ModEntities.NULLJAW,
                 ModTags.Biomes.HAS_NULLJAW,
                 MobCategory.MONSTER,
-                () -> SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get(),
+                () -> SaintsDragonsConfig.isNulljawSpawningEnabled()
+                        ? SaintsDragonsConfig.NULLJAW_SPAWN_WEIGHT.get() : 0,
                 () -> SaintsDragonsConfig.NULLJAW_MIN_GROUP_SIZE.get(),
                 () -> SaintsDragonsConfig.NULLJAW_MAX_GROUP_SIZE.get());
 

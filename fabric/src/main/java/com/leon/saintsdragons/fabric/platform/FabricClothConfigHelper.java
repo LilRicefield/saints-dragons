@@ -249,6 +249,17 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
     private static BooleanSupplier booleanSupplierForKey(String key, boolean defaultValue) {
         return switch (key) {
+            case "raevyxSpawningEnabled" -> () -> spawnHolder().getConfig().raevyxSpawningEnabled;
+            case "stegonautSpawningEnabled" -> () -> spawnHolder().getConfig().stegonautSpawningEnabled;
+            case "cindervaneSpawningEnabled" -> () -> spawnHolder().getConfig().cindervaneSpawningEnabled;
+            case "ignivorusSpawningEnabled" -> () -> spawnHolder().getConfig().ignivorusSpawningEnabled;
+            case "varasuchusSpawningEnabled" -> () -> spawnHolder().getConfig().varasuchusSpawningEnabled;
+            case "atroxiiaSpawningEnabled" -> () -> spawnHolder().getConfig().atroxiiaSpawningEnabled;
+            case "volitansSpawningEnabled" -> () -> spawnHolder().getConfig().volitansSpawningEnabled;
+            case "nulljawSpawningEnabled" -> () -> spawnHolder().getConfig().nulljawSpawningEnabled;
+            case "moopSpawningEnabled" -> () -> spawnHolder().getConfig().moopSpawningEnabled;
+            case "mossbackSpawningEnabled" -> () -> spawnHolder().getConfig().mossbackSpawningEnabled;
+            case "ivySpawningEnabled" -> () -> spawnHolder().getConfig().ivySpawningEnabled;
             case "raevyxCustomSpawningEnabled" -> () -> spawnHolder().getConfig().raevyxCustomSpawningEnabled;
             case "stegonautCustomSpawningEnabled" -> () -> spawnHolder().getConfig().stegonautCustomSpawningEnabled;
             case "volitansCustomSpawningEnabled" -> () -> spawnHolder().getConfig().volitansCustomSpawningEnabled;
@@ -275,6 +286,17 @@ final class FabricClothConfigHelper implements ConfigHelper {
 
     private static Consumer<Boolean> booleanSetterForKey(String key) {
         return switch (key) {
+            case "raevyxSpawningEnabled" -> value -> spawnHolder().getConfig().raevyxSpawningEnabled = value;
+            case "stegonautSpawningEnabled" -> value -> spawnHolder().getConfig().stegonautSpawningEnabled = value;
+            case "cindervaneSpawningEnabled" -> value -> spawnHolder().getConfig().cindervaneSpawningEnabled = value;
+            case "ignivorusSpawningEnabled" -> value -> spawnHolder().getConfig().ignivorusSpawningEnabled = value;
+            case "varasuchusSpawningEnabled" -> value -> spawnHolder().getConfig().varasuchusSpawningEnabled = value;
+            case "atroxiiaSpawningEnabled" -> value -> spawnHolder().getConfig().atroxiiaSpawningEnabled = value;
+            case "volitansSpawningEnabled" -> value -> spawnHolder().getConfig().volitansSpawningEnabled = value;
+            case "nulljawSpawningEnabled" -> value -> spawnHolder().getConfig().nulljawSpawningEnabled = value;
+            case "moopSpawningEnabled" -> value -> spawnHolder().getConfig().moopSpawningEnabled = value;
+            case "mossbackSpawningEnabled" -> value -> spawnHolder().getConfig().mossbackSpawningEnabled = value;
+            case "ivySpawningEnabled" -> value -> spawnHolder().getConfig().ivySpawningEnabled = value;
             case "raevyxCustomSpawningEnabled" -> value -> spawnHolder().getConfig().raevyxCustomSpawningEnabled = value;
             case "stegonautCustomSpawningEnabled" -> value -> spawnHolder().getConfig().stegonautCustomSpawningEnabled = value;
             case "volitansCustomSpawningEnabled" -> value -> spawnHolder().getConfig().volitansCustomSpawningEnabled = value;

@@ -22,11 +22,13 @@
     "GuiMixin"
   ],
   "mixins": [
+    "ChunkGeneratorStructureStateMixin",
     "NameTagItemMixin",
     "LivingEntityMixin",
     "PathfinderMobMixin",
     "PlayerMixin",
-    "RedStoneWireBlockMixin"
+    "RedStoneWireBlockMixin",
+    "StructureTemplateEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

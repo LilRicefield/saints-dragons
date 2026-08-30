@@ -8,6 +8,50 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 @Config(name = "saintsdragons/server/spawning")
 public final class SaintsDragonsFabricSpawnConfig implements ConfigData {
     @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean raevyxSpawningEnabled = SaintsDragonsConfig.RAEVYX_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean stegonautSpawningEnabled = SaintsDragonsConfig.STEGONAUT_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean cindervaneSpawningEnabled = SaintsDragonsConfig.CINDERVANE_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean ignivorusSpawningEnabled = SaintsDragonsConfig.IGNIVORUS_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean varasuchusSpawningEnabled = SaintsDragonsConfig.VARASUCHUS_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean atroxiiaSpawningEnabled = SaintsDragonsConfig.ATROXIIA_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean volitansSpawningEnabled = SaintsDragonsConfig.VOLITANS_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean nulljawSpawningEnabled = SaintsDragonsConfig.NULLJAW_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean moopSpawningEnabled = SaintsDragonsConfig.MOOP_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean mossbackSpawningEnabled = SaintsDragonsConfig.MOSSBACK_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
+    @ConfigEntry.Gui.Tooltip
+    public boolean ivySpawningEnabled = SaintsDragonsConfig.IVY_SPAWNING_ENABLED_DEFAULT;
+
+    @ConfigEntry.Category("spawning")
     public boolean raevyxCustomSpawningEnabled = SaintsDragonsConfig.RAEVYX_CUSTOM_SPAWNING_ENABLED_DEFAULT;
 
     @ConfigEntry.Category("spawning")
