@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:recipes/root",
+  "criteria": {
+    "has_raw_worldroot_block": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "saintsdragons:raw_worldroot_block"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_raw_worldroot_block"
+    ]
+  ],
+  "rewards": {
+    "recipes": [
+      "saintsdragons:raw_worldroot"
+    ]
+  }
+}
