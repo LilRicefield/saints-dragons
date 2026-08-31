@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.ui;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexRequest;
+import com.leon.saintsdragons.common.network.MessageDraconicCodexRemoveEntry;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyManagement;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -17,6 +18,7 @@ import com.leon.saintsdragons.client.ui.codex.CodexTabPanel;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ImageButton;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.GuiGraphics;
@@ -72,6 +74,8 @@ public class DraconicCodexScreen extends Screen {
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/add_icon.png");
     private static final ResourceLocation REMOVE_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/remove_icon.png");
+    private static final ResourceLocation REMOVE_ENTRIES_ICON =
+            SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/remove_entries_icon.png");
     private static final ResourceLocation REFRESH_ICON =
             SaintsDragonsCommon.rl("textures/gui/draconiccodex/icons/refresh_icon.png");
     private static final int REFRESH_ICON_OFFSET_X = 72;
@@ -80,6 +84,10 @@ public class DraconicCodexScreen extends Screen {
     private static final int REFRESH_ICON_HEIGHT = 9;
     private static final int REFRESH_ICON_TEXTURE_WIDTH = 8;
     private static final int REFRESH_ICON_TEXTURE_HEIGHT = 9;
+    private static final int REMOVE_ENTRY_ICON_OFFSET_X = REFRESH_ICON_OFFSET_X;
+    private static final int REMOVE_ENTRY_ICON_OFFSET_Y = REFRESH_ICON_OFFSET_Y + REFRESH_ICON_HEIGHT + 2;
+    private static final int REMOVE_ENTRY_ICON_WIDTH = 8;
+    private static final int REMOVE_ENTRY_ICON_HEIGHT = 9;
     private static final int LIVE_REFRESH_INTERVAL_TICKS = 10;
     private final CodexTabPanel tabPanel = new CodexTabPanel();
     private final CodexDragonListPanel dragonListPanel = new CodexDragonListPanel();
@@ -105,6 +113,8 @@ public class DraconicCodexScreen extends Screen {
     private boolean dragonListLoaded = false;
     @Nullable
     private Button refreshEntryButton;
+    @Nullable
+    private Button removeEntryButton;
     public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
         super(Component.translatable("saintsdragons.gui.draconic_codex.title"));
         this.pendingSelectionId = preselectedDragonId;
@@ -138,6 +148,23 @@ public class DraconicCodexScreen extends Screen {
         ));
         refreshEntryButton.setTooltip(Tooltip.create(Component.translatable("saintsdragons.gui.draconic_codex.refresh_entry")));
         refreshEntryButton.active = true;
+
+        removeEntryButton = addRenderableWidget(new ImageButton(
+                leftPos + REMOVE_ENTRY_ICON_OFFSET_X,
+                topPos + REMOVE_ENTRY_ICON_OFFSET_Y,
+                REMOVE_ENTRY_ICON_WIDTH,
+                REMOVE_ENTRY_ICON_HEIGHT,
+                0,
+                0,
+                0,
+                REMOVE_ENTRIES_ICON,
+                REMOVE_ENTRY_ICON_WIDTH,
+                REMOVE_ENTRY_ICON_HEIGHT,
+                button -> promptRemoveSelectedEntry(),
+                Component.translatable("saintsdragons.gui.draconic_codex.remove_entry")
+        ));
+        removeEntryButton.setTooltip(Tooltip.create(Component.translatable("saintsdragons.gui.draconic_codex.remove_entry")));
+        updateRemoveEntryButtonState();
 
         allyPanel.initWidgets(this::addRenderableWidget, this.font, leftPos, topPos,
                 this::addAllyFromInput, this::removeAllyFromInput);
@@ -210,6 +237,7 @@ public class DraconicCodexScreen extends Screen {
                         .findFirst()
                         .orElse(null);
                 selectedDragonId = clickedId;
+                updateRemoveEntryButtonState();
                 ecologyPage = 1;
                 ecologyPanel.resetLinkScroll();
                 updateEcologyWidgetVisibility();
@@ -298,10 +326,15 @@ public class DraconicCodexScreen extends Screen {
             pendingSelectionId = null;
         }
 
+        if (selectedDragonId != null && dragonEntries.stream().noneMatch(entry -> selectedDragonId.equals(entry.entityId()))) {
+            selectedDragonId = null;
+        }
+
         listScrollOffset = Math.min(listScrollOffset, Math.max(0, dragonEntries.size() - CodexLayout.MAX_VISIBLE_DRAGONS));
         if (refreshEntryButton != null) {
             refreshEntryButton.active = true;
         }
+        updateRemoveEntryButtonState();
     }
 
     public void updateAllyList(List<String> newAllyList) {
@@ -330,6 +363,36 @@ public class DraconicCodexScreen extends Screen {
             }
         }
         return null;
+    }
+
+    private void updateRemoveEntryButtonState() {
+        if (removeEntryButton != null) {
+            removeEntryButton.active = getSelectedEntry() != null;
+        }
+    }
+
+    private void promptRemoveSelectedEntry() {
+        CodexDragonEntry selected = getSelectedEntry();
+        if (selected == null || selected.entityId() == null || this.minecraft == null) {
+            return;
+        }
+
+        java.util.UUID dragonId = selected.entityId();
+        Component title = Component.translatable(
+                "saintsdragons.gui.draconic_codex.remove_entry.confirm.title",
+                selected.displayName()
+        );
+        Component warning = Component.translatable("saintsdragons.gui.draconic_codex.remove_entry.confirm.warning");
+        this.minecraft.setScreen(new ConfirmScreen(confirmed -> {
+            if (confirmed) {
+                NetworkHandler.sendToServer(new MessageDraconicCodexRemoveEntry(dragonId));
+                dragonEntries.removeIf(entry -> dragonId.equals(entry.entityId()));
+                selectedDragonId = null;
+                ecologyPage = 1;
+                ecologyPanel.resetLinkScroll();
+            }
+            this.minecraft.setScreen(this);
+        }, title, warning));
     }
 
 

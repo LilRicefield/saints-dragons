@@ -44,6 +44,7 @@ public class MessageDraconicCodexRequest {
         NEXT_ALLOWED_REQUEST_TICK.put(playerId, now + REQUEST_COOLDOWN_TICKS);
 
         DragonCodexSavedData data = DragonCodexSavedData.get(serverLevel);
+        data.deduplicateEntries(playerId);
         Map<UUID, DragonEntity> loadedOwnedDragons = collectLoadedOwnedDragons(serverLevel, playerId);
         for (DragonEntity dragon : loadedOwnedDragons.values()) {
             if (!isValidCodexDragon(dragon)) {

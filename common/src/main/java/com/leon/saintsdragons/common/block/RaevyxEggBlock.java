@@ -109,11 +109,12 @@ public class RaevyxEggBlock extends BaseEntityBlock {
             baby.applyConfiguredAttributes();
             baby.setHealth(baby.getMaxHealth());
             baby.moveTo(pos.getX() + 0.5D, pos.getY(), pos.getZ() + 0.5D, 0.0F, 0.0F);
-            level.addFreshEntity(baby);
-            if (baby.isTame() && baby.getOwnerUUID() != null) {
-                DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+            if (level.addFreshEntity(baby)) {
+                if (baby.isTame() && baby.getOwnerUUID() != null) {
+                    DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+                }
+                level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
             }
-            level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
         }
         awardHatchAdvancement(level, pos, eggEntity);
     }

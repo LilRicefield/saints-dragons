@@ -207,7 +207,9 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             newDragon.setTame(true);
             newDragon.setOwnerUUID(ownerUUID);
         } else {
-            newDragon.tame(player);
+            // Do not register a Codex entry until the reconstructed entity is actually accepted by the level.
+            newDragon.setTame(true);
+            newDragon.setOwnerUUID(player.getUUID());
         }
 
         if (tag.contains(BinderComponentUtil.BOUND_CUSTOM_NAME)) {
@@ -233,7 +235,10 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             return false;
         }
 
-        DragonCodexSavedData.get(serverLevel).updateDragonBoundState(ownerUUID != null ? ownerUUID : player.getUUID(), originalUUID, false);
+        UUID resolvedOwnerUUID = ownerUUID != null ? ownerUUID : player.getUUID();
+        DragonCodexSavedData codexData = DragonCodexSavedData.get(serverLevel);
+        codexData.addDragon(resolvedOwnerUUID, newDragon);
+        codexData.updateDragonBoundState(resolvedOwnerUUID, originalUUID, false);
         clearBinderData(tag);
         onDragonReleased(newDragon, player, stack);
         player.displayClientMessage(Component.translatable(getReleasedMessageKey(), dragonName), true);

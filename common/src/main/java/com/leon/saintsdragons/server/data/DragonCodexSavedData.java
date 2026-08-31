@@ -12,6 +12,7 @@ import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -49,6 +50,7 @@ public class DragonCodexSavedData extends SavedData {
             removeDragon(ownerId, dragon.getUUID());
             return;
         }
+        deduplicateEntries(ownerId);
         UUID dragonId = dragon.getUUID();
         List<DragonCodexEntry> entries = entriesByOwner.computeIfAbsent(ownerId, id -> new ArrayList<>());
         for (DragonCodexEntry entry : entries) {
@@ -109,8 +111,38 @@ public class DragonCodexSavedData extends SavedData {
         }
         boolean removed = entries.removeIf(entry -> entry.dragonId().equals(dragonId));
         if (removed) {
+            if (entries.isEmpty()) {
+                entriesByOwner.remove(ownerId);
+            }
             setDirty();
         }
+    }
+
+    /**
+     * Collapses legacy or crash-recovered records that point at the same entity UUID.
+     * The first record wins because all legacy update paths refreshed the first matching entry.
+     */
+    public int deduplicateEntries(UUID ownerId) {
+        if (ownerId == null) {
+            return 0;
+        }
+        List<DragonCodexEntry> entries = entriesByOwner.get(ownerId);
+        if (entries == null || entries.size() < 2) {
+            return 0;
+        }
+
+        Map<UUID, DragonCodexEntry> uniqueEntries = new LinkedHashMap<>();
+        for (DragonCodexEntry entry : entries) {
+            uniqueEntries.putIfAbsent(entry.dragonId(), entry);
+        }
+
+        int removed = entries.size() - uniqueEntries.size();
+        if (removed > 0) {
+            entries.clear();
+            entries.addAll(uniqueEntries.values());
+            setDirty();
+        }
+        return removed;
     }
 
     public void updateDragonName(UUID ownerId, UUID dragonId, String displayName) {
@@ -190,6 +222,7 @@ public class DragonCodexSavedData extends SavedData {
         if (owner == null) {
             return List.of();
         }
+        deduplicateEntries(owner.getUUID());
         List<DragonCodexEntry> entries = entriesByOwner.get(owner.getUUID());
         if (entries == null) {
             return List.of();
@@ -280,7 +313,8 @@ public class DragonCodexSavedData extends SavedData {
                                 brushingAvailable, brushingProgress, posX, posY, posZ, biomeId));
                     }
                 }
-                data.entriesByOwner.put(ownerId, entries);
+                data.entriesByOwner.computeIfAbsent(ownerId, ignored -> new ArrayList<>()).addAll(entries);
+                data.deduplicateEntries(ownerId);
             }
         }
         return data;

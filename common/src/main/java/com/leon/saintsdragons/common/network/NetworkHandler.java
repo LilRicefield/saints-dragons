@@ -248,6 +248,15 @@ public final class NetworkHandler {
                 MessageDialogueClose::decode,
                 MessageDialogueClose::handle
         );
+
+        // Keep new Forge packet discriminators at the end so existing packet IDs do not shift.
+        NETWORK.registerServerbound(
+                MessageDraconicCodexRemoveEntry.class,
+                id("draconic_codex_remove_entry"),
+                MessageDraconicCodexRemoveEntry::encode,
+                MessageDraconicCodexRemoveEntry::decode,
+                MessageDraconicCodexRemoveEntry::handle
+        );
     }
 
     public static void sendToServer(Object message) {

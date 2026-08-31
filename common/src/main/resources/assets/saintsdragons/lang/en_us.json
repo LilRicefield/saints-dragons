@@ -527,7 +527,10 @@
   "saintsdragons.gui.draconic_codex.ally.input": "Enter username...",
   "saintsdragons.gui.draconic_codex.ally.add": "Add Player",
   "saintsdragons.gui.draconic_codex.ally.remove": "Remove Player",
-  "saintsdragons.gui.draconic_codex.refresh_entry": "Refresh entry",
+  "saintsdragons.gui.draconic_codex.refresh_entry": "Refresh entries",
+  "saintsdragons.gui.draconic_codex.remove_entry": "Remove stale entries",
+  "saintsdragons.gui.draconic_codex.remove_entry.confirm.title": "Remove %s from the Codex?",
+  "saintsdragons.gui.draconic_codex.remove_entry.confirm.warning": "This only removes the saved Codex entry. It will not remove the dragon, and a living dragon will return when refreshed.",
   
   "saintsdragons.tooltip.draconic_codex.line1": "Right-click to open the Draconic Codex",
   "saintsdragons.tooltip.draconic_codex.line2": "View tamed dragons and manage player allies",

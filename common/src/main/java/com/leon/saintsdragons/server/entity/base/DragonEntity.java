@@ -802,7 +802,6 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
         double spawnY = safePos != null ? safePos.getY() : this.getY();
         baby.moveTo(this.getX(), spawnY, this.getZ(), this.getYRot(), 0.0F);
-        registerToOwnerCodex(baby, level);
         return baby;
     }
 
@@ -1397,6 +1396,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public void remove(@NotNull Entity.RemovalReason reason) {
+        removeCodexEntryForTerminalRemoval(reason);
         if (shouldLogDragonRemoval(reason)) {
             System.out.println("[SD-DRAGON-REMOVE] type=" + EntityType.getKey(this.getType())
                     + " uuid=" + this.getUUID()
@@ -1413,6 +1413,20 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             new Exception("[SD-DRAGON-REMOVE stack]").printStackTrace(System.out);
         }
         super.remove(reason);
+    }
+
+    private void removeCodexEntryForTerminalRemoval(Entity.RemovalReason reason) {
+        if (this.level().isClientSide || !this.isTame() || this.getOwnerUUID() == null) {
+            return;
+        }
+        if (reason != Entity.RemovalReason.KILLED && reason != Entity.RemovalReason.DISCARDED) {
+            return;
+        }
+        // Binder capture deliberately discards the world entity while retaining its Codex record.
+        if (reason == Entity.RemovalReason.DISCARDED && this.isBoundInBinder()) {
+            return;
+        }
+        DragonCodexSavedData.get((ServerLevel) this.level()).removeDragon(this.getOwnerUUID(), this.getUUID());
     }
 
     private boolean shouldLogDragonRemoval(Entity.RemovalReason reason) {
@@ -2568,7 +2582,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
            BlockPos safePos = findSafeBabySpawnPos(level, this.blockPosition());
             baby.setBaby(true);
             baby.moveTo(this.getX(), safePos != null ? safePos.getY() : this.getY(), this.getZ(), 0.0F, 0.0F);
-            level.addFreshEntityWithPassengers(baby);
+            if (level.addFreshEntity(baby) && baby instanceof DragonEntity dragonBaby) {
+                registerToOwnerCodex(dragonBaby, level);
+            }
         }
     }
 

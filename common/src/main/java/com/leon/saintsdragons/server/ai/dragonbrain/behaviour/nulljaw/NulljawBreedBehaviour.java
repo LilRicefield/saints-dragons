@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
 import net.minecraft.advancements.CriteriaTriggers;
@@ -94,7 +95,12 @@ public final class NulljawBreedBehaviour extends DragonBreedBehaviour<Nulljaw> {
                 dragon.getYRot(),
                 0.0F
         );
-        level.addFreshEntityWithPassengers(baby);
+        if (!level.addFreshEntity(baby)) {
+            return;
+        }
+        if (baby.isTame() && baby.getOwnerUUID() != null) {
+            DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+        }
         level.broadcastEntityEvent(dragon, (byte)18);
 
         if (level.getGameRules().getBoolean(GameRules.RULE_DOMOBLOOT)) {

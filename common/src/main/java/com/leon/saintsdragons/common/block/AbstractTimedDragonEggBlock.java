@@ -220,11 +220,12 @@ public abstract class AbstractTimedDragonEggBlock<E extends AbstractDragonEggBlo
             baby.setHealth(baby.getMaxHealth());
             positionBaby(level, pos, baby, i, eggCount);
 
-            level.addFreshEntity(baby);
-            if (baby.isTame() && baby.getOwnerUUID() != null) {
-                DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+            if (level.addFreshEntity(baby)) {
+                if (baby.isTame() && baby.getOwnerUUID() != null) {
+                    DragonCodexSavedData.get(level).addDragon(baby.getOwnerUUID(), baby);
+                }
+                level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
             }
-            level.gameEvent(GameEvent.ENTITY_PLACE, pos, GameEvent.Context.of(baby));
         }
 
         awardHatchAdvancement(level, pos, eggEntity);
