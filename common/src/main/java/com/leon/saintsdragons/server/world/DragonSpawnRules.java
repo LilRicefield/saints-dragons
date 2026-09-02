@@ -50,7 +50,9 @@ public final class DragonSpawnRules {
 
         var serverLevel = serverLevelAccessor.getLevel();
         if (!serverLevel.getServer().isSameThread()) {
-            return false;
+            // C2ME may evaluate chunk-generation spawn rules in parallel. Live entity
+            // density queries are server-thread-only, so defer the advisory limit here.
+            return true;
         }
 
         AABB sameSpeciesBounds = AABB.ofSize(
