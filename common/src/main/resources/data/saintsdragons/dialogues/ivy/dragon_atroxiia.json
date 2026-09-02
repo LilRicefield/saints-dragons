@@ -1,0 +1,159 @@
+{
+  "start_at": "atroxiia_1",
+  "states": {
+    "atroxiia_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_2" }
+      ]
+    },
+    "atroxiia_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_3" }
+      ]
+    },
+    "atroxiia_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_4" }
+      ]
+    },
+    "atroxiia_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_5" }
+      ]
+    },
+    "atroxiia_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_6" }
+      ]
+    },
+    "atroxiia_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_7" }
+      ]
+    },
+    "atroxiia_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_8" }
+      ]
+    },
+    "atroxiia_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_9" }
+      ]
+    },
+    "atroxiia_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_10" }
+      ]
+    },
+    "atroxiia_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_11" }
+      ]
+    },
+    "atroxiia_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_12" }
+      ]
+    },
+    "atroxiia_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_13" }
+      ]
+    },
+    "atroxiia_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_13.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_14" }
+      ]
+    },
+    "atroxiia_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_15" }
+      ]
+    },
+    "atroxiia_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_16" }
+      ]
+    },
+    "atroxiia_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_17" }
+      ]
+    },
+    "atroxiia_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_17.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_18" }
+      ]
+    },
+    "atroxiia_18": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_18.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_19" }
+      ]
+    },
+    "atroxiia_19": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_19.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" }, "next": "atroxiia_20" }
+      ]
+    },
+    "atroxiia_20": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_20.text",
+        "with": [
+          { "text": "{name}" }
+        ]
+      },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.continue" },
+          "next": "atroxiia_21",
+          "set_flag": "ivy_atroxiia_dialogue_done"
+        }
+      ]
+    },
+    "atroxiia_21": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_21.text" }
+    }
+  }
+}

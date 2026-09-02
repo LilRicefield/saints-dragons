@@ -7,10 +7,12 @@ import com.google.gson.JsonPrimitive;
 import com.leon.saintsdragons.common.network.MessageDialogueClose;
 import com.leon.saintsdragons.common.network.MessageDialogueOpen;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.item.AbstractDragonBinderItem;
 import com.leon.saintsdragons.common.item.IvyOctopusPlushieItem;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -26,6 +28,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class DialogueSessionRegistry {
     private static final double MAX_INTERACTION_DISTANCE_SQR = 64.0D;
+    private static final String OWNS_DRAGON_FLAG_PREFIX = "owns_dragon:";
+    private static final String OWNS_BABY_DRAGON_FLAG_PREFIX = "owns_baby_dragon:";
+    private static final String OWNS_ADULT_DRAGON_FLAG_PREFIX = "owns_adult_dragon:";
+    private static final String HAS_DRAGON_BINDER_FLAG = "has_dragon_binder";
+    private static final String HAS_DRAGON_BINDER_FLAG_PREFIX = "has_dragon_binder:";
     private static final Set<String> ADVANCED_DRAGONS = Set.of("raevyx", "ignivorus", "volitans", "varasuchus");
     private static final Set<String> BASIC_EXTRA_DRAGONS = Set.of("stegonaut", "nulljaw");
     private static final Set<String> IVY_WORK_TOPIC_FLAGS = Set.of("work_dragons", "work_gardening", "work_expert");
@@ -462,12 +469,30 @@ public final class DialogueSessionRegistry {
         if (flags.containsAll(IVY_WORK_TOPIC_FLAGS)) {
             flags.add("known_work_done");
         }
+        for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
+            ItemStack stack = player.getInventory().getItem(slot);
+            if (!(stack.getItem() instanceof AbstractDragonBinderItem<?>)) {
+                continue;
+            }
+            String binderPath = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
+            if (!binderPath.endsWith("_binder")) {
+                continue;
+            }
+            String dragonType = binderPath.substring(0, binderPath.length() - "_binder".length());
+            flags.add(HAS_DRAGON_BINDER_FLAG);
+            flags.add(HAS_DRAGON_BINDER_FLAG_PREFIX + dragonType);
+        }
         List<DragonCodexSavedData.DragonCodexEntry> entries = DragonCodexSavedData.get(player.serverLevel()).getEntriesFor(player);
         boolean hasCindervane = false;
         boolean hasAdvanced = false;
         boolean hasBasicExtra = false;
         for (DragonCodexSavedData.DragonCodexEntry entry : entries) {
             String dragonType = entry.dragonType();
+            if (dragonType == null || dragonType.isBlank()) {
+                continue;
+            }
+            flags.add(OWNS_DRAGON_FLAG_PREFIX + dragonType);
+            flags.add((entry.isBaby() ? OWNS_BABY_DRAGON_FLAG_PREFIX : OWNS_ADULT_DRAGON_FLAG_PREFIX) + dragonType);
             if ("cindervane".equals(dragonType)) {
                 hasCindervane = true;
             }

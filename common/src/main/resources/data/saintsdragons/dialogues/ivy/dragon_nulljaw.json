@@ -1,0 +1,70 @@
+{
+  "start_at": "nulljaw_1",
+  "states": {
+    "nulljaw_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_2" }
+      ]
+    },
+    "nulljaw_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_3" }
+      ]
+    },
+    "nulljaw_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_4" }
+      ]
+    },
+    "nulljaw_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_5" }
+      ]
+    },
+    "nulljaw_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_6" }
+      ]
+    },
+    "nulljaw_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_7" }
+      ]
+    },
+    "nulljaw_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" }, "next": "nulljaw_8" }
+      ]
+    },
+    "nulljaw_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_8.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.continue" },
+          "next": "nulljaw_9",
+          "set_flag": "ivy_nulljaw_dialogue_done"
+        }
+      ]
+    },
+    "nulljaw_9": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_9.text" }
+    }
+  }
+}

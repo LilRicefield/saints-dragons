@@ -149,6 +149,126 @@
         },
         {
           "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.14"
+          },
+          "next": "saintsdragons:ivy/dragon_raevyx#raevyx_1",
+          "requires_flag": "owns_dragon:raevyx",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_raevyx_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.15"
+          },
+          "next": "saintsdragons:ivy/dragon_cindervane#cindervane_1",
+          "requires_flag": "owns_dragon:cindervane",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_cindervane_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.16"
+          },
+          "next": "saintsdragons:ivy/dragon_stegonaut#stegonaut_1",
+          "requires_flag": "owns_dragon:stegonaut",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_stegonaut_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.17"
+          },
+          "next": "saintsdragons:ivy/dragon_varasuchus#varasuchus_1",
+          "requires_flag": "owns_dragon:varasuchus",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_varasuchus_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.18"
+          },
+          "next": "saintsdragons:ivy/dragon_ignivorus#ignivorus_1",
+          "requires_flag": "owns_dragon:ignivorus",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_ignivorus_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.19"
+          },
+          "next": "saintsdragons:ivy/dragon_volitans#volitans_1",
+          "requires_flag": "owns_dragon:volitans",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_volitans_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.20"
+          },
+          "next": "saintsdragons:ivy/dragon_nulljaw#nulljaw_1",
+          "requires_flag": "owns_dragon:nulljaw",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_nulljaw_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.21"
+          },
+          "next": "saintsdragons:ivy/dragon_atroxiia#atroxiia_1",
+          "requires_flag": "owns_dragon:atroxiia",
+          "requires_all_flags": [
+            "ivy_recruited"
+          ],
+          "hidden_if_flag": "ivy_atroxiia_dialogue_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.22"
+          },
+          "next": "saintsdragons:ivy/recruited_trader_history#trader_1",
+          "requires_flag": "ivy_recruited",
+          "hidden_if_flag": "ivy_trader_history_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.23"
+          },
+          "next": "saintsdragons:ivy/recruited_trading_opinion#trading_1",
+          "requires_flag": "ivy_recruited",
+          "hidden_if_flag": "ivy_trading_opinion_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.24"
+          },
+          "next": "saintsdragons:ivy/recruited_past_work#past_1",
+          "requires_flag": "ivy_recruited",
+          "hidden_if_flag": "ivy_past_work_done"
+        },
+        {
+          "text": {
+            "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.25"
+          },
+          "next": "saintsdragons:ivy/recruited_favorite_food#food_1",
+          "requires_flag": "ivy_recruited",
+          "hidden_if_flag": "ivy_favorite_food_done"
+        },
+        {
+          "text": {
             "translate": "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.7"
           },
           "next": "needs_help",

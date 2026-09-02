@@ -51,6 +51,7 @@ public class IvyDialogueScreen extends Screen {
     private static final long TYPE_CHAR_INTERVAL_MS = 36L;
     private static final int BOTTOM_MARGIN = 1;
     private static final int CHOICE_MAX_W = 240;
+    private static final int CHOICE_MAX_VISIBLE = 5;
     private static final int CHOICE_MIN_H = 16;
     private static final int CHOICE_GAP = 5;
     private static final int CHOICE_PADDING_X = 0;
@@ -168,12 +169,12 @@ public class IvyDialogueScreen extends Screen {
         ensureChoicesStarted();
         int choiceWidth = getChoiceWidth();
         int choiceX = (width - choiceWidth) / 2;
-        int viewportTop = CHOICE_VIEW_TOP_MARGIN;
         int viewportBottom = boxY - CHOICE_VIEW_BOTTOM_GAP;
-        int viewportHeight = Math.max(0, viewportBottom - viewportTop);
+        int viewportHeight = getChoiceViewportHeight(boxY, choiceWidth);
         if (viewportHeight == 0) {
             return;
         }
+        int viewportTop = viewportBottom - viewportHeight;
         int totalHeight = getChoicesTotalHeight(choiceWidth);
         int maxScroll = Math.max(0, totalHeight - viewportHeight);
         choiceScrollOffset = clamp(choiceScrollOffset, maxScroll);
@@ -235,8 +236,16 @@ public class IvyDialogueScreen extends Screen {
             return super.mouseScrolled(mouseX, mouseY, delta);
         }
         int boxY = getBoxY();
+        int choiceWidth = getChoiceWidth();
+        int choiceX = (width - choiceWidth) / 2;
         int viewportBottom = boxY - CHOICE_VIEW_BOTTOM_GAP;
-        int maxScroll = Math.max(0, getChoicesTotalHeight(getChoiceWidth()) - Math.max(0, viewportBottom - CHOICE_VIEW_TOP_MARGIN));
+        int viewportHeight = getChoiceViewportHeight(boxY, choiceWidth);
+        int viewportTop = viewportBottom - viewportHeight;
+        if (mouseX < choiceX - 4 || mouseX >= choiceX + choiceWidth + 4
+                || mouseY < viewportTop || mouseY >= viewportBottom) {
+            return super.mouseScrolled(mouseX, mouseY, delta);
+        }
+        int maxScroll = Math.max(0, getChoicesTotalHeight(choiceWidth) - viewportHeight);
         if (maxScroll == 0) {
             return super.mouseScrolled(mouseX, mouseY, delta);
         }
@@ -292,9 +301,13 @@ public class IvyDialogueScreen extends Screen {
         int count = message.choices().size();
         int choiceWidth = getChoiceWidth();
         int choiceX = (width - choiceWidth) / 2;
-        int viewportTop = CHOICE_VIEW_TOP_MARGIN;
         int viewportBottom = boxY - CHOICE_VIEW_BOTTOM_GAP;
-        int viewportHeight = Math.max(0, viewportBottom - viewportTop);
+        int viewportHeight = getChoiceViewportHeight(boxY, choiceWidth);
+        int viewportTop = viewportBottom - viewportHeight;
+        if (mouseX < choiceX - 4 || mouseX >= choiceX + choiceWidth + 4
+                || mouseY < viewportTop || mouseY >= viewportBottom) {
+            return -1;
+        }
         int totalHeight = getChoicesTotalHeight(choiceWidth);
         int choiceY = totalHeight <= viewportHeight ? viewportBottom - totalHeight : viewportTop - choiceScrollOffset;
         for (int i = 0; i < count; i++) {
@@ -313,10 +326,20 @@ public class IvyDialogueScreen extends Screen {
     }
 
     private int getChoicesTotalHeight(int choiceWidth) {
+        return getChoicesHeight(choiceWidth, message.choices().size());
+    }
+
+    private int getChoiceViewportHeight(int boxY, int choiceWidth) {
+        int availableHeight = Math.max(0, boxY - CHOICE_VIEW_BOTTOM_GAP - CHOICE_VIEW_TOP_MARGIN);
+        int visibleChoices = Math.min(CHOICE_MAX_VISIBLE, message.choices().size());
+        return Math.min(availableHeight, getChoicesHeight(choiceWidth, visibleChoices));
+    }
+
+    private int getChoicesHeight(int choiceWidth, int count) {
         int totalHeight = 0;
-        for (int i = 0; i < message.choices().size(); i++) {
+        for (int i = 0; i < count; i++) {
             totalHeight += getChoiceHeight(getChoiceLines(i, choiceWidth));
-            if (i < message.choices().size() - 1) {
+            if (i < count - 1) {
                 totalHeight += CHOICE_GAP;
             }
         }

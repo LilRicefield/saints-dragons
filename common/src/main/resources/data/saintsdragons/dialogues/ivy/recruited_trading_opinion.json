@@ -1,0 +1,133 @@
+{
+  "start_at": "trading_1",
+  "states": {
+    "trading_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_2" }
+      ]
+    },
+    "trading_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_3" }
+      ]
+    },
+    "trading_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_4" }
+      ]
+    },
+    "trading_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_5" }
+      ]
+    },
+    "trading_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_6" }
+      ]
+    },
+    "trading_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_7" }
+      ]
+    },
+    "trading_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_7.choice.0" }, "next": "trading_8" }
+      ]
+    },
+    "trading_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_9" }
+      ]
+    },
+    "trading_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_10" }
+      ]
+    },
+    "trading_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_11" }
+      ]
+    },
+    "trading_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_12" }
+      ]
+    },
+    "trading_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_13" }
+      ]
+    },
+    "trading_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_13.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_13.choice.0" }, "next": "trading_14" }
+      ]
+    },
+    "trading_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_15" }
+      ]
+    },
+    "trading_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_16" }
+      ]
+    },
+    "trading_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" }, "next": "trading_17" }
+      ]
+    },
+    "trading_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_17.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue" },
+          "next": "trading_18",
+          "set_flag": "ivy_trading_opinion_done"
+        }
+      ]
+    },
+    "trading_18": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_18.text" }
+    }
+  }
+}

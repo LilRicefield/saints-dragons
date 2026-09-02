@@ -1,0 +1,175 @@
+{
+  "start_at": "past_1",
+  "states": {
+    "past_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_1.choice.0" }, "next": "past_2" }
+      ]
+    },
+    "past_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_3" }
+      ]
+    },
+    "past_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_4" }
+      ]
+    },
+    "past_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_5" }
+      ]
+    },
+    "past_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_6" }
+      ]
+    },
+    "past_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_7" }
+      ]
+    },
+    "past_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_8" }
+      ]
+    },
+    "past_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_9" }
+      ]
+    },
+    "past_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_10" }
+      ]
+    },
+    "past_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_11" }
+      ]
+    },
+    "past_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_12" }
+      ]
+    },
+    "past_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_13" }
+      ]
+    },
+    "past_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_13.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_14" }
+      ]
+    },
+    "past_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_15" }
+      ]
+    },
+    "past_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_15.choice.0" }, "next": "past_16" }
+      ]
+    },
+    "past_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_17" }
+      ]
+    },
+    "past_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_17.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_18" }
+      ]
+    },
+    "past_18": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_18.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_19" }
+      ]
+    },
+    "past_19": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_19.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_19.choice.0" }, "next": "past_20" }
+      ]
+    },
+    "past_20": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_20.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_21" }
+      ]
+    },
+    "past_21": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_21.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_22" }
+      ]
+    },
+    "past_22": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_22.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.continue" }, "next": "past_23" }
+      ]
+    },
+    "past_23": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_23.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_23.choice.0" },
+          "next": "past_24",
+          "set_flag": "ivy_past_work_done"
+        }
+      ]
+    },
+    "past_24": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_past_work.past_24.text" }
+    }
+  }
+}

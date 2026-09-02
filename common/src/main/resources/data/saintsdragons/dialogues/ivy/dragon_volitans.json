@@ -1,0 +1,145 @@
+{
+  "start_at": "volitans_1",
+  "states": {
+    "volitans_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_2" }
+      ]
+    },
+    "volitans_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_3" }
+      ]
+    },
+    "volitans_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_4" }
+      ]
+    },
+    "volitans_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_5" }
+      ]
+    },
+    "volitans_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_6" }
+      ]
+    },
+    "volitans_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_7" }
+      ]
+    },
+    "volitans_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_8" }
+      ]
+    },
+    "volitans_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_9" }
+      ]
+    },
+    "volitans_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_10" }
+      ]
+    },
+    "volitans_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_11" }
+      ]
+    },
+    "volitans_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_12" }
+      ]
+    },
+    "volitans_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_13" }
+      ]
+    },
+    "volitans_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_13.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_14" }
+      ]
+    },
+    "volitans_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_15" }
+      ]
+    },
+    "volitans_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_16" }
+      ]
+    },
+    "volitans_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_17" }
+      ]
+    },
+    "volitans_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_17.text",
+        "with": [
+          { "text": "{name}" }
+        ]
+      },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" }, "next": "volitans_18" }
+      ]
+    },
+    "volitans_18": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_18.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.continue" },
+          "next": "volitans_19",
+          "set_flag": "ivy_volitans_dialogue_done"
+        }
+      ]
+    },
+    "volitans_19": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_volitans.volitans_19.text" }
+    }
+  }
+}

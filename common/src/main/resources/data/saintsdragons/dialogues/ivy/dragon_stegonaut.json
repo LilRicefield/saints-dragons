@@ -1,0 +1,108 @@
+{
+  "start_at": "stegonaut_1",
+  "states": {
+    "stegonaut_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_2" }
+      ]
+    },
+    "stegonaut_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_3" }
+      ]
+    },
+    "stegonaut_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_4" }
+      ]
+    },
+    "stegonaut_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_5" }
+      ]
+    },
+    "stegonaut_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_6" }
+      ]
+    },
+    "stegonaut_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_7" }
+      ]
+    },
+    "stegonaut_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_8" }
+      ]
+    },
+    "stegonaut_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_9" }
+      ]
+    },
+    "stegonaut_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_10" }
+      ]
+    },
+    "stegonaut_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" }, "next": "stegonaut_11" }
+      ]
+    },
+    "stegonaut_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_11.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" },
+          "next": "has_binder",
+          "requires_flag": "has_dragon_binder:stegonaut",
+          "set_flag": "ivy_stegonaut_dialogue_done"
+        },
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.continue" },
+          "next": "no_binder",
+          "hidden_if_flag": "has_dragon_binder:stegonaut",
+          "set_flag": "ivy_stegonaut_dialogue_done"
+        }
+      ]
+    },
+    "no_binder": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.no_binder.text" }
+    },
+    "has_binder": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.dragon_stegonaut.has_binder.text",
+        "with": [
+          { "text": "{name}" }
+        ]
+      }
+    }
+  }
+}

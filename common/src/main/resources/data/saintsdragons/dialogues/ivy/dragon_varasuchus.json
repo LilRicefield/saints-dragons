@@ -1,0 +1,173 @@
+{
+  "start_at": "varasuchus_1",
+  "states": {
+    "varasuchus_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_2" }
+      ]
+    },
+    "varasuchus_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_3" }
+      ]
+    },
+    "varasuchus_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_4" }
+      ]
+    },
+    "varasuchus_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_5" }
+      ]
+    },
+    "varasuchus_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_6" }
+      ]
+    },
+    "varasuchus_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_7" }
+      ]
+    },
+    "varasuchus_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_8" }
+      ]
+    },
+    "varasuchus_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_9" }
+      ]
+    },
+    "varasuchus_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_10" }
+      ]
+    },
+    "varasuchus_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_11" }
+      ]
+    },
+    "varasuchus_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_12" }
+      ]
+    },
+    "varasuchus_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_13" }
+      ]
+    },
+    "varasuchus_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": {
+        "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_13.text",
+        "with": [
+          { "text": "{name}" }
+        ]
+      },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_14" }
+      ]
+    },
+    "varasuchus_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_15" }
+      ]
+    },
+    "varasuchus_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_16" }
+      ]
+    },
+    "varasuchus_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_17" }
+      ]
+    },
+    "varasuchus_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_17.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_18" }
+      ]
+    },
+    "varasuchus_18": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_18.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_18.choice.0" }, "next": "varasuchus_19" }
+      ]
+    },
+    "varasuchus_19": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_19.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_20" }
+      ]
+    },
+    "varasuchus_20": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_20.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_21" }
+      ]
+    },
+    "varasuchus_21": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_21.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" }, "next": "varasuchus_22" }
+      ]
+    },
+    "varasuchus_22": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_22.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.continue" },
+          "next": "varasuchus_23",
+          "set_flag": "ivy_varasuchus_dialogue_done"
+        }
+      ]
+    },
+    "varasuchus_23": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_23.text" }
+    }
+  }
+}

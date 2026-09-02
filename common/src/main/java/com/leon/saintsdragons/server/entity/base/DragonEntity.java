@@ -2539,6 +2539,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
         if (wasBaby != isNowBaby && !level().isClientSide && this.tickCount > 0) {
             level().broadcastEntityEvent(this, (byte) 7);
+            if (this.isTame() && this.getOwnerUUID() != null) {
+                DragonCodexSavedData.get((ServerLevel) level()).updateDragonStats(this.getOwnerUUID(), this);
+            }
         }
     }
 

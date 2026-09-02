@@ -1,0 +1,133 @@
+{
+  "start_at": "food_1",
+  "states": {
+    "food_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_1.choice.0" }, "next": "food_2" }
+      ]
+    },
+    "food_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_3" }
+      ]
+    },
+    "food_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_4" }
+      ]
+    },
+    "food_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_5" }
+      ]
+    },
+    "food_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_6" }
+      ]
+    },
+    "food_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_7" }
+      ]
+    },
+    "food_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_7.choice.0" }, "next": "food_8" }
+      ]
+    },
+    "food_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_9" }
+      ]
+    },
+    "food_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_10" }
+      ]
+    },
+    "food_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_11" }
+      ]
+    },
+    "food_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_12" }
+      ]
+    },
+    "food_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_12.choice.0" }, "next": "food_13" }
+      ]
+    },
+    "food_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_13.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_14" }
+      ]
+    },
+    "food_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_15" }
+      ]
+    },
+    "food_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_16" }
+      ]
+    },
+    "food_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.continue" }, "next": "food_17" }
+      ]
+    },
+    "food_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_17.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_17.choice.0" },
+          "next": "food_18",
+          "set_flag": "ivy_favorite_food_done"
+        }
+      ]
+    },
+    "food_18": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.recruited_favorite_food.food_18.text" }
+    }
+  }
+}

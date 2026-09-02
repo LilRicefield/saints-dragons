@@ -49,6 +49,10 @@ public final class DragonSpawnRules {
         }
 
         var serverLevel = serverLevelAccessor.getLevel();
+        if (!serverLevel.getServer().isSameThread()) {
+            return false;
+        }
+
         AABB sameSpeciesBounds = AABB.ofSize(
                 net.minecraft.world.phys.Vec3.atCenterOf(pos),
                 SAME_SPECIES_RADIUS * 2.0D,

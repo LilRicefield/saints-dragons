@@ -1,0 +1,261 @@
+{
+  "start_at": "ignivorus_1",
+  "states": {
+    "ignivorus_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_1.choice.0" }, "next": "ignivorus_2" }
+      ]
+    },
+    "ignivorus_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_2.choice.0" }, "next": "ignivorus_3" }
+      ]
+    },
+    "ignivorus_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_4" }
+      ]
+    },
+    "ignivorus_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_5" }
+      ]
+    },
+    "ignivorus_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_5.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_6" }
+      ]
+    },
+    "ignivorus_6": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_6.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_6.choice.0" }, "next": "ignivorus_7" }
+      ]
+    },
+    "ignivorus_7": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_7.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_8" }
+      ]
+    },
+    "ignivorus_8": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_8.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_9" }
+      ]
+    },
+    "ignivorus_9": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_9.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_10" }
+      ]
+    },
+    "ignivorus_10": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_10.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_11" }
+      ]
+    },
+    "ignivorus_11": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_11.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_12" }
+      ]
+    },
+    "ignivorus_12": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_12.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_13" }
+      ]
+    },
+    "ignivorus_13": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_13.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_14" }
+      ]
+    },
+    "ignivorus_14": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_14.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_15" }
+      ]
+    },
+    "ignivorus_15": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_15.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_16" }
+      ]
+    },
+    "ignivorus_16": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_16.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_17" }
+      ]
+    },
+    "ignivorus_17": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_17.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_18" }
+      ]
+    },
+    "ignivorus_18": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_18.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "ignivorus_19" }
+      ]
+    },
+    "ignivorus_19": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_19.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_19.choice.0" }, "next": "ignivorus_20" }
+      ]
+    },
+    "ignivorus_20": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_20.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_20.choice.0" }, "next": "ignivorus_21" }
+      ]
+    },
+    "ignivorus_21": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_21.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_21.choice.0" }, "next": "ignivorus_22" }
+      ]
+    },
+    "ignivorus_22": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_22.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_22.choice.0" }, "next": "jealous_admit_1" },
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_22.choice.1" }, "next": "jealous_admit_1" }
+      ]
+    },
+    "jealous_admit_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "jealous_admit_2" }
+      ]
+    },
+    "jealous_admit_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "jealous_admit_3" }
+      ]
+    },
+    "jealous_admit_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_3.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "jealous_admit_4" }
+      ]
+    },
+    "jealous_admit_4": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_4.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "jealous_admit_5" }
+      ]
+    },
+    "jealous_admit_5": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_5.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" },
+          "next": "raevyx_extra",
+          "requires_flag": "owns_adult_dragon:raevyx"
+        },
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" },
+          "next": "apology",
+          "hidden_if_flag": "owns_adult_dragon:raevyx"
+        }
+      ]
+    },
+    "raevyx_extra": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.raevyx_extra.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "apology" }
+      ]
+    },
+    "apology": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.apology.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.apology.choice.0" },
+          "next": "forgiven",
+          "set_flag": "ivy_ignivorus_dialogue_done"
+        },
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.apology.choice.1" },
+          "next": "not_forgiven_1"
+        }
+      ]
+    },
+    "forgiven": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.forgiven.text" }
+    },
+    "not_forgiven_1": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_1.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "not_forgiven_2" }
+      ]
+    },
+    "not_forgiven_2": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_2.text" },
+      "choices": [
+        { "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" }, "next": "not_forgiven_3" }
+      ]
+    },
+    "not_forgiven_3": {
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_3.text" },
+      "choices": [
+        {
+          "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.continue" },
+          "next": "not_forgiven_4",
+          "set_flag": "ivy_ignivorus_dialogue_done"
+        }
+      ]
+    },
+    "not_forgiven_4": {
+      "type": "end_dialogue",
+      "speaker": { "translate": "entity.saintsdragons.ivy_oleander" },
+      "text": { "translate": "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_4.text" }
+    }
+  }
+}
