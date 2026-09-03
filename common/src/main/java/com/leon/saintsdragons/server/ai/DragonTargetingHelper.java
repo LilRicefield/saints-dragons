@@ -17,12 +17,36 @@ public final class DragonTargetingHelper {
     private DragonTargetingHelper() {
     }
 
+    public static Entity movementAnchor(LivingEntity target) {
+        Entity rootVehicle = target.getRootVehicle();
+        return rootVehicle != target && rootVehicle.isAlive() ? rootVehicle : target;
+    }
+
+    public static LivingEntity livingMovementAnchor(LivingEntity target) {
+        Entity anchor = movementAnchor(target);
+        return anchor instanceof LivingEntity livingAnchor ? livingAnchor : target;
+    }
+
+    public static boolean isMovementAnchorInWater(LivingEntity target) {
+        return movementAnchor(target).isInWaterOrBubble();
+    }
+
+    public static double movementStopDistance(LivingEntity target, double targetStopDistance) {
+        Entity anchor = movementAnchor(target);
+        double mountRadiusIncrease = Math.max(0.0D, (anchor.getBbWidth() - target.getBbWidth()) * 0.5D);
+        return Math.max(0.0D, targetStopDistance) + mountRadiusIncrease;
+    }
+
     public static boolean isTargetAirborne(LivingEntity target, double minHeightAboveGround) {
-        if (target == null || target.onGround()) {
+        if (target == null) {
             return false;
         }
-        if (target.getVehicle() instanceof LivingEntity vehicle) {
-            return !vehicle.onGround();
+        Entity anchor = movementAnchor(target);
+        if (anchor != target) {
+            return !anchor.onGround();
+        }
+        if (target.onGround()) {
+            return false;
         }
         if (target instanceof Player player && player.isFallFlying()) {
             return true;

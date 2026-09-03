@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.navigation.async.DragonAsyncAirMovementH
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
@@ -29,7 +30,8 @@ public final class DragonAirCombatHelper {
                 && isValidCombatTarget(dragon, target)
                 && !dragon.isVehicle()
                 && !dragon.isOrderedToSit()
-                && dragon.distanceToSqr(target) <= maxAggroDistanceSqr(dragon, fallbackFollowRange);
+                && dragon.distanceToSqr(DragonTargetingHelper.movementAnchor(target))
+                <= maxAggroDistanceSqr(dragon, fallbackFollowRange);
     }
 
     public static boolean canEngageAirborneTarget(RideableDragonBase dragon,
@@ -88,15 +90,18 @@ public final class DragonAirCombatHelper {
                                                          LivingEntity target,
                                                          double minHeightAboveGround,
                                                          double minHeightAboveDragon) {
-        if (target == null || target.onGround()) {
+        if (target == null) {
             return false;
         }
-        if (target.getVehicle() instanceof LivingEntity vehicle && vehicle.onGround()) {
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        if (movementAnchor.onGround()) {
             return false;
         }
-        double groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        return target.getY() - groundY > minHeightAboveGround
-                && target.getY() - dragon.getY() > minHeightAboveDragon;
+        double groundY = dragon.level()
+                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, movementAnchor.blockPosition())
+                .getY();
+        return movementAnchor.getY() - groundY > minHeightAboveGround
+                && movementAnchor.getY() - dragon.getY() > minHeightAboveDragon;
     }
 
     public static void startOrResumeFlight(RideableDragonBase dragon, int takeoffTicks) {
@@ -129,7 +134,10 @@ public final class DragonAirCombatHelper {
                 && !targetAirborneCheck.isTargetAirborne(target)
                 && dragon.isAerial()
                 && !dragon.isLanding()) {
-            dragon.getAIMovement().requestGroundTransition(target, landingSpeed);
+            dragon.getAIMovement().requestGroundTransition(
+                    DragonTargetingHelper.livingMovementAnchor(target),
+                    landingSpeed
+            );
             return;
         }
 
@@ -147,7 +155,8 @@ public final class DragonAirCombatHelper {
                                                           TargetAirborneCheck targetAirborneCheck,
                                                           double maxAggroDistanceSqr) {
         boolean validTarget = target != null && dragon.isTargetValid(target);
-        boolean targetOutOfRange = validTarget && dragon.distanceToSqr(target) > maxAggroDistanceSqr;
+        boolean targetOutOfRange = validTarget
+                && dragon.distanceToSqr(DragonTargetingHelper.movementAnchor(target)) > maxAggroDistanceSqr;
         if (!validTarget || targetOutOfRange) {
             dragon.setAggressive(false);
             dragon.setTarget(null);
@@ -158,7 +167,10 @@ public final class DragonAirCombatHelper {
         }
 
         if (!targetAirborneCheck.isTargetAirborne(target) && dragon.isAerial() && !dragon.isLanding()) {
-            dragon.getAIMovement().requestGroundTransition(target, landingSpeed);
+            dragon.getAIMovement().requestGroundTransition(
+                    DragonTargetingHelper.livingMovementAnchor(target),
+                    landingSpeed
+            );
         }
     }
 
@@ -179,7 +191,10 @@ public final class DragonAirCombatHelper {
             if (target != null
                     && dragon.isTargetValid(target)
                     && !isTargetAirborne(dragon, target)
-                    && dragon.getAIMovement().requestGroundTransition(target, landingSpeed)) {
+                    && dragon.getAIMovement().requestGroundTransition(
+                            DragonTargetingHelper.livingMovementAnchor(target),
+                            landingSpeed
+                    )) {
                 return true;
             }
             if (dragon instanceof DragonFlightCapable flightCapable) {
@@ -194,7 +209,10 @@ public final class DragonAirCombatHelper {
             return false;
         }
         if (dragon.isAerial()) {
-            dragon.getAIMovement().requestGroundTransition(target, landingSpeed);
+            dragon.getAIMovement().requestGroundTransition(
+                    DragonTargetingHelper.livingMovementAnchor(target),
+                    landingSpeed
+            );
             return true;
         }
         return false;
@@ -222,30 +240,36 @@ public final class DragonAirCombatHelper {
         if (!dragon.isFlying() || dragon.isLanding() || !isTargetAirborne(dragon, target, minTargetHeightAboveGround)) {
             return false;
         }
-        double heightAdvantage = dragon.getY() - (target.getY() + target.getBbHeight() * 0.5D);
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        double heightAdvantage = dragon.getY()
+                - (movementAnchor.getY() + movementAnchor.getBbHeight() * 0.5D);
         if (heightAdvantage < minHeightAdvantage) {
             return false;
         }
-        double dx = target.getX() - dragon.getX();
-        double dz = target.getZ() - dragon.getZ();
+        double dx = movementAnchor.getX() - dragon.getX();
+        double dz = movementAnchor.getZ() - dragon.getZ();
         return dx * dx + dz * dz <= maxHorizontalDistance * maxHorizontalDistance;
     }
 
     public static void holdMeleePosition(RideableFlyingDragon dragon, LivingEntity target,
                                          double targetHeightOffset, double approachDistance,
                                          double farSpeed, double nearSpeed) {
-        double targetY = target.getY() + target.getBbHeight() * 0.5D + targetHeightOffset;
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        double targetY = movementAnchor.getY()
+                + movementAnchor.getBbHeight() * 0.5D
+                + targetHeightOffset;
         Vec3 toTarget = new Vec3(
-                target.getX() - dragon.getX(),
+                movementAnchor.getX() - dragon.getX(),
                 targetY - dragon.getY(),
-                target.getZ() - dragon.getZ()
+                movementAnchor.getZ() - dragon.getZ()
         );
         double dist = toTarget.length();
         if (dist < 1.0E-4D) {
             return;
         }
         Vec3 dir = toTarget.scale(1.0D / dist);
-        Vec3 desired = new Vec3(target.getX(), targetY, target.getZ()).subtract(dir.scale(approachDistance));
+        Vec3 desired = new Vec3(movementAnchor.getX(), targetY, movementAnchor.getZ())
+                .subtract(dir.scale(approachDistance));
         DragonAsyncAirMovementHelper.moveToward(dragon, desired, dist > approachDistance ? farSpeed : nearSpeed);
     }
 
@@ -257,14 +281,15 @@ public final class DragonAirCombatHelper {
         if (target == null) {
             return false;
         }
-        if (target.getVehicle() instanceof LivingEntity vehicle) {
-            if (vehicle instanceof DragonFlightCapable flightCapable) {
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        if (movementAnchor != target) {
+            if (movementAnchor instanceof DragonFlightCapable flightCapable) {
                 return flightCapable.isFlying()
                         || flightCapable.isTakeoff()
                         || flightCapable.isHovering()
-                        || (flightCapable.isLanding() && !vehicle.onGround());
+                        || (flightCapable.isLanding() && !movementAnchor.onGround());
             }
-            return !vehicle.onGround();
+            return !movementAnchor.onGround();
         }
         if (target.onGround()) {
             return false;

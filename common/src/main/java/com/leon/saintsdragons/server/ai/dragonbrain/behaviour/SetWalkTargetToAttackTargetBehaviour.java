@@ -8,6 +8,7 @@
  */
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourUtils;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -15,6 +16,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 
@@ -64,14 +66,16 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
             return;
         }
 
-        double closeEnough = Math.max(0.0D, closeEnoughDistance.apply(dragon, target));
+        double targetCloseEnough = Math.max(0.0D, closeEnoughDistance.apply(dragon, target));
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        double movementCloseEnough = DragonTargetingHelper.movementStopDistance(target, targetCloseEnough);
         boolean requiresWaterEntry = dragon.canSwim()
-                && target.isInWaterOrBubble()
+                && movementAnchor.isInWaterOrBubble()
                 && !dragon.isInWaterOrBubble();
         if (movementLocked.test(dragon, target)
                 || !requiresWaterEntry
                 && dragon.getSensing().hasLineOfSight(target)
-                && dragon.distanceToSqr(target) <= closeEnough * closeEnough) {
+                && dragon.distanceToSqr(movementAnchor) <= movementCloseEnough * movementCloseEnough) {
             context.memories().erase(DragonMemories.WALK_TARGET);
             return;
         }
@@ -79,8 +83,9 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
         DragonBehaviourUtils.setWalkAndLookTarget(
                 context,
                 target,
+                movementAnchor,
                 speedModifier.apply(dragon, target),
-                (int)Math.floor(closeEnough)
+                (int)Math.floor(movementCloseEnough)
         );
     }
 }

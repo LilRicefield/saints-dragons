@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -131,7 +132,7 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         UUID targetUuid = target.getUUID();
         double distance = dragon.position().distanceTo(focus);
         boolean targetAirborne = context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false);
-        boolean targetInWater = targetVisible && target.isInWaterOrBubble();
+        boolean targetInWater = targetVisible && DragonTargetingHelper.isMovementAnchorInWater(target);
         boolean groundRouteAbandoned = context.memories()
                 .get(DragonMemories.GROUND_ROUTE_ABANDONED)
                 .orElse(false);
@@ -327,7 +328,7 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
 
     private @Nullable Vec3 targetFocus(DragonBrainContext<T> context, LivingEntity target) {
         if (context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
-            return target.getBoundingBox().getCenter();
+            return DragonTargetingHelper.movementAnchor(target).getBoundingBox().getCenter();
         }
         DragonSensoryObservation investigation = context.memories()
                 .get(DragonMemories.INVESTIGATION_TARGET)

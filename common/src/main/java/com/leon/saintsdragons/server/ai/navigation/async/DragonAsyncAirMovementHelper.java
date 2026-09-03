@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -17,10 +19,11 @@ public final class DragonAsyncAirMovementHelper {
             double bobAmplitude,
             double speedScale
     ) {
-        Vec3 targetVelocity = target.getDeltaMovement();
-        double targetX = target.getX() + targetVelocity.x * predictionTicks;
-        double targetZ = target.getZ() + targetVelocity.z * predictionTicks;
-        double targetY = target.getY() + target.getBbHeight() + heightOffset
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        Vec3 targetVelocity = movementAnchor.getDeltaMovement();
+        double targetX = movementAnchor.getX() + targetVelocity.x * predictionTicks;
+        double targetZ = movementAnchor.getZ() + targetVelocity.z * predictionTicks;
+        double targetY = movementAnchor.getY() + movementAnchor.getBbHeight() + heightOffset
                 + Math.sin(dragon.tickCount * bobFrequency) * bobAmplitude;
         moveToward(dragon, new Vec3(targetX, targetY, targetZ), speedScale);
     }

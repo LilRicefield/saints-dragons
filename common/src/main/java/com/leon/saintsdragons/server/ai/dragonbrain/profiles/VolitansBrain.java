@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -81,7 +82,7 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                         GroundPursuitFlightSettings.standard(),
                                         dragon -> groundCombat.isGroundMovementLocked(),
                                         dragon -> dragon.getTarget() == null
-                                                || !dragon.getTarget().isInWaterOrBubble()
+                                                || !DragonTargetingHelper.isMovementAnchorInWater(dragon.getTarget())
                                 ),
                                 new VolitansAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<>(

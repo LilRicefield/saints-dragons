@@ -2,12 +2,14 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.phys.Vec3;
@@ -73,7 +75,10 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             if (lostSightTicks >= lostSightLandingTicks) {
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.transitionToGround(target, settings.landingSpeed())
+                        DragonMovementIntent.transitionToGround(
+                                DragonTargetingHelper.livingMovementAnchor(target),
+                                settings.landingSpeed()
+                        )
                 );
                 return;
             }
@@ -149,18 +154,21 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
                                                 double farSpeed,
                                                 double nearSpeed) {
         T dragon = context.dragon();
-        double targetY = target.getY() + target.getBbHeight() * 0.5D + targetHeightOffset;
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        double targetY = movementAnchor.getY()
+                + movementAnchor.getBbHeight() * 0.5D
+                + targetHeightOffset;
         Vec3 toTarget = new Vec3(
-                target.getX() - dragon.getX(),
+                movementAnchor.getX() - dragon.getX(),
                 targetY - dragon.getY(),
-                target.getZ() - dragon.getZ()
+                movementAnchor.getZ() - dragon.getZ()
         );
         double distance = toTarget.length();
         if (distance < 1.0E-4D) {
             return;
         }
         Vec3 direction = toTarget.scale(1.0D / distance);
-        Vec3 destination = new Vec3(target.getX(), targetY, target.getZ())
+        Vec3 destination = new Vec3(movementAnchor.getX(), targetY, movementAnchor.getZ())
                 .subtract(direction.scale(approachDistance));
         double speed = distance > approachDistance ? farSpeed : nearSpeed;
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(destination, speed));
@@ -174,12 +182,13 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
                                                  double bobAmplitude,
                                                  double speed) {
         T dragon = context.dragon();
-        Vec3 velocity = target.getDeltaMovement();
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        Vec3 velocity = movementAnchor.getDeltaMovement();
         Vec3 destination = new Vec3(
-                target.getX() + velocity.x * predictionTicks,
-                target.getY() + target.getBbHeight() + heightOffset
+                movementAnchor.getX() + velocity.x * predictionTicks,
+                movementAnchor.getY() + movementAnchor.getBbHeight() + heightOffset
                         + Math.sin(dragon.tickCount * bobFrequency) * bobAmplitude,
-                target.getZ() + velocity.z * predictionTicks
+                movementAnchor.getZ() + velocity.z * predictionTicks
         );
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(destination, speed));
     }

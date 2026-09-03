@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -8,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.phys.Vec3;
@@ -92,9 +94,10 @@ public class GroundPursuitFlightTransitionBehaviour<
             resetProgressTracking();
             return;
         }
-        double distance = dragon.distanceTo(target);
-        double horizontalDistance = horizontalDistance(dragon, target);
-        double upwardSeparation = target.getY() - dragon.getY();
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        double distance = dragon.distanceTo(movementAnchor);
+        double horizontalDistance = horizontalDistance(dragon, movementAnchor);
+        double upwardSeparation = movementAnchor.getY() - dragon.getY();
         if (upwardSeparation >= settings.highGroundMinVerticalSeparation()
                 && horizontalDistance <= settings.highGroundMaxHorizontalDistance()) {
             abandonGroundRoute(context);
@@ -143,6 +146,7 @@ public class GroundPursuitFlightTransitionBehaviour<
 
     private void tickAbandonedGroundRoute(DragonBrainContext<T> context, LivingEntity target) {
         T dragon = context.dragon();
+        LivingEntity movementAnchor = DragonTargetingHelper.livingMovementAnchor(target);
         boolean targetAirborne = context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false);
         Vec3 landingPosition = context.memories()
                 .get(DragonMemories.TACTICAL_LANDING_POSITION)
@@ -186,7 +190,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         if (landingPosition != null) {
             if (!dragon.getAIMovement().isTacticalGroundTransitionTargetValid(
                     landingPosition,
-                    target,
+                    movementAnchor,
                     settings.landingSearchRadius(),
                     settings.landingMaxVerticalDelta()
             )) {
@@ -230,7 +234,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         landingSearchCooldown = settings.landingSearchIntervalTicks();
 
         Vec3 candidate = dragon.getAIMovement().findTacticalGroundTransitionTarget(
-                target,
+                movementAnchor,
                 settings.landingSearchRadius(),
                 settings.landingMaxVerticalDelta()
         );
@@ -290,7 +294,7 @@ public class GroundPursuitFlightTransitionBehaviour<
         landingFailureTicks = 0;
     }
 
-    private static double horizontalDistance(RideableFlyingDragon dragon, LivingEntity target) {
+    private static double horizontalDistance(RideableFlyingDragon dragon, Entity target) {
         double dx = target.getX() - dragon.getX();
         double dz = target.getZ() - dragon.getZ();
         return Math.sqrt(dx * dx + dz * dz);

@@ -8,6 +8,7 @@
  */
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -233,7 +234,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
                 || !dragon.canSwim()
                 || dragon.isInWaterOrBubble()
                 || attackTarget == null
-                || !attackTarget.isInWaterOrBubble()) {
+                || !DragonTargetingHelper.isMovementAnchorInWater(attackTarget)) {
             targetingWaterEntry = false;
             waterEntryTarget = null;
             return requested;
@@ -245,7 +246,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         targetingWaterEntry = true;
         waterEntryTarget = DragonWaterEntryTargeting.find(
                 context,
-                attackTarget.position(),
+                DragonTargetingHelper.movementAnchor(attackTarget).position(),
                 rejectedWaterEntries
         );
         return waterEntryTarget == null ? null : waterEntryTarget.landPosition();
@@ -253,7 +254,9 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
 
     private boolean hasSubmergedAttackTarget(DragonBrainContext<T> context) {
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
-        return target != null && target.isAlive() && target.isInWaterOrBubble();
+        return target != null
+                && target.isAlive()
+                && DragonTargetingHelper.isMovementAnchorInWater(target);
     }
 
     private boolean requiresWaterEntry(DragonBrainContext<T> context) {

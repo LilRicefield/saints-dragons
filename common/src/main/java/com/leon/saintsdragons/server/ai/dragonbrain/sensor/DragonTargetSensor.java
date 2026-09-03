@@ -55,7 +55,8 @@ public class DragonTargetSensor<T extends DragonEntity> extends DragonSensor<T> 
                 : airborneHeightThreshold;
         context.memories().set(DragonMemories.ATTACK_TARGET, target, scanMemoryTtl());
         context.memories().set(DragonMemories.TARGET_AIRBORNE,
-                DragonTargetingHelper.isTargetAirborne(target, targetAirborneHeight) && !target.isInWaterOrBubble(),
+                DragonTargetingHelper.isTargetAirborne(target, targetAirborneHeight)
+                        && !DragonTargetingHelper.isMovementAnchorInWater(target),
                 scanMemoryTtl());
     }
 

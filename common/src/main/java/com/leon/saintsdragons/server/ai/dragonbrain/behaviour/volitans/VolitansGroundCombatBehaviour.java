@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
@@ -274,7 +275,7 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
         if (dragon.isInWaterOrBubble() || dragon.isUnderWater()) {
             return false;
         }
-        if (target.isInWaterOrBubble()) {
+        if (DragonTargetingHelper.isMovementAnchorInWater(target)) {
             return false;
         }
         return !isTargetAirborne(target);
@@ -303,7 +304,11 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
             }
             if (dragon.isBurrowing()) {
                 dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                dragon.getAIMovement().moveToGroundTarget(target, BURROW_CHASE_SPEED, true);
+                dragon.getAIMovement().moveToGroundTarget(
+                        DragonTargetingHelper.livingMovementAnchor(target),
+                        BURROW_CHASE_SPEED,
+                        true
+                );
             } else {
                 holdForCommittedAbility();
             }
@@ -492,9 +497,10 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
         double gapDelta = Double.isFinite(previousGap) ? gap - previousGap : 0.0D;
         previousGap = gap;
 
-        Vec3 toTarget = target.position().subtract(dragon.position());
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        Vec3 toTarget = movementAnchor.position().subtract(dragon.position());
         Vec3 horizontalDirection = new Vec3(toTarget.x, 0.0D, toTarget.z);
-        Vec3 targetVelocity = target.getDeltaMovement();
+        Vec3 targetVelocity = movementAnchor.getDeltaMovement();
         Vec3 horizontalVelocity = new Vec3(targetVelocity.x, 0.0D, targetVelocity.z);
         double horizontalSpeed = horizontalVelocity.length();
         double awaySpeed = horizontalDirection.lengthSqr() > 1.0E-6D
@@ -562,7 +568,8 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
     }
 
     private boolean isTargetAirborne(LivingEntity target) {
-        return DragonTargetingHelper.isTargetAirborne(target, 8.0D) && !target.isInWaterOrBubble();
+        return DragonTargetingHelper.isTargetAirborne(target, 8.0D)
+                && !DragonTargetingHelper.isMovementAnchorInWater(target);
     }
 
     private enum CombatCommitment {

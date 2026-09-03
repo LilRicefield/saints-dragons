@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.client.renderer.stegonaut;
+package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
@@ -16,11 +16,11 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-public class StegonautGroundCrackRenderer extends EntityRenderer<GroundCrackEntity> {
+public class GroundCrackRenderer extends EntityRenderer<GroundCrackEntity> {
     private static final ResourceLocation STEGONAUT_TEXTURE = SaintsDragonsCommon.rl("textures/particle/ground_crack.png");
     private static final ResourceLocation DRAGONLORD_FISSURE_TEXTURE = SaintsDragonsCommon.rl("textures/particle/ground_crack_fissure.png");
 
-    public StegonautGroundCrackRenderer(EntityRendererProvider.Context context) {
+    public GroundCrackRenderer(EntityRendererProvider.Context context) {
         super(context);
         this.shadowRadius = 0.0F;
     }

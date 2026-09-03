@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain;
 
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -23,8 +24,7 @@ public final class DragonOwnerFollowTarget {
     }
 
     public static Entity anchor(LivingEntity owner) {
-        Entity rootVehicle = owner.getRootVehicle();
-        return rootVehicle != owner && rootVehicle.isAlive() ? rootVehicle : owner;
+        return DragonTargetingHelper.movementAnchor(owner);
     }
 
     public static boolean isMounted(LivingEntity owner) {

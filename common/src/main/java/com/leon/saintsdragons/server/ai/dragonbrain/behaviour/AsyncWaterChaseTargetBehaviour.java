@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -7,6 +8,7 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.util.Mth;
@@ -63,7 +65,7 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
                     && !dragon.isVehicle()
                     && !dragon.isAerial()
                     && target != null
-                    && !target.isInWaterOrBubble()
+                    && !DragonTargetingHelper.isMovementAnchorInWater(target)
                     && dragon.isTargetValid(target);
         }
         return isWaterCombatContext(context);
@@ -95,12 +97,13 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
             controller.pause();
             return;
         }
-        Vec3 targetPosition = target.position().add(0.0D, target.getEyeHeight() * 0.5D, 0.0D);
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        Vec3 targetPosition = movementAnchor.getBoundingBox().getCenter();
         double speed = speedModifier.applyAsDouble(dragon, target);
         if (dragon instanceof SemiAquaticDragon swimmer) {
             speed *= swimmer.getSwimSpeed();
         }
-        if (dragon.distanceToSqr(target) > 225.0D) {
+        if (dragon.distanceToSqr(movementAnchor) > 225.0D) {
             speed *= 1.5D;
         }
         controller.trackTarget(targetPosition, speed, turnSpeed);
@@ -130,7 +133,8 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
     private Vec3 findCombatShoreExitDirection(T dragon,
                                               LivingEntity target,
                                               AsyncSwimController controller) {
-        if (!dragon.isInWaterOrBubble() || target.isInWaterOrBubble()) {
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
+        if (!dragon.isInWaterOrBubble() || movementAnchor.isInWaterOrBubble()) {
             return null;
         }
 
@@ -144,13 +148,13 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
         Vec3 endpoint = controller.getPathEndpoint();
         boolean pathComplete = controller.hasReachedPathEnd();
         Vec3 towardExit = pathComplete || endpoint == null
-                ? target.position().subtract(dragon.position())
+                ? movementAnchor.position().subtract(dragon.position())
                 : endpoint.subtract(dragon.position());
         towardExit = new Vec3(towardExit.x, 0.0D, towardExit.z);
         if (towardExit.lengthSqr() < 1.0E-4D) {
             towardExit = new Vec3(
-                    target.getX() - dragon.getX(), 0.0D,
-                    target.getZ() - dragon.getZ());
+                    movementAnchor.getX() - dragon.getX(), 0.0D,
+                    movementAnchor.getZ() - dragon.getZ());
         }
         if (towardExit.lengthSqr() < 1.0E-4D) {
             return null;

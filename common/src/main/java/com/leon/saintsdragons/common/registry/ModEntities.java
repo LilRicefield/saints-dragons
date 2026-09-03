@@ -239,13 +239,13 @@ public final class ModEntities {
                     .noSummon()
                     .build("stegonaut_impact_ring"));
 
-    public static final Supplier<EntityType<GroundCrackEntity>> STEGONAUT_GROUND_CRACK =
-            REGISTER.register("stegonaut_ground_crack", () -> EntityType.Builder.<GroundCrackEntity>of(GroundCrackEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<GroundCrackEntity>> GROUND_CRACK =
+            REGISTER.register("ground_crack", () -> EntityType.Builder.<GroundCrackEntity>of(GroundCrackEntity::new, MobCategory.MISC)
                     .sized(1.0F, 0.1F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .noSummon()
-                    .build("stegonaut_ground_crack"));
+                    .build("ground_crack"));
 
     public static final Supplier<EntityType<DragonWaterSplashEntity>> DRAGON_WATER_SPLASH =
             REGISTER.register("dragon_water_wake", () -> EntityType.Builder.<DragonWaterSplashEntity>of(DragonWaterSplashEntity::new, MobCategory.MISC)

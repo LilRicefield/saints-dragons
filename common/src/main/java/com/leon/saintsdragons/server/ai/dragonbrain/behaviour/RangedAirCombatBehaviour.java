@@ -1,11 +1,13 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -157,13 +159,14 @@ public abstract class RangedAirCombatBehaviour<
         }
 
         T dragon = context.dragon();
+        Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
         double angle = dragon.tickCount * 0.05D % (Math.PI * 2.0D);
-        double targetY = target.getY() + target.getBbHeight() * 0.5D;
+        double targetY = movementAnchor.getY() + movementAnchor.getBbHeight() * 0.5D;
         double verticalOffset = Math.sin(dragon.tickCount * 0.1D);
         Vec3 destination = new Vec3(
-                target.getX() + Math.cos(angle) * combatSettings.engagementDistance(),
+                movementAnchor.getX() + Math.cos(angle) * combatSettings.engagementDistance(),
                 targetY + verticalOffset,
-                target.getZ() + Math.sin(angle) * combatSettings.engagementDistance()
+                movementAnchor.getZ() + Math.sin(angle) * combatSettings.engagementDistance()
         );
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(destination, 1.0D));
         repositionCooldown = REPOSITION_INTERVAL_TICKS;
@@ -183,7 +186,7 @@ public abstract class RangedAirCombatBehaviour<
                 context.memories().set(
                         DragonMemories.MOVEMENT_INTENT,
                         DragonMovementIntent.transitionToGround(
-                                target,
+                                DragonTargetingHelper.livingMovementAnchor(target),
                                 dragon.getAiAirCombatSettings().landingSpeed()
                         )
                 );

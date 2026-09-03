@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
@@ -158,7 +159,7 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} hunger={}/{} huntFood={} sleep={} roost={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
+                        + "rejectedTarget={} combatTarget={} combatAnchor={} hunger={}/{} huntFood={} sleep={} roost={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
                         + "onGround={} horizontalCollision={} verticalCollision={} fallDistance={} velocity={} groundNav={} groundPath={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
@@ -183,6 +184,7 @@ public final class DragonPathDebugTracker {
                 blockPosition(snapshot.swimEndpoint()),
                 blockPosition(snapshot.rejectedTarget()),
                 blockPosition(snapshot.combatTarget()),
+                combatAnchor(dragon),
                 dragon.getHunger(),
                 DragonEntity.HUNGER_MAX,
                 dragon.isHuntFoodPursuitActive(),
@@ -217,6 +219,14 @@ public final class DragonPathDebugTracker {
                 logState.activity,
                 logState.behaviours
         );
+    }
+
+    private static @Nullable BlockPos combatAnchor(DragonEntity dragon) {
+        LivingEntity target = dragon.getTarget();
+        if (target == null) {
+            return null;
+        }
+        return DragonTargetingHelper.movementAnchor(target).blockPosition();
     }
 
     private static MessageDragonPathDebug capture(DragonEntity dragon) {

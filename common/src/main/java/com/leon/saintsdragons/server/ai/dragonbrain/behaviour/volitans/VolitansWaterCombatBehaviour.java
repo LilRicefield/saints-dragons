@@ -97,7 +97,7 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
         }
 
         // Finish climbing out before committing to a ranged attack against a dry target.
-        if (!target.isInWaterOrBubble() && gap > GORE_RANGE) {
+        if (!DragonTargetingHelper.isMovementAnchorInWater(target) && gap > GORE_RANGE) {
             return;
         }
 

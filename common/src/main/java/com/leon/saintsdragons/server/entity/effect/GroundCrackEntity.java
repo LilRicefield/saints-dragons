@@ -54,7 +54,7 @@ public class GroundCrackEntity extends Entity {
     }
 
     public GroundCrackEntity(Level level, Vec3 position, float yaw) {
-        this(ModEntities.STEGONAUT_GROUND_CRACK.get(), level);
+        this(ModEntities.GROUND_CRACK.get(), level);
         setPos(position);
         setYRot(yaw);
         this.yRotO = yaw;
