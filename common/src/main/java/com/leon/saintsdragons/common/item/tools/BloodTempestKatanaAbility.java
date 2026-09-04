@@ -34,6 +34,7 @@ public final class BloodTempestKatanaAbility {
     private static final int SLASH_LINE_LIFETIME_TICKS = 14;
     private static final int STORM_TRAIL_LIFETIME_TICKS = 16;
     private static final double SLASH_LINE_HEIGHT = 0.85D;
+    private static final double STORM_PLANE_HEIGHT = 0.08D;
     private static final double DUST_SAMPLE_SPACING = 0.42D;
     private static final double DUST_START_HALF_WIDTH = 5.5D;
     private static final double DUST_LOWER_START_HEIGHT = 0.08D;
@@ -168,8 +169,12 @@ public final class BloodTempestKatanaAbility {
             return;
         }
 
-        spawnStormTrail(level, trails.lowerStart(), trails.meetingPoint());
-        spawnStormTrail(level, trails.upperStart(), trails.meetingPoint());
+        double planeY = origin.y + STORM_PLANE_HEIGHT;
+        Vec3 lowerStart = new Vec3(trails.lowerStart().x, planeY, trails.lowerStart().z);
+        Vec3 upperStart = new Vec3(trails.upperStart().x, planeY, trails.upperStart().z);
+        Vec3 meetingPoint = new Vec3(trails.meetingPoint().x, planeY, trails.meetingPoint().z);
+        spawnStormTrail(level, lowerStart, meetingPoint);
+        spawnStormTrail(level, upperStart, meetingPoint);
     }
 
     private static ConvergingTrails createConvergingTrails(Vec3 origin, Vec3 destination) {

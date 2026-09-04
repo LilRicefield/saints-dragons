@@ -29,8 +29,9 @@ public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisua
     private static final float WIDTH_MULTIPLIER = 1.40F;
     private static final int SLASH_FRAME_COUNT = 7;
     private static final float SLASH_TICKS_PER_FRAME = 2.0F;
-    private static final int STORM_FRAME_COUNT = 8;
-    private static final float STORM_TICKS_PER_FRAME = 2.0F;
+    private static final int STORM_FRAME_COUNT = 19;
+    private static final float STORM_TICKS_PER_FRAME = 0.75F;
+    private static final double STORM_HALF_WIDTH = 3.0D;
     private static final ResourceLocation[] SLASH_TEXTURES = new ResourceLocation[SLASH_FRAME_COUNT];
     private static final ResourceLocation[] STORM_TEXTURES = new ResourceLocation[STORM_FRAME_COUNT];
 
@@ -73,8 +74,8 @@ public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisua
         }
 
         if (entity.getVisualStyle() == LightningVisualEntity.VisualStyle.BLOOD_TEMPEST_STORM) {
-            renderAnimatedTrail(entity, partialTick, poseStack, bufferSource, start, end,
-                    STORM_TEXTURES, STORM_TICKS_PER_FRAME, 1.55D);
+            renderAnimatedGroundPlane(entity, partialTick, poseStack, bufferSource, start, end,
+                    STORM_TEXTURES, STORM_TICKS_PER_FRAME, STORM_HALF_WIDTH);
             return;
         }
 
@@ -157,6 +158,41 @@ public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisua
 
         emitSlashQuad(consumer, matrix, transformedNormal, start, end, widthAxis, alpha, false);
         emitSlashQuad(consumer, matrix, transformedNormal, start, end, widthAxis, alpha, true);
+    }
+
+    private void renderAnimatedGroundPlane(LightningVisualEntity entity, float partialTick, PoseStack poseStack,
+                                           MultiBufferSource bufferSource, Vec3 start, Vec3 end,
+                                           ResourceLocation[] textures, float ticksPerFrame, double halfWidth) {
+        int frame = Mth.clamp(
+                (int)Math.floor((entity.tickCount + partialTick) / ticksPerFrame),
+                0,
+                textures.length - 1
+        );
+        float alpha = entity.getRenderAlpha(partialTick);
+        if (alpha <= 0.01F) {
+            return;
+        }
+
+        double planeY = (start.y + end.y) * 0.5D;
+        Vec3 flatStart = new Vec3(start.x, planeY, start.z);
+        Vec3 flatEnd = new Vec3(end.x, planeY, end.z);
+        Vec3 delta = flatEnd.subtract(flatStart);
+        double length = delta.length();
+        if (length < 1.0E-4D) {
+            return;
+        }
+
+        Vec3 direction = delta.scale(1.0D / length);
+        Vec3 widthAxis = new Vec3(-direction.z, 0.0D, direction.x)
+                .scale(halfWidth * entity.getVisualScale());
+        Matrix4f matrix = poseStack.last().pose();
+        Matrix3f normalMatrix = poseStack.last().normal();
+        Vector3f transformedNormal = new Vector3f(0.0F, 1.0F, 0.0F);
+        normalMatrix.transform(transformedNormal);
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.eyes(textures[frame]));
+
+        emitSlashQuad(consumer, matrix, transformedNormal, flatStart, flatEnd, widthAxis, alpha, false);
+        emitSlashQuad(consumer, matrix, transformedNormal, flatStart, flatEnd, widthAxis, alpha, true);
     }
 
     private void emitSlashQuad(VertexConsumer consumer, Matrix4f matrix, Vector3f normal,
