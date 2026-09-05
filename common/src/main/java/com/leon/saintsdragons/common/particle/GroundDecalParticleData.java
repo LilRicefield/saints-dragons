@@ -16,7 +16,8 @@ import java.util.Locale;
 
 public record GroundDecalParticleData(boolean fissure, float yaw, float scale, int duration)
         implements ParticleOptions {
-    public static final double GROUND_OFFSET = 0.04D;
+    /** Keeps the decal just above the supporting face without visibly floating. */
+    public static final double GROUND_OFFSET = 0.002D;
     public static final float NORMAL_SCALE = 7.0F;
     public static final int NORMAL_DURATION = 34;
 

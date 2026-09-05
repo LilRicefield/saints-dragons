@@ -360,20 +360,21 @@ public final class DragonlordArmorSetBonus {
         float fissureRadius = (float) ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_RADIUS.get();
         if (ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_ENABLED.get()) {
             int fissureDuration = ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS.get();
-            server.sendParticles(
-                    GroundDecalParticleData.fissure(player.getYRot(), fissureRadius, fissureDuration),
-                    groundOrigin.x,
-                    groundOrigin.y + GroundDecalParticleData.GROUND_OFFSET,
-                    groundOrigin.z,
-                    1, 0.0D, 0.0D, 0.0D, 0.0D);
-            server.addFreshEntity(new GroundFissureEntity(
+            GroundFissureEntity fissure = new GroundFissureEntity(
                     server,
                     groundOrigin,
                     player,
                     fissureRadius,
                     (float) ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DAMAGE.get(),
                     fissureDuration
-            ));
+            );
+            server.addFreshEntity(fissure);
+            server.sendParticles(
+                    GroundDecalParticleData.fissure(player.getYRot(), fissureRadius, fissureDuration),
+                    fissure.getX(),
+                    fissure.getY(),
+                    fissure.getZ(),
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
 
         RandomSource random = player.getRandom();

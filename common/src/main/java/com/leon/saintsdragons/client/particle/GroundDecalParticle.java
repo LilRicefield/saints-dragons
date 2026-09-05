@@ -88,7 +88,6 @@ public final class GroundDecalParticle extends TextureSheetParticle {
         float v1 = this.getV1();
         int light = this.getLightColor(partialTicks);
         drawQuad(buffer, vertices, u0, u1, v0, v1, light);
-        drawReverseQuad(buffer, vertices, u0, u1, v0, v1, light);
     }
 
     private void drawQuad(VertexConsumer buffer, Vector3f[] vertices,
@@ -97,14 +96,6 @@ public final class GroundDecalParticle extends TextureSheetParticle {
         vertex(buffer, vertices[1], u1, v0, light);
         vertex(buffer, vertices[2], u0, v0, light);
         vertex(buffer, vertices[3], u0, v1, light);
-    }
-
-    private void drawReverseQuad(VertexConsumer buffer, Vector3f[] vertices,
-                                 float u0, float u1, float v0, float v1, int light) {
-        vertex(buffer, vertices[3], u0, v1, light);
-        vertex(buffer, vertices[2], u0, v0, light);
-        vertex(buffer, vertices[1], u1, v0, light);
-        vertex(buffer, vertices[0], u1, v1, light);
     }
 
     private void vertex(VertexConsumer buffer, Vector3f vertex, float u, float v, int light) {

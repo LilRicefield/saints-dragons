@@ -28,7 +28,7 @@ import java.util.UUID;
  * The fissure texture is rendered independently as a particle.
  */
 public class GroundFissureEntity extends Entity {
-    private static final float SURFACE_OFFSET = 0.04F;
+    private static final double SURFACE_SNAP_OFFSET = 0.0D;
     private static final int DAMAGE_INTERVAL = 20;
     private static final double CONTACT_HEIGHT = 1.25D;
     private static final int PARTICLE_SPOKES = 12;
@@ -50,7 +50,7 @@ public class GroundFissureEntity extends Entity {
                                float damageRadius, float damage, int duration) {
         this(ModEntities.GROUND_FISSURE.get(), level);
         setPos(position);
-        GroundEffectSurfaceSnap.snap(this, SURFACE_OFFSET);
+        GroundEffectSurfaceSnap.snap(this, SURFACE_SNAP_OFFSET);
         this.ownerUuid = owner.getUUID();
         this.damageRadius = Math.max(0.0F, damageRadius);
         this.damage = Math.max(0.0F, damage);
@@ -65,7 +65,7 @@ public class GroundFissureEntity extends Entity {
     public void tick() {
         super.tick();
         age++;
-        GroundEffectSurfaceSnap.snap(this, SURFACE_OFFSET);
+        GroundEffectSurfaceSnap.snap(this, SURFACE_SNAP_OFFSET);
         if (level() instanceof ServerLevel server) {
             damageEntitiesInsideFissure();
             spawnFissureParticles(server);
@@ -149,7 +149,7 @@ public class GroundFissureEntity extends Entity {
         double radius = 0.45D + random.nextDouble() * Math.max(0.1D, damageRadius - 0.45D);
         return new Vec3(
                 getX() + Math.cos(angle) * radius,
-                getY() + SURFACE_OFFSET + 0.025D,
+                getY() + 0.025D,
                 getZ() + Math.sin(angle) * radius
         );
     }
