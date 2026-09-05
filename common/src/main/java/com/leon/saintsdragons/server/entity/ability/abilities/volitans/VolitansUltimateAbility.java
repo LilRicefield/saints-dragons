@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
+import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -12,7 +13,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.Ability
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.*;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
-import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
@@ -255,7 +255,10 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         }
         Vec3 groundOrigin = new Vec3(dragon.getX(), dragon.getBoundingBox().minY, dragon.getZ());
         server.addFreshEntity(new ImpactRingEntity(server, groundOrigin));
-        server.addFreshEntity(new GroundCrackEntity(server, groundOrigin, dragon.getYRot()));
+        server.sendParticles(
+                GroundDecalParticleData.crack(dragon.getYRot()),
+                groundOrigin.x, groundOrigin.y + GroundDecalParticleData.GROUND_OFFSET, groundOrigin.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
     }
 
     private void spawnImpactSpines(Volitans dragon) {

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge;
 
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
+import com.leon.saintsdragons.client.particle.DragonParticleShaders;
 import com.leon.saintsdragons.client.compat.RealCameraCompatibility;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModBlocks;
@@ -13,16 +14,32 @@ import com.leon.saintsdragons.client.model.block.DraconicCrucibleEntity;
 import com.leon.saintsdragons.client.renderer.block.DraconicCrucibleRenderer;
 import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.ShaderInstance;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.RecipeBookCategories;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.RegisterRecipeBookCategoriesEvent;
+import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 
+import java.io.IOException;
+
 @Mod.EventBusSubscriber(modid = SaintsDragonsCommon.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class SaintsDragonsForgeClient {
+
+    @SubscribeEvent
+    public static void onRegisterShaders(RegisterShadersEvent event) {
+        try {
+            event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                            DragonParticleShaders.IMPACT_GLOW, DefaultVertexFormat.PARTICLE),
+                    DragonParticleShaders::setImpactGlowShader);
+        } catch (IOException exception) {
+            SaintsDragonsCommon.LOGGER.error("Could not register the impact glow particle shader", exception);
+        }
+    }
 
     @SubscribeEvent
     public static void onRegisterRenderers(EntityRenderersEvent.RegisterRenderers event) {

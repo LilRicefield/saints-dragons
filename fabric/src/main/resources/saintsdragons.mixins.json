@@ -19,6 +19,7 @@
     "EntityRendererMixin",
     "EntityTurnMixin",
     "EntityRenderDispatcherMixin",
+    "ParticleEngineMixin",
     "GuiMixin"
   ],
   "mixins": [

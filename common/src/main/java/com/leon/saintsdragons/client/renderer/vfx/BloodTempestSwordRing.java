@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
-import com.leon.saintsdragons.common.particle.SonicRingData;
+import com.leon.saintsdragons.common.particle.BloodTempestKatanaRingData;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.List;
 
 @Environment(EnvType.CLIENT)
-public final class BloodTempestSonicRingTrail {
+public final class BloodTempestSwordRing {
     private static final int RING_INTERVAL_TICKS = 1;
     private static final double RING_SPACING = 3.0D;
     private static final int MAX_RINGS = 5;
@@ -22,12 +22,13 @@ public final class BloodTempestSonicRingTrail {
     private static final double FORWARD_STEP = 1.85D;
     private static final float BASE_SCALE = 1.20F;
     private static final float SCALE_VARIANCE = 0.25F;
-    private static final int DURATION_TICKS = 10;
+    private static final float SWORD_RING_SCALE_MULTIPLIER = 2.0F;
+    private static final int SWORD_RING_DURATION_TICKS = 6;
 
     private static final List<Trail> TRAILS = new ArrayList<>();
     private static Level activeLevel;
 
-    private BloodTempestSonicRingTrail() {
+    private BloodTempestSwordRing() {
     }
 
     public static void start(int entityId, Vec3 origin, Vec3 destination) {
@@ -96,7 +97,9 @@ public final class BloodTempestSonicRingTrail {
                     .add(0.0D, this.height, 0.0D);
             float scale = BASE_SCALE + level.random.nextFloat() * SCALE_VARIANCE;
             level.addParticle(
-                    new SonicRingData(this.yaw, this.pitch, scale, DURATION_TICKS),
+                    new BloodTempestKatanaRingData(
+                            this.yaw, this.pitch, scale * SWORD_RING_SCALE_MULTIPLIER,
+                            SWORD_RING_DURATION_TICKS),
                     position.x, position.y, position.z,
                     0.0D, 0.0D, 0.0D
             );

@@ -24,7 +24,7 @@ import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEn
 import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
-import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
+import com.leon.saintsdragons.server.entity.effect.GroundFissureEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
@@ -239,13 +239,13 @@ public final class ModEntities {
                     .noSummon()
                     .build("stegonaut_impact_ring"));
 
-    public static final Supplier<EntityType<GroundCrackEntity>> GROUND_CRACK =
-            REGISTER.register("ground_crack", () -> EntityType.Builder.<GroundCrackEntity>of(GroundCrackEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<GroundFissureEntity>> GROUND_FISSURE =
+            REGISTER.register("ground_fissure", () -> EntityType.Builder.<GroundFissureEntity>of(GroundFissureEntity::new, MobCategory.MISC)
                     .sized(1.0F, 0.1F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
                     .noSummon()
-                    .build("ground_crack"));
+                    .build("ground_fissure"));
 
     public static final Supplier<EntityType<DragonWaterSplashEntity>> DRAGON_WATER_SPLASH =
             REGISTER.register("dragon_water_wake", () -> EntityType.Builder.<DragonWaterSplashEntity>of(DragonWaterSplashEntity::new, MobCategory.MISC)

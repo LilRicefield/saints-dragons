@@ -2,6 +2,7 @@ package com.leon.saintsdragons.fabric;
 
 import com.leon.saintsdragons.client.init.CommonClientModEvents;
 import com.leon.saintsdragons.client.compat.RealCameraCompatibility;
+import com.leon.saintsdragons.client.particle.DragonParticleShaders;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.client.model.block.DraconianNucleusModel;
@@ -20,12 +21,18 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.BlockEntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.renderer.RenderType;
 
 public final class SaintsDragonsFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
+                DragonParticleShaders.IMPACT_GLOW,
+                DefaultVertexFormat.PARTICLE,
+                DragonParticleShaders::setImpactGlowShader));
         RealCameraCompatibility.register();
         CommonClientModEvents.registerEntityRenderers(EntityRendererRegistry::register);
         CommonClientModEvents.registerMenuScreens();

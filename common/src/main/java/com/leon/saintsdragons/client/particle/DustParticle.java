@@ -14,6 +14,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 
 public class DustParticle extends TextureSheetParticle {
+    private static final float MAX_ALPHA = 0.55F;
+
     private final SpriteSet sprites;
 
     protected DustParticle(ClientLevel level, double x, double y, double z,
@@ -27,6 +29,7 @@ public class DustParticle extends TextureSheetParticle {
         this.friction = 0.86F;
         this.lifetime = 18 + this.random.nextInt(9);
         this.quadSize = 1.35F + this.random.nextFloat() * 0.55F;
+        this.alpha = 0.0F;
         this.roll = (float) (Math.PI * 2.0D * this.random.nextDouble());
         this.oRoll = this.roll;
         applyBlockColor(level, x, y, z);
@@ -47,8 +50,10 @@ public class DustParticle extends TextureSheetParticle {
 
         this.setSpriteFromAge(this.sprites);
         float progress = this.age / (float) this.lifetime;
-        this.alpha = progress < 0.22F ? progress / 0.22F : 1.0F - ((progress - 0.22F) / 0.78F);
-        this.alpha = Math.max(0.0F, this.alpha);
+        float fade = progress < 0.22F
+                ? progress / 0.22F
+                : 1.0F - ((progress - 0.22F) / 0.78F);
+        this.alpha = MAX_ALPHA * Math.max(0.0F, fade);
         this.roll += 0.025F;
         this.move(this.xd, this.yd, this.zd);
         this.xd *= this.friction;

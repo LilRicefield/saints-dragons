@@ -4,11 +4,13 @@ import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.network.BloodTempestAfterimageProfile;
 import com.leon.saintsdragons.common.network.MessageBloodTempestAfterimage;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxChainLightningAbility;
 import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
@@ -37,9 +39,12 @@ public final class BloodTempestKatanaAbility {
     private static final double STORM_PLANE_HEIGHT = 0.08D;
     private static final double DUST_SAMPLE_SPACING = 0.42D;
     private static final double DUST_START_HALF_WIDTH = 5.5D;
-    private static final double DUST_LOWER_START_HEIGHT = 0.08D;
-    private static final double DUST_UPPER_START_HEIGHT = 1.62D;
+    private static final double DUST_START_HEIGHT = 0.02D;
     private static final double DUST_DRIFT_SPEED = 0.045D;
+    private static final int HIT_EMITTER_COUNT = 32;
+    private static final int HIT_DUST_COUNT = 24;
+    private static final double HIT_DUST_RADIUS = 2.25D;
+    private static final double HIT_EFFECT_VIEW_DISTANCE = 128.0D;
 
     private BloodTempestKatanaAbility() {
     }
@@ -188,9 +193,9 @@ public final class BloodTempestKatanaAbility {
         Vec3 side = new Vec3(-direction.z, 0.0D, direction.x);
         Vec3 meetingPoint = destination.add(0.0D, SLASH_LINE_HEIGHT, 0.0D);
         Vec3 lowerStart = origin.add(side.scale(DUST_START_HALF_WIDTH))
-                .add(0.0D, DUST_LOWER_START_HEIGHT, 0.0D);
+                .add(0.0D, DUST_START_HEIGHT, 0.0D);
         Vec3 upperStart = origin.subtract(side.scale(DUST_START_HALF_WIDTH))
-                .add(0.0D, DUST_UPPER_START_HEIGHT, 0.0D);
+                .add(0.0D, DUST_START_HEIGHT, 0.0D);
         return new ConvergingTrails(lowerStart, upperStart, meetingPoint);
     }
 
@@ -296,6 +301,7 @@ public final class BloodTempestKatanaAbility {
                                       Vec3 direction, float damage) {
         boolean chained = false;
         for (LivingEntity target : targets) {
+            spawnTargetHitEffects(player.serverLevel(), target);
             if (target.hurt(player.damageSources().playerAttack(player), damage)) {
                 if (!chained) {
                     onSuccessfulKatanaHit(player, target);
@@ -305,6 +311,67 @@ public final class BloodTempestKatanaAbility {
                 ItemStack katana = player.getMainHandItem();
                 katana.hurtAndBreak(1, player,
                         wearer -> wearer.broadcastBreakEvent(EquipmentSlot.MAINHAND));
+            }
+        }
+    }
+
+    private static void spawnTargetHitEffects(ServerLevel level, LivingEntity target) {
+        Vec3 center = target.position().add(0.0D, target.getBbHeight() * 0.55D, 0.0D);
+        Vec3 lowerImpact = target.position().add(0.0D, target.getBbHeight() * 0.30D, 0.0D);
+        Vec3 groundImpact = new Vec3(target.getX(), target.getBoundingBox().minY + 0.03D, target.getZ());
+        sendHitParticles(level, GroundDecalParticleData.crack(level.random.nextFloat() * 360.0F), groundImpact,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.BLOOD_TEMPEST_KATANA_FIRST_IMPACT.get(), lowerImpact,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.BLOOD_TEMPEST_KATANA_SECOND_IMPACT.get(), groundImpact,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.SECOND_IMPACT_RING.get(), groundImpact,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.BLOOD_TEMPEST_KATANA_X_MARK.get(), center,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.BLOOD_TEMPEST_KATANA_GLINT.get(), center,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        Vec3 strikeBase = target.position();
+        sendHitParticles(level, ModParticles.BLOOD_TEMPEST_KATANA_LIGHTNING_STRIKE.get(), strikeBase,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.RED_GLOW.get(), center,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.RAINBOW_FLARE.get(), center,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
+
+        sendHitParticles(level, ModParticles.GLOWING_EMITTER.get(), center,
+                HIT_EMITTER_COUNT, 0.04D, 0.04D, 0.04D, 0.16D);
+        spawnRandomImpactDust(level, groundImpact);
+    }
+
+    private static void spawnRandomImpactDust(ServerLevel level, Vec3 groundImpact) {
+        for (int index = 0; index < HIT_DUST_COUNT; index++) {
+            double angle = level.random.nextDouble() * Mth.TWO_PI;
+            double distance = Math.sqrt(level.random.nextDouble()) * HIT_DUST_RADIUS;
+            double speed = 0.10D + level.random.nextDouble() * 0.24D;
+            Vec3 position = groundImpact.add(
+                    Math.cos(angle) * distance,
+                    0.05D + level.random.nextDouble() * 0.30D,
+                    Math.sin(angle) * distance
+            );
+            sendHitParticles(level, ModParticles.DRAGON_DUST.get(), position,
+                    0,
+                    Math.cos(angle) * speed,
+                    0.08D + level.random.nextDouble() * 0.20D,
+                    Math.sin(angle) * speed,
+                    1.0D);
+        }
+    }
+
+    private static void sendHitParticles(ServerLevel level, ParticleOptions particle, Vec3 position,
+                                         int count, double xSpread, double ySpread, double zSpread,
+                                         double speed) {
+        double maxDistanceSqr = HIT_EFFECT_VIEW_DISTANCE * HIT_EFFECT_VIEW_DISTANCE;
+        for (ServerPlayer viewer : level.players()) {
+            if (viewer.distanceToSqr(position) <= maxDistanceSqr) {
+                level.sendParticles(viewer, particle, true,
+                        position.x, position.y, position.z,
+                        count, xSpread, ySpread, zSpread, speed);
             }
         }
     }

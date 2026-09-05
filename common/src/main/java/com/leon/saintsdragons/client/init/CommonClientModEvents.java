@@ -21,7 +21,7 @@ import com.leon.saintsdragons.client.renderer.raevyx.RaevyxLightningChainRendere
 import com.leon.saintsdragons.client.renderer.raevyx.RaevyxRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautAmethystPillarRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautGroundChunkRenderer;
-import com.leon.saintsdragons.client.renderer.vfx.GroundCrackRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.GroundFissureRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.ImpactRingRenderer;
 import com.leon.saintsdragons.client.renderer.stegonaut.StegonautRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
@@ -69,7 +69,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.STEGONAUT_GROUND_CHUNK.get(), StegonautGroundChunkRenderer::new);
         registrar.register(ModEntities.STEGONAUT_AMETHYST_PILLAR.get(), StegonautAmethystPillarRenderer::new);
         registrar.register(ModEntities.STEGONAUT_IMPACT_RING.get(), ImpactRingRenderer::new);
-        registrar.register(ModEntities.GROUND_CRACK.get(), GroundCrackRenderer::new);
+        registrar.register(ModEntities.GROUND_FISSURE.get(), GroundFissureRenderer::new);
         registrar.register(ModEntities.DRAGON_WATER_SPLASH.get(), DragonWaterSplashRenderer::new);
         registrar.register(ModEntities.VOLITANS_GROUND_CHUNK.get(), VolitansGroundChunkRenderer::new);
         registrar.register(ModEntities.VOLITANS_BURROW_MOUND.get(), VolitansBurrowMoundRenderer::new);

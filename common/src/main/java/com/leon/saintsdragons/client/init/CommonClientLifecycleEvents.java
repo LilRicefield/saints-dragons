@@ -7,7 +7,7 @@ import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
 import com.leon.saintsdragons.client.camera.DragonlordFlightBoostController;
 import com.leon.saintsdragons.client.input.DragonlordDoubleJumpInput;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail;
-import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSonicRingTrail;
+import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSwordRing;
 import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.DraconicCrucibleSmeltingSoundController;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
@@ -43,7 +43,7 @@ public final class CommonClientLifecycleEvents {
         IvyDialogueResumeQueue.tick(minecraft);
         DragonlordDoubleJumpInput.clientTick(minecraft);
         BloodTempestAfterimageTrail.tick(minecraft);
-        BloodTempestSonicRingTrail.tick(minecraft);
+        BloodTempestSwordRing.tick(minecraft);
         BloodTempestKatanaVisuals.tick(minecraft);
         DragonlordFlightBoostController.tick(minecraft);
         DragonlordFlightVisuals.tick(minecraft);

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -9,7 +10,6 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.handlers.StegonautAnimationHandler;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
-import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
@@ -257,8 +257,12 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
     private void spawnGroundCrack() {
         Stegonaut dragon = getUser();
         if (dragon.level() instanceof ServerLevel server) {
-            server.addFreshEntity(new GroundCrackEntity(server,
-                    new Vec3(dragon.getX(), dragon.getBoundingBox().minY, dragon.getZ()), dragon.getYRot()));
+            server.sendParticles(
+                    GroundDecalParticleData.crack(dragon.getYRot()),
+                    dragon.getX(),
+                    dragon.getBoundingBox().minY + GroundDecalParticleData.GROUND_OFFSET,
+                    dragon.getZ(),
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
         }
     }
 

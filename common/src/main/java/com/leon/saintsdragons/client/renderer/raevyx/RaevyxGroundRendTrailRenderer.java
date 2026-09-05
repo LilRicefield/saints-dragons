@@ -27,8 +27,9 @@ import org.joml.Vector3f;
 @Environment(EnvType.CLIENT)
 public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisualEntity> {
     private static final float WIDTH_MULTIPLIER = 1.40F;
-    private static final int SLASH_FRAME_COUNT = 7;
-    private static final float SLASH_TICKS_PER_FRAME = 2.0F;
+    private static final int SLASH_FRAME_COUNT = 14;
+    private static final float SLASH_TICKS_PER_FRAME = 1.0F;
+    private static final double SLASH_HALF_WIDTH = 3.0D;
     private static final int STORM_FRAME_COUNT = 19;
     private static final float STORM_TICKS_PER_FRAME = 0.75F;
     private static final double STORM_HALF_WIDTH = 3.0D;
@@ -69,7 +70,7 @@ public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisua
 
         if (entity.getVisualStyle() == LightningVisualEntity.VisualStyle.BLOOD_TEMPEST_SLASH) {
             renderAnimatedTrail(entity, partialTick, poseStack, bufferSource, start, end,
-                    SLASH_TEXTURES, SLASH_TICKS_PER_FRAME, 1.1D);
+                    SLASH_TEXTURES, SLASH_TICKS_PER_FRAME, SLASH_HALF_WIDTH);
             return;
         }
 
@@ -189,7 +190,7 @@ public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisua
         Matrix3f normalMatrix = poseStack.last().normal();
         Vector3f transformedNormal = new Vector3f(0.0F, 1.0F, 0.0F);
         normalMatrix.transform(transformedNormal);
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.eyes(textures[frame]));
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(textures[frame]));
 
         emitSlashQuad(consumer, matrix, transformedNormal, flatStart, flatEnd, widthAxis, alpha, false);
         emitSlashQuad(consumer, matrix, transformedNormal, flatStart, flatEnd, widthAxis, alpha, true);

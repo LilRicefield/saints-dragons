@@ -3,11 +3,20 @@ package com.leon.saintsdragons.client.init;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowDustParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowShardParticle;
+import com.leon.saintsdragons.client.particle.BloodTempestKatanaRingParticle;
+import com.leon.saintsdragons.client.particle.BloodTempestKatanaGlintParticle;
+import com.leon.saintsdragons.client.particle.BloodTempestKatanaImpactParticle;
+import com.leon.saintsdragons.client.particle.BloodTempestKatanaLightningStrikeParticle;
+import com.leon.saintsdragons.client.particle.BloodTempestKatanaXMarkParticle;
 import com.leon.saintsdragons.client.particle.DustParticle;
 import com.leon.saintsdragons.client.particle.DraconianNucleusParticle;
+import com.leon.saintsdragons.client.particle.GlowingEmitterParticle;
+import com.leon.saintsdragons.client.particle.GroundDecalParticle;
+import com.leon.saintsdragons.client.particle.ImpactGlowParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningChainParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
+import com.leon.saintsdragons.client.particle.SecondImpactRingParticle;
 import com.leon.saintsdragons.client.particle.SonicRingParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import net.minecraft.client.particle.ParticleProvider;
@@ -24,7 +33,22 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);
         register(registrar, ModParticles.RAEVYX_SONIC_RING.get(), SonicRingParticle.Factory::new);
+        register(registrar, ModParticles.BLOOD_TEMPEST_SWORD_RING.get(), BloodTempestKatanaRingParticle.Factory::new);
         register(registrar, ModParticles.DRAGON_DUST.get(), DustParticle.Factory::new);
+        register(registrar, ModParticles.GROUND_CRACK.get(), GroundDecalParticle.Factory::new);
+        register(registrar, ModParticles.GROUND_CRACK_FISSURE.get(), GroundDecalParticle.Factory::new);
+        register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_X_MARK.get(), BloodTempestKatanaXMarkParticle.Factory::new);
+        register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_GLINT.get(), BloodTempestKatanaGlintParticle.Factory::new);
+        register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_LIGHTNING_STRIKE.get(),
+                BloodTempestKatanaLightningStrikeParticle.Factory::new);
+        register(registrar, ModParticles.GLOWING_EMITTER.get(), GlowingEmitterParticle.Factory::new);
+        register(registrar, ModParticles.RED_GLOW.get(), ImpactGlowParticle.RedGlowFactory::new);
+        register(registrar, ModParticles.RAINBOW_FLARE.get(), ImpactGlowParticle.RainbowFlareFactory::new);
+        register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_FIRST_IMPACT.get(),
+                BloodTempestKatanaImpactParticle.FirstImpactFactory::new);
+        register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_SECOND_IMPACT.get(),
+                BloodTempestKatanaImpactParticle.SecondImpactFactory::new);
+        register(registrar, ModParticles.SECOND_IMPACT_RING.get(), SecondImpactRingParticle.Factory::new);
         register(registrar, ModParticles.MOSSBACK_POISON_FUME.get(), MossbackPoisonFumeParticle.Factory::new);
         register(registrar, ModParticles.DRACONIAN_NUCLEUS_PARTICLE.get(), DraconianNucleusParticle.Factory::new);
         register(registrar, ModParticles.ATROXIIA_SNOW.get(), AtroxiiaSnowParticle.FlakeFactory::new);

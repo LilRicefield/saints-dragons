@@ -4,7 +4,7 @@ import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
 import com.leon.saintsdragons.client.camera.DragonlordFlightBoostController;
-import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSonicRingTrail;
+import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSwordRing;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
@@ -122,7 +122,7 @@ public final class ClientPacketHandlers {
         if (message.profile() == BloodTempestAfterimageProfile.KATANA_DASH
                 && message.destination() != null
                 && message.origin() != null) {
-            BloodTempestSonicRingTrail.start(
+            BloodTempestSwordRing.start(
                     message.entityId(), message.origin(), message.destination());
             if (minecraft.player != null && minecraft.player.getId() == message.entityId()) {
                 BloodTempestKatanaVisuals.startZip();

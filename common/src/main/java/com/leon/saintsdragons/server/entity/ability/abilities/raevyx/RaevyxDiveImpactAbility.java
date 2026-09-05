@@ -2,10 +2,10 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.particle.SonicRingData;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
-import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -181,8 +181,10 @@ public final class RaevyxDiveImpactAbility {
         ImpactRingEntity ring = new ImpactRingEntity(server, new Vec3(origin.x, groundY, origin.z), ringScale);
         server.addFreshEntity(ring);
 
-        server.addFreshEntity(new GroundCrackEntity(server,
-                new Vec3(origin.x, groundY, origin.z), dragon.getYRot()));
+        server.sendParticles(
+                GroundDecalParticleData.crack(dragon.getYRot()),
+                origin.x, groundY + GroundDecalParticleData.GROUND_OFFSET, origin.z,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
 
         spawnGroundDust(server, origin, power);
     }

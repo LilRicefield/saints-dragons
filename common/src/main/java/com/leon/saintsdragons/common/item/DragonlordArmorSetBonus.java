@@ -9,8 +9,9 @@ import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.network.MessageCameraImpulse;
 import com.leon.saintsdragons.common.network.MessageDragonlordFlightBoost;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.server.data.DragonlordPlayerSavedData;
-import com.leon.saintsdragons.server.entity.effect.GroundCrackEntity;
+import com.leon.saintsdragons.server.entity.effect.GroundFissureEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -358,15 +359,20 @@ public final class DragonlordArmorSetBonus {
         server.addFreshEntity(new ImpactRingEntity(server, groundOrigin, LANDING_IMPACT_RING_SCALE));
         float fissureRadius = (float) ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_RADIUS.get();
         if (ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_ENABLED.get()) {
-            server.addFreshEntity(new GroundCrackEntity(
+            int fissureDuration = ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS.get();
+            server.sendParticles(
+                    GroundDecalParticleData.fissure(player.getYRot(), fissureRadius, fissureDuration),
+                    groundOrigin.x,
+                    groundOrigin.y + GroundDecalParticleData.GROUND_OFFSET,
+                    groundOrigin.z,
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
+            server.addFreshEntity(new GroundFissureEntity(
                     server,
                     groundOrigin,
-                    player.getYRot(),
                     player,
                     fissureRadius,
-                    fissureRadius,
                     (float) ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DAMAGE.get(),
-                    ToolsArmorConfig.DRAGONLORD_LAVA_FISSURE_DURATION_TICKS.get()
+                    fissureDuration
             ));
         }
 

@@ -8,9 +8,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundAddEntityPacket;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -26,93 +23,53 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-public class GroundCrackEntity extends Entity {
-    public static final float RENDER_PLANE_Y = 0.04F;
-    private static final int STEGONAUT_DURATION = 34;
-    private static final int STEGONAUT_STYLE = 0;
-    private static final int DRAGONLORD_FISSURE_STYLE = 1;
-    private static final int FISSURE_DAMAGE_INTERVAL = 20;
-    private static final double FISSURE_CONTACT_HEIGHT = 1.25D;
-    private static final int FISSURE_PARTICLE_SPOKES = 12;
-    private static final EntityDataAccessor<Integer> DATA_STYLE =
-            SynchedEntityData.defineId(GroundCrackEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Integer> DATA_DURATION =
-            SynchedEntityData.defineId(GroundCrackEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<Float> DATA_VISUAL_RADIUS =
-            SynchedEntityData.defineId(GroundCrackEntity.class, EntityDataSerializers.FLOAT);
+/**
+ * Invisible, server-authoritative controller for Dragonlord's damaging ground fissure.
+ * The fissure texture is rendered independently as a particle.
+ */
+public class GroundFissureEntity extends Entity {
+    private static final float SURFACE_OFFSET = 0.04F;
+    private static final int DAMAGE_INTERVAL = 20;
+    private static final double CONTACT_HEIGHT = 1.25D;
+    private static final int PARTICLE_SPOKES = 12;
 
     private int age;
+    private int duration = 1;
     private UUID ownerUuid;
     private float damageRadius;
     private float damage;
     private final Map<UUID, Integer> nextDamageTicks = new HashMap<>();
 
-    public GroundCrackEntity(EntityType<? extends GroundCrackEntity> type, Level level) {
+    public GroundFissureEntity(EntityType<? extends GroundFissureEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
         this.noCulling = true;
     }
 
-    public GroundCrackEntity(Level level, Vec3 position, float yaw) {
-        this(ModEntities.GROUND_CRACK.get(), level);
+    public GroundFissureEntity(Level level, Vec3 position, ServerPlayer owner,
+                               float damageRadius, float damage, int duration) {
+        this(ModEntities.GROUND_FISSURE.get(), level);
         setPos(position);
-        setYRot(yaw);
-        this.yRotO = yaw;
-        GroundEffectSurfaceSnap.snap(this, RENDER_PLANE_Y);
-    }
-
-    public GroundCrackEntity(Level level, Vec3 position, float yaw, ServerPlayer owner,
-                             float visualRadius, float damageRadius, float damage, int duration) {
-        this(level, position, yaw);
-        entityData.set(DATA_STYLE, DRAGONLORD_FISSURE_STYLE);
-        entityData.set(DATA_DURATION, Math.max(1, duration));
-        entityData.set(DATA_VISUAL_RADIUS, Math.max(0.5F, visualRadius));
+        GroundEffectSurfaceSnap.snap(this, SURFACE_OFFSET);
         this.ownerUuid = owner.getUUID();
         this.damageRadius = Math.max(0.0F, damageRadius);
         this.damage = Math.max(0.0F, damage);
+        this.duration = Math.max(1, duration);
     }
 
     @Override
     protected void defineSynchedData() {
-        entityData.define(DATA_STYLE, STEGONAUT_STYLE);
-        entityData.define(DATA_DURATION, STEGONAUT_DURATION);
-        entityData.define(DATA_VISUAL_RADIUS, 7.0F);
-    }
-
-    public boolean isDragonlordFissure() {
-        return entityData.get(DATA_STYLE) == DRAGONLORD_FISSURE_STYLE;
-    }
-
-    public float getScale(float partialTicks) {
-        float progress = Math.min((age + partialTicks) / 5.0F, 1.0F);
-        if (isDragonlordFissure()) {
-            float radius = entityData.get(DATA_VISUAL_RADIUS);
-            return radius * (0.72F + progress * 0.28F);
-        }
-        return 4.0F + progress * 3.0F;
-    }
-
-    public float getOpacity(float partialTicks) {
-        float ageFrac = (age + partialTicks) / (float) entityData.get(DATA_DURATION);
-        if (isDragonlordFissure()) {
-            return ageFrac < 0.82F
-                    ? 1.0F
-                    : Math.max(1.0F - (ageFrac - 0.82F) / 0.18F, 0.0F);
-        }
-        return Math.max(1.0F - ageFrac * ageFrac, 0.0F);
     }
 
     @Override
     public void tick() {
         super.tick();
         age++;
-        GroundEffectSurfaceSnap.snap(this, RENDER_PLANE_Y);
+        GroundEffectSurfaceSnap.snap(this, SURFACE_OFFSET);
         if (level() instanceof ServerLevel server) {
-            if (isDragonlordFissure()) {
-                damageEntitiesInsideFissure();
-                spawnFissureParticles(server);
-            }
-            if (age >= entityData.get(DATA_DURATION)) {
+            damageEntitiesInsideFissure();
+            spawnFissureParticles(server);
+            if (age >= duration) {
                 discard();
             }
         }
@@ -187,12 +144,12 @@ public class GroundCrackEntity extends Entity {
     }
 
     private Vec3 randomFissurePoint() {
-        double spoke = random.nextInt(FISSURE_PARTICLE_SPOKES) * (Math.PI * 2.0D / FISSURE_PARTICLE_SPOKES);
+        double spoke = random.nextInt(PARTICLE_SPOKES) * (Math.PI * 2.0D / PARTICLE_SPOKES);
         double angle = spoke + (random.nextDouble() - 0.5D) * 0.24D;
         double radius = 0.45D + random.nextDouble() * Math.max(0.1D, damageRadius - 0.45D);
         return new Vec3(
                 getX() + Math.cos(angle) * radius,
-                getY() + RENDER_PLANE_Y + 0.025D,
+                getY() + SURFACE_OFFSET + 0.025D,
                 getZ() + Math.sin(angle) * radius
         );
     }
@@ -215,7 +172,7 @@ public class GroundCrackEntity extends Entity {
             }
 
             AABB targetBounds = target.getBoundingBox();
-            if (targetBounds.minY > getY() + FISSURE_CONTACT_HEIGHT || targetBounds.maxY < getY() - 0.25D) {
+            if (targetBounds.minY > getY() + CONTACT_HEIGHT || targetBounds.maxY < getY() - 0.25D) {
                 continue;
             }
             double nearestX = Math.max(targetBounds.minX, Math.min(getX(), targetBounds.maxX));
@@ -227,7 +184,7 @@ public class GroundCrackEntity extends Entity {
             }
 
             if (target.hurt(server.damageSources().playerAttack(owner), damage)) {
-                nextDamageTicks.put(targetId, age + FISSURE_DAMAGE_INTERVAL);
+                nextDamageTicks.put(targetId, age + DAMAGE_INTERVAL);
             }
         }
     }
@@ -235,11 +192,7 @@ public class GroundCrackEntity extends Entity {
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
         age = tag.getInt("Age");
-        setYRot(tag.getFloat("Yaw"));
-        this.yRotO = getYRot();
-        entityData.set(DATA_STYLE, tag.getInt("Style"));
-        entityData.set(DATA_DURATION, tag.contains("Duration") ? Math.max(1, tag.getInt("Duration")) : STEGONAUT_DURATION);
-        entityData.set(DATA_VISUAL_RADIUS, tag.contains("VisualRadius") ? tag.getFloat("VisualRadius") : 7.0F);
+        duration = tag.contains("Duration") ? Math.max(1, tag.getInt("Duration")) : 1;
         if (tag.hasUUID("Owner")) {
             ownerUuid = tag.getUUID("Owner");
         }
@@ -258,10 +211,7 @@ public class GroundCrackEntity extends Entity {
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         tag.putInt("Age", age);
-        tag.putFloat("Yaw", getYRot());
-        tag.putInt("Style", entityData.get(DATA_STYLE));
-        tag.putInt("Duration", entityData.get(DATA_DURATION));
-        tag.putFloat("VisualRadius", entityData.get(DATA_VISUAL_RADIUS));
+        tag.putInt("Duration", duration);
         if (ownerUuid != null) {
             tag.putUUID("Owner", ownerUuid);
         }
@@ -279,10 +229,5 @@ public class GroundCrackEntity extends Entity {
     @Override
     public @NotNull Packet<ClientGamePacketListener> getAddEntityPacket() {
         return new ClientboundAddEntityPacket(this);
-    }
-
-    @Override
-    public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 16384.0D;
     }
 }

@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.common.registry;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.particle.BloodTempestKatanaRingData;
+import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.SonicRingData;
@@ -54,6 +56,15 @@ public final class ModParticles {
                         }
                     });
 
+    public static final Supplier<ParticleType<BloodTempestKatanaRingData>> BLOOD_TEMPEST_SWORD_RING =
+            REGISTER.register("blood_tempest_sword_ring",
+                    () -> new ParticleType<>(false, BloodTempestKatanaRingData.DESERIALIZER) {
+                        @Override
+                        public com.mojang.serialization.Codec<BloodTempestKatanaRingData> codec() {
+                            return BloodTempestKatanaRingData.codec(this);
+                        }
+                    });
+
     public static final Supplier<SimpleParticleType> FIRE_BREATH_FLAME =
             REGISTER.register("fire_breath_flame", () -> Services.PLATFORM.createSimpleParticle(false));
 
@@ -62,6 +73,54 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> DRAGON_DUST =
             REGISTER.register("dragon_dust", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<ParticleType<GroundDecalParticleData>> GROUND_CRACK =
+            REGISTER.register("ground_crack",
+                    () -> new ParticleType<>(false, GroundDecalParticleData.DESERIALIZER) {
+                        @Override
+                        public com.mojang.serialization.Codec<GroundDecalParticleData> codec() {
+                            return GroundDecalParticleData.codec(this);
+                        }
+                    });
+
+    public static final Supplier<ParticleType<GroundDecalParticleData>> GROUND_CRACK_FISSURE =
+            REGISTER.register("ground_crack_fissure",
+                    () -> new ParticleType<>(false, GroundDecalParticleData.DESERIALIZER) {
+                        @Override
+                        public com.mojang.serialization.Codec<GroundDecalParticleData> codec() {
+                            return GroundDecalParticleData.codec(this);
+                        }
+                    });
+
+    public static final Supplier<SimpleParticleType> BLOOD_TEMPEST_KATANA_X_MARK =
+            REGISTER.register("blood_tempest_katana_x_mark", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> BLOOD_TEMPEST_KATANA_GLINT =
+            REGISTER.register("blood_tempest_katana_glint", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> BLOOD_TEMPEST_KATANA_LIGHTNING_STRIKE =
+            REGISTER.register("blood_tempest_katana_lightning_strike",
+                    () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> GLOWING_EMITTER =
+            REGISTER.register("glowing_emitter", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> RED_GLOW =
+            REGISTER.register("red_glow", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> RAINBOW_FLARE =
+            REGISTER.register("rainbow_flare", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> BLOOD_TEMPEST_KATANA_FIRST_IMPACT =
+            REGISTER.register("blood_tempest_katana_first_impact",
+                    () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> BLOOD_TEMPEST_KATANA_SECOND_IMPACT =
+            REGISTER.register("blood_tempest_katana_second_impact",
+                    () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> SECOND_IMPACT_RING =
+            REGISTER.register("second_impact_ring", () -> Services.PLATFORM.createSimpleParticle(false));
 
     public static final Supplier<SimpleParticleType> MOSSBACK_POISON_FUME =
             REGISTER.register("mossback_poison_fume", () -> Services.PLATFORM.createSimpleParticle(false));
