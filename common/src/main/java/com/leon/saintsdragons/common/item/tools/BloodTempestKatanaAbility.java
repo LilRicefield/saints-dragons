@@ -334,6 +334,8 @@ public final class BloodTempestKatanaAbility {
         Vec3 strikeBase = target.position();
         sendHitParticles(level, ModParticles.BLOOD_TEMPEST_KATANA_LIGHTNING_STRIKE.get(), strikeBase,
                 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        sendHitParticles(level, ModParticles.SECOND_LIGHTNING_STRIKE.get(), strikeBase,
+                1, 0.0D, 0.0D, 0.0D, 0.0D);
         sendHitParticles(level, ModParticles.RED_GLOW.get(), center,
                 1, 0.0D, 0.0D, 0.0D, 0.0D);
         sendHitParticles(level, ModParticles.RAINBOW_FLARE.get(), center,

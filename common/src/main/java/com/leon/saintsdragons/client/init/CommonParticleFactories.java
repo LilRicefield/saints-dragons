@@ -41,6 +41,8 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_GLINT.get(), BloodTempestKatanaGlintParticle.Factory::new);
         register(registrar, ModParticles.BLOOD_TEMPEST_KATANA_LIGHTNING_STRIKE.get(),
                 BloodTempestKatanaLightningStrikeParticle.Factory::new);
+        register(registrar, ModParticles.SECOND_LIGHTNING_STRIKE.get(),
+                BloodTempestKatanaLightningStrikeParticle.Factory::new);
         register(registrar, ModParticles.GLOWING_EMITTER.get(), GlowingEmitterParticle.Factory::new);
         register(registrar, ModParticles.RED_GLOW.get(), ImpactGlowParticle.RedGlowFactory::new);
         register(registrar, ModParticles.RAINBOW_FLARE.get(), ImpactGlowParticle.RainbowFlareFactory::new);

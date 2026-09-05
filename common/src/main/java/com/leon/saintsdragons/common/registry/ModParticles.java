@@ -102,6 +102,10 @@ public final class ModParticles {
             REGISTER.register("blood_tempest_katana_lightning_strike",
                     () -> Services.PLATFORM.createSimpleParticle(false));
 
+    public static final Supplier<SimpleParticleType> SECOND_LIGHTNING_STRIKE =
+            REGISTER.register("second_lightning_strike",
+                    () -> Services.PLATFORM.createSimpleParticle(false));
+
     public static final Supplier<SimpleParticleType> GLOWING_EMITTER =
             REGISTER.register("glowing_emitter", () -> Services.PLATFORM.createSimpleParticle(false));
 
