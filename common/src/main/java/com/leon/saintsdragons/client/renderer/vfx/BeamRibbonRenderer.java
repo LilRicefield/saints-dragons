@@ -1,10 +1,7 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.blaze3d.vertex.VertexFormat;
-import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -16,8 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-
-import java.util.function.Function;
 
 public final class BeamRibbonRenderer {
     private static final int MIN_SEGMENTS = 12;
@@ -78,7 +73,10 @@ public final class BeamRibbonRenderer {
         Vector3f companionRight = new Vector3f(-localRight.y(), localRight.x(), 0.0F);
         Vector3f companionNormal = new Vector3f(-companionRight.y(), companionRight.x(), 0.0F);
         normalMatrix.transform(companionNormal).normalize();
-        VertexConsumer consumer = bufferSource.getBuffer(RibbonRenderType.get(texture));
+        // FULL_BRIGHT already gives this an unlit appearance. Keeping it in the
+        // normal translucent entity pass also prevents shader packs from dropping
+        // the ribbon when it is drawn against the sky.
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
 
         float halfWidth = Math.max(0.001F, style.halfWidth()) * visibility;
         float textureCycles = Math.max(0.001F, style.textureCycles());
@@ -217,36 +215,5 @@ public final class BeamRibbonRenderer {
                         float scrollCyclesPerTick, float edgeFadeFraction,
                         float tileOverlapFraction, float alpha,
                         boolean companionPlane) {
-    }
-
-    private static final class RibbonRenderType extends RenderType {
-        private static final Function<ResourceLocation, RenderType> TYPES = Util.memoize(texture -> create(
-                "saintsdragons_textured_beam_ribbon",
-                DefaultVertexFormat.NEW_ENTITY,
-                VertexFormat.Mode.QUADS,
-                2048,
-                false,
-                true,
-                CompositeState.builder()
-                        .setShaderState(RENDERTYPE_BEACON_BEAM_SHADER)
-                        .setTextureState(new TextureStateShard(texture, false, false))
-                        .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                        .setDepthTestState(LEQUAL_DEPTH_TEST)
-                        .setCullState(NO_CULL)
-                        .setWriteMaskState(COLOR_WRITE)
-                        .setOutputState(TRANSLUCENT_TARGET)
-                        .createCompositeState(false)
-        ));
-
-        private RibbonRenderType(String name, VertexFormat format, VertexFormat.Mode mode,
-                                 int bufferSize, boolean affectsCrumbling, boolean sortOnUpload,
-                                 Runnable setupState, Runnable clearState) {
-            super(name, format, mode, bufferSize, affectsCrumbling, sortOnUpload,
-                    setupState, clearState);
-        }
-
-        private static RenderType get(ResourceLocation texture) {
-            return TYPES.apply(texture);
-        }
     }
 }

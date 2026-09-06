@@ -73,7 +73,14 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
             return false;
         }
 
-        Vec3 end = entity.getBeamEndPosition();
+        // A ridden beam is aimed and smoothed client-side. Its visual endpoint can
+        // diverge substantially from the synchronized server endpoint used below,
+        // so frustum-testing that stale line can hide a beam which is on screen.
+        if (entity.getControllingPassenger() != null) {
+            return true;
+        }
+
+        Vec3 end = entity.getClientBeamEndPosition(1.0F);
         if (end == null) {
             return false;
         }
