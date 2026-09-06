@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -7,6 +8,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
@@ -15,11 +17,25 @@ import org.joml.Matrix4f;
 public final class RaevyxBeamLightningRenderer {
     private static final RenderType GLOW_RENDER_TYPE = BeamRenderType.TRANSLUCENT;
     private static final RenderType CORE_RENDER_TYPE = BeamRenderType.OPAQUE;
+    private static final ResourceLocation[] FAST_LINE_TEXTURES = new ResourceLocation[16];
+    private static final BeamGrainRenderer.ConveyorStyle FAST_LINE_CONVEYOR_STYLE =
+            new BeamGrainRenderer.ConveyorStyle(
+                    48, 3.0F, 3.0F,
+                    0.3F, 0.35F, 1.85F,
+                    2.0F, 0.72F, 1.28F, 0.86F,
+                    64.0F, 0.85F, 0.5F);
     private static final long PHASE_SEED = 0x9E3779B97F4A7C15L;
     private static final long SECONDARY_SEED = 0x632BE59BD9B4E019L;
     private static final long BRANCH_SEED = 0xD1B54A32D192ED03L;
     private static final Vec3 BOLT_START = Vec3.ZERO;
     private static final float BOLT_MORPHS_PER_TICK = 0.65F;
+
+    static {
+        for (int frame = 0; frame < FAST_LINE_TEXTURES.length; frame++) {
+            FAST_LINE_TEXTURES[frame] = SaintsDragonsCommon.rl(
+                    "textures/particle/fast_lines" + frame + ".png");
+        }
+    }
 
     private RaevyxBeamLightningRenderer() {
     }
@@ -91,6 +107,10 @@ public final class RaevyxBeamLightningRenderer {
         renderImpactArcs(matrix, coreConsumer, end, seed ^ BRANCH_SEED,
                 beamLength, visibility, impactCore, coreCoverage,
                 entitySeed ^ SECONDARY_SEED);
+
+        BeamGrainRenderer.renderConveyor(poseStack, bufferSource, FAST_LINE_TEXTURES,
+                beamLength, visibility, ageInTicks, entitySeed ^ BRANCH_SEED,
+                FAST_LINE_CONVEYOR_STYLE, 0.0F, 0.0F, 0.0F);
     }
 
     private static float smoothStep(float value) {
