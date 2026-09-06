@@ -113,7 +113,7 @@ public final class GroundDecalParticle extends TextureSheetParticle {
 
     @Override
     public @NotNull ParticleRenderType getRenderType() {
-        return DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
+        return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;
     }
 
     public static final class Factory implements ParticleProvider<GroundDecalParticleData> {
