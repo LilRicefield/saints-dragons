@@ -15,15 +15,80 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class RaevyxBeamLightningRenderer {
+    private static final boolean RIBBON_ONLY_TEST = true;
     private static final RenderType GLOW_RENDER_TYPE = BeamRenderType.TRANSLUCENT;
     private static final RenderType CORE_RENDER_TYPE = BeamRenderType.OPAQUE;
+    private static final ResourceLocation STAR_TEXTURE =
+            SaintsDragonsCommon.rl("textures/particle/star.png");
+    private static final ResourceLocation LIGHTNING_BEAM_TEXTURE =
+            SaintsDragonsCommon.rl("textures/particle/lightning_beam.png");
+    private static final ResourceLocation LIGHTNING_BEAM_AURA_TEXTURE =
+            SaintsDragonsCommon.rl("textures/particle/lightning_beam_aura.png");
+    private static final ResourceLocation LIGHTNING_BEAM_SWIRL_TEXTURE =
+            SaintsDragonsCommon.rl("textures/particle/lightning_beam_swirl.png");
+    private static final ResourceLocation LIGHTNING_BEAM_SECOND_SWIRL_TEXTURE =
+            SaintsDragonsCommon.rl("textures/particle/lightning_beam_second_swirl.png");
+    private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_STYLE =
+            new BeamRibbonRenderer.Style(
+                    0.75F,
+                    1.0F,
+                    0.075F,
+                    0.12F,
+                    0.28F,
+                    1.0F,
+                    true);
+    private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_AURA_STYLE =
+            new BeamRibbonRenderer.Style(
+                    0.92F,
+                    1.0F,
+                    0.11F,
+                    0.12F,
+                    0.28F,
+                    0.72F,
+                    true);
+    private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_FAINT_AURA_STYLE =
+            new BeamRibbonRenderer.Style(
+                    1.16F,
+                    1.0F,
+                    0.14F,
+                    0.12F,
+                    0.28F,
+                    0.05F,
+                    true);
+    private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_SWIRL_STYLE =
+            new BeamRibbonRenderer.Style(
+                    0.88F,
+                    1.0F,
+                    0.09F,
+                    0.5F,
+                    0.28F,
+                    0.85F,
+                    true);
+    private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_SECOND_SWIRL_STYLE =
+            new BeamRibbonRenderer.Style(
+                    0.62F,
+                    1.0F,
+                    0.10F,
+                    0.5F,
+                    0.28F,
+                    0.60F,
+                    true);
+    private static final BeamStarFlashRenderer.Style BEAM_STAR_STYLE =
+            new BeamStarFlashRenderer.Style(
+                    32, 2.5F, 3.0F,
+                    1.0F, 6.0F,
+                    0.2F, 0.42F, 0.15F,
+                    0.70F, 1.35F,
+                    0.75F, 1.75F,
+                    0.92F, 0.85F);
     private static final ResourceLocation[] FAST_LINE_TEXTURES = new ResourceLocation[16];
-    private static final BeamGrainRenderer.ConveyorStyle FAST_LINE_CONVEYOR_STYLE =
-            new BeamGrainRenderer.ConveyorStyle(
-                    48, 3.0F, 3.0F,
-                    0.3F, 0.35F, 1.85F,
-                    2.0F, 0.72F, 1.28F, 0.86F,
-                    64.0F, 0.85F, 0.5F);
+    private static final BeamGrainRenderer.RibbonEmitterStyle FAST_LINE_EMITTER_STYLE =
+            new BeamGrainRenderer.RibbonEmitterStyle(
+                    32, 8.0F, 16.0F,
+                    3.0F, 3.0F,
+                    0.5F, 0.5F, 3.0F,
+                    0.5F, 0.25F, 0.75F, 0.85F,
+                    0.75F, 0.25F);
     private static final long PHASE_SEED = 0x9E3779B97F4A7C15L;
     private static final long SECONDARY_SEED = 0x632BE59BD9B4E019L;
     private static final long BRANCH_SEED = 0xD1B54A32D192ED03L;
@@ -42,15 +107,42 @@ public final class RaevyxBeamLightningRenderer {
 
     public static void render(Raevyx raevyx, PoseStack poseStack, MultiBufferSource bufferSource,
                               float beamLength, float visibility, float ageInTicks,
-                              boolean nightGold, boolean ending) {
+                              boolean nightGold, boolean ending,
+                              Vec3 beamStartWorld, Vec3 beamEndWorld) {
         if (raevyx == null || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
 
         long entitySeed = raevyx.getUUID().getMostSignificantBits()
                 ^ raevyx.getUUID().getLeastSignificantBits();
-        renderLightning(poseStack, bufferSource, beamLength, visibility,
-                ageInTicks, entitySeed, nightGold, ending);
+        BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_TEXTURE,
+                beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
+                LIGHTNING_BEAM_STYLE,
+                1.0F, 0.0F, 0.0F);
+        BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
+                beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
+                LIGHTNING_BEAM_AURA_STYLE,
+                1.0F, 0.0F, 0.0F);
+        BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
+                beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
+                LIGHTNING_BEAM_FAINT_AURA_STYLE,
+                1.0F, 0.0F, 0.0F);
+        BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SWIRL_TEXTURE,
+                beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
+                LIGHTNING_BEAM_SWIRL_STYLE,
+                1.0F, 0.0F, 0.0F);
+        BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SECOND_SWIRL_TEXTURE,
+                beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
+                LIGHTNING_BEAM_SECOND_SWIRL_STYLE,
+                0.0F, 0.0F, 0.0F);
+        BeamGrainRenderer.renderEmitter(poseStack, bufferSource, FAST_LINE_TEXTURES,
+                beamLength, visibility, ageInTicks, entitySeed ^ BRANCH_SEED,
+                FAST_LINE_EMITTER_STYLE, beamStartWorld, beamEndWorld,
+                0.0F, 0.0F, 0.0F);
+        if (!RIBBON_ONLY_TEST) {
+            renderLightning(poseStack, bufferSource, beamLength, visibility,
+                    ageInTicks, entitySeed, nightGold, ending);
+        }
     }
 
     private static void renderLightning(PoseStack poseStack, MultiBufferSource bufferSource,
@@ -80,13 +172,9 @@ public final class RaevyxBeamLightningRenderer {
         Matrix4f matrix = poseStack.last().pose();
         float coreCoverage = ending ? visibility : 1.0F;
 
-        // Shader packs may heavily attenuate their translucent entity pass against an HDR sky.
-        // Keep the broad energy there, then draw a narrow opaque core as a reliable anchor.
         VertexConsumer glowConsumer = bufferSource.getBuffer(GLOW_RENDER_TYPE);
         renderMorphingBolt(matrix, glowConsumer, BOLT_START, end, seed, nextSeed,
                 morph, segments, spread, glow, true, 1.0F, entitySeed ^ PHASE_SEED);
-
-        // A separate thin filament crawls around the primary bolt.
         renderMorphingBolt(matrix, glowConsumer, BOLT_START, end,
                 seed ^ SECONDARY_SEED, nextSeed ^ SECONDARY_SEED,
                 morph, segments, spread * 1.35F, crawler, false,
@@ -108,9 +196,12 @@ public final class RaevyxBeamLightningRenderer {
                 beamLength, visibility, impactCore, coreCoverage,
                 entitySeed ^ SECONDARY_SEED);
 
-        BeamGrainRenderer.renderConveyor(poseStack, bufferSource, FAST_LINE_TEXTURES,
-                beamLength, visibility, ageInTicks, entitySeed ^ BRANCH_SEED,
-                FAST_LINE_CONVEYOR_STYLE, 0.0F, 0.0F, 0.0F);
+        float starRed = 1.0F;
+        float starGreen = nightGold ? 0.72F : 0.02F;
+        float starBlue = nightGold ? 0.08F : 0.01F;
+        BeamStarFlashRenderer.render(poseStack, bufferSource, STAR_TEXTURE,
+                beamLength, visibility, ageInTicks, entitySeed ^ PHASE_SEED,
+                BEAM_STAR_STYLE, starRed, starGreen, starBlue);
     }
 
     private static float smoothStep(float value) {

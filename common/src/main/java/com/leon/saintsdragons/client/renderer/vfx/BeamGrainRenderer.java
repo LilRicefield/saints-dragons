@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -9,6 +10,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
@@ -86,11 +88,13 @@ public final class BeamGrainRenderer {
         }
     }
 
-    public static void renderConveyor(PoseStack poseStack, MultiBufferSource bufferSource,
-                                      ResourceLocation[] textures, float beamLength, float visibility,
-                                      float ageInTicks, long seed, ConveyorStyle style,
-                                      float red, float green, float blue) {
+    public static void renderEmitter(PoseStack poseStack, MultiBufferSource bufferSource,
+                                     ResourceLocation[] textures, float beamLength, float visibility,
+                                     float ageInTicks, long seed, RibbonEmitterStyle style,
+                                     Vec3 beamStartWorld, Vec3 beamEndWorld,
+                                     float red, float green, float blue) {
         if (textures == null || textures.length == 0 || style == null
+                || beamStartWorld == null || beamEndWorld == null
                 || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
@@ -98,47 +102,97 @@ public final class BeamGrainRenderer {
         PoseStack.Pose pose = poseStack.last();
         Matrix4f matrix = pose.pose();
         Matrix3f normalMatrix = pose.normal();
-        // Keep cadence tied to the full-range travel distance. Short beams clip
-        // completed grains instead of recycling every slot at a faster rate.
-        float travelLength = Math.max(Math.max(
-                style.referenceTravelLength(), beamLength), 1.0F);
+        Matrix3f worldToLocal = new Matrix3f(normalMatrix).invert();
+        Vec3 midpoint = beamStartWorld.add(beamEndWorld).scale(0.5D);
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        Vec3 viewDirection = camera.getPosition().subtract(midpoint);
+        Vector3f localView = new Vector3f(
+                (float) viewDirection.x,
+                (float) viewDirection.y,
+                (float) viewDirection.z);
+        worldToLocal.transform(localView);
+        Vector3f fallbackRight = new Vector3f(camera.getLeftVector()).negate();
+        worldToLocal.transform(fallbackRight);
+        fallbackRight.set(fallbackRight.x(), fallbackRight.y(), 0.0F);
+        if (fallbackRight.lengthSquared() <= 1.0E-6F) {
+            fallbackRight.set(1.0F, 0.0F, 0.0F);
+        }
+        fallbackRight.normalize();
+
+        Vector3f ribbonRight = new Vector3f(fallbackRight);
+        if (localView.lengthSquared() > 1.0E-6F) {
+            localView.normalize();
+            float radial = Mth.sqrt(localView.x() * localView.x()
+                    + localView.y() * localView.y());
+            if (radial > 1.0E-5F) {
+                Vector3f viewRight = new Vector3f(-localView.y(), localView.x(), 0.0F)
+                        .normalize();
+                if (viewRight.dot(fallbackRight) < 0.0F) {
+                    viewRight.negate();
+                }
+                float cameraFacingBlend = smoothStep(Mth.clamp(
+                        (radial - 0.05F) / 0.15F, 0.0F, 1.0F));
+                ribbonRight.lerp(viewRight, cameraFacingBlend).normalize();
+            }
+        }
+        Vector3f ribbonNormal = new Vector3f(-ribbonRight.y(), ribbonRight.x(), 0.0F);
+        normalMatrix.transform(ribbonNormal).normalize();
+        Vector3f companionRight = new Vector3f(-ribbonRight.y(), ribbonRight.x(), 0.0F);
+        Vector3f companionNormal = new Vector3f(
+                -companionRight.y(), companionRight.x(), 0.0F);
+        normalMatrix.transform(companionNormal).normalize();
+
         float renderLength = beamLength * Mth.clamp(style.beamCoverage(), 0.0F, 1.0F);
         if (renderLength <= 0.002F) {
             return;
         }
-        int frame = textures.length == 1
-                ? 0
-                : Mth.floor(Math.max(0.0F, ageInTicks)
-                        / Math.max(style.frameDurationTicks(), 0.05F)) % textures.length;
-        ResourceLocation texture = textures[frame];
-        if (texture == null) {
-            return;
-        }
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
+        float now = Math.max(0.0F, ageInTicks);
+        float emissionInterval = 20.0F / Math.max(style.ratePerSecond(), 0.001F);
+        float minimumLifetime = Math.max(0.05F,
+                Math.min(style.minimumLifetimeTicks(), style.maximumLifetimeTicks()));
+        float maximumLifetime = Math.max(minimumLifetime,
+                Math.max(style.minimumLifetimeTicks(), style.maximumLifetimeTicks()));
+        long newestEmission = Mth.floor(now / emissionInterval) + 1L;
+        int emissionWindow = Mth.clamp(
+                Mth.ceil(maximumLifetime / emissionInterval) + 3, 1, 512);
 
-        for (int slot = 0; slot < style.count(); slot++) {
-            long slotSeed = seed ^ SLOT_SEED * (slot + 1L);
-            RandomSource slotRandom = RandomSource.create(slotSeed);
-            float speed = Mth.lerp(slotRandom.nextFloat(),
+        for (int offset = 0; offset < emissionWindow; offset++) {
+            long emission = newestEmission - offset;
+            if (emission < 0L) {
+                continue;
+            }
+
+            long emissionSeed = seed ^ CYCLE_SEED * (emission + 1L);
+            RandomSource particleRandom = RandomSource.create(emissionSeed);
+            float birthTime = emission * emissionInterval
+                    + particleRandom.nextFloat() * emissionInterval;
+            float particleAge = now - birthTime;
+            float lifetime = Mth.lerp(particleRandom.nextFloat(),
+                    minimumLifetime, maximumLifetime);
+            if (particleAge < 0.0F || particleAge >= lifetime) {
+                continue;
+            }
+
+            float life = particleAge / lifetime;
+            float speed = Mth.lerp(particleRandom.nextFloat(),
                     style.minimumSpeed(), style.maximumSpeed());
-            float initialDistance = slotRandom.nextFloat() * travelLength;
-            float traveled = Math.max(0.0F, ageInTicks) * speed + initialDistance;
-            long cycle = Mth.floor(traveled / travelLength);
-            float life = Mth.frac(traveled / travelLength);
-
-            RandomSource cycleRandom = RandomSource.create(slotSeed ^ CYCLE_SEED * (cycle + 1L));
-            double angle = cycleRandom.nextDouble() * Mth.TWO_PI;
-            float radius = Mth.sqrt(cycleRandom.nextFloat())
+            double angle = particleRandom.nextDouble() * Mth.TWO_PI;
+            float radius = Mth.sqrt(particleRandom.nextFloat())
                     * style.maximumOffset() * visibility;
             float offsetX = Mth.cos((float) angle) * radius;
             float offsetY = Mth.sin((float) angle) * radius;
-            float randomizedScale = Mth.lerp(cycleRandom.nextFloat(),
+            float randomizedScale = Mth.lerp(particleRandom.nextFloat(),
                     style.minimumScale(), style.maximumScale());
+            float spawnZ = particleRandom.nextFloat() * renderLength;
+            int frameOffset = textures.length == 1
+                    ? 0
+                    : particleRandom.nextInt(textures.length);
 
             float remaining = 1.0F - life;
             float shrink = smoothStep(remaining);
-            float fadeIn = smoothStep(Mth.clamp(life / 0.08F, 0.0F, 1.0F));
-            float alpha = style.alpha() * visibility * fadeIn * shrink;
+            float fadeIn = smoothStep(Mth.clamp(life / 0.12F, 0.0F, 1.0F));
+            float fadeOut = smoothStep(Mth.clamp(remaining / 0.30F, 0.0F, 1.0F));
+            float alpha = style.alpha() * visibility * fadeIn * fadeOut;
             float halfWidth = style.halfWidth() * randomizedScale * shrink * visibility;
             float halfLength = style.halfLength() * style.longitudinalStretch()
                     * randomizedScale * shrink * visibility;
@@ -146,8 +200,9 @@ public final class BeamGrainRenderer {
                 continue;
             }
 
-            float spawnZ = cycleRandom.nextFloat() * renderLength * 0.85F;
-            float centerZ = spawnZ + life * travelLength;
+            // Positive local Z is the beam's start-to-end direction. Keeping the
+            // long edge on Z mirrors ParticleOrientation.VelocityParallel.
+            float centerZ = spawnZ + particleAge * speed;
             if (centerZ >= renderLength) {
                 continue;
             }
@@ -164,11 +219,51 @@ public final class BeamGrainRenderer {
                 continue;
             }
 
-            int face = cycleRandom.nextInt(4);
-            renderSquareFaceGrain(consumer, matrix, normalMatrix,
-                    offsetX, offsetY, startZ, endZ, halfWidth, face,
+            int frame = textures.length == 1
+                    ? 0
+                    : (Mth.floor(particleAge
+                    / Math.max(style.frameDurationTicks(), 0.05F))
+                    + frameOffset) % textures.length;
+            ResourceLocation texture = textures[frame];
+            if (texture == null) {
+                continue;
+            }
+            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
+            renderRibbonGrainPair(consumer, matrix,
+                    ribbonNormal, ribbonRight, companionNormal, companionRight,
+                    offsetX, offsetY, startZ, endZ, halfWidth,
                     red, green, blue, alpha);
         }
+    }
+
+    private static void renderRibbonGrainPair(VertexConsumer consumer, Matrix4f matrix,
+                                              Vector3f normal, Vector3f right,
+                                              Vector3f companionNormal,
+                                              Vector3f companionRight,
+                                              float x, float y,
+                                              float startZ, float endZ,
+                                              float halfWidth,
+                                              float red, float green, float blue, float alpha) {
+        renderRibbonGrain(consumer, matrix, normal, right,
+                x, y, startZ, endZ, halfWidth, red, green, blue, alpha);
+        renderRibbonGrain(consumer, matrix, companionNormal, companionRight,
+                x, y, startZ, endZ, halfWidth, red, green, blue, alpha);
+    }
+
+    private static void renderRibbonGrain(VertexConsumer consumer, Matrix4f matrix,
+                                          Vector3f normal, Vector3f right,
+                                          float x, float y,
+                                          float startZ, float endZ,
+                                          float halfWidth,
+                                          float red, float green, float blue, float alpha) {
+        float rightX = right.x() * halfWidth;
+        float rightY = right.y() * halfWidth;
+        emitDoubleSidedQuad(consumer, matrix, normal,
+                x - rightX, y - rightY, startZ,
+                x - rightX, y - rightY, endZ,
+                x + rightX, y + rightY, endZ,
+                x + rightX, y + rightY, startZ,
+                red, green, blue, alpha);
     }
 
     private static void renderSquareFaceGrain(VertexConsumer consumer, Matrix4f matrix,
@@ -255,12 +350,13 @@ public final class BeamGrainRenderer {
                         float frameDurationTicks) {
     }
 
-    public record ConveyorStyle(int count, float minimumSpeed, float maximumSpeed,
-                                float maximumOffset, float halfWidth, float halfLength,
-                                float longitudinalStretch, float minimumScale,
-                                float maximumScale, float alpha,
-                                float referenceTravelLength,
-                                float beamCoverage,
-                                float frameDurationTicks) {
+    public record RibbonEmitterStyle(float ratePerSecond,
+                                     float minimumLifetimeTicks,
+                                     float maximumLifetimeTicks,
+                                     float minimumSpeed, float maximumSpeed,
+                                     float maximumOffset, float halfWidth, float halfLength,
+                                     float longitudinalStretch, float minimumScale,
+                                     float maximumScale, float alpha,
+                                     float beamCoverage, float frameDurationTicks) {
     }
 }
