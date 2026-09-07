@@ -83,7 +83,8 @@ public final class RaevyxBeamLightningRenderer {
 
     public static void render(Raevyx raevyx, PoseStack poseStack, MultiBufferSource bufferSource,
                               float beamLength, float visibility, float ageInTicks,
-                              Vec3 beamStartWorld, Vec3 beamEndWorld) {
+                              Vec3 beamStartWorld, Vec3 beamEndWorld,
+                              boolean firstPersonView) {
         if (raevyx == null || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
@@ -93,26 +94,26 @@ public final class RaevyxBeamLightningRenderer {
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_STYLE,
-                1.0F, 0.0F, 0.0F);
+                1.0F, 0.0F, 0.0F, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_AURA_STYLE,
-                1.0F, 0.0F, 0.0F);
+                1.0F, 0.0F, 0.0F, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_FAINT_AURA_STYLE,
-                0.05F, 0.0F, 0.0F);
+                0.05F, 0.0F, 0.0F, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SWIRL_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_SWIRL_STYLE,
-                1.0F, 0.0F, 0.0F);
+                1.0F, 0.0F, 0.0F, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SECOND_SWIRL_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_SECOND_SWIRL_STYLE,
-                0.0F, 0.0F, 0.0F);
+                0.0F, 0.0F, 0.0F, firstPersonView);
         BeamGrainRenderer.renderEmitter(poseStack, bufferSource, FAST_LINE_TEXTURES,
                 beamLength, visibility, ageInTicks, entitySeed ^ FAST_LINE_SEED_SALT,
                 FAST_LINE_EMITTER_STYLE, beamStartWorld, beamEndWorld,
-                0.0F, 0.0F, 0.0F);
+                0.0F, 0.0F, 0.0F, firstPersonView);
     }
 }

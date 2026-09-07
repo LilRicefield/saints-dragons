@@ -2,6 +2,8 @@ package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+import net.minecraft.client.CameraType;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -23,6 +25,7 @@ import java.util.WeakHashMap;
 
 public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final float BEAM_SHAKE_INTENSITY = 0.01F;
+    private static final double FIRST_PERSON_START_OFFSET = 1.0D;
 
     private static final class BeamState {
         float visibility;
@@ -108,20 +111,35 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float mx = (float) ((mouthWorld.x - ox) / scale);
         float my = (float) ((mouthWorld.y - oy) / scale);
         float mz = (float) ((mouthWorld.z - oz) / scale);
-        poseStack.pushPose();
-        poseStack.translate(mx + shakeByX, my + shakeByY, mz + shakeByZ);
-        poseStack.mulPose(Axis.YP.rotationDegrees(((Mth.PI / 2F) - yRot) * Mth.RAD_TO_DEG));
-        poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(45));
         float visScale = beaming ? easeOutCubic(state.visibility) : state.visibility;
         visScale = Mth.clamp(visScale, 0f, 1f);
         float renderLength = beaming
                 ? Math.max(0.001F, length * visScale)
                 : length;
-        Vec3 renderedEndWorld = mouthWorld.add(vec3.scale(renderLength * scale));
+
+        Minecraft minecraft = Minecraft.getInstance();
+        boolean localRiderFirstPerson = minecraft.player != null
+                && animatable.getControllingPassenger() == minecraft.player
+                && minecraft.options.getCameraType() == CameraType.FIRST_PERSON;
+        double renderedWorldLength = renderLength * scale;
+        double startOffsetWorld = localRiderFirstPerson
+                ? Math.min(FIRST_PERSON_START_OFFSET,
+                Math.max(0.0D, renderedWorldLength - 0.05D))
+                : 0.0D;
+        float startOffsetLocal = (float) (startOffsetWorld / scale);
+        float visualRenderLength = Math.max(0.001F, renderLength - startOffsetLocal);
+        Vec3 visualStartWorld = mouthWorld.add(vec3.scale(startOffsetWorld));
+        Vec3 renderedEndWorld = mouthWorld.add(vec3.scale(renderedWorldLength));
+
+        poseStack.pushPose();
+        poseStack.translate(mx + shakeByX, my + shakeByY, mz + shakeByZ);
+        poseStack.mulPose(Axis.YP.rotationDegrees(((Mth.PI / 2F) - yRot) * Mth.RAD_TO_DEG));
+        poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(45));
+        poseStack.translate(0.0F, 0.0F, startOffsetLocal);
         RaevyxBeamLightningRenderer.render(animatable, poseStack, bufferSource,
-                renderLength, visScale, ageInTicks,
-                mouthWorld, renderedEndWorld);
+                visualRenderLength, visScale, ageInTicks,
+                visualStartWorld, renderedEndWorld, localRiderFirstPerson);
         poseStack.popPose();
     }
 

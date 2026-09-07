@@ -92,7 +92,8 @@ public final class BeamGrainRenderer {
                                      ResourceLocation[] textures, float beamLength, float visibility,
                                      float ageInTicks, long seed, RibbonEmitterStyle style,
                                      Vec3 beamStartWorld, Vec3 beamEndWorld,
-                                     float red, float green, float blue) {
+                                     float red, float green, float blue,
+                                     boolean firstPersonView) {
         if (textures == null || textures.length == 0 || style == null
                 || beamStartWorld == null || beamEndWorld == null
                 || beamLength <= 0.05F || visibility <= 0.01F) {
@@ -120,7 +121,7 @@ public final class BeamGrainRenderer {
         fallbackRight.normalize();
 
         Vector3f ribbonRight = new Vector3f(fallbackRight);
-        if (localView.lengthSquared() > 1.0E-6F) {
+        if (!firstPersonView && localView.lengthSquared() > 1.0E-6F) {
             localView.normalize();
             float radial = Mth.sqrt(localView.x() * localView.x()
                     + localView.y() * localView.y());
@@ -232,7 +233,7 @@ public final class BeamGrainRenderer {
             renderRibbonGrainPair(consumer, matrix,
                     ribbonNormal, ribbonRight, companionNormal, companionRight,
                     offsetX, offsetY, startZ, endZ, halfWidth,
-                    red, green, blue, alpha);
+                    red, green, blue, alpha, !firstPersonView);
         }
     }
 
@@ -243,11 +244,14 @@ public final class BeamGrainRenderer {
                                               float x, float y,
                                               float startZ, float endZ,
                                               float halfWidth,
-                                              float red, float green, float blue, float alpha) {
+                                              float red, float green, float blue, float alpha,
+                                              boolean companionPlane) {
         renderRibbonGrain(consumer, matrix, normal, right,
                 x, y, startZ, endZ, halfWidth, red, green, blue, alpha);
-        renderRibbonGrain(consumer, matrix, companionNormal, companionRight,
-                x, y, startZ, endZ, halfWidth, red, green, blue, alpha);
+        if (companionPlane) {
+            renderRibbonGrain(consumer, matrix, companionNormal, companionRight,
+                    x, y, startZ, endZ, halfWidth, red, green, blue, alpha);
+        }
     }
 
     private static void renderRibbonGrain(VertexConsumer consumer, Matrix4f matrix,

@@ -25,7 +25,8 @@ public final class BeamRibbonRenderer {
                               ResourceLocation texture, float beamLength,
                               float visibility, float ageInTicks,
                               Vec3 beamStartWorld, Vec3 beamEndWorld, Style style,
-                              float red, float green, float blue) {
+                              float red, float green, float blue,
+                              boolean firstPersonView) {
         if (texture == null || style == null || beamStartWorld == null || beamEndWorld == null
                 || beamLength <= 0.002F || visibility <= 0.001F) {
             return;
@@ -52,7 +53,7 @@ public final class BeamRibbonRenderer {
         fallbackRight.normalize();
 
         Vector3f localRight = new Vector3f(fallbackRight);
-        if (localView.lengthSquared() > 1.0E-6F) {
+        if (!firstPersonView && localView.lengthSquared() > 1.0E-6F) {
             localView.normalize();
             float radial = Mth.sqrt(localView.x() * localView.x()
                     + localView.y() * localView.y());
@@ -115,7 +116,7 @@ public final class BeamRibbonRenderer {
                         halfWidth, beamLength, startProgress, endProgress,
                         startU, endU, startTileFade, endTileFade,
                         fadeFraction, red, green, blue, baseAlpha,
-                        style.companionPlane());
+                        style.companionPlane() && !firstPersonView);
             }
         }
     }
