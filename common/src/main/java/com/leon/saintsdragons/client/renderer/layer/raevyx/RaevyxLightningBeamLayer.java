@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedWindRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.AttachedBillboardFlipbookRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.BillboardFlashRenderer;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import net.minecraft.resources.ResourceLocation;
@@ -35,6 +36,20 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final ResourceLocation ORIGIN_STAR_TEXTURE = SaintsDragonsCommon.rl("textures/particle/star.png");
     private static final BillboardFlashRenderer.Style ORIGIN_STAR_STYLE =
             new BillboardFlashRenderer.Style(5.0F, 4.0F, 1.0F, 0.85F, 0.3F);
+    private static final long MOUTH_SWIRL_SEED_SALT = 0x510E527FADE682D1L;
+    private static final ResourceLocation[] MOUTH_SWIRL_TEXTURES = new ResourceLocation[16];
+    private static final double MOUTH_SWIRL_FORWARD_OFFSET = 1.5D;
+    private static final float MOUTH_SWIRL_ANCHOR_U = 30.5F / 32.0F;
+    private static final float MOUTH_SWIRL_ANCHOR_V = 30.5F / 32.0F;
+    private static final AttachedBillboardFlipbookRenderer.Style MOUTH_SWIRL_STYLE =
+            new AttachedBillboardFlipbookRenderer.Style(1.5F, 1.0F, 0.5F, 3.0F, -1000.0F, 1000.0F,
+                    0.0F, 0.0F, true, MOUTH_SWIRL_ANCHOR_U, MOUTH_SWIRL_ANCHOR_V);
+
+    static {
+        for (int frame = 0; frame < MOUTH_SWIRL_TEXTURES.length; frame++) {
+            MOUTH_SWIRL_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/swirl" + frame + ".png");
+        }
+    }
     private static final ResourceLocation[] WIND_TEXTURES = {
             SaintsDragonsCommon.rl("textures/particle/wind.png"),
             SaintsDragonsCommon.rl("textures/particle/wind2.png")
@@ -42,6 +57,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
     private static final class BeamState {
         final AttachedWindRenderer.State wind = new AttachedWindRenderer.State();
+        final AttachedBillboardFlipbookRenderer.State mouthSwirl = new AttachedBillboardFlipbookRenderer.State();
         float visibility;
         float lastRenderTime = Float.NaN;
         Vec3 lastMouth;
@@ -68,6 +84,10 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         boolean beaming = animatable.isBeaming();
         float ageInTicks = animatable.tickCount + partialTick;
         float elapsedTicks = elapsedTicks(state, ageInTicks);
+        state.mouthSwirl.update(ageInTicks, beaming,
+                animatable.getUUID().getMostSignificantBits() ^ animatable.getUUID().getLeastSignificantBits()
+                        ^ MOUTH_SWIRL_SEED_SALT,
+                MOUTH_SWIRL_TEXTURES.length, MOUTH_SWIRL_STYLE);
         state.wind.update(ageInTicks, beaming,
                 animatable.getUUID().getMostSignificantBits() ^ animatable.getUUID().getLeastSignificantBits(),
                 WIND_TEXTURES.length);
@@ -81,7 +101,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 mouthWorld;
         Vec3 end;
         Vec3 liveMouth = null;
-        if (beaming || state.wind.isActive() || state.visibility > 0.001F) {
+        if (beaming || state.wind.isActive() || state.mouthSwirl.isActive() || state.visibility > 0.001F) {
             liveMouth = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
             if (liveMouth == null) {
                 liveMouth = animatable.computeBeamStartFallback(partialTick);
@@ -202,9 +222,20 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         double x = Mth.lerp(partialTick, entity.xo, entity.getX());
         double y = Mth.lerp(partialTick, entity.yo, entity.getY());
         double z = Mth.lerp(partialTick, entity.zo, entity.getZ());
+        Vec3 swirlWorld = state.liveMouth;
+        if (state.lastMouth != null && state.lastEnd != null) {
+            Vec3 beamDirection = state.lastEnd.subtract(state.lastMouth).normalize();
+            swirlWorld = swirlWorld.add(beamDirection.scale(MOUTH_SWIRL_FORWARD_OFFSET));
+        }
+        // Anchored to beamBone, independent of the star offset, beam shake and camera mode.
+        // Existing pulses finish their sprite sequence after emission stops.
+        boolean gold = entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        AttachedBillboardFlipbookRenderer.render(entityPose, buffers, MOUTH_SWIRL_TEXTURES,
+                state.mouthSwirl, MOUTH_SWIRL_STYLE, time,
+                (float) (swirlWorld.x - x), (float) (swirlWorld.y - y), (float) (swirlWorld.z - z),
+                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F);
         long seed = entity.getUUID().getMostSignificantBits()
                 ^ entity.getUUID().getLeastSignificantBits() ^ ORIGIN_STAR_SEED_SALT;
-        boolean gold = entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         Vec3 flashWorld = state.liveMouth;
         if (state.lastMouth != null && state.lastEnd != null) {
             Vec3 beamDirection = state.lastEnd.subtract(state.lastMouth).normalize();

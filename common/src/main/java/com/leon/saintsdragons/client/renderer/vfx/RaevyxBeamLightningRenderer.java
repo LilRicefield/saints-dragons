@@ -122,22 +122,25 @@ public final class RaevyxBeamLightningRenderer {
 
         long entitySeed = raevyx.getUUID().getMostSignificantBits()
                 ^ raevyx.getUUID().getLeastSignificantBits();
+        boolean gold = raevyx.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        float green = gold ? 0.75F : 0.0F;
+        float blue = gold ? 0.15F : 0.0F;
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_STYLE,
-                1.0F, 0.0F, 0.0F, firstPersonView);
+                1.0F, green, blue, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_AURA_STYLE,
-                1.0F, 0.0F, 0.0F, firstPersonView);
+                1.0F, green, blue, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_FAINT_AURA_STYLE,
-                0.05F, 0.0F, 0.0F, firstPersonView);
+                0.05F, green * 0.05F, blue * 0.05F, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SWIRL_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_SWIRL_STYLE,
-                1.0F, 0.0F, 0.0F, firstPersonView);
+                1.0F, green, blue, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SECOND_SWIRL_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_SECOND_SWIRL_STYLE,
@@ -146,12 +149,11 @@ public final class RaevyxBeamLightningRenderer {
                 beamLength, visibility, ageInTicks, entitySeed ^ FAST_LINE_SEED_SALT,
                 FAST_LINE_EMITTER_STYLE, beamStartWorld, beamEndWorld,
                 0.0F, 0.0F, 0.0F, firstPersonView);
-        boolean gold = raevyx.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         BeamStarFlashRenderer.renderAnimated(poseStack, bufferSource,
                 LIGHTNING_ZAP_TEXTURES, LIGHTNING_ZAP_FRAME_TICKS,
                 beamLength, visibility, ageInTicks, entitySeed ^ LIGHTNING_ZAP_SEED_SALT,
                 LIGHTNING_ZAP_STYLE, beamStartWorld, beamEndWorld,
-                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F, firstPersonView);
+                1.0F, green, blue, firstPersonView);
     }
 
     /** Called after the model pose is restored so stars face the camera independently of the beam. */

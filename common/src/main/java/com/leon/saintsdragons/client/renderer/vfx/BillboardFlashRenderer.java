@@ -60,6 +60,17 @@ public final class BillboardFlashRenderer {
                                   ResourceLocation texture, float centerX, float centerY, float centerZ,
                                   float halfSize, float angle,
                                   float red, float green, float blue, float alpha) {
+        renderAnchoredQuad(poseStack, buffers, texture, centerX, centerY, centerZ,
+                halfSize, angle, red, green, blue, alpha, 0.5F, 0.5F);
+    }
+
+    /** Keep a chosen texture point at the supplied position while rotating the billboard.
+     * Texture coordinates run from (0,0) at the top-left to (1,1) at the bottom-right. */
+    public static void renderAnchoredQuad(PoseStack poseStack, MultiBufferSource buffers,
+                                          ResourceLocation texture, float centerX, float centerY, float centerZ,
+                                          float halfSize, float angle,
+                                          float red, float green, float blue, float alpha,
+                                          float anchorU, float anchorV) {
         if (texture == null || halfSize <= 0.001F || alpha <= 0.01F) {
             return;
         }
@@ -69,6 +80,8 @@ public final class BillboardFlashRenderer {
             // Position first, face the viewer, then rotate only within the billboard plane.
             poseStack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
             poseStack.mulPose(Axis.ZP.rotation(angle));
+            poseStack.translate(-(anchorU * 2.0F - 1.0F) * halfSize,
+                    -(1.0F - anchorV * 2.0F) * halfSize, 0.0F);
             PoseStack.Pose pose = poseStack.last();
             VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(texture));
             vertex(consumer, pose.pose(), pose.normal(), -halfSize, -halfSize, 0, 1, red, green, blue, alpha);
