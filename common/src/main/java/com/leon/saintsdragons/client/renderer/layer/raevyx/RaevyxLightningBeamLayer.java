@@ -30,6 +30,7 @@ import java.util.WeakHashMap;
 public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final float BEAM_SHAKE_INTENSITY = 0.01F;
     private static final double FIRST_PERSON_START_OFFSET = 1.0D;
+    private static final double ORIGIN_STAR_FORWARD_OFFSET = 2.0D;
     private static final long ORIGIN_STAR_SEED_SALT = 0x3C6EF372FE94F82BL;
     private static final ResourceLocation ORIGIN_STAR_TEXTURE = SaintsDragonsCommon.rl("textures/particle/star.png");
     private static final BillboardFlashRenderer.Style ORIGIN_STAR_STYLE =
@@ -46,6 +47,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 lastMouth;
         Vec3 lastEnd;
         Vec3 smoothedEnd;
+        Vec3 liveMouth;
+        Matrix4f starBeamPose;
+        float starBeamLength;
     }
     private static final Map<Raevyx, BeamState> STATES = new WeakHashMap<>();
     private static final float APPEAR_TICKS = 5f;
@@ -59,6 +63,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
                        float partialTick, int packedLight, int packedOverlay) {
 
         BeamState state = STATES.computeIfAbsent(animatable, k -> new BeamState());
+        // Never reuse geometry from an earlier frame when this render exits early.
+        state.starBeamPose = null;
         boolean beaming = animatable.isBeaming();
         float ageInTicks = animatable.tickCount + partialTick;
         float elapsedTicks = elapsedTicks(state, ageInTicks);
@@ -87,18 +93,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         double oz = Mth.lerp(partialTick, animatable.zo, animatable.getZ());
         float scale = Raevyx.MODEL_SCALE;
         float visScale = Mth.clamp(beaming ? easeOutCubic(state.visibility) : state.visibility, 0f, 1f);
-        if (liveMouth != null && visScale > 0.01F) {
-            // Center on the mouth pivot itself. A forward bone offset sweeps an arc
-            // around this pivot when the head turns, which looks like an orbiting flash.
-            // Sprite rotation/shrink remains centered and does not move this anchor.
-            long seed = animatable.getUUID().getMostSignificantBits()
-                    ^ animatable.getUUID().getLeastSignificantBits() ^ ORIGIN_STAR_SEED_SALT;
-            boolean gold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
-            BillboardFlashRenderer.render(poseStack, bufferSource, ORIGIN_STAR_TEXTURE,
-                    (float) ((liveMouth.x - ox) / scale), (float) ((liveMouth.y - oy) / scale),
-                    (float) ((liveMouth.z - oz) / scale), visScale, ageInTicks, seed, ORIGIN_STAR_STYLE,
-                    1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F);
-        }
+        // Draw the flash later, after GeckoLib restores the unrotated entity pose.
+        state.liveMouth = liveMouth;
 
         if (beaming) {
             mouthWorld = liveMouth;
@@ -179,10 +175,45 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
         poseStack.mulPose(Axis.ZP.rotationDegrees(45));
         poseStack.translate(0.0F, 0.0F, startOffsetLocal);
+        // Retain the exact beam placement for moving star centers, not their orientation.
+        state.starBeamPose = new Matrix4f(poseStack.last().pose());
+        state.starBeamLength = visualRenderLength;
         RaevyxBeamLightningRenderer.render(animatable, poseStack, bufferSource,
                 visualRenderLength, visScale, ageInTicks,
                 visualStartWorld, renderedEndWorld, localRiderFirstPerson);
         poseStack.popPose();
+    }
+
+    public static void renderFlashes(Raevyx entity, PoseStack entityPose,
+                                        MultiBufferSource buffers, float partialTick) {
+        BeamState state = STATES.get(entity);
+        float time = entity.tickCount + partialTick;
+        if (state == null || state.liveMouth == null || state.lastRenderTime != time) {
+            return;
+        }
+        float visibility = entity.isBeaming() ? easeOutCubic(state.visibility) : state.visibility;
+        if (state.starBeamPose != null) {
+            // Cancel the outer pose only to recover entity-relative particle positions.
+            // The billboard itself receives the clean pose and camera quaternion.
+            Matrix4f beamToEntity = new Matrix4f(entityPose.last().pose()).invert().mul(state.starBeamPose);
+            RaevyxBeamLightningRenderer.renderStars(entity, entityPose, buffers, beamToEntity,
+                    state.starBeamLength, visibility, time);
+        }
+        double x = Mth.lerp(partialTick, entity.xo, entity.getX());
+        double y = Mth.lerp(partialTick, entity.yo, entity.getY());
+        double z = Mth.lerp(partialTick, entity.zo, entity.getZ());
+        long seed = entity.getUUID().getMostSignificantBits()
+                ^ entity.getUUID().getLeastSignificantBits() ^ ORIGIN_STAR_SEED_SALT;
+        boolean gold = entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        Vec3 flashWorld = state.liveMouth;
+        if (state.lastMouth != null && state.lastEnd != null) {
+            Vec3 beamDirection = state.lastEnd.subtract(state.lastMouth).normalize();
+            flashWorld = flashWorld.add(beamDirection.scale(ORIGIN_STAR_FORWARD_OFFSET));
+        }
+        BillboardFlashRenderer.render(entityPose, buffers, ORIGIN_STAR_TEXTURE,
+                (float) (flashWorld.x - x), (float) (flashWorld.y - y),
+                (float) (flashWorld.z - z), visibility, time, seed, ORIGIN_STAR_STYLE,
+                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F);
     }
 
     private static float elapsedTicks(BeamState state, float renderTime) {

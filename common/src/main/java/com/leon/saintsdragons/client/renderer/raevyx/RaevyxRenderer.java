@@ -91,6 +91,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     @Override
     protected void afterDragonRender(Raevyx entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+        RaevyxLightningBeamLayer.renderFlashes(entity, poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
                 getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),

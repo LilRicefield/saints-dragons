@@ -29,7 +29,22 @@ public final class BeamStarFlashRenderer {
                               float red, float green, float blue, boolean firstPersonView) {
         renderFlashes(poseStack, bufferSource, texture, null, 1.0F,
                 beamLength, visibility, ageInTicks, seed, style, beamStartWorld, beamEndWorld,
-                red, green, blue, firstPersonView);
+                red, green, blue, firstPersonView, null, 1.0F);
+    }
+
+    /** Draw from the unrotated entity pose. The transform affects spawn positions only;
+     * camera-facing geometry is shared with the stationary mouth flash. */
+    public static void renderBillboards(PoseStack entityPose, MultiBufferSource buffers,
+                                        ResourceLocation texture, float beamLength, float visibility,
+                                        float ageInTicks, long seed, Style style,
+                                        Matrix4f beamToEntity, float worldScale,
+                                        float red, float green, float blue) {
+        if (beamToEntity == null || worldScale <= 0.0F) {
+            return;
+        }
+        renderFlashes(entityPose, buffers, texture, null, 1.0F,
+                beamLength, visibility, ageInTicks, seed, style, null, null,
+                red, green, blue, false, beamToEntity, worldScale);
     }
 
     public static void renderAnimated(PoseStack poseStack, MultiBufferSource bufferSource,
@@ -42,7 +57,7 @@ public final class BeamStarFlashRenderer {
         }
         renderFlashes(poseStack, bufferSource, null, textures, frameDurationTicks,
                 beamLength, visibility, ageInTicks, seed, style, beamStartWorld, beamEndWorld,
-                red, green, blue, firstPersonView);
+                red, green, blue, firstPersonView, null, 1.0F);
     }
 
     private static void renderFlashes(PoseStack poseStack, MultiBufferSource bufferSource,
@@ -50,9 +65,10 @@ public final class BeamStarFlashRenderer {
                                      float frameDurationTicks, float beamLength, float visibility,
                                      float ageInTicks, long seed, Style style,
                                      Vec3 beamStartWorld, Vec3 beamEndWorld,
-                                     float red, float green, float blue, boolean firstPersonView) {
+                                     float red, float green, float blue, boolean firstPersonView,
+                                     Matrix4f billboardTransform, float billboardScale) {
         if ((texture == null && textures == null) || style == null
-                || beamStartWorld == null || beamEndWorld == null
+                || (billboardTransform == null && (beamStartWorld == null || beamEndWorld == null))
                 || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
@@ -65,30 +81,32 @@ public final class BeamStarFlashRenderer {
         PoseStack.Pose pose = poseStack.last();
         Matrix4f matrix = pose.pose();
         Matrix3f normalMatrix = pose.normal();
-        Matrix3f worldToLocal = new Matrix3f(normalMatrix).invert();
-        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vector3f ribbonRight = new Vector3f(camera.getLeftVector()).negate();
-        worldToLocal.transform(ribbonRight);
-        ribbonRight.z = 0.0F;
-        if (ribbonRight.lengthSquared() <= 1.0E-6F) {
-            ribbonRight.set(1.0F, 0.0F, 0.0F);
-        }
-        ribbonRight.normalize();
-        // Match the beam: camera-right for the rider, camera-facing crossed
-        // longitudinal planes for everyone else.
-        if (!firstPersonView) {
-            Vec3 view = camera.getPosition().subtract(beamStartWorld.add(beamEndWorld).scale(0.5D));
-            Vector3f localView = new Vector3f((float) view.x, (float) view.y, (float) view.z);
-            worldToLocal.transform(localView);
-            if (localView.lengthSquared() > 1.0E-6F) {
-                localView.normalize();
-                float radial = Mth.sqrt(localView.x() * localView.x() + localView.y() * localView.y());
-                if (radial > 1.0E-5F) {
-                    Vector3f viewRight = new Vector3f(-localView.y(), localView.x(), 0.0F).normalize();
-                    if (viewRight.dot(ribbonRight) < 0.0F) {
-                        viewRight.negate();
+        Vector3f ribbonRight = new Vector3f(1.0F, 0.0F, 0.0F);
+        if (billboardTransform == null) {
+            Matrix3f worldToLocal = new Matrix3f(normalMatrix).invert();
+            var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            ribbonRight.set(camera.getLeftVector()).negate();
+            worldToLocal.transform(ribbonRight);
+            ribbonRight.z = 0.0F;
+            if (ribbonRight.lengthSquared() <= 1.0E-6F) {
+                ribbonRight.set(1.0F, 0.0F, 0.0F);
+            }
+            ribbonRight.normalize();
+            // Keep the existing ribbon orientation for non-billboard flashes (including zaps).
+            if (!firstPersonView) {
+                Vec3 view = camera.getPosition().subtract(beamStartWorld.add(beamEndWorld).scale(0.5D));
+                Vector3f localView = new Vector3f((float) view.x, (float) view.y, (float) view.z);
+                worldToLocal.transform(localView);
+                if (localView.lengthSquared() > 1.0E-6F) {
+                    localView.normalize();
+                    float radial = Mth.sqrt(localView.x() * localView.x() + localView.y() * localView.y());
+                    if (radial > 1.0E-5F) {
+                        Vector3f viewRight = new Vector3f(-localView.y(), localView.x(), 0.0F).normalize();
+                        if (viewRight.dot(ribbonRight) < 0.0F) {
+                            viewRight.negate();
+                        }
+                        ribbonRight.lerp(viewRight, smoothStep((radial - 0.05F) / 0.15F)).normalize();
                     }
-                    ribbonRight.lerp(viewRight, smoothStep((radial - 0.05F) / 0.15F)).normalize();
                 }
             }
         }
@@ -165,8 +183,15 @@ public final class BeamStarFlashRenderer {
             if (frameTexture == null) {
                 continue;
             }
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(frameTexture));
             float angle = startingAngle + turns * Mth.TWO_PI * life;
+            if (billboardTransform != null) {
+                Vector3f center = billboardTransform.transformPosition(new Vector3f(centerX, centerY, centerZ));
+                BillboardFlashRenderer.renderQuad(poseStack, bufferSource, frameTexture,
+                        center.x(), center.y(), center.z(), halfSize * billboardScale, angle,
+                        red, green, blue, alpha);
+                continue;
+            }
+            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(frameTexture));
             renderPlanarStar(consumer, matrix, normalMatrix,
                     ribbonRight, beamForward,
                     centerX, centerY, centerZ,

@@ -6,6 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
 
 public final class RaevyxBeamLightningRenderer {
     private static final ResourceLocation LIGHTNING_BEAM_TEXTURE =
@@ -151,9 +152,17 @@ public final class RaevyxBeamLightningRenderer {
                 beamLength, visibility, ageInTicks, entitySeed ^ LIGHTNING_ZAP_SEED_SALT,
                 LIGHTNING_ZAP_STYLE, beamStartWorld, beamEndWorld,
                 1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F, firstPersonView);
-        BeamStarFlashRenderer.render(poseStack, bufferSource, STAR_TEXTURE,
+    }
+
+    /** Called after the model pose is restored so stars face the camera independently of the beam. */
+    public static void renderStars(Raevyx raevyx, PoseStack entityPose, MultiBufferSource bufferSource,
+                                   Matrix4f beamToEntity, float beamLength, float visibility, float ageInTicks) {
+        long entitySeed = raevyx.getUUID().getMostSignificantBits()
+                ^ raevyx.getUUID().getLeastSignificantBits();
+        boolean gold = raevyx.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        BeamStarFlashRenderer.renderBillboards(entityPose, bufferSource, STAR_TEXTURE,
                 beamLength, visibility, ageInTicks, entitySeed ^ STAR_SEED_SALT, STAR_STYLE,
-                beamStartWorld, beamEndWorld,
-                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F, firstPersonView);
+                beamToEntity, Raevyx.MODEL_SCALE,
+                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F);
     }
 }

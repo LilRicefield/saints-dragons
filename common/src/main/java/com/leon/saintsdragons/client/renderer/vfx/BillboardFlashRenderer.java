@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -12,7 +13,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Vector3f;
 
 public final class BillboardFlashRenderer {
     private static final long CYCLE_SEED = 0xD1B54A32D192ED03L;
@@ -50,36 +50,43 @@ public final class BillboardFlashRenderer {
         float turns = random.nextBoolean() ? style.turns() : -style.turns();
         float angle = startingAngle + turns * Mth.TWO_PI * life;
 
-        PoseStack.Pose pose = poseStack.last();
-        Matrix3f worldToLocal = new Matrix3f(pose.pose()).invert();
-        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        Vector3f right = worldToLocal.transform(new Vector3f(camera.getLeftVector()).negate());
-        Vector3f up = worldToLocal.transform(new Vector3f(camera.getUpVector()));
-        Vector3f rotatedRight = new Vector3f(right).mul(Mth.cos(angle)).fma(Mth.sin(angle), up);
-        Vector3f rotatedUp = new Vector3f(up).mul(Mth.cos(angle)).fma(-Mth.sin(angle), right);
-        Vector3f normal = new Vector3f(up).cross(right).normalize();
-        pose.normal().transform(normal).normalize();
-        VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(texture));
-        vertex(consumer, pose.pose(), normal, rotatedRight, rotatedUp,
-                centerX, centerY, centerZ, -halfSize, -halfSize, 0, 1, red, green, blue, alpha);
-        vertex(consumer, pose.pose(), normal, rotatedRight, rotatedUp,
-                centerX, centerY, centerZ, -halfSize, halfSize, 0, 0, red, green, blue, alpha);
-        vertex(consumer, pose.pose(), normal, rotatedRight, rotatedUp,
-                centerX, centerY, centerZ, halfSize, halfSize, 1, 0, red, green, blue, alpha);
-        vertex(consumer, pose.pose(), normal, rotatedRight, rotatedUp,
-                centerX, centerY, centerZ, halfSize, -halfSize, 1, 1, red, green, blue, alpha);
+        renderQuad(poseStack, buffers, texture, centerX, centerY, centerZ,
+                halfSize, angle, red, green, blue, alpha);
     }
 
-    private static void vertex(VertexConsumer consumer, Matrix4f matrix, Vector3f normal,
-                               Vector3f right, Vector3f up, float centerX, float centerY, float centerZ,
+    /** Shared camera-facing geometry for flashes with externally controlled motion and lifetime.
+     * Supply an unrotated entity/world pose; size and center are in world units, angle in radians. */
+    public static void renderQuad(PoseStack poseStack, MultiBufferSource buffers,
+                                  ResourceLocation texture, float centerX, float centerY, float centerZ,
+                                  float halfSize, float angle,
+                                  float red, float green, float blue, float alpha) {
+        if (texture == null || halfSize <= 0.001F || alpha <= 0.01F) {
+            return;
+        }
+        poseStack.pushPose();
+        try {
+            poseStack.translate(centerX, centerY, centerZ);
+            // Position first, face the viewer, then rotate only within the billboard plane.
+            poseStack.mulPose(Minecraft.getInstance().getEntityRenderDispatcher().cameraOrientation());
+            poseStack.mulPose(Axis.ZP.rotation(angle));
+            PoseStack.Pose pose = poseStack.last();
+            VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(texture));
+            vertex(consumer, pose.pose(), pose.normal(), -halfSize, -halfSize, 0, 1, red, green, blue, alpha);
+            vertex(consumer, pose.pose(), pose.normal(), -halfSize, halfSize, 0, 0, red, green, blue, alpha);
+            vertex(consumer, pose.pose(), pose.normal(), halfSize, halfSize, 1, 0, red, green, blue, alpha);
+            vertex(consumer, pose.pose(), pose.normal(), halfSize, -halfSize, 1, 1, red, green, blue, alpha);
+        } finally {
+            poseStack.popPose();
+        }
+    }
+
+    private static void vertex(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal,
                                float x, float y, float u, float v,
                                float red, float green, float blue, float alpha) {
-        consumer.vertex(matrix, centerX + right.x() * x + up.x() * y,
-                        centerY + right.y() * x + up.y() * y,
-                        centerZ + right.z() * x + up.z() * y)
+        consumer.vertex(matrix, x, y, 0.0F)
                 .color(red, green, blue, alpha).uv(u, v)
                 .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT)
-                .normal(normal.x(), normal.y(), normal.z()).endVertex();
+                .normal(normal, 0.0F, 0.0F, -1.0F).endVertex();
     }
 
     private static float smoothStep(float value) {
@@ -87,7 +94,6 @@ public final class BillboardFlashRenderer {
         return t * t * (3.0F - 2.0F * t);
     }
 
-    /** halfSize is in world units; timing is in ticks; turns is signed randomly per flash. */
     public record Style(float halfSize, float lifetimeTicks, float delayTicks, float alpha, float turns) {
     }
 }
