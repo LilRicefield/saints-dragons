@@ -77,7 +77,7 @@ public final class RaevyxBeamLightningRenderer {
                     16,
                     4.0F, 8.0F,
                     1.0F, 4.0F,
-                    0.9F, 0.8F, 0.25F,
+                    1.25F, 0.8F, 0.25F,
                     0.5F, 0.75F,
                     0.15F, 0.45F,
                     0.95F, 1.0F,
