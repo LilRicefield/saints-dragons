@@ -83,11 +83,28 @@ public final class RaevyxBeamLightningRenderer {
                     0.95F, 1.0F,
                     0.3F, 0.6F);
     private static final long STAR_SEED_SALT = 0x6A09E667F3BCC909L;
+    private static final ResourceLocation[] LIGHTNING_ZAP_TEXTURES = new ResourceLocation[16];
+    private static final float LIGHTNING_ZAP_FRAME_TICKS = 0.5F;
+    private static final BeamStarFlashRenderer.Style LIGHTNING_ZAP_STYLE =
+            new BeamStarFlashRenderer.Style(
+                    8,
+                    4.0F, 6.0F,
+                    2.0F, 6.0F,
+                    1.0F, 0.15F, 0.15F,
+                    0.9F, 1.15F,
+                    0.0F, 0.0F,
+                    0.95F, 0.85F,
+                    0.3F, 0.6F);
+    private static final long LIGHTNING_ZAP_SEED_SALT = 0xBB67AE8584CAA73BL;
 
     static {
         for (int frame = 0; frame < FAST_LINE_TEXTURES.length; frame++) {
             FAST_LINE_TEXTURES[frame] = SaintsDragonsCommon.rl(
                     "textures/particle/fast_lines" + frame + ".png");
+        }
+        for (int frame = 0; frame < LIGHTNING_ZAP_TEXTURES.length; frame++) {
+            LIGHTNING_ZAP_TEXTURES[frame] = SaintsDragonsCommon.rl(
+                    "textures/particle/lightning_zap" + frame + ".png");
         }
     }
 
@@ -129,6 +146,11 @@ public final class RaevyxBeamLightningRenderer {
                 FAST_LINE_EMITTER_STYLE, beamStartWorld, beamEndWorld,
                 0.0F, 0.0F, 0.0F, firstPersonView);
         boolean gold = raevyx.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        BeamStarFlashRenderer.renderAnimated(poseStack, bufferSource,
+                LIGHTNING_ZAP_TEXTURES, LIGHTNING_ZAP_FRAME_TICKS,
+                beamLength, visibility, ageInTicks, entitySeed ^ LIGHTNING_ZAP_SEED_SALT,
+                LIGHTNING_ZAP_STYLE, beamStartWorld, beamEndWorld,
+                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F, firstPersonView);
         BeamStarFlashRenderer.render(poseStack, bufferSource, STAR_TEXTURE,
                 beamLength, visibility, ageInTicks, entitySeed ^ STAR_SEED_SALT, STAR_STYLE,
                 beamStartWorld, beamEndWorld,

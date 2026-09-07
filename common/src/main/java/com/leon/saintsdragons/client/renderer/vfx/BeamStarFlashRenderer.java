@@ -27,7 +27,32 @@ public final class BeamStarFlashRenderer {
                               float ageInTicks, long seed, Style style,
                               Vec3 beamStartWorld, Vec3 beamEndWorld,
                               float red, float green, float blue, boolean firstPersonView) {
-        if (texture == null || style == null || beamStartWorld == null || beamEndWorld == null
+        renderFlashes(poseStack, bufferSource, texture, null, 1.0F,
+                beamLength, visibility, ageInTicks, seed, style, beamStartWorld, beamEndWorld,
+                red, green, blue, firstPersonView);
+    }
+
+    public static void renderAnimated(PoseStack poseStack, MultiBufferSource bufferSource,
+                                      ResourceLocation[] textures, float frameDurationTicks,
+                                      float beamLength, float visibility, float ageInTicks,
+                                      long seed, Style style, Vec3 beamStartWorld, Vec3 beamEndWorld,
+                                      float red, float green, float blue, boolean firstPersonView) {
+        if (textures == null || textures.length == 0) {
+            return;
+        }
+        renderFlashes(poseStack, bufferSource, null, textures, frameDurationTicks,
+                beamLength, visibility, ageInTicks, seed, style, beamStartWorld, beamEndWorld,
+                red, green, blue, firstPersonView);
+    }
+
+    private static void renderFlashes(PoseStack poseStack, MultiBufferSource bufferSource,
+                                     ResourceLocation texture, ResourceLocation[] textures,
+                                     float frameDurationTicks, float beamLength, float visibility,
+                                     float ageInTicks, long seed, Style style,
+                                     Vec3 beamStartWorld, Vec3 beamEndWorld,
+                                     float red, float green, float blue, boolean firstPersonView) {
+        if ((texture == null && textures == null) || style == null
+                || beamStartWorld == null || beamEndWorld == null
                 || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
@@ -69,14 +94,18 @@ public final class BeamStarFlashRenderer {
         }
         Vector3f companionRight = new Vector3f(-ribbonRight.y(), ribbonRight.x(), 0.0F);
         Vector3f beamForward = new Vector3f(0.0F, 0.0F, 1.0F);
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
         float time = Math.max(0.0F, ageInTicks);
+        float frameTicks = Math.max(0.05F, frameDurationTicks);
 
         for (int slot = 0; slot < style.count(); slot++) {
             long slotSeed = seed ^ SLOT_SEED * (slot + 1L);
             RandomSource slotRandom = RandomSource.create(slotSeed);
             float lifetime = Math.max(0.5F, Mth.lerp(slotRandom.nextFloat(),
                     style.minimumLifetimeTicks(), style.maximumLifetimeTicks()));
+            if (textures != null) {
+                // Animated flashes live for exactly one full sprite sequence.
+                lifetime = textures.length * frameTicks;
+            }
             float delay = Math.max(0.0F, Mth.lerp(slotRandom.nextFloat(),
                     style.minimumDelayTicks(), style.maximumDelayTicks()));
             float period = lifetime + delay;
@@ -112,9 +141,10 @@ public final class BeamStarFlashRenderer {
                 turns = -turns;
             }
 
-            float fadeIn = smoothStep(Mth.clamp(life / 0.12F, 0.0F, 1.0F));
-            float fadeOut = smoothStep(1.0F - life);
-            float shrink = 1.0F - smoothStep(life);
+            // Let animated artwork control its own appearance and disappearance.
+            float fadeIn = textures != null ? 1.0F : smoothStep(Mth.clamp(life / 0.12F, 0.0F, 1.0F));
+            float fadeOut = textures != null ? 1.0F : smoothStep(1.0F - life);
+            float shrink = textures != null ? 1.0F : 1.0F - smoothStep(life);
             float alpha = style.alpha() * visibility * fadeIn * fadeOut;
             float halfSize = startingSize * shrink;
             // Fade before the rotating quad reaches either end of the beam.
@@ -125,6 +155,17 @@ public final class BeamStarFlashRenderer {
                 continue;
             }
 
+            // Animate each flash from its own birth time, in order; randomize
+            // its timing and position, never the order of its sprite frames.
+            ResourceLocation frameTexture = texture;
+            if (textures != null) {
+                int frame = Math.min(textures.length - 1, Mth.floor(timeInCycle / frameTicks));
+                frameTexture = textures[frame];
+            }
+            if (frameTexture == null) {
+                continue;
+            }
+            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(frameTexture));
             float angle = startingAngle + turns * Mth.TWO_PI * life;
             renderPlanarStar(consumer, matrix, normalMatrix,
                     ribbonRight, beamForward,
