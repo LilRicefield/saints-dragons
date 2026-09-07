@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamIntroRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamImpactRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedWindRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedPlaneFlipbookRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedBillboardFlipbookRenderer;
@@ -75,6 +76,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 lastEnd;
         Vec3 smoothedEnd;
         Vec3 liveMouth;
+        Vec3 renderedTip;
         Matrix4f starBeamPose;
         float starBeamLength;
     }
@@ -92,6 +94,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         BeamState state = STATES.computeIfAbsent(animatable, k -> new BeamState());
         // Never reuse geometry from an earlier frame when this render exits early.
         state.starBeamPose = null;
+        state.renderedTip = null;
         boolean beaming = animatable.isBeaming();
         float ageInTicks = animatable.tickCount + partialTick;
         float elapsedTicks = elapsedTicks(state, ageInTicks);
@@ -209,6 +212,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         float visualRenderLength = Math.max(0.001F, renderLength - startOffsetLocal);
         Vec3 visualStartWorld = mouthWorld.add(vec3.scale(startOffsetWorld));
         Vec3 renderedEndWorld = mouthWorld.add(vec3.scale(renderedWorldLength));
+        if (beaming) {
+            state.renderedTip = renderedEndWorld;
+        }
 
         poseStack.pushPose();
         poseStack.translate(mx + shakeByX, my + shakeByY, mz + shakeByZ);
@@ -245,6 +251,14 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         double z = Mth.lerp(partialTick, entity.zo, entity.getZ());
         Vec3 introDirection = state.lastMouth != null && state.lastEnd != null
                 ? state.lastEnd.subtract(state.lastMouth) : entity.getViewVector(partialTick);
+        if (entity.isBeaming() && state.renderedTip != null) {
+            float fireAge = entity.getClientBeamFireAge(partialTick);
+            // Joining while a beam is already active deliberately has no intro timestamp.
+            float impactAge = fireAge >= 0.0F ? fireAge : time;
+            RaevyxBeamImpactRenderer.render(entityPose, buffers, state.renderedTip.subtract(x, y, z),
+                    introDirection, impactAge, entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD,
+                    entity.getUUID().getMostSignificantBits() ^ entity.getUUID().getLeastSignificantBits());
+        }
         RaevyxBeamIntroRenderer.render(entity, entityPose, buffers, partialTick,
                 state.liveMouth.subtract(x, y, z), introDirection);
         Vec3 swirlWorld = state.liveMouth;
