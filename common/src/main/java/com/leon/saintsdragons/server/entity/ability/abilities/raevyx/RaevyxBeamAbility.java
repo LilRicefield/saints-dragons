@@ -68,7 +68,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beam_start");
             if (!wyvern.level().isClientSide) {
                 float pitch = 0.9f + wyvern.getRandom().nextFloat() * 0.2f;
-                wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_START.get(), 1.8f, pitch, 28);
+                wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_START.get(), 1.8f, pitch, 40);
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
@@ -154,7 +154,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beam_stop");
             if (!wyvern.level().isClientSide) {
                 float pitch = 0.95f + wyvern.getRandom().nextFloat() * 0.15f;
-                wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_STOP.get(), 1.6f, pitch, 34);
+                wyvern.getSoundHandler().playMovingEntitySound(ModSounds.RAEVYX_LIGHTNING_BEAM_STOP.get(), 1.6f, pitch, 50);
             }
         }
         beamLoopActive = false;
