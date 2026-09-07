@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedWindRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.AttachedPlaneFlipbookRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedBillboardFlipbookRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.BillboardFlashRenderer;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
@@ -42,12 +43,20 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final float MOUTH_SWIRL_ANCHOR_U = 30.5F / 32.0F;
     private static final float MOUTH_SWIRL_ANCHOR_V = 30.5F / 32.0F;
     private static final AttachedBillboardFlipbookRenderer.Style MOUTH_SWIRL_STYLE =
-            new AttachedBillboardFlipbookRenderer.Style(1.5F, 1.0F, 0.5F, 3.0F, -1000.0F, 1000.0F,
+            new AttachedBillboardFlipbookRenderer.Style(1.75F, 1.0F, 0.5F, 3.0F, -1000.0F, 1000.0F,
                     0.0F, 0.0F, true, MOUTH_SWIRL_ANCHOR_U, MOUTH_SWIRL_ANCHOR_V);
+
+    private static final long MOUTH_RING_SEED_SALT = 0x1F83D9ABFB41BD6BL;
+    private static final ResourceLocation[] MOUTH_RING_TEXTURES = new ResourceLocation[8];
+    private static final AttachedPlaneFlipbookRenderer.Style MOUTH_RING_STYLE =
+            new AttachedPlaneFlipbookRenderer.Style(2.5F, 1.0F, 0.5F, 3.0F, 1.05F);
 
     static {
         for (int frame = 0; frame < MOUTH_SWIRL_TEXTURES.length; frame++) {
             MOUTH_SWIRL_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/swirl" + frame + ".png");
+        }
+        for (int frame = 0; frame < MOUTH_RING_TEXTURES.length; frame++) {
+            MOUTH_RING_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/second_impact_ring" + frame + ".png");
         }
     }
     private static final ResourceLocation[] WIND_TEXTURES = {
@@ -57,6 +66,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
     private static final class BeamState {
         final AttachedWindRenderer.State wind = new AttachedWindRenderer.State();
+        final AttachedPlaneFlipbookRenderer.State mouthRing = new AttachedPlaneFlipbookRenderer.State();
         final AttachedBillboardFlipbookRenderer.State mouthSwirl = new AttachedBillboardFlipbookRenderer.State();
         float visibility;
         float lastRenderTime = Float.NaN;
@@ -84,6 +94,10 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         boolean beaming = animatable.isBeaming();
         float ageInTicks = animatable.tickCount + partialTick;
         float elapsedTicks = elapsedTicks(state, ageInTicks);
+        state.mouthRing.update(ageInTicks, beaming,
+                animatable.getUUID().getMostSignificantBits() ^ animatable.getUUID().getLeastSignificantBits()
+                        ^ MOUTH_RING_SEED_SALT,
+                MOUTH_RING_TEXTURES.length, MOUTH_RING_STYLE);
         state.mouthSwirl.update(ageInTicks, beaming,
                 animatable.getUUID().getMostSignificantBits() ^ animatable.getUUID().getLeastSignificantBits()
                         ^ MOUTH_SWIRL_SEED_SALT,
@@ -101,7 +115,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 mouthWorld;
         Vec3 end;
         Vec3 liveMouth = null;
-        if (beaming || state.wind.isActive() || state.mouthSwirl.isActive() || state.visibility > 0.001F) {
+        if (beaming || state.wind.isActive() || state.mouthRing.isActive()
+                || state.mouthSwirl.isActive() || state.visibility > 0.001F) {
             liveMouth = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
             if (liveMouth == null) {
                 liveMouth = animatable.computeBeamStartFallback(partialTick);
@@ -141,7 +156,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             state.lastEnd = end;
         } else {
             if (state.lastMouth == null || state.lastEnd == null
-                    || (state.visibility <= 0.001F && !state.wind.isActive())) {
+                    || (state.visibility <= 0.001F && !state.wind.isActive() && !state.mouthRing.isActive())) {
                 state.lastMouth = null;
                 state.lastEnd = null;
                 state.smoothedEnd = null;
@@ -157,12 +172,16 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 vec3 = rawBeamPosition.normalize();
         float xRot = (float) Math.acos(vec3.y);
         float yRot = (float) Math.atan2(vec3.z, vec3.x);
-        if (state.wind.isActive() && liveMouth != null) {
+        if ((state.wind.isActive() || state.mouthRing.isActive()) && liveMouth != null) {
             poseStack.pushPose();
             poseStack.translate((liveMouth.x - ox) / scale, (liveMouth.y - oy) / scale, (liveMouth.z - oz) / scale);
             poseStack.mulPose(Axis.YP.rotationDegrees(((Mth.PI / 2F) - yRot) * Mth.RAD_TO_DEG));
             poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
             AttachedWindRenderer.render(poseStack, bufferSource, WIND_TEXTURES, state.wind, ageInTicks);
+            boolean gold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+            AttachedPlaneFlipbookRenderer.render(poseStack, bufferSource, MOUTH_RING_TEXTURES,
+                    state.mouthRing, MOUTH_RING_STYLE, ageInTicks,
+                    1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F);
             poseStack.popPose();
         }
         float shakeByX = (float) Math.sin(ageInTicks * 4F) * BEAM_SHAKE_INTENSITY;
