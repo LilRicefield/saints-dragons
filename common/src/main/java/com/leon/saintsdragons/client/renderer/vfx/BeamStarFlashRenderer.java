@@ -10,9 +10,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
-import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class BeamStarFlashRenderer {
@@ -25,8 +25,10 @@ public final class BeamStarFlashRenderer {
     public static void render(PoseStack poseStack, MultiBufferSource bufferSource,
                               ResourceLocation texture, float beamLength, float visibility,
                               float ageInTicks, long seed, Style style,
-                              float red, float green, float blue) {
-        if (texture == null || style == null || beamLength <= 0.05F || visibility <= 0.01F) {
+                              Vec3 beamStartWorld, Vec3 beamEndWorld,
+                              float red, float green, float blue, boolean firstPersonView) {
+        if (texture == null || style == null || beamStartWorld == null || beamEndWorld == null
+                || beamLength <= 0.05F || visibility <= 0.01F) {
             return;
         }
 
@@ -39,12 +41,34 @@ public final class BeamStarFlashRenderer {
         Matrix4f matrix = pose.pose();
         Matrix3f normalMatrix = pose.normal();
         Matrix3f worldToLocal = new Matrix3f(normalMatrix).invert();
-        Quaternionf cameraRotation = new Quaternionf(
-                Minecraft.getInstance().gameRenderer.getMainCamera().rotation());
-        Vector3f localCameraRight = new Vector3f(1.0F, 0.0F, 0.0F).rotate(cameraRotation);
-        Vector3f localCameraUp = new Vector3f(0.0F, 1.0F, 0.0F).rotate(cameraRotation);
-        worldToLocal.transform(localCameraRight).normalize();
-        worldToLocal.transform(localCameraUp).normalize();
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        Vector3f ribbonRight = new Vector3f(camera.getLeftVector()).negate();
+        worldToLocal.transform(ribbonRight);
+        ribbonRight.z = 0.0F;
+        if (ribbonRight.lengthSquared() <= 1.0E-6F) {
+            ribbonRight.set(1.0F, 0.0F, 0.0F);
+        }
+        ribbonRight.normalize();
+        // Match the beam: camera-right for the rider, camera-facing crossed
+        // longitudinal planes for everyone else.
+        if (!firstPersonView) {
+            Vec3 view = camera.getPosition().subtract(beamStartWorld.add(beamEndWorld).scale(0.5D));
+            Vector3f localView = new Vector3f((float) view.x, (float) view.y, (float) view.z);
+            worldToLocal.transform(localView);
+            if (localView.lengthSquared() > 1.0E-6F) {
+                localView.normalize();
+                float radial = Mth.sqrt(localView.x() * localView.x() + localView.y() * localView.y());
+                if (radial > 1.0E-5F) {
+                    Vector3f viewRight = new Vector3f(-localView.y(), localView.x(), 0.0F).normalize();
+                    if (viewRight.dot(ribbonRight) < 0.0F) {
+                        viewRight.negate();
+                    }
+                    ribbonRight.lerp(viewRight, smoothStep((radial - 0.05F) / 0.15F)).normalize();
+                }
+            }
+        }
+        Vector3f companionRight = new Vector3f(-ribbonRight.y(), ribbonRight.x(), 0.0F);
+        Vector3f beamForward = new Vector3f(0.0F, 0.0F, 1.0F);
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
         float time = Math.max(0.0F, ageInTicks);
 
@@ -70,6 +94,11 @@ public final class BeamStarFlashRenderer {
             float startingSize = style.halfSize() * randomizedScale * visibility;
             float inset = Math.min(startingSize, renderLength * 0.5F);
             float centerZ = Mth.lerp(cycleRandom.nextFloat(), inset, renderLength - inset);
+            float speed = Mth.lerp(cycleRandom.nextFloat(), style.minimumSpeed(), style.maximumSpeed());
+            centerZ += timeInCycle * speed;
+            if (centerZ >= renderLength) {
+                continue;
+            }
             float radialAngle = cycleRandom.nextFloat() * Mth.TWO_PI;
             float radialOffset = Math.max(0.0F, style.surfaceOffset()
                     + (cycleRandom.nextFloat() * 2.0F - 1.0F) * style.lateralJitter())
@@ -88,19 +117,29 @@ public final class BeamStarFlashRenderer {
             float shrink = 1.0F - smoothStep(life);
             float alpha = style.alpha() * visibility * fadeIn * fadeOut;
             float halfSize = startingSize * shrink;
+            // Fade before the rotating quad reaches either end of the beam.
+            float endFadeDistance = Math.max(startingSize * 2.0F, 0.01F);
+            alpha *= smoothStep(centerZ / endFadeDistance)
+                    * smoothStep((renderLength - centerZ) / endFadeDistance);
             if (alpha <= 0.01F || halfSize <= 0.001F) {
                 continue;
             }
 
             float angle = startingAngle + turns * Mth.TWO_PI * life;
-            renderBillboardStar(consumer, matrix, normalMatrix,
-                    localCameraRight, localCameraUp,
+            renderPlanarStar(consumer, matrix, normalMatrix,
+                    ribbonRight, beamForward,
                     centerX, centerY, centerZ,
                     halfSize, angle, red, green, blue, alpha);
+            if (!firstPersonView) {
+                renderPlanarStar(consumer, matrix, normalMatrix,
+                        companionRight, beamForward,
+                        centerX, centerY, centerZ,
+                        halfSize, angle, red, green, blue, alpha);
+            }
         }
     }
 
-    private static void renderBillboardStar(VertexConsumer consumer, Matrix4f matrix,
+    private static void renderPlanarStar(VertexConsumer consumer, Matrix4f matrix,
                                             Matrix3f normalMatrix,
                                             Vector3f cameraRight, Vector3f cameraUp,
                                             float centerX, float centerY, float centerZ,
@@ -112,7 +151,9 @@ public final class BeamStarFlashRenderer {
                 .fma(sin, cameraUp);
         Vector3f rotatedUp = new Vector3f(cameraUp).mul(cos)
                 .fma(-sin, cameraRight);
-        Vector3f normal = new Vector3f(cameraRight).cross(cameraUp).normalize();
+        // Match the ribbon's forward x right normal: (-right.y, right.x, 0).
+        // Reversing this order makes stars shade opposite to the beam as it turns.
+        Vector3f normal = new Vector3f(cameraUp).cross(cameraRight).normalize();
         normalMatrix.transform(normal).normalize();
 
         emitDoubleSidedQuad(consumer, matrix, normal,
@@ -172,6 +213,7 @@ public final class BeamStarFlashRenderer {
                         float halfSize, float surfaceOffset, float lateralJitter,
                         float minimumScale, float maximumScale,
                         float minimumTurns, float maximumTurns,
-                        float beamCoverage, float alpha) {
+                        float beamCoverage, float alpha,
+                        float minimumSpeed, float maximumSpeed) {
     }
 }

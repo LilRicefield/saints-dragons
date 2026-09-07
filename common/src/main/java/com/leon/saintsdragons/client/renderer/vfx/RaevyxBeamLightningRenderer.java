@@ -70,6 +70,19 @@ public final class RaevyxBeamLightningRenderer {
                     0.5F, 0.25F, 0.75F, 0.85F,
                     0.75F, 0.25F);
     private static final long FAST_LINE_SEED_SALT = 0xD1B54A32D192ED03L;
+    private static final ResourceLocation STAR_TEXTURE =
+            SaintsDragonsCommon.rl("textures/particle/star.png");
+    private static final BeamStarFlashRenderer.Style STAR_STYLE =
+            new BeamStarFlashRenderer.Style(
+                    16,
+                    4.0F, 8.0F,
+                    1.0F, 4.0F,
+                    0.9F, 0.8F, 0.25F,
+                    0.5F, 0.75F,
+                    0.15F, 0.45F,
+                    0.95F, 1.0F,
+                    0.3F, 0.6F);
+    private static final long STAR_SEED_SALT = 0x6A09E667F3BCC909L;
 
     static {
         for (int frame = 0; frame < FAST_LINE_TEXTURES.length; frame++) {
@@ -115,5 +128,10 @@ public final class RaevyxBeamLightningRenderer {
                 beamLength, visibility, ageInTicks, entitySeed ^ FAST_LINE_SEED_SALT,
                 FAST_LINE_EMITTER_STYLE, beamStartWorld, beamEndWorld,
                 0.0F, 0.0F, 0.0F, firstPersonView);
+        boolean gold = raevyx.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+        BeamStarFlashRenderer.render(poseStack, bufferSource, STAR_TEXTURE,
+                beamLength, visibility, ageInTicks, entitySeed ^ STAR_SEED_SALT, STAR_STYLE,
+                beamStartWorld, beamEndWorld,
+                1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F, firstPersonView);
     }
 }
