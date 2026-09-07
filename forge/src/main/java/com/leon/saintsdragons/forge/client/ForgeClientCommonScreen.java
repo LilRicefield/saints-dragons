@@ -18,6 +18,12 @@ public final class ForgeClientCommonScreen extends ForgePagedConfigScreen {
     protected void buildEntries(List<ConfigEntry> entries) {
         entries.add(new SectionEntry(Component.translatable("saintsdragons.config_screen.client.camera_riding")));
         entries.add(new BooleanEntry(
+                Component.translatable("saintsdragons.config_screen.others.raevyx_beam_first_person"),
+                ForgeClientConfig.RAEVYX_BEAM_FIRST_PERSON_ENABLED::get,
+                ForgeClientConfig.RAEVYX_BEAM_FIRST_PERSON_ENABLED::set,
+                ForgeClientConfig.CLIENT_SPEC::save
+        ));
+        entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
                 ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED::get,
                 ForgeClientConfig.FIRST_PERSON_BANKING_CAMERA_ENABLED::set,

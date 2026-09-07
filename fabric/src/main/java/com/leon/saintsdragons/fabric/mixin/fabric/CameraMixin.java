@@ -117,7 +117,8 @@ public abstract class CameraMixin implements CameraAccessor {
             return;
         }
 
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
+                && FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()) {
             DragonCameraState.clearRoll();
             CameraLeanData.reset();
             return;
@@ -156,7 +157,8 @@ public abstract class CameraMixin implements CameraAccessor {
             return;
         }
 
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
+                && FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()) {
             return;
         }
 

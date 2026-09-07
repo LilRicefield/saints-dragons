@@ -86,7 +86,8 @@ public class FabricClientEventHandler {
         if (!FabricClientConfigAccess.isDiveCameraWobbleEnabled()) {
             return;
         }
-        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()
+                && FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()) {
             return;
         }
 
@@ -103,15 +104,9 @@ public class FabricClientEventHandler {
     }
 
     private static void handleRaevyxBeamCamera(Camera camera, Entity vehicle) {
-        if (!(vehicle instanceof Raevyx raevyx)) {
-            wasBeaming = false;
-            previousPerspective = null;
-            beamCameraForward = 0.0f;
-            beamCameraUp = 0.0f;
-            return;
-        }
-
-        boolean isBeaming = raevyx.isBeaming();
+        // Disabling the override or dismounting releases it just like ending the beam.
+        boolean isBeaming = FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()
+                && vehicle instanceof Raevyx raevyx && raevyx.isBeaming();
         Minecraft mc = Minecraft.getInstance();
         if (isBeaming && !wasBeaming) {
             previousPerspective = mc.options.getCameraType();
@@ -147,7 +142,8 @@ public class FabricClientEventHandler {
             return false;
         }
 
-        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()
+                && FabricClientConfigAccess.isRaevyxBeamFirstPersonEnabled()) {
             return false;
         }
 

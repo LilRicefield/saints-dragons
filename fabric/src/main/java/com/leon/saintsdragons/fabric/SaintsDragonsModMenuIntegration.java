@@ -629,6 +629,13 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
             List<AbstractConfigListEntry<?>> visualEntries = new ArrayList<>();
             List<AbstractConfigListEntry<?>> audioEntries = new ArrayList<>();
             cameraEntries.add(entryBuilder.startBooleanToggle(
+                    Component.translatable("saintsdragons.config_screen.others.raevyx_beam_first_person"),
+                    clientConfig.raevyxBeamFirstPersonEnabled
+            ).setDefaultValue(true)
+             .setTooltip(Component.translatable("saintsdragons.config_screen.others.raevyx_beam_first_person.tooltip"))
+             .setSaveConsumer(value -> clientConfig.raevyxBeamFirstPersonEnabled = value)
+             .build());
+            cameraEntries.add(entryBuilder.startBooleanToggle(
                 Component.translatable("saintsdragons.config_screen.others.first_person_banking_camera"),
                 clientConfig.firstPersonBankingCameraEnabled
         ).setDefaultValue(true)

@@ -6,6 +6,16 @@ public final class FabricClientConfigAccess {
     private FabricClientConfigAccess() {
     }
 
+    public static boolean isRaevyxBeamFirstPersonEnabled() {
+        try {
+            return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)
+                    .getConfig()
+                    .raevyxBeamFirstPersonEnabled;
+        } catch (RuntimeException ignored) {
+            return true;
+        }
+    }
+
     public static boolean isFirstPersonBankingCameraEnabled() {
         try {
             return AutoConfig.getConfigHolder(SaintsDragonsFabricClientConfig.class)

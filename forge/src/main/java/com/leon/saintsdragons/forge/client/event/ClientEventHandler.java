@@ -107,7 +107,8 @@ public class ClientEventHandler {
         if (!ForgeClientConfig.DIVE_CAMERA_WOBBLE_ENABLED.get()) {
             return;
         }
-        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()
+                && ForgeClientConfig.isRaevyxBeamFirstPersonEnabled()) {
             return;
         }
 
@@ -122,15 +123,9 @@ public class ClientEventHandler {
     }
 
     private static void handleRaevyxBeamCamera(ViewportEvent.ComputeCameraAngles event, Entity vehicle) {
-        if (!(vehicle instanceof Raevyx raevyx)) {
-            wasBeaming = false;
-            previousPerspective = null;
-            beamCameraForward = 0.0f;
-            beamCameraUp = 0.0f;
-            return;
-        }
-
-        boolean isBeaming = raevyx.isBeaming();
+        // Disabling the override or dismounting releases it just like ending the beam.
+        boolean isBeaming = ForgeClientConfig.isRaevyxBeamFirstPersonEnabled()
+                && vehicle instanceof Raevyx raevyx && raevyx.isBeaming();
         Minecraft mc = Minecraft.getInstance();
         if (isBeaming && !wasBeaming) {
             previousPerspective = mc.options.getCameraType();
@@ -164,7 +159,8 @@ public class ClientEventHandler {
             return false;
         }
 
-        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (vehicle instanceof Raevyx raevyx && raevyx.isBeaming()
+                && ForgeClientConfig.isRaevyxBeamFirstPersonEnabled()) {
             return false;
         }
 
@@ -202,7 +198,8 @@ public class ClientEventHandler {
             return true;
         }
 
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
+                && ForgeClientConfig.isRaevyxBeamFirstPersonEnabled()) {
             CameraLeanData.reset();
             DragonCameraState.clearRoll();
             return true;

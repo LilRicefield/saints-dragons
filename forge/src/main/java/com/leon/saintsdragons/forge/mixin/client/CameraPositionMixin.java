@@ -59,7 +59,8 @@ public abstract class CameraPositionMixin {
             CameraLeanData.reset();
             return;
         }
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
+                && ForgeClientConfig.isRaevyxBeamFirstPersonEnabled()) {
             DragonCameraState.clearRoll();
             CameraLeanData.reset();
             return;
@@ -85,7 +86,8 @@ public abstract class CameraPositionMixin {
         if (!(vehicle instanceof RideableDragonBase dragon) || !DragonSeatAnchoredCamera.supports(dragon)) {
             return;
         }
-        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()) {
+        if (dragon instanceof Raevyx raevyx && raevyx.isBeaming()
+                && ForgeClientConfig.isRaevyxBeamFirstPersonEnabled()) {
             return;
         }
 

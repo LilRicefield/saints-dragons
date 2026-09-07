@@ -8,6 +8,10 @@ import me.shedaniel.autoconfig.annotation.ConfigEntry;
 public final class SaintsDragonsFabricClientConfig implements ConfigData {
     @ConfigEntry.Category("client")
     @ConfigEntry.Gui.Tooltip
+    public boolean raevyxBeamFirstPersonEnabled = true;
+
+    @ConfigEntry.Category("client")
+    @ConfigEntry.Gui.Tooltip
     public boolean firstPersonBankingCameraEnabled = true;
 
     @ConfigEntry.Category("client")

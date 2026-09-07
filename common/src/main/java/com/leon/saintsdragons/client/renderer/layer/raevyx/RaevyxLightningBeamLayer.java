@@ -1,6 +1,10 @@
 package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.AttachedWindRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.BillboardFlashRenderer;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import net.minecraft.resources.ResourceLocation;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
@@ -26,8 +30,17 @@ import java.util.WeakHashMap;
 public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final float BEAM_SHAKE_INTENSITY = 0.01F;
     private static final double FIRST_PERSON_START_OFFSET = 1.0D;
+    private static final long ORIGIN_STAR_SEED_SALT = 0x3C6EF372FE94F82BL;
+    private static final ResourceLocation ORIGIN_STAR_TEXTURE = SaintsDragonsCommon.rl("textures/particle/star.png");
+    private static final BillboardFlashRenderer.Style ORIGIN_STAR_STYLE =
+            new BillboardFlashRenderer.Style(5.0F, 4.0F, 1.0F, 0.85F, 0.3F);
+    private static final ResourceLocation[] WIND_TEXTURES = {
+            SaintsDragonsCommon.rl("textures/particle/wind.png"),
+            SaintsDragonsCommon.rl("textures/particle/wind2.png")
+    };
 
     private static final class BeamState {
+        final AttachedWindRenderer.State wind = new AttachedWindRenderer.State();
         float visibility;
         float lastRenderTime = Float.NaN;
         Vec3 lastMouth;
@@ -49,6 +62,9 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         boolean beaming = animatable.isBeaming();
         float ageInTicks = animatable.tickCount + partialTick;
         float elapsedTicks = elapsedTicks(state, ageInTicks);
+        state.wind.update(ageInTicks, beaming,
+                animatable.getUUID().getMostSignificantBits() ^ animatable.getUUID().getLeastSignificantBits(),
+                WIND_TEXTURES.length);
 
         if (beaming) {
             state.visibility = Mth.clamp(state.visibility + elapsedTicks / APPEAR_TICKS, 0.0F, 1.0F);
@@ -58,11 +74,34 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
         Vec3 mouthWorld;
         Vec3 end;
+        Vec3 liveMouth = null;
+        if (beaming || state.wind.isActive() || state.visibility > 0.001F) {
+            liveMouth = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
+            if (liveMouth == null) {
+                liveMouth = animatable.computeBeamStartFallback(partialTick);
+            }
+        }
+
+        double ox = Mth.lerp(partialTick, animatable.xo, animatable.getX());
+        double oy = Mth.lerp(partialTick, animatable.yo, animatable.getY());
+        double oz = Mth.lerp(partialTick, animatable.zo, animatable.getZ());
+        float scale = Raevyx.MODEL_SCALE;
+        float visScale = Mth.clamp(beaming ? easeOutCubic(state.visibility) : state.visibility, 0f, 1f);
+        if (liveMouth != null && visScale > 0.01F) {
+            // Center on the mouth pivot itself. A forward bone offset sweeps an arc
+            // around this pivot when the head turns, which looks like an orbiting flash.
+            // Sprite rotation/shrink remains centered and does not move this anchor.
+            long seed = animatable.getUUID().getMostSignificantBits()
+                    ^ animatable.getUUID().getLeastSignificantBits() ^ ORIGIN_STAR_SEED_SALT;
+            boolean gold = animatable.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
+            BillboardFlashRenderer.render(poseStack, bufferSource, ORIGIN_STAR_TEXTURE,
+                    (float) ((liveMouth.x - ox) / scale), (float) ((liveMouth.y - oy) / scale),
+                    (float) ((liveMouth.z - oz) / scale), visScale, ageInTicks, seed, ORIGIN_STAR_STYLE,
+                    1.0F, gold ? 0.75F : 0.0F, gold ? 0.15F : 0.0F);
+        }
 
         if (beaming) {
-            Vec3 bonePos = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
-            Vec3 computedPos = animatable.computeBeamStartFallback(partialTick);
-            mouthWorld = bonePos != null ? bonePos : computedPos;
+            mouthWorld = liveMouth;
             Vec3 predictedEnd = predictBeamEnd(animatable, mouthWorld, partialTick);
             Vec3 serverEnd = animatable.getClientBeamEndPosition(partialTick);
             boolean isRiding = animatable.getControllingPassenger() != null;
@@ -85,7 +124,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             state.lastMouth = mouthWorld;
             state.lastEnd = end;
         } else {
-            if (state.lastMouth == null || state.lastEnd == null || state.visibility <= 0.001F) {
+            if (state.lastMouth == null || state.lastEnd == null
+                    || (state.visibility <= 0.001F && !state.wind.isActive())) {
                 state.lastMouth = null;
                 state.lastEnd = null;
                 state.smoothedEnd = null;
@@ -95,24 +135,26 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
             end = state.lastEnd;
         }
 
-        double ox = Mth.lerp(partialTick, animatable.xo, animatable.getX());
-        double oy = Mth.lerp(partialTick, animatable.yo, animatable.getY());
-        double oz = Mth.lerp(partialTick, animatable.zo, animatable.getZ());
-        float scale = Raevyx.MODEL_SCALE;
         Vec3 rawBeamPosition = end.subtract(mouthWorld);
         float length = (float) (rawBeamPosition.length() / scale);
         if (length <= 0.001f) return;
         Vec3 vec3 = rawBeamPosition.normalize();
         float xRot = (float) Math.acos(vec3.y);
         float yRot = (float) Math.atan2(vec3.z, vec3.x);
+        if (state.wind.isActive() && liveMouth != null) {
+            poseStack.pushPose();
+            poseStack.translate((liveMouth.x - ox) / scale, (liveMouth.y - oy) / scale, (liveMouth.z - oz) / scale);
+            poseStack.mulPose(Axis.YP.rotationDegrees(((Mth.PI / 2F) - yRot) * Mth.RAD_TO_DEG));
+            poseStack.mulPose(Axis.XP.rotationDegrees((-(Mth.PI / 2F) + xRot) * Mth.RAD_TO_DEG));
+            AttachedWindRenderer.render(poseStack, bufferSource, WIND_TEXTURES, state.wind, ageInTicks);
+            poseStack.popPose();
+        }
         float shakeByX = (float) Math.sin(ageInTicks * 4F) * BEAM_SHAKE_INTENSITY;
         float shakeByY = (float) Math.sin(ageInTicks * 4F + 1.2F) * BEAM_SHAKE_INTENSITY;
         float shakeByZ = (float) Math.sin(ageInTicks * 4F + 2.4F) * BEAM_SHAKE_INTENSITY;
         float mx = (float) ((mouthWorld.x - ox) / scale);
         float my = (float) ((mouthWorld.y - oy) / scale);
         float mz = (float) ((mouthWorld.z - oz) / scale);
-        float visScale = beaming ? easeOutCubic(state.visibility) : state.visibility;
-        visScale = Mth.clamp(visScale, 0f, 1f);
         float renderLength = beaming
                 ? Math.max(0.001F, length * visScale)
                 : length;

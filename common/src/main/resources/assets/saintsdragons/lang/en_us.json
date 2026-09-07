@@ -1194,6 +1194,8 @@
   "saintsdragons.config_screen.others.dragon_breeding": "Enable Dragon Breeding",
   "saintsdragons.config_screen.others.dragon_breeding.tooltip": "Server setting. When turned off, players cannot ready dragons for breeding and dragons cannot produce eggs",
   "saintsdragons.config_screen.others.first_person_banking_camera": "Enable First-Person Banking Camera",
+  "saintsdragons.config_screen.others.raevyx_beam_first_person": "Force First Person During Raevyx Beam",
+  "saintsdragons.config_screen.others.raevyx_beam_first_person.tooltip": "Automatically switches to the first-person beam camera while riding a beaming Raevyx. Turn off to keep your chosen perspective and normal riding camera. Client-only; takes effect immediately after saving",
   "saintsdragons.config_screen.others.first_person_banking_camera.tooltip": "Disables first-person banking and barrel-roll camera effects while riding dragons when turned off",
   "saintsdragons.config_screen.others.third_person_banking_camera": "Enable Third-Person Banking Camera",
   "saintsdragons.config_screen.others.third_person_banking_camera.tooltip": "Disables the side-to-side third-person camera offset caused by dragon banking when turned off",

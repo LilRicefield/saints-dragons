@@ -6,6 +6,7 @@ public final class ForgeClientConfig {
     public static final ForgeConfigSpec CLIENT_SPEC;
 
     public static ForgeConfigSpec.BooleanValue FIRST_PERSON_BANKING_CAMERA_ENABLED;
+    public static ForgeConfigSpec.BooleanValue RAEVYX_BEAM_FIRST_PERSON_ENABLED;
     public static ForgeConfigSpec.BooleanValue THIRD_PERSON_BANKING_CAMERA_ENABLED;
     public static ForgeConfigSpec.BooleanValue DIVE_CAMERA_WOBBLE_ENABLED;
     public static ForgeConfigSpec.BooleanValue DIVE_SPEED_LINES_ENABLED;
@@ -16,6 +17,9 @@ public final class ForgeClientConfig {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         builder.comment("Local client-only settings").push("client");
+        RAEVYX_BEAM_FIRST_PERSON_ENABLED = builder
+                .comment("Automatically switch to the first-person beam camera while riding a beaming Raevyx; disable to keep the normal riding camera")
+                .define("raevyx_beam_first_person", true);
         FIRST_PERSON_BANKING_CAMERA_ENABLED = builder
                 .comment("Enable first-person banking and barrel-roll camera effects while riding dragons")
                 .define("first_person_banking_camera", true);
@@ -37,6 +41,10 @@ public final class ForgeClientConfig {
         builder.pop();
 
         CLIENT_SPEC = builder.build();
+    }
+
+    public static boolean isRaevyxBeamFirstPersonEnabled() {
+        return RAEVYX_BEAM_FIRST_PERSON_ENABLED == null || RAEVYX_BEAM_FIRST_PERSON_ENABLED.get();
     }
 
     private ForgeClientConfig() {
