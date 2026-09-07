@@ -2,7 +2,9 @@
   "base_chance": 5,
   "catch_info": {
     "entity": "saintsdragons:moop",
-    "item": "saintsdragons:raw_moop"
+    "item": {
+      "identifier": "saintsdragons:raw_moop"
+    }
   },
   "difficulty": {
     "decay": 1.0,
@@ -17,7 +19,7 @@
         "is_flip": false,
         "moving_rate": 0.0,
         "reward": 15,
-        "sweet_spot_type": "starcatcher:normal",
+        "sweetspot_type": "starcatcher:normal",
         "texture_path": "starcatcher:textures/gui/minigame/spots/normal.png",
         "vanishing_rate": 0.0
       },
@@ -27,7 +29,7 @@
         "is_flip": false,
         "moving_rate": 0.0,
         "reward": 15,
-        "sweet_spot_type": "starcatcher:normal",
+        "sweetspot_type": "starcatcher:normal",
         "texture_path": "starcatcher:textures/gui/minigame/spots/normal.png",
         "vanishing_rate": 0.0
       }
@@ -38,21 +40,17 @@
   "restrictions": [
     {
       "type": "starcatcher:dimension",
-      "dimensions": [
-        "minecraft:overworld"
-      ],
-      "dimensions_blacklist": []
+      "dimension_entry": "overworld",
+      "translation_override": "dimension.minecraft.overworld"
     },
     {
       "type": "starcatcher:biome",
-      "biomes": [],
-      "biomes_blacklist": [],
-      "biomes_blacklist_tags": [],
-      "biomes_tags": [
-        "starcatcher:is_ocean",
-        "starcatcher:is_river",
-        "starcatcher:is_swamp"
-      ]
+      "biomes": [
+        "#starcatcher:is_ocean",
+        "#starcatcher:is_river",
+        "#starcatcher:is_swamp"
+      ],
+      "blacklist": []
     },
     {
       "type": "starcatcher:elevation_restriction",
@@ -68,5 +66,13 @@
     "deviation_weight_grams": 500.0,
     "golden_chance": 0.02
   },
-  "skips_minigame": false
+  "skips_minigame": false,
+  "textures": {
+    "buttons": "starcatcher:textures/gui/minigame/buttons.png",
+    "handle": "starcatcher:textures/gui/minigame/handle.png",
+    "rod": "starcatcher:textures/gui/minigame/rod.png",
+    "tank": "starcatcher:textures/gui/minigame/tanks/surface.png",
+    "treasure": "starcatcher:textures/gui/minigame/treasure.png",
+    "wheels": "starcatcher:textures/gui/minigame/wheels.png"
+  }
 }
