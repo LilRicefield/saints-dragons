@@ -25,16 +25,17 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
+    public static final int STARTUP_TICKS = 20;
     public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;
     private static final double AI_TARGET_HIT_RADIUS = 0.55D;
     private static final double RIDER_BEAM_RADIUS = 1.2D;
     private static final double AI_BEAM_RADIUS = 0.75D;
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, STARTUP_TICKS),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 400)
     };
     private static final DragonAbilitySection[] AI_TRACK = new DragonAbilitySection[] {
-            new AbilitySectionDuration(AbilitySectionType.STARTUP, 20),
+            new AbilitySectionDuration(AbilitySectionType.STARTUP, STARTUP_TICKS),
             new AbilitySectionDuration(AbilitySectionType.ACTIVE, 80)
     };
     private static final float DEFAULT_BEAM_DAMAGE = 20.0f;

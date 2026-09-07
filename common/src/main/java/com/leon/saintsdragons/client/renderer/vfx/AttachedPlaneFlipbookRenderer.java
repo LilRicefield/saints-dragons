@@ -60,29 +60,32 @@ public final class AttachedPlaneFlipbookRenderer {
     public static void render(PoseStack poseStack, MultiBufferSource buffers,
                               ResourceLocation[] textures, State state, Style style, float time,
                               float red, float green, float blue) {
+        for (Pulse pulse : state.pulses) {
+            renderOnce(poseStack, buffers, textures, style, time - pulse.birthTime(), pulse.angle(), red, green, blue);
+        }
+    }
+
+    /** Render an externally timed one-shot, without adding it to the repeating emitter. */
+    public static void renderOnce(PoseStack poseStack, MultiBufferSource buffers,
+                                  ResourceLocation[] textures, Style style, float age, float angle,
+                                  float red, float green, float blue) {
         float frameTicks = Math.max(0.05F, style.frameTicks());
         float lifetime = textures.length * frameTicks;
         float size = style.halfSize();
         float alpha = Mth.clamp(style.alpha(), 0.0F, 1.0F);
-        if (size <= 0.0F || alpha <= 0.0F) {
+        if (size <= 0.0F || alpha <= 0.0F || age < 0.0F || age >= lifetime) {
             return;
         }
         PoseStack.Pose pose = poseStack.last();
-        for (Pulse pulse : state.pulses) {
-            float age = time - pulse.birthTime();
-            if (age < 0.0F || age >= lifetime) {
-                continue;
-            }
-            int frame = Math.min(textures.length - 1, Mth.floor(age / frameTicks));
-            VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(textures[frame]));
-            float cos = Mth.cos(pulse.angle());
-            float sin = Mth.sin(pulse.angle());
-            // Same plane, winding and unculled render type as the attached wind effects.
-            vertex(consumer, pose.pose(), pose.normal(), -size, -size, style.forwardOffset(), cos, sin, 0, 1, red, green, blue, alpha);
-            vertex(consumer, pose.pose(), pose.normal(), size, -size, style.forwardOffset(), cos, sin, 1, 1, red, green, blue, alpha);
-            vertex(consumer, pose.pose(), pose.normal(), size, size, style.forwardOffset(), cos, sin, 1, 0, red, green, blue, alpha);
-            vertex(consumer, pose.pose(), pose.normal(), -size, size, style.forwardOffset(), cos, sin, 0, 0, red, green, blue, alpha);
-        }
+        int frame = Math.min(textures.length - 1, Mth.floor(age / frameTicks));
+        VertexConsumer consumer = buffers.getBuffer(RenderType.entityTranslucent(textures[frame]));
+        float cos = Mth.cos(angle);
+        float sin = Mth.sin(angle);
+        // Same plane, winding and unculled render type as the attached wind effects.
+        vertex(consumer, pose.pose(), pose.normal(), -size, -size, style.forwardOffset(), cos, sin, 0, 1, red, green, blue, alpha);
+        vertex(consumer, pose.pose(), pose.normal(), size, -size, style.forwardOffset(), cos, sin, 1, 1, red, green, blue, alpha);
+        vertex(consumer, pose.pose(), pose.normal(), size, size, style.forwardOffset(), cos, sin, 1, 0, red, green, blue, alpha);
+        vertex(consumer, pose.pose(), pose.normal(), -size, size, style.forwardOffset(), cos, sin, 0, 0, red, green, blue, alpha);
     }
 
     private static void vertex(VertexConsumer consumer, Matrix4f matrix, Matrix3f normal,

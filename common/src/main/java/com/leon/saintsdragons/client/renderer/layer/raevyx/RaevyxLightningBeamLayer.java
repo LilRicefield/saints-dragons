@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamIntroRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedWindRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedPlaneFlipbookRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedBillboardFlipbookRenderer;
@@ -115,7 +116,8 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         Vec3 mouthWorld;
         Vec3 end;
         Vec3 liveMouth = null;
-        if (beaming || state.wind.isActive() || state.mouthRing.isActive()
+        if (beaming || RaevyxBeamIntroRenderer.isActive(animatable, partialTick)
+                || state.wind.isActive() || state.mouthRing.isActive()
                 || state.mouthSwirl.isActive() || state.visibility > 0.001F) {
             liveMouth = getBoneWorldPositionInterpolated(bakedModel, "beamBone", animatable, partialTick);
             if (liveMouth == null) {
@@ -241,6 +243,10 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         double x = Mth.lerp(partialTick, entity.xo, entity.getX());
         double y = Mth.lerp(partialTick, entity.yo, entity.getY());
         double z = Mth.lerp(partialTick, entity.zo, entity.getZ());
+        Vec3 introDirection = state.lastMouth != null && state.lastEnd != null
+                ? state.lastEnd.subtract(state.lastMouth) : entity.getViewVector(partialTick);
+        RaevyxBeamIntroRenderer.render(entity, entityPose, buffers, partialTick,
+                state.liveMouth.subtract(x, y, z), introDirection);
         Vec3 swirlWorld = state.liveMouth;
         if (state.lastMouth != null && state.lastEnd != null) {
             Vec3 beamDirection = state.lastEnd.subtract(state.lastMouth).normalize();

@@ -272,6 +272,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private long lastLandingGameTime = Long.MIN_VALUE;
     private Vec3 prevClientBeamEnd = null;
     private Vec3 clientBeamEnd = null;
+    private int clientBeamChargeStartTick = -1;
+    private int clientBeamFireStartTick = -1;
+    private boolean clientWasBeamCharging;
+    private boolean clientWasBeaming;
+    private boolean clientBeamIntroInitialized;
     private Vec3 beamLookLerp = null;
     private Vec3 beamAimDir = null;
     private float beamYawOffsetRad = 0.0f;
@@ -1479,6 +1484,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             syncCustomDiveLoopEnabled();
         }
         if (level().isClientSide) {
+            tickClientSideUpdates();
             return;
         }
         tickSittingState();
@@ -1580,7 +1586,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             setAggressive(false);
         }
 
-        tickClientSideUpdates();
     }
 
     private void tickFlightLifecycle() {
@@ -1850,10 +1855,34 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     private void tickClientSideUpdates() {
         if (level().isClientSide) {
+            boolean beaming = isBeaming();
+            boolean charging = isBeamGlowActive() && !beaming;
+            if (charging && !clientWasBeamCharging) {
+                clientBeamChargeStartTick = tickCount;
+                clientBeamFireStartTick = -1;
+            } else if (!charging) {
+                clientBeamChargeStartTick = -1;
+            }
+            // Track transitions while off-screen too; don't replay a burst upon first seeing an active beam.
+            if (clientBeamIntroInitialized && beaming && !clientWasBeaming) {
+                clientBeamFireStartTick = tickCount;
+            }
+            clientWasBeamCharging = charging;
+            clientWasBeaming = beaming;
+            clientBeamIntroInitialized = true;
             this.prevClientBeamEnd = this.clientBeamEnd;
             this.clientBeamEnd = getBeamEndPosition();
         }
     }
+    public float getClientBeamChargeAge(float partialTick) {
+        return clientBeamChargeStartTick < 0 || !isBeamGlowActive() || isBeaming()
+                ? -1.0F : tickCount - clientBeamChargeStartTick + partialTick;
+    }
+
+    public float getClientBeamFireAge(float partialTick) {
+        return clientBeamFireStartTick < 0 ? -1.0F : tickCount - clientBeamFireStartTick + partialTick;
+    }
+
     private void tickControllers() {
         updateSittingProgress();
     }
