@@ -9,6 +9,8 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class RaevyxBeamLightningRenderer {
+    // Each full texture spans half the current beam, with overlapping edges for scrolling.
+    private static final float RIBBON_TEXTURE_CYCLES = 2.0F;
     private static final ResourceLocation LIGHTNING_BEAM_TEXTURE =
             SaintsDragonsCommon.rl("textures/particle/lightning_beam.png");
     private static final ResourceLocation LIGHTNING_BEAM_AURA_TEXTURE =
@@ -20,7 +22,7 @@ public final class RaevyxBeamLightningRenderer {
     private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_STYLE =
             new BeamRibbonRenderer.Style(
                     0.75F,
-                    1.0F,
+                    RIBBON_TEXTURE_CYCLES,
                     0.075F,
                     0.12F,
                     0.28F,
@@ -29,7 +31,7 @@ public final class RaevyxBeamLightningRenderer {
     private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_AURA_STYLE =
             new BeamRibbonRenderer.Style(
                     0.92F,
-                    1.0F,
+                    RIBBON_TEXTURE_CYCLES,
                     0.11F,
                     0.12F,
                     0.28F,
@@ -38,7 +40,7 @@ public final class RaevyxBeamLightningRenderer {
     private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_FAINT_AURA_STYLE =
             new BeamRibbonRenderer.Style(
                     1.16F,
-                    1.0F,
+                    RIBBON_TEXTURE_CYCLES,
                     0.14F,
                     0.12F,
                     0.28F,
@@ -47,7 +49,7 @@ public final class RaevyxBeamLightningRenderer {
     private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_SWIRL_STYLE =
             new BeamRibbonRenderer.Style(
                     0.88F,
-                    1.0F,
+                    RIBBON_TEXTURE_CYCLES,
                     0.09F,
                     0.5F,
                     0.28F,
@@ -56,7 +58,7 @@ public final class RaevyxBeamLightningRenderer {
     private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_SECOND_SWIRL_STYLE =
             new BeamRibbonRenderer.Style(
                     0.62F,
-                    1.0F,
+                    RIBBON_TEXTURE_CYCLES,
                     0.10F,
                     0.5F,
                     0.28F,

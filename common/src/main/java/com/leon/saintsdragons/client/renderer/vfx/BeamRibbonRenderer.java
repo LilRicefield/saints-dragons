@@ -80,8 +80,8 @@ public final class BeamRibbonRenderer {
         VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
 
         float halfWidth = Math.max(0.001F, style.halfWidth()) * visibility;
-        float textureCycles = Math.max(0.001F, style.textureCycles());
-        float tileSpan = 1.0F / textureCycles;
+        // A repeat count of two stretches each full texture across half the current beam.
+        float tileSpan = 1.0F / Math.max(0.001F, style.textureCycles());
         float tileOverlap = Mth.clamp(style.tileOverlapFraction(), 0.001F, 0.499F);
         float tileStep = tileSpan * (1.0F - tileOverlap);
         float scrollDistance = Mth.frac(Math.max(0.0F, ageInTicks)
@@ -100,7 +100,8 @@ public final class BeamRibbonRenderer {
                 continue;
             }
 
-            int tileSegments = Math.max(1,
+            // Even short tiles need interior vertices; both seam endpoints fade to zero.
+            int tileSegments = Math.max(4,
                     Mth.ceil((clippedEnd - clippedStart) * segments));
             for (int segment = 0; segment < tileSegments; segment++) {
                 float startProgress = Mth.lerp(segment / (float) tileSegments,
