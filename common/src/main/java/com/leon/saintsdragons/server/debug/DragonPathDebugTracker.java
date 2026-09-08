@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
@@ -470,7 +471,20 @@ public final class DragonPathDebugTracker {
                 .orElse("none");
         return "visible=" + visible + ",last=" + lastSeen + ",investigate=" + investigation
                 + ",heard=" + heard + ",targetHeard=" + heardTarget
-                + ",wakeTarget=" + wakeTarget;
+                + ",wakeTarget=" + wakeTarget + ",investigationState=" + investigationSummary(dragon);
+    }
+
+    private static String investigationSummary(DragonEntity dragon) {
+        for (DragonBrainDiagnostics.RegisteredBehaviour registered
+                : DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (registered.behaviour() instanceof DragonInvestigateTargetBehaviour<?> investigation) {
+                Map<String, String> details = investigation.getDragonBrainDebugDetails();
+                return details.get("phase") + ":" + details.get("outcome")
+                        + ",air=" + details.get("airborne_search")
+                        + ",searchTicks=" + details.get("search_ticks");
+            }
+        }
+        return "disabled";
     }
 
     private static String observationSummary(DragonEntity dragon,

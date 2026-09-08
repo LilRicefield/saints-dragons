@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -26,7 +27,8 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
         TransitionDragon transition = transitionDragon(context.dragon());
-        if (transition == null || !transition.dragon().isAerial()) {
+        if (transition == null || !transition.dragon().isAerial()
+                || DragonInvestigation.shouldPreserveAirbornePursuit(context.dragon())) {
             return false;
         }
 

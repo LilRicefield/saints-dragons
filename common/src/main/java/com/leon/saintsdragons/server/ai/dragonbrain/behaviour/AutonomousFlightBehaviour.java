@@ -43,7 +43,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
         T dragon = context.dragon();
-        if (!canUseAutonomousFlight(dragon)) {
+        if (!canUseAutonomousFlight(dragon) || dragon.getAIMovement().hasActiveLandingTransition()) {
             return false;
         }
         boolean recoveringGroundPath = shouldRecoverFromGroundPathFailure(dragon);

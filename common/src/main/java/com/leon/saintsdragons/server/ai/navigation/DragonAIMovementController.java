@@ -328,7 +328,7 @@ public class DragonAIMovementController {
         return beginGroundTransition(landingPlan, speed);
     }
 
-    private boolean hasActiveLandingTransition() {
+    public boolean hasActiveLandingTransition() {
         if (currentWaypoint == null || currentWaypoint.mode() != MovementMode.LANDING) {
             return false;
         }

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.Entity;
@@ -69,6 +70,10 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
         }
 
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
+        if (!hasLineOfSight && DragonInvestigation.shouldPreserveAirbornePursuit(dragon)) {
+            lostSightTicks = 0;
+            return;
+        }
         int lostSightLandingTicks = settings.lostSightLandingTicks();
         if (lostSightLandingTicks > 0 && !isGroundRouteAbandoned(context)) {
             lostSightTicks = hasLineOfSight ? 0 : lostSightTicks + 1;
@@ -93,6 +98,9 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
         DragonAirCombatSettings settings = settings(dragon);
         lostSightTicks = 0;
         stopAirCombat(context);
+        if (DragonInvestigation.shouldPreserveAirbornePursuit(dragon)) {
+            return;
+        }
         if (isGroundRouteAbandoned(context)) {
             context.memories().get(DragonMemories.TACTICAL_LANDING_POSITION)
                     .filter(position -> dragon.isAerial())

@@ -44,7 +44,7 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
     @Override
     public void updateActivity(Brain<Stegonaut> brain, Stegonaut dragon) {
         if (canFight(dragon)) {
-            brain.setActiveActivityIfPossible(Activity.FIGHT);
+            brain.setActiveActivityIfPossible(getCombatActivity(brain));
             return;
         }
 

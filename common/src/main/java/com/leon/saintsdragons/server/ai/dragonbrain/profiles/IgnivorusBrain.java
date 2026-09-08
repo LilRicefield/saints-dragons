@@ -37,7 +37,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
         }
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (canFight(dragon, target)) {
-            brain.setActiveActivityIfPossible(Activity.FIGHT);
+            brain.setActiveActivityIfPossible(getCombatActivity(brain));
         } else {
             brain.useDefaultActivity();
         }

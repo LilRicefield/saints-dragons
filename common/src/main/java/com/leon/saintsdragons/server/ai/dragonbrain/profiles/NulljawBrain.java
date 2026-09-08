@@ -41,7 +41,7 @@ public final class NulljawBrain implements DragonBrainOwner<Nulljaw> {
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (NulljawShulkerBulletSensorBehaviour.isValidThreat(dragon, projectile)
                 || canFight(dragon, target)) {
-            brain.setActiveActivityIfPossible(Activity.FIGHT);
+            brain.setActiveActivityIfPossible(getCombatActivity(brain));
         } else {
             brain.useDefaultActivity();
         }

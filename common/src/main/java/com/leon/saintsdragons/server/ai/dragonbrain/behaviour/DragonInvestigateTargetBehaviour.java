@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
@@ -33,6 +34,8 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     private static final int SOURCE_WAYPOINT_REFRESH_TICKS = 10;
     private static final double SOURCE_WAYPOINT_REFRESH_DISTANCE_SQR = 2.0D * 2.0D;
     private static final double SOURCE_WAYPOINT_MIN_ADJUSTMENT_SQR = 0.75D * 0.75D;
+    private static final int AIR_SEARCH_TICKS = 20 * 6;
+    private static final int AIR_SEARCH_WAYPOINT_TICKS = 20 * 2;
 
     private final Deque<RecentLocation> recentLocations = new ArrayDeque<>();
     private int searchTicks;
@@ -42,6 +45,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     private DragonSensoryObservation activeObservation;
     private long nextSourceWaypointRefreshAt;
     private boolean trackingProjectileSource;
+    private boolean airborneSearch;
+    private Vec3 searchWaypoint;
+    private double searchAngle;
+    private int searchWaypointTicks;
     private String investigationKind = "none";
     private Phase phase = Phase.IDLE;
     private String outcome = "none";
@@ -53,7 +60,9 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
 
     @Override
     protected boolean canContinue(DragonBrainContext<T> context) {
-        return canInvestigate(context);
+        return canInvestigate(context)
+                && (!airborneSearch || (context.dragon().isAerial()
+                && !context.dragon().onGround() && !context.dragon().isInWaterOrBubble()));
     }
 
     @Override
@@ -65,6 +74,9 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         activeObservation = null;
         nextSourceWaypointRefreshAt = 0L;
         trackingProjectileSource = false;
+        airborneSearch = false;
+        searchWaypoint = null;
+        searchWaypointTicks = 0;
         investigationKind = "none";
         phase = Phase.IDLE;
         outcome = "none";
@@ -118,8 +130,13 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
             return;
         }
         if (issuedMovement && movement.hasFailed()) {
-            finish(context, dragon, Phase.FAILED, "path-failed", FAILED_LOCATION_MEMORY_TICKS);
-            return;
+            if (airborneSearch && phase == Phase.SEARCHING) {
+                stopOwnedMovement(dragon);
+                searchWaypoint = null;
+            } else {
+                finish(context, dragon, Phase.FAILED, "path-failed", FAILED_LOCATION_MEMORY_TICKS);
+                return;
+            }
         }
 
         dragon.getLookControl().setLookAt(
@@ -130,13 +147,21 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 dragon.getMaxHeadXRot()
         );
 
+        if (airborneSearch && phase == Phase.SEARCHING) {
+            tickAirSearch(context, dragon, profile);
+            return;
+        }
+
         double arrivalDistance = profile.arrivalDistance();
         boolean movementArrived = issuedMovement && movement.hasArrived();
         if (!movementArrived
                 && dragon.position().distanceToSqr(destination) > arrivalDistance * arrivalDistance) {
             searchTicks = 0;
             if (!issuedMovement) {
-                if (!movement.setWaypoint(destination, profile.investigationSpeed())) {
+                boolean accepted = airborneSearch
+                        ? movement.setAsyncAirWaypoint(destination, profile.investigationSpeed())
+                        : movement.setWaypoint(destination, profile.investigationSpeed());
+                if (!accepted) {
                     finish(context, dragon, Phase.FAILED, "movement-rejected", FAILED_LOCATION_MEMORY_TICKS);
                     return;
                 }
@@ -151,6 +176,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         stopOwnedMovement(dragon);
         phase = Phase.SEARCHING;
         outcome = "searching";
+        if (airborneSearch) {
+            tickAirSearch(context, dragon, profile);
+            return;
+        }
         searchTicks++;
         double angle = Math.toRadians((context.gameTime() * 9L) % 360L);
         dragon.getLookControl().setLookAt(
@@ -174,6 +203,13 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         LivingEntity source = resolveLivingSource(context);
         trackingProjectileSource = observation.kind() == DragonSensoryObservation.Kind.PROJECTILE
                 && source != null;
+        airborneSearch = !trackingProjectileSource
+                && dragon instanceof RideableFlyingDragon flying
+                && flying.isAerial() && !flying.onGround() && !flying.isInWaterOrBubble();
+        searchWaypoint = null;
+        searchWaypointTicks = 0;
+        searchAngle = Math.atan2(dragon.getZ() - observation.position().z,
+                dragon.getX() - observation.position().x);
         destination = trackingProjectileSource
                 ? source.getBoundingBox().getCenter()
                 : observation.position();
@@ -187,6 +223,41 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         if (!trackingProjectileSource
                 && wasRecentlySearched(destination, context.gameTime(), recentRadius * recentRadius)) {
             finish(context, dragon, Phase.SKIPPED_RECENT, "recent-location", 0);
+        }
+    }
+
+    private void tickAirSearch(DragonBrainContext<T> context,
+                               RideableDragonBase dragon,
+                               DragonPerceptionProfile profile) {
+        outcome = "searching-air";
+
+        if (++searchTicks >= AIR_SEARCH_TICKS) {
+            finish(context, dragon, Phase.COMPLETE, "searched", RECENT_LOCATION_MEMORY_TICKS);
+            return;
+        }
+        DragonAIMovementController movement = dragon.getAIMovement();
+        if (issuedMovement && (movement.hasArrived() || ++searchWaypointTicks >= AIR_SEARCH_WAYPOINT_TICKS)) {
+            stopOwnedMovement(dragon);
+            searchWaypoint = null;
+        }
+        if (issuedMovement) {
+            return;
+        }
+
+        double radius = Math.max(6.0D, dragon.getBbWidth() * 1.5D);
+        searchAngle += Math.PI / 2.0D;
+        Vec3 candidate = destination.add(Math.cos(searchAngle) * radius, 2.0D,
+                Math.sin(searchAngle) * radius);
+        if (!isDestinationUsable(context, candidate)
+                || !context.level().noCollision(dragon,
+                dragon.getBoundingBox().move(candidate.subtract(dragon.position())).deflate(1.0E-3D))) {
+            return;
+        }
+        if (movement.setAsyncAirWaypoint(candidate, profile.investigationSpeed())) {
+            searchWaypoint = candidate;
+            movementGeneration = movement.getMovementCommandGeneration();
+            issuedMovement = true;
+            searchWaypointTicks = 0;
         }
     }
 
@@ -262,7 +333,8 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
             return false;
         }
         BlockPos blockPos = BlockPos.containing(target.x, target.y, target.z);
-        return context.level().getWorldBorder().isWithinBounds(blockPos)
+        return !context.level().isOutsideBuildHeight(blockPos)
+                && context.level().getWorldBorder().isWithinBounds(blockPos)
                 && context.level().hasChunkAt(blockPos);
     }
 
@@ -279,6 +351,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                                         LivingEntity source) {
         if (source == null) {
             return false;
+        }
+        if (airborneSearch) {
+            return context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null) == source
+                    && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
         }
         if (activeObservation.kind() == DragonSensoryObservation.Kind.PROJECTILE
                 && DragonAwarenessMemory.get(dragon).isProjectileThreat(
@@ -302,6 +378,35 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         clearOwnedInvestigationMemories(context);
         phase = finalPhase;
         outcome = finalOutcome;
+        if (finalPhase == Phase.FAILED || finalPhase == Phase.SKIPPED_RECENT
+                || (finalPhase == Phase.COMPLETE && "searched".equals(finalOutcome))) {
+            landAfterAirSearch(context, dragon);
+        }
+    }
+
+    private void landAfterAirSearch(DragonBrainContext<T> context, RideableDragonBase dragon) {
+        if (!airborneSearch || activeObservation == null
+                || !(dragon instanceof RideableFlyingDragon flying)
+                || !(dragon instanceof DragonAirCombatSettingsProvider settings)
+                || !flying.isAerial() || flying.onGround()
+                || dragon.isVehicle() || dragon.isPassenger() || dragon.isOrderedToSit()
+                || dragon.isSleepLocked() || dragon.isDying()
+                || context.memories().has(DragonMemories.RESCUE_TARGET)
+                || context.memories().has(DragonMemories.INVESTIGATION_TARGET)
+                || context.memories().has(DragonMemories.LAST_SEEN_TARGET)
+                || context.memories().has(DragonMemories.HEARD_TARGET)
+                || context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
+            return;
+        }
+        LivingEntity target = dragon.getTarget();
+        LivingEntity rememberedTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        if ((target != null && !target.getUUID().equals(activeObservation.sourceUuid()))
+                || (rememberedTarget != null && !rememberedTarget.getUUID().equals(activeObservation.sourceUuid()))) {
+            return;
+        }
+        DragonTargetLifecycle.clearCombatTarget(context.memories(), context.dragon(), false);
+        dragon.getAIMovement().requestGroundTransition((LivingEntity) null,
+                settings.getAiAirCombatSettings().landingSpeed());
     }
 
     private void stopOwnedMovement(RideableDragonBase dragon) {
@@ -352,6 +457,12 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
 
     @Override
     protected void stop(DragonBrainContext<T> context) {
+        boolean expired = activeObservation != null
+                && (phase == Phase.TRAVELLING || phase == Phase.SEARCHING)
+                && !context.memories().has(DragonMemories.INVESTIGATION_TARGET)
+                && !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)
+                && (!issuedMovement || (context.dragon() instanceof RideableDragonBase dragon
+                && dragon.getAIMovement().isMovementCommandCurrent(movementGeneration)));
         if (context.dragon() instanceof RideableDragonBase dragon) {
             stopOwnedMovement(dragon);
         }
@@ -360,10 +471,17 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
             phase = Phase.CANCELLED;
             outcome = "state-changed";
         }
+        if (expired && context.dragon() instanceof RideableDragonBase dragon) {
+            landAfterAirSearch(context, dragon);
+            outcome = "memory-expired";
+        }
         destination = null;
         activeObservation = null;
         nextSourceWaypointRefreshAt = 0L;
         trackingProjectileSource = false;
+        airborneSearch = false;
+        searchWaypoint = null;
+        searchWaypointTicks = 0;
         searchTicks = 0;
     }
 
@@ -396,6 +514,8 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         details.put("search_ticks", Integer.toString(searchTicks));
         details.put("movement_owned", Boolean.toString(issuedMovement));
         details.put("tracking_source", Boolean.toString(trackingProjectileSource));
+        details.put("airborne_search", Boolean.toString(airborneSearch));
+        details.put("search_waypoint", searchWaypoint == null ? "none" : searchWaypoint.toString());
         details.put("recent_locations", Integer.toString(recentLocations.size()));
         return Map.copyOf(details);
     }

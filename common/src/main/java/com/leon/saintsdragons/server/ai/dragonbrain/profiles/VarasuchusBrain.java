@@ -77,7 +77,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
 
         if ((defendingAgainstRecentAttacker || defendingRoostIntruder || !wantsSleep)
                 && canFight(dragon)) {
-            brain.setActiveActivityIfPossible(Activity.FIGHT);
+            brain.setActiveActivityIfPossible(getCombatActivity(brain));
         } else {
             brain.useDefaultActivity();
         }

@@ -1,8 +1,14 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.perception;
 
+import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
@@ -18,6 +24,45 @@ public final class DragonInvestigation {
     private static final double OWNERLESS_PROJECTILE_COALESCE_DISTANCE_SQR = 4.0D * 4.0D;
 
     private DragonInvestigation() {
+    }
+
+    public static boolean shouldPreserveAirbornePursuit(DragonEntity dragon) {
+        if (!(dragon instanceof RideableFlyingDragon flying)
+                || !flying.isAerial() || flying.onGround()
+                || dragon.isInWaterOrBubble() || dragon.isVehicle() || dragon.isPassenger()
+                || dragon.isOrderedToSit() || dragon.isSleepLocked() || dragon.isDying()) {
+            return false;
+        }
+        var brain = dragon.getBrain();
+        LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
+        if (brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)) {
+            return false;
+        }
+        if (target == null) {
+
+            DragonSensoryObservation observation = brain.getMemory(DragonMemories.INVESTIGATION_TARGET)
+                    .orElse(null);
+            if (observation == null || observation.sourceUuid() == null
+                    || !(dragon.level() instanceof ServerLevel level)) {
+                return false;
+            }
+            Entity source = level.getEntity(observation.sourceUuid());
+            return source instanceof LivingEntity living
+                    && DragonTargetLifecycle.isValidTarget(dragon, living)
+                    && (dragon.getTarget() == null || dragon.getTarget() == living);
+        }
+        boolean withinCombatRange = flying.distanceToSqr(DragonTargetingHelper.movementAnchor(target))
+                <= DragonAirCombatHelper.maxAggroDistanceSqr(flying, 32.0D);
+        if (!DragonTargetLifecycle.isValidTarget(dragon, target)
+                || (brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true) && withinCombatRange)) {
+            return false;
+        }
+        return brain.getMemory(DragonMemories.INVESTIGATION_TARGET)
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent()
+                || brain.getMemory(DragonMemories.LAST_SEEN_TARGET)
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent()
+                || brain.getMemory(DragonMemories.HEARD_TARGET)
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid())).isPresent();
     }
 
     public static boolean remember(DragonEntity dragon, DragonSensoryObservation observation) {

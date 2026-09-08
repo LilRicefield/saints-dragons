@@ -40,7 +40,7 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
     public void updateActivity(Brain<Atroxiia> brain, Atroxiia dragon) {
         LivingEntity target = brain.getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         if (canFight(dragon, target)) {
-            brain.setActiveActivityIfPossible(Activity.FIGHT);
+            brain.setActiveActivityIfPossible(getCombatActivity(brain));
             return;
         }
 

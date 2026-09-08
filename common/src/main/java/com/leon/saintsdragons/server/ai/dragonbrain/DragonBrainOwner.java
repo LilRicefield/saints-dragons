@@ -105,12 +105,6 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
             DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
             updateActivity(brain, dragon);
-            if (brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
-                    && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
-                    && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
-                    && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)) {
-                brain.setActiveActivityIfPossible(Activity.IDLE);
-            }
             brain.tick(level, dragon);
         } finally {
             level.getProfiler().pop();
@@ -118,7 +112,19 @@ public interface DragonBrainOwner<T extends DragonEntity> {
     }
 
     default void updateActivity(Brain<T> brain, T dragon) {
-        brain.setActiveActivityToFirstValid(getDragonBrainActivityPriority());
+        if (getCombatActivity(brain) == Activity.IDLE) {
+            brain.setActiveActivityIfPossible(Activity.IDLE);
+        } else {
+            brain.setActiveActivityToFirstValid(getDragonBrainActivityPriority());
+        }
+    }
+
+    default Activity getCombatActivity(Brain<T> brain) {
+        return brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
+                && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
+                && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
+                && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)
+                ? Activity.IDLE : Activity.FIGHT;
     }
 
 }
