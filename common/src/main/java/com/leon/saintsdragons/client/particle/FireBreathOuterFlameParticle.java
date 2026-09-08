@@ -18,35 +18,42 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 
-public final class FireBreathFlickerParticle extends TextureSheetParticle {
-    private static final int FRAMES = 5;
-    private static final float FRAME_TICKS = 0.5F;
+public final class FireBreathOuterFlameParticle extends TextureSheetParticle {
+    private static final int FRAMES = 8;
+    private static final float FRAME_TICKS = 1.0F;
     private final SpriteSet sprites;
     private final float peakSize;
-    private final float spin;
     private double distance;
     private boolean stopped;
+    private final Vec3 origin;
+    private final Vec3 forward;
+    private final Vec3 outward;
+    private final float spreadReferenceSize;
 
-    private FireBreathFlickerParticle(ClientLevel level, double x, double y, double z,
+    private FireBreathOuterFlameParticle(ClientLevel level, double x, double y, double z,
                                     double vx, double vy, double vz, SpriteSet sprites) {
         super(level, x, y, z);
         this.sprites = sprites;
-        Vec3 forward = new Vec3(vx, vy, vz).normalize();
+        origin = new Vec3(x, y, z);
+        Vec3 input = new Vec3(vx, vy, vz);
+        forward = input.lengthSqr() > 1.0E-8 ? input.normalize() : new Vec3(0, 0, 1);
         double speed = Mth.clamp(new Vec3(vx, vy, vz).length(), 0.5, 12)
                 * (0.85 + random.nextDouble() * 0.15);
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 right = forward.cross(reference).normalize();
         Vec3 up = right.cross(forward).normalize();
-        Vec3 velocity = forward.add(right.scale((random.nextDouble() - 0.5) * 0.06))
-                .add(up.scale((random.nextDouble() - 0.5) * 0.06)).normalize().scale(speed);
+        double around = random.nextDouble() * Math.PI * 2;
+        outward = right.scale(Math.cos(around)).add(up.scale(Math.sin(around)))
+                .scale(Math.sqrt(random.nextDouble()));
+        spreadReferenceSize = 1.3F + random.nextFloat() * 0.4F;
+        Vec3 velocity = forward.scale(speed);
         this.xd = velocity.x;
         this.yd = velocity.y;
         this.zd = velocity.z;
         this.lifetime = Math.min(ExpandingBreathSection.MAX_TICKS,
-                (int) Math.ceil(ExpandingBreathSection.DEFAULT_RANGE / speed)) + 1;
+                (int) Math.ceil(ExpandingBreathSection.DEFAULT_RANGE / speed * 0.65)) + 1;
         this.peakSize = 0.85F + random.nextFloat() * 0.5F;
-        this.spin = (random.nextFloat() - 0.5F) * 0.08F;
-        this.roll = this.oRoll = random.nextFloat() * Mth.TWO_PI;
+        this.roll = this.oRoll = 0;
         this.hasPhysics = false;
         this.setSize(0.05F, 0.05F);
         this.quadSize = peakSize * 0.4F;
@@ -64,12 +71,18 @@ public final class FireBreathFlickerParticle extends TextureSheetParticle {
             remove();
             return;
         }
-        roll += spin;
         if (stopped) return;
         Vec3 start = new Vec3(x, y, z);
         Vec3 velocity = new Vec3(xd, yd, zd);
         double travel = Math.min(velocity.length(), ExpandingBreathSection.DEFAULT_RANGE - distance);
-        Vec3 end = start.add(velocity.normalize().scale(travel));
+        double nextDistance = distance + travel;
+        // After the mouth segment, move steadily outward without staged widening curves.
+        double finalSpread = 6.0 * (0.15 + 0.8 * Math.max(0,
+                ExpandingBreathSection.halfWidth(ExpandingBreathSection.DEFAULT_RANGE) - spreadReferenceSize));
+        double spreadProgress = Mth.clamp((nextDistance - 12.0)
+                / (ExpandingBreathSection.DEFAULT_RANGE - 12.0), 0.0, 1.0);
+        double spreadWidth = finalSpread * spreadProgress;
+        Vec3 end = origin.add(forward.scale(nextDistance)).add(outward.scale(spreadWidth));
         var contextEntity = Minecraft.getInstance().getCameraEntity();
         if (contextEntity == null || !level.hasChunksAt(BlockPos.containing(start), BlockPos.containing(end))) {
             remove();
@@ -78,7 +91,7 @@ public final class FireBreathFlickerParticle extends TextureSheetParticle {
         HitResult hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, contextEntity));
         if (hit.getType() == HitResult.Type.BLOCK) {
-            end = hit.getLocation().subtract(velocity.normalize().scale(0.03));
+            end = hit.getLocation().subtract(end.subtract(start).normalize().scale(0.03));
             stopped = true;
             lifetime = Math.min(lifetime, age + 3);
         }
@@ -91,7 +104,7 @@ public final class FireBreathFlickerParticle extends TextureSheetParticle {
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float renderAge = Math.max(0, age - 1 + partialTicks);
         setSprite(sprites.get((int) (renderAge / FRAME_TICKS) % FRAMES, FRAMES - 1));
-        float progress = Mth.clamp(renderAge / lifetime, 0, 1);
+        float progress = Mth.clamp(renderAge / (lifetime - 1.0F), 0, 1);
         float grow = smooth(Mth.clamp(progress / 0.18F, 0, 1));
         float fade = 1 - smooth(Mth.clamp((progress - 0.45F) / 0.55F, 0, 1));
         quadSize = peakSize * Mth.lerp(grow, 0.4F, 1.0F) * Mth.lerp(fade, 0.3F, 1.0F);
@@ -123,7 +136,8 @@ public final class FireBreathFlickerParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(@NotNull SimpleParticleType type, @NotNull ClientLevel level,
                                        double x, double y, double z, double vx, double vy, double vz) {
-            return new FireBreathFlickerParticle(level, x, y, z, vx, vy, vz, sprites);
+            return new FireBreathOuterFlameParticle(level, x, y, z, vx, vy, vz, sprites);
         }
     }
 }
+

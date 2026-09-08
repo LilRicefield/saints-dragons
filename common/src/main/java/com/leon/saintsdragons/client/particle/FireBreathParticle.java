@@ -46,6 +46,8 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private final boolean emitsEmber;
     private final int emberEmissionAge;
     private int embersEmitted;
+    private final int smokeEmissionAge;
+    private boolean emittedSmoke;
 
     private FireBreathParticle(ClientLevel level, double x, double y, double z, Vec3 velocity,
                               FireBreathParticleData data, SpriteSet sprites) {
@@ -68,6 +70,8 @@ public final class FireBreathParticle extends TextureSheetParticle {
         this.spread = right.scale(Math.cos(angle) * radius).add(up.scale(Math.sin(angle) * radius));
 
         this.lifetime = Math.min(ExpandingBreathSection.MAX_TICKS, (int) Math.ceil(range / speed)) + 1;
+        this.smokeEmissionAge = random.nextFloat() < 0.15F
+                ? 1 + random.nextInt(Math.max(1, lifetime - 1)) : -1;
         this.hasPhysics = false;
         this.roll = this.oRoll = random.nextFloat() * (float) (Math.PI * 2);
         this.quadSize = fullSize * 0.45F;
@@ -124,6 +128,14 @@ public final class FireBreathParticle extends TextureSheetParticle {
     }
 
     private void emitEmbers() {
+        if (!emittedSmoke && smokeEmissionAge >= 0 && (age >= smokeEmissionAge || impactAge >= 0)) {
+            emittedSmoke = true;
+            Vec3 position = new Vec3(xo, yo, zo).lerp(new Vec3(x, y, z), random.nextDouble());
+            Vec3 drift = impactAge >= 0 ? Vec3.ZERO : forward.scale(speed * 0.2);
+            Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_SMOKE.get(),
+                    position.x, position.y, position.z,
+                    drift.x, drift.y, drift.z);
+        }
         if (!emitsEmber || embersEmitted >= MAX_EMBERS || age < emberEmissionAge + embersEmitted * 2) return;
         embersEmitted++;
 
@@ -174,7 +186,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
         zo += behind.z;
         this.quadSize = flameSize * SMOKE_SCALE;
         this.setColor(0.8667F, 0.3137F, 0.0F);
-        this.alpha = 0.55F * fade;
+        this.alpha = fade;
         try {
             super.render(buffer, camera, partialTicks);
         } finally {
@@ -186,7 +198,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
             zo = oldZo;
             this.quadSize = flameSize;
             this.setColor(1.0F, 0.42F, 0.035F);
-            this.alpha = 0.9F * fade;
+            this.alpha = fade;
         }
         super.render(buffer, camera, partialTicks);
         x -= behind.x;
@@ -197,7 +209,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
         zo -= behind.z;
         this.quadSize = flameSize * CORE_SCALE;
         this.setColor(1.0F, 0.70F, 0.18F);
-        this.alpha = 0.95F * fade;
+        this.alpha = fade;
         try {
             super.render(buffer, camera, partialTicks);
         } finally {
@@ -209,7 +221,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
             zo = oldZo;
             this.quadSize = flameSize;
             this.setColor(1.0F, 0.6431F, 0.4157F);
-            this.alpha = 0.9F * fade;
+            this.alpha =  fade;
         }
     }
 
@@ -240,11 +252,37 @@ public final class FireBreathParticle extends TextureSheetParticle {
             Vec3 velocity = new Vec3(xSpeed, ySpeed, zSpeed);
             Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
                     x, y, z, xSpeed, ySpeed, zSpeed);
+            emitForwardGlows(level, new Vec3(x, y, z), velocity);
+            Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_OUTER_FLAME.get(),
+                    x, y, z, xSpeed, ySpeed, zSpeed);
             for (int i = 1; i < count; i++) {
                 Minecraft.getInstance().particleEngine.add(
                         new FireBreathParticle(level, x, y, z, velocity, data, sprites));
             }
             return new FireBreathParticle(level, x, y, z, velocity, data, sprites);
+        }
+
+        private void emitForwardGlows(ClientLevel level, Vec3 origin, Vec3 velocity) {
+            Vec3 forward = velocity.lengthSqr() > 1.0E-8 ? velocity.normalize() : new Vec3(0, 0, 1);
+            Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
+            Vec3 right = forward.cross(reference).normalize();
+            Vec3 up = right.cross(forward).normalize();
+            for (int i = 0; i < 2; i++) {
+                double around = level.random.nextDouble() * Math.PI * 2;
+                double spreadAngle = Math.toRadians(10 + level.random.nextDouble() * 15);
+                Vec3 outward = right.scale(Math.cos(around)).add(up.scale(Math.sin(around)));
+                double launchSpeed = Mth.clamp(velocity.length(), 0.5, 12)
+                        * (0.85 + level.random.nextDouble() * 0.15);
+                Vec3 launch = forward.scale(Math.cos(spreadAngle))
+                        .add(outward.scale(Math.sin(spreadAngle))).scale(launchSpeed);
+                Particle glow = Minecraft.getInstance().particleEngine.createParticle(
+                        ModParticles.GLOWING_EMITTER.get(), origin.x, origin.y, origin.z,
+                        launch.x, launch.y, launch.z);
+                if (glow != null) {
+                    glow.setColor(1.0F, 0.55F, 0.12F);
+                    if (glow instanceof GlowingEmitterParticle spark) spark.enableTerrainCollision();
+                }
+            }
         }
     }
 }

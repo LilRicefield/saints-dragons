@@ -68,6 +68,10 @@ public final class GlowingEmitterParticle extends TextureSheetParticle {
         this.quadSize = this.startSize * (0.75F + 0.25F * (1.0F - progress));
     }
 
+    public void enableTerrainCollision() {
+        this.hasPhysics = true;
+    }
+
     @Override
     public int getLightColor(float partialTick) {
         return 240 | super.getLightColor(partialTick) & 0xFF0000;

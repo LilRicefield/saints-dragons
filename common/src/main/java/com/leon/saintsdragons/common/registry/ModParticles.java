@@ -83,6 +83,9 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> FIRE_BREATH_FLICKER =
             REGISTER.register("fire_breath_flicker", () -> Services.PLATFORM.createSimpleParticle(false));
 
+    public static final Supplier<SimpleParticleType> FIRE_BREATH_OUTER_FLAME =
+            REGISTER.register("fire_breath_outer_flame", () -> Services.PLATFORM.createSimpleParticle(false));
+
     public static final Supplier<SimpleParticleType> DRAGON_DUST =
             REGISTER.register("dragon_dust", () -> Services.PLATFORM.createSimpleParticle(true));
 
