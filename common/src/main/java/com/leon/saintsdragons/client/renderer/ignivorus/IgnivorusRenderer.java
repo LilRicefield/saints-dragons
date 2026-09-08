@@ -4,7 +4,6 @@ import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
-import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusMouthSmokeLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusNightEmissiveLayer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
@@ -42,7 +41,6 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     public IgnivorusRenderer(EntityRendererProvider.Context context) {
         super(context, new IgnivorusModel());
         this.addRenderLayer(new IgnivorusNightEmissiveLayer(this));
-        this.addRenderLayer(new IgnivorusMouthSmokeLayer());
         this.addRenderLayer(new IgnivorusGlowLayer(this));
     }
 
