@@ -25,6 +25,9 @@ public interface DragonFlightCapable {
     boolean canTakeoff();
     void startTakeoffSequence(double minUpwardVelocity, int animationTicks);
     void markLandedNow();
+    default void completeAiLanding() {
+        markLandedNow();
+    }
     default void beginAiTakeoff(int animationTicks) {
         if (this instanceof RideableDragonBase rideable) {
             rideable.setGoingUp(true);

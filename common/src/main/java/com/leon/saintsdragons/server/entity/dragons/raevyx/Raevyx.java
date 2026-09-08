@@ -137,6 +137,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
                     5.0D
             );
     private static final int LANDED_RECOVERY_TICKS = 38;
+    private static final int COMBAT_LANDED_RECOVERY_TICKS = 8;
     public static final int AGGRO_TTL_TICKS = 200;
     public static final double BREED_PARTNER_RANGE = 8.0D;
     public static final double BREED_DISTANCE_SQR = 16.0D;
@@ -420,7 +421,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             suppressSleep(60);
         }
         completeTouchdownLanding(LandingSource.AI);
-        startStandardLandedRecovery(LANDED_RECOVERY_TICKS);
+        startStandardLandedRecovery(getTarget() != null && isTargetValid(getTarget())
+                ? COMBAT_LANDED_RECOVERY_TICKS : LANDED_RECOVERY_TICKS);
     }
 
     @Override
@@ -2214,7 +2216,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             if (isWildAggressionEnabled()) {
                 return !player.isCreative() && !player.isSpectator();
             }
-            return this.getLastHurtByMob() == player || this.getTarget() == player;
+            return this.getLastHurtByMob() == player || this.getCombatTargetSource() == player;
         }
 
         return super.canTarget(entity);

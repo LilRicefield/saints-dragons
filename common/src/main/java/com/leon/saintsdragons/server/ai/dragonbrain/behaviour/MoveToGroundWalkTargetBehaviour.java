@@ -215,11 +215,9 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         speedModifier = walkTarget.getSpeedModifier();
         context.memories().erase(DragonMemories.PATH);
         path = null;
-        boolean requested = dragon.getAIMovement().moveToGroundPosition(
-                resolvedPathTarget,
-                speedModifier,
-                true
-        );
+        boolean requested = targetingWaterEntry
+                ? dragon.getAIMovement().moveToGroundPosition(resolvedPathTarget, speedModifier, true)
+                : dragon.getAIMovement().moveToProgressiveGroundPosition(resolvedPathTarget, speedModifier, true);
         if (!requested) {
             nextPathAttemptAt = context.gameTime() + 20;
         }
@@ -320,7 +318,8 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         T dragon = context.dragon();
         return !dragon.isInWaterOrBubble()
                 && dragon.getLocomotionMode() == DragonLocomotionMode.GROUND
-                && !(dragon instanceof RideableFlyingDragon flyingDragon && flyingDragon.isAerial())
+                && !(dragon instanceof RideableFlyingDragon flyingDragon
+                && (flyingDragon.isAerial() || flyingDragon.isAiLandingRecoveryActive()))
                 && !context.memories().get(DragonMemories.GROUND_ROUTE_ABANDONED).orElse(false);
     }
 

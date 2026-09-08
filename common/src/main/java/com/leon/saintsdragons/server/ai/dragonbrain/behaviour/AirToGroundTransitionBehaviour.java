@@ -4,8 +4,8 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -17,17 +17,30 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 
-public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extends DragonOneShotBehaviour<T> {
+public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
     private final GroundPursuitFlightSettings pursuitSettings = GroundPursuitFlightSettings.standard();
+    private long nextAttemptTick;
+    private String handoff = "idle";
 
     public AirToGroundTransitionBehaviour() {
-        super(Map.of(DragonMemories.LOCOMOTION_MODE, MemoryStatus.REGISTERED));
+        super(Map.of(DragonMemories.LOCOMOTION_MODE, MemoryStatus.REGISTERED), false);
     }
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
+        return transitionDragon(context.dragon()) != null;
+    }
+
+    @Override
+    protected boolean canContinue(DragonBrainContext<T> context) {
+        return canStart(context);
+    }
+
+    private boolean needsLanding(DragonBrainContext<T> context) {
         TransitionDragon transition = transitionDragon(context.dragon());
         if (transition == null || !transition.dragon().isAerial()
+                || DragonFlightEligibility.movementBlockReason(transition.dragon()) != null
+                || transition.dragon().getActiveAbility() != null
                 || DragonInvestigation.shouldPreserveAirbornePursuit(context.dragon())) {
             return false;
         }
@@ -39,10 +52,7 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
         if (groundRouteAbandoned && !hasTacticalLanding) {
             return false;
         }
-        DragonLocomotionMode mode = context.memories()
-                .get(DragonMemories.LOCOMOTION_MODE)
-                .orElse(transition.dragon().getLocomotionMode());
-        if (mode != DragonLocomotionMode.AIR) {
+        if (transition.dragon().getLocomotionMode() != DragonLocomotionMode.AIR) {
             return false;
         }
         if (transition.dragon().isLanding() && transition.dragon().getAIMovement().isPathing()) {
@@ -62,7 +72,19 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
     }
 
     @Override
-    protected void start(DragonBrainContext<T> context) {
+    protected void tick(DragonBrainContext<T> context) {
+        TransitionDragon current = transitionDragon(context.dragon());
+        if (current != null && !current.dragon().isAerial() && current.dragon().onGround()) {
+            if (context.memories().has(DragonMemories.TACTICAL_LANDING_POSITION)) {
+                context.memories().erase(DragonMemories.TACTICAL_LANDING_POSITION);
+                context.memories().erase(DragonMemories.GROUND_ROUTE_ABANDONED);
+                context.memories().erase(DragonMemories.CANT_REACH_WALK_TARGET_SINCE);
+            }
+            return;
+        }
+        if (!needsLanding(context) || context.gameTime() < nextAttemptTick) {
+            return;
+        }
         TransitionDragon transition = transitionDragon(context.dragon());
         if (transition == null) {
             return;
@@ -72,35 +94,37 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
         Vec3 tacticalLanding = context.memories()
                 .get(DragonMemories.TACTICAL_LANDING_POSITION)
                 .orElse(null);
-        if (tacticalLanding != null) {
-            context.memories().set(
-                    DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.transitionToGround(tacticalLanding, landingSpeed)
-            );
-            return;
-        }
-
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (target != null) {
-            Vec3 landingTarget = transition.dragon().getAIMovement().findTacticalGroundTransitionTarget(
+        if (tacticalLanding == null && target != null) {
+            tacticalLanding = transition.dragon().getAIMovement().findTacticalGroundTransitionTarget(
                     target,
                     pursuitSettings.landingSearchRadius(),
                     pursuitSettings.landingMaxVerticalDelta()
             );
-            if (landingTarget != null) {
-                context.memories().set(
-                        DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.transitionToGround(landingTarget, landingSpeed)
-                );
-            } else {
-                context.memories().set(DragonMemories.GROUND_ROUTE_ABANDONED, true);
-            }
-        } else if (transition.dragon().isLanding()) {
-            context.memories().set(
-                    DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.transitionToGround(landingSpeed)
-            );
         }
+        // A reservation is not an accepted movement command. Keep the handoff here,
+        // so an outgoing combat behaviour cannot leave an unconsumed landing intent.
+        boolean accepted = tacticalLanding != null
+                ? transition.dragon().getAIMovement().requestGroundTransition(tacticalLanding, landingSpeed)
+                : target == null && transition.dragon().getAIMovement().requestGroundTransition((LivingEntity) null, landingSpeed);
+        if (accepted) {
+            if (tacticalLanding != null) {
+                context.memories().set(DragonMemories.TACTICAL_LANDING_POSITION, tacticalLanding);
+            }
+            handoff = "landing-accepted";
+        } else {
+            context.memories().erase(DragonMemories.TACTICAL_LANDING_POSITION);
+            context.memories().set(DragonMemories.GROUND_ROUTE_ABANDONED, true);
+            transition.dragon().setLanding(false);
+            transition.dragon().beginAiFlight();
+            handoff = "landing-rejected:resume-pursuit";
+        }
+        nextAttemptTick = context.gameTime() + pursuitSettings.landingSearchIntervalTicks();
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of("handoff", handoff);
     }
 
     private static TransitionDragon transitionDragon(DragonEntity dragon) {

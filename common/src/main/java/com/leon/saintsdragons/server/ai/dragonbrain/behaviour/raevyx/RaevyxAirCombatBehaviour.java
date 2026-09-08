@@ -824,7 +824,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
-        Map<String, String> details = new LinkedHashMap<>();
+        Map<String, String> details = new LinkedHashMap<>(super.getDragonBrainDebugDetails());
         details.put("air_phase", phase.name().toLowerCase());
         details.put("air_decision", lastDecision);
         details.put("air_phase_ticks", Integer.toString(phaseTicks));

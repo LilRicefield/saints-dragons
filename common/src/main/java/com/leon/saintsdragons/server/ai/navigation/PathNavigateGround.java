@@ -1,10 +1,10 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
 import com.leon.saintsdragons.server.ai.pathfinding.DragonWalkNodeEvaluator;
+import com.leon.saintsdragons.server.ai.navigation.async.VoxelAabbSweeper;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -14,6 +14,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathFinder;
+import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +30,6 @@ public class PathNavigateGround extends GroundPathNavigation {
     private static final double MAX_DESCENDING_WAYPOINT_OFFSET = 1.5D;
     private static final double MIN_BLOCKED_ASCENT_RISE = 0.25D;
     private static final double MAX_BLOCKED_ASCENT_RISE = 1.5D;
-    private static final int MAX_SWEEP_STEPS = 12;
     private static final int BLOCKED_ASCENT_STALL_TICKS = 4;
     private static final int BLOCKED_ASCENT_JUMP_COOLDOWN_TICKS = 10;
     private static final int MAX_BLOCKED_ASCENT_JUMPS_PER_NODE = 2;
@@ -209,8 +210,6 @@ public class PathNavigateGround extends GroundPathNavigation {
             }
         }
 
-        final Vec3 base = actualEntityPos.add(-this.mob.getBbWidth() * 0.5F, 0.0F, -this.mob.getBbWidth() * 0.5F);
-        final Vec3 max = base.add(this.mob.getBbWidth(), this.mob.getBbHeight(), this.mob.getBbWidth());
         float waypointTolerance = this.mob.getBbWidth() > 0.75F
                 ? this.mob.getBbWidth() * 0.5F
                 : 0.75F - this.mob.getBbWidth() * 0.5F;
@@ -218,9 +217,8 @@ public class PathNavigateGround extends GroundPathNavigation {
                 && Float.isFinite(finalWaypointTolerance)) {
             waypointTolerance = Math.min(waypointTolerance, finalWaypointTolerance);
         }
-        
-        // Try to shortcut to later path nodes for smoother movement
-        if (this.tryShortcut(path, actualEntityPos, pathLength, base, max)) {
+
+        if (this.tryShortcut(path, actualEntityPos, pathLength)) {
             if (this.isAt(path, waypointTolerance)
                     || this.atElevationChange(path)
                     && this.isAt(path, Math.min(this.mob.getBbWidth() * 0.5F, waypointTolerance))) {
@@ -254,13 +252,15 @@ public class PathNavigateGround extends GroundPathNavigation {
         return false;
     }
 
-    private boolean tryShortcut(Path path, Vec3 entityPos, int pathLength, Vec3 base, Vec3 max) {
+    private boolean tryShortcut(Path path, Vec3 entityPos, int pathLength) {
         for (int i = pathLength; --i > path.getNextNodeIndex(); ) {
             final Vec3 vec = this.getGroundedPathPosition(path, i).subtract(entityPos);
             if (vec.lengthSqr() > MAX_SHORTCUT_DISTANCE * MAX_SHORTCUT_DISTANCE) {
                 continue;
             }
-            if (this.sweep(vec, base, max)) {
+            if (GroundPathGeometry.canShortcut(this.mob.getBoundingBox(), vec,
+                    (body, movement) -> VoxelAabbSweeper.isClear(this.level, this.mob, body, movement),
+                    this::hasSafeShortcutSupport)) {
                 path.setNextNodeIndex(i);
                 return false; // Found a shortcut
             }
@@ -279,64 +279,40 @@ public class PathNavigateGround extends GroundPathNavigation {
 
     @Override
     protected double getGroundY(Vec3 pathPos) {
-        double centerGroundY = super.getGroundY(pathPos);
-        double halfWidth = this.mob.getBbWidth() * 0.5D;
-        double edgeInset = 1.0E-5D;
-        int minX = Mth.floor(pathPos.x - halfWidth + edgeInset);
-        int maxX = Mth.floor(pathPos.x + halfWidth - edgeInset);
-        int minZ = Mth.floor(pathPos.z - halfWidth + edgeInset);
-        int maxZ = Mth.floor(pathPos.z + halfWidth - edgeInset);
-        int supportY = Mth.floor(pathPos.y) - 1;
-        double highestSurfaceY = Double.NEGATIVE_INFINITY;
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-
-        for (int x = minX; x <= maxX; x++) {
-            for (int z = minZ; z <= maxZ; z++) {
-                cursor.set(x, supportY, z);
-                VoxelShape collision = this.level.getBlockState(cursor).getCollisionShape(this.level, cursor);
-                if (collision.isEmpty()) {
-                    continue;
-                }
-
-                double surfaceY = supportY + collision.max(Direction.Axis.Y);
-                if (surfaceY <= pathPos.y + edgeInset) {
-                    highestSurfaceY = Math.max(highestSurfaceY, surfaceY);
-                }
-            }
-        }
-
-        return Double.isFinite(highestSurfaceY) ? highestSurfaceY : centerGroundY;
+        AABB body = this.mob.getBoundingBox().move(pathPos.subtract(this.mob.position()));
+        double support = findSupportHeight(body);
+        return Double.isFinite(support) ? support : super.getGroundY(pathPos);
     }
 
-    private boolean sweep(Vec3 vec, Vec3 base, Vec3 max) {
-        double distance = vec.length();
-        if (distance < 1.0E-6D) return true;
-
-        // Sweep the mob's body AABB along the candidate shortcut path.
-        // If any sample collides, reject the shortcut and keep vanilla node progression.
-        int steps = Mth.clamp((int) Math.ceil(distance), 2, MAX_SWEEP_STEPS);
-        Vec3 step = vec.scale(1.0D / steps);
-
-        double minX = base.x;
-        double minY = base.y;
-        double minZ = base.z;
-        double maxX = max.x;
-        double maxY = max.y;
-        double maxZ = max.z;
-
-        for (int n = 1; n <= steps; n++) {
-            double dx = step.x * n;
-            double dy = step.y * n;
-            double dz = step.z * n;
-            net.minecraft.world.phys.AABB probe = new net.minecraft.world.phys.AABB(
-                    minX + dx, minY + dy, minZ + dz,
-                    maxX + dx, maxY + dy, maxZ + dz
-            );
-            if (!this.level.noCollision(this.mob, probe)) {
-                return false;
+    private double findSupportHeight(AABB body) {
+        AABB below = new AABB(body.minX, body.minY - GroundPathGeometry.MAX_SUPPORT_GAP, body.minZ,
+                body.maxX, body.minY + GroundPathGeometry.SUPPORT_EPSILON, body.maxZ);
+        double highestSurfaceY = Double.NEGATIVE_INFINITY;
+        for (VoxelShape shape : this.level.getBlockCollisions(this.mob, below)) {
+            for (AABB obstacle : shape.toAabbs()) {
+                highestSurfaceY = Math.max(highestSurfaceY, GroundPathGeometry.supportHeight(body, obstacle));
             }
         }
+        return highestSurfaceY;
+    }
 
+    private boolean hasSafeShortcutSupport(AABB body) {
+        double support = findSupportHeight(body);
+        if (!Double.isFinite(support) || Math.abs(support - body.minY) > GroundPathGeometry.SUPPORT_EPSILON) {
+            return false;
+        }
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        int y = Mth.floor(body.minY + GroundPathGeometry.SUPPORT_EPSILON);
+        for (int x = Mth.floor(body.minX); x <= Mth.floor(body.maxX - GroundPathGeometry.SUPPORT_EPSILON); x++) {
+            for (int z = Mth.floor(body.minZ); z <= Mth.floor(body.maxZ - GroundPathGeometry.SUPPORT_EPSILON); z++) {
+                cursor.set(x, y, z);
+                BlockPathTypes type = WalkNodeEvaluator.getBlockPathTypeStatic(this.level, cursor);
+                if (type == BlockPathTypes.LAVA || type == BlockPathTypes.WATER
+                        || type == BlockPathTypes.WATER_BORDER || this.mob.getPathfindingMalus(type) != 0.0F) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 

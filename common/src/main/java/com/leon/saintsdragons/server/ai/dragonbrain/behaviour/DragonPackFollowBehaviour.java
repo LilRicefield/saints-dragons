@@ -6,13 +6,12 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PackMember;
-import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
-import net.minecraft.world.level.levelgen.Heightmap;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -209,9 +208,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
     private boolean isAirborne(T dragon) {
         if (dragon.isAerial()) return true;
         if (dragon.onGround()) return false;
-        BlockPos pos = dragon.blockPosition();
-        int groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, pos).getY();
-        return dragon.getY() - groundY > 4.0D;
+        return DragonFlightSpace.heightAboveLocalFloor(dragon, 6.0D) > 4.0D;
     }
 
     private Vec3 airTarget(T member, T currentLeader) {

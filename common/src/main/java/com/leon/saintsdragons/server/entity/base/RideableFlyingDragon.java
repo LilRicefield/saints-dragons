@@ -44,10 +44,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -1019,6 +1016,12 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     protected void tickStandardTakeoffAndGroundedAerialRecovery() {
+        if (!level().isClientSide && !isVehicle() && !isPassenger() && isTakeoff() && !onGround()
+                && !getAIMovement().flightSpace().takeoffHeadroomClear(1.5D)) {
+            // A short takeoff lift must not keep pushing into a nearby cave ceiling.
+            takeoffComponent.clear();
+            setDeltaMovement(getDeltaMovement().x, Math.min(0.0D, getDeltaMovement().y), getDeltaMovement().z);
+        }
         takeoffComponent.tick();
         tickStandardLandedRecovery();
         if (completeLandingOnGroundContact()) {
@@ -1049,8 +1052,16 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         if (level().isClientSide || !isLanding() || !onGround()) {
             return false;
         }
-        completeGroundedAerialRecoveryLanding();
+        completeAiLanding();
         return true;
+    }
+
+    @Override
+    public final void completeAiLanding() {
+        if (level().isClientSide || !isAerial()) {
+            return;
+        }
+        completeGroundedAerialRecoveryLanding();
     }
 
     protected void completeGroundedAerialRecoveryLanding() {
@@ -1075,6 +1086,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 && !isTakeoff()
                 && !isLanding()
                 && !isHovering();
+    }
+
+    public final boolean isAiLandingRecoveryActive() {
+        return !isVehicle() && isStandardLandedRecoveryActive();
     }
 
     protected int clampGroundMoveStateForLandedRecovery(int state) {
@@ -1627,134 +1642,17 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     public @Nullable Vec3 findStandardAiFlightTarget(double maxTurnDegrees, double minRange, double extraRange,
                                                      double maxHeightAboveGround, boolean widerSearch) {
-        Vec3 dragonPos = position();
-
-        for (int attempt = 0; attempt < 16; attempt++) {
-            Vec3 candidate = generateStandardFlightCandidate(dragonPos, attempt, maxTurnDegrees, minRange, extraRange,
-                    maxHeightAboveGround, widerSearch);
-            if (isValidStandardFlightTarget(candidate)) {
-                return candidate;
-            }
-        }
-
-        return new Vec3(dragonPos.x, findStandardSafeFlightHeight(dragonPos.x, dragonPos.z, maxHeightAboveGround), dragonPos.z);
-    }
-
-    private @Nullable Vec3 generateStandardFlightCandidate(Vec3 dragonPos, int attempt, double maxTurnDegrees,
-                                                           double minRange, double extraRange,
-                                                           double maxHeightAboveGround, boolean widerSearch) {
-        boolean isStuck = horizontalCollision || isFlightControllerStuck();
-        float maxRot = (float) (isStuck || widerSearch ? 360.0D : maxTurnDegrees);
-        float range = (float) (isStuck
-                ? 30.0D + getRandom().nextDouble() * 40.0D
-                : minRange + getRandom().nextDouble() * extraRange);
-
-        float yRotOffset;
-        if (isStuck && attempt < 8) {
-            yRotOffset = (float) Math.toRadians(180.0D + getRandom().nextDouble() * 120.0D - 60.0D);
-        } else {
-            yRotOffset = (float) Math.toRadians(getRandom().nextDouble() * maxRot - (maxRot * 0.5D));
-        }
-
-        float xRotOffset = (float) Math.toRadians((getRandom().nextDouble() - 0.5D) * 20.0D);
-        Vec3 targetVec = getLookAngle().scale(range).yRot(yRotOffset).xRot(xRotOffset);
-        Vec3 candidate = dragonPos.add(targetVec);
-        if (!level().hasChunkAt(BlockPos.containing(candidate))) {
-            return null;
-        }
-
-        candidate = new Vec3(candidate.x, findStandardSafeFlightHeight(candidate.x, candidate.z, maxHeightAboveGround), candidate.z);
-        return candidate;
-    }
-
-    protected double findStandardSafeFlightHeight(double x, double z, double maxHeightAboveGround) {
-        int ix = Mth.floor(x);
-        int iz = Mth.floor(z);
-        int groundY = level().getHeight(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, ix, iz);
-        double base = 15.0D + getRandom().nextDouble() * 20.0D;
-        double target = groundY + base;
-        double cap = groundY + maxHeightAboveGround;
-        double worldCap = level().getMaxBuildHeight() - 10.0D;
-        return Math.min(Math.min(target, cap), worldCap);
+        return getAIMovement().flightSpace().findCruiseTarget(maxTurnDegrees, minRange, extraRange,
+                maxHeightAboveGround, widerSearch || horizontalCollision || isFlightControllerStuck());
     }
 
     public boolean isValidStandardFlightTarget(@Nullable Vec3 target) {
-        if (target == null || !isStandardFlightSegmentLoaded(target)) {
-            return false;
-        }
-
-        BlockHitResult result = level().clip(new ClipContext(
-                getEyePosition(),
-                target,
-                ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE,
-                this
-        ));
-
-        if (result.getType() == HitResult.Type.MISS) {
-            return true;
-        }
-
-        double distanceToHit = result.getLocation().distanceTo(position());
-        double distanceToTarget = target.distanceTo(position());
-        return distanceToHit > distanceToTarget * 0.95D;
-    }
-
-    private boolean isStandardFlightSegmentLoaded(Vec3 target) {
-        Vec3 start = getEyePosition();
-        double deltaX = target.x - start.x;
-        double deltaY = target.y - start.y;
-        double deltaZ = target.z - start.z;
-        int samples = Math.max(1, Mth.ceil(Math.max(Math.abs(deltaX), Math.abs(deltaZ)) / 8.0D));
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
-        int lastChunkX = Integer.MIN_VALUE;
-        int lastChunkZ = Integer.MIN_VALUE;
-
-        for (int sample = 0; sample <= samples; sample++) {
-            double progress = (double) sample / samples;
-            cursor.set(
-                    Mth.floor(start.x + deltaX * progress),
-                    Mth.floor(start.y + deltaY * progress),
-                    Mth.floor(start.z + deltaZ * progress)
-            );
-
-            int chunkX = cursor.getX() >> 4;
-            int chunkZ = cursor.getZ() >> 4;
-            if (chunkX == lastChunkX && chunkZ == lastChunkZ) {
-                continue;
-            }
-            if (!level().hasChunkAt(cursor)) {
-                return false;
-            }
-
-            lastChunkX = chunkX;
-            lastChunkZ = chunkZ;
-        }
-
-        return true;
+        return target != null && getAIMovement().flightSpace().fits(target)
+                && getAIMovement().flightSpace().corridorClear(position(), target);
     }
 
     public boolean hasStandardTakeoffClearance(int checkHeight) {
-        BlockPos dragonPos = blockPosition();
-        int checkRadius = (int) Math.ceil(getBbWidth() / 2.0D);
-
-        for (int dy = 1; dy <= checkHeight; dy++) {
-            for (int dx = -checkRadius; dx <= checkRadius; dx++) {
-                for (int dz = -checkRadius; dz <= checkRadius; dz++) {
-                    if (Math.abs(dx) + Math.abs(dz) > checkRadius + 1) {
-                        continue;
-                    }
-
-                    BlockPos checkPos = dragonPos.offset(dx, dy, dz);
-                    BlockState state = level().getBlockState(checkPos);
-                    if (!state.isAir() && !state.getCollisionShape(level(), checkPos).isEmpty()) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return getAIMovement().flightSpace().canTakeoff(Math.min(checkHeight, 3.0D));
     }
 
     public boolean isOverStandardFlightDanger() {

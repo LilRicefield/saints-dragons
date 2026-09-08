@@ -156,7 +156,7 @@ public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour
         }
         if (Source.ROOST_DEFENSE.debugName.equals(source)
                 && (!dragon.isWildAggressionEnabled()
-                || !(target instanceof Player player)
+                || !(dragon.getCombatTargetSource() instanceof Player player)
                 || player.isCreative()
                 || player.isSpectator()
                 || !dragon.isInsideRoostStructure(target.position()))) {

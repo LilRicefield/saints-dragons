@@ -70,7 +70,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         if (wakeTarget != null
                 && dragon.isWildAggressionEnabled()
                 && dragon.getSensing().hasLineOfSight(wakeTarget)
-                && pursuitSafety.canReacquire(dragon, wakeTarget, context.gameTime())) {
+                && pursuitSafety.canReacquire(dragon, DragonTargetingHelper.combatTarget(wakeTarget), context.gameTime())) {
             setTarget(context, wakeTarget, "heard_intruder", 3);
             context.memories().erase(DragonMemories.WAKE_TARGET);
             return;
@@ -123,7 +123,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             choice = projectileThreat;
         }
         if (choice != null
-                && !pursuitSafety.canReacquire(dragon, choice.target(), context.gameTime())) {
+                && !pursuitSafety.canReacquire(dragon, DragonTargetingHelper.combatTarget(choice.target()), context.gameTime())) {
             choice = null;
         }
         if (choice != null) {
@@ -261,8 +261,14 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         T dragon = context.dragon();
         LivingEntity oldTarget = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         String oldSource = source;
-        boolean changed = oldTarget != target || !oldSource.equals(newSource);
         prepareTargetChange(dragon, oldTarget, target, oldSource, newSource);
+        dragon.setTarget(target);
+        target = dragon.getTarget();
+        if (target == null) {
+            clearTarget(context);
+            return;
+        }
+        boolean changed = oldTarget != target || !oldSource.equals(newSource);
         source = newSource;
         sourcePriority = newPriority;
         context.memories().set(DragonMemories.ATTACK_TARGET, target);

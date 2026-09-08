@@ -87,6 +87,7 @@ public final class AsyncDragonPathfinder {
             }
         }
         EXECUTOR.purge();
+        DragonPathPerformance.stop(server);
     }
 
     public static Future<?> calculateFlyingPathAsync(Mob dragon, Vec3 target, Consumer<Path> callback) {
@@ -248,6 +249,7 @@ public final class AsyncDragonPathfinder {
                     callback
             );
         } catch (Exception exception) {
+            request.markFailed();
             LOGGER.warn("Failed to capture immutable ground path region for {}", dragonId, exception);
             return completeOnServer(request, server, dragon, callback, null);
         }
@@ -346,6 +348,7 @@ public final class AsyncDragonPathfinder {
                     callback
             );
         } catch (Exception exception) {
+            request.markFailed();
             LOGGER.warn("Failed to capture immutable air path region for {}", dragonId, exception);
             return completeOnServer(request, server, dragon, callback, null);
         }
@@ -377,6 +380,7 @@ public final class AsyncDragonPathfinder {
         try {
             snapshot = SwimPathSnapshot.capture(dragon, target);
         } catch (Exception exception) {
+            request.markFailed();
             LOGGER.warn("Failed to capture swim path region for {}", dragonId, exception);
             return completeOnServer(request, server, dragon, callback, null);
         }
@@ -496,6 +500,7 @@ public final class AsyncDragonPathfinder {
             return request;
         }
         int requestTick = server.getTickCount();
+        request.markQueued();
         try {
             Future<?> worker = EXECUTOR.submit(() -> {
                 if (request.isCancelled()) {
@@ -503,17 +508,22 @@ public final class AsyncDragonPathfinder {
                     return;
                 }
 
+                request.markWorkerStarted();
                 T result = null;
                 try {
                     result = computation.calculate(() -> request.isCancelled()
                             || Thread.currentThread().isInterrupted());
                 } catch (Exception exception) {
+                    request.markFailed();
                     if (!request.isCancelled()) {
                         LOGGER.warn("Async {} failed", operation, exception);
                     }
                 } catch (Error error) {
+                    request.markFailed();
                     request.complete();
                     throw error;
+                } finally {
+                    request.markSearchFinished();
                 }
 
                 if (request.isCancelled()) {
@@ -536,6 +546,7 @@ public final class AsyncDragonPathfinder {
             });
             request.attach(worker);
         } catch (RejectedExecutionException exception) {
+            request.markRejected();
             LOGGER.warn("Rejected {} because the bounded path queue is full", operation);
             try {
                 server.tell(new TickTask(requestTick, () -> applyResult(
@@ -608,6 +619,8 @@ public final class AsyncDragonPathfinder {
 
     private static PathRequest tryNewWorkerRequest(MinecraftServer server) {
         if (!WORKER_CAPACITY.tryAcquire()) {
+            DragonPathPerformance.Window metrics = DragonPathPerformance.current(server);
+            if (metrics != null) metrics.rejected();
             return null;
         }
         return registerRequest(new PathRequest(server, WORKER_CAPACITY::release));
@@ -656,6 +669,7 @@ public final class AsyncDragonPathfinder {
                     && !server.isStopped()
                     && !dragon.isRemoved()
                     && dragon.isAlive()) {
+                request.markDelivered(result == null);
                 callback.accept(result);
             }
         } catch (Exception exception) {
@@ -677,6 +691,11 @@ public final class AsyncDragonPathfinder {
         private final AtomicBoolean resourcesReleased = new AtomicBoolean();
         private final CompletableFuture<Void> completion = new CompletableFuture<>();
         private volatile Future<?> worker;
+        private final long requestedAt;
+        private final DragonPathPerformance.Window metricsWindow;
+        private long queuedAt;
+        private long workerStartedAt;
+        private volatile long searchFinishedAt;
 
         private PathRequest(MinecraftServer server) {
             this(server, () -> {
@@ -686,6 +705,49 @@ public final class AsyncDragonPathfinder {
         private PathRequest(MinecraftServer server, Runnable releaseCapacity) {
             this.server = server;
             this.releaseCapacity = releaseCapacity;
+            this.metricsWindow = DragonPathPerformance.current(server);
+            this.requestedAt = metricsWindow == null ? 0L : System.nanoTime();
+        }
+
+        private DragonPathPerformance.Window metrics() {
+            return metricsWindow != null && DragonPathPerformance.current(server) == metricsWindow
+                    ? metricsWindow : null;
+        }
+
+        void markQueued() {
+            if (requestedAt != 0L) queuedAt = System.nanoTime();
+        }
+
+        void markWorkerStarted() {
+            if (requestedAt == 0L) return;
+            workerStartedAt = System.nanoTime();
+            DragonPathPerformance.Window metrics = metrics();
+            if (metrics != null) metrics.workerStarted(workerStartedAt - queuedAt);
+        }
+
+        void markSearchFinished() {
+            if (requestedAt == 0L) return;
+            searchFinishedAt = System.nanoTime();
+            DragonPathPerformance.Window metrics = metrics();
+            if (metrics != null) metrics.searched(searchFinishedAt - workerStartedAt);
+        }
+
+        void markDelivered(boolean empty) {
+            DragonPathPerformance.Window metrics = metrics();
+            if (metrics != null) {
+                long now = System.nanoTime();
+                metrics.delivered(now - requestedAt, searchFinishedAt == 0L ? -1L : now - searchFinishedAt, empty);
+            }
+        }
+
+        void markFailed() {
+            DragonPathPerformance.Window metrics = metrics();
+            if (metrics != null) metrics.failed();
+        }
+
+        void markRejected() {
+            DragonPathPerformance.Window metrics = metrics();
+            if (metrics != null) metrics.rejected();
         }
 
         void attach(Future<?> worker) {
@@ -706,6 +768,8 @@ public final class AsyncDragonPathfinder {
             if (this.completion.isDone() || !this.cancelled.compareAndSet(false, true)) {
                 return false;
             }
+            DragonPathPerformance.Window metrics = metrics();
+            if (metrics != null) metrics.cancelled();
             Future<?> activeWorker = this.worker;
             if (activeWorker != null) {
                 cancelWorker(activeWorker, mayInterruptIfRunning);

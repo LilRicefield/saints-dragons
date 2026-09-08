@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -11,13 +12,25 @@ import net.minecraft.world.entity.animal.IronGolem;
 import net.minecraft.world.entity.npc.AbstractVillager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.raid.Raider;
-import net.minecraft.world.level.levelgen.Heightmap;
 
 public final class DragonTargetingHelper {
     private DragonTargetingHelper() {
     }
 
+    /** The outermost living mount, including modded mobs and stacked passenger chains. */
+    public static LivingEntity combatTarget(LivingEntity target) {
+        if (!(target instanceof Player)) return target;
+        LivingEntity result = target;
+        for (Entity vehicle = target.getVehicle(); vehicle != null; vehicle = vehicle.getVehicle()) {
+            if (vehicle instanceof LivingEntity living && living.isAlive() && !living.isRemoved()) {
+                result = living;
+            }
+        }
+        return result;
+    }
+
     public static Entity movementAnchor(LivingEntity target) {
+        if (!(target instanceof Player)) return target;
         Entity rootVehicle = target.getRootVehicle();
         return rootVehicle != target && rootVehicle.isAlive() ? rootVehicle : target;
     }
@@ -52,10 +65,7 @@ public final class DragonTargetingHelper {
             return true;
         }
 
-        double groundY = target.level()
-                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition())
-                .getY();
-        return target.getY() - groundY > minHeightAboveGround;
+        return DragonFlightSpace.heightAboveLocalFloor(target, minHeightAboveGround + 2.0D) > minHeightAboveGround;
     }
 
     public static boolean isBiteOnlyPreyTarget(DragonEntity dragon, LivingEntity target) {

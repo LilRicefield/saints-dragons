@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
+import com.leon.saintsdragons.server.ai.navigation.DragonGroundPath;
+import com.leon.saintsdragons.server.ai.navigation.GroundPathGeometry;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,8 +31,8 @@ import org.jetbrains.annotations.Nullable;
 final class AsyncGroundPathSearch {
     private static final int MAX_VISITED_NODES = 5000;
     private static final double SQRT_TWO = Math.sqrt(2.0D);
-    private static final double SUPPORT_EPSILON = 1.0E-5D;
-    private static final double MAX_SUPPORT_GAP = 1.0D - SUPPORT_EPSILON;
+    private static final double SUPPORT_EPSILON = GroundPathGeometry.SUPPORT_EPSILON;
+    private static final double MAX_SUPPORT_GAP = GroundPathGeometry.MAX_SUPPORT_GAP;
     private static final double TREE_NODE_MALUS = 4.0D;
     private static final int[][] CARDINAL_DIRECTIONS = {
             {1, 0},
@@ -173,6 +175,8 @@ final class AsyncGroundPathSearch {
         open.add(new OpenNode(startKey, 0.0D, startHeuristic, startHeuristic));
         long bestKey = startKey;
         double bestHeuristic = startHeuristic;
+        Long frontierKey = null;
+        double frontierScore = Double.POSITIVE_INFINITY;
         boolean reached = isGoal(startNode);
         int visited = 0;
 
@@ -190,6 +194,11 @@ final class AsyncGroundPathSearch {
 
             BlockPos currentPos = BlockPos.of(current.key());
             double currentHeuristic = heuristic(currentPos);
+            if (isSearchBoundary(currentPos) && currentPos.distSqr(startNode) >= 16.0D
+                    && knownScore + currentHeuristic < frontierScore) {
+                frontierKey = current.key();
+                frontierScore = knownScore + currentHeuristic;
+            }
             if (currentHeuristic < bestHeuristic) {
                 bestHeuristic = currentHeuristic;
                 bestKey = current.key();
@@ -232,13 +241,17 @@ final class AsyncGroundPathSearch {
             }
         }
 
+        boolean frontier = !reached && frontierKey != null && startHeuristic - bestHeuristic < 2.0D;
+        if (frontier) {
+            bestKey = frontierKey;
+        }
         if (!reached && bestKey == startKey) {
             publishDebug(debugSession, closed, gScore, false, startedNanos);
             return null;
         }
 
         boolean reachedRequestedTarget = reached && this.completeRoute;
-        Path path = buildPath(cameFrom, bestKey, reachedRequestedTarget);
+        Path path = buildPath(cameFrom, bestKey, reachedRequestedTarget, frontier);
         publishDebug(debugSession, closed, gScore, reachedRequestedTarget, startedNanos);
         return path;
     }
@@ -396,10 +409,6 @@ final class AsyncGroundPathSearch {
     private NodeEvaluation evaluateNode(BlockPos node) {
         return this.nodeEvaluations.computeIfAbsent(node.asLong(), ignored -> {
             AABB nominalBody = bodyAt(node);
-            if (!this.terrain.isClear(nominalBody, Vec3.ZERO)
-                    || this.terrain.intersectsLava(nominalBody)) {
-                return NodeEvaluation.BLOCKED;
-            }
             boolean nominalWater = this.terrain.intersectsWater(nominalBody);
             double supportHeight = nominalWater
                     ? Double.NEGATIVE_INFINITY
@@ -457,7 +466,14 @@ final class AsyncGroundPathSearch {
         return diagonal * SQRT_TWO + straight + dy * 0.75D;
     }
 
-    private Path buildPath(Map<Long, Long> cameFrom, long endKey, boolean reached) {
+    private boolean isSearchBoundary(BlockPos node) {
+        return node.getX() == this.minNode.getX() || node.getX() == this.maxNode.getX()
+                || node.getZ() == this.minNode.getZ() || node.getZ() == this.maxNode.getZ()
+                || !withinRange(node.east()) || !withinRange(node.west())
+                || !withinRange(node.north()) || !withinRange(node.south());
+    }
+
+    private Path buildPath(Map<Long, Long> cameFrom, long endKey, boolean reached, boolean frontier) {
         List<Node> nodes = new ArrayList<>();
         long current = endKey;
         while (true) {
@@ -474,7 +490,7 @@ final class AsyncGroundPathSearch {
             current = previous;
         }
         Collections.reverse(nodes);
-        return new Path(nodes, BlockPos.containing(this.requestedTarget), reached);
+        return new DragonGroundPath(nodes, BlockPos.containing(this.requestedTarget), reached, frontier);
     }
 
     private void publishDebug(@Nullable DragonPathSearchDebug.SearchSession debugSession,
@@ -573,12 +589,8 @@ final class AsyncGroundPathSearch {
                             continue;
                         }
                         for (AABB obstacle : this.snapshot.collisionBoxes(cursor)) {
-                            double gap = body.minY - obstacle.maxY;
-                            if (gap >= -SUPPORT_EPSILON
-                                    && gap <= MAX_SUPPORT_GAP
-                                    && overlapsHorizontally(body, obstacle)) {
-                                highestSupport = Math.max(highestSupport, obstacle.maxY);
-                            }
+                            highestSupport = Math.max(highestSupport,
+                                    GroundPathGeometry.supportHeight(body, obstacle));
                         }
                     }
                 }
@@ -668,12 +680,6 @@ final class AsyncGroundPathSearch {
             return (int) Math.floor(coordinate);
         }
 
-        private static boolean overlapsHorizontally(AABB first, AABB second) {
-            return first.maxX > second.minX + SUPPORT_EPSILON
-                    && first.minX < second.maxX - SUPPORT_EPSILON
-                    && first.maxZ > second.minZ + SUPPORT_EPSILON
-                    && first.minZ < second.maxZ - SUPPORT_EPSILON;
-        }
     }
 
     private record NodeEvaluation(boolean usable,

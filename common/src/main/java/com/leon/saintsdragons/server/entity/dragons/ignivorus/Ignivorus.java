@@ -2092,6 +2092,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     @Override
+    public String getAiAirCombatBlockReason() {
+        if (isAiSpecialCombatActive()) return "special-combat";
+        if (areRiderControlsLocked()) return "controls-locked";
+        return isLeaping() || isLeapImpactRecovering() ? "leap" : null;
+    }
+
+    @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
     }

@@ -5,20 +5,17 @@ import com.leon.saintsdragons.common.network.MessageDragonPathDebug;
 import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDebugDetails;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonDrinkBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ReturnToRoostBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonPathPerformance;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -98,6 +95,7 @@ public final class DragonPathDebugTracker {
     }
 
     public static void tick(MinecraftServer server) {
+        DragonPathPerformance.tick(server, !TRACKED_DRAGONS.isEmpty());
         if (TRACKED_DRAGONS.isEmpty() || server.getTickCount() % SNAPSHOT_INTERVAL_TICKS != 0) {
             return;
         }
@@ -160,11 +158,11 @@ public final class DragonPathDebugTracker {
                 "[Dragon Path Debug] event=state player={} id={} pos={} locomotion={} movement={} "
                         + "navigation={}/{} shown={} swim={}/{} shown={} calculating={} moving={} "
                         + "stuckTicks={} retries={} movementTarget={} swimTarget={} swimEndpoint={} "
-                        + "rejectedTarget={} combatTarget={} combatAnchor={} hunger={}/{} huntFood={} sleep={} roost={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
+                        + "rejectedTarget={} combatTarget={} combatAnchor={} combatFocus={} hunger={}/{} huntFood={} sleep={} roost={} drinking={} rescue={} ownerFollow={} wildAggressive={} "
                         + "onGround={} horizontalCollision={} verticalCollision={} fallDistance={} velocity={} groundNav={} groundPath={} "
                         + "navigationDone={} navigationStuck={} "
                         + "search={}#{} reached={} closed={} open={} candidates={} searchMicros={} "
-                        + "perception={} tactical={} pursuit={} coordination={} activity={} behaviours={}",
+                        + "perception={} tactical={} pursuit={} flightExecution={} coordination={} activity={} behaviours={}",
                 player.getGameProfile().getName(),
                 dragon.getId(),
                 dragon.blockPosition(),
@@ -186,6 +184,7 @@ public final class DragonPathDebugTracker {
                 blockPosition(snapshot.rejectedTarget()),
                 blockPosition(snapshot.combatTarget()),
                 combatAnchor(dragon),
+                combatFocus(dragon),
                 dragon.getHunger(),
                 DragonEntity.HUNGER_MAX,
                 dragon.isHuntFoodPursuitActive(),
@@ -216,6 +215,7 @@ public final class DragonPathDebugTracker {
                 logState.perception,
                 logState.tactical,
                 logState.pursuit,
+                logState.flightExecution,
                 logState.coordination,
                 logState.activity,
                 logState.behaviours
@@ -228,6 +228,13 @@ public final class DragonPathDebugTracker {
             return null;
         }
         return DragonTargetingHelper.movementAnchor(target).blockPosition();
+    }
+
+    private static String combatFocus(DragonEntity dragon) {
+        LivingEntity target = dragon.getTarget();
+        LivingEntity source = dragon.getCombatTargetSource();
+        return target == null ? "none" : target.getType().getDescriptionId() + "#" + target.getId()
+                + (source != null && source != target ? ",rider=" + source.getId() : "");
     }
 
     private static MessageDragonPathDebug capture(DragonEntity dragon) {
@@ -550,6 +557,7 @@ public final class DragonPathDebugTracker {
                             String perception,
                             String tactical,
                             String pursuit,
+                            String flightExecution,
                             String coordination,
                             String activity,
                             List<String> behaviours) {
@@ -595,6 +603,7 @@ public final class DragonPathDebugTracker {
                     perceptionSummary(dragon),
                     tacticalSummary(dragon),
                     pursuitSummary(dragon),
+                    flightExecutionSummary(dragon),
                     coordination,
                     activity,
                     runningBehaviours(dragon)
@@ -731,5 +740,29 @@ public final class DragonPathDebugTracker {
             }
         }
         return "disabled";
+    }
+
+    private static String flightExecutionSummary(DragonEntity dragon) {
+        if (!(dragon instanceof RideableFlyingDragon flying)) return "disabled";
+        var movement = flying.getAIMovement();
+        StringBuilder summary = new StringBuilder(movement.brainMovement().summary(
+                movement.getMovementCommandGeneration(), dragon.level().getGameTime()));
+        summary.append(",landingRecovery=").append(flying.isAiLandingRecoveryActive());
+        summary.append(",space={").append(movement.flightSpace().debugSummary()).append('}');
+        summary.append(",landing=").append(dragon.getBrain()
+                .getMemory(DragonMemories.TACTICAL_LANDING_POSITION).map(Object::toString).orElse("none"));
+        for (DragonBrainDiagnostics.RegisteredBehaviour registered :
+                DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (registered.behaviour() instanceof AirCombatMovementBehaviour<?>
+                    || registered.behaviour() instanceof AirToGroundTransitionBehaviour<?>
+                    || registered.behaviour() instanceof DragonFlightMovementRecoveryBehaviour<?>) {
+                var details = ((DragonBrainDebugDetails)
+                        registered.behaviour()).getDragonBrainDebugDetails();
+                for (String key : List.of("flight_block", "handoff", "flight_execution", "missing_ticks", "recoveries")) {
+                    if (details.containsKey(key)) summary.append(',').append(key).append('=').append(details.get(key));
+                }
+            }
+        }
+        return summary.toString();
     }
 }

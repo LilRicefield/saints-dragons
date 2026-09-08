@@ -7,11 +7,9 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
@@ -28,6 +26,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     private long lastLandingTime;
     private int decisionCooldown;
     private boolean currentCruiseDive;
+    private int spaceRetryTicks;
 
     public AutonomousFlightBehaviour(DragonFlightBehaviorProfile profile,
                                      double cruiseSpeed,
@@ -68,7 +67,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         }
 
         targetPosition = findCruiseTarget(dragon);
-        return targetPosition != null;
+        return targetPosition != null || dragon.isFlying();
     }
 
     @Override
@@ -91,13 +90,19 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
             beginLandingApproach(context);
             return true;
         }
-        return dragon.isFlying() && targetPosition != null && dragon.distanceToSqr(targetPosition) > 9.0D;
+        return dragon.isFlying() && (targetPosition == null || dragon.distanceToSqr(targetPosition) > 9.0D);
     }
 
     @Override
     protected void start(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         dragon.getAIMovement().clearGroundPathFailureHistory();
+        if (targetPosition == null) {
+            dragon.getAIMovement().stopAndClearAllMovement();
+            beginLandingApproach(context);
+            spaceRetryTicks = 20;
+            return;
+        }
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isTakeoff() && !dragon.isLanding()) {
             beginAutonomousTakeoff(dragon);
         } else {
@@ -111,6 +116,10 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     protected void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         timeSinceTargetChange++;
+        if (spaceRetryTicks > 0) {
+            spaceRetryTicks--;
+            return;
+        }
 
         if (dragon.isTakeoff() && dragon.isFlying() && !dragon.onGround()) {
             dragon.beginAiFlight();
@@ -130,6 +139,13 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         if (needsNewCruiseTarget(dragon)) {
             targetPosition = findCruiseTarget(dragon);
             timeSinceTargetChange = 0;
+            if (targetPosition == null) {
+                dragon.getAIMovement().stopAndClearAllMovement();
+                dragon.setAccelerating(false);
+                beginLandingApproach(context);
+                spaceRetryTicks = 20;
+                return;
+            }
             setMoveIntent(context, targetPosition, getCruiseSpeed(targetPosition));
             dragon.setAccelerating(currentCruiseDive);
         }
@@ -141,6 +157,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         targetPosition = null;
         timeSinceTargetChange = 0;
         currentCruiseDive = false;
+        spaceRetryTicks = 0;
         dragon.setAccelerating(false);
         context.memories().erase(DragonMemories.MOVEMENT_INTENT);
         if (!dragon.isFlying()) {
@@ -158,6 +175,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
                 && !dragon.isOrderedToSit()
                 && !dragon.isSleeping()
                 && !dragon.isSleepingExiting()
+                && !dragon.isAiLandingRecoveryActive()
                 && (target == null || !target.isAlive());
     }
 
@@ -217,7 +235,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
                 currentCruiseDive = diveTarget != cruiseTarget;
                 target = adjustCruiseTarget(dragon, diveTarget);
             }
-            if (target != null && isCruiseTargetAllowed(dragon, target)) {
+            if (target != null && isCruiseTargetAllowed(dragon, target) && dragon.isValidStandardFlightTarget(target)) {
                 return target;
             }
         }
@@ -371,11 +389,9 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
             return cruiseTarget;
         }
 
-        double groundY = dragon.level().getHeight(
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                Mth.floor(cruiseTarget.x),
-                Mth.floor(cruiseTarget.z)
-        );
+        var space = dragon.getAIMovement().flightSpace().observe(cruiseTarget);
+        if (space == null || !space.clear() || !space.floorKnown() || space.ceilingKnown()) return cruiseTarget;
+        double groundY = space.floor();
         double pullOutY = groundY + getAutonomousDivePullOutAltitude(dragon);
         double angledY = current.y - horizontalDistance * Math.tan(Math.toRadians(getAutonomousDiveAngleDegrees(dragon)));
         double targetY = Mth.clamp(angledY, pullOutY, current.y - 2.0D);
@@ -383,12 +399,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     }
 
     protected double altitudeAboveTerrain(T dragon, Vec3 position) {
-        BlockPos pos = BlockPos.containing(position);
-        int groundY = dragon.level().getHeight(
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                pos.getX(),
-                pos.getZ()
-        );
-        return position.y - groundY;
+        var space = dragon.getAIMovement().flightSpace().observe(position);
+        return space == null || !space.clear() || space.ceilingKnown() ? 0.0D : position.y - space.floor();
     }
 }

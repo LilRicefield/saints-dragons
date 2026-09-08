@@ -11,7 +11,7 @@ public final class DragonBrainContext<T extends DragonEntity> {
     DragonBrainContext(T dragon, ServerLevel level) {
         this.dragon = dragon;
         this.level = level;
-        this.memories = new DragonMemoryMap(dragon.getBrain());
+        this.memories = new DragonMemoryMap(dragon);
     }
 
     public T dragon() {

@@ -73,6 +73,8 @@ final class ImmutableBlockSnapshot implements BlockGetter {
         if (!level.getServer().isSameThread()) {
             throw new IllegalStateException("Immutable block snapshots must be captured on the server thread");
         }
+        DragonPathPerformance.Window metrics = DragonPathPerformance.current(level.getServer());
+        long captureStarted = metrics == null ? 0L : System.nanoTime();
 
         int minBuildHeight = level.getMinBuildHeight();
         int maxBuildHeight = level.getMaxBuildHeight();
@@ -126,7 +128,7 @@ final class ImmutableBlockSnapshot implements BlockGetter {
             }
         }
 
-        return new ImmutableBlockSnapshot(
+        ImmutableBlockSnapshot result = new ImmutableBlockSnapshot(
                 sections,
                 dynamicCollisionBoxes,
                 minX,
@@ -138,6 +140,11 @@ final class ImmutableBlockSnapshot implements BlockGetter {
                 minBuildHeight,
                 maxBuildHeight - minBuildHeight
         );
+        if (metrics != null) {
+            metrics.capture(level.getServer().getTickCount(), level.dimension().location().toString(),
+                    sections.keySet(), dynamicCollisionBoxes.size(), System.nanoTime() - captureStarted);
+        }
+        return result;
     }
 
     private static void captureDynamicCollisionBoxes(ServerLevel level,

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import java.util.List;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
@@ -88,7 +89,7 @@ public class AsyncFlightController {
                     || (activeLandingPhase == LandingPhase.TOUCHDOWN
                         && this.movementExecutor.hasLandingContact()))) {
             this.clearAllWaypoints();
-            this.flightCapable.markLandedNow();
+            this.flightCapable.completeAiLanding();
             return;
         }
         double arrivalDist = this.calculateArrivalDistance(activeLandingPhase, groundTransition);
@@ -378,6 +379,19 @@ public class AsyncFlightController {
         Vec3 climbTarget = this.host.position()
                 .add(heading.scale(climbDistance))
                 .add(0.0D, climbHeight, 0.0D);
+        DragonFlightSpace space = this.host instanceof RideableDragonBase dragon
+                ? dragon.getAIMovement().flightSpace() : new DragonFlightSpace(this.host);
+        climbTarget = space.fitDestination(climbTarget);
+        if (climbTarget == null || !space.corridorClear(this.host.position(), climbTarget)) {
+            climbTarget = space.findCruiseTarget(360.0D, 8.0D, 12.0D, 12.0D, true);
+        }
+        if (climbTarget == null) {
+            // Leave replanning to the brain without forcing an unchecked climb into a roof.
+            this.clearAllWaypoints();
+            this.flightCapable.beginAiFlight();
+            this.state = PathState.FAILED;
+            return;
+        }
 
         this.invalidatePathRequests();
         this.pathResolver.cancelActivePathRequest();

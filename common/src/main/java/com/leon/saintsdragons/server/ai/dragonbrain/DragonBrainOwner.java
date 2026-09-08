@@ -1,16 +1,12 @@
 package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.google.common.collect.ImmutableList;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.*;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.mojang.datafixers.util.Pair;
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirToGroundTransitionBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonInvestigateTargetBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonPerceptionBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonScentAssessmentBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSleepBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTacticalPlannerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
@@ -57,14 +53,16 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             ImmutableList.Builder<Pair<Integer, ? extends BehaviorControl<? super T>>> behaviours = ImmutableList.builder();
             int priority = group.activity() == Activity.CORE ? 0 : 10;
             List<DragonBehaviour<T>> configuredBehaviours = new ArrayList<>();
-            if (group.activity() == Activity.IDLE && usesDragonScent()) {
-                configuredBehaviours.add(new DragonScentAssessmentBehaviour<>());
-                configuredBehaviours.add(new DragonInvestigateTargetBehaviour<>());
+            if (group.activity() == Activity.IDLE) {
+                configuredBehaviours.addAll(idlePerceptionBehaviours(usesDragonScent()));
             }
             if (group.activity() == Activity.FIGHT) {
                 configuredBehaviours.add(new AirToGroundTransitionBehaviour<>());
             }
             configuredBehaviours.addAll(group.behaviours());
+            if (group.activity() == Activity.FIGHT) {
+                configuredBehaviours.add(new DragonFlightMovementRecoveryBehaviour<>());
+            }
             if (group.activity() == Activity.CORE) {
                 configuredBehaviours.add(new DragonPerceptionBehaviour<>());
                 configuredBehaviours.add(new DragonSleepBehaviour<>());
@@ -98,14 +96,25 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         return getDragonBrainSensors().contains(ModSensorTypes.DRAGON_SCENT.get());
     }
 
+    static <D extends DragonEntity> List<DragonBehaviour<D>> idlePerceptionBehaviours(boolean usesScent) {
+        // Sight and hearing also create investigation targets, without a scent sensor.
+        return usesScent
+                ? List.of(new DragonScentAssessmentBehaviour<>(), new DragonInvestigateTargetBehaviour<>())
+                : List.of(new DragonInvestigateTargetBehaviour<>());
+    }
+
     default void tickBrain(ServerLevel level, T dragon) {
         level.getProfiler().push("dragonBrain");
         try {
             @SuppressWarnings("unchecked")
             Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
+            dragon.refreshMountedCombatTarget();
             DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
             updateActivity(brain, dragon);
             brain.tick(level, dragon);
+            if (dragon instanceof RideableDragonBase rideable) {
+                ApplyMovementIntentBehaviour.applyPending(rideable);
+            }
         } finally {
             level.getProfiler().pop();
         }

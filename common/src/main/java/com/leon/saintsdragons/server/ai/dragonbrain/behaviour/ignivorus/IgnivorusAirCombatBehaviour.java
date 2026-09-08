@@ -8,7 +8,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.levelgen.Heightmap;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 
 public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivorus> {
     private static final int BREATH_COOLDOWN_TICKS = 2400;
@@ -46,23 +46,21 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
         if (target instanceof Player player && player.isFallFlying()) {
             return true;
         }
-        if (!(target.getVehicle() instanceof LivingEntity vehicle)
-                || !(vehicle instanceof DragonFlightCapable flightCapable)) {
-            return false;
+        if (!(target instanceof DragonFlightCapable flightCapable)) {
+            return !target.onGround() && DragonFlightSpace.heightAboveLocalFloor(
+                    target, MOUNTED_FLIGHT_CLEARANCE + 2.0D) > MOUNTED_FLIGHT_CLEARANCE;
         }
         if (flightCapable.isTakeoff()) {
             return true;
         }
         if ((!flightCapable.isFlying() && !flightCapable.isHovering())
                 || flightCapable.isLanding()
-                || vehicle.onGround()) {
+                || target.onGround()) {
             return false;
         }
 
-        double groundY = vehicle.level()
-                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, vehicle.blockPosition())
-                .getY();
-        return vehicle.getY() - groundY > MOUNTED_FLIGHT_CLEARANCE;
+        return DragonFlightSpace.heightAboveLocalFloor(target, MOUNTED_FLIGHT_CLEARANCE + 2.0D)
+                > MOUNTED_FLIGHT_CLEARANCE;
     }
 
     @Override
@@ -147,11 +145,7 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
     }
 
     private boolean canUseAirCombat(Ignivorus dragon) {
-        return !dragon.isBaby()
-                && !dragon.isAiSpecialCombatActive()
-                && !dragon.areRiderControlsLocked()
-                && !dragon.isLeaping()
-                && !dragon.isLeapImpactRecovering();
+        return dragon.getAiAirCombatBlockReason() == null;
     }
 
     private boolean canUseAiAbility(Ignivorus dragon,

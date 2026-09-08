@@ -66,24 +66,14 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
 
     private static final ResourceLocation[] IGNIVORUS_ROOST_COMPAT_BIOMES = {
             rl("regions_unexplored", "ashen_woodland"),
-            rl("regions_unexplored", "gravel_beach"),
-            rl("terralith", "yellowstone"),
-            rl("terralith", "white_cliffs"),
-            rl("terralith", "scarlet_mountains"),
-            rl("terralith", "gravel_desert"),
-            rl("terralith", "gravel_beach"),
-            rl("terralith", "granite_cliffs"),
-            rl("terralith", "volcanic_peaks"),
             rl("terralith", "volcanic_crater"),
             rl("terralith", "caldera"),
-            rl("terralith", "basalt_cliffs"),
             rl("terralith", "ashen_savanna"),
             rl("biomesoplenty", "wasteland_steppe"),
             rl("biomesoplenty", "wasteland"),
             rl("biomesoplenty", "volcano"),
             rl("biomesoplenty", "volcanic_plains"),
             rl("biomesoplenty", "dead_forest"),
-            rl("biomesoplenty", "gravel_beach")
     };
 
     private static final ResourceLocation[] VARASUCHUS_ROOST_COMPAT_BIOMES = {
@@ -259,13 +249,8 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .addOptionalTag(rl("c", "wasteland"))
                 .addOptionalTag(rl("c", "is_wasteland"))
                 .addOptionalTag(rl("forge", "is_wasteland"))
-                .addOptionalTag(rl("terralith", "volcanic"))
                 .add(Biomes.PLAINS)
                 .add(Biomes.SAVANNA)
-                .add(Biomes.MEADOW)
-                .add(Biomes.WINDSWEPT_HILLS)
-                .add(Biomes.WINDSWEPT_GRAVELLY_HILLS)
-                .add(Biomes.WINDSWEPT_FOREST)
                 .add(Biomes.DESERT);
         for (ResourceLocation biome : IGNIVORUS_ROOST_COMPAT_BIOMES) {
             ignivorusRoostBiomes.addOptional(biome);

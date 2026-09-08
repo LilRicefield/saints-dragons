@@ -9,12 +9,11 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerTeleport;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
-import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
-import net.minecraft.world.level.levelgen.Heightmap;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -393,9 +392,8 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         if (entity.onGround() || entity.isInWaterOrBubble()) {
             return false;
         }
-        BlockPos position = entity.blockPosition();
-        int groundY = entity.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, position).getY();
-        return entity.getY() - groundY > OWNER_AIRBORNE_CLEARANCE;
+        return DragonFlightSpace.heightAboveLocalFloor(entity, OWNER_AIRBORNE_CLEARANCE + 2.0D)
+                > OWNER_AIRBORNE_CLEARANCE;
     }
 
     private Vec3 flightTarget(T dragon, LivingEntity owner, boolean ownerAirborne, Config config) {

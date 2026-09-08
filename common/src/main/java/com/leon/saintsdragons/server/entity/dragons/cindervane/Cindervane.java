@@ -1721,6 +1721,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     @Override
+    public String getAiAirCombatBlockReason() {
+        return isInWaterOrBubble() || isInLava() ? "fluid" : null;
+    }
+
+    @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
     }

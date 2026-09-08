@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
@@ -7,8 +8,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.level.levelgen.Heightmap;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +82,8 @@ public final class DragonLandingPlanner {
         }
 
         Set<Long> sampledColumns = new HashSet<>();
+        DragonFlightSpace space = dragon instanceof RideableDragonBase rideable
+                ? rideable.getAIMovement().flightSpace() : new DragonFlightSpace(dragon);
         DragonLandingPlan bestPlan = null;
         double bestScore = Double.POSITIVE_INFINITY;
         double baseAngle = Math.atan2(preferredHeading.z, preferredHeading.x);
@@ -108,7 +109,7 @@ public final class DragonLandingPlanner {
                 }
 
                 Vec3 touchdown = new Vec3(x + 0.5D, ground.getY() + 1.0D, z + 0.5D);
-                if (!hasMinimumRunway(dragon, touchdown) || !hasLandingFootprint(dragon, ground)) {
+                if (!hasLandingFootprint(dragon, ground)) {
                     continue;
                 }
 
@@ -127,7 +128,7 @@ public final class DragonLandingPlanner {
                     continue;
                 }
 
-                DirectionPlan directionPlan = findClearDirectionPlan(dragon, touchdown, preferredHeading);
+                DirectionPlan directionPlan = findClearDirectionPlan(dragon, space, touchdown, preferredHeading);
                 if (directionPlan == null) {
                     continue;
                 }
@@ -138,10 +139,11 @@ public final class DragonLandingPlanner {
                 }
             }
         }
-        return bestPlan;
+        return bestPlan != null ? bestPlan : findCompactPlan(dragon, space, anchor, maxRadius);
     }
 
     private static @Nullable DirectionPlan findClearDirectionPlan(Mob dragon,
+                                                                   DragonFlightSpace space,
                                                                    Vec3 touchdown,
                                                                    Vec3 preferredHeading) {
         Vec3 naturalIncoming = horizontalDirection(dragon.position(), touchdown, preferredHeading);
@@ -151,6 +153,17 @@ public final class DragonLandingPlanner {
         double approachHeight = Math.max(6.0D, dragon.getBbHeight() * 1.5D);
         double glideHeight = Math.max(3.0D, dragon.getBbHeight() * 0.72D);
         double flareHeight = Math.max(0.8D, dragon.getBbHeight() * 0.20D);
+        FlightClearance clearance = space.observe(touchdown);
+        if (clearance == null || !clearance.clear()) return null;
+        double fittedApproachY = clearance.fitHeight(touchdown.y + approachHeight,
+                dragon.getBbHeight(), 0.0D, 0.5D);
+        if (!Double.isFinite(fittedApproachY) || fittedApproachY - touchdown.y < 1.0D) return null;
+        double heightScale = Math.min(1.0D, (fittedApproachY - touchdown.y) / approachHeight);
+        approachHeight *= heightScale;
+        glideHeight *= heightScale;
+        flareHeight *= heightScale;
+        double entryRunway = requiredEntryRunway(dragon, touchdown, approachHeight);
+        if (horizontalDistance(dragon.position(), touchdown) < approachDistance + entryRunway) return null;
 
         DirectionPlan best = null;
         for (double angleOffset : APPROACH_ANGLE_OFFSETS) {
@@ -162,11 +175,11 @@ public final class DragonLandingPlanner {
             Vec3 flare = touchdown.subtract(incoming.scale(flareDistance))
                     .add(0.0D, flareHeight, 0.0D);
             DragonLandingPlan plan = new DragonLandingPlan(approach, glide, flare, touchdown);
-            if (horizontalDistance(dragon.position(), approach) < requiredEntryRunway(dragon, touchdown)
+            if (horizontalDistance(dragon.position(), approach) < entryRunway
                     || !isLoaded(dragon, approach)
                     || !isLoaded(dragon, glide)
                     || !isLoaded(dragon, flare)
-                    || !isLandingCorridorClear(dragon, plan)) {
+                    || !isLandingCorridorClear(space, plan)) {
                 continue;
             }
 
@@ -182,14 +195,7 @@ public final class DragonLandingPlanner {
         return best;
     }
 
-    private static boolean hasMinimumRunway(Mob dragon, Vec3 touchdown) {
-        double approachDistance = Math.max(12.0D, dragon.getBbWidth() * 3.0D);
-        return horizontalDistance(dragon.position(), touchdown)
-                >= approachDistance + requiredEntryRunway(dragon, touchdown);
-    }
-
-    private static double requiredEntryRunway(Mob dragon, Vec3 touchdown) {
-        double approachHeight = Math.max(6.0D, dragon.getBbHeight() * 1.5D);
+    private static double requiredEntryRunway(Mob dragon, Vec3 touchdown, double approachHeight) {
         double currentHeightAboveTouchdown = dragon.getY() - touchdown.y;
         double requiredAltitudeChange = Math.abs(currentHeightAboveTouchdown - approachHeight);
         double altitudeRunway = Math.min(
@@ -203,24 +209,35 @@ public final class DragonLandingPlanner {
         return entryMargin;
     }
 
-    private static boolean isLandingCorridorClear(Mob dragon, DragonLandingPlan plan) {
-        AABB relativeBounds = dragon.getBoundingBox().move(
-                -dragon.getX(),
-                -dragon.getY(),
-                -dragon.getZ()
-        );
-        return isSegmentClear(dragon, relativeBounds, plan.approach(), plan.glide())
-                && isSegmentClear(dragon, relativeBounds, plan.glide(), plan.flare())
-                && isSegmentClear(dragon, relativeBounds, plan.flare(), plan.touchdown());
+    private static boolean isLandingCorridorClear(DragonFlightSpace space, DragonLandingPlan plan) {
+        return space.corridorClear(plan.approach(), plan.glide())
+                && space.corridorClear(plan.glide(), plan.flare())
+                && space.corridorClear(plan.flare(), plan.touchdown());
     }
 
-    private static boolean isSegmentClear(Mob dragon, AABB relativeBounds, Vec3 from, Vec3 to) {
-        return VoxelAabbSweeper.isClear(
-                dragon.level(),
-                dragon,
-                relativeBounds.move(from),
-                to.subtract(from)
-        );
+    /** Enclosed spaces may allow a controlled nearby descent without an outdoor runway. */
+    private static @Nullable DragonLandingPlan findCompactPlan(Mob dragon, DragonFlightSpace space,
+                                                                Vec3 anchor, int maxRadius) {
+        Vec3 current = dragon.position();
+        FlightClearance local = space.observe(current);
+        if (local == null || !local.clear() || !local.ceilingKnown()) return null;
+        for (int radius = 0; radius <= 8; radius += RADIUS_STEP) {
+            int samples = radius == 0 ? 1 : 8;
+            for (int i = 0; i < samples; i++) {
+                double angle = i * Math.PI * 2 / samples;
+                BlockPos column = BlockPos.containing(current.x + Math.cos(angle) * radius,
+                        current.y, current.z + Math.sin(angle) * radius);
+                BlockPos ground = findGround(dragon, column, Mth.floor(current.y));
+                if (ground == null || !hasLandingFootprint(dragon, ground)) continue;
+                Vec3 touchdown = Vec3.atBottomCenterOf(ground.above());
+                if (touchdown.y > current.y || horizontalDistance(touchdown, anchor) > maxRadius
+                        || !space.fits(touchdown) || !space.corridorClear(current, touchdown)) continue;
+                DragonLandingPlan plan = new DragonLandingPlan(current,
+                        current.lerp(touchdown, 0.5D), current.lerp(touchdown, 0.85D), touchdown);
+                if (isLandingCorridorClear(space, plan)) return plan;
+            }
+        }
+        return null;
     }
 
     private static boolean hasLandingFootprint(Mob dragon, BlockPos ground) {
@@ -260,25 +277,7 @@ public final class DragonLandingPlanner {
     }
 
     private static @Nullable BlockPos findGround(Mob dragon, BlockPos column, int originY) {
-        if (!dragon.level().dimensionType().hasCeiling()) {
-            int surfaceY = dragon.level().getHeight(
-                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                    column.getX(),
-                    column.getZ()
-            );
-            return new BlockPos(column.getX(), surfaceY - 1, column.getZ());
-        }
-
-        int minY = dragon.level().getMinBuildHeight();
-        int maxY = dragon.level().getMaxBuildHeight() - 1;
-        int startY = Math.min(maxY, Math.max(minY, originY + 8));
-        for (int y = startY; y >= minY; y--) {
-            BlockPos ground = new BlockPos(column.getX(), y, column.getZ());
-            if (hasLandingFootprint(dragon, ground)) {
-                return ground;
-            }
-        }
-        return null;
+        return DragonFlightSpace.findLandingGround(dragon, column, originY);
     }
 
     private static Vec3 preferredHeading(Mob dragon) {

@@ -154,7 +154,12 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
         LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         LivingEntity owner = context.dragon().getOwner();
         return owner == null
-                || current != owner.getLastHurtByMob() && current != owner.getLastHurtMob();
+                || dragonTargetSource(context, current) != owner.getLastHurtByMob()
+                && dragonTargetSource(context, current) != owner.getLastHurtMob();
+    }
+
+    private LivingEntity dragonTargetSource(DragonBrainContext<Cindervane> context, LivingEntity current) {
+        return current == context.dragon().getTarget() ? context.dragon().getCombatTargetSource() : current;
     }
 
     @Override

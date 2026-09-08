@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai;
 
 import com.leon.saintsdragons.server.ai.navigation.async.DragonAsyncAirMovementHelper;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -8,7 +9,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 
 public final class DragonAirCombatHelper {
@@ -60,13 +60,15 @@ public final class DragonAirCombatHelper {
 
     public static boolean canTriggerAiFlight(RideableDragonBase dragon) {
         return dragon.canFly()
+                && (!(dragon instanceof RideableFlyingDragon flying) || !flying.isAiLandingRecoveryActive())
                 && !dragon.isOrderedToSit()
                 && !dragon.isBaby()
                 && (dragon.onGround() || dragon.isInWater())
                 && dragon.getPassengers().isEmpty()
                 && dragon.getControllingPassenger() == null
                 && !dragon.isPassenger()
-                && dragon.getActiveAbility() == null;
+                && dragon.getActiveAbility() == null
+                && (dragon.isInWater() || dragon.getAIMovement().flightSpace().canTakeoff(3.0D));
     }
 
     public static boolean canTriggerAiFlightForTarget(RideableDragonBase dragon, LivingEntity target) {
@@ -97,10 +99,7 @@ public final class DragonAirCombatHelper {
         if (movementAnchor.onGround()) {
             return false;
         }
-        double groundY = dragon.level()
-                .getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, movementAnchor.blockPosition())
-                .getY();
-        return movementAnchor.getY() - groundY > minHeightAboveGround
+        return DragonFlightSpace.heightAboveLocalFloor(movementAnchor, minHeightAboveGround + 2.0D) > minHeightAboveGround
                 && movementAnchor.getY() - dragon.getY() > minHeightAboveDragon;
     }
 
@@ -297,8 +296,7 @@ public final class DragonAirCombatHelper {
         if (target instanceof Player player && player.isFallFlying()) {
             return true;
         }
-        double groundY = dragon.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, target.blockPosition()).getY();
-        return target.getY() - groundY > minHeightAboveGround;
+        return DragonFlightSpace.heightAboveLocalFloor(target, minHeightAboveGround + 2.0D) > minHeightAboveGround;
     }
 
     public static double maxAggroDistanceSqr(RideableDragonBase dragon, double fallbackFollowRange) {

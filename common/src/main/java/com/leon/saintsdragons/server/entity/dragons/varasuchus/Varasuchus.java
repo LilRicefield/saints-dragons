@@ -991,7 +991,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             super.setTarget(null);
             return;
         }
-        if (!isBabyProtectionAggroTarget(target)) {
+        if (!isBabyProtectionAggroTarget(target == getTarget() ? getCombatTargetSource() : target)) {
             clearBabyProtectionAggroTarget();
         }
         super.setTarget(target);

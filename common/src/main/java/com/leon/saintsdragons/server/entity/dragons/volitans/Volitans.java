@@ -1063,6 +1063,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     @Override
+    public String getAiAirCombatBlockReason() {
+        if (isInWaterOrBubble() || isInLava()) return "fluid";
+        if (isAiSpecialCombatActive()) return "special-combat";
+        return isAiSpecialCombatReserved() ? "special-combat-reserved" : null;
+    }
+
+    @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
     }

@@ -257,10 +257,7 @@ public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehav
     }
 
     private boolean canUseAirCombat(Cindervane dragon) {
-        return !dragon.isBaby()
-                && !dragon.isInWater()
-                && !dragon.isInWaterOrBubble()
-                && !dragon.isInLava();
+        return dragon.getAiAirCombatBlockReason() == null;
     }
 
     private boolean canUse(Cindervane dragon,
@@ -318,7 +315,7 @@ public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehav
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
-        Map<String, String> details = new LinkedHashMap<>();
+        Map<String, String> details = new LinkedHashMap<>(super.getDragonBrainDebugDetails());
         details.put("air_state", state.name().toLowerCase());
         details.put("air_decision", lastDecision);
         details.put("air_last_action", lastAction.debugName);

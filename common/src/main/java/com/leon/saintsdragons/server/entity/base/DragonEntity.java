@@ -184,6 +184,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private DamageSource killDataCause;
     private int killDataRecentlyHit;
     private Player killDataAttackingPlayer;
+    private @Nullable Player combatTargetPlayer;
     private boolean boundInBinder = false;
     private boolean growthStunted = false;
     @Nullable
@@ -2329,11 +2330,14 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public void setTarget(@Nullable LivingEntity target) {
-        if (target != null && !canTarget(target)) {
-            super.setTarget(null);
-            setAggressive(false);
-            return;
-        }
+        LivingEntity previousTarget = getTarget();
+        Player playerSource = target instanceof Player player ? player
+                : target != null && target == previousTarget ? combatTargetPlayer : null;
+        LivingEntity sourceTarget = playerSource != null ? playerSource : target;
+        target = sourceTarget == null ? null : DragonTargetingHelper.combatTarget(sourceTarget);
+        if (target != null && (target == this || target.level() != level()
+                || !canTarget(sourceTarget) || !canTarget(target))) target = null;
+        combatTargetPlayer = target == null ? null : playerSource;
         if (target != null
                 && !level().isClientSide
                 && (isSleeping() || isSleepingEntering() || isSleepTransitioning())) {
@@ -2341,8 +2345,25 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             suppressSleep(DAMAGE_SLEEP_SUPPRESSION_TICKS);
         }
         super.setTarget(target);
+        if (!level().isClientSide && previousTarget != target) {
+            com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle.combatTargetChanged(this, target);
+        }
         if (target == null) {
             setAggressive(false);
+        }
+    }
+
+    public @Nullable LivingEntity getCombatTargetSource() {
+        return combatTargetPlayer != null ? combatTargetPlayer : getTarget();
+    }
+
+    public void refreshMountedCombatTarget() {
+        LivingEntity source = getCombatTargetSource();
+        if (source == null) return;
+        if (!isTargetValid(source) || source.level() != level() || !canTarget(source)) {
+            setTarget(null);
+        } else if (DragonTargetingHelper.combatTarget(source) != getTarget()) {
+            setTarget(source);
         }
     }
 

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTactic;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
@@ -11,6 +12,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalProfi
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -187,20 +189,23 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
             );
         }
 
-        boolean canFly = dragon.movementCapabilities().contains(DragonMovementCapability.FLY);
-        if (canFly) {
+        if (dragon instanceof RideableFlyingDragon flying
+                && DragonFlightEligibility.movementBlockReason(flying) == null) {
             int score = 50;
             if (targetAirborne) score += 30;
             if (groundRouteAbandoned) score += 35;
             if (dragon.isAerial()) score += 10;
             if (distance >= 16.0D) score += 10;
-            evaluation.add(
+            if (DragonFlightEligibility.pursuitBlockReason(flying, target, targetAirborne,
+                    groundRouteAbandoned, context.memories().has(DragonMemories.TACTICAL_LANDING_POSITION)) == null) {
+                evaluation.add(
                     DragonTactic.AERIAL_PURSUIT,
                     score,
                     targetUuid,
                     focus,
                     targetAirborne ? "airborne-target" : "flight-option"
-            );
+                );
+            }
 
             if (dragon.isAerial() && !targetAirborne && !targetInWater) {
                 int landingScore = 60;

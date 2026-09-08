@@ -426,6 +426,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         Raevyx dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (target == null
+                || dragon.isAiLandingRecoveryActive()
                 || context.memories().get(DragonMemories.GROUND_ROUTE_ABANDONED).orElse(false)
                 || !DragonAirCombatHelper.isValidCombatTarget(dragon, target)
                 || dragon.isVehicle()

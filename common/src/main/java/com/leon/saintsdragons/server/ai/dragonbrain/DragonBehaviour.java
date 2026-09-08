@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 
 public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T> implements DragonBrainDebugDetails {
     private long cooldownEndsAtTick;
@@ -66,31 +68,39 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
     @Override
     protected final boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull T dragon) {
         DragonBrainContext<T> context = new DragonBrainContext<>(dragon, level);
-        return context.gameTime() >= cooldownEndsAtTick && canStart(context);
+        return context.gameTime() >= cooldownEndsAtTick && asMovementOwner(dragon, false, () -> canStart(context));
     }
 
     @Override
     protected final boolean canStillUse(@NotNull ServerLevel level, @NotNull T dragon, long gameTime) {
         return (activity == null || dragon.getBrain().getActiveActivities().contains(activity))
-                && canContinue(new DragonBrainContext<>(dragon, level));
+                && asMovementOwner(dragon, false, () -> canContinue(new DragonBrainContext<>(dragon, level)));
     }
 
     @Override
     protected final void start(@NotNull ServerLevel level, @NotNull T dragon, long gameTime) {
-        start(new DragonBrainContext<>(dragon, level));
+        asMovementOwner(dragon, false, () -> { start(new DragonBrainContext<>(dragon, level)); return null; });
     }
 
     @Override
     protected final void tick(@NotNull ServerLevel level, @NotNull T dragon, long gameTime) {
-        tick(new DragonBrainContext<>(dragon, level));
+        asMovementOwner(dragon, false, () -> { tick(new DragonBrainContext<>(dragon, level)); return null; });
     }
 
     @Override
     protected final void stop(@NotNull ServerLevel level, @NotNull T dragon, long gameTime) {
         DragonBrainContext<T> context = new DragonBrainContext<>(dragon, level);
         cooldownEndsAtTick = context.gameTime() + Math.max(0, cooldownForTicks(context));
-        stop(context);
-        context.memories().eraseAll(clearMemoriesWhenStopped());
+        asMovementOwner(dragon, true, () -> {
+            stop(context);
+            context.memories().eraseAll(clearMemoriesWhenStopped());
+            return null;
+        });
+    }
+
+    private <R> R asMovementOwner(T dragon, boolean cleanup, Supplier<R> action) {
+        return dragon instanceof RideableDragonBase rideable
+                ? rideable.getAIMovement().brainMovement().runAs(this, cleanup, action) : action.get();
     }
 
     public List<MemoryModuleType<?>> clearMemoriesWhenStopped() {

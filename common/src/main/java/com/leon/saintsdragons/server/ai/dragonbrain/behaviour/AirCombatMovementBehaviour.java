@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
@@ -20,6 +21,7 @@ import java.util.Map;
 public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon & DragonAirCombatSettingsProvider>
         extends DragonBehaviour<T> {
     private int lostSightTicks;
+    private String blockedReason = "not-evaluated";
 
     protected AirCombatMovementBehaviour() {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
@@ -102,10 +104,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             return;
         }
         if (isGroundRouteAbandoned(context)) {
-            context.memories().get(DragonMemories.TACTICAL_LANDING_POSITION)
-                    .filter(position -> dragon.isAerial())
-                    .ifPresent(position -> dragon.getAIMovement()
-                            .requestGroundTransition(position, settings.landingSpeed()));
+            // The shared transition behaviour owns accepting/rejecting the landing.
             return;
         }
         DragonAirCombatHelper.stopAirCombatAndLandWhenTargetLost(
@@ -203,23 +202,15 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
 
     private boolean isValidAirTarget(DragonBrainContext<T> context, LivingEntity target) {
         T dragon = context.dragon();
-        if (target == null || context.memories().has(DragonMemories.TACTICAL_LANDING_POSITION)) {
-            return false;
-        }
-        if (isGroundRouteAbandoned(context)) {
-            return DragonAirCombatHelper.canUseAirCombat(
-                    dragon,
-                    target,
-                    settings(dragon).fallbackFollowRange()
-            ) && (dragon.isAerial() || dragon.canTakeoff());
-        }
-        return context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false)
-                && DragonAirCombatHelper.canEngageAirborneTarget(
-                        dragon,
-                        target,
-                        settings(dragon),
-                        dragon.getAiTargetAirborneHeight(target)
-                );
+        blockedReason = target == null ? "no-target" : DragonFlightEligibility.pursuitBlockReason(
+                dragon, target, context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false),
+                isGroundRouteAbandoned(context), context.memories().has(DragonMemories.TACTICAL_LANDING_POSITION));
+        return blockedReason == null;
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of("flight_block", blockedReason == null ? "none" : blockedReason);
     }
 
     private boolean isGroundRouteAbandoned(DragonBrainContext<T> context) {
