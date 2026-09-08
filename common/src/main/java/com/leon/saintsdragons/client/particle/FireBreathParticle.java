@@ -173,7 +173,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
         yo += behind.y;
         zo += behind.z;
         this.quadSize = flameSize * SMOKE_SCALE;
-        this.setColor(0.32F, 0.30F, 0.28F);
+        this.setColor(0.8667F, 0.3137F, 0.0F);
         this.alpha = 0.55F * fade;
         try {
             super.render(buffer, camera, partialTicks);
@@ -208,7 +208,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
             yo = oldYo;
             zo = oldZo;
             this.quadSize = flameSize;
-            this.setColor(1.0F, 0.42F, 0.035F);
+            this.setColor(1.0F, 0.6431F, 0.4157F);
             this.alpha = 0.9F * fade;
         }
     }
@@ -238,6 +238,8 @@ public final class FireBreathParticle extends TextureSheetParticle {
             if (level.random.nextFloat() < amount - count) count++;
             if (count == 0) return null;
             Vec3 velocity = new Vec3(xSpeed, ySpeed, zSpeed);
+            Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
+                    x, y, z, xSpeed, ySpeed, zSpeed);
             for (int i = 1; i < count; i++) {
                 Minecraft.getInstance().particleEngine.add(
                         new FireBreathParticle(level, x, y, z, velocity, data, sprites));
