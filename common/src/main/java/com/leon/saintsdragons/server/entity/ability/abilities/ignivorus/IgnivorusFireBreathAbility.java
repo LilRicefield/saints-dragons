@@ -24,8 +24,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private static final int STARTUP_TICKS = 9;
-    private static final int RIDER_ACTIVE_TICKS = 160;
-    private static final int AI_ACTIVE_TICKS = 80;
+    private static final int RIDER_ACTIVE_TICKS = 240;
+    private static final int AI_ACTIVE_TICKS = 240;
+    private static final int BLOCK_BREAK_START_TICKS = 120;
     private static final int COOLDOWN_TICKS = 40;
     private static final float DEFAULT_FIRE_BREATH_DRAIN_PER_TICK = 1.0f / RIDER_ACTIVE_TICKS;
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[]{
@@ -152,10 +153,11 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             float drain = (float) DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                     .extraDouble("fire_breath_drain_per_tick", DEFAULT_FIRE_BREATH_DRAIN_PER_TICK);
-            if (!dragon.drainFireBreathEnergy(drain)) {
+            if (dragon.isFireBreathDepleted() || dragon.getFireBreathEnergy() <= 0) {
                 interrupt();
                 return;
             }
+            dragon.drainFireBreathEnergy(drain);
         }
         int currentProgress = dragon.getFireBreathProgress();
         if (currentProgress < 40) {
@@ -174,7 +176,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             return;
         }
         dragon.syncFireBreathPath(origin, origin.add(aim.normalize().scale(ExpandingBreathSection.DEFAULT_RANGE)));
-        dragon.emitFireBreathSection(origin, aim);
+        dragon.emitFireBreathSection(origin, aim, getTicksInSection() >= BLOCK_BREAK_START_TICKS);
         if (!openingBurstEmitted && dragon.level() instanceof ServerLevel level) {
             openingBurstEmitted = true;
             for (ServerPlayer viewer : level.players()) {

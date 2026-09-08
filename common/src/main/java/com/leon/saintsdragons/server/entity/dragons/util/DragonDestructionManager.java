@@ -309,6 +309,16 @@ public final class DragonDestructionManager {
         applyFlameImpact(level, null, impactPoint, radius);
     }
 
+    public static void applyFlameCookingHit(ServerLevel level, DragonEntity dragon, BlockPos pos) {
+        DragonUtilities.accelerateCooking(level, dragon, pos,
+                FIRE_BREATH_FURNACE_BOOST_TICKS, FIRE_BREATH_SMOKER_BOOST_TICKS,
+                FIRE_BREATH_BLAST_FURNACE_BOOST_TICKS, FIRE_BREATH_FURNACE_LIT_TICKS);
+    }
+
+    public static void applyFlameIgnition(ServerLevel level, Vec3 impactPoint, double radius) {
+        igniteBlocks(level, impactPoint, radius);
+    }
+
     public static void applyFlameImpact(ServerLevel level, DragonEntity dragon, Vec3 impactPoint, double radius) {
         if (level == null || impactPoint == null) {
             return;

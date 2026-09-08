@@ -29,6 +29,15 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 
 public final class ForgePlatformHelper implements PlatformHelper {
+    @Override
+    public boolean canDragonBreakBlock(net.minecraft.server.level.ServerLevel level,
+                                      net.minecraft.world.entity.LivingEntity dragon,
+                                      net.minecraft.core.BlockPos pos,
+                                      net.minecraft.world.level.block.state.BlockState state) {
+        return net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(level, dragon)
+                && state.canEntityDestroy(level, pos, dragon)
+                && net.minecraftforge.event.ForgeEventFactory.onEntityDestroyBlock(dragon, pos, state);
+    }
     // Lazy initialization to avoid ServiceConfigurationError during early class loading
     private ForgeRegistryHelper registryHelper;
     private ForgeNetworkHelper networkHelper;

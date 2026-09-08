@@ -2,6 +2,7 @@ package com.leon.saintsdragons.common.particle;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
@@ -86,13 +87,26 @@ public final class ExpandingBreathSection {
             return List.of();
         }
         List<AABB> obstacles = new ArrayList<>();
-        for (VoxelShape shape : level.getBlockCollisions(null, bounds)) {
-            obstacles.addAll(shape.toAabbs());
+        List<BlockPos> positions = new ArrayList<>();
+        BlockCollisions<TerrainShape> collisions = new BlockCollisions<>(level, null, bounds, false,
+                (pos, shape) -> new TerrainShape(pos.immutable(), shape));
+        while (collisions.hasNext()) {
+            TerrainShape terrain = collisions.next();
+            for (AABB box : terrain.shape().toAabbs()) {
+                obstacles.add(box);
+                positions.add(terrain.pos());
+            }
         }
-        return advance(obstacles);
+        return advance(obstacles, positions);
     }
 
     public List<Sweep> advance(List<AABB> obstacles) {
+        return advance(obstacles, null);
+    }
+
+    private record TerrainShape(BlockPos pos, VoxelShape shape) {}
+
+    private List<Sweep> advance(List<AABB> obstacles, List<BlockPos> positions) {
         if (finished()) {
             return List.of();
         }
@@ -111,11 +125,14 @@ public final class ExpandingBreathSection {
             Vec3 end = origin.add(forward.scale(next)).add(offset.scale(toHalf));
             double stop = Double.POSITIVE_INFINITY;
             AABB blocker = null;
-            for (AABB obstacle : obstacles) {
+            BlockPos blockPos = null;
+            for (int i = 0; i < obstacles.size(); i++) {
+                AABB obstacle = obstacles.get(i);
                 double contact = contactFraction(start, end, fromExtent, toExtent, obstacle);
                 if (contact < stop) {
                     stop = contact;
                     blocker = obstacle;
+                    blockPos = positions == null ? null : positions.get(i);
                 }
             }
             Vec3 impact = null;
@@ -126,7 +143,7 @@ public final class ExpandingBreathSection {
                 impact = new Vec3(clamp(point.x, blocker.minX, blocker.maxX),
                         clamp(point.y, blocker.minY, blocker.maxY), clamp(point.z, blocker.minZ, blocker.maxZ));
             }
-            sweeps.add(new Sweep(lane, start, end, fromExtent, toExtent, stop, impact));
+            sweeps.add(new Sweep(lane, start, end, fromExtent, toExtent, stop, impact, blockPos));
         }
         distance = next;
         return sweeps;
@@ -171,7 +188,11 @@ public final class ExpandingBreathSection {
     }
 
     public record Sweep(int lane, Vec3 start, Vec3 end, Vec3 fromHalf, Vec3 toHalf,
-                        double blockFraction, Vec3 blockImpact) {
+                        double blockFraction, Vec3 blockImpact, BlockPos blockPos) {
+        public Sweep(int lane, Vec3 start, Vec3 end, Vec3 fromHalf, Vec3 toHalf,
+                     double blockFraction, Vec3 blockImpact) {
+            this(lane, start, end, fromHalf, toHalf, blockFraction, blockImpact, null);
+        }
         public boolean hits(AABB target) {
             double contact = contactFraction(start, end, fromHalf, toHalf, target);
             // Terrain wins ties. In particular, a tile starting inside a wall cannot damage through it.

@@ -320,7 +320,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double tamingChancePorkchop = 14.2857D;
         double tamingChanceHearty = 25.0D;
         boolean legacyTaming = false;
-        double fireBreathDrainPerTick = 0.00625D;
+        double fireBreathDrainPerTick = 0.004166666666666667D;
         double fireBreathRegenPerTick = 0.0025D;
         double eggHatchTimeTicksNormal = 36000.0D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
@@ -1151,9 +1151,14 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             }
 
             if (isIgnivorus) {
+                if (extra.has("fire_breath_drain_per_tick")
+                        && Math.abs(extra.get("fire_breath_drain_per_tick").getAsDouble() - 0.00625D) < 1.0E-10D) {
+                    extra.addProperty("fire_breath_drain_per_tick", 1.0D / 240.0D);
+                    updated = true;
+                }
                 if (!extra.has("fire_breath_drain_per_tick")) {
                     extra.addProperty("fire_breath_drain_per_tick",
-                            mergedConfig.extraDouble("fire_breath_drain_per_tick", 0.00625D));
+                            mergedConfig.extraDouble("fire_breath_drain_per_tick", 0.004166666666666667D));
                     updated = true;
                 }
                 if (!extra.has("fire_breath_regen_per_tick")) {

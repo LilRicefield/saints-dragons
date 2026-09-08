@@ -314,7 +314,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         ignivorusBuffer.wildFlyingSpeedMultiplier = ignivorusCurrent.extraDouble("wild_flying_speed_multiplier",
                 ignivorusDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
         ignivorusBuffer.fireBreathDrainPerTick = ignivorusCurrent.extraDouble("fire_breath_drain_per_tick",
-                ignivorusDefaults.extraDouble("fire_breath_drain_per_tick", 0.00625D));
+                ignivorusDefaults.extraDouble("fire_breath_drain_per_tick", 0.004166666666666667D));
         ignivorusBuffer.fireBreathRegenPerTick = ignivorusCurrent.extraDouble("fire_breath_regen_per_tick",
                 ignivorusDefaults.extraDouble("fire_breath_regen_per_tick", 0.0025D));
         ignivorusBuffer.legacyTaming = ignivorusCurrent.extraBoolean("legacy_taming", false);
@@ -1759,7 +1759,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setSaveConsumer(value -> buffer.tamingStunHealth = value)
                 .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_drain_per_tick"), buffer.fireBreathDrainPerTick)
-                .setDefaultValue(defaults.extraDouble("fire_breath_drain_per_tick", 0.00625D))
+                .setDefaultValue(defaults.extraDouble("fire_breath_drain_per_tick", 0.004166666666666667D))
                 .setMin(0.0D)
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.fireBreathDrainPerTick = value)

@@ -239,6 +239,11 @@ public final class SaintsDragonsForge {
         }
 
         if (matchesConfigFile(config.getFileName(), FORGE_ATTRIBUTES_CONFIG_FILE)) {
+            if (event instanceof ModConfigEvent.Loading
+                    && Math.abs(ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.get() - 0.00625D) < 1.0E-10D) {
+                ForgeDragonAttributesConfig.IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK.set(1.0D / 240.0D);
+                config.save();
+            }
             DragonAttributeConfigLoader.getInstance().refreshFromForgeConfig();
             applyAttributesToLoadedDragons();
         }

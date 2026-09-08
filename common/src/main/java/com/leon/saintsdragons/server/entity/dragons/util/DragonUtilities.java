@@ -22,7 +22,6 @@ import net.minecraft.world.level.block.LightningRodBlock;
 import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.WeatheringCopper;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.phys.AABB;
@@ -33,6 +32,8 @@ import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class DragonUtilities {
     private static final String COOKING_PROGRESS_FIELD = "cookingProgress";
@@ -44,6 +45,7 @@ public final class DragonUtilities {
     private static Field cookingTotalField;
     private static Field litTimeField;
     private static Field litDurationField;
+    private static final Map<AbstractFurnaceBlockEntity, Long> lastDirectCookingTick = new WeakHashMap<>();
 
     private DragonUtilities() {
     }
@@ -68,51 +70,57 @@ public final class DragonUtilities {
                 continue;
             }
 
-            BlockEntity blockEntity = level.getBlockEntity(pos);
-            if (!(blockEntity instanceof AbstractFurnaceBlockEntity furnace)) {
-                continue;
-            }
-
-            BlockState state = level.getBlockState(pos);
-            if (!state.is(Blocks.FURNACE) && !state.is(Blocks.SMOKER) && !state.is(Blocks.BLAST_FURNACE)) {
-                continue;
-            }
-
-            int total = getCookingTotalTime(furnace);
-            if (total <= 0) {
-                continue;
-            }
-
-            boolean changed = false;
-            int litTime = getLitTime(furnace);
-            if (litTime < litTicks) {
-                setLitTime(furnace, litTicks);
-                setLitDuration(furnace, litTicks);
-                changed = true;
-            }
-            if (state.hasProperty(BlockStateProperties.LIT) && !state.getValue(BlockStateProperties.LIT)) {
-                level.setBlock(pos, state.setValue(BlockStateProperties.LIT, true), 3);
-                changed = true;
-            }
-
-            int progress = getCookingProgress(furnace);
-            int boostTicks = state.is(Blocks.SMOKER)
-                    ? smokerBoost
-                    : (state.is(Blocks.BLAST_FURNACE) ? blastBoost : furnaceBoost);
-            int boosted = Math.min(total - 1, progress + boostTicks);
-            if (boosted > progress) {
-                setCookingProgress(furnace, boosted);
-                cookedByDragon |= boosted >= total - 1;
-                changed = true;
-            }
-            if (changed) {
-                blockEntity.setChanged();
-            }
+            cookedByDragon |= accelerateCookingAt(level, pos, furnaceBoost, smokerBoost, blastBoost, litTicks, false);
         }
 
         if (cookedByDragon) {
             awardFireCookingAdvancement(dragon);
         }
+    }
+
+    public static void accelerateCooking(ServerLevel level, @Nullable DragonEntity dragon, BlockPos pos,
+                                         int furnaceBoost, int smokerBoost, int blastBoost, int litTicks) {
+        if (!level.hasChunkAt(pos)) return;
+        if (accelerateCookingAt(level, pos, furnaceBoost, smokerBoost, blastBoost, litTicks, true)) {
+            awardFireCookingAdvancement(dragon);
+        }
+    }
+
+    private static boolean accelerateCookingAt(ServerLevel level, BlockPos pos, int furnaceBoost,
+                                                int smokerBoost, int blastBoost, int litTicks,
+                                                boolean directHit) {
+        BlockState state = level.getBlockState(pos);
+        if (!state.is(Blocks.FURNACE) && !state.is(Blocks.SMOKER) && !state.is(Blocks.BLAST_FURNACE)) return false;
+        if (!(level.getBlockEntity(pos) instanceof AbstractFurnaceBlockEntity furnace)) return false;
+        int total = getCookingTotalTime(furnace);
+        if (total <= 0) return false;
+        if (directHit) {
+            long now = level.getGameTime();
+            Long previous = lastDirectCookingTick.put(furnace, now);
+            if (previous != null && previous == now) return false;
+        }
+        boolean changed = false;
+        if (getLitTime(furnace) < litTicks) {
+            setLitTime(furnace, litTicks);
+            setLitDuration(furnace, litTicks);
+            changed = true;
+        }
+        if (state.hasProperty(BlockStateProperties.LIT) && !state.getValue(BlockStateProperties.LIT)) {
+            level.setBlock(pos, state.setValue(BlockStateProperties.LIT, true), 3);
+            changed = true;
+        }
+        int progress = getCookingProgress(furnace);
+        int boost = state.is(Blocks.SMOKER) ? smokerBoost
+                : (state.is(Blocks.BLAST_FURNACE) ? blastBoost : furnaceBoost);
+        int boosted = Math.min(total - 1, progress + boost);
+        boolean cookedByDragon = false;
+        if (boosted > progress) {
+            setCookingProgress(furnace, boosted);
+            cookedByDragon = boosted >= total - 1;
+            changed = true;
+        }
+        if (changed) furnace.setChanged();
+        return cookedByDragon;
     }
 
     public static boolean extinguishFire(ServerLevel level, Vec3 start, Vec3 end, double radius) {

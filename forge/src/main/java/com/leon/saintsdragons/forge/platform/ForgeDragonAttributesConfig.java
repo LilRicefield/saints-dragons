@@ -293,7 +293,7 @@ public final class ForgeDragonAttributesConfig {
         IGNIVORUS_ULTIMATE_DAMAGE = builder.defineInRange("ultimate_damage", 200.0, 0.0, 100000.0);
         IGNIVORUS_ULTIMATE_PENALTY_HEALTH = builder.defineInRange("ultimate_penalty_health", 50.0, 1.0, 10000.0);
         IGNIVORUS_ULTIMATE_TRIGGER_HEALTH_FRACTION = builder.defineInRange("ultimate_trigger_health_fraction", 0.6, 0.0, 1.0);
-        IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK = builder.defineInRange("fire_breath_drain_per_tick", 0.00625, 0.0, 1.0);
+        IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK = builder.defineInRange("fire_breath_drain_per_tick", 0.004166666666666667, 0.0, 1.0);
         IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK = builder.defineInRange("fire_breath_regen_per_tick", 0.0025, 0.0, 1.0);
         IGNIVORUS_TAMING_CHANCE_BASE = builder.defineInRange("taming_chance_base", 14.2857, 0.0, 100.0);
         IGNIVORUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", 20.0, 0.0, 100.0);

@@ -42,4 +42,11 @@ public interface PlatformHelper {
                          Item.Properties properties);
    SimpleParticleType createSimpleParticle(boolean overrideLimiter);
     Path getConfigDirectory();
+
+    default boolean canDragonBreakBlock(net.minecraft.server.level.ServerLevel level,
+                                       net.minecraft.world.entity.LivingEntity dragon,
+                                       net.minecraft.core.BlockPos pos,
+                                       net.minecraft.world.level.block.state.BlockState state) {
+        return true;
+    }
 }

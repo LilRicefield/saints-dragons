@@ -2277,7 +2277,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public boolean drainFireBreathEnergy(float amount) {
-        return DragonBreathComponent.drain(getFireBreathGauge(), amount, FIRE_BREATH_DEPLETED_THRESHOLD, FIRE_BREATH_REARM_THRESHOLD);
+        boolean available = DragonBreathComponent.drain(getFireBreathGauge(), amount, 1.0E-5F, FIRE_BREATH_REARM_THRESHOLD);
+        if (!available) setFireBreathEnergy(0);
+        return available;
     }
 
     private void tickFireBreathEnergy() {
@@ -2318,8 +2320,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         setFireBreathTarget(end);
     }
 
-    public void emitFireBreathSection(Vec3 origin, Vec3 direction) {
-        fireBreathStream.emit(origin, direction);
+    public void emitFireBreathSection(Vec3 origin, Vec3 direction, boolean canBreakBlocks) {
+        fireBreathStream.emit(origin, direction, canBreakBlocks);
     }
 
     public void clearFireBreathPath() {
