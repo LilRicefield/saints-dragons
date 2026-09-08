@@ -2347,6 +2347,18 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return computeFireBoneFallback(partialTicks);
     }
 
+    public Vec3 getFireBreathVisualDirection(float partialTicks) {
+        Vec3 start = getFireBreathStart();
+        if (start != null && this.entityData.get(DATA_FIRE_END_SET)) {
+            Vec3 end = new Vec3(this.entityData.get(DATA_FIRE_END_X),
+                    this.entityData.get(DATA_FIRE_END_Y), this.entityData.get(DATA_FIRE_END_Z));
+            Vec3 direction = end.subtract(start);
+            if (direction.lengthSqr() > 1.0E-8) return direction.normalize();
+        }
+        return Vec3.directionFromRotation(Mth.lerp(partialTicks, xRotO, getXRot()),
+                Mth.rotLerp(partialTicks, yHeadRotO, yHeadRot));
+    }
+
     private Vec3 computeFireBoneFallback(float partialTicks) {
         double x = Mth.lerp(partialTicks, this.xo, this.getX());
         double y = Mth.lerp(partialTicks, this.yo, this.getY());

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.BloodTempestKatanaRingData;
 import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.particle.FireBreathParticleData;
+import com.leon.saintsdragons.common.particle.FireBreathBurstData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.SonicRingData;
@@ -82,6 +83,14 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> FIRE_BREATH_FLICKER =
             REGISTER.register("fire_breath_flicker", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<ParticleType<FireBreathBurstData>> FIRE_BREATH_BURST =
+            REGISTER.register("fire_breath_burst", () -> new ParticleType<>(false, FireBreathBurstData.DESERIALIZER) {
+                @Override
+                public com.mojang.serialization.Codec<FireBreathBurstData> codec() {
+                    return FireBreathBurstData.CODEC;
+                }
+            });
 
     public static final Supplier<SimpleParticleType> FIRE_BREATH_OUTER_FLAME =
             REGISTER.register("fire_breath_outer_flame", () -> Services.PLATFORM.createSimpleParticle(false));

@@ -14,6 +14,7 @@ import com.leon.saintsdragons.client.particle.GlowingEmitterParticle;
 import com.leon.saintsdragons.client.particle.FireBreathParticle;
 import com.leon.saintsdragons.client.particle.FireBreathEmberParticle;
 import com.leon.saintsdragons.client.particle.FireBreathFlickerParticle;
+import com.leon.saintsdragons.client.particle.FireBreathBurstParticle;
 import com.leon.saintsdragons.client.particle.FireBreathOuterFlameParticle;
 import com.leon.saintsdragons.client.particle.FireBreathSmokeParticle;
 import com.leon.saintsdragons.client.particle.GroundDecalParticle;
@@ -37,6 +38,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.FIRE_BREATH_FLAME.get(), FireBreathParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_EMBER.get(), FireBreathEmberParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_FLICKER.get(), FireBreathFlickerParticle.Factory::new);
+        register(registrar, ModParticles.FIRE_BREATH_BURST.get(), FireBreathBurstParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_OUTER_FLAME.get(), FireBreathOuterFlameParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_SMOKE.get(), FireBreathSmokeParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);

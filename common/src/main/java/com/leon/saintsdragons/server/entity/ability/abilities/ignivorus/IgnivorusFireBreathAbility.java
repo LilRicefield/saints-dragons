@@ -2,6 +2,9 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.particle.FireBreathBurstData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -37,6 +40,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private boolean breathStartPlayed = false;
     private boolean breathLoopActive = false;
+    private boolean openingBurstEmitted = false;
 
     public IgnivorusFireBreathAbility(DragonAbilityType<Ignivorus, IgnivorusFireBreathAbility> type,
                                       Ignivorus user) {
@@ -75,6 +79,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             }
 
         } else if (section.sectionType == ACTIVE) {
+            openingBurstEmitted = false;
             dragon.setBreathingFire(true);
             dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breathing");
             breathLoopActive = true;
@@ -170,6 +175,15 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         }
         dragon.syncFireBreathPath(origin, origin.add(aim.normalize().scale(ExpandingBreathSection.DEFAULT_RANGE)));
         dragon.emitFireBreathSection(origin, aim);
+        if (!openingBurstEmitted && dragon.level() instanceof ServerLevel level) {
+            openingBurstEmitted = true;
+            for (ServerPlayer viewer : level.players()) {
+                if (viewer.distanceToSqr(origin) <= 128.0 * 128.0) {
+                    level.sendParticles(viewer, new FireBreathBurstData(dragon.getId()), true,
+                            origin.x, origin.y, origin.z, 1, 0, 0, 0, 0);
+                }
+            }
+        }
     }
 
     private boolean isValidTarget(LivingEntity target) {
