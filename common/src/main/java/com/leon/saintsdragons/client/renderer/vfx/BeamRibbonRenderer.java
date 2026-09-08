@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -74,10 +73,8 @@ public final class BeamRibbonRenderer {
         Vector3f companionRight = new Vector3f(-localRight.y(), localRight.x(), 0.0F);
         Vector3f companionNormal = new Vector3f(-companionRight.y(), companionRight.x(), 0.0F);
         normalMatrix.transform(companionNormal).normalize();
-        // FULL_BRIGHT already gives this an unlit appearance. Keeping it in the
-        // normal translucent entity pass also prevents shader packs from dropping
-        // the ribbon when it is drawn against the sky.
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
+        // Vanilla bypasses directional lighting; shader packs retain the entity pass.
+        VertexConsumer consumer = bufferSource.getBuffer(BeamRenderTypes.translucent(texture));
 
         float halfWidth = Math.max(0.001F, style.halfWidth()) * visibility;
         // A repeat count of two stretches each full texture across half the current beam.

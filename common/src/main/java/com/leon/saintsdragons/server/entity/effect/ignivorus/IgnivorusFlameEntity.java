@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
-import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -37,6 +36,8 @@ public class IgnivorusFlameEntity extends Entity {
     private static final EntityDataAccessor<Integer> DATA_LIFETIME =
             SynchedEntityData.defineId(IgnivorusFlameEntity.class, EntityDataSerializers.INT);
     private static final int ENTITY_COLLISION_CHECK_INTERVAL = 2;
+    // Legacy entities remain loadable, but only the new breath stream may damage entities.
+    private static final boolean LEGACY_ENTITY_DAMAGE_ENABLED = false;
 
     private UUID ownerUUID;
     private LivingEntity owner;
@@ -46,7 +47,6 @@ public class IgnivorusFlameEntity extends Entity {
     private Vec3 spawnPos;
     private boolean hasHitEntity = false;
     private boolean hasHitBlock = false;
-    private double igniteBlockChance = 1.0D;
 
     public IgnivorusFlameEntity(EntityType<? extends IgnivorusFlameEntity> type, Level level) {
         super(type, level);
@@ -65,12 +65,6 @@ public class IgnivorusFlameEntity extends Entity {
         this.maxAge = lifetime;
         setScale(scale);
         setLifetime(lifetime);
-        var config = DragonAttributeConfigLoader.getInstance()
-                .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        this.igniteBlockChance = config.extraDouble("fire_breath_ignite_block_chance", 1.0D);
-        if (this.igniteBlockChance < 0.0D) {
-            this.igniteBlockChance = 0.0D;
-        }
     }
 
     @Override
@@ -114,7 +108,7 @@ public class IgnivorusFlameEntity extends Entity {
                 this.discard();
                 return;
             }
-            if (!hasHitEntity
+            if (LEGACY_ENTITY_DAMAGE_ENABLED && !hasHitEntity
                     && (this.age % ENTITY_COLLISION_CHECK_INTERVAL == 0)
                     && checkEntityCollision()) {
                 this.discard();
@@ -131,10 +125,8 @@ public class IgnivorusFlameEntity extends Entity {
                     if (level() instanceof ServerLevel serverLevel) {
                         double travelDistance = spawnPos.distanceTo(impactPoint);
                         double impactRadius = Mth.clamp(1.2 + travelDistance * 0.16, 1.2, 3.2);
-                        if (igniteBlockChance > 0.0D && level().random.nextDouble() <= igniteBlockChance) {
-                            DragonEntity dragonOwner = getOwner() instanceof DragonEntity dragon ? dragon : null;
-                            DragonDestructionManager.applyFlameImpact(serverLevel, dragonOwner, impactPoint, impactRadius);
-                        }
+                        DragonEntity dragonOwner = getOwner() instanceof DragonEntity dragon ? dragon : null;
+                        DragonDestructionManager.applyFlameImpact(serverLevel, dragonOwner, impactPoint, impactRadius);
                     }
                     hasHitBlock = true;
                     setPos(impactPoint);
@@ -203,7 +195,6 @@ public class IgnivorusFlameEntity extends Entity {
         this.damage = tag.getFloat("Damage");
         this.hasHitEntity = tag.getBoolean("HasHitEntity");
         this.hasHitBlock = tag.getBoolean("HasHitBlock");
-        this.igniteBlockChance = tag.contains("IgniteBlockChance") ? tag.getDouble("IgniteBlockChance") : 1.0D;
         if (tag.contains("SpawnX")) {
             this.spawnPos = new Vec3(tag.getDouble("SpawnX"), tag.getDouble("SpawnY"), tag.getDouble("SpawnZ"));
         }
@@ -219,7 +210,6 @@ public class IgnivorusFlameEntity extends Entity {
         tag.putFloat("Damage", this.damage);
         tag.putBoolean("HasHitEntity", this.hasHitEntity);
         tag.putBoolean("HasHitBlock", this.hasHitBlock);
-        tag.putDouble("IgniteBlockChance", this.igniteBlockChance);
         if (this.spawnPos != null) {
             tag.putDouble("SpawnX", this.spawnPos.x);
             tag.putDouble("SpawnY", this.spawnPos.y);

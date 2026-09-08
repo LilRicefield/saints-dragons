@@ -317,14 +317,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 ignivorusDefaults.extraDouble("fire_breath_drain_per_tick", 0.00625D));
         ignivorusBuffer.fireBreathRegenPerTick = ignivorusCurrent.extraDouble("fire_breath_regen_per_tick",
                 ignivorusDefaults.extraDouble("fire_breath_regen_per_tick", 0.0025D));
-        ignivorusBuffer.fireBreathFlameSpawnMultiplier = ignivorusCurrent.extraDouble("fire_breath_flame_spawn_multiplier",
-                ignivorusDefaults.extraDouble("fire_breath_flame_spawn_multiplier", 1.0D));
-        ignivorusBuffer.fireBreathFlameSpeedMultiplier = ignivorusCurrent.extraDouble("fire_breath_flame_speed_multiplier",
-                ignivorusDefaults.extraDouble("fire_breath_flame_speed_multiplier", 1.0D));
-        ignivorusBuffer.fireBreathFlameLifetimeMultiplier = ignivorusCurrent.extraDouble("fire_breath_flame_lifetime_multiplier",
-                ignivorusDefaults.extraDouble("fire_breath_flame_lifetime_multiplier", 1.0D));
-        ignivorusBuffer.fireBreathIgniteBlockChance = ignivorusCurrent.extraDouble("fire_breath_ignite_block_chance",
-                ignivorusDefaults.extraDouble("fire_breath_ignite_block_chance", 1.0D));
         ignivorusBuffer.legacyTaming = ignivorusCurrent.extraBoolean("legacy_taming", false);
         ignivorusBuffer.eggHatchChanceNormal = ignivorusCurrent.extraDouble("egg_hatch_time_ticks_normal", 36000.0D);
         ignivorusBuffer.aggressiveWild = ignivorusCurrent.extraBoolean("aggressive_wild", false);
@@ -1778,29 +1770,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.fireBreathRegenPerTick = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_flame_spawn_multiplier"), buffer.fireBreathFlameSpawnMultiplier)
-                .setDefaultValue(defaults.extraDouble("fire_breath_flame_spawn_multiplier", 1.0D))
-                .setMin(0.0D)
-                .setMax(5.0D)
-                .setSaveConsumer(value -> buffer.fireBreathFlameSpawnMultiplier = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_flame_speed_multiplier"), buffer.fireBreathFlameSpeedMultiplier)
-                .setDefaultValue(defaults.extraDouble("fire_breath_flame_speed_multiplier", 1.0D))
-                .setMin(0.0D)
-                .setMax(5.0D)
-                .setSaveConsumer(value -> buffer.fireBreathFlameSpeedMultiplier = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_flame_lifetime_multiplier"), buffer.fireBreathFlameLifetimeMultiplier)
-                .setDefaultValue(defaults.extraDouble("fire_breath_flame_lifetime_multiplier", 1.0D))
-                .setMin(0.0D)
-                .setMax(5.0D)
-                .setSaveConsumer(value -> buffer.fireBreathFlameLifetimeMultiplier = value)
-                .build());
-        entries.add(buildPercentChanceEntry(entryBuilder,
-                Component.translatable("config.saintsdragons.attributes.ignivorus.fire_breath_ignite_block_chance"),
-                buffer.fireBreathIgniteBlockChance,
-                defaults.extraDouble("fire_breath_ignite_block_chance", 1.0D),
-                value -> buffer.fireBreathIgniteBlockChance = value));
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.ignivorus.egg_hatch_time_ticks_normal"), buffer.eggHatchChanceNormal)
                 .setDefaultValue(defaults.extraDouble("egg_hatch_time_ticks_normal", 36000.0D))
                 .setMin(20.0D)
@@ -2580,10 +2549,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double wildFlyingSpeedMultiplier;
         double fireBreathDrainPerTick;
         double fireBreathRegenPerTick;
-        double fireBreathFlameSpawnMultiplier;
-        double fireBreathFlameSpeedMultiplier;
-        double fireBreathFlameLifetimeMultiplier;
-        double fireBreathIgniteBlockChance;
         boolean legacyTaming;
         double eggHatchChanceNormal;
         boolean aggressiveWild;
@@ -2692,10 +2657,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("wild_flying_speed_multiplier", buffer.wildFlyingSpeedMultiplier);
         extras.put("fire_breath_drain_per_tick", buffer.fireBreathDrainPerTick);
         extras.put("fire_breath_regen_per_tick", buffer.fireBreathRegenPerTick);
-        extras.put("fire_breath_flame_spawn_multiplier", buffer.fireBreathFlameSpawnMultiplier);
-        extras.put("fire_breath_flame_speed_multiplier", buffer.fireBreathFlameSpeedMultiplier);
-        extras.put("fire_breath_flame_lifetime_multiplier", buffer.fireBreathFlameLifetimeMultiplier);
-        extras.put("fire_breath_ignite_block_chance", buffer.fireBreathIgniteBlockChance);
         extras.put("egg_hatch_time_ticks_normal", buffer.eggHatchChanceNormal);
         return extras;
     }

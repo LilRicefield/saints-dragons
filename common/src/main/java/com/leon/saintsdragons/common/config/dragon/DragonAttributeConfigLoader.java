@@ -322,10 +322,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         boolean legacyTaming = false;
         double fireBreathDrainPerTick = 0.00625D;
         double fireBreathRegenPerTick = 0.0025D;
-        double fireBreathFlameSpawnMultiplier = 1.0D;
-        double fireBreathFlameSpeedMultiplier = 1.0D;
-        double fireBreathFlameLifetimeMultiplier = 1.0D;
-        double fireBreathIgniteBlockChance = 1.0D;
         double eggHatchTimeTicksNormal = 36000.0D;
         double tamingStunHealth = maxHealth * (1.0D / 3.0D);
         double wildFlyingSpeedMultiplier = 1.0D;
@@ -357,10 +353,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 legacyTaming = (boolean) configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_LEGACY_TAMING").get(null));
                 fireBreathDrainPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_DRAIN_PER_TICK").get(null));
                 fireBreathRegenPerTick = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_REGEN_PER_TICK").get(null));
-                fireBreathFlameSpawnMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPAWN_MULTIPLIER").get(null));
-                fireBreathFlameSpeedMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_SPEED_MULTIPLIER").get(null));
-                fireBreathFlameLifetimeMultiplier = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_FLAME_LIFETIME_MULTIPLIER").get(null));
-                fireBreathIgniteBlockChance = (double) configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_FIRE_BREATH_IGNITE_BLOCK_CHANCE").get(null));
                 eggHatchTimeTicksNormal = (double) configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_EGG_HATCH_CHANCE_NORMAL").get(null));
                 tamingStunHealth = (double) configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_TAMING_STUN_HEALTH").get(null));
                 wildFlyingSpeedMultiplier = (double) configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null).getClass().getMethod("get").invoke(configClass.getField("IGNIVORUS_WILD_FLYING_SPEED_MULTIPLIER").get(null));
@@ -374,10 +366,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("ultimate_trigger_health_fraction", ultimateTriggerHealthFraction);
         extras.put("fire_breath_drain_per_tick", fireBreathDrainPerTick);
         extras.put("fire_breath_regen_per_tick", fireBreathRegenPerTick);
-        extras.put("fire_breath_flame_spawn_multiplier", fireBreathFlameSpawnMultiplier);
-        extras.put("fire_breath_flame_speed_multiplier", fireBreathFlameSpeedMultiplier);
-        extras.put("fire_breath_flame_lifetime_multiplier", fireBreathFlameLifetimeMultiplier);
-        extras.put("fire_breath_ignite_block_chance", fireBreathIgniteBlockChance);
         extras.put("taming_chance_base", tamingChanceBase);
         extras.put("taming_chance_beef", tamingChanceBeef);
         extras.put("taming_chance_mutton", tamingChanceMutton);
@@ -1173,24 +1161,16 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                             mergedConfig.extraDouble("fire_breath_regen_per_tick", 0.0025D));
                     updated = true;
                 }
-                if (!extra.has("fire_breath_flame_spawn_multiplier")) {
-                    extra.addProperty("fire_breath_flame_spawn_multiplier",
-                            mergedConfig.extraDouble("fire_breath_flame_spawn_multiplier", 1.0D));
+                if (extra.remove("fire_breath_flame_spawn_multiplier") != null) {
                     updated = true;
                 }
-                if (!extra.has("fire_breath_flame_speed_multiplier")) {
-                    extra.addProperty("fire_breath_flame_speed_multiplier",
-                            mergedConfig.extraDouble("fire_breath_flame_speed_multiplier", 1.0D));
+                if (extra.remove("fire_breath_flame_speed_multiplier") != null) {
                     updated = true;
                 }
-                if (!extra.has("fire_breath_flame_lifetime_multiplier")) {
-                    extra.addProperty("fire_breath_flame_lifetime_multiplier",
-                            mergedConfig.extraDouble("fire_breath_flame_lifetime_multiplier", 1.0D));
+                if (extra.remove("fire_breath_flame_lifetime_multiplier") != null) {
                     updated = true;
                 }
-                if (!extra.has("fire_breath_ignite_block_chance")) {
-                    extra.addProperty("fire_breath_ignite_block_chance",
-                            mergedConfig.extraDouble("fire_breath_ignite_block_chance", 1.0D));
+                if (extra.remove("fire_breath_ignite_block_chance") != null) {
                     updated = true;
                 }
                 if (!extra.has("ultimate_trigger_health_fraction")) {

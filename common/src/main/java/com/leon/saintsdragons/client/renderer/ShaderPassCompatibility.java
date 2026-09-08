@@ -11,6 +11,16 @@ public final class ShaderPassCompatibility {
     private ShaderPassCompatibility() {
     }
 
+    public static boolean isShaderPackInUse() {
+        resolveIrisApi();
+        if (irisGetInstanceMethod == null || irisShaderPackInUseMethod == null) return false;
+        try {
+            return Boolean.TRUE.equals(irisShaderPackInUseMethod.invoke(irisGetInstanceMethod.invoke(null)));
+        } catch (ReflectiveOperationException | LinkageError ignored) {
+            return false;
+        }
+    }
+
     public static boolean isIrisShadowPass() {
         resolveIrisApi();
         if (irisGetInstanceMethod == null || irisShaderPackInUseMethod == null || irisShadowPassMethod == null) {
@@ -35,15 +45,23 @@ public final class ShaderPassCompatibility {
         }
         irisLookupResolved = true;
 
-        try {
-            Class<?> irisApiClass = Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-            irisGetInstanceMethod = irisApiClass.getMethod("getInstance");
-            irisShaderPackInUseMethod = irisApiClass.getMethod("isShaderPackInUse");
-            irisShadowPassMethod = irisApiClass.getMethod("isRenderingShadowPass");
-        } catch (ReflectiveOperationException ignored) {
-            irisGetInstanceMethod = null;
-            irisShaderPackInUseMethod = null;
-            irisShadowPassMethod = null;
+        for (String apiName : new String[]{"net.irisshaders.iris.api.v0.IrisApi",
+                "net.coderbot.iris.api.v0.IrisApi"}) {
+            try {
+                Class<?> irisApiClass = Class.forName(apiName);
+                Method instance = irisApiClass.getMethod("getInstance");
+                Method packInUse = irisApiClass.getMethod("isShaderPackInUse");
+                irisGetInstanceMethod = instance;
+                irisShaderPackInUseMethod = packInUse;
+                try {
+                    irisShadowPassMethod = irisApiClass.getMethod("isRenderingShadowPass");
+                } catch (NoSuchMethodException ignored) {
+                    // Pack detection does not depend on shadow-pass API availability.
+                }
+                return;
+            } catch (ReflectiveOperationException | LinkageError ignored) {
+                // Older Iris/Oculus releases use the legacy package name.
+            }
         }
     }
 }

@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.registry;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.BloodTempestKatanaRingData;
 import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
+import com.leon.saintsdragons.common.particle.FireBreathParticleData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.SonicRingData;
@@ -65,11 +66,19 @@ public final class ModParticles {
                         }
                     });
 
-    public static final Supplier<SimpleParticleType> FIRE_BREATH_FLAME =
-            REGISTER.register("fire_breath_flame", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<ParticleType<FireBreathParticleData>> FIRE_BREATH_FLAME =
+            REGISTER.register("fire_breath_flame", () -> new ParticleType<>(false, FireBreathParticleData.DESERIALIZER) {
+                @Override
+                public com.mojang.serialization.Codec<FireBreathParticleData> codec() {
+                    return FireBreathParticleData.CODEC;
+                }
+            });
 
     public static final Supplier<SimpleParticleType> FIRE_BREATH_SMOKE =
             REGISTER.register("fire_breath_smoke", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> FIRE_BREATH_EMBER =
+            REGISTER.register("fire_breath_ember", () -> Services.PLATFORM.createSimpleParticle(false));
 
     public static final Supplier<SimpleParticleType> DRAGON_DUST =
             REGISTER.register("dragon_dust", () -> Services.PLATFORM.createSimpleParticle(true));

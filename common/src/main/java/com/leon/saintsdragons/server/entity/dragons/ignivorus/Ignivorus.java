@@ -38,6 +38,7 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
+import com.leon.saintsdragons.server.entity.component.IgnivorusBreathStream;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.entity.component.DragonRoostComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
@@ -317,6 +318,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private int airTicks;
     public int groundTicks;
     private Vec3 fireAimDir;
+    private final IgnivorusBreathStream fireBreathStream = new IgnivorusBreathStream(this);
     private int fireTime = 0;
     private Vec3 fireServerTarget = null;
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
@@ -534,9 +536,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
 
         if (isDying() || this.dead) {
+            fireBreathStream.clear();
             stopCustomStateForDeath();
             return;
         }
+        fireBreathStream.tick();
         tickRiderControlLock();
         tickBulldozeState();
         tickPhase2State();
@@ -2312,6 +2316,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     public void syncFireBreathPath(@Nullable Vec3 start, @Nullable Vec3 end) {
         setFireBreathStart(start);
         setFireBreathTarget(end);
+    }
+
+    public void emitFireBreathSection(Vec3 origin, Vec3 direction) {
+        fireBreathStream.emit(origin, direction);
     }
 
     public void clearFireBreathPath() {

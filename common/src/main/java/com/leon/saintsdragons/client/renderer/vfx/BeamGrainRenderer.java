@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -42,7 +41,7 @@ public final class BeamGrainRenderer {
         if (texture == null) {
             return;
         }
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
+        VertexConsumer consumer = bufferSource.getBuffer(BeamRenderTypes.translucent(texture));
 
         for (int slot = 0; slot < style.count(); slot++) {
             long slotSeed = seed ^ SLOT_SEED * (slot + 1L);
@@ -229,7 +228,7 @@ public final class BeamGrainRenderer {
             if (texture == null) {
                 continue;
             }
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(texture));
+            VertexConsumer consumer = bufferSource.getBuffer(BeamRenderTypes.translucent(texture));
             renderRibbonGrainPair(consumer, matrix,
                     ribbonNormal, ribbonRight, companionNormal, companionRight,
                     offsetX, offsetY, startZ, endZ, halfWidth,

@@ -11,6 +11,8 @@ import com.leon.saintsdragons.client.particle.BloodTempestKatanaXMarkParticle;
 import com.leon.saintsdragons.client.particle.DustParticle;
 import com.leon.saintsdragons.client.particle.DraconianNucleusParticle;
 import com.leon.saintsdragons.client.particle.GlowingEmitterParticle;
+import com.leon.saintsdragons.client.particle.FireBreathParticle;
+import com.leon.saintsdragons.client.particle.FireBreathEmberParticle;
 import com.leon.saintsdragons.client.particle.GroundDecalParticle;
 import com.leon.saintsdragons.client.particle.ImpactGlowParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
@@ -29,6 +31,8 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.FIRE_BREATH_FLAME.get(), FireBreathParticle.Factory::new);
+        register(registrar, ModParticles.FIRE_BREATH_EMBER.get(), FireBreathEmberParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);

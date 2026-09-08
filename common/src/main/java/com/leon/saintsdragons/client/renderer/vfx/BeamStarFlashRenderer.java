@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -191,7 +190,7 @@ public final class BeamStarFlashRenderer {
                         red, green, blue, alpha);
                 continue;
             }
-            VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(frameTexture));
+            VertexConsumer consumer = bufferSource.getBuffer(BeamRenderTypes.translucent(frameTexture));
             renderPlanarStar(consumer, matrix, normalMatrix,
                     ribbonRight, beamForward,
                     centerX, centerY, centerZ,
