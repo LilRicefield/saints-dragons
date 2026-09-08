@@ -87,7 +87,7 @@ public final class FireBreathBurstParticle extends TextureSheetParticle {
             if (ringAge < 0 || ringAge >= duration) continue;
             setSprite(sprites.get(2 + (int) (ringAge / RING_FRAME_TICKS) % RING_FRAMES, LAST_SPRITE));
             float progress = ringAge / duration;
-            double size = Mth.lerp(smooth(progress), 3.0F, 8.0F + i);
+            double size = Mth.lerp(smooth(progress), 1.5F, 8.0F + i);
             Vec3 center = mouth.add(forward.scale(FORWARD_OFFSET + i * 2.0 + ringAge * 0.6))
                     .subtract(camera.getPosition());
             Vec3 across = right;
