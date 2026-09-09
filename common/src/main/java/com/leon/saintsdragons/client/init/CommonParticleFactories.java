@@ -38,8 +38,11 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
-        register(registrar, ModParticles.VOLITANS_WATER_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, false));
-        register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, true));
+        register(registrar, ModParticles.VOLITANS_WATER_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.WATER));
+        register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON));
+        register(registrar, ModParticles.VOLITANS_BREATH_BUBBLES.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.BUBBLES));
+        register(registrar, ModParticles.VOLITANS_BREATH_EMITTER.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.EMITTER));
+        register(registrar, ModParticles.VOLITANS_BREATH_STAR.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.STAR));
         register(registrar, ModParticles.FIRE_BREATH_FLAME.get(), FireBreathParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_EMBER.get(), FireBreathEmberParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_FLICKER.get(), FireBreathFlickerParticle.Factory::new);

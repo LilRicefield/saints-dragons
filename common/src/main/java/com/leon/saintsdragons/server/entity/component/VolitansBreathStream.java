@@ -55,7 +55,7 @@ public final class VolitansBreathStream {
         var particle = poison ? ModParticles.VOLITANS_POISON_BREATH.get() : ModParticles.VOLITANS_WATER_BREATH.get();
         for (var viewer : level.players()) {
             if (visibleArea.contains(viewer.position())) {
-                // One section packet; each client creates its eight visual particles locally.
+                // One section packet; each client creates the visual particles locally.
                 level.sendParticles(viewer, particle, true, origin.x, origin.y, origin.z,
                         0, velocity.x, velocity.y, velocity.z, 1.0);
             }

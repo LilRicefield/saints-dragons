@@ -26,6 +26,12 @@ public final class ModParticles {
             REGISTER.register("volitans_water_breath", () -> Services.PLATFORM.createSimpleParticle(false));
     public static final Supplier<SimpleParticleType> VOLITANS_POISON_BREATH =
             REGISTER.register("volitans_poison_breath", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> VOLITANS_BREATH_BUBBLES =
+            REGISTER.register("volitans_breath_bubbles", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> VOLITANS_BREATH_EMITTER =
+            REGISTER.register("volitans_breath_emitter", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> VOLITANS_BREATH_STAR =
+            REGISTER.register("volitans_breath_star", () -> Services.PLATFORM.createSimpleParticle(false));
 
     public static final Supplier<ParticleType<RaevyxLightningStormData>> LIGHTNING_STORM =
             REGISTER.register("lightning_storm",
