@@ -24,18 +24,24 @@ class AsyncFlightMovementExecutor {
     private static final double TOUCHDOWN_MAX_ACTUAL_DESCENT_SPEED = 0.28D;
     private static final double TOUCHDOWN_MIN_DESCENT_SPEED = 0.11D;
     private static final double TOUCHDOWN_MAX_DESCENT_SPEED = 0.28D;
-    private static final float MAX_YAW_STEP = 5.0f;
+    private static final double MAX_ACCELERATION = 0.12D;
+    private static final float MAX_YAW_STEP = 12.0f;
     private static final float MAX_PITCH_STEP = 2.5f;
     private static final float PITCH_DEADZONE_DEGREES = 3.5f;
 
     private final Mob dragon;
     private final DragonFlightCapable flightCapable;
+    private final DragonFlightSteering steering;
     private Vec3 smoothedVelocity = Vec3.ZERO;
-    private Vec3 smoothedDirection = Vec3.ZERO;
 
     AsyncFlightMovementExecutor(Mob dragon, DragonFlightCapable flightCapable) {
+        this(dragon, flightCapable, new DragonFlightSteering(dragon));
+    }
+
+    AsyncFlightMovementExecutor(Mob dragon, DragonFlightCapable flightCapable, DragonFlightSteering steering) {
         this.dragon = dragon;
         this.flightCapable = flightCapable;
+        this.steering = steering;
     }
 
     public void executeMovement(Vec3 lookAheadTarget,
@@ -55,16 +61,24 @@ class AsyncFlightMovementExecutor {
             return;
         }
 
-        Vec3 target = lookAheadTarget != null ? lookAheadTarget : currentWaypoint;
+        double desiredSpeed = Math.max(0.0, this.flightCapable.getFlightSpeed()) * speedModifier;
+        if (landingPhase == AsyncFlightController.LandingPhase.APPROACH) {
+            desiredSpeed = Math.max(desiredSpeed, this.flightCapable.getFlightSpeed() * 3.0D);
+        } else if (landingPhase == AsyncFlightController.LandingPhase.GLIDE) {
+            desiredSpeed = Math.max(desiredSpeed, this.flightCapable.getFlightSpeed() * 2.0D);
+        }
+        Vec3 target = this.steering.guide(
+                lookAheadTarget != null ? lookAheadTarget : currentWaypoint,
+                currentWaypoint, landingTarget || this.flightCapable.isTakeoff(), desiredSpeed);
         Vec3 toTarget = target.subtract(dragonPos);
         double distToTarget = toTarget.length();
         if (distToTarget < 0.1) {
             return;
         }
 
-        double desiredSpeed = Math.max(0.0, this.flightCapable.getFlightSpeed()) * speedModifier;
         double distToFinalWaypoint = dragonPos.distanceTo(currentWaypoint);
-        double decelStartDist = arrivalDist * 2.0;
+        double decelStartDist = Math.max(arrivalDist * 2.0D,
+                currentVelocity.lengthSqr() / (2.0D * MAX_ACCELERATION) + arrivalDist);
         desiredSpeed *= switch (landingPhase) {
             case GLIDE -> GLIDE_SPEED_SCALE;
             case FLARE -> FLARE_SPEED_SCALE;
@@ -72,24 +86,44 @@ class AsyncFlightMovementExecutor {
             default -> 1.0D;
         };
         boolean ordinaryFinalWaypoint = landingPhase == AsyncFlightController.LandingPhase.NONE
-                || landingPhase == AsyncFlightController.LandingPhase.GO_AROUND;
+                || landingPhase == AsyncFlightController.LandingPhase.GO_AROUND
+                || landingPhase == AsyncFlightController.LandingPhase.APPROACH;
         if (ordinaryFinalWaypoint && distToFinalWaypoint < decelStartDist && queueEmpty) {
             desiredSpeed *= Math.max(0.3, distToFinalWaypoint / decelStartDist);
         }
 
         Vec3 desiredDirection = toTarget.normalize();
+        if (!landingTarget && currentVelocity.horizontalDistanceSqr() > 0.01D
+                && desiredDirection.horizontalDistanceSqr() > 0.01D) {
+            double alignment = currentVelocity.multiply(1, 0, 1).normalize()
+                    .dot(desiredDirection.multiply(1, 0, 1).normalize());
+            desiredSpeed *= Mth.clamp((alignment + 1.0D) * 0.5D, 0.35D, 1.0D);
+            if (alignment < 0.7D) {
+                desiredSpeed = Math.min(desiredSpeed, Math.max(0.12D, toTarget.horizontalDistance() * 0.08D));
+            }
+        }
+        Vec3 steeringDirection = !landingTarget && !this.flightCapable.isTakeoff()
+                ? this.steering.turnToward(desiredDirection, currentVelocity.length()) : desiredDirection;
         double desiredVertical = Math.abs(toTarget.y) < VERTICAL_TARGET_DEADZONE && !landingTarget ? 0.0D : desiredDirection.y;
         Vec3 targetVelocity = new Vec3(
-                desiredDirection.x * desiredSpeed,
+                steeringDirection.x * desiredSpeed,
                 desiredVertical * desiredSpeed,
-                desiredDirection.z * desiredSpeed
+                steeringDirection.z * desiredSpeed
         );
         targetVelocity = this.shapeLandingVelocity(landingPhase, targetVelocity, dragonPos, currentWaypoint);
-        Vec3 velocityBaseline = this.smoothedVelocity;
-        if (velocityBaseline.lengthSqr() < 1.0E-4 && currentVelocity.lengthSqr() > 1.0E-4) {
-            velocityBaseline = currentVelocity;
-        }
+        Vec3 velocityBaseline = currentVelocity;
         this.smoothedVelocity = lerpVelocity(velocityBaseline, targetVelocity, landingPhase);
+        if (!landingTarget && !this.flightCapable.isTakeoff()) {
+            double horizontalSpeed = Mth.lerp(HORIZONTAL_VELOCITY_LERP,
+                    currentVelocity.horizontalDistance(), targetVelocity.horizontalDistance());
+            Vec3 horizontalDirection = steeringDirection.multiply(1.0D, 0.0D, 1.0D).normalize();
+            this.smoothedVelocity = horizontalDirection.scale(horizontalSpeed)
+                    .add(0.0D, this.smoothedVelocity.y, 0.0D);
+            Vec3 change = this.smoothedVelocity.subtract(velocityBaseline);
+            if (change.lengthSqr() > MAX_ACCELERATION * MAX_ACCELERATION) {
+                this.smoothedVelocity = velocityBaseline.add(change.normalize().scale(MAX_ACCELERATION));
+            }
+        }
         this.smoothedVelocity = limitLandingMomentum(landingPhase, this.smoothedVelocity);
         if (this.flightCapable.isTakeoff() && currentVelocity.y > 0.0D) {
             this.smoothedVelocity = new Vec3(
@@ -103,6 +137,9 @@ class AsyncFlightMovementExecutor {
                 || Math.abs(desiredVertical) > 0.1D;
         if (!shouldPreserveVerticalMotion && Math.abs(this.smoothedVelocity.y) < VERTICAL_SPEED_DEADZONE) {
             this.smoothedVelocity = new Vec3(this.smoothedVelocity.x, 0.0D, this.smoothedVelocity.z);
+        }
+        if (landingPhase != AsyncFlightController.LandingPhase.TOUCHDOWN && !this.flightCapable.isTakeoff()) {
+            this.smoothedVelocity = this.steering.checkedVelocity(this.smoothedVelocity);
         }
         this.dragon.setDeltaMovement(this.smoothedVelocity);
         this.dragon.hasImpulse = true;
@@ -145,27 +182,14 @@ class AsyncFlightMovementExecutor {
             return;
         }
 
-        Vec3 horizDir = new Vec3(velocity.x, 0.0, velocity.z);
-        if (horizDir.lengthSqr() < 1.0E-4) {
-            return;
+        if (velocity.horizontalDistanceSqr() > 1.0E-4D) {
+            float targetYaw = -(float) Math.toDegrees(Mth.atan2(velocity.x, velocity.z));
+            float yawDiff = Mth.wrapDegrees(targetYaw - this.dragon.getYRot());
+            float newYaw = this.dragon.getYRot() + Mth.clamp(yawDiff, -MAX_YAW_STEP, MAX_YAW_STEP);
+            this.dragon.setYRot(newYaw);
+            this.dragon.yBodyRot = newYaw;
+            this.dragon.setYHeadRot(newYaw);
         }
-
-        horizDir = horizDir.normalize();
-        if (this.smoothedDirection.lengthSqr() < 0.001) {
-            this.smoothedDirection = horizDir;
-        } else {
-            this.smoothedDirection = lerpVec3(this.smoothedDirection, horizDir, 0.12);
-            if (this.smoothedDirection.lengthSqr() > 0.001) {
-                this.smoothedDirection = this.smoothedDirection.normalize();
-            }
-        }
-
-        float targetYaw = -(float) Math.toDegrees(Mth.atan2(this.smoothedDirection.x, this.smoothedDirection.z));
-        float yawDiff = Mth.wrapDegrees(targetYaw - this.dragon.getYRot());
-        float newYaw = this.dragon.getYRot() + Mth.clamp(yawDiff, -MAX_YAW_STEP, MAX_YAW_STEP);
-        this.dragon.setYRot(newYaw);
-        this.dragon.yBodyRot = newYaw;
-        this.dragon.setYHeadRot(newYaw);
 
         float targetPitch = (float) (-Math.toDegrees(Mth.atan2(velocity.y, Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z))));
         float pitchDiff = Mth.wrapDegrees(targetPitch - this.dragon.getXRot());
@@ -176,6 +200,8 @@ class AsyncFlightMovementExecutor {
     }
 
     public void applyIdleFriction() {
+        this.steering.reset();
+        this.smoothedVelocity = this.dragon.getDeltaMovement();
         if (this.smoothedVelocity.lengthSqr() > 1.0E-4) {
             this.smoothedVelocity = this.smoothedVelocity.scale(0.85);
             this.dragon.setDeltaMovement(this.smoothedVelocity);
@@ -186,6 +212,7 @@ class AsyncFlightMovementExecutor {
     }
 
     public void zeroVelocity() {
+        this.steering.reset();
         this.smoothedVelocity = Vec3.ZERO;
         this.dragon.setDeltaMovement(Vec3.ZERO);
     }
@@ -196,12 +223,12 @@ class AsyncFlightMovementExecutor {
                 || (this.dragon.verticalCollision && currentVelocity.y <= 0.0D);
     }
 
-    private static Vec3 lerpVec3(Vec3 from, Vec3 to, double t) {
-        return new Vec3(
-                Mth.lerp(t, from.x, to.x),
-                Mth.lerp(t, from.y, to.y),
-                Mth.lerp(t, from.z, to.z)
-        );
+    void resetSteering() {
+        this.steering.reset();
+    }
+
+    String steeringSummary() {
+        return this.steering.debugSummary();
     }
 
     private static Vec3 lerpVelocity(Vec3 from,

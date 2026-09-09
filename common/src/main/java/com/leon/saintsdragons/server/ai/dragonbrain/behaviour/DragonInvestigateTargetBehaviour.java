@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
@@ -101,6 +102,10 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 activeObservation = observation;
                 trackingProjectileSource = true;
                 outcome = "evidence-refreshed";
+            } else if (DragonInvestigation.refreshesAmbientSearch(activeObservation, observation, destination,
+                    dragon.getTarget() != null || context.memories().has(DragonMemories.ATTACK_TARGET))) {
+                activeObservation = observation;
+                outcome = "evidence-refreshed";
             } else {
                 beginObservation(context, dragon, observation, profile);
             }
@@ -159,7 +164,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
             searchTicks = 0;
             if (!issuedMovement) {
                 boolean accepted = airborneSearch
-                        ? movement.setAsyncAirWaypoint(destination, profile.investigationSpeed())
+                        ? movement.setAsyncAirWaypoint(destination, Math.max(3.0D, profile.investigationSpeed()))
                         : movement.setWaypoint(destination, profile.investigationSpeed());
                 if (!accepted) {
                     finish(context, dragon, Phase.FAILED, "movement-rejected", FAILED_LOCATION_MEMORY_TICKS);
@@ -253,7 +258,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 dragon.getBoundingBox().move(candidate.subtract(dragon.position())).deflate(1.0E-3D))) {
             return;
         }
-        if (movement.setAsyncAirWaypoint(candidate, profile.investigationSpeed())) {
+        if (movement.setAsyncAirWaypoint(candidate, Math.max(1.5D, profile.investigationSpeed()))) {
             searchWaypoint = candidate;
             movementGeneration = movement.getMovementCommandGeneration();
             issuedMovement = true;
@@ -351,6 +356,9 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                                         LivingEntity source) {
         if (source == null) {
             return false;
+        }
+        if (DragonInvestigation.isVisibleAmbientSource(dragon, source, activeObservation.kind())) {
+            return true;
         }
         if (airborneSearch) {
             return context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null) == source

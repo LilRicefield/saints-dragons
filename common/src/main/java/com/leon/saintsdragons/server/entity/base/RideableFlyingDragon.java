@@ -84,6 +84,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             );
 
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
+    private final DragonFlightStateEvaluator.AnimationState flightAnimationState = new DragonFlightStateEvaluator.AnimationState();
     private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
     protected final PathNavigateGround groundNav;
     protected final FlyingPathNavigation airNav;
@@ -1798,6 +1799,8 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     protected DragonFlightStateEvaluator.VisualState evaluateVisualFlightState(float partialTick, float flightPitchRadians) {
         return DragonFlightStateEvaluator.evaluateAnimationVisualState(
+                flightAnimationState,
+                tickCount,
                 getSyncedFlightMode(),
                 isVehicle(),
                 flightPitchRadians,
@@ -1807,6 +1810,15 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 LANDING_BLEND_ALTITUDE,
                 isRiderLandingBlendActive()
         );
+    }
+
+    public DragonFlightStateEvaluator.VisualState evaluateMotionFlightState(float flightPitchRadians) {
+        return DragonFlightStateEvaluator.evaluateVisualState(flightAnimationState, tickCount,
+                getSyncedFlightMode(), isVehicle(), flightPitchRadians, getDeltaMovement());
+    }
+
+    public String getFlightSteeringDebugSummary() {
+        return this.asyncAirController.getSteeringDebugSummary();
     }
 
     protected void tickStandardPitchingLogic() {

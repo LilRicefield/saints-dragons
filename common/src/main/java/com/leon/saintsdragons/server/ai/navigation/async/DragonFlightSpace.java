@@ -176,7 +176,13 @@ public final class DragonFlightSpace {
     }
 
     public static @Nullable BlockPos findLandingGround(Mob dragon, BlockPos column, int referenceY) {
+        if (!dragon.level().hasChunkAt(column)) return null;
         int top = Math.min(referenceY, dragon.level().getMaxBuildHeight() - 1);
+        // Skip empty sky using the already loaded column's heightmap. Inside caves the
+        // surface is above us, so retain the bounded local downward scan.
+        top = Math.min(top, dragon.level().getHeight(
+                net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING,
+                column.getX(), column.getZ()) - 1);
         int bottom = Math.max(dragon.level().getMinBuildHeight(), top - 96);
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos(column.getX(), top, column.getZ());
         if (!dragon.level().hasChunkAt(cursor)) return null;

@@ -130,6 +130,8 @@ public final class DragonHearingListener implements GameEventListener {
         boolean storedInvestigation = target == null
                 && stimulus.investigate()
                 && canInvestigate(stimulus, source)
+                && (!(source instanceof LivingEntity living)
+                    || !DragonInvestigation.isVisibleAmbientSource(dragon, living, stimulus.kind()))
                 && DragonInvestigation.isMeaningfulSound(observation)
                 && DragonInvestigation.remember(dragon, observation);
         return storedAmbient || storedTarget || storedInvestigation;

@@ -25,7 +25,6 @@ public final class DragonFlightStateEvaluator {
     private static final double AI_CLIMB_FLAP_MIN_ASCENT = 0.08D;
     private static final double AI_CLIMB_FLAP_DEGREES = 18.0D;
     private static final float RIDER_GLIDE_DOWN_DEGREES = -12.0f;
-    private static final double AI_GLIDE_DOWN_MIN_HORIZONTAL_SPEED = 0.14D;
     private static final double AI_GLIDE_DOWN_MIN_DESCENT = -0.12D;
     private static final double AI_GLIDE_DOWN_DEGREES = 24.0D;
     private static final double LANDING_TOUCHDOWN_ALTITUDE = 3.0D;
@@ -69,6 +68,10 @@ public final class DragonFlightStateEvaluator {
     public static VisualState evaluateVisualState(int syncedMode, boolean ridden, float flightPitchRadians, Vec3 velocity) {
         boolean climbing = shouldUseClimbFlap(ridden, flightPitchRadians, velocity);
         boolean diving = shouldUseGlideDown(ridden, flightPitchRadians, velocity);
+        return visualState(syncedMode, climbing, diving);
+    }
+
+    private static VisualState visualState(int syncedMode, boolean climbing, boolean diving) {
         return switch (syncedMode) {
             case MODE_TAKEOFF -> VisualState.TAKEOFF;
             case MODE_LANDING -> VisualState.GLIDE_DOWN;
@@ -84,6 +87,50 @@ public final class DragonFlightStateEvaluator {
                     : climbing ? VisualState.FLAP : VisualState.GLIDE;
             default -> VisualState.GROUND;
         };
+    }
+
+    /** Update once per entity tick, independent of render frequency and animation controller count. */
+    public static VisualState evaluateVisualState(AnimationState state, int tick, int syncedMode,
+                                                  boolean ridden, float flightPitchRadians, Vec3 velocity) {
+        if (ridden || syncedMode == MODE_GROUND || syncedMode == MODE_TAKEOFF) {
+            state.diving = false;
+            state.climbing = false;
+            state.diveTicks = state.climbTicks = 0;
+            state.lastTick = tick;
+            return evaluateVisualState(syncedMode, ridden, flightPitchRadians, velocity);
+        }
+        if (state.lastTick != tick) {
+            // Resume from current motion after an entity spent time outside render range.
+            boolean stale = state.lastTick == Integer.MIN_VALUE || tick - state.lastTick > 10;
+            state.lastTick = tick;
+            double slope = Math.toDegrees(Math.atan2(velocity.y, Math.max(0.08D, velocity.horizontalDistance())));
+            boolean diving = velocity.y < (state.diving ? -0.06D : AI_GLIDE_DOWN_MIN_DESCENT)
+                    && slope < (state.diving ? -14.0D : -AI_GLIDE_DOWN_DEGREES);
+            boolean climbing = velocity.y > (state.climbing ? 0.04D : AI_CLIMB_FLAP_MIN_ASCENT)
+                    && slope > (state.climbing ? 10.0D : AI_CLIMB_FLAP_DEGREES);
+            state.diveTicks = diving == state.diving ? 0 : state.diveTicks + 1;
+            state.climbTicks = climbing == state.climbing ? 0 : state.climbTicks + 1;
+            if (stale || state.diveTicks >= (diving ? 4 : 6)) {
+                state.diving = diving;
+                state.diveTicks = 0;
+            }
+            if (stale || state.climbTicks >= (climbing ? 4 : 6)) {
+                state.climbing = climbing;
+                state.climbTicks = 0;
+            }
+        }
+        return visualState(syncedMode, state.climbing, state.diving);
+    }
+
+    public static VisualState evaluateAnimationVisualState(AnimationState state, int tick,
+                                                           int syncedMode, boolean ridden, float flightPitchRadians,
+                                                           Vec3 velocity, boolean landing, double altitudeAboveTerrain,
+                                                           double landingBlendAltitude,
+                                                           boolean riderLandingBlendActive) {
+        VisualState motion = evaluateVisualState(state, tick, syncedMode, ridden, flightPitchRadians, velocity);
+        boolean nearTerrain = altitudeAboveTerrain >= -0.25D
+                && altitudeAboveTerrain <= Math.min(landingBlendAltitude, LANDING_TOUCHDOWN_ALTITUDE);
+        return riderLandingBlendActive || (landing && nearTerrain) ? VisualState.LANDING : motion;
     }
 
     public static VisualState evaluateAnimationVisualState(int syncedMode, boolean ridden, float flightPitchRadians,
@@ -107,11 +154,11 @@ public final class DragonFlightStateEvaluator {
         }
 
         double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        if (horizontalSpeed <= AI_GLIDE_DOWN_MIN_HORIZONTAL_SPEED || velocity.y >= AI_GLIDE_DOWN_MIN_DESCENT) {
+        if (velocity.y >= AI_GLIDE_DOWN_MIN_DESCENT) {
             return false;
         }
 
-        double pitchDegrees = Math.toDegrees(Math.atan2(-velocity.y, horizontalSpeed));
+        double pitchDegrees = Math.toDegrees(Math.atan2(-velocity.y, Math.max(0.08D, horizontalSpeed)));
         return pitchDegrees > AI_GLIDE_DOWN_DEGREES;
     }
 
@@ -267,6 +314,14 @@ public final class DragonFlightStateEvaluator {
         FLAP,
         SPRINT_FLAP,
         FLY_IDLE
+    }
+
+    public static final class AnimationState {
+        private int lastTick = Integer.MIN_VALUE;
+        private boolean diving;
+        private boolean climbing;
+        private int diveTicks;
+        private int climbTicks;
     }
 
     public static final class State {

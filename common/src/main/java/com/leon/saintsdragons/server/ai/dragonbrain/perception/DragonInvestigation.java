@@ -10,6 +10,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.Vec3;
 
@@ -169,6 +170,31 @@ public final class DragonInvestigation {
             case EXPLOSION, ROAR, COMBAT, PROJECTILE, BLOCK, TELEPORT -> true;
             case SIGHT, SCENT, SPLASH, STEP, IMPACT, OTHER -> false;
         };
+    }
+
+    public static boolean isVisibleAmbientSource(DragonEntity dragon, LivingEntity source,
+                                                  DragonSensoryObservation.Kind kind) {
+        return source != null && source.isAlive()
+                && kind != DragonSensoryObservation.Kind.SIGHT
+                && kind != DragonSensoryObservation.Kind.PROJECTILE
+                && source != dragon.getTarget()
+                && source != dragon.getLastHurtByMob()
+                && source != dragon.getBrain().getMemory(MemoryModuleType.ATTACK_TARGET).orElse(null)
+                && dragon.hasLineOfSight(source);
+    }
+
+    public static boolean refreshesAmbientSearch(DragonSensoryObservation current,
+                                                 DragonSensoryObservation candidate,
+                                                 Vec3 searchOrigin, boolean pursuingTarget) {
+        // Repeated hurt sounds describe the same nearby event. Keep the search's
+        // original destination and time budget instead of chasing every sound sample.
+        return !pursuingTarget && current != null && searchOrigin != null
+                && current.kind() == candidate.kind()
+                && candidate.kind() != DragonSensoryObservation.Kind.PROJECTILE
+                && isMeaningfulSound(candidate)
+                && current.sourceUuid() != null
+                && current.sourceUuid().equals(candidate.sourceUuid())
+                && candidate.position().distanceToSqr(searchOrigin) <= 64.0D;
     }
 
     private static boolean shouldReplace(DragonSensoryObservation existing,

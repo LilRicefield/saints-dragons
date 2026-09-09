@@ -163,7 +163,8 @@ public final class DragonLandingPlanner {
         glideHeight *= heightScale;
         flareHeight *= heightScale;
         double entryRunway = requiredEntryRunway(dragon, touchdown, approachHeight);
-        if (horizontalDistance(dragon.position(), touchdown) < approachDistance + entryRunway) return null;
+        boolean stagedDescent = dragon.getY() - touchdown.y - approachHeight > 24.0D;
+        if (!stagedDescent && horizontalDistance(dragon.position(), touchdown) < approachDistance + entryRunway) return null;
 
         DirectionPlan best = null;
         for (double angleOffset : APPROACH_ANGLE_OFFSETS) {
@@ -175,7 +176,7 @@ public final class DragonLandingPlanner {
             Vec3 flare = touchdown.subtract(incoming.scale(flareDistance))
                     .add(0.0D, flareHeight, 0.0D);
             DragonLandingPlan plan = new DragonLandingPlan(approach, glide, flare, touchdown);
-            if (horizontalDistance(dragon.position(), approach) < entryRunway
+            if ((!stagedDescent && horizontalDistance(dragon.position(), approach) < entryRunway)
                     || !isLoaded(dragon, approach)
                     || !isLoaded(dragon, glide)
                     || !isLoaded(dragon, flare)

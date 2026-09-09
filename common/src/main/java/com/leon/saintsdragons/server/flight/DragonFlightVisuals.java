@@ -18,7 +18,7 @@ public final class DragonFlightVisuals {
     private static final float RIDER_VERTICAL_KEY_PITCH_BLEND = 0.28f;
     private static final float RIDER_VERTICAL_KEY_PITCH_LERP = 0.24f;
     private static final float AI_PITCH_LERP = 0.34f;
-    private static final double AI_PITCH_MIN_HORIZONTAL_SPEED = 0.22D;
+    private static final double AI_PITCH_MIN_SPEED = 0.06D;
     private static final double AI_PITCH_VERTICAL_DEADZONE = 0.06D;
     private static final float AI_PITCH_DEADZONE_RAD = (float) Math.toRadians(4.0D);
     private static final float DIVE_POSE_LERP = 0.50F;
@@ -108,12 +108,12 @@ public final class DragonFlightVisuals {
 
     public static float computeAiPitchTarget(Vec3 velocity) {
         double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        if (horizontalSpeed <= AI_PITCH_MIN_HORIZONTAL_SPEED) {
+        if (velocity.lengthSqr() <= AI_PITCH_MIN_SPEED * AI_PITCH_MIN_SPEED) {
             return 0f;
         }
 
         double verticalSpeed = Math.abs(velocity.y) < AI_PITCH_VERTICAL_DEADZONE ? 0.0D : velocity.y;
-        float targetPitchRad = (float) Math.atan2(verticalSpeed, horizontalSpeed);
+        float targetPitchRad = (float) Math.atan2(verticalSpeed, Math.max(0.08D, horizontalSpeed));
         if (Math.abs(targetPitchRad) < AI_PITCH_DEADZONE_RAD) {
             return 0f;
         }

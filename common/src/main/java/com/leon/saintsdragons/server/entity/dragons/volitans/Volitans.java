@@ -2496,8 +2496,9 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         } else {
             Vec3 velocity = getDeltaMovement();
             double horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-            double minPitchSpeed = inWater ? 0.05D : 0.15D;
-            if (horizontalSpeed > minPitchSpeed) {
+            if (!inWater) {
+                targetPitchRad = -DragonFlightVisuals.computeAiPitchTarget(velocity);
+            } else if (horizontalSpeed > 0.05D) {
                 targetPitchRad = (float) Math.atan2(-velocity.y, horizontalSpeed);
                 targetPitchRad = Mth.clamp(targetPitchRad, -Mth.HALF_PI, Mth.HALF_PI);
             }

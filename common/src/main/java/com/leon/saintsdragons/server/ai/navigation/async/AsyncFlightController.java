@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.navigation.async;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import java.util.List;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,6 @@ public class AsyncFlightController {
     private final int stuckThresholdTicks = 20;
     private final double stuckMovementThreshold = 0.5;
     private final double maxSegmentDistance = 64.0;
-    private final double flyingLookAhead = 6.0;
     private final double liveRetargetRefreshDistanceSq = 16.0D;
     private final double liveRetargetMeaningfulVerticalDelta = 2.0D;
     private final double liveRetargetMeaningfulHeadingDot = 0.75D;
@@ -112,11 +112,13 @@ public class AsyncFlightController {
                 }
                 movementTarget = this.currentWaypoint;
             } else {
-                movementTarget = this.pathResolver.calculateLookAheadPoint(this.flyingLookAhead);
+                double lookAhead = Mth.clamp(6.0D + this.host.getDeltaMovement().length() * 8.0D,
+                        6.0D, 24.0D);
+                movementTarget = this.pathResolver.calculateLookAheadPoint(lookAhead);
                 if (movementTarget == null) {
                     movementTarget = this.pathResolver.calculateSafeDirectLookAhead(
                             this.currentWaypoint,
-                            this.flyingLookAhead
+                            lookAhead
                     );
                 }
             }
@@ -177,6 +179,7 @@ public class AsyncFlightController {
         if (plan == null) {
             return;
         }
+        this.movementExecutor.resetSteering();
 
         this.waypointQueue.clear();
         this.invalidatePathRequests();
@@ -352,6 +355,7 @@ public class AsyncFlightController {
     }
 
     private void beginDirectLandingPhase(LandingPhase phase, Vec3 target) {
+        this.movementExecutor.resetSteering();
         this.invalidatePathRequests();
         this.pathResolver.cancelActivePathRequest();
         this.pathResolver.clearPathNodes();
@@ -427,6 +431,7 @@ public class AsyncFlightController {
         if (this.landingPhase == LandingPhase.NONE) {
             return;
         }
+        this.movementExecutor.resetSteering();
 
         this.waypointQueue.clear();
         this.currentWaypoint = null;
@@ -450,6 +455,7 @@ public class AsyncFlightController {
     }
 
     public void onArrived() {
+        this.movementExecutor.resetSteering();
         this.invalidatePathRequests();
         this.pathResolver.cancelActivePathRequest();
         this.pathResolver.clearPathNodes();
@@ -597,6 +603,10 @@ public class AsyncFlightController {
 
     public List<AsyncFlightWaypointQueue.QueuedWaypoint> getQueuedWaypoints() {
         return this.waypointQueue.stream().toList();
+    }
+
+    public String getSteeringDebugSummary() {
+        return this.movementExecutor.steeringSummary();
     }
 
     public DebugSnapshot getDebugSnapshot() {
