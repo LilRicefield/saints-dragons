@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer.layer.raevyx;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamLightningRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamBackblastRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamIntroRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxBeamImpactRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.AttachedWindRenderer;
@@ -249,6 +250,10 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
         double x = Mth.lerp(partialTick, entity.xo, entity.getX());
         double y = Mth.lerp(partialTick, entity.yo, entity.getY());
         double z = Mth.lerp(partialTick, entity.zo, entity.getZ());
+        RaevyxBeamBackblastRenderer.render(entityPose, buffers, state.liveMouth.subtract(x, y, z),
+                Mth.rotLerp(partialTick, entity.yBodyRotO, entity.yBodyRot), visibility, time,
+                entity.getUUID().getMostSignificantBits() ^ entity.getUUID().getLeastSignificantBits(),
+                entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD);
         Vec3 introDirection = state.lastMouth != null && state.lastEnd != null
                 ? state.lastEnd.subtract(state.lastMouth) : entity.getViewVector(partialTick);
         if (entity.isBeaming() && state.renderedTip != null) {

@@ -25,7 +25,7 @@ public final class BeamRibbonRenderer {
                               float visibility, float ageInTicks,
                               Vec3 beamStartWorld, Vec3 beamEndWorld, Style style,
                               float red, float green, float blue,
-                              boolean firstPersonView) {
+                              float widthScale, boolean firstPersonView) {
         if (texture == null || style == null || beamStartWorld == null || beamEndWorld == null
                 || beamLength <= 0.002F || visibility <= 0.001F) {
             return;
@@ -76,7 +76,7 @@ public final class BeamRibbonRenderer {
         // Vanilla bypasses directional lighting; shader packs retain the entity pass.
         VertexConsumer consumer = bufferSource.getBuffer(BeamRenderTypes.translucent(texture));
 
-        float halfWidth = Math.max(0.001F, style.halfWidth()) * visibility;
+        float halfWidth = Math.max(0.001F, style.halfWidth() * widthScale) * visibility;
         // A repeat count of two stretches each full texture across half the current beam.
         float tileSpan = 1.0F / Math.max(0.001F, style.textureCycles());
         float tileOverlap = Mth.clamp(style.tileOverlapFraction(), 0.001F, 0.499F);

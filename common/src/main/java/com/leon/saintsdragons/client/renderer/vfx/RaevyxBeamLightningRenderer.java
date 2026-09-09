@@ -11,6 +11,7 @@ import org.joml.Matrix4f;
 public final class RaevyxBeamLightningRenderer {
     // Each full texture spans half the current beam, with overlapping edges for scrolling.
     private static final float RIBBON_TEXTURE_CYCLES = 2.0F;
+    private static final float OBSERVER_RIBBON_WIDTH_SCALE = 1.5F;
     private static final ResourceLocation LIGHTNING_BEAM_TEXTURE =
             SaintsDragonsCommon.rl("textures/particle/lightning_beam.png");
     private static final ResourceLocation LIGHTNING_BEAM_AURA_TEXTURE =
@@ -127,26 +128,27 @@ public final class RaevyxBeamLightningRenderer {
         boolean gold = raevyx.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         float green = gold ? 0.75F : 0.0F;
         float blue = gold ? 0.15F : 0.0F;
+        float ribbonWidthScale = firstPersonView ? 1.0F : OBSERVER_RIBBON_WIDTH_SCALE;
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_STYLE,
-                1.0F, green, blue, firstPersonView);
+                1.0F, green, blue, ribbonWidthScale, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_AURA_STYLE,
-                1.0F, green, blue, firstPersonView);
+                1.0F, green, blue, ribbonWidthScale, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_AURA_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_FAINT_AURA_STYLE,
-                0.05F, green * 0.05F, blue * 0.05F, firstPersonView);
+                0.05F, green * 0.05F, blue * 0.05F, ribbonWidthScale, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SWIRL_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_SWIRL_STYLE,
-                1.0F, green, blue, firstPersonView);
+                1.0F, green, blue, ribbonWidthScale, firstPersonView);
         BeamRibbonRenderer.render(poseStack, bufferSource, LIGHTNING_BEAM_SECOND_SWIRL_TEXTURE,
                 beamLength, visibility, ageInTicks, beamStartWorld, beamEndWorld,
                 LIGHTNING_BEAM_SECOND_SWIRL_STYLE,
-                0.0F, 0.0F, 0.0F, firstPersonView);
+                0.0F, 0.0F, 0.0F, ribbonWidthScale, firstPersonView);
         BeamGrainRenderer.renderEmitter(poseStack, bufferSource, FAST_LINE_TEXTURES,
                 beamLength, visibility, ageInTicks, entitySeed ^ FAST_LINE_SEED_SALT,
                 FAST_LINE_EMITTER_STYLE, beamStartWorld, beamEndWorld,
@@ -156,6 +158,8 @@ public final class RaevyxBeamLightningRenderer {
                 beamLength, visibility, ageInTicks, entitySeed ^ LIGHTNING_ZAP_SEED_SALT,
                 LIGHTNING_ZAP_STYLE, beamStartWorld, beamEndWorld,
                 1.0F, green, blue, firstPersonView);
+        ProceduralBeamLightningRenderer.render(poseStack, bufferSource,
+                beamLength, visibility, ageInTicks, entitySeed, 1.0F, green, blue);
     }
 
     /** Called after the model pose is restored so stars face the camera independently of the beam. */
