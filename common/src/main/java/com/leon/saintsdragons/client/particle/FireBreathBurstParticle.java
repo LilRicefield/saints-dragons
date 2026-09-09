@@ -17,7 +17,10 @@ import org.jetbrains.annotations.NotNull;
 public final class FireBreathBurstParticle extends TextureSheetParticle {
     private static final float WIDE_DELAY = 3.0F;
     private static final double FORWARD_OFFSET = 2.0;
-    private static final int LAST_SPRITE = 7;
+    private static final int START_FIRST_SPRITE = 8;
+    private static final int START_FRAMES = 17;
+    private static final float START_FRAME_TICKS = 0.5F;
+    private static final int LAST_SPRITE = START_FIRST_SPRITE + START_FRAMES - 1;
     private static final float RING_FRAME_TICKS = 0.25F;
     private static final int RING_FRAMES = 6;
     private static final float RING_LIFETIME_TICKS = 12.0F;
@@ -56,6 +59,17 @@ public final class FireBreathBurstParticle extends TextureSheetParticle {
         float time = Math.max(0, age - 1 + partialTicks);
         // Submit the rings before overlapping translucent star faces write depth.
         renderRings(buffer, camera, partialTicks, time);
+        if (time < START_FRAMES * START_FRAME_TICKS) {
+            int frame = Mth.floor(time / START_FRAME_TICKS);
+            setSprite(sprites.get(START_FIRST_SPRITE + frame, LAST_SPRITE));
+            roll = oRoll = 0;
+            quadSize = 8.0F;
+            alpha = 1.0F;
+            // These frames already contain the fire color and their own transparency.
+            setColor(1.0F, 1.0F, 1.0F);
+            super.render(buffer, camera, partialTicks);
+            setColor(1.0F, 0.45F, 0.06F);
+        }
         if (time < 9.0F) {
             setSprite(sprites.get(0, LAST_SPRITE));
             roll = oRoll = 0;

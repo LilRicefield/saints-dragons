@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 public final class RaevyxBeamIntroRenderer {
     private static final ResourceLocation WIDE_STAR = SaintsDragonsCommon.rl("textures/particle/wider_star.png");
+    private static final ResourceLocation[] MORE_SWIRL = frames("more_swirl", 25);
     private static final ResourceLocation[] STEAM = frames("steamy_explosion", 16);
     private static final ResourceLocation[] SHARP = frames("sharp_explosion", 8);
     private static final ResourceLocation[] GLASS = {SaintsDragonsCommon.rl("textures/particle/glass_shatter.png")};
@@ -20,6 +21,9 @@ public final class RaevyxBeamIntroRenderer {
     private static final float GLASS_END_HALF_SIZE = 5.0F;
     private static final float GLASS_ALPHA = 0.85F;
     private static final float FRAME_TICKS = 0.5F;
+    private static final float SWIRL_FRAME_TICKS = 0.5F;
+    private static final float SWIRL_HALF_SIZE = 4.0F;
+    private static final float SWIRL_ANCHOR_U = 0.565F;
     private static final float STEAM_FRAME_TICKS = 0.25F;
     private static final float FLASH_TICKS = 2.0F;
     private static final float FLASH_MAX_HALF_SIZE = 4.0F;
@@ -27,6 +31,7 @@ public final class RaevyxBeamIntroRenderer {
     private static final float FORWARD_OFFSET = 1.5F;
     private static final float STEAM_START = RaevyxBeamAbility.STARTUP_TICKS - STEAM.length * STEAM_FRAME_TICKS;
     private static final float FLASH_START = STEAM_START - FLASH_TICKS;
+    private static final float SWIRL_START = FLASH_START - MORE_SWIRL.length * SWIRL_FRAME_TICKS;
     private static final AttachedPlaneFlipbookRenderer.Style SHARP_STYLE =
             new AttachedPlaneFlipbookRenderer.Style(5.0F, 1.0F, FRAME_TICKS, 1.0F, 0.0F);
 
@@ -36,7 +41,8 @@ public final class RaevyxBeamIntroRenderer {
     public static boolean isActive(Raevyx entity, float partialTick) {
         float chargeAge = entity.getClientBeamChargeAge(partialTick);
         float fireAge = entity.getClientBeamFireAge(partialTick);
-        return (chargeAge >= FLASH_START && chargeAge < FLASH_START + FLASH_TICKS)
+        return (chargeAge >= SWIRL_START && chargeAge < FLASH_START)
+                || (chargeAge >= FLASH_START && chargeAge < FLASH_START + FLASH_TICKS)
                 || (chargeAge >= STEAM_START && chargeAge < RaevyxBeamAbility.STARTUP_TICKS)
                 || (fireAge >= 0.0F && fireAge < Math.max(SHARP.length * FRAME_TICKS, GLASS_TICKS));
     }
@@ -54,6 +60,13 @@ public final class RaevyxBeamIntroRenderer {
         boolean gold = entity.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
         float green = gold ? 0.75F : 0.0F;
         float blue = gold ? 0.15F : 0.0F;
+        float swirlAge = entity.getClientBeamChargeAge(partialTick) - SWIRL_START;
+        if (swirlAge >= 0.0F && swirlAge < MORE_SWIRL.length * SWIRL_FRAME_TICKS) {
+            BillboardFlashRenderer.renderAnchoredQuad(poseStack, buffers,
+                    MORE_SWIRL[Mth.floor(swirlAge / SWIRL_FRAME_TICKS)],
+                    x, y, z, SWIRL_HALF_SIZE, 0.0F, 1.0F, green, blue, 1.0F,
+                    SWIRL_ANCHOR_U, 0.5F);
+        }
         float introAge = entity.getClientBeamChargeAge(partialTick) - FLASH_START;
         if (introAge >= 0.0F && introAge < FLASH_TICKS) {
             float life = introAge / FLASH_TICKS;
