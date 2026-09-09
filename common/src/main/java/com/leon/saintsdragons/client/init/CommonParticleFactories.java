@@ -26,6 +26,7 @@ import com.leon.saintsdragons.client.particle.RaevyxLightningChainParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
 import com.leon.saintsdragons.client.particle.SecondImpactRingParticle;
 import com.leon.saintsdragons.client.particle.SonicRingParticle;
+import com.leon.saintsdragons.client.particle.VolitansBreathParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
@@ -37,6 +38,8 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.VOLITANS_WATER_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, false));
+        register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, true));
         register(registrar, ModParticles.FIRE_BREATH_FLAME.get(), FireBreathParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_EMBER.get(), FireBreathEmberParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_FLICKER.get(), FireBreathFlickerParticle.Factory::new);

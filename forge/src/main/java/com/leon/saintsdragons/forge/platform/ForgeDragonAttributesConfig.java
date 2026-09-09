@@ -145,9 +145,6 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_ACTIVE_TICKS_MAX;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_DRAIN_PER_TICK;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_REGEN_PER_TICK;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_PROJECTILE_SPREAD;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_PROJECTILE_SPEED;
-    public static ForgeConfigSpec.DoubleValue VOLITANS_BREATH_PROJECTILE_LIFETIME;
     public static ForgeConfigSpec.DoubleValue VOLITANS_POISON_BREATH_POISON_DURATION_TICKS;
     public static ForgeConfigSpec.DoubleValue VOLITANS_POISON_BREATH_POISON_LEVEL;
     public static ForgeConfigSpec.DoubleValue VOLITANS_POISON_BALL_POISON_DURATION_TICKS;
@@ -347,9 +344,6 @@ public final class ForgeDragonAttributesConfig {
         VOLITANS_BREATH_ACTIVE_TICKS_MAX = builder.defineInRange("breath_active_ticks_max", 240.0, 1.0, 24000.0);
         VOLITANS_BREATH_DRAIN_PER_TICK = builder.defineInRange("breath_drain_per_tick", 1.0 / (20.0 * 12.0), 0.0, 1.0);
         VOLITANS_BREATH_REGEN_PER_TICK = builder.defineInRange("breath_regen_per_tick", 0.0025, 0.0, 1.0);
-        VOLITANS_BREATH_PROJECTILE_SPREAD = builder.defineInRange("breath_projectile_spread", 0.20, 0.0, 5.0);
-        VOLITANS_BREATH_PROJECTILE_SPEED = builder.defineInRange("breath_projectile_speed", 1.60, 0.0, 10.0);
-        VOLITANS_BREATH_PROJECTILE_LIFETIME = builder.defineInRange("breath_projectile_lifetime", 28.0, 1.0, 1200.0);
         VOLITANS_POISON_BREATH_POISON_DURATION_TICKS = builder.defineInRange("poison_breath_poison_duration_ticks", 80.0, 0.0, 12000.0);
         VOLITANS_POISON_BREATH_POISON_LEVEL = builder.defineInRange("poison_breath_poison_level", 1.0, 0.0, 4.0);
         VOLITANS_POISON_BALL_POISON_DURATION_TICKS = builder.defineInRange("poison_ball_poison_duration_ticks", 120.0, 0.0, 12000.0);

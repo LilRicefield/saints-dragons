@@ -21,6 +21,7 @@ import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -711,9 +712,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         double breathActiveTicksMax = 240.0D;
         double breathDrainPerTick = 1.0D / (20.0D * 12.0D);
         double breathRegenPerTick = 0.0025D;
-        double breathProjectileSpread = 0.20D;
-        double breathProjectileSpeed = 1.60D;
-        double breathProjectileLifetime = 28.0D;
         double poisonBreathPoisonDurationTicks = 80.0D;
         double poisonBreathPoisonLevel = 1.0D;
         double poisonBallPoisonDurationTicks = 120.0D;
@@ -749,9 +747,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 breathActiveTicksMax = (double) configClass.getField("VOLITANS_BREATH_ACTIVE_TICKS_MAX").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_ACTIVE_TICKS_MAX").get(null));
                 breathDrainPerTick = (double) configClass.getField("VOLITANS_BREATH_DRAIN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_DRAIN_PER_TICK").get(null));
                 breathRegenPerTick = (double) configClass.getField("VOLITANS_BREATH_REGEN_PER_TICK").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_REGEN_PER_TICK").get(null));
-                breathProjectileSpread = (double) configClass.getField("VOLITANS_BREATH_PROJECTILE_SPREAD").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_PROJECTILE_SPREAD").get(null));
-                breathProjectileSpeed = (double) configClass.getField("VOLITANS_BREATH_PROJECTILE_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_PROJECTILE_SPEED").get(null));
-                breathProjectileLifetime = (double) configClass.getField("VOLITANS_BREATH_PROJECTILE_LIFETIME").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BREATH_PROJECTILE_LIFETIME").get(null));
                 poisonBreathPoisonDurationTicks = (double) configClass.getField("VOLITANS_POISON_BREATH_POISON_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BREATH_POISON_DURATION_TICKS").get(null));
                 poisonBreathPoisonLevel = (double) configClass.getField("VOLITANS_POISON_BREATH_POISON_LEVEL").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BREATH_POISON_LEVEL").get(null));
                 poisonBallPoisonDurationTicks = (double) configClass.getField("VOLITANS_POISON_BALL_POISON_DURATION_TICKS").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_POISON_BALL_POISON_DURATION_TICKS").get(null));
@@ -787,9 +782,6 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("breath_active_ticks_max", breathActiveTicksMax);
         extras.put("breath_drain_per_tick", breathDrainPerTick);
         extras.put("breath_regen_per_tick", breathRegenPerTick);
-        extras.put("breath_projectile_spread", breathProjectileSpread);
-        extras.put("breath_projectile_speed", breathProjectileSpeed);
-        extras.put("breath_projectile_lifetime", breathProjectileLifetime);
         extras.put("poison_breath_poison_duration_ticks", poisonBreathPoisonDurationTicks);
         extras.put("poison_breath_poison_level", poisonBreathPoisonLevel);
         extras.put("poison_ball_poison_duration_ticks", poisonBallPoisonDurationTicks);
@@ -859,6 +851,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 ResourceLocation id = entry.getKey();
                 DragonAttributeConfig fallback = merged.getOrDefault(id, DragonAttributeConfig.EMPTY);
                 JsonObject data = GsonHelper.convertToJsonObject(entry.getValue(), id.toString());
+                removeRetiredVolitansBreathFields(id, data);
                 rawJson.put(id, data);
                 DragonAttributeConfig parsed = DragonAttributeConfig.merge(data, fallback);
                 merged.put(id, parsed);
@@ -903,7 +896,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillAtroxiiaAbilityTuning(path, entry.getKey(), entry.getValue());
                 backfillCindervaneAbilityTuning(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
-                backfillVolitansRiderSwimSpeed(path, entry.getKey(), entry.getValue());
+                migrateVolitansExtras(path, entry.getKey(), entry.getValue());
                 continue;
             }
             writeConfigFile(path, source);
@@ -923,6 +916,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         try (Reader reader = Files.newBufferedReader(path)) {
             JsonElement element = JsonParser.parseReader(reader);
             JsonObject json = GsonHelper.convertToJsonObject(element, id.toString());
+            removeRetiredVolitansBreathFields(id, json);
             return DragonAttributeConfig.merge(json, fallback);
         } catch (Exception e) {
             SaintsDragonsCommon.LOGGER.error("Failed to read dragon attribute config {} from {}", id, path, e);
@@ -986,6 +980,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             json.add("extra", extraJson);
         }
 
+        removeRetiredVolitansBreathFields(id, json);
         return json;
     }
 
@@ -1398,18 +1393,32 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
     }
 
-    private void backfillVolitansRiderSwimSpeed(Path path, ResourceLocation id, DragonAttributeConfig defaults) {
+    private static boolean removeRetiredVolitansBreathFields(ResourceLocation id, JsonObject json) {
+        if (!id.equals(VOLITANS_ID) || !json.has("extra")) return false;
+        JsonObject extra = GsonHelper.getAsJsonObject(json, "extra");
+        boolean changed = false;
+        for (String key : List.of("breath_projectile_speed", "breath_projectile_lifetime", "breath_projectile_spread")) {
+            changed |= extra.remove(key) != null;
+        }
+        return changed;
+    }
+
+    private void migrateVolitansExtras(Path path, ResourceLocation id, DragonAttributeConfig defaults) {
         if (!id.equals(VOLITANS_ID)) return;
         try (Reader reader = Files.newBufferedReader(path)) {
             JsonObject json = GsonHelper.convertToJsonObject(JsonParser.parseReader(reader), id.toString());
             JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            boolean changed = removeRetiredVolitansBreathFields(id, json);
             if (!extra.has("rider_swim_speed")) {
                 extra.addProperty("rider_swim_speed", defaults.extraDouble("rider_swim_speed", 1.42D));
+                changed = true;
+            }
+            if (changed) {
                 json.add("extra", extra);
                 writeConfigFile(path, json);
             }
         } catch (Exception e) {
-            SaintsDragonsCommon.LOGGER.warn("Failed to backfill Volitans rider swim speed at {}", path, e);
+            SaintsDragonsCommon.LOGGER.warn("Failed to migrate Volitans extras at {}", path, e);
         }
     }
 

@@ -23,15 +23,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 public final class IgnivorusBreathStream {
     static final int DAMAGE_INTERVAL = 10;
     private static final double BACKBLAST_SIDE_OFFSET = 0.75;
     private final Ignivorus dragon;
-    private final List<ExpandingBreathSection> sections = new ArrayList<>();
-    private final HitCadence hits = new HitCadence();
-    private final Set<ExpandingBreathSection> breakingSections = new HashSet<>();
+    private final SweptBreathStream<FireSection> stream = new SweptBreathStream<>(DAMAGE_INTERVAL, ExpandingBreathSection.MAX_TICKS);
+
+    private static final class FireSection {
+        boolean breaking;
+    }
     private final IgnivorusBreathTerrain terrain = new IgnivorusBreathTerrain();
     private final Map<BlockPos, Long> recentImpacts = new HashMap<>();
     private int lastEmissionTick = Integer.MIN_VALUE;
@@ -47,11 +48,9 @@ public final class IgnivorusBreathStream {
         Vec3 velocity = direction.normalize().scale(ExpandingBreathSection.DEFAULT_SPEED);
         ExpandingBreathSection section = new ExpandingBreathSection(origin, velocity,
                 ExpandingBreathSection.DEFAULT_RANGE);
-        if (sections.size() >= ExpandingBreathSection.MAX_TICKS) sections.remove(0);
-        sections.add(section);
-        breakingSections.retainAll(sections);
+        stream.emit(section, new FireSection());
         // At the six-second mark, fire already in flight becomes destructive too.
-        if (canBreakBlocks) breakingSections.addAll(sections);
+        if (canBreakBlocks) stream.forEachPayload(payload -> payload.breaking = true);
 
         FireBreathParticleData particle = new FireBreathParticleData((float) section.range(), 1.0F);
         AABB visibleArea = new AABB(origin, origin.add(direction.normalize().scale(section.range()))).inflate(64);
@@ -86,49 +85,31 @@ public final class IgnivorusBreathStream {
             return;
         }
         long now = level.getGameTime();
-        hits.expire(now);
         recentImpacts.values().removeIf(expiry -> expiry <= now);
-        if (sections.isEmpty()) return;
         var config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         float damage = (float) Math.max(0, config.abilityDamage("fire_breath", 80)) * DAMAGE_INTERVAL / 20.0F;
-        Set<UUID> attempted = new HashSet<>();
         List<Vec3> impacts = new ArrayList<>();
         Map<BlockPos, BlockState> blockHits = new LinkedHashMap<>();
         Set<BlockPos> cookingHits = new HashSet<>();
-        for (ExpandingBreathSection section : sections) {
-            AABB bounds = section.nextBounds();
-            List<ExpandingBreathSection.Sweep> sweeps = section.advance(level);
-            if (sweeps.isEmpty()) continue;
-            List<LivingEntity> targets = level.getEntitiesOfClass(LivingEntity.class, bounds, this::canHit);
-            for (LivingEntity target : targets) {
-                UUID id = target.getUUID();
-                if (!hits.ready(id, now) || attempted.contains(id)) continue;
-                for (ExpandingBreathSection.Sweep sweep : sweeps) {
-                    if (!sweep.hits(target.getBoundingBox())) continue;
-                    attempted.add(id);
-                    // Preserve vanilla hurt immunity, shields, armor and damage-event cancellation.
-                    if (damage > 0 && target.hurt(level.damageSources().mobAttack(dragon), damage)) {
-                        hits.record(id, now);
-                        target.setSecondsOnFire(3);
-                    }
-                    break;
-                }
+        stream.tick(level, (payload, target) -> canHit(target), (payload, target, sweep) -> {
+            // Preserve vanilla hurt immunity, shields, armor and damage-event cancellation.
+            if (damage > 0 && target.hurt(level.damageSources().mobAttack(dragon), damage)) {
+                target.setSecondsOnFire(3);
+                return true;
             }
-            for (ExpandingBreathSection.Sweep sweep : sweeps) {
-                Vec3 impact = sweep.blockImpact();
-                BlockPos blockPos = sweep.blockPos();
-                if (blockPos != null) cookingHits.add(blockPos);
-                if (blockPos != null && breakingSections.contains(section)) {
-                    blockHits.computeIfAbsent(blockPos, level::getBlockState);
-                }
-                if (impact != null
-                        && recentImpacts.putIfAbsent(blockPos != null ? blockPos : BlockPos.containing(impact), now + DAMAGE_INTERVAL) == null) {
-                    impacts.add(impact);
-                }
+            return false;
+        }, (payload, sweep) -> {
+            Vec3 impact = sweep.blockImpact();
+            BlockPos blockPos = sweep.blockPos();
+            if (blockPos != null) cookingHits.add(blockPos);
+            if (blockPos != null && payload.breaking) {
+                blockHits.computeIfAbsent(blockPos, level::getBlockState);
             }
-        }
-        sections.removeIf(ExpandingBreathSection::finished);
-        breakingSections.retainAll(sections);
+            if (impact != null
+                    && recentImpacts.putIfAbsent(blockPos != null ? blockPos : BlockPos.containing(impact), now + DAMAGE_INTERVAL) == null) {
+                impacts.add(impact);
+            }
+        });
         // Apply terrain effects after all collision queries, so one impact cannot alter another's trace.
         terrain.tick(level, dragon, blockHits);
         for (BlockPos pos : cookingHits) {
@@ -148,29 +129,7 @@ public final class IgnivorusBreathStream {
     }
 
     public void clear() {
-        sections.clear();
-        breakingSections.clear();
-        hits.clear();
+        stream.clear();
         recentImpacts.clear();
-    }
-
-    static final class HitCadence {
-        private final Map<UUID, Long> nextHits = new HashMap<>();
-
-        boolean ready(UUID target, long tick) {
-            return nextHits.getOrDefault(target, Long.MIN_VALUE) <= tick;
-        }
-
-        void record(UUID target, long tick) {
-            nextHits.put(target, tick + DAMAGE_INTERVAL);
-        }
-
-        void expire(long tick) {
-            nextHits.values().removeIf(expiry -> expiry <= tick);
-        }
-
-        void clear() {
-            nextHits.clear();
-        }
     }
 }

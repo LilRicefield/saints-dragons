@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.server.entity.component.VolitansBreathStream;
+
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
@@ -246,6 +248,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             .build();
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
+    private final VolitansBreathStream breathStream = new VolitansBreathStream(this);
     private final VolitansAnimationHandler animationHandler = new VolitansAnimationHandler(this);
     private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
@@ -915,6 +918,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     public void tick() {
         super.tick();
+        breathStream.tick();
         if (level() instanceof ServerLevel serverLevel) {
             DragonDestructionManager.applyPassiveTreeDestruction(serverLevel, this);
         }
@@ -1641,6 +1645,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     private void clearVolitansBinderTransientState() {
+        breathStream.clear();
         setTarget(null);
         setAggressive(false);
         setLastHurtByMob(null);
@@ -1832,6 +1837,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean canUseCurrentBreathMode() {
         return DragonBreathComponent.canUse(getCurrentBreathGauge(), BREATH_DEPLETED_THRESHOLD);
+    }
+
+    public void emitBreathSection(Vec3 origin, Vec3 direction) {
+        breathStream.emit(origin, direction);
     }
 
     public boolean drainCurrentBreathEnergy(float amount) {

@@ -362,12 +362,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 volitansDefaults.extraDouble("breath_drain_per_tick", 1.0D / (20.0D * 12.0D)));
         volitansBuffer.breathRegenPerTick = volitansCurrent.extraDouble("breath_regen_per_tick",
                 volitansDefaults.extraDouble("breath_regen_per_tick", 0.0025D));
-        volitansBuffer.breathProjectileSpread = volitansCurrent.extraDouble("breath_projectile_spread",
-                volitansDefaults.extraDouble("breath_projectile_spread", 0.20D));
-        volitansBuffer.breathProjectileSpeed = volitansCurrent.extraDouble("breath_projectile_speed",
-                volitansDefaults.extraDouble("breath_projectile_speed", 1.60D));
-        volitansBuffer.breathProjectileLifetime = volitansCurrent.extraDouble("breath_projectile_lifetime",
-                volitansDefaults.extraDouble("breath_projectile_lifetime", 28.0D));
         volitansBuffer.poisonBreathPoisonDurationTicks = volitansCurrent.extraDouble("poison_breath_poison_duration_ticks",
                 volitansDefaults.extraDouble("poison_breath_poison_duration_ticks", 80.0D));
         volitansBuffer.poisonBreathPoisonLevel = volitansCurrent.extraDouble("poison_breath_poison_level",
@@ -1921,24 +1915,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(1.0D)
                 .setSaveConsumer(value -> buffer.breathRegenPerTick = value)
                 .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_spread"), buffer.breathProjectileSpread)
-                .setDefaultValue(defaults.extraDouble("breath_projectile_spread", 0.20D))
-                .setMin(0.0D)
-                .setMax(5.0D)
-                .setSaveConsumer(value -> buffer.breathProjectileSpread = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_speed"), buffer.breathProjectileSpeed)
-                .setDefaultValue(defaults.extraDouble("breath_projectile_speed", 1.60D))
-                .setMin(0.0D)
-                .setMax(10.0D)
-                .setSaveConsumer(value -> buffer.breathProjectileSpeed = value)
-                .build());
-        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_lifetime"), buffer.breathProjectileLifetime)
-                .setDefaultValue(defaults.extraDouble("breath_projectile_lifetime", 28.0D))
-                .setMin(1.0D)
-                .setMax(1200.0D)
-                .setSaveConsumer(value -> buffer.breathProjectileLifetime = value)
-                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_poison_duration_ticks"), buffer.poisonBreathPoisonDurationTicks)
                 .setDefaultValue(defaults.extraDouble("poison_breath_poison_duration_ticks", 80.0D))
                 .setMin(0.0D)
@@ -2584,9 +2560,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         double breathActiveTicksMax;
         double breathDrainPerTick;
         double breathRegenPerTick;
-        double breathProjectileSpread;
-        double breathProjectileSpeed;
-        double breathProjectileLifetime;
         double poisonBreathPoisonDurationTicks;
         double poisonBreathPoisonLevel;
         double poisonBallPoisonDurationTicks;
@@ -2680,9 +2653,6 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         extras.put("breath_active_ticks_max", buffer.breathActiveTicksMax);
         extras.put("breath_drain_per_tick", buffer.breathDrainPerTick);
         extras.put("breath_regen_per_tick", buffer.breathRegenPerTick);
-        extras.put("breath_projectile_spread", buffer.breathProjectileSpread);
-        extras.put("breath_projectile_speed", buffer.breathProjectileSpeed);
-        extras.put("breath_projectile_lifetime", buffer.breathProjectileLifetime);
         extras.put("poison_breath_poison_duration_ticks", buffer.poisonBreathPoisonDurationTicks);
         extras.put("poison_breath_poison_level", buffer.poisonBreathPoisonLevel);
         extras.put("poison_ball_poison_duration_ticks", buffer.poisonBallPoisonDurationTicks);

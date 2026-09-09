@@ -879,18 +879,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK::get,
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK::set,
                 null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_spread"),
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD::get,
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_speed"),
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED::get,
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED::set,
-                null));
-        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.breath_projectile_lifetime"),
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME::get,
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME::set,
-                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.poison_breath_poison_duration_ticks"),
                 ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS::get,
                 ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS::set,
@@ -1077,9 +1065,6 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_ACTIVE_TICKS_MAX.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_DRAIN_PER_TICK.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_REGEN_PER_TICK.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPREAD.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_SPEED.getDefault());
-                ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME.set(ForgeDragonAttributesConfig.VOLITANS_BREATH_PROJECTILE_LIFETIME.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_DURATION_TICKS.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_LEVEL.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BREATH_POISON_LEVEL.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_DURATION_TICKS.set(ForgeDragonAttributesConfig.VOLITANS_POISON_BALL_POISON_DURATION_TICKS.getDefault());

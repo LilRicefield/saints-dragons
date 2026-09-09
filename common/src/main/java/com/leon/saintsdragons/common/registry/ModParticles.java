@@ -22,6 +22,11 @@ public final class ModParticles {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.PARTICLE_TYPE, () -> BuiltInRegistries.PARTICLE_TYPE, SaintsDragonsCommon.MOD_ID);
 
+    public static final Supplier<SimpleParticleType> VOLITANS_WATER_BREATH =
+            REGISTER.register("volitans_water_breath", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> VOLITANS_POISON_BREATH =
+            REGISTER.register("volitans_poison_breath", () -> Services.PLATFORM.createSimpleParticle(false));
+
     public static final Supplier<ParticleType<RaevyxLightningStormData>> LIGHTNING_STORM =
             REGISTER.register("lightning_storm",
                     () -> new ParticleType<>(false, RaevyxLightningStormData.DESERIALIZER) {

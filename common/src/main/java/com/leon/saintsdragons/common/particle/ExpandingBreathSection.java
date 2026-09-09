@@ -6,6 +6,8 @@ import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.material.Fluid;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,20 +29,30 @@ public final class ExpandingBreathSection {
     private final Vec3 forward;
     private final Vec3 right;
     private final Vec3 up;
-    private final double speed;
+    private double speed;
     private final double range;
+    private final Profile profile;
+    private int age;
     private final boolean[] open = new boolean[LANE_COUNT];
     private double distance;
     private int activeLanes = LANE_COUNT;
 
     public ExpandingBreathSection(Vec3 origin, Vec3 velocity, double range) {
+        this(origin, velocity.lengthSqr() < 1.0E-8 ? new Vec3(0, 0, 0.5)
+                        : velocity.normalize().scale(Math.max(0.5, Math.min(12, velocity.length()))),
+                Math.max(1, Math.min(96, Math.min(range, Math.max(0.5, Math.min(12, velocity.length())) * MAX_TICKS))),
+                Profile.FIRE);
+    }
+
+    public ExpandingBreathSection(Vec3 origin, Vec3 velocity, double range, Profile profile) {
         this.origin = origin;
-        this.speed = Math.max(0.5, Math.min(12, velocity.length()));
+        this.speed = velocity.length();
+        this.profile = profile;
         this.forward = velocity.lengthSqr() < 1.0E-8 ? new Vec3(0, 0, 1) : velocity.normalize();
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         this.right = forward.cross(reference).normalize();
         this.up = right.cross(forward).normalize();
-        this.range = Math.max(1, Math.min(96, Math.min(range, speed * MAX_TICKS)));
+        this.range = Math.max(0, range);
         Arrays.fill(open, true);
     }
 
@@ -53,11 +65,31 @@ public final class ExpandingBreathSection {
     }
 
     public boolean finished() {
-        return distance >= range || activeLanes == 0;
+        return (speed > 0 && distance >= range) || age >= profile.maxTicks() || activeLanes == 0;
     }
 
     public static double halfWidth(double distance) {
         return Math.min(MAX_HALF_WIDTH, START_HALF_WIDTH + Math.max(0, distance) * GROWTH_PER_BLOCK);
+    }
+
+    /** Collision shape and travel rules; particle appearance is deliberately separate. */
+    public record Profile(double startHalfWidth, double maxHalfWidth, double growthPerBlock,
+                          int maxTicks, double drag, TagKey<Fluid> blockingFluid) {
+        public static final Profile FIRE = new Profile(START_HALF_WIDTH, MAX_HALF_WIDTH,
+                GROWTH_PER_BLOCK, MAX_TICKS, 1.0, null);
+
+        public Profile {
+            if (!Double.isFinite(startHalfWidth) || startHalfWidth <= 0
+                    || !Double.isFinite(maxHalfWidth) || maxHalfWidth < startHalfWidth
+                    || !Double.isFinite(growthPerBlock) || growthPerBlock < 0
+                    || maxTicks < 1 || !Double.isFinite(drag) || drag <= 0 || drag > 1) {
+                throw new IllegalArgumentException("Invalid breath profile");
+            }
+        }
+
+        public double halfWidthAt(double distance) {
+            return Math.min(maxHalfWidth, startHalfWidth + Math.max(0, distance) * growthPerBlock);
+        }
     }
 
     public Vec3 center() {
@@ -68,18 +100,19 @@ public final class ExpandingBreathSection {
         double u = (2.0 * (lane % GRID_SIZE) + 1) / GRID_SIZE - 1;
         double v = (2.0 * (lane / GRID_SIZE) + 1) / GRID_SIZE - 1;
         return origin.add(forward.scale(atDistance))
-                .add(right.scale(u * halfWidth(atDistance))).add(up.scale(v * halfWidth(atDistance)));
+                .add(right.scale(u * profile.halfWidthAt(atDistance))).add(up.scale(v * profile.halfWidthAt(atDistance)));
     }
 
     public AABB nextBounds() {
         double next = Math.min(range, distance + speed);
-        double half = halfWidth(next);
+        double half = profile.halfWidthAt(next);
         Vec3 extent = extent(half);
         return new AABB(center(), origin.add(forward.scale(next))).inflate(extent.x, extent.y, extent.z);
     }
 
     /** Gather terrain once per section, rather than performing a world lookup for every lane. */
     public List<Sweep> advance(Level level) {
+        if (finished()) return List.of();
         AABB bounds = nextBounds();
         if (!level.hasChunksAt(BlockPos.containing(bounds.minX, bounds.minY, bounds.minZ),
                 BlockPos.containing(bounds.maxX, bounds.maxY, bounds.maxZ))) {
@@ -97,6 +130,17 @@ public final class ExpandingBreathSection {
                 positions.add(terrain.pos());
             }
         }
+        if (profile.blockingFluid() != null) {
+            for (BlockPos pos : BlockPos.betweenClosed(BlockPos.containing(bounds.minX, bounds.minY, bounds.minZ),
+                    BlockPos.containing(bounds.maxX, bounds.maxY, bounds.maxZ))) {
+                var fluid = level.getFluidState(pos);
+                if (!fluid.is(profile.blockingFluid())) continue;
+                for (AABB box : fluid.getShape(level, pos).toAabbs()) {
+                    obstacles.add(box.move(pos));
+                    positions.add(pos.immutable());
+                }
+            }
+        }
         return advance(obstacles, positions);
     }
 
@@ -111,8 +155,8 @@ public final class ExpandingBreathSection {
             return List.of();
         }
         double next = Math.min(range, distance + speed);
-        double fromHalf = halfWidth(distance);
-        double toHalf = halfWidth(next);
+        double fromHalf = profile.halfWidthAt(distance);
+        double toHalf = profile.halfWidthAt(next);
         Vec3 fromExtent = extent(fromHalf / GRID_SIZE);
         Vec3 toExtent = extent(toHalf / GRID_SIZE);
         List<Sweep> sweeps = new ArrayList<>(activeLanes);
@@ -146,6 +190,8 @@ public final class ExpandingBreathSection {
             sweeps.add(new Sweep(lane, start, end, fromExtent, toExtent, stop, impact, blockPos));
         }
         distance = next;
+        speed *= profile.drag();
+        age++;
         return sweeps;
     }
 
