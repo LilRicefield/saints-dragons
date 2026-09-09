@@ -97,10 +97,14 @@ public class AsyncFlightController {
         if (this.hasReachedWaypoint(distSq, arrivalDist, activeLandingPhase, groundTransition)) {
             if (activeLandingPhase.advancesLandingPlan()) {
                 this.advanceLandingPhase();
+                if (this.currentWaypoint == null) return;
+                activeLandingPhase = this.landingPhase;
+                groundTransition = this.currentGroundTransition;
+                arrivalDist = this.calculateArrivalDistance(activeLandingPhase, groundTransition);
             } else {
                 this.onArrived();
+                return;
             }
-            return;
         }
 
         if (this.state == PathState.FOLLOWING || this.state == PathState.CALCULATING) {
@@ -606,7 +610,8 @@ public class AsyncFlightController {
     }
 
     public String getSteeringDebugSummary() {
-        return this.movementExecutor.steeringSummary();
+        return this.movementExecutor.steeringSummary() + ",phase=" + this.landingPhase
+                + (this.landingPlan == null ? "" : ",touchdown=" + this.landingPlan.touchdown());
     }
 
     public DebugSnapshot getDebugSnapshot() {

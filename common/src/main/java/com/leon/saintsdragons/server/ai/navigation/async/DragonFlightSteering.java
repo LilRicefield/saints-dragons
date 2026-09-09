@@ -9,6 +9,7 @@ final class DragonFlightSteering {
     private final Mob dragon;
     private final DragonFlightSpace space;
     private Vec3 descentTarget;
+    private Vec3 descentStart;
     private Vec3 descentDestination;
     private long descentExpires;
     private long nextDescentAttempt;
@@ -33,6 +34,7 @@ final class DragonFlightSteering {
         if (descentTarget != null) {
             if (finalLanding || descentDestination.distanceToSqr(destination) > 144.0D
                     || now >= descentExpires || position.distanceToSqr(descentTarget) < 16.0D
+                    || passedDescentWaypoint(position)
                     || (now >= nextDescentCheck && !space.corridorClear(position, descentTarget))) {
                 descentTarget = null;
             } else {
@@ -62,6 +64,7 @@ final class DragonFlightSteering {
                         -Math.min(-remaining.y - 6.0D, length * 0.65D), 0.0D);
                 if (!space.corridorClear(position, candidate) || !space.corridorClear(candidate, routeTarget)) continue;
                 descentTarget = candidate;
+                descentStart = position;
                 descentDestination = destination;
                 nextDescentCheck = now + 4;
                 descentExpires = now + Mth.clamp(Mth.ceil(length / Math.max(0.3D, speed)) + 30, 40, 120);
@@ -90,6 +93,11 @@ final class DragonFlightSteering {
         return direction;
     }
 
+    private boolean passedDescentWaypoint(Vec3 position) {
+        Vec3 leg = descentTarget.subtract(descentStart).multiply(1.0D, 0.0D, 1.0D);
+        return position.subtract(descentTarget).dot(leg) >= 0.0D;
+    }
+
     Vec3 checkedVelocity(Vec3 velocity) {
         if (space.corridorClear(dragon.position(), dragon.position().add(velocity))) return velocity;
         decision = "braking-obstacle";
@@ -102,6 +110,7 @@ final class DragonFlightSteering {
 
     void reset() {
         descentTarget = null;
+        descentStart = null;
         descentDestination = null;
         nextDescentAttempt = 0L;
         nextDescentCheck = 0L;

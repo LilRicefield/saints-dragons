@@ -225,6 +225,11 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             resetTracking();
             return true;
         }
+        if (!ownerAirborne && dragon.getAIMovement().hasActiveLandingTransition()) {
+            context.memories().erase(DragonMemories.MOVEMENT_INTENT);
+            dragon.setAccelerating(false);
+            return true;
+        }
         if (shouldFly && !dragon.isFlying() && !dragon.isTakeoff()) {
             takeoffStarter.accept(dragon);
             resetTracking();
@@ -241,15 +246,15 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         if (!shouldFly && !ownerAirborne
                 && horizontalDistance < config.landingDistance
                 && !dragon.isLanding()) {
-            context.memories().set(
-                    DragonMemories.MOVEMENT_INTENT,
-                    DragonMovementIntent.transitionToGround(
-                            DragonOwnerFollowTarget.groundTarget(dragon, owner),
-                            config.flightSpeed
-                    )
-            );
-            groundRepathCooldown = 0;
-            return true;
+            Entity anchorEntity = DragonOwnerFollowTarget.anchor(owner);
+            LivingEntity landingAnchor = anchorEntity instanceof LivingEntity living ? living : owner;
+            boolean accepted = dragon.getAIMovement().requestGroundTransition(landingAnchor, config.flightSpeed);
+            if (accepted) {
+                context.memories().erase(DragonMemories.MOVEMENT_INTENT);
+                dragon.setAccelerating(false);
+                groundRepathCooldown = 0;
+            }
+            return accepted;
         }
         return false;
     }
