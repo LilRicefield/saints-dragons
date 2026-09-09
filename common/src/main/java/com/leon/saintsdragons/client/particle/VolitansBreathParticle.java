@@ -23,13 +23,14 @@ import org.jetbrains.annotations.NotNull;
 public final class VolitansBreathParticle extends TextureSheetParticle {
     private static final int WATER_PARTICLES_PER_SECTION = 32;
     private static final double WATER_EMISSION_INTERVAL_TICKS = 2.0D;
-    public enum Kind { WATER, POISON, BUBBLES, EMITTER, STAR }
+    public enum Kind { WATER, POISON, BUBBLES, EMITTER, STAR, POISON_SKULL, POISON_FLAME }
 
     private final SpriteSet sprites;
     private final Kind kind;
     private final int frames;
     private final float frameTicks;
     private final boolean highlight;
+    private final boolean poison;
     private final float peakSize;
     private final int frameOffset;
 
@@ -39,8 +40,20 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
         this.sprites = sprites;
         this.kind = kind;
         this.highlight = kind == Kind.EMITTER || kind == Kind.STAR;
-        this.frames = highlight ? 1 : kind == Kind.BUBBLES ? 12 : 5;
-        this.frameTicks = kind == Kind.POISON ? 3.0F : 1.0F;
+        this.poison = kind == Kind.POISON || kind == Kind.POISON_SKULL || kind == Kind.POISON_FLAME;
+        this.frames = switch (kind) {
+            case EMITTER, STAR -> 1;
+            case BUBBLES -> 12;
+            case POISON_SKULL -> 16;
+            case POISON_FLAME -> 20;
+            default -> 5;
+        };
+        this.frameTicks = switch (kind) {
+            case POISON -> 3.0F;
+            case POISON_SKULL -> 0.75F;
+            case POISON_FLAME -> 0.5F;
+            default -> 1.0F;
+        };
         this.frameOffset = kind == Kind.WATER ? random.nextInt(frames) : 0;
         this.peakSize = kind == Kind.STAR ? 0.35F + random.nextFloat() * 0.25F
                 : 0.10F + random.nextFloat() * 0.10F;
@@ -58,6 +71,8 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
         if (highlight) {
             setColor(0.55F, 0.90F, 1.0F);
             roll = oRoll = random.nextFloat() * Mth.TWO_PI;
+        } else if (kind == Kind.POISON_SKULL) {
+            setColor(0.35F, 1.0F, 0.15F);
         }
         hasPhysics = false;
         setSize(1.44F, 1.44F);
@@ -91,7 +106,7 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
         }
         var hit = level.clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, cameraEntity));
-        if (hit.getType() != HitResult.Type.MISS || (kind != Kind.POISON && touchesLava(start, end))) {
+        if (hit.getType() != HitResult.Type.MISS || (!poison && touchesLava(start, end))) {
             remove();
             return false;
         }
@@ -131,7 +146,7 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
             alpha = 1.0F - Mth.clamp((progress - 0.75F) / 0.25F, 0.0F, 1.0F);
         } else {
             quadSize = Mth.lerp(progress, 0.34F, 0.72F);
-            if (kind == Kind.WATER) {
+            if (kind == Kind.WATER || kind == Kind.POISON_SKULL || kind == Kind.POISON_FLAME) {
                 float fade = Mth.clamp((progress - 0.35F) / 0.65F, 0.0F, 1.0F);
                 alpha = 1.0F - fade * fade * (3.0F - 2.0F * fade);
             } else {
@@ -169,10 +184,13 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
                 engine.createParticle(ModParticles.VOLITANS_BREATH_BUBBLES.get(), x, y, z, vx, vy, vz);
                 engine.createParticle(ModParticles.VOLITANS_BREATH_EMITTER.get(), x, y, z, vx, vy, vz);
                 engine.createParticle(ModParticles.VOLITANS_BREATH_STAR.get(), x, y, z, vx, vy, vz);
+            } else if (kind == Kind.POISON) {
+                engine.createParticle(ModParticles.VOLITANS_POISON_SKULL.get(), x, y, z, vx, vy, vz);
+                engine.createParticle(ModParticles.VOLITANS_POISON_FLAME.get(), x, y, z, vx, vy, vz);
             }
             int count = switch (kind) {
                 case WATER -> WATER_PARTICLES_PER_SECTION;
-                case BUBBLES -> 4;
+                case BUBBLES, POISON_SKULL -> 4;
                 case EMITTER, STAR -> 16;
                 default -> VolitansBreathMotion.PARTICLES_PER_SECTION;
             };

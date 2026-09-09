@@ -40,6 +40,8 @@ public final class CommonParticleFactories {
     public static void register(Registrar registrar) {
         register(registrar, ModParticles.VOLITANS_WATER_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.WATER));
         register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON));
+        register(registrar, ModParticles.VOLITANS_POISON_SKULL.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_SKULL));
+        register(registrar, ModParticles.VOLITANS_POISON_FLAME.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_FLAME));
         register(registrar, ModParticles.VOLITANS_BREATH_BUBBLES.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.BUBBLES));
         register(registrar, ModParticles.VOLITANS_BREATH_EMITTER.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.EMITTER));
         register(registrar, ModParticles.VOLITANS_BREATH_STAR.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.STAR));
