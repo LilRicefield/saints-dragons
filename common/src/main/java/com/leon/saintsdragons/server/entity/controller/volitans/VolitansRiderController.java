@@ -119,7 +119,7 @@ public final class VolitansRiderController {
         dragon.setAirSupply(dragon.getMaxAirSupply());
         Vec3 velocity = dragon.getDeltaMovement();
 
-        double swimSpeed = dragon.getSwimSpeed();
+        double swimSpeed = dragon.getRiderSwimSpeed();
         if (dragon.isAccelerating()) {
             swimSpeed *= 1.6D;
         }

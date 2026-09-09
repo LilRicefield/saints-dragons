@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -27,8 +28,6 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     private DragonBrainContext<Ignivorus> currentContext;
     private int attackCooldown = 0;
     private int decisionCooldown = 0;
-    private int breathCooldown = 0;
-    private static final int BREATH_COOLDOWN_TICKS = 3600;
     private int fireballDecisionCooldown = 0;
     private int fireballPostCooldown = 0;
     private FireballMode fireballMode = FireballMode.NONE;
@@ -177,9 +176,6 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
             decisionCooldown--;
         }
 
-        if (breathCooldown > 0) {
-            breathCooldown--;
-        }
         if (fireballDecisionCooldown > 0) {
             fireballDecisionCooldown--;
         }
@@ -343,7 +339,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     }
 
     private CombatAction selectAbility(CombatSnapshot snapshot) {
-        AbilityChoice best = new AbilityChoice(CombatAction.NONE, MIN_ABILITY_SCORE);
+        AbilityChoice best = new AbilityChoice(CombatAction.NONE, Double.NEGATIVE_INFINITY);
         int extraNearbyEnemies = Math.max(0, snapshot.nearbyEnemies() - 1);
         int extraClusteredEnemies = Math.max(0, snapshot.targetClusterSize() - 1);
 
@@ -422,11 +418,11 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
                 - snapshot.closingSpeed() * 20.0D;
         best = consider(best, CombatAction.FIRE_BREATH, breathScore,
                 snapshot.hasLineOfSight()
-                        && snapshot.gap() >= 7.0D
+                        && snapshot.gap() >= 10.0D
                         && snapshot.gap() <= 24.0D
-                        && breathCooldown <= 0
-                        && dragon.canUseFireBreath()
-                        && canUseAiAbility(ModAbilities.IGNIVORUS_FIRE_BREATH, true));
+                        && canUseAiAbility(ModAbilities.IGNIVORUS_FIRE_BREATH, true)
+                        && IgnivorusFireBreathAbility.canStartAiBreath(dragon, dragon.getTarget())
+                        && dragon.getRandom().nextFloat() < 0.65F);
 
         double roarScore = 52.0D
                 + Mth.clamp((snapshot.gap() - 16.0D) * 0.75D, 0.0D, 20.0D)
@@ -448,7 +444,9 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
                                    CombatAction action,
                                    double score,
                                    boolean eligible) {
-        if (!eligible) {
+        // Suitability is checked before repetition penalties. Those penalties rank valid
+        // attacks; they must not leave a stationary melee target with no selectable attack.
+        if (!eligible || score < MIN_ABILITY_SCORE) {
             return current;
         }
         if (action == lastAction) {
@@ -515,15 +513,14 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
         if (!tryUseAbility(
                 ModAbilities.IGNIVORUS_FIRE_BREATH,
                 true,
-                60,
-                BREATH_COOLDOWN_TICKS,
-                180,
-                80)) {
+                12,
+                0,
+                30,
+                0)) {
             return false;
         }
         stopMovement("ignivorus-combat:fire-breath");
-        attackCooldown = 60;
-        breathCooldown = BREATH_COOLDOWN_TICKS;
+        attackCooldown = 12;
         return true;
     }
 
@@ -686,5 +683,12 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of("breath_decision", dragon == null ? "idle" : dragon.getAiFireBreathDecision(),
+                "last_action", lastAction.name(),
+                "attack_cooldown", Integer.toString(attackCooldown));
     }
 }

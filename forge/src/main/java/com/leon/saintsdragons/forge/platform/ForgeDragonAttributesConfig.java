@@ -126,6 +126,7 @@ public final class ForgeDragonAttributesConfig {
     public static ForgeConfigSpec.DoubleValue VOLITANS_MAX_HEALTH;
     public static ForgeConfigSpec.DoubleValue VOLITANS_ARMOR;
     public static ForgeConfigSpec.DoubleValue VOLITANS_FLYING_SPEED;
+    public static ForgeConfigSpec.DoubleValue VOLITANS_RIDER_SWIM_SPEED;
     public static ForgeConfigSpec.DoubleValue VOLITANS_WILD_FLYING_SPEED_MULTIPLIER;
     public static ForgeConfigSpec.DoubleValue VOLITANS_BITE_DAMAGE;
     public static ForgeConfigSpec.DoubleValue VOLITANS_CLAW_DAMAGE;
@@ -328,6 +329,7 @@ public final class ForgeDragonAttributesConfig {
         VOLITANS_MAX_HEALTH = builder.defineInRange("max_health", 160.0, 1.0, 100000.0);
         VOLITANS_ARMOR = builder.defineInRange("armor", 6.0, 0.0, 100000.0);
         VOLITANS_FLYING_SPEED = builder.defineInRange("flying_speed", 0.38, 0.0, 2.0);
+        VOLITANS_RIDER_SWIM_SPEED = builder.defineInRange("rider_swim_speed", 1.42, 0.1, 5.0);
         VOLITANS_WILD_FLYING_SPEED_MULTIPLIER = builder.defineInRange("wild_flying_speed_multiplier", 1.0, 0.05, 10.0);
         VOLITANS_BITE_DAMAGE = builder.defineInRange("bite_damage", 12.0, 0.0, 100000.0);
         VOLITANS_CLAW_DAMAGE = builder.defineInRange("claw_damage", 11.0, 0.0, 100000.0);

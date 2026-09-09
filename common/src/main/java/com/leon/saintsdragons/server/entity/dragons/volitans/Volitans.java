@@ -1570,6 +1570,13 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         return RIDER_SWIM_SPEED;
     }
 
+    public double getRiderSwimSpeed() {
+        double configured = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VOLITANS_ID)
+                .extraDouble("rider_swim_speed", RIDER_SWIM_SPEED);
+        return Double.isFinite(configured) ? Mth.clamp(configured, 0.1D, 5.0D) : RIDER_SWIM_SPEED;
+    }
+
     @Override
     public boolean canBreatheUnderwater() {
         return true;

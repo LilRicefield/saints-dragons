@@ -43,6 +43,12 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private boolean hasBeamFired = false;
     private boolean beamStartPlayed = false;
     private boolean beamLoopActive = false;
+    private boolean aiControlled;
+    private boolean groundAiBeam;
+    private int aiBurstTicks;
+    private int lostShotTicks;
+    private boolean retreatUsed;
+    private int retreatAimUnlockTick;
     private final Set<BlockPos> energizedRedstoneWires = new HashSet<>();
     public RaevyxBeamAbility(DragonAbilityType<Raevyx, RaevyxBeamAbility> type, Raevyx user) {
         super(type, user, user.getControllingPassenger() != null ? RIDER_TRACK : AI_TRACK, 0);
@@ -54,6 +60,13 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.STARTUP) {
             Raevyx wyvern = getUser();
+            aiControlled = wyvern.getControllingPassenger() == null;
+            groundAiBeam = aiControlled && !wyvern.isAerial();
+            aiBurstTicks = 40 + wyvern.getRandom().nextInt(41);
+            lostShotTicks = 0;
+            retreatUsed = false;
+            retreatAimUnlockTick = 0;
+            if (aiControlled) wyvern.setAiBeamDecision("windup");
             if (!wyvern.canUseBeam()) {
                 interrupt();
                 return;
@@ -72,7 +85,12 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
+            if (!wyvern.level().isClientSide && aiControlled && !canContinueAiBeam(false)) {
+                interrupt();
+                return;
+            }
             wyvern.setBeaming(true);
+            if (aiControlled) wyvern.setAiBeamDecision("firing");
             wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beaming");
             beamLoopActive = true;
             if (!hasBeamFired) {
@@ -90,6 +108,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
+            if (aiControlled) wyvern.setAiBeamDecision("burst-complete");
             wyvern.setBeaming(false);
             wyvern.setBeamGlowActive(false);
             wyvern.clearBeamPath();
@@ -112,12 +131,26 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     }
 
     @Override
+    public void end() {
+        Raevyx wyvern = getUser();
+        if (isUsing() && aiControlled && !wyvern.level().isClientSide) {
+            wyvern.finishAiBeam();
+        }
+        super.end();
+    }
+
+    @Override
     public void tickUsing() {
         var section = getCurrentSection();
-        if (section == null || section.sectionType != AbilitySectionType.ACTIVE) return;
-
+        if (section == null) return;
         Raevyx wyvern = getUser();
         if (wyvern.level().isClientSide) return;
+        boolean active = section.sectionType == AbilitySectionType.ACTIVE;
+        if (aiControlled && !canContinueAiBeam(active)) {
+            interrupt();
+            return;
+        }
+        if (!active) return;
         float energyDrain = (float) DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
                 .extraDouble("beam_drain_per_tick", ENERGY_COST_PER_TICK);
@@ -127,26 +160,70 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         }
         if (!wyvern.hasBeamEnergy()) {
             wyvern.setBeamDepleted(true);
+            if (aiControlled) wyvern.setAiBeamDecision("energy-depleted");
             interrupt();
             return;
         }
 
-        if (!wyvern.isTame() && wyvern.getControllingPassenger() == null) {
-            if (!isValidTarget(wyvern.getTarget())) {
-                interrupt();
-                return;
-            }
-            if (isAtAiBeamMercyThreshold(wyvern.getTarget())) {
-                interrupt();
-                return;
-            }
-        }
         BeamPath path = computeBeamPath(wyvern);
         if (path == null) {
             releaseEnergizedRedstone(wyvern);
             return;
         }
         damageAlongBeam(wyvern, path.origin(), path.impact());
+    }
+
+    private boolean canContinueAiBeam(boolean active) {
+        Raevyx wyvern = getUser();
+        LivingEntity target = wyvern.getTarget();
+        if (wyvern.getControllingPassenger() != null || !isValidTarget(target)
+                || !target.isAlive()) return stopAiBeam("target-lost");
+        if (isAtAiBeamMercyThreshold(target)) return stopAiBeam("mercy-threshold");
+        if (active && getTicksInSection() >= aiBurstTicks) return stopAiBeam("burst-complete");
+
+        if (groundAiBeam) {
+            if (wyvern.isAerial() || wyvern.isInWaterOrBubble()) return stopAiBeam("locomotion-changed");
+            double gap = Math.max(0.0D, wyvern.distanceTo(target)
+                    - (wyvern.getBbWidth() + target.getBbWidth()) * 0.5D);
+            // Point-blank/under-body pressure wins immediately, including during the wind-up.
+            double horizontalGap = Math.sqrt(wyvern.position().distanceToSqr(
+                    new Vec3(target.getX(), wyvern.getY(), target.getZ())))
+                    - (wyvern.getBbWidth() + target.getBbWidth()) * 0.5D;
+            if (gap <= 4.5D || horizontalGap <= 1.0D) return stopAiBeam("close-melee");
+
+            if (retreatAimUnlockTick > 0) {
+                if (getTicksInSection() < retreatAimUnlockTick) return true;
+                wyvern.clearAiBeamRetreat();
+                wyvern.setAiBeamDecision("firing-after-retreat");
+                retreatAimUnlockTick = 0;
+            }
+            if (active && gap <= 8.0D && getTicksInSection() >= 12) {
+                if (retreatUsed) return stopAiBeam("retreat-spent");
+                Vec3 aim = wyvern.getBeamAimDirection();
+                if (aim == null) return stopAiBeam("aim-unavailable");
+                Vec3 horizontalAim = new Vec3(aim.x, 0.0D, aim.z).normalize();
+                Vec3 towardTarget = new Vec3(target.getX() - wyvern.getX(), 0.0D,
+                        target.getZ() - wyvern.getZ()).normalize();
+                if (horizontalAim.dot(towardTarget) < 0.5D) return stopAiBeam("flanked");
+                // Fixed world-space aim during one short, grounded retreat. No added damage or i-frames.
+                if (!wyvern.beginAiBeamRetreat(horizontalAim.scale(-6.0D), 10)) return stopAiBeam("retreat-blocked");
+                wyvern.lockAiBeamDirection(aim);
+                wyvern.setAiBeamDecision("retreat-locked-aim");
+                retreatUsed = true;
+                retreatAimUnlockTick = getTicksInSection() + 12;
+                return true;
+            }
+        }
+
+        boolean clearShot = wyvern.hasAiBeamShot(target, Raevyx.BEAM_RANGE);
+        lostShotTicks = clearShot ? 0 : lostShotTicks + 1;
+        // A brief obstruction/aim adjustment is allowed; sustained cover ends the cast.
+        return lostShotTicks < 10 || stopAiBeam("shot-obstructed-or-out-of-range");
+    }
+
+    private boolean stopAiBeam(String reason) {
+        getUser().setAiBeamDecision(reason);
+        return false;
     }
 
     private void triggerBeamStop(Raevyx wyvern) {
@@ -251,6 +328,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         float mercyFloor = target.getMaxHealth() * AI_BEAM_MERCY_HEALTH_FRACTION;
         float allowedDamage = Math.max(0.0F, target.getHealth() - mercyFloor);
         if (allowedDamage <= 0.0F) {
+            stopAiBeam("mercy-threshold");
             interrupt();
             return;
         }
@@ -258,6 +336,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             return;
         }
         if (isAtAiBeamMercyThreshold(target)) {
+            stopAiBeam("mercy-threshold");
             interrupt();
         }
         var away = target.position().subtract(hitPos).normalize();

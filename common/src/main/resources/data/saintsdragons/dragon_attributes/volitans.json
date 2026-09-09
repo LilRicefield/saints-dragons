@@ -3,6 +3,7 @@
   "armor": 6.0,
   "flying_speed": 0.38,
   "extra": {
+    "rider_swim_speed": 1.42,
     "taming_chance_base": 20.0,
     "taming_chance_hearty": 30.0,
     "egg_hatch_time_ticks_normal": 18000.0,

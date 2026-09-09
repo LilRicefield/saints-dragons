@@ -183,6 +183,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final EntityDataAccessor<Boolean> DATA_CUSTOM_DIVE_LOOP_ENABLED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
+    public static final double BEAM_RANGE = 64.0D;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
     private static final double BABY_MAX_HEALTH = 60.0D;
@@ -286,6 +287,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private int beamAimRefreshTick = -1;
     private int beamPathRefreshTick = -1;
     private Vec3 beamServerTarget = null;
+    private Vec3 aiBeamLockedDirection;
+    private long nextAiBeamGameTime;
+    private boolean aiBeamNeedsFollowup;
+    private int aiBeamPursuitTicks;
+    private String aiBeamDecision = "idle";
+    private boolean aiBeamRetreatActive;
+    private Vec3 aiBeamRetreatVelocity = Vec3.ZERO;
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -755,6 +763,113 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return hasBeamEnergy() && !isBeamDepleted();
     }
 
+    public boolean isAiBeamReady() {
+        return canUseBeam() && !aiBeamNeedsFollowup && level().getGameTime() >= nextAiBeamGameTime;
+    }
+
+    public int getAiBeamCooldownTicks() {
+        return (int) Math.max(0L, nextAiBeamGameTime - level().getGameTime());
+    }
+
+    public void setAiBeamDecision(String decision) {
+        aiBeamDecision = decision;
+    }
+
+    public String getAiBeamStatus() {
+        return aiBeamDecision + (aiBeamNeedsFollowup ? ":awaiting-followup" : "");
+    }
+
+    public void finishAiBeam() {
+        nextAiBeamGameTime = level().getGameTime() + 300 + getRandom().nextInt(101);
+        aiBeamNeedsFollowup = true;
+        aiBeamPursuitTicks = 0;
+        getAiCombatPacing().setCadenceCooldownMin(10);
+        clearAiBeamRetreat();
+    }
+
+    public void recordAiBeamFollowup() {
+        aiBeamNeedsFollowup = false;
+        aiBeamPursuitTicks = 0;
+    }
+
+    private void tickAiBeamPursuit() {
+        if (!aiBeamNeedsFollowup) return;
+        LivingEntity target = getTarget();
+        Vec3 movement = position().subtract(new Vec3(xo, yo, zo));
+        if (target != null && target.isAlive() && !isVehicle() && getActiveAbility() == null
+                && movement.lengthSqr() > 0.0025D
+                && movement.dot(target.position().subtract(position())) > 0.0D) {
+            if (++aiBeamPursuitTicks >= 60) recordAiBeamFollowup();
+        } else {
+            aiBeamPursuitTicks = 0;
+        }
+    }
+
+    /** Use the same mouth origin, aim limits and block collision as the damaging beam. */
+    public boolean hasAiBeamShot(LivingEntity target, double range) {
+        Vec3 origin = getBeamStartAnchor(1.0F);
+        if (origin == null || target == null) return false;
+        Vec3 offset = target.getEyePosition().add(0.0D, -0.25D, 0.0D).subtract(origin);
+        if (offset.lengthSqr() < 1.0E-6D || offset.lengthSqr() > range * range) return false;
+        Vec3 direction = clampBeamDirection(offset.normalize());
+        if (direction == null) return false;
+        Vec3 impact = traceBeamImpact(origin, direction);
+        AABB hitBox = target.getBoundingBox().inflate(0.55D);
+        return hitBox.contains(origin) || hitBox.clip(origin, impact).isPresent();
+    }
+
+    public void lockAiBeamDirection(Vec3 direction) {
+        aiBeamLockedDirection = direction.normalize();
+        beamAimRefreshTick = -1;
+        beamPathRefreshTick = -1;
+    }
+
+    public void clearAiBeamRetreat() {
+        aiBeamLockedDirection = null;
+        beamAimRefreshTick = -1;
+        beamPathRefreshTick = -1;
+        if (aiBeamRetreatActive) {
+            dashDodgeNudge.cancelActive();
+            setDeltaMovement(0.0D, getDeltaMovement().y, 0.0D);
+        }
+        aiBeamRetreatActive = false;
+    }
+
+    public boolean canRetreatWithAiBeam(Vec3 displacement) {
+        if ((!aiBeamRetreatActive && !onGround()) || isAerial() || isInWaterOrBubble() || isInLava() || isVehicle()
+                || (isTamingStunned() && !isTame())) return false;
+        AABB body = getBoundingBox();
+        AABB swept = body.expandTowards(displacement).inflate(0.1D);
+        if (!level().hasChunksAt(BlockPos.containing(swept.minX, swept.minY - 1.0D, swept.minZ),
+                BlockPos.containing(swept.maxX, swept.maxY, swept.maxZ))) return false;
+        int steps = Math.max(1, (int) Math.ceil(displacement.length() / 0.5D));
+        for (int i = 1; i <= steps; i++) {
+            AABB moved = body.move(displacement.scale((double) i / steps));
+            if (!level().getWorldBorder().isWithinBounds(moved)
+                    || !level().noCollision(this, moved) || level().containsAnyLiquid(moved)) return false;
+            // Check all four feet: a wide body overlapping one block is not safe footing.
+            for (int corner = 0; corner < 4; corner++) {
+                double x = (corner & 1) == 0 ? moved.minX + 0.2D : moved.maxX - 0.2D;
+                double z = (corner & 2) == 0 ? moved.minZ + 0.2D : moved.maxZ - 0.2D;
+                AABB foot = new AABB(x - 0.1D, moved.minY - 0.3D, z - 0.1D,
+                        x + 0.1D, moved.minY + 0.01D, z + 0.1D);
+                if (!level().getBlockCollisions(this, foot).iterator().hasNext()
+                        || level().containsAnyLiquid(foot)) return false;
+            }
+        }
+        return true;
+    }
+
+    public boolean beginAiBeamRetreat(Vec3 displacement, int ticks) {
+        if (dashDodgeNudge.isActive() || ticks <= 0 || !canRetreatWithAiBeam(displacement)) return false;
+        aiBeamRetreatVelocity = displacement.scale(1.0D / ticks);
+        beginDodge(aiBeamRetreatVelocity, ticks);
+        aiBeamRetreatActive = true;
+        aiDodgeCooldownTicks = Math.max(aiDodgeCooldownTicks, ticks + 20);
+        animationHandler.triggerDodgeBackwardAnimation();
+        return true;
+    }
+
     public boolean isRiderPitchKeyMode() {
         return this.entityData.get(DATA_PITCH_KEY_MODE);
     }
@@ -847,8 +962,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     private Vec3 traceBeamImpact(Vec3 origin, Vec3 aimDir) {
-        final double maxBeamRange = 64.0D;
-        Vec3 reach = origin.add(aimDir.scale(maxBeamRange));
+        Vec3 reach = origin.add(aimDir.scale(BEAM_RANGE));
         var context = new ClipContext(origin, reach, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this);
         var hit = level().clip(context);
         if (hit == null || hit.getType() == HitResult.Type.MISS) {
@@ -1280,6 +1394,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     public boolean tryAIGroundDodge(@Nullable LivingEntity threat) {
+        if (isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) return false;
         if (isFlying() || isInWaterOrBubble() || isDodging() || (isTamingStunned() && !isTame())) {
             return false;
         }
@@ -1537,12 +1652,17 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (dashDodgeNudge.isActive() || dashDodgeNudge.getDashCooldownTicks() > 0 || !dashHitCooldowns.isEmpty()) {
             tickDashState();
         }
+        if (aiBeamRetreatActive && !dashDodgeNudge.isActive()) {
+            aiBeamRetreatActive = false;
+            setDeltaMovement(0.0D, getDeltaMovement().y, 0.0D);
+        }
         tamingController.tickServer();
         if (isTamingStunned()) {
             tamingController.enforceGroundingTick();
         }
         handleAmbientSounds();
         tickBeamEnergy();
+        tickAiBeamPursuit();
         if (isFlying() || isTakeoff()) {
             tickFlightPhysics();
         }
@@ -1693,6 +1813,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     public Vec3 refreshBeamAimDirection(Vec3 start, boolean smooth) {
+        if (getControllingPassenger() == null && aiBeamLockedDirection != null) {
+            beamAimDir = aiBeamLockedDirection;
+            updateBeamOffsets(beamAimDir);
+            beamAimRefreshTick = tickCount;
+            return beamAimDir;
+        }
         if (beamAimRefreshTick == tickCount && beamAimDir != null) {
             updateBeamOffsets(beamAimDir);
             return beamAimDir;
@@ -2083,6 +2209,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     @Override
     public void travel(@NotNull Vec3 motion) {
+        if (!level().isClientSide && aiBeamRetreatActive && dashDodgeNudge.isActive()
+                && !canRetreatWithAiBeam(aiBeamRetreatVelocity)) {
+            clearAiBeamRetreat();
+            if (isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) getActiveAbility().interrupt();
+        }
         if (dashDodgeNudge.isActive()) {
             if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isFlying() && !isInWaterOrBubble() && !isInLava()) {
                 this.setSpeed(this.getRiddenSpeed(player));

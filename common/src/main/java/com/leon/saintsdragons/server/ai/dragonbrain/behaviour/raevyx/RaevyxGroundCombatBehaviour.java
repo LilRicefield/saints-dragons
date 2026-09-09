@@ -25,7 +25,9 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
     private static final double BITE_RANGE = 3.0D;
     private static final double GROUND_REND_RANGE = 8.5D;
     private static final double GROUND_REND_MIN_RANGE = 3.4D;
-    private static final int BEAM_COOLDOWN_TICKS = 3600;
+    private static final double BEAM_MIN_GAP = 12.0D;
+    private static final double BEAM_START_RANGE = Raevyx.BEAM_RANGE * 0.85D;
+    private static final int BEAM_DECISION_TICKS = 10;
     private static final int GROUND_REND_COOLDOWN_TICKS = 400;
     private static final int MODE_REEVALUATE_TICKS = 6;
     private static final int DAMAGE_MEMORY_TICKS = 30;
@@ -38,7 +40,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
     private static final int BEAM_LOCK_TICKS = 30;
 
     private int attackCooldown;
-    private int beamCooldown;
+    private int beamDecisionTicks;
     private int groundRendCooldown;
     private int postRoarGroundRendTicks;
     private CombatMode combatMode = CombatMode.PRESSURE;
@@ -48,6 +50,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
     private int mobilityLockTicks;
     private int beamLockTicks;
     private float mobilityBudget = 1.0F;
+    private String beamStatus = "idle";
+    private int remainingBeamCooldown;
 
     public RaevyxGroundCombatBehaviour() {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
@@ -74,6 +78,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         tickCooldowns();
 
         Raevyx dragon = context.dragon();
+        remainingBeamCooldown = dragon.getAiBeamCooldownTicks();
+        beamStatus = dragon.getAiBeamStatus();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         if (target == null) {
             return;
@@ -94,7 +100,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         }
 
         boolean biteOnlyPrey = DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target);
-        boolean beamReady = beamCooldown <= 0;
+        boolean beamReady = dragon.isAiBeamReady();
         if (!biteOnlyPrey) {
             tickCombatPacing(dragon, target, gap, hasLineOfSight, beamReady);
         }
@@ -107,6 +113,10 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
             claimStationaryMovement(context, "roar");
             return;
         }
+        if (!biteOnlyPrey && tryDirectedBeam(dragon, target, hasLineOfSight, beamReady)) {
+            claimStationaryMovement(context, "beam-start");
+            return;
+        }
         if (!biteOnlyPrey && shouldTryDash(dragon, gap, isCurrentlyAttacking(dragon))
                 && tryGroundDash(dragon, target)) {
             attackCooldown = Math.max(attackCooldown, 12);
@@ -115,10 +125,6 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         }
         if (!biteOnlyPrey && tryPostRoarGroundRend(dragon, gap, hasLineOfSight)) {
             claimStationaryMovement(context, "post-roar-ground-rend");
-            return;
-        }
-        if (!biteOnlyPrey && tryDirectedBeam(dragon, target, hasLineOfSight, beamReady)) {
-            claimStationaryMovement(context, "beam-start");
             return;
         }
 
@@ -146,9 +152,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         if (attackCooldown > 0) {
             attackCooldown--;
         }
-        if (beamCooldown > 0) {
-            beamCooldown--;
-        }
+        if (beamDecisionTicks > 0) beamDecisionTicks--;
         if (groundRendCooldown > 0) {
             groundRendCooldown--;
         }
@@ -179,7 +183,6 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                 groundRendCooldown = GROUND_REND_COOLDOWN_TICKS;
                 return true;
             }
-            return false;
         }
         if (gap <= BITE_RANGE
                 && canUseAiAbility(dragon, ModAbilities.RAEVYX_BITE, false)
@@ -201,13 +204,15 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                                     boolean hasLineOfSight,
                                     boolean beamReady) {
         if (RaevyxBeamAbility.isAtAiBeamMercyThreshold(target)
-                || !shouldTryBeam(dragon, gapToTarget(dragon, target), hasLineOfSight, beamReady)
                 || !canUseAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true)
-                || !startAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, BEAM_COOLDOWN_TICKS, 160, 80)) {
+                || !shouldTryBeam(dragon, gapToTarget(dragon, target), hasLineOfSight, beamReady)
+                || !dragon.hasAiBeamShot(target, BEAM_START_RANGE)
+                || !startAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 12, 0, 40, 0)) {
             return false;
         }
-        attackCooldown = 60;
-        beamCooldown = BEAM_COOLDOWN_TICKS;
+        attackCooldown = 12;
+        mobilityBudget = Math.max(0.0F, mobilityBudget - BEAM_COST);
+        beamLockTicks = BEAM_LOCK_TICKS;
         return true;
     }
 
@@ -241,6 +246,9 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         if (!dragon.beginForwardDashMotion(27, 50, 30.0D)) {
             return false;
         }
+        mobilityBudget = Math.max(0.0F, mobilityBudget - DASH_COST);
+        mobilityLockTicks = MOBILITY_LOCK_TICKS;
+        beamLockTicks = Math.max(beamLockTicks, 12);
         dragon.triggerDashFeedback();
         return true;
     }
@@ -331,6 +339,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
 
     private boolean shouldTryDash(Raevyx dragon, double gap, boolean currentlyAttacking) {
         if (currentlyAttacking
+                || attackCooldown > 0
+                || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0
                 || dragon.isBeaming()
                 || dragon.isDodging()
                 || dragon.isDashing()
@@ -352,9 +362,6 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         if (dragon.getRandom().nextFloat() >= chance) {
             return false;
         }
-        mobilityBudget = Math.max(0.0F, mobilityBudget - DASH_COST);
-        mobilityLockTicks = MOBILITY_LOCK_TICKS;
-        beamLockTicks = Math.max(beamLockTicks, 12);
         return true;
     }
 
@@ -366,27 +373,26 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                 || attackCooldown > 0
                 || !beamReady
                 || !hasLineOfSight
+                || gap < BEAM_MIN_GAP
+                || dragon.getBeamEnergy() < 0.6F
+                || beamDecisionTicks > 0
                 || beamLockTicks > 0
                 || mobilityBudget < BEAM_COST) {
             return false;
         }
 
+        beamDecisionTicks = BEAM_DECISION_TICKS;
         float chance = switch (combatMode) {
-            case PRESSURE -> 0.20F;
-            case SPACE -> 0.10F;
-            default -> 0.04F;
+            case SPACE -> 0.65F;
+            case PRESSURE -> 0.45F;
+            default -> 0.20F;
         };
-        if (gap < 8.0D || gap > 32.0D) {
-            chance *= 0.45F;
-        }
         if (recentDamageTicks > 0) {
             chance *= 0.8F;
         }
         if (dragon.getRandom().nextFloat() >= chance) {
             return false;
         }
-        mobilityBudget = Math.max(0.0F, mobilityBudget - BEAM_COST);
-        beamLockTicks = BEAM_LOCK_TICKS;
         return true;
     }
 
@@ -498,7 +504,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                                    int abilityCooldownTicks,
                                    int majorCooldownTicks,
                                    int repeatLockoutTicks) {
-        return dragon.combatManager.tryUseAiAbility(
+        boolean started = dragon.combatManager.tryUseAiAbility(
                 abilityType,
                 majorAbility,
                 cadenceTicks,
@@ -506,6 +512,9 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                 majorCooldownTicks,
                 repeatLockoutTicks
         );
+        if (started && abilityType != ModAbilities.RAEVYX_LIGHTNING_BEAM
+                && abilityType != ModAbilities.RAEVYX_ROAR) dragon.recordAiBeamFollowup();
+        return started;
     }
 
     private enum CombatMode {
@@ -513,5 +522,13 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         SPACE,
         EVADE,
         REPOSITION
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of("beam_status", beamStatus,
+                "beam_cooldown", Integer.toString(remainingBeamCooldown),
+                "beam_decision_ticks", Integer.toString(beamDecisionTicks),
+                "combat_mode", combatMode.name());
     }
 }

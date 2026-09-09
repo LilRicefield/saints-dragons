@@ -327,6 +327,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
         volitansBuffer.maxHealth = volitansCurrent.maxHealth();
         volitansBuffer.armor = volitansCurrent.armor();
         volitansBuffer.flyingSpeed = volitansCurrent.flyingSpeed();
+        volitansBuffer.riderSwimSpeed = volitansCurrent.extraDouble("rider_swim_speed", 1.42D);
         volitansBuffer.wildFlyingSpeedMultiplier = volitansCurrent.extraDouble("wild_flying_speed_multiplier",
                 volitansDefaults.extraDouble("wild_flying_speed_multiplier", 1.0D));
         volitansBuffer.biteDamage = volitansCurrent.abilityDamage("bite",
@@ -1818,6 +1819,12 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                 .setMax(2.0D)
                 .setSaveConsumer(value -> buffer.flyingSpeed = value)
                 .build());
+        entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.rider_swim_speed"), buffer.riderSwimSpeed)
+                .setDefaultValue(defaults.extraDouble("rider_swim_speed", 1.42D))
+                .setMin(0.1D)
+                .setMax(5.0D)
+                .setSaveConsumer(value -> buffer.riderSwimSpeed = value)
+                .build());
         entries.add(entryBuilder.startDoubleField(Component.translatable("config.saintsdragons.attributes.volitans.wild_flying_speed_multiplier"), buffer.wildFlyingSpeedMultiplier)
                 .setDefaultValue(defaults.extraDouble("wild_flying_speed_multiplier", 1.0D))
                 .setMin(0.05D)
@@ -2555,6 +2562,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
     }
 
     private static final class VolitansAttributeBuffer {
+        double riderSwimSpeed;
         double maxHealth;
         double armor;
         double flyingSpeed;
@@ -2663,6 +2671,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
 
     private static Map<String, Double> buildVolitansExtras(VolitansAttributeBuffer buffer) {
         Map<String, Double> extras = new HashMap<>();
+        extras.put("rider_swim_speed", buffer.riderSwimSpeed);
         extras.put("taming_chance_base", buffer.tamingChanceBase);
         extras.put("taming_chance_hearty", buffer.tamingChanceHearty);
         extras.put("taming_stun_health", buffer.tamingStunHealth);

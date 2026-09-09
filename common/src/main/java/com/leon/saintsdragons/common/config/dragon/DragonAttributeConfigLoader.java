@@ -690,6 +690,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private static DragonAttributeConfig volitansDefaults() {
+        double riderSwimSpeed = 1.42D;
         double maxHealth = 160.0D;
         double armor = 6.0D;
         double flyingSpeed = 0.38D;
@@ -730,6 +731,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 maxHealth = (double) configClass.getField("VOLITANS_MAX_HEALTH").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_MAX_HEALTH").get(null));
                 armor = (double) configClass.getField("VOLITANS_ARMOR").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_ARMOR").get(null));
                 flyingSpeed = (double) configClass.getField("VOLITANS_FLYING_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_FLYING_SPEED").get(null));
+                riderSwimSpeed = (double) configClass.getField("VOLITANS_RIDER_SWIM_SPEED").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_RIDER_SWIM_SPEED").get(null));
                 biteDamage = (double) configClass.getField("VOLITANS_BITE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_BITE_DAMAGE").get(null));
                 clawDamage = (double) configClass.getField("VOLITANS_CLAW_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_CLAW_DAMAGE").get(null));
                 hornGoreDamage = (double) configClass.getField("VOLITANS_HORN_GORE_DAMAGE").get(null).getClass().getMethod("get").invoke(configClass.getField("VOLITANS_HORN_GORE_DAMAGE").get(null));
@@ -781,6 +783,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         extras.put("taming_stun_health", tamingStunHealth);
         extras.put("egg_hatch_time_ticks_normal", eggHatchTimeTicksNormal);
         extras.put("wild_flying_speed_multiplier", wildFlyingSpeedMultiplier);
+        extras.put("rider_swim_speed", riderSwimSpeed);
         extras.put("breath_active_ticks_max", breathActiveTicksMax);
         extras.put("breath_drain_per_tick", breathDrainPerTick);
         extras.put("breath_regen_per_tick", breathRegenPerTick);
@@ -900,6 +903,7 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
                 backfillAtroxiiaAbilityTuning(path, entry.getKey(), entry.getValue());
                 backfillCindervaneAbilityTuning(path, entry.getKey(), entry.getValue());
                 backfillWildFlyingSpeedMultiplier(path, entry.getKey(), entry.getValue());
+                backfillVolitansRiderSwimSpeed(path, entry.getKey(), entry.getValue());
                 continue;
             }
             writeConfigFile(path, source);
@@ -1391,6 +1395,21 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
             }
         } catch (Exception e) {
             SaintsDragonsCommon.LOGGER.warn("Failed to backfill wild_flying_speed_multiplier at {}", path, e);
+        }
+    }
+
+    private void backfillVolitansRiderSwimSpeed(Path path, ResourceLocation id, DragonAttributeConfig defaults) {
+        if (!id.equals(VOLITANS_ID)) return;
+        try (Reader reader = Files.newBufferedReader(path)) {
+            JsonObject json = GsonHelper.convertToJsonObject(JsonParser.parseReader(reader), id.toString());
+            JsonObject extra = json.has("extra") ? GsonHelper.getAsJsonObject(json, "extra") : new JsonObject();
+            if (!extra.has("rider_swim_speed")) {
+                extra.addProperty("rider_swim_speed", defaults.extraDouble("rider_swim_speed", 1.42D));
+                json.add("extra", extra);
+                writeConfigFile(path, json);
+            }
+        } catch (Exception e) {
+            SaintsDragonsCommon.LOGGER.warn("Failed to backfill Volitans rider swim speed at {}", path, e);
         }
     }
 

@@ -1071,6 +1071,7 @@
   "config.saintsdragons.attributes.volitans.armor": "Armor",
   "config.saintsdragons.attributes.volitans.flying_speed": "Flying Speed (Base)",
   "config.saintsdragons.attributes.volitans.rider_flying_speed": "Rider Flying Speed",
+  "config.saintsdragons.attributes.volitans.rider_swim_speed": "Rider Swim Speed (Base)",
   "config.saintsdragons.attributes.volitans.wild_flying_speed_multiplier": "Wild Flying Speed Multiplier",
   "config.saintsdragons.attributes.volitans.bite_damage": "Bite Damage",
   "config.saintsdragons.attributes.volitans.claw_damage": "Claw Damage",

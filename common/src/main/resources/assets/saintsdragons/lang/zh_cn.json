@@ -1010,6 +1010,7 @@
   "config.saintsdragons.attributes.volitans.armor": "护甲值",
   "config.saintsdragons.attributes.volitans.flying_speed": "飞行速度",
   "config.saintsdragons.attributes.volitans.rider_flying_speed": "骑乘飞行速度",
+  "config.saintsdragons.attributes.volitans.rider_swim_speed": "骑乘游泳速度（基础）",
   "config.saintsdragons.attributes.volitans.wild_flying_speed_multiplier": "野生龙飞行速度提升倍率",
   "config.saintsdragons.attributes.volitans.bite_damage": "撕咬伤害",
   "config.saintsdragons.attributes.volitans.claw_damage": "爪击伤害",

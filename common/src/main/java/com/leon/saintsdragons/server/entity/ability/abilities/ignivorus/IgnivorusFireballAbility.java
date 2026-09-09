@@ -40,6 +40,9 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private int releaseTicks = 0;
     private int releaseChargeTicks = 0;
     private boolean level3HoldActive = false;
+    private boolean aiAirCast;
+    private int aiReleaseTicks;
+    private int aiLostSightTicks;
 
     public IgnivorusFireballAbility(DragonAbilityType<Ignivorus, IgnivorusFireballAbility> type,
                                     Ignivorus user) {
@@ -61,6 +64,10 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             return;
         }
         if (section.sectionType == ACTIVE) {
+            Ignivorus dragon = getUser();
+            aiAirCast = dragon.getControllingPassenger() == null && dragon.isAerial();
+            aiReleaseTicks = aiAirCast ? 25 + dragon.getRandom().nextInt(21) : 0;
+            aiLostSightTicks = 0;
             // Start charging
             chargeTicks = 0;
             hasFired = false;
@@ -83,6 +90,24 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     public void tickUsing() {
         if (hasFired) {
             return;
+        }
+
+        if (aiAirCast && !getUser().level().isClientSide) {
+            Ignivorus dragon = getUser();
+            var target = dragon.getTarget();
+            if (dragon.getControllingPassenger() != null || !dragon.isAerial()
+                    || target == null || !target.isAlive() || !dragon.isTargetValid(target)) {
+                interrupt();
+                return;
+            }
+            double gap = dragon.distanceTo(target) - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
+            aiLostSightTicks = dragon.getSensing().hasLineOfSight(target) ? 0 : aiLostSightTicks + 1;
+            if (gap <= 6.0D || aiLostSightTicks >= 12) {
+                interrupt();
+                return;
+            }
+            // Ground AI and riders retain their own release controls.
+            if (!releaseRequested && chargeTicks >= aiReleaseTicks) requestRelease();
         }
 
         if (releaseRequested) {

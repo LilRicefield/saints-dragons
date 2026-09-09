@@ -815,6 +815,10 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER::get,
                 ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER::set,
                 null));
+        entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.rider_swim_speed"),
+                ForgeDragonAttributesConfig.VOLITANS_RIDER_SWIM_SPEED::get,
+                ForgeDragonAttributesConfig.VOLITANS_RIDER_SWIM_SPEED::set,
+                null));
         entries.add(new DoubleEntry(Component.translatable("config.saintsdragons.attributes.volitans.bite_damage"),
                 ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE::get,
                 ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE::set,
@@ -1054,6 +1058,7 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
                 ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH.set(ForgeDragonAttributesConfig.VOLITANS_MAX_HEALTH.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_ARMOR.set(ForgeDragonAttributesConfig.VOLITANS_ARMOR.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_FLYING_SPEED.set(ForgeDragonAttributesConfig.VOLITANS_FLYING_SPEED.getDefault());
+                ForgeDragonAttributesConfig.VOLITANS_RIDER_SWIM_SPEED.set(ForgeDragonAttributesConfig.VOLITANS_RIDER_SWIM_SPEED.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER.set(ForgeDragonAttributesConfig.VOLITANS_WILD_FLYING_SPEED_MULTIPLIER.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_BITE_DAMAGE.getDefault());
                 ForgeDragonAttributesConfig.VOLITANS_CLAW_DAMAGE.set(ForgeDragonAttributesConfig.VOLITANS_CLAW_DAMAGE.getDefault());

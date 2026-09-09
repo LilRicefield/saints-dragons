@@ -96,6 +96,7 @@ import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
@@ -318,6 +319,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private int airTicks;
     public int groundTicks;
     private Vec3 fireAimDir;
+    private String aiFireBreathDecision = "idle";
     private final IgnivorusBreathStream fireBreathStream = new IgnivorusBreathStream(this);
     private int fireTime = 0;
     private Vec3 fireServerTarget = null;
@@ -327,6 +329,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private final Map<Integer, Integer> bulldozeHitCooldowns = new HashMap<>();
     private boolean bulldozeWasVehicle = false;
     private boolean phase2Active = false;
+    @Nullable
+    private LivingEntity wildPhase2Target;
     private int phase2CooldownTicks = 0;
     private boolean phase2RiderTakeoffActive = false;
     private boolean useRightWingSwipe = true;
@@ -942,9 +946,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             }
             if (phase2Active && wildLowHealthUltimateTriggered && !isTame()) {
                 LivingEntity target = getTarget();
-                if (target == null || !target.isAlive() || target.isRemoved()) {
+                if ((wildPhase2Target != null && wildPhase2Target.isDeadOrDying())
+                        || (target != null && target.isDeadOrDying())) {
                     exitPhase2(true);
+                    wildLowHealthUltimateTriggered = false;
                     return;
+                }
+                if (target != null && !target.isRemoved()) {
+                    wildPhase2Target = target;
+                } else if (wildPhase2Target != null && wildPhase2Target.isRemoved()) {
+                    wildPhase2Target = null;
                 }
             }
             if (phase2Active && phase2WasVehicle && !currentlyVehicle) {
@@ -1272,12 +1283,17 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
 
-        if (isPhase2RiderTakeoffAnimating() && isFlying()) {
-            move(MoverType.SELF, new Vec3(0.0D, PHASE2_RIDER_TAKEOFF_UPWARD_STEP, 0.0D));
-            setDeltaMovement(Vec3.ZERO);
-            hasImpulse = true;
-            hurtMarked = true;
-            fallDistance = 0.0F;
+        if (isPhase2RiderTakeoffAnimating()) {
+            if (isFlying()) {
+                move(MoverType.SELF, new Vec3(0.0D, PHASE2_RIDER_TAKEOFF_UPWARD_STEP, 0.0D));
+                setDeltaMovement(Vec3.ZERO);
+                hasImpulse = true;
+                hurtMarked = true;
+                fallDistance = 0.0F;
+            } else {
+                setDeltaMovement(0.0D, getDeltaMovement().y, 0.0D);
+                super.travel(Vec3.ZERO);
+            }
             return;
         }
 
@@ -1876,6 +1892,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     public void markWildLowHealthUltimateTriggered() {
         if (!level().isClientSide && !isTame() && !isBaby()) {
             wildLowHealthUltimateTriggered = true;
+            wildPhase2Target = getTarget();
         }
     }
 
@@ -1884,20 +1901,15 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
         wildLowHealthUltimateTriggered = true;
+        if (getTarget() != null) wildPhase2Target = getTarget();
         phase2Active = true;
         this.entityData.set(DATA_PHASE2, true);
         phase2CooldownTicks = 0;
         phase2WasVehicle = false;
     }
 
-    public void exitWildPhase2ForAirPursuit() {
-        if (level().isClientSide || isTame() || isVehicle() || !phase2Active) {
-            return;
-        }
-        exitPhase2(true);
-    }
-
     public void clearPhase2ForTamingStun() {
+        wildPhase2Target = null;
         boolean wasPhase2Active = phase2Active;
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
@@ -1921,6 +1933,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
 
+        wildPhase2Target = null;
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
         phase2RiderTakeoffActive = false;
@@ -1934,6 +1947,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     private void exitPhase2(boolean lockControls) {
+        wildPhase2Target = null;
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
         phase2CooldownTicks = 40;
@@ -1970,7 +1984,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-        if (!isPhase2RiderTakeoff()) {
+        if (!isPhase2Active()) {
             super.startTakeoffSequence(minUpwardVelocity, animationTicks);
             return;
         }
@@ -1983,7 +1997,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         setRunning(false);
         setAccelerating(false);
         setDeltaMovement(Vec3.ZERO);
-        if (!level().isClientSide) {
+        if (!level().isClientSide && getControllingPassenger() instanceof Player) {
             lockRiderControls(PHASE2_RIDER_TAKEOFF_TICKS);
         }
         takeoffComponent.startTakeoff(
@@ -2018,16 +2032,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         setGoingUp(false);
         setGoingDown(false);
         setAccelerating(false);
-        if (isFlying()) {
+        if (isFlying() && getControllingPassenger() instanceof Player) {
             setDeltaMovement(Vec3.ZERO);
             primeRiderFlightIdleMode();
         }
     }
 
-    private boolean isPhase2RiderTakeoff() {
-        return isPhase2Active() && getControllingPassenger() instanceof Player;
-    }
-
+    // The existing synchronized animation state now covers AI phase-2 takeoffs too.
     public boolean isPhase2RiderTakeoffAnimating() {
         return level().isClientSide
                 ? entityData.get(DATA_PHASE2_RIDER_TAKEOFF)
@@ -2155,7 +2166,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     public boolean canTakeoff() {
         return !isBaby()
-                && (!isPhase2Active() || getControllingPassenger() instanceof Player)
                 && !isFlying()
                 && onGround()
                 && !isInWaterOrBubble();
@@ -2274,6 +2284,30 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     public boolean canUseFireBreath() {
         return DragonBreathComponent.canUse(getFireBreathGauge(), FIRE_BREATH_DEPLETED_THRESHOLD);
+    }
+
+    public String getAiFireBreathDecision() {
+        return aiFireBreathDecision;
+    }
+
+    public void setAiFireBreathDecision(String decision) {
+        aiFireBreathDecision = decision;
+    }
+
+    /** Mouth-level shot viability without advancing the breath's smoothed targeting. */
+    public boolean hasAiFireBreathShot(LivingEntity target, double range) {
+        if (target == null) return false;
+        Vec3 origin = getFireBreathStartAnchor(1.0F);
+        if (origin == null) return false;
+        Vec3 offset = target.getBoundingBox().getCenter().subtract(origin);
+        if (offset.lengthSqr() < 1.0E-6D || offset.lengthSqr() > range * range) return false;
+        Vec3 direction = clampFireDirection(offset.normalize());
+        if (direction == null) return false;
+        Vec3 end = origin.add(direction.scale(Math.min(range, offset.length() + target.getBbWidth() + 1.0D)));
+        Vec3 impact = level().clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, this)).getLocation();
+        AABB targetBox = target.getBoundingBox().inflate(1.0D);
+        return targetBox.contains(origin) || targetBox.clip(origin, impact).isPresent();
     }
 
     public boolean drainFireBreathEnergy(float amount) {

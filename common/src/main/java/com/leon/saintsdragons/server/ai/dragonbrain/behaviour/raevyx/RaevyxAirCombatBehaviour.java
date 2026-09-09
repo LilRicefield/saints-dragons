@@ -46,8 +46,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private static final double COMMIT_ABORT_DISTANCE_SQR = 324.0D;
     private static final double BREAKAWAY_CLEAR_DISTANCE_SQR = 34.0D * 34.0D;
     private static final int MELEE_ATTACK_COOLDOWN_TICKS = 20;
-    private static final int BEAM_ATTACK_COOLDOWN_TICKS = 60;
-    private static final int BEAM_COOLDOWN_TICKS = 2400;
+    private static final int BEAM_ATTACK_COOLDOWN_TICKS = 12;
     private static final int ROAR_ATTACK_COOLDOWN_TICKS = 24;
     private static final int ROAR_COOLDOWN_TICKS = 160;
     private static final int CHASE_CAPTURE_TICKS = 12;
@@ -111,6 +110,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                                  boolean hasLineOfSight) {
         tickCooldowns();
         Raevyx dragon = context.dragon();
+        rangedCooldown = dragon.getAiBeamCooldownTicks();
         dragon.getLookControl().setLookAt(target, 100.0F, 100.0F);
 
         if (checkEmergencyLanding(context, target)) {
@@ -288,14 +288,13 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
         if (attackCooldown <= 0
-                && rangedCooldown <= 0
+                && dragon.isAiBeamReady()
                 && hasLineOfSight
                 && distance >= RANGED_MIN_RANGE
                 && distance <= RANGED_MAX_RANGE
                 && canUseRangedAttack(dragon, target)
                 && tryStartRangedAttack(dragon)) {
             attackCooldown = BEAM_ATTACK_COOLDOWN_TICKS;
-            rangedCooldown = BEAM_COOLDOWN_TICKS;
             enterBeamPass(context, target, "beam:started-pass");
             return;
         }
@@ -653,9 +652,6 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         if (attackCooldown > 0) {
             attackCooldown--;
         }
-        if (rangedCooldown > 0) {
-            rangedCooldown--;
-        }
         if (roarCooldown > 0) {
             roarCooldown--;
         }
@@ -694,6 +690,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private boolean canUseRangedAttack(Raevyx dragon, LivingEntity target) {
         return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                && dragon.getBeamEnergy() >= 0.6F
+                && dragon.hasAiBeamShot(target, Raevyx.BEAM_RANGE * 0.85D)
                 && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target);
     }
 
@@ -704,7 +702,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private boolean tryStartRangedAttack(Raevyx dragon) {
         return canUseAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true)
-                && startAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 60, 2400, 160, 80);
+                && startAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true, 12, 0, 40, 0);
     }
 
     private boolean tryStartRoar(Raevyx dragon) {
@@ -732,7 +730,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                                    int abilityCooldownTicks,
                                    int majorCooldownTicks,
                                    int repeatLockoutTicks) {
-        return dragon.combatManager.tryUseAiAbility(
+        boolean started = dragon.combatManager.tryUseAiAbility(
                 abilityType,
                 majorAbility,
                 cadenceTicks,
@@ -740,6 +738,9 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                 majorCooldownTicks,
                 repeatLockoutTicks
         );
+        if (started && abilityType != ModAbilities.RAEVYX_LIGHTNING_BEAM
+                && abilityType != ModAbilities.RAEVYX_ROAR) dragon.recordAiBeamFollowup();
+        return started;
     }
 
     private boolean isFacingTarget(Raevyx dragon, LivingEntity target, double threshold) {

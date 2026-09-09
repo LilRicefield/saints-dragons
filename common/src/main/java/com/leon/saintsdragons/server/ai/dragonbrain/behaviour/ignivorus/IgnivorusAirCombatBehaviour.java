@@ -5,14 +5,11 @@ import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.RangedAirCombatBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 
 public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivorus> {
-    private static final int BREATH_COOLDOWN_TICKS = 2400;
-    private static final double MOUNTED_FLIGHT_CLEARANCE = 3.0D;
+    private long nextRangedDecisionTick;
     private static final RangedAirCombatSettings COMBAT_SETTINGS = new RangedAirCombatSettings(
             3.75D,
             5.5D,
@@ -24,43 +21,12 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
             64.0D,
             25.0D,
             30,
-            60,
-            BREATH_COOLDOWN_TICKS
+            12,
+            0 // The ability records its shared cooldown when the breath ends.
     );
 
     public IgnivorusAirCombatBehaviour() {
         super(COMBAT_SETTINGS);
-    }
-
-    @Override
-    protected void prepareStartConditions(Ignivorus dragon, LivingEntity target) {
-        if (shouldExitPhase2ForAirPursuit(dragon, target)) {
-            dragon.exitWildPhase2ForAirPursuit();
-        }
-    }
-
-    private boolean shouldExitPhase2ForAirPursuit(Ignivorus dragon, LivingEntity target) {
-        if (!dragon.isPhase2Active() || target == null) {
-            return false;
-        }
-        if (target instanceof Player player && player.isFallFlying()) {
-            return true;
-        }
-        if (!(target instanceof DragonFlightCapable flightCapable)) {
-            return !target.onGround() && DragonFlightSpace.heightAboveLocalFloor(
-                    target, MOUNTED_FLIGHT_CLEARANCE + 2.0D) > MOUNTED_FLIGHT_CLEARANCE;
-        }
-        if (flightCapable.isTakeoff()) {
-            return true;
-        }
-        if ((!flightCapable.isFlying() && !flightCapable.isHovering())
-                || flightCapable.isLanding()
-                || target.onGround()) {
-            return false;
-        }
-
-        return DragonFlightSpace.heightAboveLocalFloor(target, MOUNTED_FLIGHT_CLEARANCE + 2.0D)
-                > MOUNTED_FLIGHT_CLEARANCE;
     }
 
     @Override
@@ -80,7 +46,8 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
 
     @Override
     protected boolean isRangedAttackActive(Ignivorus dragon) {
-        return dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIRE_BREATH);
+        return dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIRE_BREATH)
+                || dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIREBALL);
     }
 
     @Override
@@ -114,7 +81,10 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
 
     @Override
     protected boolean canUseRangedAttack(Ignivorus dragon, LivingEntity target) {
-        return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target);
+        return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                && (isRangedAttackActive(dragon)
+                || canUseAiAbility(dragon, ModAbilities.IGNIVORUS_FIRE_BREATH, true)
+                || (dragon.isPhase2Active() && canUseAiAbility(dragon, ModAbilities.IGNIVORUS_FIREBALL, true)));
     }
 
     @Override
@@ -129,17 +99,31 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
 
     @Override
     protected boolean tryStartRangedAttack(Ignivorus dragon, LivingEntity target) {
-        if (!canUseAiAbility(dragon, ModAbilities.IGNIVORUS_FIRE_BREATH, true)
+        if (dragon.level().getGameTime() < nextRangedDecisionTick || !canUseRangedAttack(dragon, target)) {
+            return false;
+        }
+        nextRangedDecisionTick = dragon.level().getGameTime() + 12;
+        if (dragon.getRandom().nextFloat() >= 0.65F) return false;
+        boolean breathReady = canUseAiAbility(dragon, ModAbilities.IGNIVORUS_FIRE_BREATH, true)
+                && IgnivorusFireBreathAbility.canStartAiBreath(dragon, target);
+        boolean fireballReady = dragon.isPhase2Active()
+                && canUseAiAbility(dragon, ModAbilities.IGNIVORUS_FIREBALL, true)
+                && dragon.hasAiFireBreathShot(target, 64.0D);
+        if (fireballReady && (!breathReady || dragon.getRandom().nextFloat() < 0.4F)) {
+            return dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIREBALL,
+                    true, 12, 400, 60, 80);
+        }
+        if (!breathReady
                 || !dragon.combatManager.tryUseAbility(ModAbilities.IGNIVORUS_FIRE_BREATH)) {
             return false;
         }
         dragon.getAiCombatPacing().recordUse(
                 ModAbilities.IGNIVORUS_FIRE_BREATH,
-                60,
-                BREATH_COOLDOWN_TICKS,
+                12,
+                0,
                 true,
-                180,
-                80
+                30,
+                0
         );
         return true;
     }
@@ -151,7 +135,8 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
     private boolean canUseAiAbility(Ignivorus dragon,
                                     com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
                                     boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType)
+        return !dragon.isTakeoff() && !dragon.isLanding()
+                && dragon.combatManager.canStart(abilityType)
                 && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 }
