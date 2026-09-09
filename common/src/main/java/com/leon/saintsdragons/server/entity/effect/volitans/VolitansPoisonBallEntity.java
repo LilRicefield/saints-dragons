@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.volitans;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
@@ -176,6 +177,14 @@ public class VolitansPoisonBallEntity extends Entity {
 
         Vec3 impact = position();
         float scale = getVisualScale();
+
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(impact) > 128.0D * 128.0D) continue;
+            server.sendParticles(viewer, ModParticles.VOLITANS_POISON_CLOUD.get(), true,
+                    impact.x, impact.y + 0.35D * scale, impact.z, 0, scale, 0, 0, 1.0D);
+            server.sendParticles(viewer, ModParticles.VOLITANS_POISON_EXPLOSION.get(), true,
+                    impact.x, impact.y + 0.35D * scale, impact.z, 0, scale, 0, 0, 1.0D);
+        }
 
         int effectCount = Math.min(80, Math.max(8, (int) (14 * scale)));
         server.sendParticles(ParticleTypes.ENTITY_EFFECT, impact.x, impact.y + 0.35D * scale, impact.z,

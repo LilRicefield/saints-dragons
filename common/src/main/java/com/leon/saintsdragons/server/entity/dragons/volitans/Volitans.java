@@ -149,6 +149,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Long> DATA_BREATH_FIRE_TIME =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Long> DATA_POISON_BALL_CHARGE_TIME =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Long> DATA_POISON_BALL_FIRE_TIME =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Float> DATA_WATER_BREATH_ENERGY =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_POISON_BREATH_ENERGY =
@@ -527,6 +531,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.entityData.define(DATA_BREATHING, false);
         this.entityData.define(DATA_BREATH_START_TIME, -1L);
         this.entityData.define(DATA_BREATH_FIRE_TIME, -1L);
+        this.entityData.define(DATA_POISON_BALL_CHARGE_TIME, -1L);
+        this.entityData.define(DATA_POISON_BALL_FIRE_TIME, -1L);
         this.entityData.define(DATA_WATER_BREATH_ENERGY, 1.0F);
         this.entityData.define(DATA_POISON_BREATH_ENERGY, 1.0F);
         this.entityData.define(DATA_WATER_BREATH_DEPLETED, false);
@@ -1887,6 +1893,28 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean isBurrowing() {
         return this.entityData.get(DATA_BURROWING);
+    }
+
+    public void setPoisonBallCharging(boolean charging) {
+        if (level().isClientSide) return;
+        this.entityData.set(DATA_POISON_BALL_CHARGE_TIME, charging ? level().getGameTime() : -1L);
+        if (charging) this.entityData.set(DATA_POISON_BALL_FIRE_TIME, -1L);
+    }
+
+    public void markPoisonBallFired() {
+        if (level().isClientSide) return;
+        this.entityData.set(DATA_POISON_BALL_CHARGE_TIME, -1L);
+        this.entityData.set(DATA_POISON_BALL_FIRE_TIME, level().getGameTime());
+    }
+
+    public float getPoisonBallChargeAge(float partialTick) {
+        long start = this.entityData.get(DATA_POISON_BALL_CHARGE_TIME);
+        return start < 0 ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
+    }
+
+    public float getPoisonBallFireAge(float partialTick) {
+        long start = this.entityData.get(DATA_POISON_BALL_FIRE_TIME);
+        return start < 0 ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
     }
 
     public void setBurrowing(boolean burrowing) {

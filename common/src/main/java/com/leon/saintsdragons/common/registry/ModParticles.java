@@ -30,6 +30,10 @@ public final class ModParticles {
             REGISTER.register("volitans_poison_skull", () -> Services.PLATFORM.createSimpleParticle(false));
     public static final Supplier<SimpleParticleType> VOLITANS_POISON_FLAME =
             REGISTER.register("volitans_poison_flame", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> VOLITANS_POISON_EXPLOSION =
+            REGISTER.register("volitans_poison_explosion", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> VOLITANS_POISON_CLOUD =
+            REGISTER.register("volitans_poison_cloud", () -> Services.PLATFORM.createSimpleParticle(false));
     public static final Supplier<SimpleParticleType> VOLITANS_BREATH_BUBBLES =
             REGISTER.register("volitans_breath_bubbles", () -> Services.PLATFORM.createSimpleParticle(false));
     public static final Supplier<SimpleParticleType> VOLITANS_BREATH_EMITTER =

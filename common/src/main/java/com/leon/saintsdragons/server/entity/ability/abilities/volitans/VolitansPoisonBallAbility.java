@@ -62,6 +62,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
         releaseTicks = 0;
         resolved = false;
         getUser().triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "poison_ball_ready");
+        getUser().setPoisonBallCharging(true);
         if (!getUser().level().isClientSide) {
             getUser().getSoundHandler().playMovingEntitySound(
                     ModSounds.VOLITANS_POISON_BALL_READY.get(),
@@ -171,7 +172,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
         projectile.setVisualScale(PROJECTILE_SCALE);
         projectile.setDeltaMovement(direction.scale(PROJECTILE_SPEED));
         projectile.hasImpulse = true;
-        server.addFreshEntity(projectile);
+        if (server.addFreshEntity(projectile)) dragon.markPoisonBallFired();
     }
 
     private Vec3 getAimDirection(Volitans dragon) {
@@ -184,6 +185,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
     }
 
     private void resetState() {
+        getUser().setPoisonBallCharging(false);
         chargeTicks = 0;
         holdLoopActive = false;
         releaseRequested = false;

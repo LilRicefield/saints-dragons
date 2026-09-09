@@ -6,6 +6,7 @@ import com.leon.saintsdragons.client.renderer.layer.volitans.VolitansNightEmissi
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.VolitansBreathIntroRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.VolitansWaterRingRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.VolitansPoisonBallChargeRenderer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -61,6 +62,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
         sendBreathLocatorToServer(entity);
         VolitansWaterRingRenderer.render(entity, poseStack, bufferSource, partialTick);
         VolitansBreathIntroRenderer.render(entity, poseStack, bufferSource, partialTick);
+        VolitansPoisonBallChargeRenderer.render(entity, poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
                 getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),

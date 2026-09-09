@@ -27,6 +27,7 @@ import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
 import com.leon.saintsdragons.client.particle.SecondImpactRingParticle;
 import com.leon.saintsdragons.client.particle.SonicRingParticle;
 import com.leon.saintsdragons.client.particle.VolitansBreathParticle;
+import com.leon.saintsdragons.client.particle.VolitansPoisonImpactParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import net.minecraft.client.particle.ParticleProvider;
 import net.minecraft.client.particle.SpriteSet;
@@ -42,6 +43,8 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON));
         register(registrar, ModParticles.VOLITANS_POISON_SKULL.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_SKULL));
         register(registrar, ModParticles.VOLITANS_POISON_FLAME.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_FLAME));
+        register(registrar, ModParticles.VOLITANS_POISON_EXPLOSION.get(), sprites -> new VolitansPoisonImpactParticle.Factory(sprites, false));
+        register(registrar, ModParticles.VOLITANS_POISON_CLOUD.get(), sprites -> new VolitansPoisonImpactParticle.Factory(sprites, true));
         register(registrar, ModParticles.VOLITANS_BREATH_BUBBLES.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.BUBBLES));
         register(registrar, ModParticles.VOLITANS_BREATH_EMITTER.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.EMITTER));
         register(registrar, ModParticles.VOLITANS_BREATH_STAR.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.STAR));
