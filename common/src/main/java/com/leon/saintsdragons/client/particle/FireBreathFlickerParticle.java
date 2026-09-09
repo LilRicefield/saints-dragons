@@ -37,8 +37,8 @@ public final class FireBreathFlickerParticle extends TextureSheetParticle {
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 right = forward.cross(reference).normalize();
         Vec3 up = right.cross(forward).normalize();
-        Vec3 velocity = forward.add(right.scale((random.nextDouble() - 0.5) * 0.06))
-                .add(up.scale((random.nextDouble() - 0.5) * 0.06)).normalize().scale(speed);
+        Vec3 velocity = forward.add(right.scale((random.nextDouble() - 0.5) * 0.09))
+                .add(up.scale((random.nextDouble() - 0.5) * 0.09)).normalize().scale(speed);
         this.xd = velocity.x;
         this.yd = velocity.y;
         this.zd = velocity.z;

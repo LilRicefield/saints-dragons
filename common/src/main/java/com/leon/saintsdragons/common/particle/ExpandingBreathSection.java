@@ -21,8 +21,8 @@ public final class ExpandingBreathSection {
     public static final int GRID_SIZE = 5;
     public static final int LANE_COUNT = GRID_SIZE * GRID_SIZE;
     private static final double START_HALF_WIDTH = 0.6;
-    private static final double MAX_HALF_WIDTH = 3;
-    private static final double GROWTH_PER_BLOCK = 0.1;
+    private static final double MAX_HALF_WIDTH = 8;
+    private static final double GROWTH_PER_BLOCK = 0.3;
     private static final double THICKNESS = 0.08;
 
     private final Vec3 origin;

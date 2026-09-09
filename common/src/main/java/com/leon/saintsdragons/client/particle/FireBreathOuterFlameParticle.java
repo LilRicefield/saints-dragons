@@ -28,7 +28,6 @@ public final class FireBreathOuterFlameParticle extends TextureSheetParticle {
     private final Vec3 origin;
     private final Vec3 forward;
     private final Vec3 outward;
-    private final float spreadReferenceSize;
 
     private FireBreathOuterFlameParticle(ClientLevel level, double x, double y, double z,
                                     double vx, double vy, double vz, SpriteSet sprites) {
@@ -38,21 +37,20 @@ public final class FireBreathOuterFlameParticle extends TextureSheetParticle {
         Vec3 input = new Vec3(vx, vy, vz);
         forward = input.lengthSqr() > 1.0E-8 ? input.normalize() : new Vec3(0, 0, 1);
         double speed = Mth.clamp(new Vec3(vx, vy, vz).length(), 0.5, 12)
-                * (0.85 + random.nextDouble() * 0.15);
+                * (0.75 + random.nextDouble() * 0.25);
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 right = forward.cross(reference).normalize();
         Vec3 up = right.cross(forward).normalize();
         double around = random.nextDouble() * Math.PI * 2;
         outward = right.scale(Math.cos(around)).add(up.scale(Math.sin(around)))
-                .scale(Math.sqrt(random.nextDouble()));
-        spreadReferenceSize = 1.3F + random.nextFloat() * 0.4F;
+                .scale(0.65 + random.nextDouble() * 0.35);
         Vec3 velocity = forward.scale(speed);
         this.xd = velocity.x;
         this.yd = velocity.y;
         this.zd = velocity.z;
         this.lifetime = Math.min(ExpandingBreathSection.MAX_TICKS,
                 (int) Math.ceil(ExpandingBreathSection.DEFAULT_RANGE / speed * 0.65)) + 1;
-        this.peakSize = 0.85F + random.nextFloat() * 0.5F;
+        this.peakSize = 1.2F + random.nextFloat() * 0.7F;
         this.roll = this.oRoll = 0;
         this.hasPhysics = false;
         this.setSize(0.05F, 0.05F);
@@ -76,12 +74,8 @@ public final class FireBreathOuterFlameParticle extends TextureSheetParticle {
         Vec3 velocity = new Vec3(xd, yd, zd);
         double travel = Math.min(velocity.length(), ExpandingBreathSection.DEFAULT_RANGE - distance);
         double nextDistance = distance + travel;
-        // After the mouth segment, move steadily outward without staged widening curves.
-        double finalSpread = 6.0 * (0.15 + 0.8 * Math.max(0,
-                ExpandingBreathSection.halfWidth(ExpandingBreathSection.DEFAULT_RANGE) - spreadReferenceSize));
-        double spreadProgress = Mth.clamp((nextDistance - 12.0)
-                / (ExpandingBreathSection.DEFAULT_RANGE - 12.0), 0.0, 1.0);
-        double spreadWidth = finalSpread * spreadProgress;
+        // Reach the widened edge early and stay there; never turn back toward the core.
+        double spreadWidth = Math.max(0, ExpandingBreathSection.halfWidth(nextDistance) - peakSize);
         Vec3 end = origin.add(forward.scale(nextDistance)).add(outward.scale(spreadWidth));
         var contextEntity = Minecraft.getInstance().getCameraEntity();
         if (contextEntity == null || !level.hasChunksAt(BlockPos.containing(start), BlockPos.containing(end))) {

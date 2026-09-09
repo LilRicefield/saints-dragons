@@ -41,6 +41,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private final double range;
     private final float fullSize;
     private final float spin;
+    private final int frameOffset;
     private double distance;
     private int impactAge = -1;
     private final boolean emitsEmber;
@@ -50,23 +51,24 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private boolean emittedSmoke;
 
     private FireBreathParticle(ClientLevel level, double x, double y, double z, Vec3 velocity,
-                              FireBreathParticleData data, SpriteSet sprites) {
+                              FireBreathParticleData data, SpriteSet sprites, double launchFraction, boolean core) {
         super(level, x, y, z);
         this.sprites = sprites;
+        this.frameOffset = random.nextInt(FRAME_COUNT);
         this.emitsEmber = random.nextFloat() < EMBER_EMITTER_CHANCE;
         this.emberEmissionAge = 2 + random.nextInt(5);
         this.origin = new Vec3(x, y, z);
         this.forward = velocity.lengthSqr() < 1.0E-8 ? new Vec3(0, 0, 1) : velocity.normalize();
-        this.speed = Mth.clamp(velocity.length(), 0.5, 12) * (0.85 + random.nextDouble() * 0.15);
+        this.speed = Mth.clamp(velocity.length(), 0.5, 12) * (0.75 + random.nextDouble() * 0.25);
         this.range = data.range();
-        this.fullSize = 1.3F + random.nextFloat() * 0.4F;
+        this.fullSize = 1.6F + random.nextFloat() * 0.4F;
         this.spin = (random.nextFloat() - 0.5F) * 0.04F;
 
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
         Vec3 right = forward.cross(reference).normalize();
         Vec3 up = right.cross(forward).normalize();
         double angle = random.nextDouble() * Math.PI * 2;
-        double radius = Math.sqrt(random.nextDouble());
+        double radius = Math.sqrt(random.nextDouble()) * (core ? 0.25 : 1.0);
         this.spread = right.scale(Math.cos(angle) * radius).add(up.scale(Math.sin(angle) * radius));
 
         this.lifetime = Math.min(ExpandingBreathSection.MAX_TICKS, (int) Math.ceil(range / speed)) + 1;
@@ -76,7 +78,14 @@ public final class FireBreathParticle extends TextureSheetParticle {
         this.roll = this.oRoll = random.nextFloat() * (float) (Math.PI * 2);
         this.quadSize = fullSize * 0.45F;
         this.setColor(1.0F, 0.42F, 0.035F);
-        this.setSprite(sprites.get(0, FRAME_COUNT - 1));
+        this.setSprite(sprites.get(frameOffset, FRAME_COUNT - 1));
+        if (launchFraction > 0) {
+            // Fill a one-tick emission interval, checking terrain before placing the particle.
+            advanceFlame(speed * launchFraction);
+            xo = this.x;
+            yo = this.y;
+            zo = this.z;
+        }
     }
 
     @Override
@@ -95,11 +104,15 @@ public final class FireBreathParticle extends TextureSheetParticle {
             return;
         }
 
+        advanceFlame(speed);
+        if (isAlive()) emitEmbers();
+    }
+
+    private void advanceFlame(double travel) {
         Vec3 start = new Vec3(x, y, z);
-        distance = Math.min(range, distance + speed);
-        double spreadWidth = 0.15 + 0.8 * Math.max(0, ExpandingBreathSection.halfWidth(distance) - fullSize);
-        double endSpread = Mth.clamp((distance / range - 0.5) * 2.0, 0.0, 1.0);
-        spreadWidth *= 1.0 + endSpread * endSpread * (3.0 - 2.0 * endSpread);
+        distance = Math.min(range, distance + travel);
+        // Share the fire's collision envelope; reserve room for the outer rendered layer.
+        double spreadWidth = Math.max(0, ExpandingBreathSection.halfWidth(distance) - fullSize * SMOKE_SCALE);
         Vec3 end = origin.add(forward.scale(distance)).add(spread.scale(spreadWidth));
         if (!level.hasChunksAt(BlockPos.containing(start), BlockPos.containing(end))) {
             remove();
@@ -117,14 +130,13 @@ public final class FireBreathParticle extends TextureSheetParticle {
         if (hit.getType() == HitResult.Type.BLOCK) {
             Vec3 impact = hit.getLocation().subtract(forward.scale(0.03));
             setPos(impact.x, impact.y, impact.z);
-            impactAge = age - 1;
+            impactAge = Math.max(0, age - 1);
             lifetime = Math.min(lifetime, age + IMPACT_FADE_TICKS);
         } else {
             setPos(end.x, end.y, end.z);
         }
         setBoundingBox(new AABB(new Vec3(x, y, z), new Vec3(x, y, z))
                 .inflate(fullSize * SMOKE_SCALE + SMOKE_DEPTH_OFFSET));
-        emitEmbers();
     }
 
     private void emitEmbers() {
@@ -165,7 +177,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float renderAge = Math.max(0, age - 1 + partialTicks);
-        int frame = (int) (renderAge / FRAME_TICKS) % FRAME_COUNT;
+        int frame = ((int) (renderAge / FRAME_TICKS) + frameOffset) % FRAME_COUNT;
         setSprite(sprites.get(frame, FRAME_COUNT - 1));
         float growth = Mth.clamp(renderAge / GROWTH_TICKS, 0, 1);
         this.quadSize = fullSize * Mth.lerp(growth, 0.45F, 1.0F);
@@ -245,21 +257,25 @@ public final class FireBreathParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(@NotNull FireBreathParticleData data, @NotNull ClientLevel level,
                                        double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            float amount = (3 + level.random.nextInt(3)) * data.density();
+            float amount = (3 + level.random.nextInt(3)) * 3 * data.density();
             int count = (int) amount;
             if (level.random.nextFloat() < amount - count) count++;
             if (count == 0) return null;
             Vec3 velocity = new Vec3(xSpeed, ySpeed, zSpeed);
-            Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
-                    x, y, z, xSpeed, ySpeed, zSpeed);
+            for (int i = 0; i < 3; i++) {
+                Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
+                        x, y, z, xSpeed, ySpeed, zSpeed);
+            }
+            for (int i = 0; i < 5; i++) {
+                Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_OUTER_FLAME.get(),
+                        x, y, z, xSpeed, ySpeed, zSpeed);
+            }
             emitForwardGlows(level, new Vec3(x, y, z), velocity);
-            Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_OUTER_FLAME.get(),
-                    x, y, z, xSpeed, ySpeed, zSpeed);
             for (int i = 1; i < count; i++) {
                 Minecraft.getInstance().particleEngine.add(
-                        new FireBreathParticle(level, x, y, z, velocity, data, sprites));
+                        new FireBreathParticle(level, x, y, z, velocity, data, sprites, (double) i / count, i % 3 == 0));
             }
-            return new FireBreathParticle(level, x, y, z, velocity, data, sprites);
+            return new FireBreathParticle(level, x, y, z, velocity, data, sprites, 0, true);
         }
 
         private void emitForwardGlows(ClientLevel level, Vec3 origin, Vec3 velocity) {
@@ -267,9 +283,9 @@ public final class FireBreathParticle extends TextureSheetParticle {
             Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
             Vec3 right = forward.cross(reference).normalize();
             Vec3 up = right.cross(forward).normalize();
-            for (int i = 0; i < 2; i++) {
+            for (int i = 0; i < 8; i++) {
                 double around = level.random.nextDouble() * Math.PI * 2;
-                double spreadAngle = Math.toRadians(10 + level.random.nextDouble() * 15);
+                double spreadAngle = Math.toRadians(15 + level.random.nextDouble() * 17);
                 Vec3 outward = right.scale(Math.cos(around)).add(up.scale(Math.sin(around)));
                 double launchSpeed = Mth.clamp(velocity.length(), 0.5, 12)
                         * (0.85 + level.random.nextDouble() * 0.15);
