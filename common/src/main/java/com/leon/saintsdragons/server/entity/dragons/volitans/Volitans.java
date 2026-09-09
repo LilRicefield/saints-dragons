@@ -145,6 +145,10 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_BREATHING =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Long> DATA_BREATH_START_TIME =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Long> DATA_BREATH_FIRE_TIME =
+            SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Float> DATA_WATER_BREATH_ENERGY =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Float> DATA_POISON_BREATH_ENERGY =
@@ -521,6 +525,8 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
         this.entityData.define(DATA_ULTIMATE_SLAM_ACTIVE, false);
         this.entityData.define(DATA_BREATH_MODE, 0); // 0=water, 1=poison
         this.entityData.define(DATA_BREATHING, false);
+        this.entityData.define(DATA_BREATH_START_TIME, -1L);
+        this.entityData.define(DATA_BREATH_FIRE_TIME, -1L);
         this.entityData.define(DATA_WATER_BREATH_ENERGY, 1.0F);
         this.entityData.define(DATA_POISON_BREATH_ENERGY, 1.0F);
         this.entityData.define(DATA_WATER_BREATH_DEPLETED, false);
@@ -1852,7 +1858,31 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     }
 
     public void setBreathing(boolean breathing) {
+        if (!level().isClientSide) {
+            this.entityData.set(DATA_BREATH_START_TIME, -1L);
+            if (!breathing) {
+                this.entityData.set(DATA_BREATH_FIRE_TIME, -1L);
+            } else if (!isBreathing()) {
+                this.entityData.set(DATA_BREATH_FIRE_TIME, level().getGameTime());
+            }
+        }
         this.entityData.set(DATA_BREATHING, breathing);
+    }
+
+    public void startBreathIntro() {
+        if (!level().isClientSide) {
+            this.entityData.set(DATA_BREATH_START_TIME, level().getGameTime());
+        }
+    }
+
+    public float getBreathIntroAge(float partialTick) {
+        long start = this.entityData.get(DATA_BREATH_START_TIME);
+        return start < 0 || isBreathing() ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
+    }
+
+    public float getBreathFireAge(float partialTick) {
+        long start = this.entityData.get(DATA_BREATH_FIRE_TIME);
+        return start < 0 || !isBreathing() ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
     }
 
     public boolean isBurrowing() {

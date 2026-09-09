@@ -62,6 +62,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             }
             dragon.triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "breath_start");
             dragon.setBreathing(false);
+            dragon.startBreathIntro();
             playBreathStartSound();
             return;
         }

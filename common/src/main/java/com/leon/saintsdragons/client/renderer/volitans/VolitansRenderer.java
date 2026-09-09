@@ -4,6 +4,8 @@ import com.leon.saintsdragons.client.model.volitans.VolitansModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.layer.volitans.VolitansNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.VolitansBreathIntroRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.VolitansWaterRingRenderer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -57,6 +59,8 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     protected void afterDragonRender(Volitans entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
                                      net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
         sendBreathLocatorToServer(entity);
+        VolitansWaterRingRenderer.render(entity, poseStack, bufferSource, partialTick);
+        VolitansBreathIntroRenderer.render(entity, poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
                 getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),
