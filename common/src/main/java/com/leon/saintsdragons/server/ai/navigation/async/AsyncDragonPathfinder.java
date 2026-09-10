@@ -5,16 +5,10 @@ import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.pathfinding.DragonPathSearchDebug;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.EnumMap;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.*;
@@ -41,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 public final class AsyncDragonPathfinder {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncDragonPathfinder.class);
-    private static final int MAX_SWIM_ASTAR_VISITS = 50000;
     private static final int MAX_ASYNC_GROUND_ROUTE = 128;
     private static final int MAX_ASYNC_FLIGHT_ROUTE = 128;
     private static final int MAX_GROUND_DETOUR_ALLOWANCE = 48;
@@ -401,93 +394,16 @@ public final class AsyncDragonPathfinder {
                                            DragonPathSearchDebug.SearchSession debugSession,
                                            BooleanSupplier cancelled) {
         long startedNanos = System.nanoTime();
-        if (!snapshot.prepare(cancelled)) {
-            return null;
-        }
-        int start = snapshot.index(snapshot.startX, snapshot.startY, snapshot.startZ);
-        int goal = snapshot.index(snapshot.goalX, snapshot.goalY, snapshot.goalZ);
-        if (!snapshot.isWaterIndex(start) || !snapshot.isWaterIndex(goal)) {
-            if (debugSession != null) {
-                DragonPathSearchDebug.publishGridSearch(
-                        debugSession,
-                        DragonPathSearchDebug.SearchType.SWIM,
-                        snapshot.toWorld(start),
-                        snapshot.toWorld(goal),
-                        List.of(),
-                        List.of(),
-                        List.of(),
-                        false,
-                        startedNanos
-                );
-            }
-            return null;
-        }
-
-        PriorityQueue<SwimNode> open = new PriorityQueue<>(Comparator.comparingDouble(SwimNode::fScore));
-        Map<Integer, Integer> cameFrom = new HashMap<>();
-        Map<Integer, Double> gScore = new HashMap<>();
-        Set<Integer> closed = debugSession == null ? new HashSet<>() : new LinkedHashSet<>();
-        gScore.put(start, 0.0D);
-        open.add(new SwimNode(start, 0.0D, snapshot.heuristic(start, goal)));
-
-        List<Vec3> path = null;
-        int visited = 0;
-        while (!open.isEmpty() && visited < MAX_SWIM_ASTAR_VISITS) {
-            if (cancelled.getAsBoolean()) {
-                return null;
-            }
-            SwimNode current = open.poll();
-            double currentScore = gScore.getOrDefault(current.index(), Double.POSITIVE_INFINITY);
-            if (current.gScore() > currentScore || !closed.add(current.index())) {
-                continue;
-            }
-            visited++;
-            if (current.index() == goal) {
-                path = snapshot.reconstructPath(cameFrom, current.index());
-                break;
-            }
-
-            for (int neighbor : snapshot.neighbors(current.index())) {
-                if (cancelled.getAsBoolean()) {
-                    return null;
-                }
-                if (closed.contains(neighbor)) {
-                    continue;
-                }
-                double tentativeScore = currentScore + snapshot.stepCost(current.index(), neighbor);
-                if (tentativeScore >= gScore.getOrDefault(neighbor, Double.POSITIVE_INFINITY)) {
-                    continue;
-                }
-
-                cameFrom.put(neighbor, current.index());
-                gScore.put(neighbor, tentativeScore);
-                open.add(new SwimNode(
-                        neighbor,
-                        tentativeScore,
-                        tentativeScore + snapshot.heuristic(neighbor, goal)
-                ));
-            }
-        }
-
-        if (debugSession != null) {
-            List<Vec3> closedPositions = closed.stream().map(snapshot::toWorld).toList();
-            List<Vec3> openPositions = gScore.keySet().stream()
-                    .filter(index -> !closed.contains(index))
-                    .map(snapshot::toWorld)
-                    .toList();
-            DragonPathSearchDebug.publishGridSearch(
-                    debugSession,
-                    DragonPathSearchDebug.SearchType.SWIM,
-                    snapshot.toWorld(start),
-                    snapshot.toWorld(goal),
-                    closedPositions,
-                    openPositions,
-                    List.of(),
-                    path != null,
-                    startedNanos
-            );
-        }
-        return path;
+        if (!snapshot.prepare(cancelled)) return null;
+        return new AsyncSwimPathSearch(
+                snapshot.water, snapshot.sizeX, snapshot.sizeY, snapshot.sizeZ,
+                new BlockPos(snapshot.minX, snapshot.minY, snapshot.minZ),
+                snapshot.index(snapshot.startX, snapshot.startY, snapshot.startZ),
+                snapshot.index(snapshot.goalX, snapshot.goalY, snapshot.goalZ),
+                snapshot.relativeBounds,
+                (box, movement) -> VoxelAabbSweeper.isClear(snapshot.blocks, box, movement),
+                cancelled
+        ).findPath(debugSession, startedNanos);
     }
 
     private static <T> Future<?> submitWorker(PathRequest request,
@@ -815,10 +731,7 @@ public final class AsyncDragonPathfinder {
         }
     }
 
-    private record SwimNode(int index, double gScore, double fScore) {
-    }
-
-    private static final class SwimPathSnapshot {
+    static final class SwimPathSnapshot {
         private static final int HORIZONTAL_PADDING = 16;
         private static final int VERTICAL_PADDING = 8;
         private static final int MAX_HORIZONTAL_SPAN = 96;
@@ -833,6 +746,7 @@ public final class AsyncDragonPathfinder {
         private final int sizeX;
         private final int sizeY;
         private final int sizeZ;
+        private final AABB relativeBounds;
         private final int horizontalClearance;
         private final int verticalClearance;
         private boolean[] water;
@@ -857,8 +771,10 @@ public final class AsyncDragonPathfinder {
                                  int goalY,
                                  int goalZ,
                                  int horizontalClearance,
-                                 int verticalClearance) {
+                                 int verticalClearance,
+                                 AABB relativeBounds) {
             this.blocks = blocks;
+            this.relativeBounds = relativeBounds;
             this.minX = minX;
             this.minY = minY;
             this.minZ = minZ;
@@ -945,7 +861,8 @@ public final class AsyncDragonPathfinder {
                     goalY,
                     goalZ,
                     horizontalClearance,
-                    verticalClearance
+                    verticalClearance,
+                    dragon.getBoundingBox().move(dragon.position().scale(-1.0D))
             );
         }
 
@@ -1015,13 +932,13 @@ public final class AsyncDragonPathfinder {
             return true;
         }
 
-        private static boolean[] buildClearanceMap(boolean[] rawWater,
-                                                   boolean[] rawClear,
-                                                   int sizeX,
-                                                   int sizeY,
-                                                   int sizeZ,
-                                                   int horizontalClearance,
-                                                   int verticalClearance) {
+        static boolean[] buildClearanceMap(boolean[] rawWater,
+                                           boolean[] rawClear,
+                                           int sizeX,
+                                           int sizeY,
+                                           int sizeZ,
+                                           int horizontalClearance,
+                                           int verticalClearance) {
             boolean[] passable = new boolean[rawWater.length];
             int[] waterPrefix = buildVolumePrefix(rawWater, sizeX, sizeY, sizeZ);
             int[] clearPrefix = buildVolumePrefix(rawClear, sizeX, sizeY, sizeZ);
@@ -1126,7 +1043,7 @@ public final class AsyncDragonPathfinder {
             return x + y * sizeX + z * sizeX * sizeY;
         }
 
-        private static int nearestWaterIndex(boolean[] water, int sizeX, int sizeY, int sizeZ, int x, int y, int z, int maxRadius) {
+        static int nearestWaterIndex(boolean[] water, int sizeX, int sizeY, int sizeZ, int x, int y, int z, int maxRadius) {
             int center = index(x, y, z, sizeX, sizeY);
             if (water[center]) {
                 return center;
@@ -1183,104 +1100,5 @@ public final class AsyncDragonPathfinder {
             return x + y * sizeX + z * sizeX * sizeY;
         }
 
-        boolean isWaterIndex(int index) {
-            return index >= 0 && index < this.water.length && this.water[index];
-        }
-
-        List<Integer> neighbors(int index) {
-            int x = index % sizeX;
-            int y = (index / sizeX) % sizeY;
-            int z = index / (sizeX * sizeY);
-            List<Integer> neighbors = new ArrayList<>(18);
-            for (int dx = -1; dx <= 1; dx++) {
-                for (int dy = -1; dy <= 1; dy++) {
-                    for (int dz = -1; dz <= 1; dz++) {
-                        if (dx == 0 && dy == 0 && dz == 0) {
-                            continue;
-                        }
-                        if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 2) {
-                            continue;
-                        }
-                        int nx = x + dx;
-                        int ny = y + dy;
-                        int nz = z + dz;
-                        if (nx < 0 || ny < 0 || nz < 0 || nx >= sizeX || ny >= sizeY || nz >= sizeZ) {
-                            continue;
-                        }
-                        int neighbor = index(nx, ny, nz);
-                        if (isWaterIndex(neighbor) && canTraverseDiagonal(x, y, z, dx, dy, dz)) {
-                            neighbors.add(neighbor);
-                        }
-                    }
-                }
-            }
-            return neighbors;
-        }
-
-        private boolean canTraverseDiagonal(int x, int y, int z, int dx, int dy, int dz) {
-            if (Math.abs(dx) + Math.abs(dy) + Math.abs(dz) <= 1) {
-                return true;
-            }
-            return (dx == 0 || isWaterIndex(index(x + dx, y, z)))
-                    && (dy == 0 || isWaterIndex(index(x, y + dy, z)))
-                    && (dz == 0 || isWaterIndex(index(x, y, z + dz)));
-        }
-
-        double stepCost(int from, int to) {
-            int fx = from % sizeX;
-            int fy = (from / sizeX) % sizeY;
-            int fz = from / (sizeX * sizeY);
-            int tx = to % sizeX;
-            int ty = (to / sizeX) % sizeY;
-            int tz = to / (sizeX * sizeY);
-            int dx = Math.abs(tx - fx);
-            int dy = Math.abs(ty - fy);
-            int dz = Math.abs(tz - fz);
-            double cost = Math.sqrt(dx * dx + dy * dy + dz * dz);
-            if (dy > 0) {
-                cost += 1.25D;
-            }
-            if (isNearFloor(tx, ty, tz)) {
-                cost += 3.0D;
-            }
-            return cost;
-        }
-
-        double heuristic(int from, int to) {
-            int fx = from % sizeX;
-            int fy = (from / sizeX) % sizeY;
-            int fz = from / (sizeX * sizeY);
-            int tx = to % sizeX;
-            int ty = (to / sizeX) % sizeY;
-            int tz = to / (sizeX * sizeY);
-            int dx = tx - fx;
-            int dy = ty - fy;
-            int dz = tz - fz;
-            return Math.sqrt(dx * dx + dy * dy + dz * dz);
-        }
-
-        List<Vec3> reconstructPath(Map<Integer, Integer> cameFrom, int current) {
-            List<Vec3> path = new ArrayList<>();
-            path.add(toWorld(current));
-            while (cameFrom.containsKey(current)) {
-                current = cameFrom.get(current);
-                path.add(0, toWorld(current));
-            }
-            return path;
-        }
-
-        private Vec3 toWorld(int index) {
-            int x = index % sizeX;
-            int y = (index / sizeX) % sizeY;
-            int z = index / (sizeX * sizeY);
-            return new Vec3(minX + x + 0.5D, minY + y + 0.5D, minZ + z + 0.5D);
-        }
-
-        private boolean isNearFloor(int x, int y, int z) {
-            if (y <= 0) {
-                return true;
-            }
-            return !isWaterIndex(index(x, y - 1, z));
-        }
     }
 }

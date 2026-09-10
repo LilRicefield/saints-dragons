@@ -21,11 +21,12 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
-/** A worker-only A* search over an immutable voxel snapshot. */
 final class AsyncFlightPathSearch {
     private static final int MAX_VISITED_NODES = 5000;
-    private static final double SQRT_TWO = Math.sqrt(2.0D);
-    private static final double SQRT_THREE = Math.sqrt(3.0D);
+    private static final double MAX_SHORTCUT_DISTANCE = 24.0D;
+    private static final double SWEEP_SEGMENT_LENGTH = 4.0D;
+    private static final double HEURISTIC_WEIGHT = 1.25D;
+    private static final int GOAL_SWEEP_INTERVAL = 16;
     private static final int[][] NEIGHBOR_OFFSETS = createNeighborOffsets();
 
     private final CollisionView collisionView;
@@ -81,7 +82,7 @@ final class AsyncFlightPathSearch {
         );
     }
 
-    private AsyncFlightPathSearch(CollisionView collisionView,
+    AsyncFlightPathSearch(CollisionView collisionView,
                                   Vec3 origin,
                                   Vec3 target,
                                   Vec3 requestedTarget,
@@ -115,26 +116,61 @@ final class AsyncFlightPathSearch {
         Map<Long, Double> gScore = new HashMap<>();
         Set<Long> closed = debugSession == null ? new HashSet<>() : new LinkedHashSet<>();
         Map<Long, Boolean> clearNodes = new HashMap<>();
-        Set<EdgeKey> blockedEdges = new HashSet<>();
+        Map<EdgeKey, Boolean> clearEdges = new HashMap<>();
 
         double startHeuristic = heuristic(this.startNode);
         gScore.put(startKey, 0.0D);
-        open.add(new OpenNode(startKey, 0.0D, startHeuristic, startHeuristic));
+        open.add(new OpenNode(startKey, 0.0D, startHeuristic, HEURISTIC_WEIGHT * startHeuristic));
         long bestKey = startKey;
         double bestHeuristic = startHeuristic;
         boolean reached = false;
         int visited = 0;
 
-        while (!open.isEmpty() && visited < MAX_VISITED_NODES) {
+        long targetKey = this.targetNode.asLong();
+        if (targetKey != startKey && withinBounds(this.targetNode.getX(), this.targetNode.getY(), this.targetNode.getZ())
+                && isSegmentClear(this.origin, nodePosition(targetKey))
+                && canFinishAtTarget(targetKey)) {
+            cameFrom.put(targetKey, startKey);
+            gScore.put(targetKey, this.origin.distanceTo(nodePosition(targetKey)));
+            bestKey = targetKey;
+            reached = true;
+            closed.add(startKey);
+            closed.add(targetKey);
+            open.clear();
+        }
+
+        while (!reached && !open.isEmpty() && visited < MAX_VISITED_NODES) {
             if (this.cancelled.getAsBoolean()) {
                 return null;
             }
 
             OpenNode current = open.poll();
             double knownScore = gScore.getOrDefault(current.key(), Double.POSITIVE_INFINITY);
-            if (current.gScore() > knownScore || !closed.add(current.key())) {
+            if (Double.compare(current.gScore(), knownScore) != 0 || closed.contains(current.key())) {
                 continue;
             }
+
+            // Only confirmed connections may enter the closed set or a returned partial route.
+            Long parentKey = cameFrom.get(current.key());
+            if (parentKey != null && !isEdgeClear(parentKey, current.key(), clearEdges)) {
+                Parent repair = repairParent(current.key(), closed, gScore, clearEdges);
+                if (this.cancelled.getAsBoolean()) return null;
+                if (repair == null) {
+                    cameFrom.remove(current.key());
+                    gScore.remove(current.key());
+                    continue;
+                }
+                cameFrom.put(current.key(), repair.key());
+                gScore.put(current.key(), repair.gScore());
+                if (repair.gScore() > knownScore) {
+                    open.add(new OpenNode(current.key(), repair.gScore(), current.hScore(),
+                            repair.gScore() + HEURISTIC_WEIGHT * current.hScore()));
+                    continue;
+                }
+                knownScore = repair.gScore();
+            }
+            if (this.cancelled.getAsBoolean()) return null;
+            closed.add(current.key());
             visited++;
 
             BlockPos currentPos = BlockPos.of(current.key());
@@ -145,6 +181,18 @@ final class AsyncFlightPathSearch {
             }
             if (currentPos.equals(this.targetNode) && canFinishAtTarget(current.key())) {
                 bestKey = current.key();
+                reached = true;
+                break;
+            }
+
+            if (visited % GOAL_SWEEP_INTERVAL == 0 && !closed.contains(targetKey)
+                    && withinBounds(this.targetNode.getX(), this.targetNode.getY(), this.targetNode.getZ())
+                    && isSegmentClear(nodePosition(current.key()), nodePosition(targetKey))
+                    && canFinishAtTarget(targetKey)) {
+                cameFrom.put(targetKey, current.key());
+                gScore.put(targetKey, knownScore + currentHeuristic);
+                closed.add(targetKey);
+                bestKey = targetKey;
                 reached = true;
                 break;
             }
@@ -167,34 +215,37 @@ final class AsyncFlightPathSearch {
                     continue;
                 }
 
-                EdgeKey edge = new EdgeKey(current.key(), nextKey);
-                if (blockedEdges.contains(edge) || !isEdgeClear(current.key(), nextPos)) {
-                    blockedEdges.add(edge);
-                    continue;
-                }
-
-                double stepCost = Math.sqrt(
-                        offset[0] * offset[0]
-                                + offset[1] * offset[1]
-                                + offset[2] * offset[2]
-                );
+                double stepCost = nodePosition(current.key()).distanceTo(nodePosition(nextKey));
                 double tentativeScore = knownScore + stepCost;
+                long nextParent = current.key();
+                Long ancestor = cameFrom.get(current.key());
+                if (ancestor != null) {
+                    double shortcutLength = nodePosition(ancestor).distanceTo(nodePosition(nextKey));
+                    double shortcutScore = gScore.get(ancestor) + shortcutLength;
+                    if (shortcutLength <= MAX_SHORTCUT_DISTANCE && shortcutScore <= tentativeScore
+                            && !Boolean.FALSE.equals(clearEdges.get(new EdgeKey(ancestor, nextKey)))) {
+                        // Defer the expensive sweep until this candidate is selected for expansion.
+                        tentativeScore = shortcutScore;
+                        nextParent = ancestor;
+                    }
+                }
                 if (tentativeScore >= gScore.getOrDefault(nextKey, Double.POSITIVE_INFINITY)) {
                     continue;
                 }
 
-                cameFrom.put(nextKey, current.key());
+                cameFrom.put(nextKey, nextParent);
                 gScore.put(nextKey, tentativeScore);
                 double nextHeuristic = heuristic(nextPos);
                 open.add(new OpenNode(
                         nextKey,
                         tentativeScore,
                         nextHeuristic,
-                        tentativeScore + nextHeuristic
+                        tentativeScore + HEURISTIC_WEIGHT * nextHeuristic
                 ));
             }
         }
 
+        if (this.cancelled.getAsBoolean()) return null;
         boolean reachedRequestedTarget = reached && this.completeRoute;
         Path path = buildPath(cameFrom, bestKey, reachedRequestedTarget);
         if (debugSession != null && !this.cancelled.getAsBoolean()) {
@@ -219,9 +270,7 @@ final class AsyncFlightPathSearch {
     }
 
     private boolean canFinishAtTarget(long currentKey) {
-        Vec3 from = currentKey == this.startNode.asLong() ? this.origin : nodeCenter(currentKey);
-        AABB startBox = this.relativeBounds.move(from);
-        return this.collisionView.isClear(startBox, this.target.subtract(from));
+        return isSegmentClear(nodePosition(currentKey), this.target);
     }
 
     private boolean isNodeClear(BlockPos pos) {
@@ -229,10 +278,43 @@ final class AsyncFlightPathSearch {
         return this.collisionView.isClear(this.relativeBounds.move(center), Vec3.ZERO);
     }
 
-    private boolean isEdgeClear(long fromKey, BlockPos destination) {
-        Vec3 from = fromKey == this.startNode.asLong() ? this.origin : nodeCenter(fromKey);
-        Vec3 to = Vec3.atCenterOf(destination);
-        return this.collisionView.isClear(this.relativeBounds.move(from), to.subtract(from));
+    private boolean isEdgeClear(long fromKey, long toKey, Map<EdgeKey, Boolean> clearEdges) {
+        return clearEdges.computeIfAbsent(new EdgeKey(fromKey, toKey),
+                ignored -> isSegmentClear(nodePosition(fromKey), nodePosition(toKey)));
+    }
+
+    private boolean isSegmentClear(Vec3 from, Vec3 to) {
+        Vec3 movement = to.subtract(from);
+        int segments = Math.max(1, (int) Math.ceil(movement.length() / SWEEP_SEGMENT_LENGTH));
+        Vec3 cursor = from;
+        for (int segment = 1; segment <= segments; segment++) {
+            if (this.cancelled.getAsBoolean()) return false;
+            Vec3 end = segment == segments ? to : from.add(movement.scale((double) segment / segments));
+            if (!this.collisionView.isClear(this.relativeBounds.move(cursor), end.subtract(cursor))) return false;
+            cursor = end;
+        }
+        return true;
+    }
+
+    @Nullable
+    private Parent repairParent(long key, Set<Long> closed, Map<Long, Double> gScore,
+                                Map<EdgeKey, Boolean> clearEdges) {
+        BlockPos position = BlockPos.of(key);
+        Parent best = null;
+        for (int[] offset : NEIGHBOR_OFFSETS) {
+            if (this.cancelled.getAsBoolean()) return null;
+            long neighbor = position.offset(offset[0], offset[1], offset[2]).asLong();
+            if (!closed.contains(neighbor)) continue;
+            double score = gScore.get(neighbor) + nodePosition(neighbor).distanceTo(nodePosition(key));
+            if ((best == null || score < best.gScore()) && isEdgeClear(neighbor, key, clearEdges)) {
+                best = new Parent(neighbor, score);
+            }
+        }
+        return best;
+    }
+
+    private Vec3 nodePosition(long key) {
+        return key == this.startNode.asLong() ? this.origin : nodeCenter(key);
     }
 
     private boolean withinBounds(int x, int y, int z) {
@@ -242,15 +324,7 @@ final class AsyncFlightPathSearch {
     }
 
     private double heuristic(BlockPos pos) {
-        int dx = Math.abs(pos.getX() - this.targetNode.getX());
-        int dy = Math.abs(pos.getY() - this.targetNode.getY());
-        int dz = Math.abs(pos.getZ() - this.targetNode.getZ());
-        int shortest = Math.min(dx, Math.min(dy, dz));
-        int longest = Math.max(dx, Math.max(dy, dz));
-        int middle = dx + dy + dz - shortest - longest;
-        return shortest * SQRT_THREE
-                + (middle - shortest) * SQRT_TWO
-                + (longest - middle);
+        return nodePosition(pos.asLong()).distanceTo(nodePosition(this.targetNode.asLong()));
     }
 
     private Path buildPath(Map<Long, Long> cameFrom, long endKey, boolean reached) {
@@ -291,6 +365,9 @@ final class AsyncFlightPathSearch {
     }
 
     private record OpenNode(long key, double gScore, double hScore, double fScore) {
+    }
+
+    private record Parent(long key, double gScore) {
     }
 
     private record EdgeKey(long from, long to) {

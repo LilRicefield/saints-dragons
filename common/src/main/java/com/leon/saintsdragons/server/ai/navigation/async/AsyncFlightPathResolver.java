@@ -10,7 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 class AsyncFlightPathResolver {
-    private static final int PARTIAL_PATH_REPLAN_NODES = 12;
+    private static final double PARTIAL_PATH_REPLAN_DISTANCE = 16.0D;
     private static final double STALE_REQUEST_TARGET_DISTANCE_SQ = 4.0D;
 
     private final Mob dragon;
@@ -197,8 +197,8 @@ class AsyncFlightPathResolver {
                 || this.hasActivePathRequest()) {
             return false;
         }
-        int remainingNodes = this.pathNodes.size() - 1 - this.currentPathIndex;
-        return remainingNodes <= PARTIAL_PATH_REPLAN_NODES;
+        return AsyncFlightPathGeometry.remainingDistance(this.pathNodes, this.currentPathIndex,
+                this.dragon.position()) <= PARTIAL_PATH_REPLAN_DISTANCE;
     }
 
     public void recalculatePath(Vec3 currentWaypoint) {

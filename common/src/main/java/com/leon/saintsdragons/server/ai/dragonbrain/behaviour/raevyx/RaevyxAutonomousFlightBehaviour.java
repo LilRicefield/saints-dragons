@@ -5,7 +5,7 @@ import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
 public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Raevyx> {
-    private static final double CRUISE_SPEED = 2.0D;
+    private static final double CRUISE_SPEED = 2.6D;
     private static final double LANDING_SPEED = 1.45D;
 
     public RaevyxAutonomousFlightBehaviour() {

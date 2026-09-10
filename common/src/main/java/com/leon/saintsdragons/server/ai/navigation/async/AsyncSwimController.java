@@ -353,13 +353,19 @@ public class AsyncSwimController {
         }
 
         Vec3 boxOffset = start.subtract(this.host.position());
-        if (!VoxelAabbSweeper.isClear(
-                this.host.level(),
-                this.host,
-                this.host.getBoundingBox().move(boxOffset),
-                offset
-        )) {
-            return false;
+        int sweeps = Math.max(1, (int) Math.ceil(distance / 4.0D));
+        Vec3 cursor = Vec3.ZERO;
+        for (int sweep = 1; sweep <= sweeps; sweep++) {
+            Vec3 endOffset = sweep == sweeps ? offset : offset.scale((double) sweep / sweeps);
+            if (!VoxelAabbSweeper.isClear(
+                    this.host.level(),
+                    this.host,
+                    this.host.getBoundingBox().move(boxOffset).move(cursor),
+                    endOffset.subtract(cursor)
+            )) {
+                return false;
+            }
+            cursor = endOffset;
         }
 
         int samples = Math.max(1, (int)Math.ceil(distance / COLLISION_SAMPLE_STEP));

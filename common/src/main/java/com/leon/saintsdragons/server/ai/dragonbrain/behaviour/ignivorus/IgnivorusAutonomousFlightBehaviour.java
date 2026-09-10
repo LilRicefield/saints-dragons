@@ -8,7 +8,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Ignivorus> {
     public IgnivorusAutonomousFlightBehaviour() {
-        super(DragonFlightBehaviorProfile.ignivorus(), 1.75D, 1.5D, Ignivorus.TAKEOFF_ANIMATION_TICKS);
+        super(DragonFlightBehaviorProfile.ignivorus(), 2.25D, 1.5D, Ignivorus.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override

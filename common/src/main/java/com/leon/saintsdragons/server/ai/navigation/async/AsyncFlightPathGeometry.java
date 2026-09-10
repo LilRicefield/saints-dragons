@@ -7,6 +7,20 @@ final class AsyncFlightPathGeometry {
     private AsyncFlightPathGeometry() {
     }
 
+    static double remainingDistance(List<Vec3> pathNodes, int currentPathIndex, Vec3 position) {
+        if (pathNodes.isEmpty() || currentPathIndex >= pathNodes.size()) return 0;
+        int first = Math.max(0, currentPathIndex);
+        if (first == pathNodes.size() - 1) return position.distanceTo(pathNodes.get(first));
+        Vec3 cursor = closestPointOnSegment(position, pathNodes.get(first), pathNodes.get(first + 1));
+        double distance = position.distanceTo(cursor);
+        for (int index = first + 1; index < pathNodes.size(); index++) {
+            Vec3 next = pathNodes.get(index);
+            distance += cursor.distanceTo(next);
+            cursor = next;
+        }
+        return distance;
+    }
+
     static LookAheadResult calculateLookAhead(List<Vec3> pathNodes,
                                                int currentPathIndex,
                                                Vec3 position,
