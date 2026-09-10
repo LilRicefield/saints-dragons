@@ -65,6 +65,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.IGNIVORUS_GROUND_IMPACT.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.GROUND));
         register(registrar, ModParticles.IGNIVORUS_FIRE_SPEC.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.SPEC));
         register(registrar, ModParticles.IGNIVORUS_SKYFALL_CHARGE.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.CHARGE));
+        register(registrar, ModParticles.IGNIVORUS_SKYFALL_AURA.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.AURA));
         register(registrar, ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);

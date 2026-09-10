@@ -40,6 +40,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private final double speed;
     private final double range;
     private final float fullSize;
+    private final float visualScale;
     private final float spin;
     private final int frameOffset;
     private double distance;
@@ -61,7 +62,8 @@ public final class FireBreathParticle extends TextureSheetParticle {
         this.forward = velocity.lengthSqr() < 1.0E-8 ? new Vec3(0, 0, 1) : velocity.normalize();
         this.speed = Mth.clamp(velocity.length(), 0.5, 12) * (0.75 + random.nextDouble() * 0.25);
         this.range = data.range();
-        this.fullSize = 1.6F + random.nextFloat() * 0.4F;
+        this.visualScale = data.scale();
+        this.fullSize = (1.6F + random.nextFloat() * 0.4F) * visualScale;
         this.spin = (random.nextFloat() - 0.5F) * 0.04F;
 
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
@@ -112,7 +114,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
         Vec3 start = new Vec3(x, y, z);
         distance = Math.min(range, distance + travel);
         // Share the fire's collision envelope; reserve room for the outer rendered layer.
-        double spreadWidth = Math.max(0, ExpandingBreathSection.halfWidth(distance) - fullSize * SMOKE_SCALE);
+        double spreadWidth = Math.max(0, ExpandingBreathSection.halfWidth(distance) * visualScale - fullSize * SMOKE_SCALE);
         Vec3 end = origin.add(forward.scale(distance)).add(spread.scale(spreadWidth));
         if (!level.hasChunksAt(BlockPos.containing(start), BlockPos.containing(end))) {
             remove();

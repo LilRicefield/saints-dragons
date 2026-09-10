@@ -3,6 +3,8 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
+import com.leon.saintsdragons.common.particle.FireBreathParticleData;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -27,9 +29,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
     private static final int SKYFALL_TICKS = 14 * 20;
-    private static final int SKYFALL_EXPLOSION_TICK = (int) Math.round(6.23D * 20.0D);
+    public static final int SKYFALL_EXPLOSION_TICK = (int) Math.round(6.23D * 20.0D);
     private static final int SKYFALL_STAR_TICK = SKYFALL_EXPLOSION_TICK - 4;
     private static final int SKYFALL_CHARGE_TICK = SKYFALL_EXPLOSION_TICK - 20;
+    private static final int SKYFALL_AURA_TICK = SKYFALL_CHARGE_TICK + 2;
     private static final double EXPLOSION_VISUAL_HEIGHT = 20.0D;
     private static final int ULTIMATE_START_TICKS = 40;
     private static final int ULTIMATE_LOOP_TICKS = 108;
@@ -83,6 +86,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean novaSpawned;
     private boolean explosionStarSpawned;
     private boolean skyfallChargeSpawned;
+    private boolean skyfallAuraSpawned;
     private boolean transitionsToPhase2;
     private boolean groundSkyfallMode;
 
@@ -210,6 +214,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 explosionStarSpawned = true;
                 spawnExplosionStar();
             }
+            if (!skyfallAuraSpawned && ticks >= SKYFALL_AURA_TICK) {
+                skyfallAuraSpawned = true;
+                spawnSkyfallAura();
+            }
             if (!novaSpawned && ticks >= SKYFALL_EXPLOSION_TICK) {
                 novaSpawned = true;
                 spawnNovaEntity();
@@ -282,9 +290,11 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     }
 
     private void beginGroundSkyfall(Ignivorus dragon) {
+        dragon.setSkyfallChargeActive(true);
         novaSpawned = false;
         explosionStarSpawned = false;
         skyfallChargeSpawned = false;
+        skyfallAuraSpawned = false;
         penaltyApplied = false;
         endAnimPlayed = false;
         dragon.getCombatAim().clear();
@@ -363,6 +373,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     }
 
     private void releaseLocks() {
+        getUser().setSkyfallChargeActive(false);
         if (lockedControls) {
             getUser().clearRiderControlLock();
             lockedControls = false;
@@ -398,6 +409,17 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         spawnExplosionFire(server, center);
     }
 
+    private void spawnSkyfallAura() {
+        if (!(getUser().level() instanceof ServerLevel server)) return;
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_AURA.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
+
     private void spawnSkyfallCharge() {
         if (!(getUser().level() instanceof ServerLevel server)) {
             return;
@@ -430,6 +452,17 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         var viewers = server.players().stream()
                 .filter(viewer -> viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR)
                 .toList();
+        var crossFire = new FireBreathParticleData(64.0F, 2.0F, 3.0F);
+        Vec3 crossOrigin = center.add(0.0D, 1.0D, 0.0D);
+        for (int side = 0; side < 4; side++) {
+            Vec3 direction = Vec3.directionFromRotation(0.0F, getUser().yBodyRot + side * 90.0F);
+            Vec3 outlet = crossOrigin.add(direction.scale(2.0D));
+            Vec3 velocity = direction.scale(ExpandingBreathSection.DEFAULT_SPEED);
+            for (var viewer : viewers) {
+                server.sendParticles(viewer, crossFire, true,
+                        outlet.x, outlet.y, outlet.z, 0, velocity.x, velocity.y, velocity.z, 1.0D);
+            }
+        }
         for (var viewer : viewers) {
             server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_LAYER.get(), true,
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);

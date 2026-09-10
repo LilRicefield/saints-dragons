@@ -1,3 +1,10 @@
 {
-  "textures": ["saintsdragons:fire_ground_impact0"]
+  "textures": [
+    "saintsdragons:fire_ground_impact0",
+    "saintsdragons:fire_ground_impact1",
+    "saintsdragons:fire_ground_impact2",
+    "saintsdragons:fire_ground_impact3",
+    "saintsdragons:fire_ground_impact4",
+    "saintsdragons:fire_ground_impact5"
+  ]
 }

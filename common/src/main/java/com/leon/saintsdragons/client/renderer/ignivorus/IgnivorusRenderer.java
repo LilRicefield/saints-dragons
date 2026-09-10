@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.renderer.ignivorus;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.IgnivorusSkyfallRaysRenderer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusNightEmissiveLayer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
@@ -57,7 +58,7 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     @Override
     protected String[] trackedBoneNames() {
         return new String[] {
-                PASSENGER_BONE, FIRE_BONE, HEAD_BONE, NECK_BONE, HIP_BONE,
+                PASSENGER_BONE, FIRE_BONE, HEAD_BONE, NECK_BONE, HIP_BONE, "middlebody",
                 LEFT_WING_BONE, RIGHT_WING_BONE, LEFT_WING_JOINT_BONE, RIGHT_WING_JOINT_BONE,
                 TAIL1_BONE, TAIL2_BONE, TAIL3_BONE, TAIL4_BONE,
                 LEFT_FRONT_LEG_BONE, RIGHT_FRONT_LEG_BONE, LEFT_BACK_LEG_BONE, RIGHT_BACK_LEG_BONE,
@@ -100,6 +101,8 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     protected void afterDragonRender(Ignivorus entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
                                      net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
         if (!entity.isBaby()) {
+            IgnivorusSkyfallRaysRenderer.render(entity, getBoneWorldPosition("middlebody"),
+                    poseStack, bufferSource, partialTick);
             sendBonePositionsToServer(entity);
             DragonDiveTrailRenderer.render(entity,
                     getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),

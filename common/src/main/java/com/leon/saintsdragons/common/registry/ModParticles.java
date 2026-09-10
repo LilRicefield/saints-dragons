@@ -138,6 +138,9 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> IGNIVORUS_SKYFALL_CHARGE =
             REGISTER.register("ignivorus_skyfall_charge", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_SKYFALL_AURA =
+            REGISTER.register("ignivorus_skyfall_aura", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> DRAGON_DUST =
             REGISTER.register("dragon_dust", () -> Services.PLATFORM.createSimpleParticle(true));
 

@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.particle;
 
 import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -17,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle {
-    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE }
+    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA }
     private static final float TICKS_PER_FRAME = 2.0F;
     private static final int SPARK_COUNT = 64;
     private final SpriteSet sprites;
@@ -25,31 +26,43 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
     private final Layer layer;
     private final int frameCount;
     private final float ticksPerFrame;
+    private final ParticleRenderType renderType;
 
     private IgnivorusExplosionLayerParticle(ClientLevel level, double x, double y, double z,
                                             SpriteSet sprites, Layer layer) {
         super(level, x, y, z);
         this.sprites = sprites;
         this.layer = layer;
+        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND)
+                && ShaderPassCompatibility.isShaderPackInUse()
+                ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
+                : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
         this.ground = layer == Layer.GROUND;
         this.frameCount = switch (layer) {
             case EXPLOSION -> 7;
-            case GROUND -> 1;
+            case GROUND -> 6;
             case SPEC -> 12;
             case CHARGE -> 5;
+            case AURA -> 10;
         };
-        this.ticksPerFrame = layer == Layer.CHARGE ? 1.0F : TICKS_PER_FRAME;
-        lifetime = ground ? 24 : (int) (frameCount * ticksPerFrame);
+        this.ticksPerFrame = switch (layer) {
+            case CHARGE -> 1.0F;
+            case AURA -> 16.0F / frameCount;
+            case GROUND -> 24.0F / frameCount;
+            default -> TICKS_PER_FRAME;
+        };
+        lifetime = layer == Layer.AURA ? 16 : ground ? 24 : (int) (frameCount * ticksPerFrame);
         hasPhysics = false;
         alpha = 0.0F;
         setColor(1.0F, 0.65F, 0.18F);
         if (layer == Layer.SPEC) setColor(1.0F, 0.82F, 0.38F);
-        if (ground) {
+        if (layer == Layer.AURA) setColor(1.0F, 1.0F, 1.0F);
+        if (frameCount == 1) {
             pickSprite(sprites);
         } else {
             setSprite(sprites.get(0, frameCount - 1));
         }
-        double radius = 56.0D;
+        double radius = layer == Layer.AURA ? 70.0D : 56.0D;
         setBoundingBox(new AABB(x - radius, y - radius, z - radius,
                 x + radius, y + radius, z + radius));
     }
@@ -84,6 +97,9 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float elapsed = age + partialTicks;
+        if (frameCount > 1) {
+            setSprite(sprites.get(Math.min((int) (elapsed / ticksPerFrame), frameCount - 1), frameCount - 1));
+        }
         float progress = Mth.clamp(elapsed / lifetime, 0.0F, 1.0F);
         float fadeIn = smooth(Mth.clamp(elapsed / 2.0F, 0.0F, 1.0F));
         float fadeOut = 1.0F - smooth(Mth.clamp((progress - 0.3F) / 0.7F, 0.0F, 1.0F));
@@ -91,8 +107,24 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         quadSize = Mth.lerp(1.0F - (1.0F - progress) * (1.0F - progress),
                 ground ? 10.0F : 12.0F, ground ? 32.0F : 36.0F);
         if (layer == Layer.CHARGE) quadSize = Mth.lerp(progress, 24.0F, 36.0F);
+        if (layer == Layer.AURA) {
+            quadSize = Mth.lerp(progress, 18.0F, 24.0F);
+            Vec3 center = new Vec3(x, y, z).subtract(camera.getPosition());
+            Vec3 towardCamera = camera.getPosition().subtract(x, y, z);
+            Vec3 right = new Vec3(towardCamera.z, 0.0D, -towardCamera.x);
+            if (right.lengthSqr() < 1.0E-8D) {
+                double yaw = Math.toRadians(camera.getYRot());
+                right = new Vec3(Math.cos(yaw), 0.0D, Math.sin(yaw));
+            } else {
+                right = right.normalize();
+            }
+            auraCorner(buffer, center, right, -1, -1, getU1(), getV1());
+            auraCorner(buffer, center, right, -1, 1, getU1(), getV0());
+            auraCorner(buffer, center, right, 1, 1, getU0(), getV0());
+            auraCorner(buffer, center, right, 1, -1, getU0(), getV1());
+            return;
+        }
         if (!ground) {
-            setSprite(sprites.get(Math.min((int) (elapsed / ticksPerFrame), frameCount - 1), frameCount - 1));
             super.render(buffer, camera, partialTicks);
             return;
         }
@@ -101,6 +133,13 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         corner(buffer, center, -quadSize, quadSize, getU0(), getV1());
         corner(buffer, center, quadSize, quadSize, getU1(), getV1());
         corner(buffer, center, quadSize, -quadSize, getU1(), getV0());
+    }
+
+    private void auraCorner(VertexConsumer buffer, Vec3 center, Vec3 right,
+                            float horizontal, float vertical, float u, float v) {
+        buffer.vertex(center.x + right.x * horizontal * quadSize, center.y + vertical * quadSize,
+                        center.z + right.z * horizontal * quadSize)
+                .uv(u, v).color(rCol, gCol, bCol, alpha).uv2(0xF000F0).endVertex();
     }
 
     private void corner(VertexConsumer buffer, Vec3 center, float dx, float dz, float u, float v) {
@@ -119,7 +158,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
 
     @Override
     public @NotNull ParticleRenderType getRenderType() {
-        return DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
+        return renderType;
     }
 
     public static final class Factory implements ParticleProvider<SimpleParticleType> {

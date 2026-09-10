@@ -223,6 +223,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Boolean> DATA_CINEMATIC_ZOOM_ACTIVE =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Long> DATA_SKYFALL_START =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.LONG);
 
     private static final double MODEL_SCALE = 1.0D;
     private static final float FIRE_BREATH_ENERGY_REGEN = 0.0025f;
@@ -485,12 +487,24 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.define(DATA_FIRE_END_Z, 0F);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
+        this.entityData.define(DATA_SKYFALL_START, -1L);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
         this.entityData.define(DATA_ACCUMULATED_ROLL, 0f);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_FIREBALL_CHARGE, 0);
+    }
+
+    public void setSkyfallChargeActive(boolean active) {
+        if (!level().isClientSide) {
+            entityData.set(DATA_SKYFALL_START, active ? level().getGameTime() : -1L);
+        }
+    }
+
+    public float getSkyfallElapsedTicks(float partialTick) {
+        long start = entityData.get(DATA_SKYFALL_START);
+        return start < 0L ? -1.0F : (float) (level().getGameTime() - start) + partialTick;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
