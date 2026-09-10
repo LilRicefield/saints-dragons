@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -291,7 +292,7 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
         }
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             holdForCommittedAbility();
-            if (--breathHoldTicks <= 0 || !hasLineOfSight || gap < 4.5D || gap > 18.0D) {
+            if (--breathHoldTicks <= 0 || gap < 4.5D || gap > 18.0D) {
                 dragon.forceEndActiveAbility();
             }
             return true;
@@ -394,6 +395,10 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
             return false;
         }
         if (targetAwaySpeed >= RETREATING_SPEED) {
+            return false;
+        }
+        if (dragon.getAiBreathShot(dragon.getTarget())
+                != DragonCombatAim.Shot.ALIGNED) {
             return false;
         }
         dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);

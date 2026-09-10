@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.control.LookControl;
 
@@ -32,6 +33,11 @@ public class DragonLookControl<T extends DragonEntity> extends LookControl {
         }
         if (dragon.isVehicle()) {
             super.tick();
+            return;
+        }
+        if (dragon instanceof RideableFlyingDragon flying
+                && flying.getCombatAim().isActive()) {
+            flying.getCombatAim().applyFacing();
             return;
         }
         float oldYaw = dragon.yHeadRot;

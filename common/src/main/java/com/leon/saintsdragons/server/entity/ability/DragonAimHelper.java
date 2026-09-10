@@ -102,6 +102,22 @@ public final class DragonAimHelper {
         return normalizeOrNull(Vec3.directionFromRotation(finalPitch, finalYaw));
     }
 
+    public static Vec3 turnDirection(@Nullable Vec3 current, Vec3 desired, double maxDegrees) {
+        Vec3 to = normalizeOrNull(desired);
+        Vec3 from = current == null ? null : normalizeOrNull(current);
+        if (to == null) return from != null ? from : DEFAULT_FORWARD;
+        if (from == null) return to;
+        double dot = Mth.clamp(from.dot(to), -1.0D, 1.0D);
+        double angle = Math.acos(dot);
+        double step = Math.toRadians(maxDegrees);
+        if (angle <= step || angle < 1.0E-6D) return to;
+        Vec3 tangent = to.subtract(from.scale(dot));
+        if (tangent.lengthSqr() < 1.0E-8D) {
+            tangent = from.cross(Math.abs(from.y) < 0.9D ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0));
+        }
+        return from.scale(Math.cos(step)).add(tangent.normalize().scale(Math.sin(step))).normalize();
+    }
+
     @Nullable
     public static Vec3 normalizeOrNull(Vec3 vec) {
         return vec.lengthSqr() > EPSILON ? vec.normalize() : null;

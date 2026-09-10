@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.BodyRotationControl;
@@ -42,6 +43,14 @@ public class DragonBodyControl extends BodyRotationControl {
         }
         if (shouldLockForSitting()) {
             freezeSeatedRotation();
+            this.trackingSuspended = true;
+            return;
+        }
+        if (this.entity instanceof RideableFlyingDragon flying
+                && flying.getCombatAim().isActive()) {
+            this.entity.yBodyRot = this.entity.getYRot();
+            flying.getCombatAim().applyFacing();
+            this.targetYawHead = this.entity.yHeadRot;
             this.trackingSuspended = true;
             return;
         }

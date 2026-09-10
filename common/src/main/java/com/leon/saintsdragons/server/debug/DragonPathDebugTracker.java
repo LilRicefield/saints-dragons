@@ -749,6 +749,7 @@ public final class DragonPathDebugTracker {
                 movement.getMovementCommandGeneration(), dragon.level().getGameTime()));
         summary.append(",landingRecovery=").append(flying.isAiLandingRecoveryActive());
         summary.append(",steering={").append(flying.getFlightSteeringDebugSummary()).append('}');
+        summary.append(",aim={").append(flying.getCombatAim().debugSummary()).append('}');
         summary.append(",space={").append(movement.flightSpace().debugSummary()).append('}');
         summary.append(",landing=").append(dragon.getBrain()
                 .getMemory(DragonMemories.TACTICAL_LANDING_POSITION).map(Object::toString).orElse("none"));

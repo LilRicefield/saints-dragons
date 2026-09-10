@@ -35,6 +35,7 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxDiveImpactAbility;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
@@ -805,20 +806,22 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
     }
 
-    /** Use the same mouth origin, aim limits and block collision as the damaging beam. */
     public boolean hasAiBeamShot(LivingEntity target, double range) {
+        return getAiBeamShot(target, range) == DragonCombatAim.Shot.ALIGNED;
+    }
+
+    public DragonCombatAim.Shot getAiBeamShot(LivingEntity target, double range) {
         Vec3 origin = getBeamStartAnchor(1.0F);
-        if (origin == null || target == null) return false;
-        Vec3 offset = target.getEyePosition().add(0.0D, -0.25D, 0.0D).subtract(origin);
-        if (offset.lengthSqr() < 1.0E-6D || offset.lengthSqr() > range * range) return false;
-        Vec3 direction = clampBeamDirection(offset.normalize());
-        if (direction == null) return false;
-        Vec3 impact = traceBeamImpact(origin, direction);
-        AABB hitBox = target.getBoundingBox().inflate(0.55D);
-        return hitBox.contains(origin) || hitBox.clip(origin, impact).isPresent();
+        if (origin == null || target == null) return DragonCombatAim.Shot.NO_TARGET;
+        Vec3 direction = refreshBeamAimDirection(origin, true);
+        origin = getBeamStartAnchor(1.0F);
+        if (isBeaming() && updateBeamPathFromAim()) origin = getBeamStartPosition();
+        if (origin == null) return DragonCombatAim.Shot.NO_TARGET;
+        return getCombatAim().assess(origin, direction, target, range, 0.55D, null);
     }
 
     public void lockAiBeamDirection(Vec3 direction) {
+        getCombatAim().clear();
         aiBeamLockedDirection = direction.normalize();
         beamAimRefreshTick = -1;
         beamPathRefreshTick = -1;
@@ -956,6 +959,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return false;
         }
 
+        Vec3 alignedOrigin = getBeamStartAnchor(1.0F);
+        if (alignedOrigin != null) origin = alignedOrigin;
         syncBeamPath(origin, traceBeamImpact(origin, aimDir));
         beamPathRefreshTick = tickCount;
         return true;
@@ -1694,7 +1699,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return;
         }
 
-        if (isBeaming() || beamAimDir != null) {
+        if (isBeaming() || isBeamGlowActive() || beamAimDir != null) {
             tickBeamLook();
         }
 
@@ -1783,7 +1788,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
     
     private void tickBeamLook() {
-        if (!isBeaming()) {
+        if (!isBeaming() && !isBeamGlowActive()) {
             resetBeamAim();
             return;
         }
@@ -1804,7 +1809,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (!riderControlled) {
             applyBeamLook(aimDir);
         }
-        if (!level().isClientSide) {
+        if (!level().isClientSide && isBeaming()) {
             updateBeamPathFromAim();
         }
     }
@@ -1816,6 +1821,12 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public Vec3 refreshBeamAimDirection(Vec3 start, boolean smooth) {
         if (getControllingPassenger() == null && aiBeamLockedDirection != null) {
             beamAimDir = aiBeamLockedDirection;
+            updateBeamOffsets(beamAimDir);
+            beamAimRefreshTick = tickCount;
+            return beamAimDir;
+        }
+        if (!level().isClientSide && getControllingPassenger() == null && isTargetValid(getTarget())) {
+            beamAimDir = getCombatAim().track(getTarget(), start, DragonCombatAim.BEAM);
             updateBeamOffsets(beamAimDir);
             beamAimRefreshTick = tickCount;
             return beamAimDir;
@@ -1931,6 +1942,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (aimDir == null) {
             return;
         }
+        if (getCombatAim().isActive()) {
+            getCombatAim().applyFacing();
+            return;
+        }
+        if (isAerial() && getControllingPassenger() == null) return;
         float desiredYaw = (float)(Math.atan2(-aimDir.x, aimDir.z) * (180.0 / Math.PI));
         float desiredPitch = (float)(-Math.atan2(aimDir.y, Math.sqrt(aimDir.x * aimDir.x + aimDir.z * aimDir.z)) * (180.0 / Math.PI));
 

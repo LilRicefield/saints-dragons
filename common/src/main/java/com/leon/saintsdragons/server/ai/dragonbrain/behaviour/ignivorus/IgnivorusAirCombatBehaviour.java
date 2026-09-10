@@ -2,6 +2,9 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.RangedAirCombatBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -17,8 +20,8 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
             42.0D,
             16.0D,
             3.5D,
-            20.0D,
-            64.0D,
+            16.0D,
+            128.0D,
             25.0D,
             30,
             12,
@@ -108,7 +111,7 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
                 && IgnivorusFireBreathAbility.canStartAiBreath(dragon, target);
         boolean fireballReady = dragon.isPhase2Active()
                 && canUseAiAbility(dragon, ModAbilities.IGNIVORUS_FIREBALL, true)
-                && dragon.hasAiFireBreathShot(target, 64.0D);
+                && dragon.hasAiFireballShot(target, 64.0D);
         if (fireballReady && (!breathReady || dragon.getRandom().nextFloat() < 0.4F)) {
             return dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIREBALL,
                     true, 12, 400, 60, 80);
@@ -126,6 +129,17 @@ public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivo
                 0
         );
         return true;
+    }
+
+    @Override
+    protected void setRangedMovementIntent(DragonBrainContext<Ignivorus> context, LivingEntity target) {
+        Ignivorus dragon = context.dragon();
+        if (!dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIRE_BREATH)) {
+            super.setRangedMovementIntent(context, target);
+            return;
+        }
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(
+                dragon.getCombatAim().firingApproach(target, COMBAT_SETTINGS.directChaseSpeed(), 22.0D, 2.0D)));
     }
 
     private boolean canUseAirCombat(Ignivorus dragon) {

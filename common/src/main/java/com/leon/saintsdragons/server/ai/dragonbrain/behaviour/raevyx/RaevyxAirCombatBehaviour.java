@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirCombatMovementBehaviour;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.util.Mth;
@@ -21,7 +22,7 @@ import java.util.Map;
 
 public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<Raevyx> {
     private static final double MELEE_RANGE = 7.0D;
-    private static final double RANGED_MIN_RANGE = 20.0D;
+    private static final double RANGED_MIN_RANGE = 16.0D;
     private static final double RANGED_MAX_RANGE = 70.0D;
     private static final double ROAR_MIN_RANGE = 6.0D;
     private static final double ROAR_MAX_RANGE = 40.0D;
@@ -49,6 +50,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private static final double BREAKAWAY_CLEAR_DISTANCE_SQR = 34.0D * 34.0D;
     private static final int MELEE_ATTACK_COOLDOWN_TICKS = 20;
     private static final int BEAM_ATTACK_COOLDOWN_TICKS = 12;
+    private static final int BEAM_OPENING_TICKS = 10;
     private static final int ROAR_ATTACK_COOLDOWN_TICKS = 24;
     private static final int ROAR_COOLDOWN_TICKS = 160;
     private static final int CHASE_CAPTURE_TICKS = 12;
@@ -69,6 +71,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private int routeGraceTicks;
     private int attackSide = 1;
     private int beamSegment;
+    private int beamAlignmentTicks;
+    private int beamRetryTick;
     private int orbitWaypointsCompleted;
     private boolean roarEgressIssued;
     private int shotFromBelowCounter;
@@ -85,10 +89,6 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private Vec3 runDirection;
     @Nullable
     private Vec3 breakawayTarget;
-    @Nullable
-    private Vec3 beamRadial;
-    @Nullable
-    private Vec3 beamTangent;
 
     @Override
     protected void startAirCombat(DragonBrainContext<Raevyx> context) {
@@ -100,6 +100,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         routeGraceTicks = 0;
         attackSide = context.dragon().getRandom().nextBoolean() ? 1 : -1;
         beamSegment = 0;
+        beamAlignmentTicks = 0;
+        beamRetryTick = 0;
         orbitWaypointsCompleted = 0;
         roarEgressIssued = false;
         clearRouteState();
@@ -174,6 +176,18 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
 
+        if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) {
+            chaseCaptureTicks = 0;
+            commandBeamApproach(context, target);
+            if (dragon.distanceTo(target) <= ORBIT_ABORT_RANGE) {
+                enterBeamPass(context, target, "beam:pursuit-caught-up");
+            } else {
+                lastDecision = "beam:pursuit";
+            }
+            return;
+        }
+        if (phaseTicks >= BEAM_OPENING_TICKS && tryBeamOpening(context, target, hasLineOfSight)) return;
+
         if (attackCooldown <= 0
                 && !isCurrentlyAttacking(dragon)
                 && hasLineOfSight
@@ -242,6 +256,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
 
+        if (phaseTicks >= BEAM_OPENING_TICKS && tryBeamOpening(context, target, hasLineOfSight)) return;
+
         Vec3 currentTargetCenter = targetCenter(target);
         boolean targetShifted = orbitAnchor != null
                 && orbitAnchor.distanceToSqr(currentTargetCenter) > ORBIT_RETARGET_DISTANCE_SQR;
@@ -287,17 +303,6 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             attackCooldown = ROAR_ATTACK_COOLDOWN_TICKS;
             roarCooldown = ROAR_COOLDOWN_TICKS;
             enterRoarPass(context, target);
-            return;
-        }
-        if (attackCooldown <= 0
-                && dragon.isAiBeamReady()
-                && hasLineOfSight
-                && distance >= RANGED_MIN_RANGE
-                && distance <= RANGED_MAX_RANGE
-                && canUseRangedAttack(dragon, target)
-                && tryStartRangedAttack(dragon)) {
-            attackCooldown = BEAM_ATTACK_COOLDOWN_TICKS;
-            enterBeamPass(context, target, "beam:started-pass");
             return;
         }
         enterMeleeCommit(context, target);
@@ -374,18 +379,17 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
         if (routeFailed(dragon)) {
-            commandBeamSegment(context, target, 2);
-            lastDecision = "beam:route-recovery";
+            enterChase(context, target, "beam:route-recovery");
             return;
         }
-        if (routeReached(dragon) && beamSegment < 2) {
-            commandBeamSegment(context, target, beamSegment + 1);
+        if (phaseTicks % 6 == 0 || routeReached(dragon)) {
+            commandBeamApproach(context, target);
         }
         if (phaseTicks >= 110) {
             enterBreakaway(context, target, "breakaway:beam-timeout");
             return;
         }
-        lastDecision = "beam:strafing-" + beamSegment;
+        lastDecision = "beam:tracking-pass";
     }
 
     private void tickRoarPass(DragonBrainContext<Raevyx> context, LivingEntity target) {
@@ -510,16 +514,9 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private void enterBeamPass(DragonBrainContext<Raevyx> context,
                                LivingEntity target,
                                String decision) {
-        Raevyx dragon = context.dragon();
         phase = AirPhase.BEAM_PASS;
         phaseTicks = 0;
-        Vec3 center = targetCenter(target);
-        beamRadial = horizontalDirection(
-                dragon.getBoundingBox().getCenter().subtract(center),
-                dragon.getLookAngle()
-        );
-        beamTangent = new Vec3(-beamRadial.z, 0.0D, beamRadial.x).scale(attackSide);
-        commandBeamSegment(context, target, 0);
+        commandBeamApproach(context, target);
         lastDecision = decision;
     }
 
@@ -549,32 +546,19 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         lastDecision = "roar:started-flyby";
     }
 
-    private void commandBeamSegment(DragonBrainContext<Raevyx> context,
-                                    LivingEntity target,
-                                    int segment) {
+    private void commandBeamApproach(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
-        if (beamRadial == null || beamTangent == null) {
-            Vec3 center = targetCenter(target);
-            beamRadial = horizontalDirection(
-                    dragon.getBoundingBox().getCenter().subtract(center),
-                    dragon.getLookAngle()
-            );
-            beamTangent = new Vec3(-beamRadial.z, 0.0D, beamRadial.x).scale(attackSide);
-        }
-        Vec3 center = predictTargetCenter(target, 4.0D, 10.0D);
-        Vec3 destination = switch (segment) {
-            case 0 -> center.add(beamTangent.scale(30.0D))
-                    .add(beamRadial.scale(-6.0D))
-                    .add(0.0D, 4.0D, 0.0D);
-            case 1 -> center.add(beamRadial.scale(-28.0D))
-                    .add(beamTangent.scale(-10.0D))
-                    .add(0.0D, 6.0D, 0.0D);
-            default -> center.add(beamRadial.scale(35.0D))
-                    .add(beamTangent.scale(-16.0D))
-                    .add(0.0D, 10.0D, 0.0D);
-        };
-        beamSegment = Math.min(2, segment);
-        commandManeuver(context, destination, beamSegment == 2 ? BREAKAWAY_SPEED : BEAM_PASS_SPEED);
+        double speed = Mth.clamp((target.getDeltaMovement().horizontalDistance() + 0.5D)
+                * 1.5D / Math.max(0.1D, dragon.getFlightSpeed()), BEAM_PASS_SPEED, DIRECT_CHASE_SPEED);
+        Vec3 toTarget = target.position().subtract(dragon.position()).normalize();
+        double closing = Math.max(0, dragon.getDeltaMovement().subtract(target.getDeltaMovement()).dot(toTarget));
+        DragonFlightRequest request = dragon.getCombatAim().firingApproach(target, speed,
+                24.0D + Math.min(12.0D, closing * 6.0D),
+                attackSide * (4.0D + Math.sin(phaseTicks * 0.04D) * 3.0D));
+        routeTarget = request.target();
+        routeGraceTicks = 3;
+        beamSegment = dragon.isBeaming() ? 1 : 0;
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(request));
     }
 
     private void enterBreakaway(DragonBrainContext<Raevyx> context,
@@ -694,11 +678,45 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         return false;
     }
 
-    private boolean canUseRangedAttack(Raevyx dragon, LivingEntity target) {
-        return !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
-                && dragon.getBeamEnergy() >= 0.6F
-                && dragon.hasAiBeamShot(target, Raevyx.BEAM_RANGE * 0.85D)
-                && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target);
+    private boolean tryBeamOpening(DragonBrainContext<Raevyx> context, LivingEntity target, boolean hasLineOfSight) {
+        Raevyx dragon = context.dragon();
+        double distance = dragon.distanceTo(target);
+        if (attackCooldown > 0 || dragon.tickCount < beamRetryTick || dragon.isTakeoff()
+                || isCurrentlyAttacking(dragon) || !dragon.isAiBeamReady() || !hasLineOfSight
+                || distance < RANGED_MIN_RANGE || distance > RANGED_MAX_RANGE
+                || DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                || dragon.getBeamEnergy() < 0.6F || RaevyxBeamAbility.isAtAiBeamMercyThreshold(target)
+                || !canUseAiAbility(dragon, ModAbilities.RAEVYX_LIGHTNING_BEAM, true)) {
+            beamAlignmentTicks = 0;
+            return false;
+        }
+        DragonCombatAim.Shot shot = dragon.getAiBeamShot(target, Raevyx.BEAM_RANGE * 0.85D);
+        if (shot != DragonCombatAim.Shot.ALIGNED && !shot.needsAlignment()) {
+            beamAlignmentTicks = 0;
+            dragon.getCombatAim().clear();
+            return false;
+        }
+        if (dragon.getCombatAim().ready(3) && tryStartRangedAttack(dragon)) {
+            beamAlignmentTicks = 0;
+            attackCooldown = BEAM_ATTACK_COOLDOWN_TICKS;
+            if (distance <= ORBIT_ABORT_RANGE) {
+                enterBeamPass(context, target, "beam:aligned-opening");
+            } else {
+                commandBeamApproach(context, target);
+                lastDecision = "beam:started-pursuit";
+            }
+        } else {
+            if (++beamAlignmentTicks > 30) {
+                beamAlignmentTicks = 0;
+                beamRetryTick = dragon.tickCount + 40;
+                dragon.getCombatAim().clear();
+                return false;
+            }
+            commandBeamApproach(context, target);
+            lastDecision = "beam:aligning-approach";
+        }
+        chaseCaptureTicks = 0;
+        return true;
     }
 
     private boolean tryStartMeleeAttack(Raevyx dragon) {
@@ -810,13 +828,13 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         committedIntercept = null;
         runDirection = null;
         breakawayTarget = null;
-        beamRadial = null;
-        beamTangent = null;
         routeGraceTicks = 0;
     }
 
     @Override
     protected void stopAirCombat(DragonBrainContext<Raevyx> context) {
+        context.dragon().getCombatAim().clear();
+        beamAlignmentTicks = 0;
         phase = AirPhase.CHASE;
         phaseTicks = 0;
         chaseCaptureTicks = 0;
@@ -841,6 +859,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         details.put("air_side", attackSide > 0 ? "left" : "right");
         details.put("air_attack_cooldown", Integer.toString(attackCooldown));
         details.put("air_beam_cooldown", Integer.toString(rangedCooldown));
+        details.put("air_beam_alignment_ticks", Integer.toString(beamAlignmentTicks));
         details.put("air_roar_cooldown", Integer.toString(roarCooldown));
         details.put("air_beam_segment", Integer.toString(beamSegment));
         return Map.copyOf(details);

@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.particle.FireBreathBurstData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -44,7 +45,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private boolean openingBurstEmitted = false;
     private boolean aiControlled;
     private int aiActiveTicks;
-    private int lostShotTicks;
+    private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
     private static final double AI_START_GAP = 10.0D;
     private static final double AI_STOP_GAP = 6.0D;
     private static final int AI_LOST_SHOT_GRACE_TICKS = 12;
@@ -64,7 +65,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
         if (section.sectionType == STARTUP) {
             aiControlled = dragon.getControllingPassenger() == null;
             aiActiveTicks = aiControlled ? 80 + dragon.getRandom().nextInt(81) : RIDER_ACTIVE_TICKS;
-            lostShotTicks = 0;
+            shotGrace.reset();
             if (aiControlled) dragon.setAiFireBreathDecision("windup");
         }
         if (!dragon.level().isClientSide && aiControlled && !canContinueAiBreath(false)) {
@@ -125,6 +126,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     @Override
     public void end() {
         Ignivorus dragon = getUser();
+        dragon.getCombatAim().clear();
         if (isUsing() && aiControlled && !dragon.level().isClientSide) {
             // Shared across ground/air combat, and measured from completion or cancellation.
             dragon.getAiCombatPacing().recordUse(getAbilityType(), 10,
@@ -226,9 +228,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
         if (!dragon.isAerial() && horizontalGap <= 2.0D) return stopAiBreath("target-underneath");
         if (active && getTicksInSection() >= aiActiveTicks) return stopAiBreath("burst-complete");
-        boolean clearShot = dragon.hasAiFireBreathShot(target, ExpandingBreathSection.DEFAULT_RANGE);
-        lostShotTicks = clearShot ? 0 : lostShotTicks + 1;
-        return lostShotTicks < AI_LOST_SHOT_GRACE_TICKS || stopAiBreath("shot-lost");
+        DragonCombatAim.Shot shot = dragon.getAiFireBreathShot(target, ExpandingBreathSection.DEFAULT_RANGE);
+        if (shot != DragonCombatAim.Shot.ALIGNED) dragon.setAiFireBreathDecision("tracking:" + shot.reason());
+        return shotGrace.allows(shot, dragon.tickCount, 20, AI_LOST_SHOT_GRACE_TICKS)
+                || stopAiBreath(shot.reason());
     }
 
     private boolean stopAiBreath(String reason) {

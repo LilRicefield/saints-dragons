@@ -45,6 +45,10 @@ public abstract class RangedAirCombatBehaviour<
             return;
         }
         double distance = dragon.distanceTo(target);
+        if (isRangedAttackActive(dragon)) {
+            setRangedMovementIntent(context, target);
+            return;
+        }
         if (distance <= combatSettings.meleeRange() && hasLineOfSight) {
             if (!isCurrentlyAttacking(dragon) && attackCooldown <= 0 && tryStartMeleeAttack(dragon, target)) {
                 attackCooldown = combatSettings.meleeAttackCooldownTicks();
@@ -66,7 +70,7 @@ public abstract class RangedAirCombatBehaviour<
                 rangedCooldown = combatSettings.rangedCooldownTicks();
             }
             if (isRangedAttackActive(dragon)) {
-                context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.holdPosition());
+                setRangedMovementIntent(context, target);
             } else {
                 setCombatPositionIntent(context, target);
             }
@@ -108,6 +112,10 @@ public abstract class RangedAirCombatBehaviour<
     }
 
     protected abstract boolean isRangedAttackActive(T dragon);
+
+    protected void setRangedMovementIntent(DragonBrainContext<T> context, LivingEntity target) {
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.holdPosition());
+    }
 
     protected abstract boolean tryStartMeleeAttack(T dragon, LivingEntity target);
 

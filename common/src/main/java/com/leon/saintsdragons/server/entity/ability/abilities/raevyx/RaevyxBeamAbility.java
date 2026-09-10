@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -46,7 +47,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private boolean aiControlled;
     private boolean groundAiBeam;
     private int aiBurstTicks;
-    private int lostShotTicks;
+    private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
     private boolean retreatUsed;
     private int retreatAimUnlockTick;
     private final Set<BlockPos> energizedRedstoneWires = new HashSet<>();
@@ -63,7 +64,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             aiControlled = wyvern.getControllingPassenger() == null;
             groundAiBeam = aiControlled && !wyvern.isAerial();
             aiBurstTicks = 40 + wyvern.getRandom().nextInt(41);
-            lostShotTicks = 0;
+            shotGrace.reset();
             retreatUsed = false;
             retreatAimUnlockTick = 0;
             if (aiControlled) wyvern.setAiBeamDecision("windup");
@@ -133,6 +134,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     @Override
     public void end() {
         Raevyx wyvern = getUser();
+        wyvern.getCombatAim().clear();
         if (isUsing() && aiControlled && !wyvern.level().isClientSide) {
             wyvern.finishAiBeam();
         }
@@ -215,10 +217,12 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             }
         }
 
-        boolean clearShot = wyvern.hasAiBeamShot(target, Raevyx.BEAM_RANGE);
-        lostShotTicks = clearShot ? 0 : lostShotTicks + 1;
-        // A brief obstruction/aim adjustment is allowed; sustained cover ends the cast.
-        return lostShotTicks < 10 || stopAiBeam("shot-obstructed-or-out-of-range");
+        DragonCombatAim.Shot shot = wyvern.getAiBeamShot(target, Raevyx.BEAM_RANGE);
+        if (shot != DragonCombatAim.Shot.ALIGNED) {
+            wyvern.setAiBeamDecision("tracking:" + shot.reason());
+        }
+        return shotGrace.allows(shot, wyvern.tickCount, wyvern.isAerial() ? 20 : 10, 10)
+                || stopAiBeam(shot.reason());
     }
 
     private boolean stopAiBeam(String reason) {

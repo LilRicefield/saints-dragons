@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -238,13 +239,23 @@ class AsyncFlightMovementExecutor {
 
         if (!holdLandingHeading && velocity.horizontalDistanceSqr() > 1.0E-4D) {
             float targetYaw = -(float) Math.toDegrees(Mth.atan2(velocity.x, velocity.z));
+            if (this.dragon instanceof RideableFlyingDragon flying) {
+                targetYaw = flying.getCombatAim().flightYaw(targetYaw);
+            }
             float yawDiff = Mth.wrapDegrees(targetYaw - this.dragon.getYRot());
             float newYaw = this.dragon.getYRot() + Mth.clamp(yawDiff, -MAX_YAW_STEP, MAX_YAW_STEP);
             this.dragon.setYRot(newYaw);
             this.dragon.yBodyRot = newYaw;
-            this.dragon.setYHeadRot(newYaw);
+            if (!(this.dragon instanceof RideableFlyingDragon flying)
+                    || !flying.getCombatAim().isActive()) {
+                this.dragon.setYHeadRot(newYaw);
+            }
         }
 
+        if (this.dragon instanceof RideableFlyingDragon flying && flying.getCombatAim().isActive()) {
+            flying.getCombatAim().applyFacing();
+            return;
+        }
         float targetPitch = (float) (-Math.toDegrees(Mth.atan2(velocity.y, Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z))));
         float pitchDiff = Mth.wrapDegrees(targetPitch - this.dragon.getXRot());
         if (Math.abs(pitchDiff) < PITCH_DEADZONE_DEGREES) {

@@ -2,6 +2,9 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirCombatMovementBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -56,8 +59,8 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         }
 
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
-            setAbilityApproachIntent(context, target, POSITION_SPEED * 0.65D);
-            if (--breathHoldTicks <= 0 || !hasLineOfSight || distance < 7.0D || distance > 26.0D) {
+            setBreathApproachIntent(context, target);
+            if (--breathHoldTicks <= 0 || distance < 7.0D || distance > 26.0D) {
                 dragon.forceEndActiveAbility();
             }
             return;
@@ -91,11 +94,12 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
                 && distance >= BREATH_MIN_RANGE
                 && distance <= BREATH_MAX_RANGE
                 && hasLineOfSight
-                && canUseAiAbility(dragon, ModAbilities.VOLITANS_BREATH, true)) {
+                && canUseAiAbility(dragon, ModAbilities.VOLITANS_BREATH, true)
+                && dragon.getAiBreathShot(target) == DragonCombatAim.Shot.ALIGNED) {
             dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
             if (startAiAbility(dragon, ModAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
                 breathHoldTicks = 50 + dragon.getRandom().nextInt(30);
-                setAbilityApproachIntent(context, target, POSITION_SPEED * 0.7D);
+                setBreathApproachIntent(context, target);
                 return;
             }
         }
@@ -176,6 +180,11 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
                                           LivingEntity target,
                                           double speed) {
         setPredictedChaseIntent(context, target, 5.0D, CHASE_HEIGHT_OFFSET, 0.12D, 0.5D, speed);
+    }
+
+    private void setBreathApproachIntent(DragonBrainContext<Volitans> context, LivingEntity target) {
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(
+                context.dragon().getCombatAim().firingApproach(target, CHASE_SPEED, 16.0D, 2.0D)));
     }
 
     private boolean canUseAirCombat(Volitans dragon) {

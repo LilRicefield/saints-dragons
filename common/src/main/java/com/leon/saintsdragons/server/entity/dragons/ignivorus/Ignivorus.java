@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
 import com.leon.saintsdragons.util.animation.AnimationHelper;
@@ -21,6 +22,7 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -2294,8 +2296,21 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         aiFireBreathDecision = decision;
     }
 
-    /** Mouth-level shot viability without advancing the breath's smoothed targeting. */
     public boolean hasAiFireBreathShot(LivingEntity target, double range) {
+        return getAiFireBreathShot(target, range) == DragonCombatAim.Shot.ALIGNED;
+    }
+
+    public DragonCombatAim.Shot getAiFireBreathShot(LivingEntity target, double range) {
+        Vec3 origin = getFireBreathStartAnchor(1.0F);
+        if (origin == null || target == null) return DragonCombatAim.Shot.NO_TARGET;
+        Vec3 direction = refreshFireAimDirection(origin, true);
+        origin = getFireBreathStartAnchor(1.0F);
+        if (origin == null) return DragonCombatAim.Shot.NO_TARGET;
+        return getCombatAim().assess(origin, direction, target, range, 0,
+                ExpandingBreathSection.Profile.FIRE);
+    }
+
+    public boolean hasAiFireballShot(LivingEntity target, double range) {
         if (target == null) return false;
         Vec3 origin = getFireBreathStartAnchor(1.0F);
         if (origin == null) return false;
@@ -2429,6 +2444,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public Vec3 refreshFireAimDirection(Vec3 start, boolean smooth) {
+        if (!level().isClientSide && getControllingPassenger() == null && isTargetValid(getTarget())) {
+            fireAimDir = getCombatAim().track(getTarget(), start, DragonCombatAim.FIRE);
+            return fireAimDir;
+        }
         Vec3 desired = computeRawFireAimDirection(start);
         if (desired == null) {
             resetFireAimDirection();

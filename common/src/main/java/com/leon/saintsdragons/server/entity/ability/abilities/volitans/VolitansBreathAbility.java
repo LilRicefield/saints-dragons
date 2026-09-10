@@ -2,14 +2,13 @@ package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
@@ -24,6 +23,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     private static final int BREATH_START_SOUND_TICKS = 20; // 1.0s
     private static final int BREATH_END_SOUND_TICKS = 50;   // 2.5s
     private static final float BREATH_VOLUME = 2.0F;
+    private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
@@ -56,6 +56,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
         Volitans dragon = getUser();
         if (section.sectionType == STARTUP) {
+            shotGrace.reset();
             if (!dragon.canUseCurrentBreathMode()) {
                 interrupt();
                 return;
@@ -76,9 +77,21 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     public void tickUsing() {
         DragonAbilitySection section = getCurrentSection();
         Volitans dragon = getUser();
-        if (section == null || section.sectionType != ACTIVE || dragon.level().isClientSide) {
+        if (section == null || dragon.level().isClientSide) {
             return;
         }
+        if (dragon.getControllingPassenger() == null) {
+            if (!dragon.isTargetValid(dragon.getTarget())) {
+                interrupt();
+                return;
+            }
+            DragonCombatAim.Shot shot = dragon.getAiBreathShot(dragon.getTarget());
+            if (!shotGrace.allows(shot, dragon.tickCount, 20, 12)) {
+                interrupt();
+                return;
+            }
+        }
+        if (section.sectionType != ACTIVE) return;
 
         int activeTicksMax = Math.max(1, (int) Math.round(dragon.getConfiguredExtra("breath_active_ticks_max", 20.0D * 12.0D)));
         if (getTicksInSection() >= activeTicksMax) {
@@ -86,10 +99,9 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
             return;
         }
 
-        updateAiBreathTracking(dragon);
         Vec3 origin = dragon.getBreathOrigin();
         Vec3 direction = getBreathDirection(dragon, origin);
-        if (direction.lengthSqr() < 1.0E-6) {
+        if (direction == null || direction.lengthSqr() < 1.0E-6) {
             return;
         }
 
@@ -109,40 +121,19 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     }
 
     private Vec3 getBreathDirection(Volitans dragon, Vec3 origin) {
+        Vec3 riderDirection = DragonAimHelper.riderViewDirection(dragon);
+        if (riderDirection != null) return riderDirection;
         LivingEntity target = dragon.getTarget();
         if (dragon.isTargetValid(target)) {
-            return DragonAimHelper.riderTargetOrLookDirection(dragon, origin, target, 0.35D);
+            return dragon.getCombatAim().track(target, origin, DragonCombatAim.BREATH);
         }
-
-        Vec3 riderDirection = DragonAimHelper.riderViewDirection(dragon);
-        return riderDirection != null ? riderDirection : DragonAimHelper.lookDirectionOrDefault(dragon);
+        return DragonAimHelper.lookDirectionOrDefault(dragon);
     }
 
-    private void updateAiBreathTracking(Volitans dragon) {
-        if (dragon.getControllingPassenger() instanceof Player) {
-            return;
-        }
-        LivingEntity target = dragon.getTarget();
-        if (!dragon.isTargetValid(target)) {
-            return;
-        }
-
-        Vec3 origin = dragon.getBreathOrigin();
-        Vec3 toTarget = DragonAimHelper.targetAimPoint(target, 0.35D).subtract(origin);
-        if (toTarget.lengthSqr() <= 1.0E-6) {
-            return;
-        }
-
-        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-
-        Vec3 horizontal = new Vec3(toTarget.x, 0.0D, toTarget.z);
-        if (horizontal.lengthSqr() > 1.0E-6D) {
-            float targetYaw = (float) (Mth.atan2(horizontal.z, horizontal.x) * (180.0D / Math.PI)) - 90.0F;
-            float newYaw = Mth.approachDegrees(dragon.getYRot(), targetYaw, 8.0F);
-            dragon.setYRot(newYaw);
-            dragon.yBodyRot = Mth.approachDegrees(dragon.yBodyRot, targetYaw, 10.0F);
-            dragon.yHeadRot = Mth.approachDegrees(dragon.yHeadRot, targetYaw, 14.0F);
-        }
+    @Override
+    public void end() {
+        getUser().getCombatAim().clear();
+        super.end();
     }
 
     @Override

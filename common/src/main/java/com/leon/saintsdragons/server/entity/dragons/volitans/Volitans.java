@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
 import com.leon.saintsdragons.server.entity.component.VolitansBreathStream;
+import com.leon.saintsdragons.common.particle.VolitansBreathMotion;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
@@ -1853,6 +1855,14 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public void emitBreathSection(Vec3 origin, Vec3 direction) {
         breathStream.emit(origin, direction);
+    }
+
+    public DragonCombatAim.Shot getAiBreathShot(LivingEntity target) {
+        Vec3 origin = getBreathOrigin();
+        Vec3 direction = getCombatAim().track(target, origin, DragonCombatAim.BREATH);
+        origin = getBreathOrigin();
+        return getCombatAim().assess(origin, direction, target, VolitansBreathMotion.RANGE,
+                0, VolitansBreathStream.collisionProfile(isPoisonBreathMode()));
     }
 
     public boolean drainCurrentBreathEnergy(float amount) {

@@ -62,6 +62,10 @@ public final class VolitansBreathStream {
         }
     }
 
+    public static ExpandingBreathSection.Profile collisionProfile(boolean poison) {
+        return poison ? POISON : WATER;
+    }
+
     public void tick() {
         if (!(dragon.level() instanceof ServerLevel level)) return;
         if (!dragon.isAlive() || dragon.isRemoved() || dragon.isDying()) {

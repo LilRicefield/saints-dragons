@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonLandingPlan;
+import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
 import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
@@ -88,6 +89,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private final DragonFlightStateEvaluator.AnimationState flightAnimationState = new DragonFlightStateEvaluator.AnimationState();
     private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
+    private final DragonCombatAim combatAim = new DragonCombatAim(this);
     protected final PathNavigateGround groundNav;
     protected final FlyingPathNavigation airNav;
     protected final AsyncFlightController asyncAirController;
@@ -118,6 +120,10 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private boolean aiWaterBreachTakeoff = false;
     private float prevSmoothedRoll = 0.0F;
     private float smoothedRoll = 0.0F;
+
+    public DragonCombatAim getCombatAim() {
+        return combatAim;
+    }
 
     protected abstract EntityDataAccessor<Boolean> getFlyingDataAccessor();
 
