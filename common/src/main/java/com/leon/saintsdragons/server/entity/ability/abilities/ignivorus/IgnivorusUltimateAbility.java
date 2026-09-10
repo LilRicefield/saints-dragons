@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -12,7 +13,6 @@ import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.Ignivorus
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,6 +28,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
     private static final int SKYFALL_TICKS = 14 * 20;
     private static final int SKYFALL_EXPLOSION_TICK = (int) Math.round(6.23D * 20.0D);
+    private static final int SKYFALL_STAR_TICK = SKYFALL_EXPLOSION_TICK - 4;
+    private static final int SKYFALL_CHARGE_TICK = SKYFALL_EXPLOSION_TICK - 20;
+    private static final double EXPLOSION_VISUAL_HEIGHT = 20.0D;
     private static final int ULTIMATE_START_TICKS = 40;
     private static final int ULTIMATE_LOOP_TICKS = 108;
     private static final int ULTIMATE_END_TICKS = 25;
@@ -51,6 +54,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int NOVA_SPAWN_DELAY_AIR = 42;
     private static final int PHASE2_DAMAGE_DELAY = 10;
     private static final int PHASE2_NOVA_SPAWN_DELAY = 13;
+    private static final int FIRE_PUFF_COUNT = 48;
+    private static final double FIRE_PUFF_VIEW_DISTANCE_SQR = 128.0D * 128.0D;
     private static final float PENALTY_HEALTH = 50.0F;
     private static final Component PENALTY_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
@@ -76,6 +81,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean isAirborneMode;
     private boolean phase2DamageApplied;
     private boolean novaSpawned;
+    private boolean explosionStarSpawned;
+    private boolean skyfallChargeSpawned;
     private boolean transitionsToPhase2;
     private boolean groundSkyfallMode;
 
@@ -195,6 +202,14 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
         int ticks = getTicksInSection();
         if (groundSkyfallMode) {
+            if (!skyfallChargeSpawned && ticks >= SKYFALL_CHARGE_TICK) {
+                skyfallChargeSpawned = true;
+                spawnSkyfallCharge();
+            }
+            if (!explosionStarSpawned && ticks >= SKYFALL_STAR_TICK) {
+                explosionStarSpawned = true;
+                spawnExplosionStar();
+            }
             if (!novaSpawned && ticks >= SKYFALL_EXPLOSION_TICK) {
                 novaSpawned = true;
                 spawnNovaEntity();
@@ -268,6 +283,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
     private void beginGroundSkyfall(Ignivorus dragon) {
         novaSpawned = false;
+        explosionStarSpawned = false;
+        skyfallChargeSpawned = false;
         penaltyApplied = false;
         endAnimPlayed = false;
         dragon.getCombatAim().clear();
@@ -377,35 +394,63 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 center.add(0, 0.1, 0)
         );
         server.addFreshEntity(ring);
-        int flameCount = 32;
-        double flameSpeed = 1.2;
-        float flameScale = 2.0F;
-        int flameLifetime = 30;
-        float flameDamage = 0.0F;
-        var random = dragon.getRandom();
-        Vec3 spawnPos = center.add(0, 4.0, 0);
 
-        for (int i = 0; i < flameCount; i++) {
-            double angle = random.nextDouble() * Math.PI * 2.0;
-            double horizontal = Math.sqrt(random.nextDouble());
-            double vx = Math.cos(angle) * horizontal;
-            double vz = Math.sin(angle) * horizontal;
-            double vy = 0.35 + random.nextDouble() * 0.35;
+        spawnExplosionFire(server, center);
+    }
 
-            Vec3 velocity = new Vec3(vx, vy, vz).normalize().scale(flameSpeed * (0.8 + random.nextDouble() * 0.6));
-
-            IgnivorusFlameEntity flame = new IgnivorusFlameEntity(
-                    server,
-                    spawnPos,
-                    velocity,
-                    dragon,
-                    flameDamage,
-                    flameScale,
-                    flameLifetime
-            );
-            server.addFreshEntity(flame);
+    private void spawnSkyfallCharge() {
+        if (!(getUser().level() instanceof ServerLevel server)) {
+            return;
         }
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_CHARGE.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
 
+    private void spawnExplosionStar() {
+        if (!(getUser().level() instanceof ServerLevel server)) {
+            return;
+        }
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_STAR.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
+
+    private void spawnExplosionFire(ServerLevel server, Vec3 center) {
+        var random = getUser().getRandom();
+        Vec3 base = center.add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        var viewers = server.players().stream()
+                .filter(viewer -> viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR)
+                .toList();
+        for (var viewer : viewers) {
+            server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_LAYER.get(), true,
+                    base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            server.sendParticles(viewer, ModParticles.IGNIVORUS_FIRE_SPEC.get(), true,
+                    base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            server.sendParticles(viewer, ModParticles.IGNIVORUS_GROUND_IMPACT.get(), true,
+                    center.x, center.y + 0.24D, center.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        for (int i = 0; i < FIRE_PUFF_COUNT; i++) {
+            double theta = random.nextDouble() * Math.PI * 2.0D;
+            double phi = Math.acos(1.0D - random.nextDouble() * 1.4D);
+            double sinPhi = Math.sin(phi);
+            Vec3 dir = new Vec3(Math.cos(theta) * sinPhi, Math.cos(phi), Math.sin(theta) * sinPhi);
+            Vec3 pos = base.add(dir.scale(8.0D + random.nextDouble() * 8.0D));
+            Vec3 vel = dir.scale(1.2D + random.nextDouble() * 1.0D)
+                    .add(0.0D, 0.05D + random.nextDouble() * 0.25D, 0.0D);
+            for (var viewer : viewers) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_FIRE.get(), true,
+                        pos.x, pos.y, pos.z, 0, vel.x, vel.y, vel.z, 1.0D);
+            }
+        }
     }
 
     private void triggerRingExplosion(boolean openingPulse) {

@@ -16,6 +16,8 @@ import org.joml.Matrix4f;
 
 public class IgnivorusNovaRenderer extends EntityRenderer<IgnivorusNovaEntity> {
 
+    private static final boolean RENDER_ENABLED = false;
+
     private static final int TOTAL_FRAMES = 8;
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[TOTAL_FRAMES];
 
@@ -33,6 +35,11 @@ public class IgnivorusNovaRenderer extends EntityRenderer<IgnivorusNovaEntity> {
     @Override
     public void render(@NotNull IgnivorusNovaEntity entity, float entityYaw, float partialTicks,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
+
+        if (!RENDER_ENABLED) {
+            super.render(entity, entityYaw, partialTicks, poseStack, bufferSource, packedLight);
+            return;
+        }
 
         float scale = entity.getScale(partialTicks);
         float opacity = entity.getOpacity(partialTicks);
