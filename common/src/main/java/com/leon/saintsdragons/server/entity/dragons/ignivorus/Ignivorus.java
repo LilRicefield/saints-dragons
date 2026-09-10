@@ -728,6 +728,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public @NotNull Vec3 getRiddenInput(@NotNull Player player, @NotNull Vec3 deltaIn) {
+        if (areRiderControlsLocked()) {
+            return Vec3.ZERO;
+        }
         Vec3 input = riderController.getRiddenInput(player, deltaIn);
         if (!level().isClientSide && isFlying()) {
             float fwd = (float) Mth.clamp(input.z, -1.0, 1.0);
@@ -1257,6 +1260,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void tickRidden(@NotNull Player player, @NotNull Vec3 travelVector) {
+        if (areRiderControlsLocked()) {
+            player.fallDistance = 0.0F;
+            fallDistance = 0.0F;
+            return;
+        }
         super.tickRidden(player, travelVector);
         riderController.tickRidden(player, travelVector);
         if (isBreathingFire()) {

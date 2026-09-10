@@ -1674,6 +1674,17 @@
       }
     ]
   },
+  "ignivorus_skyfall": {
+    "subtitle": "subtitles.saintsdragons.ignivorus_skyfall",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/ignivorus/ignivorus_skyfall",
+        "volume": 2.0,
+        "pitch": 1.0,
+        "attenuation_distance": 64
+      }
+    ]
+  },
   "ignivorus_ultimate_start": {
     "subtitle": "subtitles.saintsdragons.ignivorus_ultimate_start",
     "sounds": [

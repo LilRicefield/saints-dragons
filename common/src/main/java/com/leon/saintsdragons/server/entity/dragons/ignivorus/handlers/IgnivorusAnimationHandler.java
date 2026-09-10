@@ -137,6 +137,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
                 RawAnimation.begin().thenPlay("animation.ignivorus.ignivorus_impact"));
         controller.triggerableAnim("ultimate_start",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start"));
+        controller.triggerableAnim("skyfall",
+                RawAnimation.begin().thenPlay("animation.ignivorus.skyfall"));
         controller.triggerableAnim("ultimate",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate"));
         controller.triggerableAnim("ultimate_end",
@@ -185,6 +187,18 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public PlayState movementPredicate(AnimationState<Ignivorus> state) {
+        var previousAnimation = state.getController().getCurrentAnimation();
+        boolean leavingSkyfall = previousAnimation != null
+                && "animation.ignivorus.skyfall".equals(previousAnimation.animation().name());
+        PlayState result = selectMovementAnimation(state);
+        // Apply after the next pose selects its normal blend duration.
+        if (leavingSkyfall) {
+            state.getController().transitionLength(0);
+        }
+        return result;
+    }
+
+    private PlayState selectMovementAnimation(AnimationState<Ignivorus> state) {
         var controller = state.getController();
         boolean aerialState = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
 
