@@ -14,6 +14,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +23,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> extends DragonBehaviour<T> {
-    private static final double AIR_TARGET_EPSILON_SQR = 9.0D;
-    private static final double AIR_SPEED_EPSILON = 0.15D;
     private static final double AIR_CATCH_UP_DISTANCE = 18.0D;
     private static final double AIR_CATCH_UP_MULTIPLIER = 1.35D;
     private static final double OWNER_AIRBORNE_CLEARANCE = 4.0D;
@@ -47,12 +46,10 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
     private final Consumer<T> takeoffStarter;
     private final DragonOwnerFollowWaterHandoff waterHandoff = new DragonOwnerFollowWaterHandoff();
     private int groundRepathCooldown;
-    private int airRefreshCooldown;
     @Nullable
     private Vec3 lastAirTarget;
     @Nullable
     private Vec3 lastGroundTarget;
-    private double lastAirSpeed = Double.NaN;
     private String mode = "idle";
 
     public DragonFollowOwnerBehaviour(Config config, Consumer<T> takeoffStarter) {
@@ -119,9 +116,6 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         LivingEntity owner = dragon.getOwner();
         if (owner == null) {
             return;
-        }
-        if (airRefreshCooldown > 0) {
-            airRefreshCooldown--;
         }
 
         Config config = configFor(dragon);
@@ -270,17 +264,9 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         boolean catchUp = dragon.distanceToSqr(target) > AIR_CATCH_UP_DISTANCE * AIR_CATCH_UP_DISTANCE;
         double speed = catchUp ? config.flightSpeed * AIR_CATCH_UP_MULTIPLIER : config.flightSpeed;
         dragon.setAccelerating(catchUp);
-        if (dragon.distanceToSqr(target) <= 1.0D) {
-            dragon.setAccelerating(false);
-            dragon.getAIMovement().stop();
-            return;
-        }
-        if (shouldRefreshAirTarget(target, speed)) {
-            context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(target, speed));
-            lastAirTarget = target;
-            lastAirSpeed = speed;
-            airRefreshCooldown = speed >= 1.4D ? 3 : speed >= 1.0D ? 5 : 7;
-        }
+        context.memories().set(DragonMemories.MOVEMENT_INTENT,
+                DragonMovementIntent.flight(DragonFlightRequest.track(target, speed, 1.0D)));
+        lastAirTarget = target;
     }
 
     private void followOnGround(T dragon, LivingEntity owner, Config config) {
@@ -421,23 +407,14 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
         );
     }
 
-    private boolean shouldRefreshAirTarget(Vec3 target, double speed) {
-        return lastAirTarget == null
-                || airRefreshCooldown <= 0
-                || target.distanceToSqr(lastAirTarget) > AIR_TARGET_EPSILON_SQR
-                || Math.abs(speed - lastAirSpeed) > AIR_SPEED_EPSILON;
-    }
-
     private Config configFor(T dragon) {
         return dragon.isBaby() ? BABY_CONFIG : adultConfig;
     }
 
     private void resetTracking() {
         groundRepathCooldown = 0;
-        airRefreshCooldown = 0;
         lastAirTarget = null;
         lastGroundTarget = null;
-        lastAirSpeed = Double.NaN;
     }
 
     @Override
@@ -446,7 +423,6 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
                 "mode", mode,
                 "ground_repath", Integer.toString(groundRepathCooldown),
                 "ground_target", lastGroundTarget == null ? "none" : lastGroundTarget.toString(),
-                "air_refresh", Integer.toString(airRefreshCooldown),
                 "air_target", lastAirTarget == null ? "none" : lastAirTarget.toString(),
                 "water_handoff", Boolean.toString(waterHandoff.isActive())
         );

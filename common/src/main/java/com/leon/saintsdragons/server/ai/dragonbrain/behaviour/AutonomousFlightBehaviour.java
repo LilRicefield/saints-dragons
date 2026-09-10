@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -295,7 +297,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
 
     protected void setMoveIntent(DragonBrainContext<T> context, Vec3 target, double speed) {
         if (target != null) {
-            context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(target, speed));
+            context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(DragonFlightRequest.cruise(target, speed)));
         }
     }
 

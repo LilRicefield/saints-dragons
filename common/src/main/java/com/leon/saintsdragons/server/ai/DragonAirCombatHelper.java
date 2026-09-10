@@ -236,7 +236,8 @@ public final class DragonAirCombatHelper {
                                           double minTargetHeightAboveGround,
                                           double minHeightAdvantage,
                                           double maxHorizontalDistance) {
-        if (!dragon.isFlying() || dragon.isLanding() || !isTargetAirborne(dragon, target, minTargetHeightAboveGround)) {
+        if (!dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding()
+                || !isTargetAirborne(dragon, target, minTargetHeightAboveGround)) {
             return false;
         }
         Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);

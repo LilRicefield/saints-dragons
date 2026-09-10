@@ -28,9 +28,19 @@ final class DragonFlightSteering {
         this.preferredTurn = (dragon.getUUID().getLeastSignificantBits() & 1L) == 0 ? 1 : -1;
     }
 
-    Vec3 guide(Vec3 routeTarget, Vec3 destination, boolean finalLanding, double speed) {
+    Vec3 guide(Vec3 routeTarget, Vec3 destination, boolean finalLanding, boolean commitDive, double speed) {
         Vec3 position = dragon.position();
         long now = dragon.level().getGameTime();
+        Vec3 remaining = destination.subtract(position);
+        if (remaining.y < -4.0D && routeTarget.y > position.y
+                && space.corridorClear(position, destination)) {
+            routeTarget = position.add(remaining.normalize().scale(Math.min(remaining.length(), 16.0D)));
+        }
+        if (commitDive) {
+            descentTarget = null;
+            decision = "dive-commit";
+            return routeTarget;
+        }
         if (descentTarget != null) {
             if (finalLanding || descentDestination.distanceToSqr(destination) > 144.0D
                     || now >= descentExpires || position.distanceToSqr(descentTarget) < 16.0D
@@ -42,11 +52,6 @@ final class DragonFlightSteering {
                 decision = "descending-approach";
                 return descentTarget;
             }
-        }
-        Vec3 remaining = destination.subtract(position);
-        if (remaining.y < -4.0D && routeTarget.y > position.y
-                && space.corridorClear(position, destination)) {
-            routeTarget = position.add(remaining.normalize().scale(Math.min(remaining.length(), 16.0D)));
         }
         Vec3 next = routeTarget.subtract(position);
         if (!finalLanding && remaining.y < -12.0D

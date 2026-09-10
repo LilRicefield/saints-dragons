@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -34,8 +36,8 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private static final double BREAKAWAY_LATERAL_OFFSET = 6.0D;
     private static final double BREAKAWAY_CLIMB = 8.0D;
     private static final double ORBIT_SPEED = 4.0D;
-    private static final double DIRECT_CHASE_SPEED = 7.0D;
-    private static final double DIVE_CHASE_SPEED = 8.0D;
+    private static final double DIRECT_CHASE_SPEED = 11.0D;
+    private static final double DIVE_CHASE_SPEED = 12.5D;
     private static final double DIRECT_COMMIT_SPEED = 6.0D;
     private static final double DIVE_COMMIT_SPEED = 7.5D;
     private static final double BEAM_PASS_SPEED = 4.5D;
@@ -204,7 +206,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         Raevyx dragon = context.dragon();
         boolean dive = shouldDiveChase(dragon, target, 7.0D, 42.0D);
         if (dive) {
-            setPredictedChaseIntent(
+            setDivingChaseIntent(
                     context,
                     target,
                     3.0D,
@@ -351,7 +353,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                 enterBreakaway(context, target, "breakaway:no-strike-egress");
                 return;
             }
-            commandStrict(context, breakawayTarget, BREAKAWAY_SPEED);
+            commandManeuver(context, breakawayTarget, BREAKAWAY_SPEED);
         }
         if (routeFailed(dragon)) {
             enterBreakaway(context, target, "breakaway:strike-route-failed");
@@ -393,7 +395,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             return;
         }
         if (!roarEgressIssued && routeReached(dragon) && breakawayTarget != null) {
-            commandStrict(context, breakawayTarget, BREAKAWAY_SPEED);
+            commandManeuver(context, breakawayTarget, BREAKAWAY_SPEED);
             roarEgressIssued = true;
         }
         if (phaseTicks >= 5 && !dragon.isAbilityActive(ModAbilities.RAEVYX_ROAR)) {
@@ -469,7 +471,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                 .add(orbitDirection.scale(ORBIT_RADIUS))
                 .add(0.0D, ORBIT_HEIGHT_OFFSET, 0.0D);
         orbitAnchor = targetCenter(target);
-        commandStrict(context, orbitPosition, ORBIT_SPEED);
+        commandManeuver(context, orbitPosition, ORBIT_SPEED);
     }
 
     private void enterMeleeCommit(DragonBrainContext<Raevyx> context, LivingEntity target) {
@@ -490,11 +492,9 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                         .add(tangent.scale(BREAKAWAY_LATERAL_OFFSET))
                         .add(0.0D, BREAKAWAY_CLIMB, 0.0D)
         );
-        double speed = shouldDiveChase(dragon, target, 7.0D, 42.0D)
-                ? DIVE_COMMIT_SPEED
-                : DIRECT_COMMIT_SPEED;
-        commandStrict(context, committedIntercept, speed);
-        lastDecision = speed == DIVE_COMMIT_SPEED ? "commit:dive" : "commit:direct";
+        boolean dive = shouldDiveChase(dragon, target, 7.0D, 42.0D);
+        commandManeuver(context, committedIntercept, dive ? DIVE_COMMIT_SPEED : DIRECT_COMMIT_SPEED, dive);
+        lastDecision = dive ? "commit:dive" : "commit:direct";
     }
 
     private void enterMeleeStrike(DragonBrainContext<Raevyx> context, String decision) {
@@ -502,7 +502,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         phaseTicks = 0;
         routeTarget = null;
         if (breakawayTarget != null) {
-            commandStrict(context, breakawayTarget, BREAKAWAY_SPEED);
+            commandManeuver(context, breakawayTarget, BREAKAWAY_SPEED);
         }
         lastDecision = decision;
     }
@@ -545,7 +545,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                 passTarget.add(runDirection.scale(24.0D)).add(0.0D, 6.0D, 0.0D)
         );
         roarEgressIssued = false;
-        commandStrict(context, passTarget, ROAR_PASS_SPEED);
+        commandManeuver(context, passTarget, ROAR_PASS_SPEED);
         lastDecision = "roar:started-flyby";
     }
 
@@ -574,7 +574,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                     .add(0.0D, 10.0D, 0.0D);
         };
         beamSegment = Math.min(2, segment);
-        commandStrict(context, destination, beamSegment == 2 ? BREAKAWAY_SPEED : BEAM_PASS_SPEED);
+        commandManeuver(context, destination, beamSegment == 2 ? BREAKAWAY_SPEED : BEAM_PASS_SPEED);
     }
 
     private void enterBreakaway(DragonBrainContext<Raevyx> context,
@@ -609,7 +609,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
                         .add(0.0D, BREAKAWAY_CLIMB, 0.0D)
         );
         runDirection = forward;
-        commandStrict(context, breakawayTarget, BREAKAWAY_SPEED);
+        commandManeuver(context, breakawayTarget, BREAKAWAY_SPEED);
     }
 
     private void adoptCurrentRouteAsBreakaway(String decision) {
@@ -629,12 +629,18 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         lastDecision = decision;
     }
 
-    private void commandStrict(DragonBrainContext<Raevyx> context, Vec3 target, double speed) {
+    private void commandManeuver(DragonBrainContext<Raevyx> context, Vec3 target, double speed) {
+        commandManeuver(context, target, speed, false);
+    }
+
+    private void commandManeuver(DragonBrainContext<Raevyx> context, Vec3 target, double speed, boolean dive) {
         routeTarget = clampFlightY(context.dragon(), target);
         routeGraceTicks = 3;
         context.memories().set(
                 DragonMemories.MOVEMENT_INTENT,
-                DragonMovementIntent.strictAir(routeTarget, speed)
+                DragonMovementIntent.flight(new DragonFlightRequest(routeTarget, speed,
+                        dive ? DragonFlightRequest.Purpose.DIVE : DragonFlightRequest.Purpose.MANEUVER,
+                        Math.sqrt(ROUTE_ARRIVAL_DISTANCE_SQR), DragonFlightRequest.Arrival.PASS_THROUGH))
         );
     }
 

@@ -22,8 +22,8 @@ public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehav
     private static final double MELEE_FACING_DOT = 0.25D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final double CHASE_HEIGHT_OFFSET = 0.5D;
-    private static final double CHASE_SPEED = 2.0D;
-    private static final double DIVE_CHASE_SPEED = 3.1D;
+    private static final double CHASE_SPEED = 2.3D;
+    private static final double DIVE_CHASE_SPEED = 3.5D;
     private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
     private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
     private static final int DECISION_INTERVAL_TICKS = 6;
@@ -141,7 +141,7 @@ public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehav
                 DIVE_CHASE_MIN_HEIGHT_ADVANTAGE,
                 DIVE_CHASE_MAX_HORIZONTAL_DISTANCE
         )) {
-            setPredictedChaseIntent(context, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
+            setDivingChaseIntent(context, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
         } else {
             setPredictedChaseIntent(context, target, 4.0D, CHASE_HEIGHT_OFFSET, 0.15D, 0.35D, CHASE_SPEED);
         }

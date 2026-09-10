@@ -11,8 +11,8 @@ import net.minecraft.world.entity.LivingEntity;
 public class IgnivorusAirCombatBehaviour extends RangedAirCombatBehaviour<Ignivorus> {
     private long nextRangedDecisionTick;
     private static final RangedAirCombatSettings COMBAT_SETTINGS = new RangedAirCombatSettings(
-            3.75D,
-            5.5D,
+            4.25D,
+            6.25D,
             7.0D,
             42.0D,
             16.0D,

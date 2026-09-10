@@ -24,10 +24,11 @@ class AsyncFlightMovementExecutor {
     private static final double TOUCHDOWN_MAX_ACTUAL_DESCENT_SPEED = 0.28D;
     private static final double TOUCHDOWN_MIN_DESCENT_SPEED = 0.11D;
     private static final double TOUCHDOWN_MAX_DESCENT_SPEED = 0.28D;
-    private static final double MAX_ACCELERATION = 0.12D;
+    private static final double MAX_ACCELERATION = FlightMotionPolicy.MAX_ACCELERATION;
     private static final double TOUCHDOWN_HORIZONTAL_DEADZONE = 0.2D;
     private static final float MAX_YAW_STEP = 12.0f;
     private static final float MAX_PITCH_STEP = 2.5f;
+    private static final float DIVE_MAX_PITCH_STEP = 7.0f;
     private static final float PITCH_DEADZONE_DEGREES = 3.5f;
 
     private final Mob dragon;
@@ -50,10 +51,14 @@ class AsyncFlightMovementExecutor {
                                 double speedModifier,
                                 double arrivalDist,
                                 boolean queueEmpty,
+                                DragonFlightRequest.Arrival arrival,
+                                boolean diveCommit,
                                 AsyncFlightController.LandingPhase landingPhase) {
         Vec3 dragonPos = this.dragon.position();
         Vec3 currentVelocity = this.dragon.getDeltaMovement();
         boolean landingTarget = landingPhase.isCommitted();
+        boolean diving = diveCommit && !this.flightCapable.isTakeoff()
+                && landingPhase == AsyncFlightController.LandingPhase.NONE;
         if (landingTarget
                 && (this.dragon.onGround()
                     || (landingPhase == AsyncFlightController.LandingPhase.TOUCHDOWN
@@ -62,7 +67,7 @@ class AsyncFlightMovementExecutor {
             return;
         }
 
-        double desiredSpeed = Math.max(0.0, this.flightCapable.getFlightSpeed()) * speedModifier;
+        double desiredSpeed = FlightMotionPolicy.requestedSpeed(this.flightCapable.getFlightSpeed(), speedModifier);
         if (landingPhase == AsyncFlightController.LandingPhase.APPROACH) {
             desiredSpeed = Math.max(desiredSpeed, this.flightCapable.getFlightSpeed() * 3.0D);
         } else if (landingPhase == AsyncFlightController.LandingPhase.GLIDE) {
@@ -70,7 +75,7 @@ class AsyncFlightMovementExecutor {
         }
         Vec3 target = this.steering.guide(
                 lookAheadTarget != null ? lookAheadTarget : currentWaypoint,
-                currentWaypoint, landingTarget || this.flightCapable.isTakeoff(), desiredSpeed);
+                currentWaypoint, landingTarget || this.flightCapable.isTakeoff(), diving, desiredSpeed);
         Vec3 toTarget = target.subtract(dragonPos);
         double distToTarget = toTarget.length();
         if (distToTarget < 0.1 && landingPhase != AsyncFlightController.LandingPhase.TOUCHDOWN) {
@@ -89,20 +94,22 @@ class AsyncFlightMovementExecutor {
         boolean ordinaryFinalWaypoint = landingPhase == AsyncFlightController.LandingPhase.NONE
                 || landingPhase == AsyncFlightController.LandingPhase.GO_AROUND
                 || landingPhase == AsyncFlightController.LandingPhase.APPROACH;
-        if (ordinaryFinalWaypoint && distToFinalWaypoint < decelStartDist && queueEmpty) {
+        if (landingPhase == AsyncFlightController.LandingPhase.NONE && queueEmpty) {
+            desiredSpeed = FlightMotionPolicy.arrivalSpeed(desiredSpeed, distToFinalWaypoint, arrivalDist, arrival);
+        } else if (ordinaryFinalWaypoint && distToFinalWaypoint < decelStartDist && queueEmpty) {
             desiredSpeed *= Math.max(0.3, distToFinalWaypoint / decelStartDist);
         }
 
         Vec3 desiredDirection = toTarget.normalize();
+        if (diving) {
+            desiredSpeed = FlightMotionPolicy.diveSpeed(desiredSpeed, desiredDirection.y);
+        }
         double verticalSpeed = desiredSpeed;
         if (!landingTarget && currentVelocity.horizontalDistanceSqr() > 0.01D
                 && desiredDirection.horizontalDistanceSqr() > 0.01D) {
             double alignment = currentVelocity.multiply(1, 0, 1).normalize()
                     .dot(desiredDirection.multiply(1, 0, 1).normalize());
-            desiredSpeed *= Mth.clamp((alignment + 1.0D) * 0.5D, 0.35D, 1.0D);
-            if (alignment < 0.7D) {
-                desiredSpeed = Math.min(desiredSpeed, Math.max(0.12D, toTarget.horizontalDistance() * 0.08D));
-            }
+            desiredSpeed = FlightMotionPolicy.turnSpeed(desiredSpeed, alignment, toTarget.horizontalDistance());
         }
         Vec3 steeringDirection = !landingTarget && !this.flightCapable.isTakeoff()
                 ? this.steering.turnToward(desiredDirection, currentVelocity.length()) : desiredDirection;
@@ -115,16 +122,25 @@ class AsyncFlightMovementExecutor {
         targetVelocity = this.shapeLandingVelocity(landingPhase, targetVelocity, dragonPos, currentWaypoint);
         Vec3 velocityBaseline = currentVelocity;
         this.smoothedVelocity = lerpVelocity(velocityBaseline, targetVelocity, landingPhase);
+        if (diving) {
+            this.smoothedVelocity = new Vec3(
+                    this.smoothedVelocity.x,
+                    Mth.lerp(FlightMotionPolicy.DIVE_VERTICAL_LERP, velocityBaseline.y, targetVelocity.y),
+                    this.smoothedVelocity.z
+            );
+        }
         if (!landingTarget && !this.flightCapable.isTakeoff()) {
             double horizontalSpeed = Mth.lerp(HORIZONTAL_VELOCITY_LERP,
                     currentVelocity.horizontalDistance(), targetVelocity.horizontalDistance());
             Vec3 horizontalDirection = steeringDirection.multiply(1.0D, 0.0D, 1.0D).normalize();
             this.smoothedVelocity = horizontalDirection.scale(horizontalSpeed)
                     .add(0.0D, this.smoothedVelocity.y, 0.0D);
-            Vec3 change = this.smoothedVelocity.subtract(velocityBaseline);
-            if (change.lengthSqr() > MAX_ACCELERATION * MAX_ACCELERATION) {
-                this.smoothedVelocity = velocityBaseline.add(change.normalize().scale(MAX_ACCELERATION));
-            }
+            double acceleration = landingPhase == AsyncFlightController.LandingPhase.NONE
+                    && arrival == DragonFlightRequest.Arrival.PASS_THROUGH
+                    ? FlightMotionPolicy.sprintAcceleration(desiredSpeed) : MAX_ACCELERATION;
+            this.smoothedVelocity = diving
+                    ? FlightMotionPolicy.limitDiveAcceleration(velocityBaseline, this.smoothedVelocity, acceleration)
+                    : FlightMotionPolicy.limitAcceleration(velocityBaseline, this.smoothedVelocity, acceleration);
         }
         this.smoothedVelocity = limitLandingMomentum(landingPhase, this.smoothedVelocity);
         if (landingPhase == AsyncFlightController.LandingPhase.GLIDE
@@ -156,7 +172,8 @@ class AsyncFlightMovementExecutor {
         }
         this.dragon.setDeltaMovement(this.smoothedVelocity);
         this.dragon.hasImpulse = true;
-        this.updateRotation(landingPhase == AsyncFlightController.LandingPhase.TOUCHDOWN);
+        this.updateRotation(landingPhase == AsyncFlightController.LandingPhase.TOUCHDOWN,
+                diving ? DIVE_MAX_PITCH_STEP : MAX_PITCH_STEP);
     }
 
     private Vec3 shapeLandingVelocity(AsyncFlightController.LandingPhase phase,
@@ -213,7 +230,7 @@ class AsyncFlightMovementExecutor {
         return new Vec3(velocity.x * scale, velocity.y, velocity.z * scale);
     }
 
-    private void updateRotation(boolean holdLandingHeading) {
+    private void updateRotation(boolean holdLandingHeading, float maxPitchStep) {
         Vec3 velocity = this.smoothedVelocity;
         if (velocity.lengthSqr() < 1.0E-4) {
             return;
@@ -233,7 +250,7 @@ class AsyncFlightMovementExecutor {
         if (Math.abs(pitchDiff) < PITCH_DEADZONE_DEGREES) {
             pitchDiff = 0.0f;
         }
-        this.dragon.setXRot(this.dragon.getXRot() + Mth.clamp(pitchDiff, -MAX_PITCH_STEP, MAX_PITCH_STEP));
+        this.dragon.setXRot(this.dragon.getXRot() + Mth.clamp(pitchDiff, -maxPitchStep, maxPitchStep));
     }
 
     public void applyIdleFriction() {

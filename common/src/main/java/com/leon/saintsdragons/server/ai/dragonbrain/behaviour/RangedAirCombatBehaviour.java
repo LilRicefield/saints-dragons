@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.RangedAirCombatSettings;
@@ -77,7 +79,7 @@ public abstract class RangedAirCombatBehaviour<
                 combatSettings.diveMinHeightAdvantage(),
                 combatSettings.diveMaxHorizontalDistance()
         )) {
-            setPredictedChaseIntent(
+            setDivingChaseIntent(
                     context,
                     target,
                     3.0D,
@@ -168,7 +170,7 @@ public abstract class RangedAirCombatBehaviour<
                 targetY + verticalOffset,
                 movementAnchor.getZ() + Math.sin(angle) * combatSettings.engagementDistance()
         );
-        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(destination, 1.0D));
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(DragonFlightRequest.maneuver(destination, 1.0D, 0.0D, DragonFlightRequest.Arrival.BRAKE)));
         repositionCooldown = REPOSITION_INTERVAL_TICKS;
     }
 

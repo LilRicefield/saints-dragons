@@ -1748,7 +1748,8 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     private void tickFlightPhysics() {
-        if (level().isClientSide) return;
+        // AI descent is already shaped by the shared flight controller.
+        if (level().isClientSide || getControllingPassenger() == null) return;
         if (isFlying() && !isLanding() && getDeltaMovement().y < 0 && isAlive()) {
             setDeltaMovement(getDeltaMovement().multiply(1, 0.6, 1));
         }

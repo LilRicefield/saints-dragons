@@ -255,6 +255,12 @@ public final class DragonBrainDebugTracker {
         if (intent instanceof DragonMovementIntent.AutoPosition move) {
             return "AUTO " + format(move.target()) + " speed=" + decimal(move.speed());
         }
+        if (intent instanceof DragonMovementIntent.Flight move) {
+            var request = move.request();
+            return "FLIGHT " + request.purpose() + " " + format(request.target())
+                    + " speed=" + decimal(request.speedModifier()) + " arrival=" + request.arrival()
+                    + " tolerance=" + decimal(request.arrivalTolerance());
+        }
         if (intent instanceof DragonMovementIntent.AutoTarget move) {
             return "AUTO_TARGET " + describeEntity(dragon, move.target())
                     + " speed=" + decimal(move.speed());
@@ -303,6 +309,8 @@ public final class DragonBrainDebugTracker {
             position = Vec3.atCenterOf(globalPos.pos());
         } else if (value instanceof DragonMovementIntent.AutoPosition move) {
             position = move.target();
+        } else if (value instanceof DragonMovementIntent.Flight move) {
+            position = move.request().target();
         } else if (value instanceof DragonMovementIntent.AutoTarget move) {
             position = move.target().getBoundingBox().getCenter();
             entityId = move.target().getId();

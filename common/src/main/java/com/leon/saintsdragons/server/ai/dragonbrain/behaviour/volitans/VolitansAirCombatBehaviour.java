@@ -15,8 +15,8 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
     private static final double POISON_MAX_RANGE = 32.0D;
     private static final double ROAR_MAX_RANGE = 12.0D;
     private static final double CHASE_HEIGHT_OFFSET = 2.0D;
-    private static final double CHASE_SPEED = 2.0D;
-    private static final double DIVE_CHASE_SPEED = 3.1D;
+    private static final double CHASE_SPEED = 2.3D;
+    private static final double DIVE_CHASE_SPEED = 3.5D;
     private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
     private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
     private static final double POSITION_SPEED = 0.85D;
@@ -115,7 +115,7 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
                 DIVE_CHASE_MIN_HEIGHT_ADVANTAGE,
                 DIVE_CHASE_MAX_HORIZONTAL_DISTANCE
         )) {
-            setPredictedChaseIntent(context, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
+            setDivingChaseIntent(context, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
         } else {
             setPredictedChaseIntent(context, target, 5.0D, CHASE_HEIGHT_OFFSET, 0.12D, 0.5D, CHASE_SPEED);
         }

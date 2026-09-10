@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.navigation;
 
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementOwnership;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncDragonPathfinder;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -145,6 +147,12 @@ public class DragonAIMovementController {
             return false;
         }
         return startWaypoint(new QueuedWaypoint(target, speed, false, MovementMode.AIR));
+    }
+
+    public boolean requestFlight(DragonFlightRequest request) {
+        if (dragon.level().isClientSide || !(dragon instanceof RideableFlyingDragon)) return false;
+        return startWaypoint(new QueuedWaypoint(request.target(), request.speedModifier(), false, MovementMode.AIR,
+                null, Double.NaN, request));
     }
 
     public boolean setWaypoint(LivingEntity target, double speed, boolean running) {
@@ -601,6 +609,7 @@ public class DragonAIMovementController {
             if (currentWaypoint.mode() == MovementMode.LANDING) {
                 return dragon.onGround();
             }
+            if (dragon instanceof RideableFlyingDragon flyingDragon) return flyingDragon.isAiFlightDone();
             double arrivalDistance = Math.max(2.0D, dragon.getBbWidth());
             return dragon.distanceToSqr(currentWaypoint.target()) <= arrivalDistance * arrivalDistance;
         }
@@ -769,7 +778,8 @@ public class DragonAIMovementController {
             Vec3 fitted = flightSpace.fitDestination(waypoint.target());
             if (fitted == null) return false;
             waypoint = new QueuedWaypoint(fitted, waypoint.speed(), waypoint.running(), waypoint.mode(),
-                    waypoint.landingPlan(), waypoint.groundArrivalTolerance());
+                    waypoint.landingPlan(), waypoint.groundArrivalTolerance(),
+                    waypoint.flightRequest() == null ? null : waypoint.flightRequest().withTarget(fitted));
         }
         if (waypoint.mode() == MovementMode.AUTO && shouldUseWaterMovement()) {
             waypoint = new QueuedWaypoint(
@@ -846,10 +856,12 @@ public class DragonAIMovementController {
                         return false;
                     }
                     flyingDragon.pathAiLandingPlan(waypoint.landingPlan(), waypoint.speed());
-                } else if (waypoint.mode() == MovementMode.AIR) {
-                    flyingDragon.pathAiFlightTo(waypoint.target(), waypoint.speed());
                 } else {
-                    flyingDragon.trackAiFlightTarget(waypoint.target(), waypoint.speed());
+                    DragonFlightRequest request = waypoint.flightRequest() != null ? waypoint.flightRequest()
+                            : waypoint.mode() == MovementMode.AIR
+                                ? DragonFlightRequest.cruise(waypoint.target(), waypoint.speed())
+                                : DragonFlightRequest.track(waypoint.target(), waypoint.speed());
+                    flyingDragon.requestAiFlight(request);
                 }
                 return true;
             }
@@ -1172,7 +1184,13 @@ public class DragonAIMovementController {
                                   boolean running,
                                   MovementMode mode,
                                   @Nullable DragonLandingPlan landingPlan,
-                                  double groundArrivalTolerance) {
+                                  double groundArrivalTolerance,
+                                  @Nullable DragonFlightRequest flightRequest) {
+        private QueuedWaypoint(Vec3 target, double speed, boolean running, MovementMode mode,
+                               @Nullable DragonLandingPlan landingPlan, double groundArrivalTolerance) {
+            this(target, speed, running, mode, landingPlan, groundArrivalTolerance, null);
+        }
+
         private QueuedWaypoint(Vec3 target, double speed, boolean running, MovementMode mode) {
             this(target, speed, running, mode, null, Double.NaN);
         }

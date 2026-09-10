@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;
@@ -1591,6 +1593,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
         this.asyncAirController.setWaypoint(target, speed);
     }
 
+    public void requestAiFlight(DragonFlightRequest request) {
+        if (!isUsingAirNavigation()) switchToAirNavigation();
+        this.asyncAirController.requestFlight(request);
+    }
+
     public void pathAiGroundTransitionTo(@Nullable Vec3 target, double speed) {
         if (target == null) {
             return;
@@ -1779,7 +1786,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 isRiddenByOwner(),
                 isGoingUp(),
                 isGoingDown(),
-                isAccelerating(),
+                isAccelerating() || this.asyncAirController.isSprinting(),
                 isRiddenByOwner() && (forceSurfaceGlide || shouldForceSurfaceGlide(altitudeAboveTerrain)),
                 getX(),
                 getY(),

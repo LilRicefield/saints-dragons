@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
@@ -178,7 +180,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
         Vec3 destination = new Vec3(movementAnchor.getX(), targetY, movementAnchor.getZ())
                 .subtract(direction.scale(approachDistance));
         double speed = distance > approachDistance ? farSpeed : nearSpeed;
-        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(destination, speed));
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(DragonFlightRequest.chase(destination, speed)));
     }
 
     protected final void setPredictedChaseIntent(DragonBrainContext<T> context,
@@ -188,16 +190,49 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
                                                  double bobFrequency,
                                                  double bobAmplitude,
                                                  double speed) {
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(
+                DragonFlightRequest.chase(
+                        predictedChaseDestination(context, target, predictionTicks, heightOffset, bobFrequency, bobAmplitude),
+                        speed)));
+    }
+
+    protected final void setDivingChaseIntent(DragonBrainContext<T> context,
+                                              LivingEntity target,
+                                              double predictionTicks,
+                                              double heightOffset,
+                                              double bobFrequency,
+                                              double bobAmplitude,
+                                              double speed) {
+        T dragon = context.dragon();
+        Vec3 base = predictedChaseDestination(context, target, predictionTicks, heightOffset, bobFrequency, bobAmplitude);
+        // Intercept the target's altitude; forcing a dive angle can aim far below it.
+        double targetY = base.y + DragonTargetingHelper.movementAnchor(target).getDeltaMovement().y * predictionTicks;
+        Vec3 destination = new Vec3(base.x, targetY, base.z);
+        var clearance = dragon.getAIMovement().flightSpace().observe(destination);
+        if (clearance != null && clearance.floorKnown()) {
+            destination = new Vec3(base.x, Math.max(targetY, clearance.floor() + 6.0D), base.z);
+        }
+        context.memories().set(DragonMemories.MOVEMENT_INTENT,
+                DragonMovementIntent.flight(destination.y < dragon.getY() - 2.0D
+                        ? DragonFlightRequest.dive(destination, speed)
+                        : DragonFlightRequest.chase(destination, speed)));
+    }
+
+    private Vec3 predictedChaseDestination(DragonBrainContext<T> context,
+                                           LivingEntity target,
+                                           double predictionTicks,
+                                           double heightOffset,
+                                           double bobFrequency,
+                                           double bobAmplitude) {
         T dragon = context.dragon();
         Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
         Vec3 velocity = movementAnchor.getDeltaMovement();
-        Vec3 destination = new Vec3(
+        return new Vec3(
                 movementAnchor.getX() + velocity.x * predictionTicks,
                 movementAnchor.getY() + movementAnchor.getBbHeight() + heightOffset
                         + Math.sin(dragon.tickCount * bobFrequency) * bobAmplitude,
                 movementAnchor.getZ() + velocity.z * predictionTicks
         );
-        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(destination, speed));
     }
 
     private boolean isValidAirTarget(DragonBrainContext<T> context, LivingEntity target) {

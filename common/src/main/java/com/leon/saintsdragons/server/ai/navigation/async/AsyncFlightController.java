@@ -23,6 +23,7 @@ public class AsyncFlightController {
     private final AsyncFlightStuckDetector stuckDetector;
 
     private Vec3 currentWaypoint;
+    private @Nullable DragonFlightRequest currentFlightRequest;
     private WaypointArrivalCallback currentArrivalCallback;
     private boolean currentGroundTransition;
     private @Nullable DragonLandingPlan landingPlan;
@@ -31,20 +32,21 @@ public class AsyncFlightController {
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
     private long pathRequestGeneration = 0L;
-    private final int recalculationInterval = 40;
     private final int maxRetries = 5;
     private final double baseArrivalDistance = 1.5;
     private final int stuckThresholdTicks = 20;
     private final double stuckMovementThreshold = 0.5;
-    private final double maxSegmentDistance = 64.0;
-    private final double liveRetargetRefreshDistanceSq = 16.0D;
-    private final double liveRetargetMeaningfulVerticalDelta = 2.0D;
-    private final double liveRetargetMeaningfulHeadingDot = 0.75D;
 
     public AsyncFlightController(Mob host) {
+        this(host, null, null);
+    }
+
+    AsyncFlightController(Mob host, @Nullable AsyncFlightPathResolver.PathRequester requester,
+                          @Nullable AsyncFlightPathResolver.SegmentChecker segments) {
         this.host = host;
         this.flightCapable = (DragonFlightCapable) host;
-        this.pathResolver = new AsyncFlightPathResolver(host, this);
+        this.pathResolver = requester == null || segments == null ? new AsyncFlightPathResolver(host, this)
+                : new AsyncFlightPathResolver(host, this, requester, segments);
         this.movementExecutor = new AsyncFlightMovementExecutor(host, this.flightCapable);
         this.stuckDetector = new AsyncFlightStuckDetector(host);
     }
@@ -53,7 +55,7 @@ public class AsyncFlightController {
         if (this.host.isVehicle()) {
             return;
         }
-        if (this.state == PathState.IDLE || this.state == PathState.FAILED) {
+        if (this.state == PathState.IDLE || this.state == PathState.ARRIVED || this.state == PathState.FAILED) {
             this.movementExecutor.applyIdleFriction();
             return;
         }
@@ -133,6 +135,9 @@ public class AsyncFlightController {
                         this.speedModifier,
                         arrivalDist,
                         this.waypointQueue.isEmpty(),
+                        this.currentFlightRequest == null ? DragonFlightRequest.Arrival.BRAKE : this.currentFlightRequest.arrival(),
+                        this.currentFlightRequest != null
+                                && this.currentFlightRequest.purpose() == DragonFlightRequest.Purpose.DIVE,
                         activeLandingPhase
                 );
             } else {
@@ -156,12 +161,8 @@ public class AsyncFlightController {
         }
         if (this.state == PathState.FOLLOWING && this.pathResolver.shouldExtendPartialPath()) {
             this.pathResolver.forceRecalculatePath(this.currentWaypoint);
-        } else {
-            this.pathResolver.tickRecalc();
         }
-        if (this.pathResolver.getTicksSinceRecalc() >= this.recalculationInterval) {
-            this.pathResolver.recalculatePath(this.currentWaypoint);
-        }
+        this.pathResolver.tickPathing(this.currentWaypoint);
     }
 
     public void setWaypoint(Vec3 target) {
@@ -193,6 +194,7 @@ public class AsyncFlightController {
         this.landingPhase = LandingPhase.APPROACH;
         this.landingSpeed = Math.max(MIN_LANDING_SPEED_MODIFIER, speed * LANDING_SPEED_BOOST);
         this.currentWaypoint = plan.approach();
+        this.currentFlightRequest = null;
         this.currentArrivalCallback = null;
         this.currentGroundTransition = false;
         this.speedModifier = this.landingSpeed;
@@ -203,108 +205,44 @@ public class AsyncFlightController {
     }
 
     public void trackMovingWaypoint(Vec3 target, double speed) {
-        this.cancelLandingPlanForNewFlightCommand();
-        if (this.currentWaypoint == null
-                || this.state == PathState.IDLE
-                || this.state == PathState.ARRIVED
-                || this.state == PathState.FAILED
-                || this.state == PathState.STUCK
-                || this.currentGroundTransition) {
-            this.setWaypoint(target, speed, null);
-            return;
-        }
-
-        this.waypointQueue.clear();
-        this.currentWaypoint = target;
-        this.currentArrivalCallback = null;
-        this.currentGroundTransition = false;
-        this.speedModifier = speed;
-        if (this.pathResolver.needsRefresh(target, this.liveRetargetRefreshDistanceSq)) {
-            if (!this.pathResolver.hasActivePathRequest()) {
-                this.pathResolver.forceRecalculatePath(target);
-            }
-        } else if (!this.pathResolver.retargetPathEndpoint(target)
-                && !this.pathResolver.hasActivePathRequest()) {
-            this.pathResolver.forceRecalculatePath(target);
-        }
+        this.requestFlight(DragonFlightRequest.track(target, speed));
     }
 
     public void setWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
-        this.cancelLandingPlanForNewFlightCommand();
-        this.setWaypoint(target, speed, onArrival, false);
+        this.requestFlight(DragonFlightRequest.cruise(target, speed), onArrival);
     }
 
-    private void setWaypoint(Vec3 target,
-                             double speed,
-                             WaypointArrivalCallback onArrival,
-                             boolean groundTransition) {
-        if (this.currentWaypoint != null
-                && target.distanceToSqr(this.currentWaypoint) < 1.0
-                && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
-            this.currentWaypoint = target;
-            this.speedModifier = speed;
-            this.currentArrivalCallback = onArrival;
-            this.currentGroundTransition = groundTransition;
-            if (this.state == PathState.FOLLOWING && !this.pathResolver.retargetPathEndpoint(target)
-                    && !this.pathResolver.hasActivePathRequest()) {
-                this.pathResolver.forceRecalculatePath(target);
-            }
+    public void requestFlight(DragonFlightRequest request) {
+        this.requestFlight(request, null);
+    }
+
+    private void requestFlight(DragonFlightRequest request, @Nullable WaypointArrivalCallback onArrival) {
+        this.cancelLandingPlanForNewFlightCommand();
+        boolean newObjective = FlightRoutePolicy.isNewObjective(this.host.position(), this.currentFlightRequest, request);
+        if (this.state == PathState.FAILED && !newObjective) return;
+        if (this.state == PathState.ARRIVED && !newObjective
+                && this.host.position().distanceToSqr(request.target()) <= Math.pow(request.arrivalDistance(this.host.getBbWidth()), 2)) {
+            this.currentFlightRequest = request;
+            this.speedModifier = request.speedModifier();
             return;
         }
 
-        double retargetDistSq = this.currentWaypoint == null ? -1.0D : target.distanceToSqr(this.currentWaypoint);
-        if (this.currentWaypoint != null
-                && retargetDistSq >= 1.0D
-                && retargetDistSq < this.liveRetargetRefreshDistanceSq
-                && (this.state == PathState.CALCULATING || this.state == PathState.FOLLOWING)) {
-            Vec3 previousWaypoint = this.currentWaypoint;
-            boolean forceRecalculate = this.shouldForceRecalculateForRetarget(
-                    previousWaypoint,
-                    this.currentGroundTransition,
-                    target,
-                    groundTransition
-            );
-            this.currentWaypoint = target;
-            this.speedModifier = speed;
-            this.currentArrivalCallback = onArrival;
-            this.currentGroundTransition = groundTransition;
-            if (forceRecalculate && !this.pathResolver.hasActivePathRequest()) {
-                this.pathResolver.forceRecalculatePath(target);
-            } else if (this.state == PathState.FOLLOWING) {
-                if (!this.pathResolver.retargetPathEndpoint(target)
-                        && !this.pathResolver.hasActivePathRequest()) {
-                    this.pathResolver.forceRecalculatePath(target);
-                }
-            }
-            return;
-        }
-
+        boolean changedPurpose = this.currentFlightRequest != null
+                && !FlightRoutePolicy.samePurpose(this.currentFlightRequest.purpose(), request.purpose());
+        this.currentFlightRequest = request;
         this.waypointQueue.clear();
-        double distToTarget = target.distanceTo(this.host.position());
-        if (distToTarget > this.maxSegmentDistance) {
-            this.resetPathingState();
-            this.state = PathState.IDLE;
-            this.currentWaypoint = null;
-            this.currentGroundTransition = false;
-            this.pathResolver.clearPathNodes();
-
-            Vec3 startPos = this.host.position();
-            Vec3 direction = target.subtract(startPos).normalize();
-            int segments = (int) Math.floor(distToTarget / this.maxSegmentDistance);
-            for (int i = 1; i <= segments && i * this.maxSegmentDistance < distToTarget; ++i) {
-                Vec3 segmentPos = startPos.add(direction.scale(i * this.maxSegmentDistance));
-                this.addWaypoint(segmentPos, speed, null, false);
-            }
-            this.addWaypoint(target, speed, onArrival, groundTransition);
-            return;
-        }
-
-        this.currentWaypoint = target;
+        this.currentWaypoint = request.target();
         this.currentArrivalCallback = onArrival;
-        this.currentGroundTransition = groundTransition;
-        this.speedModifier = speed;
-        this.resetPathingState();
-        this.pathResolver.startPathing(this.currentWaypoint);
+        this.currentGroundTransition = false;
+        this.speedModifier = request.speedModifier();
+        // Repeated pursuit updates must not cancel a recovery's backoff or replenish its retry budget.
+        if (this.state == PathState.STUCK && !changedPurpose) return;
+        if (this.state == PathState.IDLE || this.state == PathState.ARRIVED
+                || this.state == PathState.FAILED || this.state == PathState.STUCK) {
+            this.stuckDetector.reset();
+            this.state = PathState.CALCULATING;
+        }
+        this.pathResolver.updateTarget(request.target());
     }
 
     public void addWaypoint(Vec3 target, double speed, WaypointArrivalCallback onArrival) {
@@ -320,7 +258,8 @@ public class AsyncFlightController {
                 target,
                 speed,
                 onArrival,
-                groundTransition
+                groundTransition,
+                DragonFlightRequest.cruise(target, speed)
         ));
         if (this.state == PathState.IDLE || this.state == PathState.ARRIVED) {
             this.advanceToNextWaypoint();
@@ -328,6 +267,7 @@ public class AsyncFlightController {
     }
 
     public void clearAllWaypoints() {
+        this.currentFlightRequest = null;
         this.waypointQueue.clear();
         this.currentWaypoint = null;
         this.currentArrivalCallback = null;
@@ -447,6 +387,7 @@ public class AsyncFlightController {
         this.pathResolver.clearPathNodes();
         this.stuckDetector.reset();
         this.clearLandingPlanState();
+        this.currentFlightRequest = null;
         if (this.flightCapable.isLanding()) {
             this.flightCapable.beginAiFlight();
         }
@@ -492,6 +433,7 @@ public class AsyncFlightController {
         this.currentArrivalCallback = next.onArrival();
         this.currentGroundTransition = next.groundTransition();
         this.speedModifier = next.speed();
+        this.currentFlightRequest = next.flightRequest();
         this.resetPathingState();
         this.pathResolver.startPathing(this.currentWaypoint);
     }
@@ -515,6 +457,7 @@ public class AsyncFlightController {
             }
         } else if (currentWaypoint != null) {
             this.state = PathState.STUCK;
+            this.pathResolver.cancelActivePathRequest();
             this.pathResolver.clearPathNodes();
         }
     }
@@ -532,6 +475,7 @@ public class AsyncFlightController {
         if (landingTarget) {
             return 1.0D;
         }
+        if (this.currentFlightRequest != null) return this.currentFlightRequest.arrivalDistance(this.host.getBbWidth());
         double width = this.host.getBbWidth();
         // Use square root scaling for large dragons to prevent excessive arrival distances
         // Small dragons (width <= 2): ~1.5-3.0 blocks
@@ -597,6 +541,14 @@ public class AsyncFlightController {
         return this.state == PathState.FAILED;
     }
 
+    public boolean isSprinting() {
+        return (this.state == PathState.FOLLOWING || this.state == PathState.CALCULATING)
+                && this.landingPhase == LandingPhase.NONE && !this.host.isVehicle()
+                && !this.flightCapable.isTakeoff() && !this.flightCapable.isLanding()
+                && this.currentFlightRequest != null && this.currentFlightRequest.requestsSprint()
+                && this.host.getDeltaMovement().length() > this.flightCapable.getFlightSpeed() * 1.1D;
+    }
+
     public Vec3 getCurrentWaypoint() {
         return this.currentWaypoint;
     }
@@ -611,6 +563,8 @@ public class AsyncFlightController {
 
     public String getSteeringDebugSummary() {
         return this.movementExecutor.steeringSummary() + ",phase=" + this.landingPhase
+                + (this.currentFlightRequest == null ? "" : ",purpose=" + this.currentFlightRequest.purpose()
+                    + ",arrival=" + this.currentFlightRequest.arrival() + ",speed=" + this.speedModifier)
                 + (this.landingPlan == null ? "" : ",touchdown=" + this.landingPlan.touchdown());
     }
 
@@ -621,40 +575,6 @@ public class AsyncFlightController {
                 this.pathResolver.getDebugPathNodes(),
                 this.pathResolver.getDebugCurrentPathIndex()
         );
-    }
-
-    private boolean shouldForceRecalculateForRetarget(Vec3 previousTarget,
-                                                      boolean previousGroundTransition,
-                                                      Vec3 newTarget,
-                                                      boolean newGroundTransition) {
-        if (previousTarget == null) {
-            return false;
-        }
-
-        if (previousGroundTransition != newGroundTransition) {
-            return true;
-        }
-
-        if (Math.abs(newTarget.y - previousTarget.y) >= this.liveRetargetMeaningfulVerticalDelta) {
-            return true;
-        }
-
-        Vec3 currentDirection = horizontalDirectionTo(previousTarget);
-        Vec3 newDirection = horizontalDirectionTo(newTarget);
-        if (currentDirection == null || newDirection == null) {
-            return false;
-        }
-
-        return currentDirection.dot(newDirection) < this.liveRetargetMeaningfulHeadingDot;
-    }
-
-    private Vec3 horizontalDirectionTo(Vec3 target) {
-        Vec3 horizontal = target.subtract(this.host.position());
-        horizontal = new Vec3(horizontal.x, 0.0D, horizontal.z);
-        if (horizontal.lengthSqr() < 1.0D) {
-            return null;
-        }
-        return horizontal.normalize();
     }
 
     public interface WaypointArrivalCallback {

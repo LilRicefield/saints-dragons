@@ -32,6 +32,7 @@ class AsyncFlightWaypointQueue {
     record QueuedWaypoint(Vec3 position,
                           double speed,
                           @Nullable AsyncFlightController.WaypointArrivalCallback onArrival,
-                          boolean groundTransition) {
+                          boolean groundTransition,
+                          DragonFlightRequest flightRequest) {
     }
 }

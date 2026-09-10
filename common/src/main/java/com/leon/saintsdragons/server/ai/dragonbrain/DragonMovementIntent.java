@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -9,6 +10,7 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         DragonMovementIntent.HoldPosition,
         DragonMovementIntent.AutoPosition,
         DragonMovementIntent.StrictAirPosition,
+        DragonMovementIntent.Flight,
         DragonMovementIntent.AutoTarget,
         DragonMovementIntent.GroundPosition,
         DragonMovementIntent.ProgressiveGroundPosition,
@@ -40,6 +42,10 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
 
     static DragonMovementIntent strictAir(Vec3 target, double speed) {
         return new StrictAirPosition(target, speed);
+    }
+
+    static DragonMovementIntent flight(DragonFlightRequest request) {
+        return new Flight(request);
     }
 
     static DragonMovementIntent auto(LivingEntity target, double speed) {
@@ -112,6 +118,13 @@ public sealed interface DragonMovementIntent permits DragonMovementIntent.None,
         @Override
         public void apply(RideableDragonBase dragon) {
             dragon.getAIMovement().setAsyncAirWaypoint(target, speed);
+        }
+    }
+
+    record Flight(DragonFlightRequest request) implements DragonMovementIntent {
+        @Override
+        public void apply(RideableDragonBase dragon) {
+            dragon.getAIMovement().requestFlight(request);
         }
     }
 
