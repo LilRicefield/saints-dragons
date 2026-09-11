@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.fabric.mixin.fabric;
 
 import com.leon.saintsdragons.client.camera.DragonFovEffects;
+import com.leon.saintsdragons.client.camera.IgnivorusSkyfallScreenEffects;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import net.minecraft.client.Camera;
@@ -13,6 +14,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = GameRenderer.class, priority = 500)
 public class EntityRendererMixin {
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V"))
+    private void saintsdragons$skyfallFlash(float partialTick, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+        if (renderLevel) {
+            IgnivorusSkyfallScreenEffects.renderFlash(partialTick);
+        }
+    }
+
     @ModifyReturnValue(method = "getFov(Lnet/minecraft/client/Camera;FZ)D", at = @At("RETURN"), require = 0)
     private double modifyFOV(double incomingFov, Camera camera, float partialTicks, boolean useFOVSetting) {
         return DragonFovEffects.apply(incomingFov, partialTicks);

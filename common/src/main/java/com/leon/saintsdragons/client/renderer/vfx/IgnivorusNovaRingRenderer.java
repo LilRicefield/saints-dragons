@@ -17,12 +17,12 @@ import org.joml.Vector3f;
 
 public class IgnivorusNovaRingRenderer extends EntityRenderer<IgnivorusNovaRingEntity> {
 
-    private static final int TOTAL_FRAMES = 5;
+    private static final int TOTAL_FRAMES = 7;
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[TOTAL_FRAMES];
 
     static {
         for (int i = 0; i < TOTAL_FRAMES; i++) {
-            TEXTURES[i] = SaintsDragonsCommon.rl("textures/entity/ignivorus/ring" + i + ".png");
+            TEXTURES[i] = SaintsDragonsCommon.rl("textures/particle/sharp_impact" + (i + 1) + ".png");
         }
     }
 

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.IgnivorusSkyfallRaysRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.IgnivorusSkyfallSphereRenderer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusNightEmissiveLayer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
@@ -101,6 +102,7 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     protected void afterDragonRender(Ignivorus entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
                                      net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
         if (!entity.isBaby()) {
+            IgnivorusSkyfallSphereRenderer.render(entity, poseStack, bufferSource, partialTick);
             IgnivorusSkyfallRaysRenderer.render(entity, getBoneWorldPosition("middlebody"),
                     poseStack, bufferSource, partialTick);
             sendBonePositionsToServer(entity);

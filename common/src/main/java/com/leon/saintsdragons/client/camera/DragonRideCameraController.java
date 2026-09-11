@@ -45,6 +45,9 @@ public final class DragonRideCameraController {
 
         boolean airOrWaterMode = DragonRideCameraTuning.isAirOrWaterMode(vehicle);
         float targetZoom = airOrWaterMode ? profile.airOrWaterDistance() : profile.groundedDistance();
+        if (vehicle instanceof Ignivorus ignivorus && ignivorus.getSkyfallElapsedTicks(partialTick) >= 0.0F) {
+            targetZoom = Math.max(targetZoom, 40.0F);
+        }
         double targetLateralShift = airOrWaterMode ? computeTargetLateralShift(vehicle, partialTick, profile) : 0.0;
         double targetVerticalShift = airOrWaterMode ? profile.airOrWaterVerticalShift() : profile.groundedVerticalShift();
         float targetPitchOffset = airOrWaterMode ? profile.airOrWaterPitchOffset() : profile.groundedPitchOffset();

@@ -65,9 +65,11 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.IGNIVORUS_EXPLOSION_FIRE.get(), IgnivorusExplosionFireParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_EXPLOSION_STAR.get(), IgnivorusExplosionStarParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_NOVA_SPARKLE.get(), IgnivorusNovaSparkleParticle.Factory::new);
+        register(registrar, ModParticles.IGNIVORUS_CHARGE_SPARKLE.get(), IgnivorusNovaSparkleParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_AFTERMATH.get(), sprites -> new IgnivorusAftermathParticle.Factory());
         register(registrar, ModParticles.IGNIVORUS_LINGERING_FIRE.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.FIRE));
         register(registrar, ModParticles.IGNIVORUS_LINGERING_SPEC.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.SPEC));
+        register(registrar, ModParticles.IGNIVORUS_LINGERING_BETTER_FIRE.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.BETTER_FIRE));
         register(registrar, ModParticles.IGNIVORUS_NOVA_SMOKE.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.SMOKE));
         register(registrar, ModParticles.IGNIVORUS_EXPLOSION_LAYER.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.EXPLOSION));
         register(registrar, ModParticles.IGNIVORUS_GROUND_IMPACT.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.GROUND));
@@ -75,6 +77,10 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.IGNIVORUS_SKYFALL_CHARGE.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.CHARGE));
         register(registrar, ModParticles.IGNIVORUS_SKYFALL_AURA.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.AURA));
         register(registrar, ModParticles.IGNIVORUS_SKYFALL_SHARP.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.SHARP));
+        register(registrar, ModParticles.IGNIVORUS_SKYFALL_SWIRL.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.SWIRL));
+        register(registrar, ModParticles.IGNIVORUS_SKYFALL_ABSORB.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.ABSORB));
+        register(registrar, ModParticles.IGNIVORUS_SKYFALL_CIRCLE.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.CIRCLE));
+        register(registrar, ModParticles.IGNIVORUS_TOON_EXPLOSION.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.TOON));
         register(registrar, ModParticles.LIGHTNING_STORM.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_STORM_NIGHT_GOLD.get(), RaevyxLightningParticle.Factory::new);
         register(registrar, ModParticles.LIGHTNING_CHAIN.get(), RaevyxLightningChainParticle.Factory::new);

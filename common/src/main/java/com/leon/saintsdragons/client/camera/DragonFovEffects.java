@@ -39,7 +39,8 @@ public final class DragonFovEffects {
         return originalFov
                 * currentDragonMultiplier
                 * BloodTempestKatanaVisuals.getFovMultiplier(partialTick)
-                * DragonlordFlightVisuals.getFovMultiplier(partialTick);
+                * DragonlordFlightVisuals.getFovMultiplier(partialTick)
+                * IgnivorusSkyfallScreenEffects.fovMultiplier(partialTick);
     }
 
     private static void resetDragonSmoothing() {

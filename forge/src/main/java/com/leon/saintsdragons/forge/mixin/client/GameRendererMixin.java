@@ -1,8 +1,10 @@
 package com.leon.saintsdragons.forge.mixin.client;
 
+import com.leon.saintsdragons.client.camera.IgnivorusSkyfallScreenEffects;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.ui.SpeedLineOverlay;
 import com.leon.saintsdragons.forge.platform.ForgeClientConfig;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.GameRenderer;
@@ -14,6 +16,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/GuiGraphics;flush()V"))
+    private void saintsdragons$skyfallFlash(float partialTick, long nanoTime, boolean renderLevel, CallbackInfo ci) {
+        if (renderLevel) {
+            IgnivorusSkyfallScreenEffects.renderFlash(partialTick);
+        }
+    }
+
     @Shadow
     private Minecraft minecraft;
 

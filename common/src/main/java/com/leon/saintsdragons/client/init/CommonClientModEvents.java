@@ -12,7 +12,7 @@ import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusFlameRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaBlockRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaPillarRenderer;
-import com.leon.saintsdragons.client.renderer.vfx.IgnivorusNovaRenderer;
+import net.minecraft.client.renderer.entity.NoopRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.IgnivorusNovaRingRenderer;
 import com.leon.saintsdragons.client.renderer.nulljaw.NulljawRenderer;
 import com.leon.saintsdragons.client.renderer.varasuchus.VarasuchusRenderer;
@@ -64,7 +64,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_FLAME.get(), IgnivorusFlameRenderer::new);
-        registrar.register(ModEntities.IGNIVORUS_NOVA.get(), IgnivorusNovaRenderer::new);
+        registrar.register(ModEntities.IGNIVORUS_NOVA.get(), NoopRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_NOVA_RING.get(), IgnivorusNovaRingRenderer::new);
         registrar.register(ModEntities.STEGONAUT_GROUND_CHUNK.get(), StegonautGroundChunkRenderer::new);
         registrar.register(ModEntities.STEGONAUT_AMETHYST_PILLAR.get(), StegonautAmethystPillarRenderer::new);

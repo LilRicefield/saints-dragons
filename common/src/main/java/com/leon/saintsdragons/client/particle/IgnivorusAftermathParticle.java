@@ -41,6 +41,10 @@ public final class IgnivorusAftermathParticle extends NoRenderParticle {
                         ground.x, ground.y, ground.z, 0.0D, 0.0D, 0.0D);
             }
         }
+        if (age == 5) {
+            Minecraft.getInstance().particleEngine.createParticle(ModParticles.IGNIVORUS_TOON_EXPLOSION.get(),
+                    x, y + 20.0D, z, 0.0D, 0.0D, 0.0D);
+        }
         if (age >= 12 && age <= 60 && age % 12 == 0) {
             for (Vec3 point : groundPoints) emitFire(point, new Vec3(0.0D, 0.04D, 0.0D));
         }
@@ -66,6 +70,9 @@ public final class IgnivorusAftermathParticle extends NoRenderParticle {
             Vec3 dir = new Vec3(Math.cos(angle) * horizontal, height, Math.sin(angle) * horizontal);
             Vec3 point = center.add(dir.scale(6.0D + random.nextDouble() * 15.0D));
             emitFire(point, dir.scale(0.3D + random.nextDouble() * 0.4D));
+            Vec3 flameVelocity = dir.scale(0.3D + random.nextDouble() * 0.4D);
+            engine.createParticle(ModParticles.IGNIVORUS_LINGERING_BETTER_FIRE.get(), point.x, point.y, point.z,
+                    flameVelocity.x, flameVelocity.y, flameVelocity.z);
             if (i < 28) {
                 Vec3 smokeOrigin = center.add(dir.scale(12.0D + random.nextDouble() * 18.0D));
                 Vec3 velocity = dir.scale(0.7D + random.nextDouble() * 0.6D);

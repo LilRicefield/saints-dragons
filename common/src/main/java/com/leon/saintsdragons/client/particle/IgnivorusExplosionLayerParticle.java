@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle {
-    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA, SHARP }
+    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA, SHARP, SWIRL, ABSORB, CIRCLE, TOON }
     private static final float TICKS_PER_FRAME = 2.0F;
     private static final int SPARK_COUNT = 64;
     private final SpriteSet sprites;
@@ -33,7 +33,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         super(level, x, y, z);
         this.sprites = sprites;
         this.layer = layer;
-        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND || layer == Layer.SHARP)
+        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND || layer == Layer.SHARP || layer == Layer.SWIRL || layer == Layer.ABSORB || layer == Layer.CIRCLE || layer == Layer.TOON)
                 && ShaderPassCompatibility.isShaderPackInUse()
                 ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
                 : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
@@ -45,19 +45,24 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             case CHARGE -> 5;
             case AURA -> 10;
             case SHARP -> 8;
+            case SWIRL -> 31;
+            case ABSORB -> 31;
+            case CIRCLE -> 12;
+            case TOON -> 8;
         };
         this.ticksPerFrame = switch (layer) {
-            case CHARGE, SHARP -> 1.0F;
+            case CHARGE, SHARP, SWIRL -> 1.0F;
+            case ABSORB, CIRCLE -> 0.5F;
             case AURA -> 16.0F / frameCount;
             case GROUND -> 24.0F / frameCount;
             default -> TICKS_PER_FRAME;
         };
-        lifetime = layer == Layer.AURA ? 16 : ground ? 24 : (int) (frameCount * ticksPerFrame);
+        lifetime = layer == Layer.AURA ? 16 : ground ? 24 : Mth.ceil(frameCount * ticksPerFrame);
         hasPhysics = false;
         alpha = 0.0F;
         setColor(1.0F, 0.65F, 0.18F);
         if (layer == Layer.SPEC) setColor(1.0F, 0.82F, 0.38F);
-        if (layer == Layer.AURA) setColor(1.0F, 1.0F, 1.0F);
+        if (layer == Layer.AURA || layer == Layer.ABSORB) setColor(1.0F, 1.0F, 1.0F);
         if (frameCount == 1) {
             pickSprite(sprites);
         } else {
@@ -76,6 +81,19 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         if (age == 0 && layer == Layer.EXPLOSION) {
             emitSparks();
             emitStars();
+        }
+        if (layer == Layer.ABSORB && age < 40 && age % 5 == 0) {
+            var engine = Minecraft.getInstance().particleEngine;
+            for (int i = 0; i < 5; i++) {
+                double angle = random.nextDouble() * Math.PI * 2.0D;
+                double vertical = random.nextDouble() * 2.0D - 1.0D;
+                double horizontal = Math.sqrt(1.0D - vertical * vertical);
+                Vec3 direction = new Vec3(Math.cos(angle) * horizontal, vertical, Math.sin(angle) * horizontal);
+                Vec3 point = new Vec3(x, y, z).add(direction.scale(24.0D + random.nextDouble() * 10.0D));
+                Vec3 drift = direction.scale(0.08D);
+                engine.createParticle(ModParticles.IGNIVORUS_CHARGE_SPARKLE.get(), point.x, point.y, point.z,
+                        drift.x, drift.y, drift.z);
+            }
         }
         if (++age >= lifetime) remove();
     }
@@ -128,6 +146,24 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
                 ground ? 10.0F : 12.0F, ground ? 32.0F : 36.0F);
         if (layer == Layer.CHARGE) quadSize = Mth.lerp(progress, 24.0F, 36.0F);
         if (layer == Layer.SHARP) quadSize = 16.0F;
+        if (layer == Layer.CIRCLE) {
+            quadSize = Mth.lerp(1.0F - (1.0F - progress) * (1.0F - progress), 2.0F, 38.0F);
+            alpha = smooth(Mth.clamp(elapsed, 0.0F, 1.0F))
+                    * (1.0F - smooth(Mth.clamp((elapsed - 4.0F) / 2.0F, 0.0F, 1.0F)));
+        }
+        if (layer == Layer.TOON) {
+            quadSize = Mth.lerp(progress, 24.0F, 36.0F);
+            alpha = fadeIn * (1.0F - smooth(Mth.clamp((elapsed - 10.0F) / 6.0F, 0.0F, 1.0F)));
+        }
+        if (layer == Layer.ABSORB) {
+            quadSize = 24.0F;
+            alpha = smooth(Mth.clamp(elapsed / 1.0F, 0.0F, 1.0F))
+                    * (1.0F - smooth(Mth.clamp((elapsed - 14.0F) / 1.5F, 0.0F, 1.0F)));
+        }
+        if (layer == Layer.SWIRL) {
+            quadSize = 32.0F;
+            alpha = fadeIn * (1.0F - smooth(Mth.clamp((elapsed - 27.0F) / 4.0F, 0.0F, 1.0F)));
+        }
         if (layer == Layer.AURA) {
             quadSize = Mth.lerp(progress, 18.0F, 24.0F);
             Vec3 center = new Vec3(x, y, z).subtract(camera.getPosition());

@@ -13,7 +13,7 @@ import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 
 public final class IgnivorusAftermathFlameParticle extends TextureSheetParticle {
-    public enum Style { FIRE, SPEC, SMOKE }
+    public enum Style { FIRE, SPEC, SMOKE, BETTER_FIRE }
     private final SpriteSet sprites;
     private final Style style;
     private final int frames;
@@ -28,7 +28,12 @@ public final class IgnivorusAftermathFlameParticle extends TextureSheetParticle 
         this.sprites = sprites;
         this.style = style;
         nextSparkAge = 2 + random.nextInt(5);
-        frames = style == Style.FIRE ? 17 : style == Style.SPEC ? 12 : 14;
+        frames = switch (style) {
+            case FIRE -> 17;
+            case SPEC -> 12;
+            case SMOKE -> 14;
+            case BETTER_FIRE -> 8;
+        };
         frameOffset = style == Style.SMOKE ? 0.0F : random.nextInt(frames);
         lifetime = style == Style.SMOKE ? 28 : 45 + random.nextInt(36);
         size = style == Style.SMOKE ? 4.0F + random.nextFloat() * 3.0F : 1.4F + random.nextFloat() * 1.5F;
@@ -38,7 +43,7 @@ public final class IgnivorusAftermathFlameParticle extends TextureSheetParticle 
         hasPhysics = false;
         alpha = 0.0F;
         quadSize = size;
-        if (style == Style.FIRE) setColor(1.0F, 0.55F, 0.12F);
+        if (style == Style.FIRE || style == Style.BETTER_FIRE) setColor(1.0F, 0.55F, 0.12F);
         if (style == Style.SPEC) setColor(1.0F, 0.82F, 0.38F);
         if (style == Style.SMOKE) setColor(0.7F, 0.65F, 0.6F);
         setSprite(sprites.get((int) frameOffset, frames - 1));

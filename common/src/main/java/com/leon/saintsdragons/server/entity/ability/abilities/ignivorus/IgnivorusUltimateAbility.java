@@ -34,6 +34,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int SKYFALL_CHARGE_TICK = SKYFALL_EXPLOSION_TICK - 20;
     private static final int SKYFALL_AURA_TICK = SKYFALL_CHARGE_TICK + 2;
     private static final int SKYFALL_SHARP_TICK = SKYFALL_EXPLOSION_TICK - 8;
+    private static final int SKYFALL_SWIRL_TICK = SKYFALL_EXPLOSION_TICK - 24;
+    private static final int SKYFALL_ABSORB_TICK = 5 * 20;
     private static final double EXPLOSION_VISUAL_HEIGHT = 20.0D;
     private static final int ULTIMATE_START_TICKS = 40;
     private static final int ULTIMATE_LOOP_TICKS = 108;
@@ -89,6 +91,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean skyfallChargeSpawned;
     private boolean skyfallAuraSpawned;
     private boolean skyfallSharpSpawned;
+    private boolean skyfallSwirlSpawned;
+    private boolean skyfallCircleSpawned;
+    private boolean skyfallAbsorbSpawned;
     private boolean transitionsToPhase2;
     private boolean groundSkyfallMode;
 
@@ -208,6 +213,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
         int ticks = getTicksInSection();
         if (groundSkyfallMode) {
+            if (!skyfallAbsorbSpawned && ticks >= SKYFALL_ABSORB_TICK) {
+                skyfallAbsorbSpawned = true;
+                spawnSkyfallAbsorb();
+            }
             if (!skyfallChargeSpawned && ticks >= SKYFALL_CHARGE_TICK) {
                 skyfallChargeSpawned = true;
                 spawnSkyfallCharge();
@@ -220,6 +229,14 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 skyfallSharpSpawned = true;
                 spawnSkyfallSharp();
             }
+            if (!skyfallSwirlSpawned && ticks >= SKYFALL_SWIRL_TICK) {
+                skyfallSwirlSpawned = true;
+                spawnSkyfallSwirl();
+            }
+            if (!skyfallCircleSpawned && ticks >= SKYFALL_EXPLOSION_TICK - 6) {
+                skyfallCircleSpawned = true;
+                spawnSkyfallCircle();
+            }
             if (!skyfallAuraSpawned && ticks >= SKYFALL_AURA_TICK) {
                 skyfallAuraSpawned = true;
                 spawnSkyfallAura();
@@ -227,7 +244,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             if (!novaSpawned && ticks >= SKYFALL_EXPLOSION_TICK) {
                 novaSpawned = true;
                 spawnNovaEntity();
-                getUser().triggerScreenShake(2.3F);
+                getUser().triggerScreenShake(3.5F);
             }
             return;
         }
@@ -302,6 +319,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         skyfallChargeSpawned = false;
         skyfallAuraSpawned = false;
         skyfallSharpSpawned = false;
+        skyfallSwirlSpawned = false;
+        skyfallCircleSpawned = false;
+        skyfallAbsorbSpawned = false;
         penaltyApplied = false;
         endAnimPlayed = false;
         dragon.getCombatAim().clear();
@@ -312,7 +332,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         dragon.setLanding(false);
         dragon.setTakeoff(false);
         dragon.setDeltaMovement(Vec3.ZERO);
-        dragon.setUltimateCameraZoomActive(true);
+        dragon.setUltimateCameraZoomActive(false);
         dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
         if (!dragon.level().isClientSide) {
             dragon.getSoundHandler().playMovingEntitySound(
@@ -414,6 +434,39 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         server.addFreshEntity(ring);
 
         spawnExplosionFire(server, center);
+    }
+
+    private void spawnSkyfallAbsorb() {
+        if (!(getUser().level() instanceof ServerLevel server)) return;
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_ABSORB.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
+
+    private void spawnSkyfallCircle() {
+        if (!(getUser().level() instanceof ServerLevel server)) return;
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_CIRCLE.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
+
+    private void spawnSkyfallSwirl() {
+        if (!(getUser().level() instanceof ServerLevel server)) return;
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_SWIRL.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
     }
 
     private void spawnSkyfallSharp() {
