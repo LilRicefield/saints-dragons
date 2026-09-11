@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.renderer.layer.ignivorus;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusUltimateAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -43,8 +44,9 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
 
         boolean isBreathingFire = animatable.isBreathingFire();
         boolean isChargingFireball = animatable.isChargingFireball();
+        float skyfallGlow = skyfallGlow(animatable.getSkyfallElapsedTicks(partialTick));
 
-        if (!isBreathingFire && !isChargingFireball) {
+        if (!isBreathingFire && !isChargingFireball && skyfallGlow <= 0.0F) {
             return;
         }
 
@@ -68,12 +70,15 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
                 float rapidPulse = 0.8f + 0.2f * Mth.sin(ticks * 0.8f);
                 alpha = Math.min(1.0f, alpha * rapidPulse * 1.2f);
             }
-        } else {
+        } else if (isBreathingFire) {
             // Fire breathing glow - original behavior
             float pulse = 0.5f + 0.5f * Mth.sin(ticks * 0.2f);
             float streamProgress = animatable.getFireBreathProgress() / 40.0f;
             alpha = Mth.clamp(streamProgress, 0.0f, 1.0f) * (0.35f + 0.65f * pulse);
+        } else {
+            alpha = 0.0F;
         }
+        alpha = Math.max(alpha, skyfallGlow);
 
         if (alpha <= 0.01f) {
             return;
@@ -98,6 +103,19 @@ public class IgnivorusGlowLayer extends GeoRenderLayer<Ignivorus> {
                 1.0f,
                 alpha
         );
+    }
+
+    private static float skyfallGlow(float elapsed) {
+        if (elapsed < 0.0F) return 0.0F;
+        float afterExplosion = elapsed - IgnivorusUltimateAbility.SKYFALL_EXPLOSION_TICK;
+        if (afterExplosion < 0.0F) {
+            float buildup = Mth.clamp(1.0F + afterExplosion / 60.0F, 0.0F, 1.0F);
+            return buildup * buildup * (3.0F - 2.0F * buildup);
+        }
+        float fade = Mth.clamp((120.0F - afterExplosion) / 30.0F, 0.0F, 1.0F);
+        fade = fade * fade * (3.0F - 2.0F * fade);
+        float pulse = 0.5F + 0.5F * Mth.cos(afterExplosion * Mth.TWO_PI / 30.0F);
+        return (0.08F + 0.92F * pulse) * fade;
     }
 
     private ResourceLocation getGlowTexture(Ignivorus animatable) {

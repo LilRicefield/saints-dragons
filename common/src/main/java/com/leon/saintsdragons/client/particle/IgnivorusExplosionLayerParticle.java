@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle {
-    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA }
+    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA, SHARP }
     private static final float TICKS_PER_FRAME = 2.0F;
     private static final int SPARK_COUNT = 64;
     private final SpriteSet sprites;
@@ -33,7 +33,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         super(level, x, y, z);
         this.sprites = sprites;
         this.layer = layer;
-        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND)
+        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND || layer == Layer.SHARP)
                 && ShaderPassCompatibility.isShaderPackInUse()
                 ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
                 : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
@@ -44,9 +44,10 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             case SPEC -> 12;
             case CHARGE -> 5;
             case AURA -> 10;
+            case SHARP -> 8;
         };
         this.ticksPerFrame = switch (layer) {
-            case CHARGE -> 1.0F;
+            case CHARGE, SHARP -> 1.0F;
             case AURA -> 16.0F / frameCount;
             case GROUND -> 24.0F / frameCount;
             default -> TICKS_PER_FRAME;
@@ -60,7 +61,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         if (frameCount == 1) {
             pickSprite(sprites);
         } else {
-            setSprite(sprites.get(0, frameCount - 1));
+            setSprite(sprites.get(layer == Layer.SHARP ? frameCount - 1 : 0, frameCount - 1));
         }
         double radius = layer == Layer.AURA ? 70.0D : 56.0D;
         setBoundingBox(new AABB(x - radius, y - radius, z - radius,
@@ -72,8 +73,25 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         xo = x;
         yo = y;
         zo = z;
-        if (age == 0 && layer == Layer.EXPLOSION) emitSparks();
+        if (age == 0 && layer == Layer.EXPLOSION) {
+            emitSparks();
+            emitStars();
+        }
         if (++age >= lifetime) remove();
+    }
+
+    private void emitStars() {
+        var engine = Minecraft.getInstance().particleEngine;
+        for (int i = 0; i < 80; i++) {
+            double angle = (i + random.nextDouble()) * Math.PI * 2.0D / 80.0D;
+            double vertical = random.nextDouble() * 1.5D - 0.5D;
+            double horizontal = Math.sqrt(1.0D - vertical * vertical);
+            Vec3 direction = new Vec3(Math.cos(angle) * horizontal, vertical, Math.sin(angle) * horizontal);
+            Vec3 origin = new Vec3(x, y, z).add(direction.scale(4.0D + random.nextDouble() * 5.0D));
+            Vec3 velocity = direction.scale(1.2D + random.nextDouble() * 2.2D);
+            engine.createParticle(ModParticles.IGNIVORUS_NOVA_SPARKLE.get(), origin.x, origin.y, origin.z,
+                    velocity.x, velocity.y, velocity.z);
+        }
     }
 
     private void emitSparks() {
@@ -98,7 +116,9 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float elapsed = age + partialTicks;
         if (frameCount > 1) {
-            setSprite(sprites.get(Math.min((int) (elapsed / ticksPerFrame), frameCount - 1), frameCount - 1));
+            int frame = Math.min((int) (elapsed / ticksPerFrame), frameCount - 1);
+            if (layer == Layer.SHARP) frame = frameCount - 1 - frame;
+            setSprite(sprites.get(frame, frameCount - 1));
         }
         float progress = Mth.clamp(elapsed / lifetime, 0.0F, 1.0F);
         float fadeIn = smooth(Mth.clamp(elapsed / 2.0F, 0.0F, 1.0F));
@@ -107,6 +127,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         quadSize = Mth.lerp(1.0F - (1.0F - progress) * (1.0F - progress),
                 ground ? 10.0F : 12.0F, ground ? 32.0F : 36.0F);
         if (layer == Layer.CHARGE) quadSize = Mth.lerp(progress, 24.0F, 36.0F);
+        if (layer == Layer.SHARP) quadSize = 16.0F;
         if (layer == Layer.AURA) {
             quadSize = Mth.lerp(progress, 18.0F, 24.0F);
             Vec3 center = new Vec3(x, y, z).subtract(camera.getPosition());
@@ -119,9 +140,9 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
                 right = right.normalize();
             }
             auraCorner(buffer, center, right, -1, -1, getU1(), getV1());
-            auraCorner(buffer, center, right, -1, 1, getU1(), getV0());
-            auraCorner(buffer, center, right, 1, 1, getU0(), getV0());
             auraCorner(buffer, center, right, 1, -1, getU0(), getV1());
+            auraCorner(buffer, center, right, 1, 1, getU0(), getV0());
+            auraCorner(buffer, center, right, -1, 1, getU1(), getV0());
             return;
         }
         if (!ground) {

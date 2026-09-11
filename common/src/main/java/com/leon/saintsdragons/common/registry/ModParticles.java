@@ -126,6 +126,18 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> IGNIVORUS_EXPLOSION_STAR =
             REGISTER.register("ignivorus_explosion_star", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_NOVA_SPARKLE =
+            REGISTER.register("ignivorus_nova_sparkle", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_AFTERMATH =
+            REGISTER.register("ignivorus_aftermath", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LINGERING_FIRE =
+            REGISTER.register("ignivorus_lingering_fire", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LINGERING_SPEC =
+            REGISTER.register("ignivorus_lingering_spec", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> IGNIVORUS_NOVA_SMOKE =
+            REGISTER.register("ignivorus_nova_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> IGNIVORUS_EXPLOSION_LAYER =
             REGISTER.register("ignivorus_explosion_layer", () -> Services.PLATFORM.createSimpleParticle(true));
 
@@ -140,6 +152,9 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> IGNIVORUS_SKYFALL_AURA =
             REGISTER.register("ignivorus_skyfall_aura", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_SKYFALL_SHARP =
+            REGISTER.register("ignivorus_skyfall_sharp", () -> Services.PLATFORM.createSimpleParticle(true));
 
     public static final Supplier<SimpleParticleType> DRAGON_DUST =
             REGISTER.register("dragon_dust", () -> Services.PLATFORM.createSimpleParticle(true));

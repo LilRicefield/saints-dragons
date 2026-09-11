@@ -33,6 +33,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int SKYFALL_STAR_TICK = SKYFALL_EXPLOSION_TICK - 4;
     private static final int SKYFALL_CHARGE_TICK = SKYFALL_EXPLOSION_TICK - 20;
     private static final int SKYFALL_AURA_TICK = SKYFALL_CHARGE_TICK + 2;
+    private static final int SKYFALL_SHARP_TICK = SKYFALL_EXPLOSION_TICK - 8;
     private static final double EXPLOSION_VISUAL_HEIGHT = 20.0D;
     private static final int ULTIMATE_START_TICKS = 40;
     private static final int ULTIMATE_LOOP_TICKS = 108;
@@ -87,6 +88,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean explosionStarSpawned;
     private boolean skyfallChargeSpawned;
     private boolean skyfallAuraSpawned;
+    private boolean skyfallSharpSpawned;
     private boolean transitionsToPhase2;
     private boolean groundSkyfallMode;
 
@@ -214,6 +216,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 explosionStarSpawned = true;
                 spawnExplosionStar();
             }
+            if (!skyfallSharpSpawned && ticks >= SKYFALL_SHARP_TICK) {
+                skyfallSharpSpawned = true;
+                spawnSkyfallSharp();
+            }
             if (!skyfallAuraSpawned && ticks >= SKYFALL_AURA_TICK) {
                 skyfallAuraSpawned = true;
                 spawnSkyfallAura();
@@ -295,6 +301,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         explosionStarSpawned = false;
         skyfallChargeSpawned = false;
         skyfallAuraSpawned = false;
+        skyfallSharpSpawned = false;
         penaltyApplied = false;
         endAnimPlayed = false;
         dragon.getCombatAim().clear();
@@ -409,6 +416,17 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         spawnExplosionFire(server, center);
     }
 
+    private void spawnSkyfallSharp() {
+        if (!(getUser().level() instanceof ServerLevel server)) return;
+        Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
+        for (var viewer : server.players()) {
+            if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_SHARP.get(), true,
+                        base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            }
+        }
+    }
+
     private void spawnSkyfallAura() {
         if (!(getUser().level() instanceof ServerLevel server)) return;
         Vec3 base = getUser().position().add(0.0D, EXPLOSION_VISUAL_HEIGHT, 0.0D);
@@ -470,6 +488,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
             server.sendParticles(viewer, ModParticles.IGNIVORUS_GROUND_IMPACT.get(), true,
                     center.x, center.y + 0.24D, center.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            server.sendParticles(viewer, ModParticles.IGNIVORUS_AFTERMATH.get(), true,
+                    center.x, center.y, center.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
         }
         for (int i = 0; i < FIRE_PUFF_COUNT; i++) {
             double theta = random.nextDouble() * Math.PI * 2.0D;

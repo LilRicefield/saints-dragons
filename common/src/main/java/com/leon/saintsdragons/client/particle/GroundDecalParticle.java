@@ -39,6 +39,9 @@ public final class GroundDecalParticle extends TextureSheetParticle {
         this.alpha = 1.0F;
         this.hasPhysics = false;
         this.setSprite(sprites.get(this.random));
+        double radius = this.finalScale * Math.sqrt(2.0D);
+        this.setBoundingBox(new net.minecraft.world.phys.AABB(x - radius, y - 0.1D, z - radius,
+                x + radius, y + 0.1D, z + radius));
     }
 
     @Override
