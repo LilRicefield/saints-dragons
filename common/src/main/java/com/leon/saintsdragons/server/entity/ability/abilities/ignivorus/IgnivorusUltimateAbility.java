@@ -76,6 +76,10 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final DragonAbilitySection[] SKYFALL_TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, SKYFALL_TICKS)
     };
+    private static final int PHASE2_SKYFALL_OFFSET = 16;
+    private static final DragonAbilitySection[] PHASE2_SKYFALL_TRACK = new DragonAbilitySection[] {
+            new AbilitySectionDuration(STARTUP, SKYFALL_TICKS - PHASE2_SKYFALL_OFFSET)
+    };
 
     private boolean lockedControls;
     private boolean startAnimPlayed;
@@ -96,6 +100,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean skyfallAbsorbSpawned;
     private boolean transitionsToPhase2;
     private boolean groundSkyfallMode;
+    private boolean phase2SkyfallMode;
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
                                     Ignivorus user) {
@@ -104,13 +109,14 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
     @Override
     public void start() {
-        groundSkyfallMode = !getUser().isAerial() && !getUser().isPhase2Active();
+        groundSkyfallMode = !getUser().isAerial();
+        phase2SkyfallMode = groundSkyfallMode && getUser().isPhase2Active();
         super.start();
     }
 
     @Override
     public DragonAbilitySection[] getSectionTrack() {
-        return groundSkyfallMode ? SKYFALL_TRACK : TRACK;
+        return groundSkyfallMode ? (phase2SkyfallMode ? PHASE2_SKYFALL_TRACK : SKYFALL_TRACK) : TRACK;
     }
 
     @Override
@@ -136,6 +142,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             boolean isAirborne = dragon.isAerial();
             boolean wildLowHealthUltimate = dragon.shouldTriggerWildUltimateAtCurrentHealth();
             boolean wildPhase1Transition = wildLowHealthUltimate
+                    && !dragon.isPhase2Active()
                     && !isAirborne
                     && dragon.isGroundedForAction();
             isAirborneMode = isAirborne;
@@ -213,6 +220,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
         int ticks = getTicksInSection();
         if (groundSkyfallMode) {
+            ticks += phase2SkyfallMode ? PHASE2_SKYFALL_OFFSET : 0;
             if (!skyfallAbsorbSpawned && ticks >= SKYFALL_ABSORB_TICK) {
                 skyfallAbsorbSpawned = true;
                 spawnSkyfallAbsorb();
@@ -313,7 +321,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     }
 
     private void beginGroundSkyfall(Ignivorus dragon) {
-        dragon.setSkyfallChargeActive(true);
+        int offset = phase2SkyfallMode ? PHASE2_SKYFALL_OFFSET : 0;
+        dragon.setSkyfallChargeActive(true, offset);
         novaSpawned = false;
         explosionStarSpawned = false;
         skyfallChargeSpawned = false;
@@ -325,7 +334,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         penaltyApplied = false;
         endAnimPlayed = false;
         dragon.getCombatAim().clear();
-        dragon.lockRiderControls(SKYFALL_TICKS);
+        dragon.lockRiderControls(SKYFALL_TICKS - offset);
         lockedControls = true;
         dragon.markLandedNow();
         dragon.setHovering(false);
@@ -333,10 +342,11 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         dragon.setTakeoff(false);
         dragon.setDeltaMovement(Vec3.ZERO);
         dragon.setUltimateCameraZoomActive(false);
-        dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
+        dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
         if (!dragon.level().isClientSide) {
             dragon.getSoundHandler().playMovingEntitySound(
-                    ModSounds.IGNIVORUS_SKYFALL.get(), 1.0F, 1.0F, SKYFALL_TICKS);
+                    phase2SkyfallMode ? ModSounds.IGNIVORUS_SKYFALL_PHASE2.get() : ModSounds.IGNIVORUS_SKYFALL.get(),
+                    1.0F, 1.0F, SKYFALL_TICKS - offset);
         }
         applyPenaltyHealth(dragon);
     }
@@ -387,7 +397,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     public void interrupt() {
         transitionsToPhase2 = false;
         if (groundSkyfallMode) {
-            getUser().stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
+            getUser().stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
+                    phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
         }
         releaseLocks();
         super.interrupt();

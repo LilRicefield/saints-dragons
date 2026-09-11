@@ -225,6 +225,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Long> DATA_SKYFALL_START =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.LONG);
+    private static final EntityDataAccessor<Integer> DATA_SKYFALL_OFFSET =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
 
     private static final double MODEL_SCALE = 1.0D;
     private static final float FIRE_BREATH_ENERGY_REGEN = 0.0025f;
@@ -488,6 +490,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
         this.entityData.define(DATA_SKYFALL_START, -1L);
+        this.entityData.define(DATA_SKYFALL_OFFSET, 0);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
@@ -497,14 +500,20 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public void setSkyfallChargeActive(boolean active) {
+        setSkyfallChargeActive(active, 0);
+    }
+
+    public void setSkyfallChargeActive(boolean active, int timelineOffset) {
         if (!level().isClientSide) {
+            entityData.set(DATA_SKYFALL_OFFSET, active ? timelineOffset : 0);
             entityData.set(DATA_SKYFALL_START, active ? level().getGameTime() : -1L);
         }
     }
 
     public float getSkyfallElapsedTicks(float partialTick) {
         long start = entityData.get(DATA_SKYFALL_START);
-        return start < 0L ? -1.0F : (float) (level().getGameTime() - start) + partialTick;
+        return start < 0L ? -1.0F : (float) (level().getGameTime() - start)
+                + entityData.get(DATA_SKYFALL_OFFSET) + partialTick;
     }
 
     public static AttributeSupplier.Builder createAttributes() {
