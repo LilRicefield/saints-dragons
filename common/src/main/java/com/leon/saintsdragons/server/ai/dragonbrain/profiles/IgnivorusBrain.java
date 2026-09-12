@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
-import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -59,17 +58,10 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                         .build(),
                 DragonBehaviourGroup.<Ignivorus>activity(Activity.FIGHT)
                         .behaviours(
-                                new GroundPursuitFlightTransitionBehaviour<>(
-                                        GroundPursuitFlightSettings.standard(),
-                                        dragon -> groundCombat.isGroundMovementLocked(),
-                                        dragon -> false
-                                ),
                                 new IgnivorusAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<>(
                                         IgnivorusGroundCombatBehaviour.CHASE_SPEED,
-                                        (dragon, targetEntity) ->
-                                                IgnivorusGroundCombatBehaviour.MELEE_ENGAGE_RANGE
-                                                        + (dragon.getBbWidth() + targetEntity.getBbWidth()) * 0.5D,
+                                        groundCombat::getPreferredStopDistance,
                                         (dragon, targetEntity) -> groundCombat.isGroundMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),
@@ -151,7 +143,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
             return false;
         }
         double followRange = dragon.getAttributeValue(Attributes.FOLLOW_RANGE);
-        if (followRange <= 0.0D) followRange = 32.0D;
+        if (followRange <= 0.0D) followRange = Ignivorus.BASE_FOLLOW_RANGE;
         return dragon.distanceToSqr(target) <= followRange * followRange;
     }
 }

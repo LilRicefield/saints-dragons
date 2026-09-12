@@ -19,6 +19,9 @@ import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
@@ -138,12 +141,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return SCENT_ASSESSMENT_ANIMATION_TICKS;
     }
 
+    public static final double BASE_FOLLOW_RANGE = 128.0D;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
                     1.5D,
                     0,
-                    64.0D,
+                    BASE_FOLLOW_RANGE,
                     2.5D,
                     8.0D,
                     5.0D
@@ -339,6 +343,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private final Map<Integer, Integer> bulldozeHitCooldowns = new HashMap<>();
     private boolean bulldozeWasVehicle = false;
     private boolean phase2Active = false;
+    private static final DragonCombatFlightProfile COMBAT_FLIGHT_PHASE1 =
+            DragonCombatFlightProfile.ignivorus(ExpandingBreathSection.DEFAULT_RANGE, false);
+    private static final DragonCombatFlightProfile COMBAT_FLIGHT_PHASE2 =
+            DragonCombatFlightProfile.ignivorus(ExpandingBreathSection.DEFAULT_RANGE, true);
+    private static final DragonCombatAim.Profile AIR_FIRE_AIM = new DragonCombatAim.Profile(70, 55, 3, 1.0);
+    private final DragonCombatFlightState combatFlightState = new DragonCombatFlightState(this,
+            () -> isPhase2Active() ? COMBAT_FLIGHT_PHASE2 : COMBAT_FLIGHT_PHASE1,
+            this::isAiRangedFlightReady, this::isAiCombatMovementCommitted);
     @Nullable
     private LivingEntity wildPhase2Target;
     private int phase2CooldownTicks = 0;
@@ -347,6 +359,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private boolean phase2WasVehicle = false;
     private boolean wildLowHealthUltimateTriggered = false;
     private int wildPhase2IdleTicks;
+    private boolean wildPhase2PendingLanding;
     private boolean aiSpecialCombatActive = false;
     private boolean leaping = false;
     private boolean leapWasVehicle = false;
@@ -522,6 +535,15 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
                 + entityData.get(DATA_SKYFALL_OFFSET) + partialTick;
     }
 
+    private boolean isSkyfallMovementLocked() {
+        return !isDying() && entityData.get(DATA_SKYFALL_START) >= 0L;
+    }
+
+    private void holdSkyfallMovement() {
+        setDeltaMovement(Vec3.ZERO);
+        fallDistance = 0.0F;
+    }
+
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         double attackDamage = config.abilityDamage("bite", 15.0D);
@@ -530,7 +552,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
             .add(Attributes.FLYING_SPEED, config.flyingSpeed())
             .add(Attributes.ATTACK_DAMAGE, attackDamage)
-            .add(Attributes.FOLLOW_RANGE, 64.0D)
+            .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
             .add(Attributes.ARMOR, config.armor())
             .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
     }
@@ -607,7 +629,14 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
         this.setNoGravity(isFlying() || isTakeoff() || isHovering() || isLanding());
 
-        tickAsyncFlightNavigation();
+        if (isSkyfallMovementLocked()) {
+            if (!level().isClientSide && !isAiFlightDone()) {
+                clearAiFlightTarget();
+            }
+            holdSkyfallMovement();
+        } else {
+            tickAsyncFlightNavigation();
+        }
 
         tickBankingLogic();
         tickBarrelRollLogic();
@@ -973,6 +1002,21 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     private void tickPhase2State() {
         if (!level().isClientSide) {
+            if (wildPhase2PendingLanding) {
+                LivingEntity target = getTarget();
+                boolean fightEnded = wildPhase2Target != null && wildPhase2Target.isDeadOrDying()
+                        || target != null && target.isDeadOrDying();
+                if (fightEnded) {
+                    wildLowHealthUltimateTriggered = false;
+                    wildPhase2Target = null;
+                    wildPhase2PendingLanding = false;
+                } else if (!isAlive() || isTame() || isTamingStunned() || isPhase2Active()) {
+                    wildPhase2PendingLanding = false;
+                } else if (isGroundedForAction() && !isAerial() && getActiveAbility() == null
+                        && !areRiderControlsLocked() && !isLeaping() && !isLeapImpactRecovering()) {
+                    queueWildPhase2Transition();
+                }
+            }
             if (wildPhase2IdleTicks > 0) {
                 if (!isAlive() || isTamingStunned() || isTame() || isAerial()) {
                     wildPhase2IdleTicks = 0;
@@ -1027,9 +1071,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
 
         boolean wildTransitionUltimate = !isTame()
-                && !wildLowHealthUltimateTriggered
+                && !phase2Active
                 && isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE);
-        boolean shouldExtendRange = !isTame() && (phase2Active || wildTransitionUltimate);
+        boolean shouldExtendRange = !isTame() && (phase2Active || wildTransitionUltimate
+                || wildPhase2PendingLanding || wildPhase2IdleTicks > 0);
         boolean hasModifier = followRange.getModifier(PHASE2_FOLLOW_RANGE_MODIFIER_UUID) != null;
 
         if (shouldExtendRange && !hasModifier) {
@@ -1327,6 +1372,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public void travel(@NotNull Vec3 travelVec) {
+        if (isSkyfallMovementLocked()) {
+            // Zero input still runs physics; Skyfall must hold before normal travel can move it.
+            holdSkyfallMovement();
+            return;
+        }
         if (isLeaping()) {
             setDeltaMovement(Vec3.ZERO);
             if (leapMovement.isActive()) {
@@ -1954,10 +2004,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     public void queueWildPhase2Transition() {
         if (level().isClientSide || isTame() || isBaby() || phase2Active || !isAlive() || isTamingStunned()) return;
+        wildPhase2PendingLanding = false;
         wildPhase2IdleTicks = WILD_PHASE2_IDLE_TICKS;
         entityData.set(DATA_SKYFALL_IDLE, true);
         lockRiderControls(WILD_PHASE2_IDLE_TICKS + 1);
-        getNavigation().stop();
+        getAIMovement().stopAndClearAllMovement();
         setDeltaMovement(Vec3.ZERO);
         stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
     }
@@ -1967,19 +2018,21 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
         wildLowHealthUltimateTriggered = true;
+        wildPhase2PendingLanding = false;
         if (getTarget() != null) wildPhase2Target = getTarget();
         phase2Active = true;
         this.entityData.set(DATA_PHASE2, true);
         phase2CooldownTicks = 0;
         phase2WasVehicle = false;
         lockRiderControls(WILD_PHASE2_ENTER_LOCK_TICKS);
-        getNavigation().stop();
+        getAIMovement().stopAndClearAllMovement();
         setDeltaMovement(Vec3.ZERO);
         animationHandler.triggerPhase2EnterAnimation();
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0F, 1.0F, 47);
     }
 
     public void clearPhase2ForTamingStun() {
+        wildPhase2PendingLanding = false;
         wildPhase2IdleTicks = 0;
         entityData.set(DATA_SKYFALL_IDLE, false);
         wildPhase2Target = null;
@@ -2005,6 +2058,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         if (level().isClientSide || isTame()) {
             return;
         }
+        wildPhase2PendingLanding = false;
 
         wildPhase2Target = null;
         phase2Active = false;
@@ -2020,6 +2074,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     private void exitPhase2(boolean lockControls) {
+        wildPhase2PendingLanding = false;
         wildPhase2Target = null;
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
@@ -2192,6 +2247,58 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     @Override
+    public DragonCombatFlightState getCombatFlightState() {
+        return combatFlightState;
+    }
+
+    public boolean isAiAirBreathReady() {
+        LivingEntity target = getTarget();
+        return target != null && isTargetValid(target) && !DragonTargetingHelper.isBiteOnlyPreyTarget(this, target)
+                && canUseFireBreath() && getFireBreathEnergy() >= 0.4F
+                && combatManager.canStart(ModAbilities.IGNIVORUS_FIRE_BREATH)
+                && getAiCombatPacing().canUse(ModAbilities.IGNIVORUS_FIRE_BREATH, true);
+    }
+
+    public boolean shouldFavorRangedCombat(LivingEntity target) {
+        return target != null && isTargetValid(target) && !combatFlightState.targetNeedsFlight()
+                && !DragonTargetingHelper.isMovementAnchorInWater(target)
+                && !DragonTargetingHelper.isBiteOnlyPreyTarget(this, target);
+    }
+
+    private boolean isAiCombatMovementCommitted() {
+        LivingEntity target = getTarget();
+        boolean skyfallReady = target != null && isTargetValid(target) && isGroundedForAction()
+                && !DragonTargetingHelper.isBiteOnlyPreyTarget(this, target)
+                && shouldTriggerWildUltimateAtCurrentHealth()
+                && combatManager.canStart(ModAbilities.IGNIVORUS_ULTIMATE)
+                && getAiCombatPacing().canUse(ModAbilities.IGNIVORUS_ULTIMATE, true);
+        return getActiveAbility() != null || getAiAirCombatBlockReason() != null || isTamingStunned()
+                || isSkyfallIdlePause()
+                || !isAerial() && (wildPhase2PendingLanding || skyfallReady);
+    }
+
+    private boolean isAiRangedFlightReady() {
+        return !wildPhase2PendingLanding && isAiAirBreathReady();
+    }
+
+    public boolean isWaitingForWildPhase2Entry() {
+        return wildPhase2PendingLanding && !isAerial();
+    }
+
+    public void queueWildPhase2AfterLanding() {
+        if (level().isClientSide || isTame() || isBaby() || phase2Active || !isAlive() || isTamingStunned()) return;
+        wildPhase2PendingLanding = true;
+        combatFlightState.deferRangedFlightFor(200);
+    }
+
+    public String getAiPhaseDecision() {
+        if (isAbilityActive(ModAbilities.IGNIVORUS_ULTIMATE)) return "skyfall";
+        if (isSkyfallIdlePause()) return "phase2-idle-pause";
+        if (wildPhase2PendingLanding) return "phase2-after-landing";
+        return isPhase2Active() ? "phase2" : "phase1";
+    }
+
+    @Override
     public double getAiTargetAirborneHeight(LivingEntity target) {
         return Math.max(AI_AIR_COMBAT_SETTINGS.targetAirborneHeight(), target.getBbHeight() * 0.75D);
     }
@@ -2233,6 +2340,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
         setAttributeBase(Attributes.ATTACK_DAMAGE, isBaby() ? 0.0D : attackDamage);
+        AttributeInstance followRange = getAttribute(Attributes.FOLLOW_RANGE);
+        // Saved dragons retain their previous default in their attribute NBT.
+        if (followRange != null && followRange.getBaseValue() == 64.0D) {
+            followRange.setBaseValue(BASE_FOLLOW_RANGE);
+        }
         clampHealthToMax();
     }
 
@@ -2516,7 +2628,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     public Vec3 refreshFireAimDirection(Vec3 start, boolean smooth) {
         if (!level().isClientSide && getControllingPassenger() == null && isTargetValid(getTarget())) {
-            fireAimDir = getCombatAim().track(getTarget(), start, DragonCombatAim.FIRE);
+            fireAimDir = getCombatAim().track(getTarget(), start, isAerial() ? AIR_FIRE_AIM : DragonCombatAim.FIRE);
             return fireAimDir;
         }
         Vec3 desired = computeRawFireAimDirection(start);
@@ -3151,6 +3263,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         tag.putBoolean("Phase2Active", phase2Active);
         tag.putInt("Phase2CooldownTicks", Math.max(0, phase2CooldownTicks));
         tag.putBoolean("WildLowHealthUltimateTriggered", wildLowHealthUltimateTriggered);
+        tag.putBoolean("WildPhase2PendingLanding", wildPhase2PendingLanding || wildPhase2IdleTicks > 0);
         tag.putInt("LeapCooldownTicks", Math.max(0, leapCooldownTicks));
         tag.putFloat("FireBreathEnergy", getFireBreathEnergy());
         tag.putBoolean("FireBreathDepleted", isFireBreathDepleted());
@@ -3187,6 +3300,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         } else {
             wildLowHealthUltimateTriggered = phase2Active;
         }
+        wildPhase2PendingLanding = !phase2Active && !isTame() && tag.getBoolean("WildPhase2PendingLanding");
         if (tag.contains("Phase2CooldownTicks")) {
             phase2CooldownTicks = Math.max(0, tag.getInt("Phase2CooldownTicks"));
         }

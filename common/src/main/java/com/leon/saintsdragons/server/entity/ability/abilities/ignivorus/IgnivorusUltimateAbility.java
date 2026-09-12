@@ -66,6 +66,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean skyfallCircleSpawned;
     private boolean skyfallAbsorbSpawned;
     private boolean transitionsToPhase2;
+    private boolean transitionsAfterLanding;
     private boolean groundSkyfallMode;
     private boolean airSkyfallMode;
     private boolean phase2SkyfallMode;
@@ -105,6 +106,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         Ignivorus dragon = getUser();
         boolean lowHealthUltimate = dragon.shouldTriggerWildUltimateAtCurrentHealth();
         transitionsToPhase2 = lowHealthUltimate && groundSkyfallMode && dragon.isGroundedForAction();
+        transitionsAfterLanding = lowHealthUltimate && airSkyfallMode;
         if (lowHealthUltimate && airSkyfallMode) dragon.markWildLowHealthUltimateTriggered();
         beginSkyfall(dragon);
     }
@@ -169,6 +171,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         penaltyApplied = false;
         dragon.getCombatAim().clear();
         dragon.lockRiderControls(SKYFALL_TICKS - offset);
+        if (!dragon.level().isClientSide) dragon.getAIMovement().stopAndClearAllMovement();
         lockedControls = true;
         if (!airSkyfallMode) {
             dragon.markLandedNow();
@@ -228,12 +231,17 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 getUser().queueWildPhase2Transition();
                 transitionsToPhase2 = false;
             }
+            if (transitionsAfterLanding && getUser().isAlive() && !getUser().isTamingStunned()) {
+                getUser().queueWildPhase2AfterLanding();
+                transitionsAfterLanding = false;
+            }
         }
     }
 
     @Override
     public void interrupt() {
         transitionsToPhase2 = false;
+        transitionsAfterLanding = false;
         if (groundSkyfallMode || airSkyfallMode) {
             getUser().stopTriggeredAnimation(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
                     airSkyfallMode ? "skyfall_air" : phase2SkyfallMode ? "skyfall_phase2" : "skyfall");

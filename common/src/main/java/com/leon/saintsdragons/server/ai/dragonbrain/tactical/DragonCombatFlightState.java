@@ -19,10 +19,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public final class DragonCombatFlightState {
     private final RideableFlyingDragon dragon;
-    private final DragonCombatFlightProfile profile;
+    private final Supplier<DragonCombatFlightProfile> profileProvider;
+    private DragonCombatFlightProfile observedProfile;
     private final BooleanSupplier rangedReady;
     private final BooleanSupplier actionCommitted;
     private final GroundPursuitFlightSettings landing = GroundPursuitFlightSettings.standard();
@@ -56,8 +58,13 @@ public final class DragonCombatFlightState {
 
     public DragonCombatFlightState(RideableFlyingDragon dragon, DragonCombatFlightProfile profile,
                                    BooleanSupplier rangedReady, BooleanSupplier actionCommitted) {
+        this(dragon, () -> profile, rangedReady, actionCommitted);
+    }
+
+    public DragonCombatFlightState(RideableFlyingDragon dragon, Supplier<DragonCombatFlightProfile> profileProvider,
+                                   BooleanSupplier rangedReady, BooleanSupplier actionCommitted) {
         this.dragon = dragon;
-        this.profile = profile;
+        this.profileProvider = profileProvider;
         this.rangedReady = rangedReady;
         this.actionCommitted = actionCommitted;
     }
@@ -68,6 +75,12 @@ public final class DragonCombatFlightState {
 
     public void observe() {
         long now = dragon.level().getGameTime();
+        DragonCombatFlightProfile profile = profileProvider.get();
+        if (!profile.equals(observedProfile)) {
+            observedProfile = profile;
+            nextSpaceCheck = 0;
+            revision++;
+        }
         LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         UUID currentId = target == null ? null : target.getUUID();
         if (!java.util.Objects.equals(targetId, currentId)) {
@@ -173,6 +186,7 @@ public final class DragonCombatFlightState {
 
     public List<Option> options(LivingEntity target, Vec3 focus) {
         observe();
+        DragonCombatFlightProfile profile = observedProfile;
         long now = dragon.level().getGameTime();
         List<Option> options = new ArrayList<>();
         double distance = dragon.distanceTo(DragonTargetingHelper.movementAnchor(target));
@@ -200,7 +214,8 @@ public final class DragonCombatFlightState {
         if (!aerial) {
             if (!canLaunch || !needsPursuit) {
                 options.add(new Option(DragonTactic.GROUND_PURSUIT,
-                        75 + (distance <= 14.0D ? 15 : 0), focus, locked ? "committed-ground-action" : "ground-pressure"));
+                        75 + profile.groundPreference() + (distance <= 14.0D ? 15 : 0), focus,
+                        locked ? "committed-ground-action" : "ground-pressure"));
             }
             if (!canLaunch) return options;
             if (needsPursuit) {
@@ -236,7 +251,7 @@ public final class DragonCombatFlightState {
             }
         }
         if (landingPosition != null) {
-            int score = 82 - airPreference + (canUseRanged ? 0 : 25)
+            int score = 82 + profile.groundPreference() - airPreference + (canUseRanged ? 0 : 25)
                     + (distance < 18.0D ? 12 : 0)
                     + (now - mediumSince > profile.airCommitmentTicks() * 3L ? 30 : 0);
             options.add(new Option(DragonTactic.LANDING_APPROACH, score, landingPosition, "land-for-ground-pressure"));
@@ -245,6 +260,7 @@ public final class DragonCombatFlightState {
     }
 
     private boolean hasFlightOpening(LivingEntity target, long now) {
+        DragonCombatFlightProfile profile = observedProfile;
         if (now < nextSpaceCheck) return openingAvailable;
         nextSpaceCheck = now + 20;
         openingAvailable = false;

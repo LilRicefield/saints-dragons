@@ -113514,7 +113514,7 @@
 						"vector": [0, 0, 0]
 					}
 				},
-				"lowerjaw": {
+				"lowerJawController": {
 					"rotation": {
 						"vector": ["17.5+math.sin(query.anim_time *300-100)* 5", 0, 0]
 					}

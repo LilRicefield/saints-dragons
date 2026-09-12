@@ -23,6 +23,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
@@ -761,6 +762,12 @@ public final class DragonPathDebugTracker {
             summary.append(",beam={status=").append(raevyx.getAiBeamStatus())
                     .append(",energy=").append(Mth.floor(raevyx.getBeamEnergy() * 100.0F))
                     .append(",cooldown=").append(raevyx.getAiBeamCooldownTicks()).append('}');
+        }
+        if (dragon instanceof Ignivorus ignivorus) {
+            summary.append(",ignivorus={phase=").append(ignivorus.getAiPhaseDecision())
+                    .append(",breath=").append(ignivorus.getAiFireBreathDecision())
+                    .append(",energy=").append(Mth.floor(ignivorus.getFireBreathEnergy() * 100.0F))
+                    .append(",breathReady=").append(ignivorus.isAiAirBreathReady()).append('}');
         }
         for (DragonBrainDiagnostics.RegisteredBehaviour registered :
                 DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
