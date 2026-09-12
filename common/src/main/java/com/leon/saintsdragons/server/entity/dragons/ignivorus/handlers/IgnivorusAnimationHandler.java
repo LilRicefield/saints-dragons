@@ -162,6 +162,9 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void setupFlightController(AnimationController<Ignivorus> controller) {
+        controller.receiveTriggeredAnimations();
+        AnimationHelper.registerFlight(controller, "skyfall_air",
+                RawAnimation.begin().thenPlay("animation.ignivorus.skyfall_air"));
         AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, null);
         AnimationHelper.registerFlight(controller, "ultimate_start_air",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start_air"));
@@ -349,6 +352,19 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         return PlayState.CONTINUE;
     }
     public PlayState flightPredicate(AnimationState<Ignivorus> state) {
+        if (AnimationHelper.holdTriggeredAnimation(state, 1,
+                RawAnimation.begin().thenPlay("animation.ignivorus.skyfall_air"))) {
+            return PlayState.CONTINUE;
+        }
+        var previous = state.getController().getCurrentAnimation();
+        boolean leavingSkyfall = previous != null
+                && "animation.ignivorus.skyfall_air".equals(previous.animation().name());
+        PlayState result = selectFlightAnimation(state);
+        if (leavingSkyfall) state.getController().transitionLength(0);
+        return result;
+    }
+
+    private PlayState selectFlightAnimation(AnimationState<Ignivorus> state) {
         if (dragon.isDying() || dragon.isTamingStunned()) {
             return PlayState.STOP;
         }

@@ -122,6 +122,7 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public void setupFlightController(AnimationController<Raevyx> controller) {
+        controller.receiveTriggeredAnimations();
         AnimationHelper.registerFlightStandard(controller, TAKEOFF, RIDER_TAKEOFF, null);
         AnimationHelper.registerFlight(controller, DODGE_AIR_LEFT,
                 RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"));
@@ -223,6 +224,11 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
     }
 
     public PlayState flightPredicate(AnimationState<Raevyx> state) {
+        if (AnimationHelper.holdTriggeredAnimation(state, 1,
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_left"),
+                RawAnimation.begin().thenPlay("animation.raevyx.dodge_air_right"))) {
+            return PlayState.CONTINUE;
+        }
         if (wyvern.isDying() || wyvern.isTamingStunned()) {
             return PlayState.STOP;
         }

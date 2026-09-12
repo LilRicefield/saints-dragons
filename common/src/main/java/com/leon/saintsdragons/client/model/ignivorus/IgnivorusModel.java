@@ -60,6 +60,9 @@ public class IgnivorusModel extends DragonGeoModel<Ignivorus> {
         if (modelData == null) return;
 
         float partialTick = animationState.getPartialTick();
+        if (entity.getSkyfallElapsedTicks(partialTick) >= 0.0F) {
+            return;
+        }
 
         if (entity.isAlive()) {
             if (entity.isDeadOrDying()){

@@ -17,9 +17,11 @@ import java.util.List;
 
 public final class IgnivorusAftermathParticle extends NoRenderParticle {
     private final List<Vec3> groundPoints = new ArrayList<>();
+    private final boolean airborne;
 
-    private IgnivorusAftermathParticle(ClientLevel level, double x, double y, double z) {
+    private IgnivorusAftermathParticle(ClientLevel level, double x, double y, double z, boolean airborne) {
         super(level, x, y, z);
+        this.airborne = airborne;
         lifetime = 100;
     }
 
@@ -27,13 +29,13 @@ public final class IgnivorusAftermathParticle extends NoRenderParticle {
     public void tick() {
         if (age == 0) {
             emitAirEffects();
-            for (int i = 0; i < 49; i++) {
+            for (int i = 0; !airborne && i < 49; i++) {
                 Vec3 point = groundAt(x + random.nextDouble() * 32.0D - 16.0D,
                         z + random.nextDouble() * 32.0D - 16.0D);
                 if (point != null) groundPoints.add(point);
             }
         }
-        if (age == 12) {
+        if (!airborne && age == 12) {
             Vec3 ground = groundAt(x, z);
             if (ground != null) {
                 Minecraft.getInstance().particleEngine.createParticle(
@@ -91,10 +93,19 @@ public final class IgnivorusAftermathParticle extends NoRenderParticle {
     }
 
     public static final class Factory implements ParticleProvider<SimpleParticleType> {
+        private final boolean airborne;
+
+        public Factory() {
+            this(false);
+        }
+
+        public Factory(boolean airborne) {
+            this.airborne = airborne;
+        }
         @Override
         public Particle createParticle(@NotNull SimpleParticleType type, @NotNull ClientLevel level,
                                        double x, double y, double z, double vx, double vy, double vz) {
-            return new IgnivorusAftermathParticle(level, x, y, z);
+            return new IgnivorusAftermathParticle(level, x, y, z, airborne);
         }
     }
 }

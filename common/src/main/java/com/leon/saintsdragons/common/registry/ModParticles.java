@@ -134,6 +134,8 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> IGNIVORUS_AFTERMATH =
             REGISTER.register("ignivorus_aftermath", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> IGNIVORUS_AIR_AFTERMATH =
+            REGISTER.register("ignivorus_air_aftermath", () -> Services.PLATFORM.createSimpleParticle(true));
     public static final Supplier<SimpleParticleType> IGNIVORUS_LINGERING_FIRE =
             REGISTER.register("ignivorus_lingering_fire", () -> Services.PLATFORM.createSimpleParticle(true));
     public static final Supplier<SimpleParticleType> IGNIVORUS_LINGERING_SPEC =

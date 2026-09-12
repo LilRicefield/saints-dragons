@@ -67,6 +67,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.IGNIVORUS_NOVA_SPARKLE.get(), IgnivorusNovaSparkleParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_CHARGE_SPARKLE.get(), IgnivorusNovaSparkleParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_AFTERMATH.get(), sprites -> new IgnivorusAftermathParticle.Factory());
+        register(registrar, ModParticles.IGNIVORUS_AIR_AFTERMATH.get(), sprites -> new IgnivorusAftermathParticle.Factory(true));
         register(registrar, ModParticles.IGNIVORUS_LINGERING_FIRE.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.FIRE));
         register(registrar, ModParticles.IGNIVORUS_LINGERING_SPEC.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.SPEC));
         register(registrar, ModParticles.IGNIVORUS_LINGERING_BETTER_FIRE.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.BETTER_FIRE));

@@ -29,6 +29,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
     private static final int SKYFALL_TICKS = 14 * 20;
+    private static final int SKYFALL_AIR_SOUND_TICKS = 15 * 20;
     public static final int SKYFALL_EXPLOSION_TICK = (int) Math.round(6.23D * 20.0D);
     private static final int SKYFALL_STAR_TICK = SKYFALL_EXPLOSION_TICK - 4;
     private static final int SKYFALL_CHARGE_TICK = SKYFALL_EXPLOSION_TICK - 20;
@@ -100,6 +101,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private boolean skyfallAbsorbSpawned;
     private boolean transitionsToPhase2;
     private boolean groundSkyfallMode;
+    private boolean airSkyfallMode;
     private boolean phase2SkyfallMode;
 
     public IgnivorusUltimateAbility(DragonAbilityType<Ignivorus, IgnivorusUltimateAbility> type,
@@ -110,13 +112,14 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     @Override
     public void start() {
         groundSkyfallMode = !getUser().isAerial();
+        airSkyfallMode = !groundSkyfallMode;
         phase2SkyfallMode = groundSkyfallMode && getUser().isPhase2Active();
         super.start();
     }
 
     @Override
     public DragonAbilitySection[] getSectionTrack() {
-        return groundSkyfallMode ? (phase2SkyfallMode ? PHASE2_SKYFALL_TRACK : SKYFALL_TRACK) : TRACK;
+        return phase2SkyfallMode ? PHASE2_SKYFALL_TRACK : SKYFALL_TRACK;
     }
 
     @Override
@@ -148,8 +151,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             isAirborneMode = isAirborne;
             isPhase2GroundMode = dragon.isPhase2Active() && !isAirborne;
             transitionsToPhase2 = wildPhase1Transition;
-            if (groundSkyfallMode) {
-                beginGroundSkyfall(dragon);
+            if (groundSkyfallMode || airSkyfallMode) {
+                beginSkyfall(dragon);
                 return;
             }
             if (wildLowHealthUltimate && isAirborne) {
@@ -167,7 +170,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 dragon.setUltimateCameraZoomActive(true);
                 dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "phase2_ultimate");
                 if (!dragon.level().isClientSide) {
-                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 127);
+                    dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 160);
                 }
                 phase2DamageApplied = false;
                 novaSpawned = false;
@@ -219,7 +222,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             return;
         }
         int ticks = getTicksInSection();
-        if (groundSkyfallMode) {
+        if (groundSkyfallMode || airSkyfallMode) {
             ticks += phase2SkyfallMode ? PHASE2_SKYFALL_OFFSET : 0;
             if (!skyfallAbsorbSpawned && ticks >= SKYFALL_ABSORB_TICK) {
                 skyfallAbsorbSpawned = true;
@@ -282,7 +285,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         if (!loopAnimPlayed && ticks >= startEndTick) {
             if (isAirborneMode) {
                 dragon.triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, "ultimate_air");
-                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 112);
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE_AIR.get(), 1.0f, 1.0f, 160);
             } else {
                 dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "ultimate");
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_ULTIMATE.get(), 1.0f, 1.0f, 127);
@@ -320,7 +323,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
     }
 
-    private void beginGroundSkyfall(Ignivorus dragon) {
+    private void beginSkyfall(Ignivorus dragon) {
         int offset = phase2SkyfallMode ? PHASE2_SKYFALL_OFFSET : 0;
         dragon.setSkyfallChargeActive(true, offset);
         novaSpawned = false;
@@ -336,17 +339,20 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         dragon.getCombatAim().clear();
         dragon.lockRiderControls(SKYFALL_TICKS - offset);
         lockedControls = true;
-        dragon.markLandedNow();
+        if (!airSkyfallMode) {
+            dragon.markLandedNow();
         dragon.setHovering(false);
         dragon.setLanding(false);
-        dragon.setTakeoff(false);
+            dragon.setTakeoff(false);
+        }
         dragon.setDeltaMovement(Vec3.ZERO);
         dragon.setUltimateCameraZoomActive(false);
-        dragon.triggerAnim(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
+        dragon.triggerAnim(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, airSkyfallMode ? "skyfall_air" : phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
         if (!dragon.level().isClientSide) {
             dragon.getSoundHandler().playMovingEntitySound(
-                    phase2SkyfallMode ? ModSounds.IGNIVORUS_SKYFALL_PHASE2.get() : ModSounds.IGNIVORUS_SKYFALL.get(),
-                    1.0F, 1.0F, SKYFALL_TICKS - offset);
+                    airSkyfallMode ? ModSounds.IGNIVORUS_SKYFALL_AIR.get()
+                            : phase2SkyfallMode ? ModSounds.IGNIVORUS_SKYFALL_PHASE2.get() : ModSounds.IGNIVORUS_SKYFALL.get(),
+                    1.0F, 1.0F, airSkyfallMode ? SKYFALL_AIR_SOUND_TICKS : SKYFALL_TICKS - offset);
         }
         applyPenaltyHealth(dragon);
     }
@@ -396,9 +402,9 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     @Override
     public void interrupt() {
         transitionsToPhase2 = false;
-        if (groundSkyfallMode) {
-            getUser().stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
-                    phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
+        if (groundSkyfallMode || airSkyfallMode) {
+            getUser().stopTriggeredAnimation(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
+                    airSkyfallMode ? "skyfall_air" : phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
         }
         releaseLocks();
         super.interrupt();
@@ -438,11 +444,13 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         );
         server.addFreshEntity(nova);
 
+        if (!airSkyfallMode) {
         IgnivorusNovaRingEntity ring = new IgnivorusNovaRingEntity(
                 server,
                 center.add(0, 0.1, 0)
         );
         server.addFreshEntity(ring);
+        }
 
         spawnExplosionFire(server, center);
     }
@@ -536,7 +544,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                 .toList();
         var crossFire = new FireBreathParticleData(64.0F, 2.0F, 3.0F);
         Vec3 crossOrigin = center.add(0.0D, 1.0D, 0.0D);
-        for (int side = 0; side < 4; side++) {
+        for (int side = 0; !airSkyfallMode && side < 4; side++) {
             Vec3 direction = Vec3.directionFromRotation(0.0F, getUser().yBodyRot + side * 90.0F);
             Vec3 outlet = crossOrigin.add(direction.scale(2.0D));
             Vec3 velocity = direction.scale(ExpandingBreathSection.DEFAULT_SPEED);
@@ -550,9 +558,11 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
             server.sendParticles(viewer, ModParticles.IGNIVORUS_FIRE_SPEC.get(), true,
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            if (!airSkyfallMode) {
             server.sendParticles(viewer, ModParticles.IGNIVORUS_GROUND_IMPACT.get(), true,
                     center.x, center.y + 0.24D, center.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
-            server.sendParticles(viewer, ModParticles.IGNIVORUS_AFTERMATH.get(), true,
+            }
+            server.sendParticles(viewer, airSkyfallMode ? ModParticles.IGNIVORUS_AIR_AFTERMATH.get() : ModParticles.IGNIVORUS_AFTERMATH.get(), true,
                     center.x, center.y, center.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
         }
         for (int i = 0; i < FIRE_PUFF_COUNT; i++) {
