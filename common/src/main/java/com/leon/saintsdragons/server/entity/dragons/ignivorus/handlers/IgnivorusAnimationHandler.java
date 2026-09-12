@@ -225,6 +225,10 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         }
 
         if (dragon.areRiderControlsLocked()) {
+            if (dragon.isSkyfallIdlePause()) {
+                controller.transitionLength(0);
+                return state.setAndContinue(IDLE);
+            }
             return PlayState.STOP;
         }
 

@@ -150,6 +150,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             );
     private static final int LANDED_RECOVERY_TICKS = 18;
     private static final int PHASE2_ENTER_LOCK_TICKS = 13;
+    private static final int WILD_PHASE2_ENTER_LOCK_TICKS = 17;
+    private static final int WILD_PHASE2_IDLE_TICKS = 10;
     private static final int PHASE2_EXIT_LOCK_TICKS = 13;
     private static final int PHASE2_LANDED_RECOVERY_TICKS = 20;
     private static final int PHASE2_RIDER_TAKEOFF_TICKS = 60;
@@ -227,6 +229,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.LONG);
     private static final EntityDataAccessor<Integer> DATA_SKYFALL_OFFSET =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<Boolean> DATA_SKYFALL_IDLE =
+            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     private static final double MODEL_SCALE = 1.0D;
     private static final float FIRE_BREATH_ENERGY_REGEN = 0.0025f;
@@ -342,6 +346,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private boolean useRightWingSwipe = true;
     private boolean phase2WasVehicle = false;
     private boolean wildLowHealthUltimateTriggered = false;
+    private int wildPhase2IdleTicks;
     private boolean aiSpecialCombatActive = false;
     private boolean leaping = false;
     private boolean leapWasVehicle = false;
@@ -491,6 +496,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.define(DATA_CINEMATIC_ZOOM_ACTIVE, false);
         this.entityData.define(DATA_SKYFALL_START, -1L);
         this.entityData.define(DATA_SKYFALL_OFFSET, 0);
+        this.entityData.define(DATA_SKYFALL_IDLE, false);
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_TAMING_STUNNED, false);
         this.entityData.define(DATA_FLIGHT_PITCH, 0f);
@@ -967,6 +973,19 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     private void tickPhase2State() {
         if (!level().isClientSide) {
+            if (wildPhase2IdleTicks > 0) {
+                if (!isAlive() || isTamingStunned() || isTame() || isAerial()) {
+                    wildPhase2IdleTicks = 0;
+                    entityData.set(DATA_SKYFALL_IDLE, false);
+                } else {
+                    getNavigation().stop();
+                    setDeltaMovement(Vec3.ZERO);
+                    if (--wildPhase2IdleTicks == 0) {
+                        entityData.set(DATA_SKYFALL_IDLE, false);
+                        completeWildPhase2Transition();
+                    }
+                }
+            }
             boolean currentlyVehicle = this.isVehicle();
 
             if (phase2CooldownTicks > 0) {
@@ -1929,8 +1948,22 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         }
     }
 
+    public boolean isSkyfallIdlePause() {
+        return entityData.get(DATA_SKYFALL_IDLE);
+    }
+
+    public void queueWildPhase2Transition() {
+        if (level().isClientSide || isTame() || isBaby() || phase2Active || !isAlive() || isTamingStunned()) return;
+        wildPhase2IdleTicks = WILD_PHASE2_IDLE_TICKS;
+        entityData.set(DATA_SKYFALL_IDLE, true);
+        lockRiderControls(WILD_PHASE2_IDLE_TICKS + 1);
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
+        stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
+    }
+
     public void completeWildPhase2Transition() {
-        if (level().isClientSide || isTame() || isBaby()) {
+        if (level().isClientSide || isTame() || isBaby() || phase2Active || !isAlive() || isTamingStunned()) {
             return;
         }
         wildLowHealthUltimateTriggered = true;
@@ -1939,9 +1972,16 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.set(DATA_PHASE2, true);
         phase2CooldownTicks = 0;
         phase2WasVehicle = false;
+        lockRiderControls(WILD_PHASE2_ENTER_LOCK_TICKS);
+        getNavigation().stop();
+        setDeltaMovement(Vec3.ZERO);
+        animationHandler.triggerPhase2EnterAnimation();
+        getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_ENTER.get(), 1.0F, 1.0F, 47);
     }
 
     public void clearPhase2ForTamingStun() {
+        wildPhase2IdleTicks = 0;
+        entityData.set(DATA_SKYFALL_IDLE, false);
         wildPhase2Target = null;
         boolean wasPhase2Active = phase2Active;
         phase2Active = false;
