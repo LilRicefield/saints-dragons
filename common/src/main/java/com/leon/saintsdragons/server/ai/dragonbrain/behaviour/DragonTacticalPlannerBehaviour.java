@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTactic;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalProfile;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -28,6 +29,8 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     private long nextEvaluationTick;
     private long lastGameTime;
     private DragonTacticalCommitment lastCommitment;
+    private long flightRevision = -1;
+    private String flightSummary;
 
     public DragonTacticalPlannerBehaviour() {
         super(false);
@@ -46,9 +49,13 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     @Override
     protected void tick(DragonBrainContext<T> context) {
         lastGameTime = context.gameTime();
-        if (context.gameTime() < nextEvaluationTick) {
+        DragonCombatFlightState combatFlight = DragonCombatFlightState.get(context.dragon());
+        flightSummary = combatFlight == null ? null : combatFlight.summary();
+        long revision = combatFlight == null ? -1 : combatFlight.revision();
+        if (context.gameTime() < nextEvaluationTick && flightRevision == revision) {
             return;
         }
+        flightRevision = revision;
 
         DragonTacticalProfile profile = DragonTacticalProfile.forDragon(context.dragon());
         nextEvaluationTick = context.gameTime() + profile.evaluationIntervalTicks();
@@ -132,6 +139,15 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
                                 DragonTacticalProfile profile) {
         T dragon = context.dragon();
         UUID targetUuid = target.getUUID();
+        DragonCombatFlightState combatFlight = DragonCombatFlightState.get(dragon);
+        if (combatFlight != null) {
+            if (targetVisible) {
+                for (DragonCombatFlightState.Option option : combatFlight.options(target, focus)) {
+                    evaluation.add(option.tactic(), option.score(), targetUuid, option.focus(), option.reason());
+                }
+            }
+            return;
+        }
         double distance = dragon.position().distanceTo(focus);
         boolean targetAirborne = context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false);
         boolean targetInWater = targetVisible && DragonTargetingHelper.isMovementAnchorInWater(target);
@@ -382,6 +398,7 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         details.put("expiry_remaining",
                 Math.max(0L, lastCommitment.expiresAt() - lastGameTime) + "t");
         details.put("scores", lastCommitment.scoresSummary());
+        if (flightSummary != null) details.put("combat_flight", flightSummary);
         return Map.copyOf(details);
     }
 

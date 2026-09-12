@@ -363,6 +363,10 @@ public class DragonAIMovementController {
         return true;
     }
 
+    public @Nullable Vec3 getActiveLandingTarget() {
+        return hasActiveLandingTransition() ? currentWaypoint.target() : null;
+    }
+
     private boolean beginGroundTransition(@Nullable DragonLandingPlan landingPlan, double speed) {
         if (landingPlan == null) {
             return false;

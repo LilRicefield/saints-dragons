@@ -13,6 +13,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonPathPerformance;
@@ -22,6 +23,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
+import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.network.chat.Component;
@@ -753,6 +755,13 @@ public final class DragonPathDebugTracker {
         summary.append(",space={").append(movement.flightSpace().debugSummary()).append('}');
         summary.append(",landing=").append(dragon.getBrain()
                 .getMemory(DragonMemories.TACTICAL_LANDING_POSITION).map(Object::toString).orElse("none"));
+        DragonCombatFlightState combatFlight = DragonCombatFlightState.get(dragon);
+        if (combatFlight != null) summary.append(",combatFlight={").append(combatFlight.summary()).append('}');
+        if (dragon instanceof Raevyx raevyx) {
+            summary.append(",beam={status=").append(raevyx.getAiBeamStatus())
+                    .append(",energy=").append(Mth.floor(raevyx.getBeamEnergy() * 100.0F))
+                    .append(",cooldown=").append(raevyx.getAiBeamCooldownTicks()).append('}');
+        }
         for (DragonBrainDiagnostics.RegisteredBehaviour registered :
                 DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
             if (registered.behaviour() instanceof AirCombatMovementBehaviour<?>
@@ -760,7 +769,9 @@ public final class DragonPathDebugTracker {
                     || registered.behaviour() instanceof DragonFlightMovementRecoveryBehaviour<?>) {
                 var details = ((DragonBrainDebugDetails)
                         registered.behaviour()).getDragonBrainDebugDetails();
-                for (String key : List.of("flight_block", "handoff", "flight_execution", "missing_ticks", "recoveries")) {
+                for (String key : List.of("flight_block", "handoff", "flight_execution", "missing_ticks", "recoveries",
+                        "air_phase", "air_decision", "air_attack_height", "air_route_y", "air_phase_ticks",
+                        "air_beam_availability", "air_beam_cooldown", "air_beam_alignment_ticks", "air_roar_cooldown")) {
                     if (details.containsKey(key)) summary.append(',').append(key).append('=').append(details.get(key));
                 }
             }

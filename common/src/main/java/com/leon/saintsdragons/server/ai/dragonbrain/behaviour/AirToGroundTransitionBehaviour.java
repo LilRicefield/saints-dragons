@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -28,7 +29,7 @@ public final class AirToGroundTransitionBehaviour<T extends DragonEntity> extend
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
-        return transitionDragon(context.dragon()) != null;
+        return transitionDragon(context.dragon()) != null && DragonCombatFlightState.get(context.dragon()) == null;
     }
 
     @Override

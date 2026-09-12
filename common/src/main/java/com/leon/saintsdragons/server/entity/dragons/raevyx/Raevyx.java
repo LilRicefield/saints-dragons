@@ -14,6 +14,9 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.RaevyxBrain;
 import com.leon.saintsdragons.server.ai.navigation.async.VoxelAabbSweeper;
@@ -37,6 +40,7 @@ import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxDiveImpactAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.component.DragonMotionMath;
 import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
@@ -290,6 +294,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private Vec3 beamServerTarget = null;
     private Vec3 aiBeamLockedDirection;
     private long nextAiBeamGameTime;
+    private final DragonCombatFlightState combatFlightState = new DragonCombatFlightState(
+            this, DragonCombatFlightProfile.raevyx(BEAM_RANGE), this::isAiAirBeamReady,
+            () -> getActiveAbility() != null || isDashing() || isDodging() || isGroundRending()
+                    || areRiderControlsLocked() || isTamingStunned());
+
     private boolean aiBeamNeedsFollowup;
     private int aiBeamPursuitTicks;
     private String aiBeamDecision = "idle";
@@ -453,6 +462,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
+    }
+
+    @Override
+    public DragonCombatFlightState getCombatFlightState() {
+        return combatFlightState;
     }
 
     @Override
@@ -766,6 +780,13 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     public boolean isAiBeamReady() {
         return canUseBeam() && !aiBeamNeedsFollowup && level().getGameTime() >= nextAiBeamGameTime;
+    }
+
+    public boolean isAiAirBeamReady() {
+        LivingEntity target = getTarget();
+        return isAiBeamReady() && getBeamEnergy() >= 0.6F && target != null && target.isAlive()
+                && !DragonTargetingHelper.isBiteOnlyPreyTarget(this, target)
+                && !RaevyxBeamAbility.isAtAiBeamMercyThreshold(target);
     }
 
     public int getAiBeamCooldownTicks() {

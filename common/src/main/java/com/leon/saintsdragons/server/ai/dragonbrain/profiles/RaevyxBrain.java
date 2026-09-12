@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
-import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -17,7 +16,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonIdleLookBeha
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonRescueFallingOwnerBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.LookAtAttackTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.MoveToGroundWalkTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
@@ -73,9 +71,6 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                         .build(),
                 DragonBehaviourGroup.<Raevyx>activity(Activity.FIGHT)
                         .behaviours(
-                                new GroundPursuitFlightTransitionBehaviour<>(
-                                        GroundPursuitFlightSettings.standard()
-                                ),
                                 new RaevyxAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<>(
                                         RaevyxGroundCombatBehaviour.CHASE_SPEED,
@@ -146,17 +141,6 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
         if (target.isInWaterOrBubble()) {
             return dragon.isAerial()
                     || dragon.distanceToSqr(target) <= DragonAirCombatHelper.maxAggroDistanceSqr(dragon, 32.0D);
-        }
-        if (DragonAirCombatHelper.isTargetAirborne(
-                dragon,
-                target,
-                Raevyx.AI_AIR_COMBAT_SETTINGS.targetAirborneHeight()
-        )) {
-            return DragonAirCombatHelper.canEngageAirborneTarget(
-                    dragon,
-                    target,
-                    Raevyx.AI_AIR_COMBAT_SETTINGS
-            );
         }
         return dragon.isAerial()
                 || dragon.distanceToSqr(target) <= DragonAirCombatHelper.maxAggroDistanceSqr(dragon, 32.0D);

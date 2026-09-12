@@ -14,6 +14,7 @@ public class AsyncFlightController {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncFlightController.class);
     private static final double MIN_LANDING_SPEED_MODIFIER = 1.0D;
     private static final double LANDING_SPEED_BOOST = 1.15D;
+    private static final int BLOCKED_APPROACH_TICKS = 8;
 
     private final Mob host;
     private final DragonFlightCapable flightCapable;
@@ -29,6 +30,7 @@ public class AsyncFlightController {
     private @Nullable DragonLandingPlan landingPlan;
     private LandingPhase landingPhase = LandingPhase.NONE;
     private double landingSpeed = 1.0D;
+    private int blockedApproachTicks;
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
     private long pathRequestGeneration = 0L;
@@ -129,6 +131,7 @@ public class AsyncFlightController {
                 }
             }
             if (movementTarget != null) {
+                this.blockedApproachTicks = 0;
                 this.movementExecutor.executeMovement(
                         movementTarget,
                         this.currentWaypoint,
@@ -142,6 +145,15 @@ public class AsyncFlightController {
                 );
             } else {
                 this.movementExecutor.applyIdleFriction();
+                if (activeLandingPhase == LandingPhase.APPROACH && this.host.horizontalCollision
+                        && !this.pathResolver.hasActivePathRequest()) {
+                    if (++this.blockedApproachTicks >= BLOCKED_APPROACH_TICKS) {
+                        this.beginLandingGoAround();
+                        return;
+                    }
+                } else if (!this.host.horizontalCollision) {
+                    this.blockedApproachTicks = 0;
+                }
             }
         }
 
@@ -192,6 +204,7 @@ public class AsyncFlightController {
         this.pathResolver.clearPathNodes();
         this.landingPlan = plan;
         this.landingPhase = LandingPhase.APPROACH;
+        this.blockedApproachTicks = 0;
         this.landingSpeed = Math.max(MIN_LANDING_SPEED_MODIFIER, speed * LANDING_SPEED_BOOST);
         this.currentWaypoint = plan.approach();
         this.currentFlightRequest = null;
@@ -299,6 +312,7 @@ public class AsyncFlightController {
     }
 
     private void beginDirectLandingPhase(LandingPhase phase, Vec3 target) {
+        this.blockedApproachTicks = 0;
         this.movementExecutor.resetSteering();
         this.invalidatePathRequests();
         this.pathResolver.cancelActivePathRequest();
@@ -313,6 +327,7 @@ public class AsyncFlightController {
     }
 
     private void beginLandingGoAround() {
+        this.blockedApproachTicks = 0;
         Vec3 horizontalVelocity = this.host.getDeltaMovement().multiply(1.0D, 0.0D, 1.0D);
         Vec3 heading;
         if (horizontalVelocity.lengthSqr() > 0.04D) {
@@ -394,12 +409,18 @@ public class AsyncFlightController {
     }
 
     private void clearLandingPlanState() {
+        this.blockedApproachTicks = 0;
         this.landingPlan = null;
         this.landingPhase = LandingPhase.NONE;
         this.landingSpeed = 1.0D;
     }
 
     public void onArrived() {
+        // Async results can report arrival too; reaching the approach is not touchdown.
+        if (this.landingPhase.advancesLandingPlan()) {
+            this.advanceLandingPhase();
+            return;
+        }
         this.movementExecutor.resetSteering();
         this.invalidatePathRequests();
         this.pathResolver.cancelActivePathRequest();
@@ -439,6 +460,10 @@ public class AsyncFlightController {
     }
 
     public void handleStuck(Vec3 currentWaypoint) {
+        if (this.landingPhase == LandingPhase.APPROACH || this.landingPhase.isCommitted()) {
+            this.beginLandingGoAround();
+            return;
+        }
         AsyncFlightStuckDetector.StuckAction action = this.stuckDetector.handleStuck(this.maxRetries);
         if (action == AsyncFlightStuckDetector.StuckAction.FAILED) {
             boolean abandonedLanding = this.landingPhase != LandingPhase.NONE;
@@ -563,6 +588,7 @@ public class AsyncFlightController {
 
     public String getSteeringDebugSummary() {
         return this.movementExecutor.steeringSummary() + ",phase=" + this.landingPhase
+                + ",takeoff=" + this.flightCapable.isTakeoff() + ",blockedApproach=" + this.blockedApproachTicks
                 + (this.currentFlightRequest == null ? "" : ",purpose=" + this.currentFlightRequest.purpose()
                     + ",arrival=" + this.currentFlightRequest.arrival() + ",speed=" + this.speedModifier)
                 + (this.landingPlan == null ? "" : ",touchdown=" + this.landingPlan.touchdown());

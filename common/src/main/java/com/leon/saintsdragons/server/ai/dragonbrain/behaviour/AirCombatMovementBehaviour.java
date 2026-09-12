@@ -49,7 +49,11 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
     protected final void start(DragonBrainContext<T> context) {
         lostSightTicks = 0;
         T dragon = context.dragon();
-        DragonAirCombatHelper.startAirCombat(dragon, settings(dragon).takeoffAnimationTicks());
+        if (dragon.getCombatFlightState() == null) {
+            DragonAirCombatHelper.startAirCombat(dragon, settings(dragon).takeoffAnimationTicks());
+        } else {
+            dragon.setAggressive(true);
+        }
         startAirCombat(context);
     }
 
@@ -79,7 +83,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
             return;
         }
         int lostSightLandingTicks = settings.lostSightLandingTicks();
-        if (lostSightLandingTicks > 0 && !isGroundRouteAbandoned(context)) {
+        if (dragon.getCombatFlightState() == null && lostSightLandingTicks > 0 && !isGroundRouteAbandoned(context)) {
             lostSightTicks = hasLineOfSight ? 0 : lostSightTicks + 1;
             if (lostSightTicks >= lostSightLandingTicks) {
                 context.memories().set(
@@ -102,6 +106,7 @@ public abstract class AirCombatMovementBehaviour<T extends RideableFlyingDragon 
         DragonAirCombatSettings settings = settings(dragon);
         lostSightTicks = 0;
         stopAirCombat(context);
+        if (dragon.getCombatFlightState() != null) return;
         if (DragonInvestigation.shouldPreserveAirbornePursuit(dragon)) {
             return;
         }

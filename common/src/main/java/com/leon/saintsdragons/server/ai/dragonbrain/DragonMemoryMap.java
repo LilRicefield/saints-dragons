@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.server.ai.dragonbrain;
 
+import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 
@@ -7,11 +10,11 @@ import java.util.Optional;
 
 public final class DragonMemoryMap {
     private final Brain<?> brain;
-    private final com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController movement;
+    private final DragonAIMovementController movement;
 
-    DragonMemoryMap(com.leon.saintsdragons.server.entity.base.DragonEntity dragon) {
+    DragonMemoryMap(DragonEntity dragon) {
         this.brain = dragon.getBrain();
-        this.movement = dragon instanceof com.leon.saintsdragons.server.entity.base.RideableDragonBase rideable
+        this.movement = dragon instanceof RideableDragonBase rideable
                 ? rideable.getAIMovement() : null;
     }
 

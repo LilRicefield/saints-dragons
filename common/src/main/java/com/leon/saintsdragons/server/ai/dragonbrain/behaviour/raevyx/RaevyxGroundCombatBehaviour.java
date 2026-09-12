@@ -70,7 +70,6 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
     @Override
     protected void start(DragonBrainContext<Raevyx> context) {
         context.dragon().setAggressive(true);
-        resetCombatPacing();
     }
 
     @Override
@@ -140,8 +139,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
     protected void stop(DragonBrainContext<Raevyx> context) {
         if (!context.memories().has(DragonMemories.ATTACK_TARGET)) {
             context.dragon().setAggressive(false);
+            resetCombatPacing();
         }
-        resetCombatPacing();
     }
 
     public static double meleeStopRange(Raevyx dragon, LivingEntity target) {
@@ -439,7 +438,7 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                 || dragon.isPassenger()
                 || dragon.isOrderedToSit()
                 || dragon.isAerial()
-                || context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false)
+                || dragon.getCombatFlightState().wantsFlight()
                 || dragon.distanceToSqr(target) > DragonAirCombatHelper.maxAggroDistanceSqr(dragon, 32.0D)) {
             return false;
         }

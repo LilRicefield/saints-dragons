@@ -57,6 +57,7 @@ class AsyncFlightMovementExecutor {
                                 AsyncFlightController.LandingPhase landingPhase) {
         Vec3 dragonPos = this.dragon.position();
         Vec3 currentVelocity = this.dragon.getDeltaMovement();
+        boolean takingOff = this.flightCapable.isTakeoff();
         boolean landingTarget = landingPhase.isCommitted();
         boolean diving = diveCommit && !this.flightCapable.isTakeoff()
                 && landingPhase == AsyncFlightController.LandingPhase.NONE;
@@ -69,6 +70,7 @@ class AsyncFlightMovementExecutor {
         }
 
         double desiredSpeed = FlightMotionPolicy.requestedSpeed(this.flightCapable.getFlightSpeed(), speedModifier);
+        if (takingOff) desiredSpeed = Math.min(desiredSpeed, FlightMotionPolicy.TAKEOFF_MAX_SPEED);
         if (landingPhase == AsyncFlightController.LandingPhase.APPROACH) {
             desiredSpeed = Math.max(desiredSpeed, this.flightCapable.getFlightSpeed() * 3.0D);
         } else if (landingPhase == AsyncFlightController.LandingPhase.GLIDE) {
@@ -120,6 +122,10 @@ class AsyncFlightMovementExecutor {
                 desiredVertical * verticalSpeed,
                 steeringDirection.z * desiredSpeed
         );
+        if (takingOff) {
+            targetVelocity = new Vec3(targetVelocity.x,
+                    FlightMotionPolicy.takeoffVerticalSpeed(targetVelocity.y, toTarget.y), targetVelocity.z);
+        }
         targetVelocity = this.shapeLandingVelocity(landingPhase, targetVelocity, dragonPos, currentWaypoint);
         Vec3 velocityBaseline = currentVelocity;
         this.smoothedVelocity = lerpVelocity(velocityBaseline, targetVelocity, landingPhase);
@@ -142,6 +148,8 @@ class AsyncFlightMovementExecutor {
             this.smoothedVelocity = diving
                     ? FlightMotionPolicy.limitDiveAcceleration(velocityBaseline, this.smoothedVelocity, acceleration)
                     : FlightMotionPolicy.limitAcceleration(velocityBaseline, this.smoothedVelocity, acceleration);
+        } else if (takingOff) {
+            this.smoothedVelocity = FlightMotionPolicy.limitAcceleration(velocityBaseline, this.smoothedVelocity);
         }
         this.smoothedVelocity = limitLandingMomentum(landingPhase, this.smoothedVelocity);
         if (landingPhase == AsyncFlightController.LandingPhase.GLIDE
@@ -155,10 +163,10 @@ class AsyncFlightMovementExecutor {
                     horizontalDistance <= TOUCHDOWN_HORIZONTAL_DEADZONE ? 0.0D
                             : Math.min(0.28D, horizontalDistance * 0.35D));
         }
-        if (this.flightCapable.isTakeoff() && currentVelocity.y > 0.0D) {
+        if (takingOff && currentVelocity.y > 0.0D) {
             this.smoothedVelocity = new Vec3(
                     this.smoothedVelocity.x,
-                    Math.max(this.smoothedVelocity.y, currentVelocity.y),
+                    Math.max(this.smoothedVelocity.y, Math.min(currentVelocity.y, FlightMotionPolicy.TAKEOFF_MIN_LIFT)),
                     this.smoothedVelocity.z
             );
         }
@@ -168,7 +176,8 @@ class AsyncFlightMovementExecutor {
         if (!shouldPreserveVerticalMotion && Math.abs(this.smoothedVelocity.y) < VERTICAL_SPEED_DEADZONE) {
             this.smoothedVelocity = new Vec3(this.smoothedVelocity.x, 0.0D, this.smoothedVelocity.z);
         }
-        if (landingPhase != AsyncFlightController.LandingPhase.TOUCHDOWN && !this.flightCapable.isTakeoff()) {
+        if (landingPhase != AsyncFlightController.LandingPhase.TOUCHDOWN
+                && (!takingOff || this.flightCapable.isFlying() && !this.dragon.onGround())) {
             this.smoothedVelocity = this.steering.checkedVelocity(this.smoothedVelocity);
         }
         this.dragon.setDeltaMovement(this.smoothedVelocity);

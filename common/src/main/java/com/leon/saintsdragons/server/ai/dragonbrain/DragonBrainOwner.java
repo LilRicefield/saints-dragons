@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.behavior.BehaviorControl;
@@ -110,8 +111,11 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
             dragon.refreshMountedCombatTarget();
             DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
+            DragonCombatFlightState combatFlight = DragonCombatFlightState.get(dragon);
+            if (combatFlight != null) combatFlight.observe();
             updateActivity(brain, dragon);
             brain.tick(level, dragon);
+            if (combatFlight != null) combatFlight.applyPlan();
             if (dragon instanceof RideableDragonBase rideable) {
                 ApplyMovementIntentBehaviour.applyPending(rideable);
             }

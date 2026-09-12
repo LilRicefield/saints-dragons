@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.Entity;
@@ -54,7 +55,9 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
                 && !dragon.isAerial()
                 && !dragon.isInWaterOrBubble()
                 && dragon.getLocomotionMode() == DragonLocomotionMode.GROUND
-                && !context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false)
+                && (DragonCombatFlightState.get(dragon) != null
+                    ? !DragonCombatFlightState.get(dragon).wantsFlight()
+                    : !context.memories().get(DragonMemories.TARGET_AIRBORNE).orElse(false))
                 && !context.memories().get(DragonMemories.GROUND_ROUTE_ABANDONED).orElse(false);
     }
 

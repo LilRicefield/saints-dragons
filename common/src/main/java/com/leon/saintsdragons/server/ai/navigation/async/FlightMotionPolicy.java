@@ -5,6 +5,9 @@ import net.minecraft.world.phys.Vec3;
 
 final class FlightMotionPolicy {
     static final double MAX_ACCELERATION = 0.12D;
+    static final double TAKEOFF_MAX_SPEED = 1.0D;
+    static final double TAKEOFF_MAX_VERTICAL_SPEED = 0.8D;
+    static final double TAKEOFF_MIN_LIFT = 0.12D;
     static final double DIVE_VERTICAL_ACCELERATION = 0.35D;
     static final double DIVE_VERTICAL_LERP = 0.35D;
     static final double DIVE_SPEED_OVERDRIVE = 1.8D;
@@ -20,6 +23,11 @@ final class FlightMotionPolicy {
     static double requestedSpeed(double flightSpeed, double modifier) {
         return Double.isFinite(flightSpeed) && Double.isFinite(modifier)
                 ? Math.max(0.0D, flightSpeed) * Math.max(0.0D, modifier) : 0.0D;
+    }
+
+    static double takeoffVerticalSpeed(double requested, double heightRemaining) {
+        double brakingSpeed = Math.sqrt(2.0D * MAX_ACCELERATION * Math.max(0.0D, heightRemaining - 0.75D));
+        return Mth.clamp(Math.min(requested, brakingSpeed), TAKEOFF_MIN_LIFT, TAKEOFF_MAX_VERTICAL_SPEED);
     }
 
     static double arrivalSpeed(double speed, double distance, double arrivalDistance, DragonFlightRequest.Arrival arrival) {
