@@ -1362,6 +1362,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public void setBreathingFire(boolean breathing) {
         if (breathing && !isBreathingFire() && !level().isClientSide) {
             level().broadcastEntityEvent(this, FIRE_BODY_START_EVENT);
+            getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_FIRE_BODY_START.get(), 1.2F, 1.0F, 45);
         }
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
     }

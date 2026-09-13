@@ -663,6 +663,25 @@
       }
     ]
   },
+  "cindervane_fire_body_start": {
+    "subtitle": "subtitles.saintsdragons.cindervane_fire_body_start",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/cindervane_fire_body_start",
+        "attenuation_distance": 64
+      }
+    ]
+  },
+  "cindervane_fire_body_loop": {
+    "subtitle": "subtitles.saintsdragons.cindervane_fire_body_loop",
+    "sounds": [
+      {
+        "name": "saintsdragons:entity/cindervane/fire_body_loop",
+        "stream": true,
+        "attenuation_distance": 64
+      }
+    ]
+  },
   "cindervane_magma_volley": {
     "subtitle": "subtitles.saintsdragons.cindervane_magma_volley",
     "sounds": [

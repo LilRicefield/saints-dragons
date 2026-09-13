@@ -11,7 +11,6 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -42,8 +41,6 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
     private static final int ALLY_FIRE_RESIST_TICKS = 60;
     private static final int ALLY_DAMAGE_RESIST_TICKS = 40;
 
-    private int activeTicks;
-
     public CindervaneFireBodyAbility(DragonAbilityType<Cindervane, CindervaneFireBodyAbility> type,
                                      Cindervane user) {
         super(type, user, TRACK, 40);
@@ -65,10 +62,7 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
             return;
         }
         if (section.sectionType == STARTUP) {
-            activeTicks = 0;
             getUser().setBreathingFire(true);
-            Level level = getLevel();
-            level.playSound(null, getUser().blockPosition(), SoundEvents.FIRECHARGE_USE, getUser().getSoundSource(), 1.2F, 1.0F + getUser().getRandom().nextFloat() * 0.2F);
         } else if (section.sectionType == ACTIVE) {
             getUser().setBreathingFire(true);
         }
@@ -104,13 +98,9 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
         Cindervane dragon = getUser();
         Level level = dragon.level();
         if (!level.isClientSide) {
-            activeTicks++;
             applyFireAura((ServerLevel) level, dragon);
             if (dragon.isGroundedForAction() && dragon.getControllingPassenger() != null) {
                 DragonDestructionManager.applyFireBodyCookingAura((ServerLevel) level, dragon, dragon.position(), COOKING_RADIUS);
-            }
-            if (activeTicks % 20 == 0) {
-                level.playSound(null, dragon.blockPosition(), SoundEvents.BLAZE_SHOOT, dragon.getSoundSource(), 0.6F, 0.9F + dragon.getRandom().nextFloat() * 0.2F);
             }
         }
 

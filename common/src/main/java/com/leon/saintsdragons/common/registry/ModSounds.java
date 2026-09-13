@@ -166,6 +166,8 @@ public final class ModSounds {
     public static final Supplier<SoundEvent> CINDERVANE_LANDED = registerSound("cindervane_landed");
     public static final Supplier<SoundEvent> CINDERVANE_EAT = registerSound("cindervane_eat");
     public static final Supplier<SoundEvent> CINDERVANE_MAGMA_VOLLEY = registerSound("cindervane_magma_volley");
+    public static final Supplier<SoundEvent> CINDERVANE_FIRE_BODY_START = registerSound("cindervane_fire_body_start");
+    public static final Supplier<SoundEvent> CINDERVANE_FIRE_BODY_LOOP = registerSound("cindervane_fire_body_loop");
     public static final Supplier<SoundEvent> CINDERVANE_STEP = registerSound("cindervane_step");
 
     // Varasuchus

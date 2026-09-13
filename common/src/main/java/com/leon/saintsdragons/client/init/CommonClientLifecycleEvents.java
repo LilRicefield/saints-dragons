@@ -12,6 +12,7 @@ import com.leon.saintsdragons.client.sound.DragonDiveSoundController;
 import com.leon.saintsdragons.client.sound.DraconicCrucibleSmeltingSoundController;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
 import com.leon.saintsdragons.client.sound.ignivorus.IgnivorusFireBreathSoundController;
+import com.leon.saintsdragons.client.sound.cindervane.CindervaneFireBodySoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxDiveSoundController;
 import com.leon.saintsdragons.client.sound.raevyx.RaevyxLightningBeamSoundController;
 import com.leon.saintsdragons.client.sound.volitans.VolitansBreathSoundController;
@@ -38,6 +39,7 @@ public final class CommonClientLifecycleEvents {
         RaevyxDiveSoundController.tick(minecraft);
         RaevyxLightningBeamSoundController.tick(minecraft);
         IgnivorusFireBreathSoundController.tick(minecraft);
+        CindervaneFireBodySoundController.tick(minecraft);
         VolitansBreathSoundController.tick(minecraft);
         VolitansBurrowSoundController.tick(minecraft);
         IvyDialogueResumeQueue.tick(minecraft);
