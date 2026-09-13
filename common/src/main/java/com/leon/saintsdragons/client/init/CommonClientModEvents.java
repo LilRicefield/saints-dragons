@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.renderer.atroxiia.AtroxiiaRenderer;
-import com.leon.saintsdragons.client.renderer.cindervane.CindervaneMagmaBlockRenderer;
+import com.leon.saintsdragons.client.renderer.cindervane.CindervaneFireballRenderer;
 import com.leon.saintsdragons.client.renderer.draconianswarm.LatcherRenderer;
 import com.leon.saintsdragons.client.renderer.draconianswarm.WingedRenderer;
 import com.leon.saintsdragons.client.renderer.draconianswarm.WhettledRenderer;
@@ -60,7 +60,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.NULLJAW.get(), NulljawRenderer::new);
         registrar.register(ModEntities.MOOP.get(), MoopRenderer::new);
         registrar.register(ModEntities.MOSSBACK.get(), MossbackRenderer::new);
-        registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneMagmaBlockRenderer::new);
+        registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneFireballRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_FLAME.get(), IgnivorusFlameRenderer::new);

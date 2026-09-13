@@ -7,7 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.handlers.CindervaneAnimationHandler;
-import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneFireballEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
@@ -17,7 +17,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.RECOVERY;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
-public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
+public class CindervaneFireballVolleyAbility extends DragonAbility<Cindervane> {
     private static final int MAX_VOLLEYS = 3;
     private static final int BLOCKS_PER_VOLLEY = 3;
     private static final int VOLLEY_INTERVAL_TICKS = 10;
@@ -42,8 +42,8 @@ public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
     private int ticksSinceVolley;
     private int volleysFired;
 
-    public CindervaneMagmaVolleyAbility(DragonAbilityType<Cindervane, CindervaneMagmaVolleyAbility> type,
-                                        Cindervane user) {
+    public CindervaneFireballVolleyAbility(DragonAbilityType<Cindervane, CindervaneFireballVolleyAbility> type,
+                                           Cindervane user) {
         super(type, user, TRACK, 0);
     }
 
@@ -96,6 +96,7 @@ public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
             return;
         }
 
+        server.broadcastEntityEvent(dragon, Cindervane.FIREBALL_MOUTH_EVENT);
         Vec3 origin = getMagmaVolleyOrigin(dragon);
         float baseYaw = dragon.yHeadRot;
         float basePitch = dragon.getXRot();
@@ -106,7 +107,7 @@ public class CindervaneMagmaVolleyAbility extends DragonAbility<Cindervane> {
             Vec3 direction = Vec3.directionFromRotation(basePitch + pitchOffset, baseYaw + yawOffset).normalize();
             Vec3 spawnPos = origin.add(direction.scale(SPAWN_FORWARD_OFFSET));
 
-            CindervaneMagmaBlockEntity block = new CindervaneMagmaBlockEntity(server, spawnPos,
+            CindervaneFireballEntity block = new CindervaneFireballEntity(server, spawnPos,
                     dragon, MAGMA_IMPACT_RADIUS, resolveImpactDamage(), MAGMA_BLOCK_LIFETIME);
             block.setDeltaMovement(direction.scale(VELOCITY_FORWARD).add(0.0D, VELOCITY_DOWN, 0.0D));
             server.addFreshEntity(block);

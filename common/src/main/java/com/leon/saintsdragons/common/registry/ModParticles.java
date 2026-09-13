@@ -94,6 +94,30 @@ public final class ModParticles {
                 }
             });
 
+    public static final Supplier<SimpleParticleType> CINDERVANE_MOUTH_EMITTER =
+            REGISTER.register("cindervane_mouth_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_IMPACT_EMITTER =
+            REGISTER.register("cindervane_impact_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_EXPLOSION =
+            REGISTER.register("cindervane_fire_explosion", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> CINDERVANE_SMALL_EXPLOSION =
+            REGISTER.register("cindervane_small_explosion", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> CINDERVANE_GROUND_IMPACT =
+            REGISTER.register("cindervane_ground_impact", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_FIREBALL_FIRE_TRAIL =
+            REGISTER.register("cindervane_fireball_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_BETTER_FIRE_TRAIL =
+            REGISTER.register("cindervane_better_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_TRAIL =
+            REGISTER.register("cindervane_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> CINDERVANE_SPEC_TRAIL =
+            REGISTER.register("cindervane_spec_trail", () -> Services.PLATFORM.createSimpleParticle(false));
+
     public static final Supplier<SimpleParticleType> FIRE_BREATH_SMOKE =
             REGISTER.register("fire_breath_smoke", () -> Services.PLATFORM.createSimpleParticle(false));
 

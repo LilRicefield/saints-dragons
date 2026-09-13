@@ -1,11 +1,11 @@
 package com.leon.saintsdragons.server.entity.effect.cindervane;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
@@ -28,12 +28,29 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.util.GeckoLibUtil;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class CindervaneMagmaBlockEntity extends Entity {
+public class CindervaneFireballEntity extends Entity implements GeoEntity {
+    private final AnimatableInstanceCache animationCache =
+            GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return animationCache;
+    }
+
     private static final EntityDataAccessor<BlockState> DATA_BLOCK_STATE =
-            SynchedEntityData.defineId(CindervaneMagmaBlockEntity.class, EntityDataSerializers.BLOCK_STATE);
+            SynchedEntityData.defineId(CindervaneFireballEntity.class, EntityDataSerializers.BLOCK_STATE);
 
     private Cindervane owner;
     private double impactRadius;
@@ -42,14 +59,14 @@ public class CindervaneMagmaBlockEntity extends Entity {
     private int livedTicks;
     private boolean exploded;
 
-    public CindervaneMagmaBlockEntity(EntityType<? extends CindervaneMagmaBlockEntity> type, Level level) {
+    public CindervaneFireballEntity(EntityType<? extends CindervaneFireballEntity> type, Level level) {
         super(type, level);
         this.blocksBuilding = true;
         this.refreshDimensions();
     }
 
-    public CindervaneMagmaBlockEntity(Level level, Vec3 pos, Cindervane owner,
-                                      double impactRadius, float impactDamage, int lifetimeTicks) {
+    public CindervaneFireballEntity(Level level, Vec3 pos, Cindervane owner,
+                                    double impactRadius, float impactDamage, int lifetimeTicks) {
         this(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), level);
         this.setPos(pos);
         this.owner = owner;
@@ -112,9 +129,22 @@ public class CindervaneMagmaBlockEntity extends Entity {
     }
 
     private void spawnTrailParticles() {
-        level().addParticle(ParticleTypes.FLAME, getX(), getY() + 0.2D, getZ(), 0.0D, 0.011D, 0.0D);
-        level().addParticle(ParticleTypes.SMALL_FLAME, getX(), getY() + 0.2D, getZ(), 0.0D, 0.003D, 0.0D);
-        level().addParticle(ParticleTypes.FALLING_LAVA, getX(), getY(), getZ(), 0.0D, -0.035D, 0.0D);
+        Vec3 velocity = getDeltaMovement();
+        for (int i = 0; i < 4; i++) {
+            double along = (i + random.nextDouble()) / 4.0;
+            double ox = (random.nextDouble() - 0.5) * 1.2;
+            double oy = (random.nextDouble() - 0.5) * 1.2;
+            double oz = (random.nextDouble() - 0.5) * 1.2;
+            level().addParticle(i == 0
+                            ? ModParticles.CINDERVANE_FIRE_TRAIL.get()
+                            : i == 1 ? ModParticles.CINDERVANE_SPEC_TRAIL.get()
+                            : i == 2 ? ModParticles.CINDERVANE_BETTER_FIRE_TRAIL.get()
+                            : ModParticles.CINDERVANE_FIREBALL_FIRE_TRAIL.get(), true,
+                    getX() - velocity.x * along + ox, getY() + getBbHeight() * 0.5 - velocity.y * along + oy,
+                    getZ() - velocity.z * along + oz,
+                    velocity.x * 0.12 + ox * 0.10, velocity.y * 0.12 + oy * 0.10 + 0.025,
+                    velocity.z * 0.12 + oz * 0.10);
+        }
     }
 
     private boolean checkImpactCollision() {
@@ -167,19 +197,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
         }
 
         Vec3 impact = position();
-        server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.4D, impact.z, 1,
-                0.0D, 0.0D, 0.0D, 0.0D);
-        server.sendParticles(ParticleTypes.EXPLOSION, impact.x, impact.y + 0.4D, impact.z, 4,
-                0.6D, 0.35D, 0.6D, 0.08D);
-        server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D, impact.z, 18,
-                0.5D, 0.3D, 0.5D, 0.04D);
-        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D, impact.z, 55,
-                0.9D, 0.55D, 0.9D, 0.12D);
-        server.sendParticles(ParticleTypes.SMALL_FLAME, impact.x, impact.y + 0.35D, impact.z, 40,
-                0.8D, 0.35D, 0.8D, 0.16D);
-        server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE, impact.x, impact.y + 0.25D, impact.z, 16,
-                0.9D, 0.25D, 0.9D, 0.08D);
-        spawnFlameBurst(server, impact);
+        spawnImpactEffects(server, impact);
         server.playSound(null, blockPosition(), SoundEvents.GENERIC_EXPLODE, getSoundSource(), 0.7F, 1.1F);
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
@@ -199,23 +217,22 @@ public class CindervaneMagmaBlockEntity extends Entity {
         discard();
     }
 
-    private void spawnFlameBurst(ServerLevel server, Vec3 impact) {
-        for (int i = 0; i < 18; i++) {
-            double angle = (Math.PI * 2.0D * i) / 18.0D;
-            double speed = 0.25D + random.nextDouble() * 0.35D;
-            double ySpeed = 0.08D + random.nextDouble() * 0.18D;
-            double vx = Math.cos(angle) * speed;
-            double vz = Math.sin(angle) * speed;
-            server.sendParticles(ParticleTypes.FLAME,
-                    impact.x, impact.y + 0.45D, impact.z,
-                    0,
-                    vx, ySpeed, vz,
-                    1.0D);
-            server.sendParticles(ParticleTypes.SMALL_FLAME,
-                    impact.x, impact.y + 0.35D, impact.z,
-                    0,
-                    vx * 1.25D, ySpeed * 0.75D, vz * 1.25D,
-                    1.0D);
+    private void spawnImpactEffects(ServerLevel server, Vec3 impact) {
+        HitResult ground = server.clip(new ClipContext(impact.add(0, 0.5, 0), impact.add(0, -6, 0),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        for (var player : server.players()) {
+            if (player.distanceToSqr(impact) > 256.0D * 256.0D) continue;
+            server.sendParticles(player, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), true,
+                    impact.x, impact.y + 0.4D, impact.z, 24, 0.12D, 0.08D, 0.12D, 0);
+            server.sendParticles(player, ModParticles.CINDERVANE_FIRE_EXPLOSION.get(), true,
+                    impact.x, impact.y + 1.2D, impact.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.CINDERVANE_SMALL_EXPLOSION.get(), true,
+                    impact.x, impact.y + 0.6D, impact.z, 1, 0, 0, 0, 0);
+            if (ground.getType() == HitResult.Type.BLOCK) {
+                Vec3 point = ground.getLocation();
+                server.sendParticles(player, ModParticles.CINDERVANE_GROUND_IMPACT.get(), true,
+                        point.x, point.y + 0.04D, point.z, 1, 0, 0, 0, 0);
+            }
         }
     }
 
@@ -278,7 +295,7 @@ public class CindervaneMagmaBlockEntity extends Entity {
 
     @Override
     public boolean shouldRenderAtSqrDistance(double distance) {
-        return distance < 4096.0D;
+        return distance < 256.0D * 256.0D;
     }
 
     @Override

@@ -118,6 +118,22 @@ import javax.annotation.Nonnull;
 public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>,
         DragonSaddleCarrier, DragonAirCombatSettingsProvider, DrinkingDragon {
     private static final CindervaneBrain DRAGON_BRAIN = new CindervaneBrain();
+    public static final byte FIREBALL_MOUTH_EVENT = 78;
+    private int fireballMouthTick = -1;
+
+    public float getFireballMouthAge(float partialTick) {
+        return fireballMouthTick < 0 ? -1.0F : tickCount - fireballMouthTick + partialTick;
+    }
+
+    @Override
+    public void handleEntityEvent(byte eventId) {
+        if (eventId == FIREBALL_MOUTH_EVENT) {
+            fireballMouthTick = tickCount;
+        } else {
+            super.handleEntityEvent(eventId);
+        }
+    }
+
     @Override
     protected ResourceLocation getDragonAttributesId() {
         return DragonAttributeConfigLoader.CINDERVANE_ID;

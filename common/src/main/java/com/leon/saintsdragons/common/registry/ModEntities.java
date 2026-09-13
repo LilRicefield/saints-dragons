@@ -14,7 +14,7 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.draconianswarm.Latcher;
 import com.leon.saintsdragons.server.entity.draconianswarm.Winged;
 import com.leon.saintsdragons.server.entity.draconianswarm.Whettled;
-import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneFireballEntity;
 import com.leon.saintsdragons.server.entity.effect.DragonWaterSplashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
@@ -161,8 +161,8 @@ public final class ModEntities {
                     .noSummon()
                     .build("raevyx_ground_rend_trail"));
 
-    public static final Supplier<EntityType<CindervaneMagmaBlockEntity>> CINDERVANE_MAGMA_BLOCK =
-            REGISTER.register("cindervane_magma_block", () -> EntityType.Builder.<CindervaneMagmaBlockEntity>of(CindervaneMagmaBlockEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<CindervaneFireballEntity>> CINDERVANE_MAGMA_BLOCK =
+            REGISTER.register("cindervane_magma_block", () -> EntityType.Builder.<CindervaneFireballEntity>of(CindervaneFireballEntity::new, MobCategory.MISC)
                     .sized(0.98F, 0.98F)
                     .clientTrackingRange(32)
                     .updateInterval(1)

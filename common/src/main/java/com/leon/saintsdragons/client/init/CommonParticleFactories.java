@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.client.init;
 
+import com.leon.saintsdragons.client.particle.CindervaneFireTrailParticle;
+import com.leon.saintsdragons.client.particle.CindervaneFireImpactParticle;
+import com.leon.saintsdragons.client.particle.CindervaneImpactEmitterParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowDustParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowShardParticle;
@@ -45,6 +48,15 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.CINDERVANE_MOUTH_EMITTER.get(), CindervaneImpactEmitterParticle.MouthFactory::new);
+        register(registrar, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), CindervaneImpactEmitterParticle.Factory::new);
+        register(registrar, ModParticles.CINDERVANE_FIRE_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.FIRE));
+        register(registrar, ModParticles.CINDERVANE_SMALL_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.SMALL));
+        register(registrar, ModParticles.CINDERVANE_GROUND_IMPACT.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.GROUND));
+        register(registrar, ModParticles.CINDERVANE_FIREBALL_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.FIREBALL_FIRE));
+        register(registrar, ModParticles.CINDERVANE_BETTER_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.BETTER_FIRE));
+        register(registrar, ModParticles.CINDERVANE_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.FIRE));
+        register(registrar, ModParticles.CINDERVANE_SPEC_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.SPEC));
         register(registrar, ModParticles.VOLITANS_WATER_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.WATER));
         register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON));
         register(registrar, ModParticles.VOLITANS_POISON_SKULL.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_SKULL));

@@ -16,7 +16,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.Cinderv
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneDoubleBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneFireBodyAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneSlashGrabAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneMagmaVolleyAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.cindervane.CindervaneFireballVolleyAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusBiteAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusBodySlamAbility;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
@@ -99,7 +99,7 @@ public final class ModAbilities {
     public static final DragonAbilityType<Cindervane, CindervaneSlashGrabAbility> CINDERVANE_SLASH_GRAB = register("cindervane_slash_grab", CindervaneSlashGrabAbility::new);
     public static final DragonAbilityType<Cindervane, CindervaneFireBodyAbility> CINDERVANE_FIRE_BODY = register("cindervane_fire_body", CindervaneFireBodyAbility::new);
     public static final DragonAbilityType<Cindervane, CindervaneDoubleBiteAbility> CINDERVANE_DOUBLE_BITE = register("cindervane_double_bite", CindervaneDoubleBiteAbility::new);
-    public static final DragonAbilityType<Cindervane, CindervaneMagmaVolleyAbility> CINDERVANE_MAGMA_VOLLEY = register("cindervane_magma_volley", CindervaneMagmaVolleyAbility::new);
+    public static final DragonAbilityType<Cindervane, CindervaneFireballVolleyAbility> CINDERVANE_MAGMA_VOLLEY = register("cindervane_magma_volley", CindervaneFireballVolleyAbility::new);
     public static final DragonAbilityType<Cindervane, HurtAbility<Cindervane>> CINDERVANE_HURT = register("cindervane_hurt", HurtAbility::new);
     public static final DragonAbilityType<Cindervane, DieAbility<Cindervane>> CINDERVANE_DIE = register("cindervane_die", DieAbility::new);
 

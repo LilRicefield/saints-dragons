@@ -59,7 +59,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
 
     @Override
     protected String[] trackedBoneNames() {
-        return new String[] {"passengerBone1", "passengerBone2", AUTO_MOUNT_BONE,
+        return new String[] {"headController", "passengerBone1", "passengerBone2", AUTO_MOUNT_BONE,
                 DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE,
                 DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE,
                 DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE};
@@ -92,6 +92,8 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     protected void afterDragonRender(Cindervane entity, PoseStack poseStack,
                                      MultiBufferSource bufferSource, float partialTick) {
         sendBonePositionsToServer(entity);
+        com.leon.saintsdragons.client.renderer.vfx.CindervaneFireballMouthRenderer.render(
+                entity, getBoneWorldPosition("headController"), poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
                 getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),
