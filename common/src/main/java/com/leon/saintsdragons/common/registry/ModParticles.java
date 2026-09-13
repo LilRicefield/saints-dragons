@@ -121,6 +121,9 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_TRAIL =
             REGISTER.register("cindervane_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> CINDERVANE_DARK_FIRE_TRAIL =
+            REGISTER.register("cindervane_dark_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_MORE_SPEC_TRAIL =
             REGISTER.register("cindervane_more_spec_trail", () -> Services.PLATFORM.createSimpleParticle(false));
 

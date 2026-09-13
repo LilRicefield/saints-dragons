@@ -11,7 +11,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class CindervaneFireTrailParticle extends TextureSheetParticle {
-    public enum Kind { FIRE, SPEC, MORE_SPEC, BETTER_FIRE, FIREBALL_FIRE }
+    public enum Kind { FIRE, DARK_FIRE, SPEC, MORE_SPEC, BETTER_FIRE, FIREBALL_FIRE }
 
     private final SpriteSet sprites;
     private final float ticksPerFrame;
@@ -38,6 +38,7 @@ public final class CindervaneFireTrailParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.quadSize = size;
         setColor(1.0F, spec ? 0.78F : fireball ? 0.60F : 0.48F, spec ? 0.28F : fireball ? 0.12F : 0.08F);
+        if (kind == Kind.DARK_FIRE) setColor(0.75F, 0.25F, 0.035F);
         setSprite(sprites.get(0, frames - 1));
     }
 

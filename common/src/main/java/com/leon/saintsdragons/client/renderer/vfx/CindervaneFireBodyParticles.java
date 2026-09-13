@@ -34,6 +34,7 @@ public final class CindervaneFireBodyParticles {
     private static final Map<Cindervane, Integer> LAST_TICK = new WeakHashMap<>();
     private static final Map<GeoBone, List<Face>> SURFACES = new WeakHashMap<>();
     private static final int FLAMES_PER_TICK = 64;
+    private static final int DARK_FLAMES_PER_TICK = 16;
     private static final int SPARKS_PER_TICK = 10;
     private static final int SMOKE_PER_TICK = 4;
     private static final double SURFACE_OFFSET = 0.06;
@@ -77,6 +78,15 @@ public final class CindervaneFireBodyParticles {
                 default -> ModParticles.CINDERVANE_MORE_SPEC_TRAIL.get();
             };
             var particle = Minecraft.getInstance().particleEngine.createParticle(type,
+                    point.x, point.y, point.z, motion.x, motion.y + 0.025, motion.z);
+            if (particle instanceof CindervaneFireTrailParticle flameParticle) {
+                flameParticle.setBodySizeMultiplier(1.5625F);
+            }
+        }
+        for (int i = 0; i < DARK_FLAMES_PER_TICK; i++) {
+            double area = (i + random.nextDouble()) * totalArea / DARK_FLAMES_PER_TICK;
+            Vec3 point = sample(faces, area, random).add(renderOrigin);
+            var particle = Minecraft.getInstance().particleEngine.createParticle(ModParticles.CINDERVANE_DARK_FIRE_TRAIL.get(),
                     point.x, point.y, point.z, motion.x, motion.y + 0.025, motion.z);
             if (particle instanceof CindervaneFireTrailParticle flameParticle) {
                 flameParticle.setBodySizeMultiplier(1.5625F);
