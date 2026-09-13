@@ -1,6 +1,9 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
 import com.leon.saintsdragons.server.entity.component.VolitansBreathStream;
+import com.leon.saintsdragons.server.entity.component.VolitansBreathCombatComponent;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.common.particle.VolitansBreathMotion;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 
@@ -259,6 +262,11 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VolitansBreathStream breathStream = new VolitansBreathStream(this);
+    private final VolitansBreathCombatComponent breathCombat = new VolitansBreathCombatComponent(this);
+    private final DragonCombatFlightState combatFlightState = new DragonCombatFlightState(this,
+            DragonCombatFlightProfile.volitans(VolitansBreathMotion.RANGE),
+            () -> breathCombat.ready(getTarget()),
+            () -> getActiveAbility() != null || isGroundMobilityActive() || getAiAirCombatBlockReason() != null);
     private final VolitansAnimationHandler animationHandler = new VolitansAnimationHandler(this);
     private final VolitansInteractionHandler interactionHandler = new VolitansInteractionHandler(this);
     private final VolitansTamingHandler tamingController = new VolitansTamingHandler(this);
@@ -1090,6 +1098,15 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
     @Override
     public DragonAirCombatSettings getAiAirCombatSettings() {
         return AI_AIR_COMBAT_SETTINGS;
+    }
+
+    @Override
+    public DragonCombatFlightState getCombatFlightState() {
+        return combatFlightState;
+    }
+
+    public VolitansBreathCombatComponent getBreathCombat() {
+        return breathCombat;
     }
 
     @Override
@@ -2115,7 +2132,7 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     public boolean shouldAiHoldPositionForAbility() {
         return isAiRootedByAbility()
-                || (isAbilityActive(ModAbilities.VOLITANS_BREATH) && !isFlying());
+                || (isAbilityActive(ModAbilities.VOLITANS_BREATH) && !isAerial() && !isInWaterOrBubble());
     }
 
     public void requestPoisonBallRelease() {

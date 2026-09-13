@@ -1,8 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
-import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
-import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -18,7 +16,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSwimFollowBe
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonSwimWanderBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonWaterEscapeBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.FirstApplicableDragonBehaviour;
-import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.GroundPursuitFlightTransitionBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.LookAtAttackTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.MoveToGroundWalkTargetBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.SetWalkTargetToAttackTargetBehaviour;
@@ -78,24 +75,17 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                         .build(),
                 DragonBehaviourGroup.<Volitans>activity(Activity.FIGHT)
                         .behaviours(
-                                new GroundPursuitFlightTransitionBehaviour<>(
-                                        GroundPursuitFlightSettings.standard(),
-                                        dragon -> groundCombat.isGroundMovementLocked(),
-                                        dragon -> dragon.getTarget() == null
-                                                || !DragonTargetingHelper.isMovementAnchorInWater(dragon.getTarget())
-                                ),
                                 new VolitansAirCombatBehaviour(),
                                 new SetWalkTargetToAttackTargetBehaviour<>(
                                         VolitansGroundCombatBehaviour.CHASE_SPEED,
-                                        (dragon, target) ->
-                                                VolitansGroundCombatBehaviour.CHASE_STOP_RANGE
-                                                        + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
+                                        (dragon, target) -> dragon.getBreathCombat().groundStopDistance(target),
                                         (dragon, target) -> groundCombat.isGroundMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(
-                                        (dragon, target) -> 0.28D,
+                                        (dragon, target) -> dragon.isBreathing() ? 0.16D : 0.28D,
                                         8.0F,
-                                        (dragon, target) -> groundCombat.isGroundMovementLocked()
+                                        (dragon, target) -> dragon.shouldAiHoldPositionForAbility() || dragon.isGroundMobilityActive(),
+                                        (dragon, target) -> dragon.getBreathCombat().waterDestination(target)
                                 ),
                                 groundCombat,
                                 new VolitansWaterCombatBehaviour()

@@ -203,6 +203,11 @@ public final class DragonCombatFlightState {
         boolean highGround = separation.y >= landing.highGroundMinVerticalSeparation()
                 && separation.horizontalDistance() <= landing.highGroundMaxHorizontalDistance();
         boolean needsPursuit = targetNeedsFlight || routeFailed || highGround;
+        if (dragon.canSwim() && !aerial
+                && (dragon.isInWaterOrBubble() || DragonTargetingHelper.isMovementAnchorInWater(target))) {
+            options.add(new Option(DragonTactic.WATER_PURSUIT, 110, focus, "water-contact"));
+            return options;
+        }
         Vec3 escapeDirection = targetNeedsFlight ? separation : separation.multiply(1, 0, 1);
         boolean escaping = escapeDirection.length() >= 18.0D
                 && observedTargetVelocity.dot(escapeDirection.normalize()) > 0.10D;

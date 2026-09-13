@@ -18,15 +18,12 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
     private static final double BITE_RANGE = 4.1D;
     private static final double CLAW_RANGE = 5.1D;
     private static final double GORE_RANGE = 6.2D;
-    private static final double BREATH_MIN_RANGE = 6.0D;
-    private static final double BREATH_MAX_RANGE = 16.0D;
     private static final double ROAR_MIN_RANGE = 4.5D;
     private static final double ROAR_MAX_RANGE = 12.0D;
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private Volitans dragon;
     private int attackCooldown = 0;
-    private int breathHoldTicks = 0;
 
     public VolitansWaterCombatBehaviour() {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
@@ -52,9 +49,6 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
             return false;
         }
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (dragon.isGroundCombatAbilityActive()) {
-            return true;
-        }
         if (!canFightTarget(target)) {
             return false;
         }
@@ -71,9 +65,6 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
     protected void stop(DragonBrainContext<Volitans> context) {
         dragon.setAggressive(false);
         attackCooldown = 0;
-        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
-            dragon.forceEndActiveAbility();
-        }
     }
 
     @Override
@@ -92,12 +83,7 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
 
-        if (handleActiveAbility(gap, hasLineOfSight)) {
-            return;
-        }
-
-        // Finish climbing out before committing to a ranged attack against a dry target.
-        if (!DragonTargetingHelper.isMovementAnchorInWater(target) && gap > GORE_RANGE) {
+        if (dragon.isGroundCombatAbilityActive()) {
             return;
         }
 
@@ -114,11 +100,11 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
             return;
         }
 
-        if (tryRoar(gap)) {
+        if (dragon.getBreathCombat().tryStart(target)) {
             return;
         }
 
-        tryBreath(gap);
+        tryRoar(gap);
     }
 
     private boolean canFightTarget(LivingEntity target) {
@@ -137,16 +123,6 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
         return dragon.distanceToSqr(target) <= getMaxAggroDistanceSqr();
     }
 
-    private boolean handleActiveAbility(double gap, boolean hasLineOfSight) {
-        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
-            if (--breathHoldTicks <= 0 || !hasLineOfSight || gap < 4.5D || gap > 18.0D) {
-                dragon.forceEndActiveAbility();
-            }
-            return true;
-        }
-        return dragon.isGroundCombatAbilityActive();
-    }
-
     private boolean tryRoar(double gap) {
         if (gap < ROAR_MIN_RANGE || gap > ROAR_MAX_RANGE) {
             return false;
@@ -157,19 +133,9 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
         return startAiAbility(ModAbilities.VOLITANS_ROAR, true, 24, ROAR_COOLDOWN_TICKS, 120, 48);
     }
 
-    private boolean tryBreath(double gap) {
-        if (gap < BREATH_MIN_RANGE || gap > BREATH_MAX_RANGE) {
-            return false;
-        }
-        dragon.setBreathMode(0);
-        if (!canUseAiAbility(ModAbilities.VOLITANS_BREATH, true)) {
-            return false;
-        }
-        if (!startAiAbility(ModAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
-            return false;
-        }
-        breathHoldTicks = 50 + dragon.getRandom().nextInt(20);
-        return true;
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return dragon == null ? Map.of() : Map.of("breath", dragon.getBreathCombat().debugSummary());
     }
 
     private void tryMelee(LivingEntity target, double gap) {

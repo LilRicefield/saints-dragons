@@ -23,7 +23,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     private static final int BREATH_START_SOUND_TICKS = 20; // 1.0s
     private static final int BREATH_END_SOUND_TICKS = 50;   // 2.5s
     private static final float BREATH_VOLUME = 2.0F;
-    private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
+    private boolean aiControlled;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),
@@ -56,7 +56,8 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         }
         Volitans dragon = getUser();
         if (section.sectionType == STARTUP) {
-            shotGrace.reset();
+            aiControlled = !dragon.level().isClientSide && dragon.getControllingPassenger() == null;
+            if (aiControlled) dragon.getBreathCombat().begin();
             if (!dragon.canUseCurrentBreathMode()) {
                 interrupt();
                 return;
@@ -70,6 +71,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         if (section.sectionType == ACTIVE) {
             dragon.triggerAnim(VolitansAnimationHandler.ACTION_CONTROLLER, "breathing");
             dragon.setBreathing(true);
+            if (aiControlled) dragon.getBreathCombat().startedBreathing();
         }
     }
 
@@ -80,16 +82,14 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
         if (section == null || dragon.level().isClientSide) {
             return;
         }
-        if (dragon.getControllingPassenger() == null) {
-            if (!dragon.isTargetValid(dragon.getTarget())) {
-                interrupt();
-                return;
-            }
-            DragonCombatAim.Shot shot = dragon.getAiBreathShot(dragon.getTarget());
-            if (!shotGrace.allows(shot, dragon.tickCount, 20, 12)) {
-                interrupt();
-                return;
-            }
+        if (aiControlled && !dragon.getBreathCombat().continueBreath(
+                dragon.getTarget(), section.sectionType == ACTIVE, getTicksInSection())) {
+            interrupt();
+            return;
+        }
+        if (!aiControlled && dragon.getControllingPassenger() == null) {
+            interrupt();
+            return;
         }
         if (section.sectionType != ACTIVE) return;
 
@@ -133,6 +133,8 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
     @Override
     public void end() {
         getUser().getCombatAim().clear();
+        if (aiControlled) getUser().getBreathCombat().end();
+        aiControlled = false;
         super.end();
     }
 

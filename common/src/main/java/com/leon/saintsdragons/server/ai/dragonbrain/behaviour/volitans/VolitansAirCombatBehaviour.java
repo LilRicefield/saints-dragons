@@ -5,16 +5,22 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
+import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+import com.leon.saintsdragons.server.entity.component.VolitansBreathCombatComponent;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirCombatMovementBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volitans> {
     private static final double MELEE_RANGE = 6.0D;
-    private static final double BREATH_MIN_RANGE = 10.0D;
-    private static final double BREATH_MAX_RANGE = 24.0D;
     private static final double POISON_MAX_RANGE = 32.0D;
     private static final double ROAR_MAX_RANGE = 12.0D;
     private static final double CHASE_HEIGHT_OFFSET = 2.0D;
@@ -27,7 +33,10 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private int attackCooldown;
-    private int breathHoldTicks;
+    private int breathApproachTicks;
+    private Vec3 takeoffTarget;
+    private Volitans currentDragon;
+    private String lastDecision = "idle";
     private int poisonHoldTicks;
 
     @Override
@@ -45,6 +54,12 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
                                  LivingEntity target,
                                  boolean hasLineOfSight) {
         Volitans dragon = context.dragon();
+        currentDragon = dragon;
+        if (dragon.isTakeoff()) {
+            tickTakeoff(context, target);
+            return;
+        }
+        takeoffTarget = null;
         if (attackCooldown > 0) {
             attackCooldown--;
         }
@@ -60,9 +75,8 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
 
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             setBreathApproachIntent(context, target);
-            if (--breathHoldTicks <= 0 || distance < 7.0D || distance > 26.0D) {
-                dragon.forceEndActiveAbility();
-            }
+            breathApproachTicks = 0;
+            lastDecision = "breath:moving-pass";
             return;
         }
 
@@ -71,12 +85,38 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
             return;
         }
 
-        if (distance <= MELEE_RANGE && hasLineOfSight) {
+        if (dragon.getBreathCombat().makingSpace()) {
+            setBreathApproachIntent(context, target);
+            lastDecision = "breath:making-space";
+            return;
+        }
+
+        double gap = Math.max(0, distance - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D);
+        if (gap <= MELEE_RANGE && hasLineOfSight) {
+            lastDecision = "melee:closing";
             if (attackCooldown <= 0 && dragon.getAiCombatPacing().getCadenceCooldownTicks() <= 0) {
                 tryMelee(dragon, target);
             }
             setMeleePositionIntent(context, target, 0.0D, BITE_APPROACH_DISTANCE, 1.2D, 0.7D);
             return;
+        }
+
+        if (hasLineOfSight && dragon.getBreathCombat().tryStart(target)) {
+            breathApproachTicks = 0;
+            setBreathApproachIntent(context, target);
+            lastDecision = "breath:starting";
+            return;
+        }
+        if (hasLineOfSight && dragon.getBreathCombat().ready(target)
+                && distance <= VolitansBreathCombatComponent.FIRING_RANGE + 8
+                && dragon.getAiBreathShot(target) != DragonCombatAim.Shot.BLOCKED) {
+            if (++breathApproachTicks <= 40) {
+                setBreathApproachIntent(context, target);
+                lastDecision = "breath:aligning-pass";
+                return;
+            }
+        } else {
+            breathApproachTicks = 0;
         }
 
         if (attackCooldown <= 0
@@ -91,20 +131,6 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         }
 
         if (attackCooldown <= 0
-                && distance >= BREATH_MIN_RANGE
-                && distance <= BREATH_MAX_RANGE
-                && hasLineOfSight
-                && canUseAiAbility(dragon, ModAbilities.VOLITANS_BREATH, true)
-                && dragon.getAiBreathShot(target) == DragonCombatAim.Shot.ALIGNED) {
-            dragon.setBreathMode(dragon.getRandom().nextFloat() < 0.65F ? 1 : 0);
-            if (startAiAbility(dragon, ModAbilities.VOLITANS_BREATH, true, 16, 140, 110, 42)) {
-                breathHoldTicks = 50 + dragon.getRandom().nextInt(30);
-                setBreathApproachIntent(context, target);
-                return;
-            }
-        }
-
-        if (attackCooldown <= 0
                 && distance <= ROAR_MAX_RANGE
                 && hasLineOfSight
                 && canUseAiAbility(dragon, ModAbilities.VOLITANS_ROAR, true)
@@ -113,6 +139,7 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
             return;
         }
 
+        lastDecision = "chase";
         if (shouldDiveChase(
                 dragon,
                 target,
@@ -121,7 +148,9 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         )) {
             setDivingChaseIntent(context, target, 3.0D, -0.25D, 0.08D, 0.12D, DIVE_CHASE_SPEED);
         } else {
-            setPredictedChaseIntent(context, target, 5.0D, CHASE_HEIGHT_OFFSET, 0.12D, 0.5D, CHASE_SPEED);
+            setPredictedChaseIntent(context, target, 4.0D,
+                    dragon.getCombatFlightState().targetNeedsFlight() ? CHASE_HEIGHT_OFFSET : 8.0D,
+                    0.0D, 0.0D, CHASE_SPEED);
         }
     }
 
@@ -130,11 +159,11 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         Volitans dragon = context.dragon();
         dragon.setAiSpecialCombatReserved(false);
         attackCooldown = 0;
+        breathApproachTicks = 0;
+        takeoffTarget = null;
+        lastDecision = "stopped";
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_POISON_BALL)) {
             dragon.requestPoisonBallRelease();
-        }
-        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
-            dragon.forceEndActiveAbility();
         }
     }
 
@@ -183,8 +212,64 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
     }
 
     private void setBreathApproachIntent(DragonBrainContext<Volitans> context, LivingEntity target) {
+        Volitans dragon = context.dragon();
+        Vec3 destination = dragon.getBreathCombat().movingDestination(target, true);
+        var space = dragon.getAIMovement().flightSpace();
+        double floor = dragon.level().getMinBuildHeight() + 4;
+        double ceiling = dragon.level().getMaxBuildHeight() - dragon.getBbHeight() - 2;
+        var local = space.observe(dragon.position());
+        if (local != null && local.clear() && local.ceilingKnown()) {
+            ceiling = Math.min(ceiling, local.ceiling() - dragon.getBbHeight() - 2);
+        }
+        var ahead = space.observe(new Vec3(destination.x, dragon.getY(), destination.z));
+        if (ahead != null && ahead.clear() && ahead.ceilingKnown()) {
+            ceiling = Math.min(ceiling, ahead.ceiling() - dragon.getBbHeight() - 2);
+        }
+        double y = dragon.getCombatFlightState().targetNeedsFlight() ? destination.y
+                : DragonTargetingHelper.movementAnchor(target).getY() + 8;
+        Vec3 fitted = space.fitDestination(new Vec3(destination.x, Mth.clamp(y, floor, Math.max(floor, ceiling)), destination.z));
+        if (fitted == null || fitted.y > ceiling) {
+            context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.holdPosition());
+            // Give the normal chase/landing planner the next opening if this firing lane is unusable.
+            breathApproachTicks = 40;
+            dragon.getCombatFlightState().deferRangedFlightFor(60);
+            return;
+        }
+        boolean passing = dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH) || dragon.getBreathCombat().makingSpace();
+        double speed = passing ? Mth.clamp(0.42D + dragon.getCombatFlightState().targetVelocity().length(), 0.42D, 1.25D)
+                / Math.max(0.01D, dragon.getFlightSpeed()) : POSITION_SPEED;
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(
-                context.dragon().getCombatAim().firingApproach(target, CHASE_SPEED, 16.0D, 2.0D)));
+                DragonFlightRequest.maneuver(fitted, speed, 3,
+                        passing ? DragonFlightRequest.Arrival.PASS_THROUGH : DragonFlightRequest.Arrival.BRAKE)));
+    }
+
+    private void tickTakeoff(DragonBrainContext<Volitans> context, LivingEntity target) {
+        Volitans dragon = context.dragon();
+        if (takeoffTarget == null) {
+            Vec3 direction = target.position().subtract(dragon.position()).multiply(1, 0, 1).normalize();
+            var space = dragon.getAIMovement().flightSpace();
+            for (Vec3 candidate : new Vec3[] {
+                    dragon.position().add(direction.scale(14)).add(0, 8, 0),
+                    dragon.position().add(0, 8, 0) }) {
+                Vec3 fitted = space.fitDestination(candidate);
+                if (fitted != null && fitted.y >= dragon.getY() + 3 && space.corridorClear(dragon.position(), fitted)) {
+                    takeoffTarget = fitted;
+                    break;
+                }
+            }
+        }
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, takeoffTarget == null
+                ? DragonMovementIntent.holdPosition()
+                : DragonMovementIntent.flight(DragonFlightRequest.track(takeoffTarget, POSITION_SPEED, 3)));
+        lastDecision = "takeoff";
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        Map<String, String> details = new LinkedHashMap<>(super.getDragonBrainDebugDetails());
+        details.put("decision", lastDecision);
+        if (currentDragon != null) details.put("breath", currentDragon.getBreathCombat().debugSummary());
+        return Map.copyOf(details);
     }
 
     private boolean canUseAirCombat(Volitans dragon) {

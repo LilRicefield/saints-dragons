@@ -75,7 +75,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.MoverType;
 import javax.annotation.Nonnull;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -158,9 +157,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final int WILD_PHASE2_IDLE_TICKS = 10;
     private static final int PHASE2_EXIT_LOCK_TICKS = 13;
     private static final int PHASE2_LANDED_RECOVERY_TICKS = 20;
-    private static final int PHASE2_RIDER_TAKEOFF_TICKS = 60;
-    private static final int PHASE2_RIDER_TAKEOFF_LAUNCH_DELAY_TICKS = 40;
-    private static final double PHASE2_RIDER_TAKEOFF_UPWARD_STEP = 1.0D;
     private static final UUID PHASE2_FOLLOW_RANGE_MODIFIER_UUID =
             UUID.fromString("9bc2f319-58d7-47b7-84e8-bb0ed524030f");
     private static final AttributeModifier PHASE2_FOLLOW_RANGE_MODIFIER = new AttributeModifier(
@@ -174,8 +170,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     public static final EntityDataAccessor<Boolean> DATA_BULLDOZING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_PHASE2 =
-            SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
-    private static final EntityDataAccessor<Boolean> DATA_PHASE2_RIDER_TAKEOFF =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_LEAPING =
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
@@ -354,7 +348,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Nullable
     private LivingEntity wildPhase2Target;
     private int phase2CooldownTicks = 0;
-    private boolean phase2RiderTakeoffActive = false;
     private boolean useRightWingSwipe = true;
     private boolean phase2WasVehicle = false;
     private boolean wildLowHealthUltimateTriggered = false;
@@ -486,7 +479,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         this.entityData.define(DATA_RIDER_LANDING_BLEND, false);
         this.entityData.define(DATA_BULLDOZING, false);
         this.entityData.define(DATA_PHASE2, false);
-        this.entityData.define(DATA_PHASE2_RIDER_TAKEOFF, false);
         this.entityData.define(DATA_LEAPING, false);
         this.entityData.define(DATA_LEAP_ANIM_STATE, 0);
         this.entityData.define(DATA_LEAP_MOVE_TICKS, 0);
@@ -688,8 +680,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
-        phase2RiderTakeoffActive = false;
-        this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
         phase2WasVehicle = false;
 
         leaping = false;
@@ -1385,20 +1375,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
 
-        if (isPhase2RiderTakeoffAnimating()) {
-            if (isFlying()) {
-                move(MoverType.SELF, new Vec3(0.0D, PHASE2_RIDER_TAKEOFF_UPWARD_STEP, 0.0D));
-                setDeltaMovement(Vec3.ZERO);
-                hasImpulse = true;
-                hurtMarked = true;
-                fallDistance = 0.0F;
-            } else {
-                setDeltaMovement(0.0D, getDeltaMovement().y, 0.0D);
-                super.travel(Vec3.ZERO);
-            }
-            return;
-        }
-
         if (areRiderControlsLocked()) {
             super.travel(Vec3.ZERO);
             return;
@@ -2039,8 +2015,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         boolean wasPhase2Active = phase2Active;
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
-        phase2RiderTakeoffActive = false;
-        this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
         phase2WasVehicle = false;
         phase2CooldownTicks = 0;
         if (wasPhase2Active && !level().isClientSide) {
@@ -2063,8 +2037,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         wildPhase2Target = null;
         phase2Active = false;
         this.entityData.set(DATA_PHASE2, false);
-        phase2RiderTakeoffActive = false;
-        this.entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
         phase2WasVehicle = false;
         phase2CooldownTicks = 0;
         wildLowHealthUltimateTriggered = false;
@@ -2108,69 +2080,6 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     @Override
     protected void beforeStandardRiderTakeoff(Player player) {
         enforcePrimaryMeleeForFlight(player);
-    }
-
-    @Override
-    public void startTakeoffSequence(double minUpwardVelocity, int animationTicks) {
-        if (!isPhase2Active()) {
-            super.startTakeoffSequence(minUpwardVelocity, animationTicks);
-            return;
-        }
-        if (!canStartTakeoffSequence()) {
-            return;
-        }
-
-        phase2RiderTakeoffActive = true;
-        entityData.set(DATA_PHASE2_RIDER_TAKEOFF, true);
-        setRunning(false);
-        setAccelerating(false);
-        setDeltaMovement(Vec3.ZERO);
-        if (!level().isClientSide && getControllingPassenger() instanceof Player) {
-            lockRiderControls(PHASE2_RIDER_TAKEOFF_TICKS);
-        }
-        takeoffComponent.startTakeoff(
-                PHASE2_RIDER_TAKEOFF_TICKS,
-                PHASE2_RIDER_TAKEOFF_UPWARD_STEP
-        );
-        setGoingUp(true);
-        setGoingDown(false);
-    }
-
-    @Override
-    protected int getTakeoffLiftDelayTicks() {
-        return phase2RiderTakeoffActive
-                ? PHASE2_RIDER_TAKEOFF_LAUNCH_DELAY_TICKS
-                : super.getTakeoffLiftDelayTicks();
-    }
-
-    @Override
-    protected boolean shouldIgnoreGroundedTakeoffRecovery() {
-        return phase2RiderTakeoffActive || super.shouldIgnoreGroundedTakeoffRecovery();
-    }
-
-    @Override
-    protected void onTakeoffEnded() {
-        super.onTakeoffEnded();
-        if (!phase2RiderTakeoffActive) {
-            return;
-        }
-
-        phase2RiderTakeoffActive = false;
-        entityData.set(DATA_PHASE2_RIDER_TAKEOFF, false);
-        setGoingUp(false);
-        setGoingDown(false);
-        setAccelerating(false);
-        if (isFlying() && getControllingPassenger() instanceof Player) {
-            setDeltaMovement(Vec3.ZERO);
-            primeRiderFlightIdleMode();
-        }
-    }
-
-    // The existing synchronized animation state now covers AI phase-2 takeoffs too.
-    public boolean isPhase2RiderTakeoffAnimating() {
-        return level().isClientSide
-                ? entityData.get(DATA_PHASE2_RIDER_TAKEOFF)
-                : phase2RiderTakeoffActive;
     }
 
     @Override
@@ -2401,9 +2310,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void onTakeoffStateStarted() {
-        if (!isPhase2Active()) {
-            triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.TAKEOFF);
-        }
+        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER,
+                isPhase2Active() ? AnimationHelper.PHASE2_TAKEOFF : AnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
     }
 

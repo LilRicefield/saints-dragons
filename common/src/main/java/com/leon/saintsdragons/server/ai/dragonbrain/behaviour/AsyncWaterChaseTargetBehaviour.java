@@ -16,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.function.ToDoubleBiFunction;
 
@@ -25,6 +26,7 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
 
     private final ToDoubleBiFunction<T, LivingEntity> speedModifier;
     private final BiPredicate<T, LivingEntity> movementLocked;
+    private final BiFunction<T, LivingEntity, Vec3> destination;
     private final float turnSpeed;
     private boolean shoreExitActive;
     private int shoreExitTicks;
@@ -45,10 +47,19 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
     public AsyncWaterChaseTargetBehaviour(ToDoubleBiFunction<T, LivingEntity> speedModifier,
                                           float turnSpeed,
                                           BiPredicate<T, LivingEntity> movementLocked) {
+        this(speedModifier, turnSpeed, movementLocked,
+                (dragon, target) -> DragonTargetingHelper.movementAnchor(target).getBoundingBox().getCenter());
+    }
+
+    public AsyncWaterChaseTargetBehaviour(ToDoubleBiFunction<T, LivingEntity> speedModifier,
+                                          float turnSpeed,
+                                          BiPredicate<T, LivingEntity> movementLocked,
+                                          BiFunction<T, LivingEntity, Vec3> destination) {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
         this.speedModifier = speedModifier;
         this.turnSpeed = turnSpeed;
         this.movementLocked = movementLocked;
+        this.destination = destination;
     }
 
     @Override
@@ -98,7 +109,7 @@ public class AsyncWaterChaseTargetBehaviour<T extends RideableDragonBase> extend
             return;
         }
         Entity movementAnchor = DragonTargetingHelper.movementAnchor(target);
-        Vec3 targetPosition = movementAnchor.getBoundingBox().getCenter();
+        Vec3 targetPosition = destination.apply(dragon, target);
         double speed = speedModifier.applyAsDouble(dragon, target);
         if (dragon instanceof SemiAquaticDragon swimmer) {
             speed *= swimmer.getSwimSpeed();

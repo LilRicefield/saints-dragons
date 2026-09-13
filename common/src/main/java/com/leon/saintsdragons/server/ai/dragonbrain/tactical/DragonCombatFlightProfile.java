@@ -16,4 +16,8 @@ public record DragonCombatFlightProfile(double firingRange,
         return new DragonCombatFlightProfile(breathRange * 0.65D, 32.0D, 10.0D,
                 phase2 ? 240 : 180, 140, 8, 30, phase2 ? 22 : 12);
     }
+
+    public static DragonCombatFlightProfile volitans(double breathRange) {
+        return new DragonCombatFlightProfile(breathRange * 0.9D, 22.0D, 8.0D, 120, 100, 8, 30, 6);
+    }
 }

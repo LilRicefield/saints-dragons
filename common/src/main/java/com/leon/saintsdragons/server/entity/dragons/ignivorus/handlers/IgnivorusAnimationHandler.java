@@ -51,6 +51,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             new AnimationHelper.Transitions(4, 4, 4, 4, 2, 4, 4, 4);
     private static final AnimationHelper.FlightAnimations FLIGHT_ANIMATIONS =
             new AnimationHelper.FlightAnimations(TAKEOFF, null, LANDING, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
+    private static final AnimationHelper.FlightAnimations PHASE2_FLIGHT_ANIMATIONS =
+            new AnimationHelper.FlightAnimations(PHASE2_TAKEOFF, null, LANDING, GLIDE, GLIDE_DOWN, FLY_IDLE, FLAP, SPRINT_FLAP);
     private static final AnimationHelper.FlightTransitions FLIGHT_TRANSITIONS =
             new AnimationHelper.FlightTransitions(2, 12, 6, 3, 6, 4, 3, 2);
     private static final int ACTION_TRANSITION_TICKS = 4;
@@ -113,7 +115,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         AnimationHelper.registerRestAnimations(controller, GROUND_ANIMATIONS);
         AnimationHelper.register(controller, AnimationHelper.LANDED, LANDED);
         AnimationHelper.register(controller, AnimationHelper.PHASE2_LANDED, PHASE2_LANDED);
-        AnimationHelper.register(controller, AnimationHelper.PHASE2_TAKEOFF, PHASE2_TAKEOFF);
         controller.triggerableAnim(DRINKING_TRIGGER, DRINKING);
         controller.triggerableAnim("phase2_enter",
                 RawAnimation.begin().thenPlay("animation.ignivorus.phase2_enter"));
@@ -166,6 +167,7 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         AnimationHelper.registerFlight(controller, "skyfall_air",
                 RawAnimation.begin().thenPlay("animation.ignivorus.skyfall_air"));
         AnimationHelper.registerFlightStandard(controller, TAKEOFF, null, null);
+        AnimationHelper.registerFlight(controller, AnimationHelper.PHASE2_TAKEOFF, PHASE2_TAKEOFF);
         AnimationHelper.registerFlight(controller, "ultimate_start_air",
                 RawAnimation.begin().thenPlay("animation.ignivorus.ultimate_start_air"));
         AnimationHelper.registerFlight(controller, "ultimate_air",
@@ -215,12 +217,6 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
         if (dragon.isTamingStunned()) {
             controller.transitionLength(GROUND_TRANSITIONS.idle());
             AnimationHelper.setAndContinue(state, STUNNED);
-            return PlayState.CONTINUE;
-        }
-
-        if (dragon.isPhase2RiderTakeoffAnimating()) {
-            controller.transitionLength(GROUND_TRANSITIONS.bodyTransition());
-            AnimationHelper.setAndContinue(state, PHASE2_TAKEOFF);
             return PlayState.CONTINUE;
         }
 
@@ -377,10 +373,8 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
             return PlayState.STOP;
         }
         if (dragon.isTakeoff()) {
-            if (dragon.isPhase2Active()) {
-                return PlayState.STOP;
-            }
-            return AnimationHelper.handleTakeoff(state, false, FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
+            return AnimationHelper.handleTakeoff(state, false,
+                    dragon.isPhase2Active() ? PHASE2_FLIGHT_ANIMATIONS : FLIGHT_ANIMATIONS, FLIGHT_TRANSITIONS);
         }
         var visualState = dragon.getVisualFlightState(state.getPartialTick());
         if (dragon.isHoldingRiderDiveMomentum()
