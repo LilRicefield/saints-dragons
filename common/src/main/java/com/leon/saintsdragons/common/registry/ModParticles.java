@@ -94,6 +94,12 @@ public final class ModParticles {
                 }
             });
 
+    public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_BODY_SMOKE =
+            REGISTER.register("cindervane_fire_body_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_BODY_STAR =
+            REGISTER.register("cindervane_fire_body_star", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_MOUTH_EMITTER =
             REGISTER.register("cindervane_mouth_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
 

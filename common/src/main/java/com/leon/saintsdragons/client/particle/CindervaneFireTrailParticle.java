@@ -16,7 +16,7 @@ public final class CindervaneFireTrailParticle extends TextureSheetParticle {
     private final SpriteSet sprites;
     private final float ticksPerFrame;
     private final int frames;
-    private final float size;
+    private float size;
     private final float aspectRatio;
 
     private CindervaneFireTrailParticle(ClientLevel level, double x, double y, double z,
@@ -39,6 +39,11 @@ public final class CindervaneFireTrailParticle extends TextureSheetParticle {
         this.quadSize = size;
         setColor(1.0F, spec ? 0.78F : fireball ? 0.60F : 0.48F, spec ? 0.28F : fireball ? 0.12F : 0.08F);
         setSprite(sprites.get(0, frames - 1));
+    }
+
+    public void setBodySizeMultiplier(float multiplier) {
+        this.size *= multiplier;
+        this.quadSize = size;
     }
 
     @Override

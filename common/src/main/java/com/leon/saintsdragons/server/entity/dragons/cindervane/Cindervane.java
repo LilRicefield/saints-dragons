@@ -118,6 +118,13 @@ import javax.annotation.Nonnull;
 public class Cindervane extends RideableFlyingDragon implements ShakesScreen, PackMember<Cindervane>,
         DragonSaddleCarrier, DragonAirCombatSettingsProvider, DrinkingDragon {
     private static final CindervaneBrain DRAGON_BRAIN = new CindervaneBrain();
+    public static final byte FIRE_BODY_START_EVENT = 79;
+    private int fireBodyStartTick = -1;
+
+    public float getFireBodyStartAge(float partialTick) {
+        return fireBodyStartTick < 0 ? -1.0F : tickCount - fireBodyStartTick + partialTick;
+    }
+
     public static final byte FIREBALL_MOUTH_EVENT = 78;
     private int fireballMouthTick = -1;
 
@@ -127,7 +134,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     public void handleEntityEvent(byte eventId) {
-        if (eventId == FIREBALL_MOUTH_EVENT) {
+        if (eventId == FIRE_BODY_START_EVENT) {
+            fireBodyStartTick = tickCount;
+        } else if (eventId == FIREBALL_MOUTH_EVENT) {
             fireballMouthTick = tickCount;
         } else {
             super.handleEntityEvent(eventId);
@@ -1351,6 +1360,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     }
 
     public void setBreathingFire(boolean breathing) {
+        if (breathing && !isBreathingFire() && !level().isClientSide) {
+            level().broadcastEntityEvent(this, FIRE_BODY_START_EVENT);
+        }
         this.entityData.set(DATA_FIRE_BREATHING, breathing);
     }
 

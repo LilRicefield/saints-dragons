@@ -133,6 +133,8 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
                                      MultiBufferSource bufferSource, float partialTick) {
         sendBonePositionsToServer(entity);
         CindervaneFireBodyParticles.emit(entity, this.lastBakedModel, fireBodyTransforms, partialTick);
+        com.leon.saintsdragons.client.renderer.vfx.CindervaneFireBodyActivationRenderer.render(
+                entity, poseStack, bufferSource, partialTick);
         com.leon.saintsdragons.client.renderer.vfx.CindervaneFireballMouthRenderer.render(
                 entity, getBoneWorldPosition("headController"), poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
