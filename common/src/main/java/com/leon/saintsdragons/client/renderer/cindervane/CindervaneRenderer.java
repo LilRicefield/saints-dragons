@@ -5,16 +5,22 @@ import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.layer.cindervane.CindervaneNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.layer.DragonEquipmentLayer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.CindervaneFireBodyParticles;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.util.RenderUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +37,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     private static final int SYNC_INTERVAL_TICKS = 2;
     private static final double SNAPSHOT_PRECISION = 1000.0;
     private final Map<Cindervane, Integer> lastBoneSnapshotHashes = new WeakHashMap<>();
+    private final Map<String, Matrix4f> fireBodyTransforms = new HashMap<>();
 
     public CindervaneRenderer(EntityRendererProvider.Context context) {
         super(context, new CindervaneModel());
@@ -66,6 +73,39 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     }
 
     @Override
+    public void render(Cindervane entity, float entityYaw, float partialTick, PoseStack poses,
+                       MultiBufferSource buffers, int packedLight) {
+        fireBodyTransforms.clear();
+        try {
+            super.render(entity, entityYaw, partialTick, poses, buffers, packedLight);
+        } finally {
+            fireBodyTransforms.clear();
+        }
+    }
+
+    @Override
+    public void renderRecursively(PoseStack poses, Cindervane entity, GeoBone bone, RenderType renderType,
+                                  MultiBufferSource buffers, VertexConsumer buffer, boolean isReRender,
+                                  float partialTick, int packedLight, int packedOverlay,
+                                  float red, float green, float blue, float alpha) {
+        super.renderRecursively(poses, entity, bone, renderType, buffers, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+        if (isReRender || !entity.isBreathingFire() || !CindervaneFireBodyParticles.samplesBone(bone.getName())) return;
+        poses.pushPose();
+        try {
+            RenderUtils.translateMatrixToBone(poses, bone);
+            RenderUtils.translateToPivotPoint(poses, bone);
+            RenderUtils.rotateMatrixAroundBone(poses, bone);
+            RenderUtils.scaleMatrixForBone(poses, bone);
+            RenderUtils.translateAwayFromPivotPoint(poses, bone);
+            fireBodyTransforms.put(bone.getName(), RenderUtils.invertAndMultiplyMatrices(
+                    poses.last().pose(), this.entityRenderTranslations));
+        } finally {
+            poses.popPose();
+        }
+    }
+
+    @Override
     protected LocatorSpec[] locatorSpecs(Cindervane entity) {
         return new LocatorSpec[] {
                 new LocatorSpec("passengerBone1", PASSENGER_SEAT0_X, PASSENGER_SEAT0_Y, PASSENGER_SEAT0_Z,
@@ -92,6 +132,7 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
     protected void afterDragonRender(Cindervane entity, PoseStack poseStack,
                                      MultiBufferSource bufferSource, float partialTick) {
         sendBonePositionsToServer(entity);
+        CindervaneFireBodyParticles.emit(entity, this.lastBakedModel, fireBodyTransforms, partialTick);
         com.leon.saintsdragons.client.renderer.vfx.CindervaneFireballMouthRenderer.render(
                 entity, getBoneWorldPosition("headController"), poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,

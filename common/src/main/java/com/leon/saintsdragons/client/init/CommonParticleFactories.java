@@ -48,6 +48,7 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.CINDERVANE_MORE_SPEC_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.MORE_SPEC));
         register(registrar, ModParticles.CINDERVANE_MOUTH_EMITTER.get(), CindervaneImpactEmitterParticle.MouthFactory::new);
         register(registrar, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), CindervaneImpactEmitterParticle.Factory::new);
         register(registrar, ModParticles.CINDERVANE_FIRE_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.FIRE));

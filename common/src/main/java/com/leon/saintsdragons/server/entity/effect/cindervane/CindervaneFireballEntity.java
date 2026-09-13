@@ -130,16 +130,16 @@ public class CindervaneFireballEntity extends Entity implements GeoEntity {
 
     private void spawnTrailParticles() {
         Vec3 velocity = getDeltaMovement();
-        for (int i = 0; i < 4; i++) {
-            double along = (i + random.nextDouble()) / 4.0;
+        for (int i = 0; i < 6; i++) {
+            double along = (i + random.nextDouble()) / 6.0;
             double ox = (random.nextDouble() - 0.5) * 1.2;
             double oy = (random.nextDouble() - 0.5) * 1.2;
             double oz = (random.nextDouble() - 0.5) * 1.2;
             level().addParticle(i == 0
                             ? ModParticles.CINDERVANE_FIRE_TRAIL.get()
                             : i == 1 ? ModParticles.CINDERVANE_SPEC_TRAIL.get()
-                            : i == 2 ? ModParticles.CINDERVANE_BETTER_FIRE_TRAIL.get()
-                            : ModParticles.CINDERVANE_FIREBALL_FIRE_TRAIL.get(), true,
+                            : i == 5 ? ModParticles.CINDERVANE_MORE_SPEC_TRAIL.get()
+                            : ModParticles.CINDERVANE_BETTER_FIRE_TRAIL.get(), true,
                     getX() - velocity.x * along + ox, getY() + getBbHeight() * 0.5 - velocity.y * along + oy,
                     getZ() - velocity.z * along + oz,
                     velocity.x * 0.12 + ox * 0.10, velocity.y * 0.12 + oy * 0.10 + 0.025,

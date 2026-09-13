@@ -37,7 +37,8 @@ public class CindervaneFireballRenderer extends GeoEntityRenderer<CindervaneFire
     @Override
     public void render(CindervaneFireballEntity entity, float entityYaw, float partialTick,
                        PoseStack poses, MultiBufferSource buffers, int packedLight) {
-        super.render(entity, entityYaw, partialTick, poses, buffers, packedLight);
+        if (ShaderPassCompatibility.isIrisShadowPass()) return;
+        super.render(entity, entityYaw, partialTick, poses, buffers, LightTexture.FULL_BRIGHT);
         float age = entity.tickCount + partialTick;
         Vec3 tail = entity.getDeltaMovement().normalize().scale(-0.35);
         poses.pushPose();
@@ -67,6 +68,11 @@ public class CindervaneFireballRenderer extends GeoEntityRenderer<CindervaneFire
             double radius = 0.5 + progress * 0.45;
             float pulse = (float) Math.sin(progress * Math.PI);
             boolean ember = i < 5;
+            float grow = smoothStep(progress / 0.15F);
+            float shrink = 1.0F - smoothStep((progress - 0.60F) / 0.40F);
+            float halfSize = ember
+                    ? (0.045F + random.nextFloat() * 0.025F) * grow * shrink
+                    : 0.055F * pulse;
             poses.pushPose();
             poses.translate(Math.cos(angle) * horizontal * radius,
                     entity.getBbHeight() * 0.5 + height * radius + progress * 0.15,
@@ -77,10 +83,16 @@ public class CindervaneFireballRenderer extends GeoEntityRenderer<CindervaneFire
                 poses.scale(0.5F, 1.0F, 1.0F);
             }
             layer(poses, buffers, ember ? EMBER : EMITTER, 0.0F, 1.0F,
-                    (ember ? 0.14F : 0.055F) * pulse,
-                    0.0F, 0.0F, 0.0F, ember ? 0.65F : 0.72F, 0.16F, pulse * 0.9F);
+                    halfSize, 0.0F, 0.0F, 0.0F,
+                    ember ? 0.48F : 0.72F, ember ? 0.055F : 0.16F,
+                    ember ? 0.95F * shrink : pulse * 0.9F);
             poses.popPose();
         }
+    }
+
+    private static float smoothStep(float value) {
+        float t = Math.max(0.0F, Math.min(1.0F, value));
+        return t * t * (3.0F - 2.0F * t);
     }
 
     private static void layer(PoseStack poses, MultiBufferSource buffers, ResourceLocation[] frames,

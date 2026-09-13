@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.model.cindervane;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.client.renderer.vfx.BeamRenderTypes;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneFireballEntity;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.client.renderer.RenderType;
@@ -22,6 +23,6 @@ public class CindervaneFireballModel extends GeoModel<CindervaneFireballEntity> 
 
     @Override
     public RenderType getRenderType(CindervaneFireballEntity entity, ResourceLocation texture) {
-        return RenderType.entityTranslucent(texture);
+        return BeamRenderTypes.translucent(texture);
     }
 }

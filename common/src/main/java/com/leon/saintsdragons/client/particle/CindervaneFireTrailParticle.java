@@ -6,25 +6,31 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.*;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
 
 public final class CindervaneFireTrailParticle extends TextureSheetParticle {
-    public enum Kind { FIRE, SPEC, BETTER_FIRE, FIREBALL_FIRE }
+    public enum Kind { FIRE, SPEC, MORE_SPEC, BETTER_FIRE, FIREBALL_FIRE }
 
     private final SpriteSet sprites;
     private final float ticksPerFrame;
     private final int frames;
     private final float size;
+    private final float aspectRatio;
 
     private CindervaneFireTrailParticle(ClientLevel level, double x, double y, double z,
                                         double vx, double vy, double vz, SpriteSet sprites, Kind kind) {
         super(level, x, y, z);
         this.sprites = sprites;
-        boolean spec = kind == Kind.SPEC;
+        boolean spec = kind == Kind.SPEC || kind == Kind.MORE_SPEC;
         boolean fireball = kind == Kind.FIREBALL_FIRE;
-        this.frames = fireball || kind == Kind.BETTER_FIRE ? 8 : spec ? 12 : 17;
+        this.aspectRatio = fireball ? 32.0F / 48.0F : 1.0F;
+        this.frames = kind == Kind.MORE_SPEC ? 11 : fireball || kind == Kind.BETTER_FIRE ? 8 : spec ? 12 : 17;
         this.ticksPerFrame = fireball ? 0.25F : kind == Kind.BETTER_FIRE ? 1.0F : 0.5F;
         this.lifetime = (int) Math.ceil(frames * ticksPerFrame);
-        this.size = (spec ? 0.36F : 0.46F) * (0.8F + random.nextFloat() * 0.4F);
+        this.size = (kind == Kind.BETTER_FIRE ? 0.23F : spec ? 0.36F : 0.46F)
+                * (0.8F + random.nextFloat() * 0.4F);
         this.xd = vx;
         this.yd = vy;
         this.zd = vz;
@@ -43,7 +49,25 @@ public final class CindervaneFireTrailParticle extends TextureSheetParticle {
         this.alpha = 0.9F * (1.0F - fade * fade * (3.0F - 2.0F * fade));
         this.quadSize = size * (1.0F + progress * 0.35F);
         setSprite(sprites.get(Math.min(frames - 1, (int) (time / ticksPerFrame)), frames - 1));
-        super.render(buffer, camera, partialTick);
+        if (aspectRatio == 1.0F) {
+            super.render(buffer, camera, partialTick);
+            return;
+        }
+        Vec3 center = new Vec3(Mth.lerp(partialTick, xo, x), Mth.lerp(partialTick, yo, y),
+                Mth.lerp(partialTick, zo, z)).subtract(camera.getPosition());
+        Quaternionf rotation = new Quaternionf(camera.rotation())
+                .rotateZ(Mth.lerp(partialTick, oRoll, roll));
+        vertex(buffer, rotation, center, -aspectRatio, -1, getU1(), getV1());
+        vertex(buffer, rotation, center, -aspectRatio, 1, getU1(), getV0());
+        vertex(buffer, rotation, center, aspectRatio, 1, getU0(), getV0());
+        vertex(buffer, rotation, center, aspectRatio, -1, getU0(), getV1());
+    }
+
+    private void vertex(VertexConsumer buffer, Quaternionf rotation, Vec3 center,
+                        float localX, float localY, float u, float v) {
+        Vector3f corner = new Vector3f(localX, localY, 0).mul(quadSize).rotate(rotation);
+        buffer.vertex(center.x + corner.x, center.y + corner.y, center.z + corner.z)
+                .uv(u, v).color(rCol, gCol, bCol, alpha).uv2(0xF000F0).endVertex();
     }
 
     @Override
