@@ -351,6 +351,23 @@ public class DragonAIMovementController {
         return beginGroundTransition(landingPlan, speed);
     }
 
+    public boolean requestOwnerFollowLanding(Vec3 ownerPosition, double stopDistance,
+                                              double maxDistance, double maxVerticalDelta, double speed) {
+        if (!brainMovement.canMutate(movementCommandGeneration) || !dragon.canFly()
+                || !dragon.isAerial() || dragon.onGround()) return false;
+        if (hasActiveLandingTransition()) return true;
+        if (landingPlanRetryTicks > 0) return false;
+        pendingLandingPlan = null;
+        DragonLandingPlan plan = DragonLandingPlanner.findFollowPlan(
+                dragon, ownerPosition, stopDistance, maxDistance, maxVerticalDelta);
+        if (plan == null) {
+            landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
+            return false;
+        }
+        landingPlanRetryTicks = 0;
+        return beginGroundTransition(plan, speed);
+    }
+
     public boolean hasActiveLandingTransition() {
         if (currentWaypoint == null || currentWaypoint.mode() != MovementMode.LANDING) {
             return false;

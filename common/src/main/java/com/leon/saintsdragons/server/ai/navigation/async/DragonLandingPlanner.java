@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.navigation.async;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -59,6 +60,15 @@ public final class DragonLandingPlanner {
         );
     }
 
+    public static @Nullable DragonLandingPlan findFollowPlan(Mob dragon, Vec3 ownerPosition,
+                                                             double stopDistance, double maxDistance,
+                                                             double maxVerticalDelta) {
+        double preferredDistance = Math.max(stopDistance, dragon.getBbWidth() * 0.65D + 2.0D);
+        return findBestPlan(dragon, ownerPosition, Mth.ceil(maxDistance), preferredDistance,
+                preferredHeading(dragon), touchdown -> horizontalDistance(touchdown, ownerPosition) <= maxDistance
+                        && Math.abs(touchdown.y - ownerPosition.y) <= maxVerticalDelta);
+    }
+
     static boolean isTouchdownStillValid(Mob dragon, DragonLandingPlan plan) {
         if (plan == null || dragon.level().isClientSide) {
             return false;
@@ -77,6 +87,15 @@ public final class DragonLandingPlanner {
                                                              int maxRadius,
                                                              double desiredAnchorDistance,
                                                              Vec3 preferredHeading) {
+        return findBestPlan(dragon, anchor, maxRadius, desiredAnchorDistance, preferredHeading, touchdown -> true);
+    }
+
+    private static @Nullable DragonLandingPlan findBestPlan(Mob dragon,
+                                                             Vec3 anchor,
+                                                             int maxRadius,
+                                                             double desiredAnchorDistance,
+                                                             Vec3 preferredHeading,
+                                                             Predicate<Vec3> acceptableTouchdown) {
         if (dragon.level().isClientSide) {
             return null;
         }
@@ -109,7 +128,7 @@ public final class DragonLandingPlanner {
                 }
 
                 Vec3 touchdown = new Vec3(x + 0.5D, ground.getY() + 1.0D, z + 0.5D);
-                if (!hasLandingFootprint(dragon, ground)) {
+                if (!acceptableTouchdown.test(touchdown) || !hasLandingFootprint(dragon, ground)) {
                     continue;
                 }
 
@@ -139,7 +158,7 @@ public final class DragonLandingPlanner {
                 }
             }
         }
-        return bestPlan != null ? bestPlan : findCompactPlan(dragon, space, anchor, maxRadius);
+        return bestPlan != null ? bestPlan : findCompactPlan(dragon, space, anchor, maxRadius, acceptableTouchdown);
     }
 
     private static @Nullable DirectionPlan findClearDirectionPlan(Mob dragon,
@@ -218,7 +237,8 @@ public final class DragonLandingPlanner {
 
     /** Enclosed spaces may allow a controlled nearby descent without an outdoor runway. */
     private static @Nullable DragonLandingPlan findCompactPlan(Mob dragon, DragonFlightSpace space,
-                                                                Vec3 anchor, int maxRadius) {
+                                                                Vec3 anchor, int maxRadius,
+                                                                Predicate<Vec3> acceptableTouchdown) {
         Vec3 current = dragon.position();
         FlightClearance local = space.observe(current);
         if (local == null || !local.clear() || !local.ceilingKnown()) return null;
@@ -231,7 +251,7 @@ public final class DragonLandingPlanner {
                 BlockPos ground = findGround(dragon, column, Mth.floor(current.y));
                 if (ground == null || !hasLandingFootprint(dragon, ground)) continue;
                 Vec3 touchdown = Vec3.atBottomCenterOf(ground.above());
-                if (touchdown.y > current.y || horizontalDistance(touchdown, anchor) > maxRadius
+                if (!acceptableTouchdown.test(touchdown) || touchdown.y > current.y || horizontalDistance(touchdown, anchor) > maxRadius
                         || !space.fits(touchdown) || !space.corridorClear(current, touchdown)) continue;
                 DragonLandingPlan plan = new DragonLandingPlan(current,
                         current.lerp(touchdown, 0.5D), current.lerp(touchdown, 0.85D), touchdown);
