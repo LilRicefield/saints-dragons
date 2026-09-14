@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightSpace;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
@@ -110,7 +111,7 @@ public final class DragonCombatFlightState {
             revision++;
         }
         if (target == null || !dragon.getBrain().getMemory(DragonMemories.TARGET_VISIBLE).orElse(false)) {
-            airborneSince = groundedSince = -1;
+            if (!DragonPerception.isSightInterruption(dragon.getBrain())) airborneSince = groundedSince = -1;
             observedTargetPosition = null;
             observedTargetVelocity = Vec3.ZERO;
             return;

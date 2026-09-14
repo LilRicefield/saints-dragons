@@ -67,6 +67,7 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
 
     @Override
     protected final boolean checkExtraStartConditions(@NotNull ServerLevel level, @NotNull T dragon) {
+        if (pauseCombatForSight(dragon)) return false;
         DragonBrainContext<T> context = new DragonBrainContext<>(dragon, level);
         return context.gameTime() >= cooldownEndsAtTick && asMovementOwner(dragon, false, () -> canStart(context));
     }
@@ -84,7 +85,17 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
 
     @Override
     protected final void tick(@NotNull ServerLevel level, @NotNull T dragon, long gameTime) {
+        // Keep the running behaviour's state, but do not make combat decisions from hidden positions.
+        if (pauseCombatForSight(dragon)) return;
         asMovementOwner(dragon, false, () -> { tick(new DragonBrainContext<>(dragon, level)); return null; });
+    }
+
+    private boolean pauseCombatForSight(T dragon) {
+        var brain = dragon.getBrain();
+        return activity == Activity.FIGHT && brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
+                && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
+                && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
+                && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE);
     }
 
     @Override

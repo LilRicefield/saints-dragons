@@ -14,6 +14,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
@@ -41,6 +42,8 @@ public final class ModMemoryTypes {
             () -> new MemoryModuleType<>(Optional.of(GlobalPos.CODEC))
     );
     public static final Supplier<MemoryModuleType<Boolean>> TARGET_VISIBLE = register("target_visible");
+    public static final Supplier<MemoryModuleType<Boolean>> RECENT_TARGET_SIGHT = register("recent_target_sight");
+    public static final Supplier<MemoryModuleType<WalkTarget>> LAST_SEEN_WALK_TARGET = register("last_seen_walk_target");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> LAST_SEEN_TARGET =
             register("last_seen_target");
     public static final Supplier<MemoryModuleType<DragonSensoryObservation>> HEARD_STIMULUS =

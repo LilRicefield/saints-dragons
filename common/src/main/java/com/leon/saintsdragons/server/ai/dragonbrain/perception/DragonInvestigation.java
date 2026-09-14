@@ -53,7 +53,7 @@ public final class DragonInvestigation {
                     && (dragon.getTarget() == null || dragon.getTarget() == living);
         }
         boolean withinCombatRange = flying.distanceToSqr(DragonTargetingHelper.movementAnchor(target))
-                <= DragonAirCombatHelper.maxAggroDistanceSqr(flying, 32.0D);
+                <= DragonAirCombatHelper.maxPursuitDistanceSqr(flying, target, 32.0D);
         if (!DragonTargetLifecycle.isValidTarget(dragon, target)
                 || (brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true) && withinCombatRange)) {
             return false;

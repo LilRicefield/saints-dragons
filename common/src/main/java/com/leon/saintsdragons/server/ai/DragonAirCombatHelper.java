@@ -31,7 +31,7 @@ public final class DragonAirCombatHelper {
                 && !dragon.isVehicle()
                 && !dragon.isOrderedToSit()
                 && dragon.distanceToSqr(DragonTargetingHelper.movementAnchor(target))
-                <= maxAggroDistanceSqr(dragon, fallbackFollowRange);
+                <= maxPursuitDistanceSqr(dragon, target, fallbackFollowRange);
     }
 
     public static boolean canEngageAirborneTarget(RideableDragonBase dragon,
@@ -306,6 +306,13 @@ public final class DragonAirCombatHelper {
             followRange = fallbackFollowRange;
         }
         return followRange * followRange;
+    }
+
+    public static double maxPursuitDistanceSqr(RideableDragonBase dragon, LivingEntity target, double fallbackFollowRange) {
+        double acquisitionRangeSqr = maxAggroDistanceSqr(dragon, fallbackFollowRange);
+        // An existing aerial fight needs room for egress and turning; acquisition keeps its normal range.
+        return target != null && target == dragon.getTarget() && dragon.isAerial()
+                ? acquisitionRangeSqr * 2.25D : acquisitionRangeSqr;
     }
 
     @FunctionalInterface

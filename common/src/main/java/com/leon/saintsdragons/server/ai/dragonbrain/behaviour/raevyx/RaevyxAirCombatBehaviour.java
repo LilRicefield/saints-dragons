@@ -8,6 +8,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirCombatMovementBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
@@ -669,6 +670,20 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         Vec3 radial = horizontalDirection(dragon.getBoundingBox().getCenter().subtract(center), dragon.getLookAngle());
         Vec3 tangent = new Vec3(-radial.z, 0, radial.x).scale(attackSide * 4.0D);
         double spacing = dragon.getCombatFlightState().targetNeedsFlight() ? 28.0D : Math.max(28.0D, attackHeight * 1.25D);
+        var expected = dragon.getCombatLearning().expectation(target,
+                DragonCombatLearning.Attack.BEAM, true);
+        spacing += expected.spacingBonus();
+        if (expected.response() == DragonCombatLearning.Response.RETREAT) {
+            spacing -= 4.0D * expected.confidence();
+        }
+        double side = switch (expected.response()) {
+            case LEFT -> 1.0D;
+            case RIGHT -> -1.0D;
+            default -> 0.0D;
+        };
+        // Commit this correction with the firing position; do not chase each fresh observation sideways.
+        Vec3 targetLeft = new Vec3(radial.z, 0, -radial.x);
+        tangent = tangent.add(targetLeft.scale(side * 4.0D * expected.confidence()));
         Vec3 position = flightFeet(dragon, center).add(radial.scale(spacing)).add(tangent);
         position = groundAttackPosition(dragon, target, position, attackHeight * 0.75D);
         Vec3 fitted = dragon.getAIMovement().flightSpace().fitDestination(position);
@@ -937,14 +952,12 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     }
 
     private Vec3 predictTargetCenter(Raevyx dragon, LivingEntity target, double ticks, double maxLeadDistance) {
-        Vec3 center = targetCenter(target);
-        Vec3 velocity = dragon.getCombatFlightState().targetVelocity();
-        if (!dragon.getCombatFlightState().targetNeedsFlight()) velocity = velocity.multiply(1, 0, 1);
-        Vec3 lead = velocity.scale(ticks);
-        if (lead.lengthSqr() > maxLeadDistance * maxLeadDistance) {
-            lead = lead.normalize().scale(maxLeadDistance);
-        }
-        return center.add(lead);
+        Vec3 prediction = dragon.getCombatLearning().predictCenter(target, ticks, maxLeadDistance);
+        if (prediction != null) return prediction;
+        return dragon.getBrain().getMemory(DragonMemories.LAST_SEEN_TARGET)
+                .filter(observation -> target.getUUID().equals(observation.sourceUuid()))
+                .map(observation -> observation.position())
+                .orElseGet(() -> dragon.getBoundingBox().getCenter());
     }
 
     private Vec3 targetCenter(LivingEntity target) {

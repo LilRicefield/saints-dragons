@@ -34,12 +34,16 @@ public final class DragonTargetLifecycle {
 
     public static void clearPerceptionMemories(Brain<?> brain) {
         brain.eraseMemory(DragonMemories.TARGET_VISIBLE);
+        brain.eraseMemory(DragonMemories.RECENT_TARGET_SIGHT);
+        brain.eraseMemory(DragonMemories.LAST_SEEN_WALK_TARGET);
         brain.eraseMemory(DragonMemories.LAST_SEEN_TARGET);
         brain.eraseMemory(DragonMemories.HEARD_TARGET);
     }
 
     public static void clearPerceptionMemories(DragonMemoryMap memories) {
         memories.erase(DragonMemories.TARGET_VISIBLE);
+        memories.erase(DragonMemories.RECENT_TARGET_SIGHT);
+        memories.erase(DragonMemories.LAST_SEEN_WALK_TARGET);
         memories.erase(DragonMemories.LAST_SEEN_TARGET);
         memories.erase(DragonMemories.HEARD_TARGET);
     }

@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonPathPerformance;
@@ -479,7 +480,9 @@ public final class DragonPathDebugTracker {
         String wakeTarget = dragon.getBrain().getMemory(DragonMemories.WAKE_TARGET)
                 .map(target -> target.getId() + "@" + target.blockPosition().toShortString())
                 .orElse("none");
-        return "visible=" + visible + ",last=" + lastSeen + ",investigate=" + investigation
+        return "visible=" + visible
+                + ",sightGrace=" + dragon.getBrain().getMemory(DragonMemories.RECENT_TARGET_SIGHT).orElse(false)
+                + ",last=" + lastSeen + ",investigate=" + investigation
                 + ",heard=" + heard + ",targetHeard=" + heardTarget
                 + ",wakeTarget=" + wakeTarget + ",investigationState=" + investigationSummary(dragon);
     }
@@ -491,6 +494,9 @@ public final class DragonPathDebugTracker {
                 Map<String, String> details = investigation.getDragonBrainDebugDetails();
                 return details.get("phase") + ":" + details.get("outcome")
                         + ",air=" + details.get("airborne_search")
+                        + ",combatPursuit=" + details.get("combat_pursuit")
+                        + ",movementFailures=" + details.get("movement_failures")
+                        + ",groundSearchAttempts=" + details.get("ground_search_attempts")
                         + ",searchTicks=" + details.get("search_ticks");
             }
         }
@@ -732,7 +738,9 @@ public final class DragonPathDebugTracker {
         DragonTacticalCommitment commitment = dragon.getBrain()
                 .getMemory(DragonMemories.TACTICAL_COMMITMENT)
                 .orElse(null);
-        return commitment == null ? "none" : commitment.summary();
+        String summary = commitment == null ? "none" : commitment.summary();
+        var learning = DragonCombatLearner.get(dragon);
+        return learning == null ? summary : summary + ",combat_learning={" + learning.debugSummary() + '}';
     }
 
     private static String pursuitSummary(DragonEntity dragon) {

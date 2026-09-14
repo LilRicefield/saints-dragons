@@ -6,10 +6,13 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTactic;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalProfile;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -19,6 +22,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,6 +35,7 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     private DragonTacticalCommitment lastCommitment;
     private long flightRevision = -1;
     private String flightSummary;
+    private WeakReference<DragonCombatLearning> combatLearning;
 
     public DragonTacticalPlannerBehaviour() {
         super(false);
@@ -49,8 +54,23 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     @Override
     protected void tick(DragonBrainContext<T> context) {
         lastGameTime = context.gameTime();
+        var learning = DragonCombatLearner.get(context.dragon());
+        // Diagnostics retain behaviours in a weak-key registry; do not reference the owning entity strongly.
+        if (learning != null && (combatLearning == null || combatLearning.get() != learning)) {
+            combatLearning = new WeakReference<>(learning);
+        }
         DragonCombatFlightState combatFlight = DragonCombatFlightState.get(context.dragon());
         flightSummary = combatFlight == null ? null : combatFlight.summary();
+        if (DragonPerception.isSightInterruption(context.dragon().getBrain())
+                && inactiveReason(context.dragon()) == null) {
+            var current = context.memories().get(DragonMemories.TACTICAL_COMMITMENT).orElse(null);
+            var target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+            if (current != null && target != null && target.getUUID().equals(current.targetUuid())) {
+                lastCommitment = current;
+                nextEvaluationTick = 0;
+                return;
+            }
+        }
         long revision = combatFlight == null ? -1 : combatFlight.revision();
         if (context.gameTime() < nextEvaluationTick && flightRevision == revision) {
             return;
@@ -143,7 +163,9 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         if (combatFlight != null) {
             if (targetVisible) {
                 for (DragonCombatFlightState.Option option : combatFlight.options(target, focus)) {
-                    evaluation.add(option.tactic(), option.score(), targetUuid, option.focus(), option.reason());
+                    int bias = learningBias(dragon, target, option.tactic());
+                    evaluation.add(option.tactic(), option.score() + bias, targetUuid, option.focus(),
+                            bias == 0 ? option.reason() : option.reason() + ":learned=" + bias);
                 }
             }
             return;
@@ -292,6 +314,15 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         );
     }
 
+    private int learningBias(T dragon, LivingEntity target, DragonTactic tactic) {
+        var learning = DragonCombatLearner.get(dragon);
+        if (learning == null || tactic != DragonTactic.AERIAL_PURSUIT || dragon.isAerial()) return 0;
+        var expected = learning.expectation(target, learning.primaryAttack(), false);
+        // Only weigh an already-valid flight option. Never bypass takeoff/route/commitment gates.
+        return expected.response() == DragonCombatLearning.Response.CLOSE
+                ? (int) Math.round(8.0D * expected.confidence()) : 0;
+    }
+
     private DragonTacticalCommitment start(Plan selected,
                                             Plan candidate,
                                             Evaluation evaluation,
@@ -399,6 +430,8 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
                 Math.max(0L, lastCommitment.expiresAt() - lastGameTime) + "t");
         details.put("scores", lastCommitment.scoresSummary());
         if (flightSummary != null) details.put("combat_flight", flightSummary);
+        var learning = combatLearning == null ? null : combatLearning.get();
+        if (learning != null) details.put("combat_learning", learning.debugSummary());
         return Map.copyOf(details);
     }
 

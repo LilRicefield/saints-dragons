@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability;
 
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import net.minecraft.util.Mth;
@@ -43,6 +44,8 @@ public final class DragonCombatAim {
         boolean changed = this.target != target || this.profile != profile || !isActive();
         if (changed) {
             direction = DragonAimHelper.fallbackHeadDirection(dragon);
+            desired = direction;
+            yawError = pitchError = 0;
             alignedTicks = 0;
             assessedTick = Integer.MIN_VALUE;
         }
@@ -51,9 +54,18 @@ public final class DragonCombatAim {
         if (!changed && updatedTick == dragon.tickCount) return direction;
         updatedTick = dragon.tickCount;
         // A short, bounded lead compensates tracking lag without predicting a long hitscan flight time.
-        Vec3 lead = target.getDeltaMovement().scale(profile.leadTicks());
-        if (lead.lengthSqr() > 4.0D) lead = lead.normalize().scale(2.0D);
-        Vec3 aimPoint = target.getEyePosition().add(0, -0.25D, 0).add(lead);
+        Vec3 aimPoint;
+        var learning = DragonCombatLearner.get(dragon);
+        if (learning != null) {
+            // Hitscan uses zero flight-time lead. Longer intercepts belong to the movement planner.
+            aimPoint = learning.predictCenter(target, profile.leadTicks(), 2.0D);
+            // Hold the last aim during lost sight; reaction grace must not become wall tracking.
+            if (aimPoint == null) return direction;
+        } else {
+            Vec3 lead = target.getDeltaMovement().scale(profile.leadTicks());
+            if (lead.lengthSqr() > 4.0D) lead = lead.normalize().scale(2.0D);
+            aimPoint = target.getEyePosition().add(0, -0.25D, 0).add(lead);
+        }
         Vec3 wanted = DragonAimHelper.directionTo(origin, aimPoint);
         if (wanted == null) return direction;
         desired = wanted;
@@ -106,6 +118,8 @@ public final class DragonCombatAim {
     public Shot assess(Vec3 origin, Vec3 firingDirection, LivingEntity target, double range,
                        double hitRadius, @Nullable ExpandingBreathSection.Profile spread) {
         if (target == null || !target.isAlive() || firingDirection == null) return recordShot(Shot.NO_TARGET);
+        var learning = DragonCombatLearner.get(dragon);
+        if (learning != null && !learning.hasVisibleObservation(target)) return recordShot(Shot.BLOCKED);
         Vec3 forward = DragonAimHelper.normalizeOrNull(firingDirection);
         if (forward == null) return recordShot(Shot.NO_TARGET);
         AABB box = target.getBoundingBox();

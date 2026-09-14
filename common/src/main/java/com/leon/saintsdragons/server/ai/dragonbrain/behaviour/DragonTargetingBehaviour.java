@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
+import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
@@ -272,7 +273,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         source = newSource;
         sourcePriority = newPriority;
         context.memories().set(DragonMemories.ATTACK_TARGET, target);
-        if (changed) {
+        if (oldTarget != target) {
             DragonSensoryObservation investigation = context.memories()
                     .get(DragonMemories.INVESTIGATION_TARGET)
                     .orElse(null);
@@ -282,23 +283,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
                 context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
             }
             context.memories().erase(DragonMemories.HEARD_TARGET);
-            boolean visible = dragon.getSensing().hasLineOfSight(target);
-            context.memories().set(DragonMemories.TARGET_VISIBLE, visible, 3);
-            if (visible) {
-                context.memories().set(
-                        DragonMemories.LAST_SEEN_TARGET,
-                        new DragonSensoryObservation(
-                                target.getBoundingBox().getCenter(),
-                                target.getUUID(),
-                                DragonSensoryObservation.Kind.SIGHT,
-                                1.0F,
-                                context.gameTime()
-                        ),
-                        DragonPerceptionProfile.forDragon(dragon).targetMemoryTicks()
-                );
-            } else {
-                context.memories().erase(DragonMemories.LAST_SEEN_TARGET);
-            }
+            DragonPerception.refreshTargetVisibility(dragon.getBrain(), dragon, context.gameTime());
         }
         syncTarget(context, target);
         if (changed) {

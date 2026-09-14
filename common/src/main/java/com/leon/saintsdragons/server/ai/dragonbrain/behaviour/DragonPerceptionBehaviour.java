@@ -6,7 +6,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonAwarenessMemory;
-import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerceptionProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.world.entity.LivingEntity;
@@ -57,7 +56,6 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
             return;
         }
 
-        DragonPerceptionProfile profile = DragonPerceptionProfile.forDragon(dragon);
         DragonSensoryObservation remembered = context.memories()
                 .get(DragonMemories.LAST_SEEN_TARGET)
                 .orElse(null);
@@ -68,11 +66,7 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
                 .orElse(null);
         if (heard != null && (remembered == null || heard.observedAt() > remembered.observedAt())) {
             remembered = heard;
-            context.memories().set(
-                    DragonMemories.LAST_SEEN_TARGET,
-                    heard,
-                    profile.soundMemoryTicks()
-            );
+            // Hearing can guide investigation without replacing the last actual sighting.
             lastObservation = "heard_target_"
                     + heard.kind().name().toLowerCase(java.util.Locale.ROOT);
         }

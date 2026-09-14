@@ -37,6 +37,8 @@ public final class DragonMemories {
     public static final MemoryModuleType<Vec3> TACTICAL_LANDING_POSITION = ModMemoryTypes.TACTICAL_LANDING_POSITION.get();
     public static final MemoryModuleType<GlobalPos> ROOST_SLEEP_POSITION = ModMemoryTypes.ROOST_SLEEP_POSITION.get();
     public static final MemoryModuleType<Boolean> TARGET_VISIBLE = ModMemoryTypes.TARGET_VISIBLE.get();
+    public static final MemoryModuleType<Boolean> RECENT_TARGET_SIGHT = ModMemoryTypes.RECENT_TARGET_SIGHT.get();
+    public static final MemoryModuleType<WalkTarget> LAST_SEEN_WALK_TARGET = ModMemoryTypes.LAST_SEEN_WALK_TARGET.get();
     public static final MemoryModuleType<DragonSensoryObservation> LAST_SEEN_TARGET =
             ModMemoryTypes.LAST_SEEN_TARGET.get();
     public static final MemoryModuleType<DragonSensoryObservation> INVESTIGATION_TARGET =
@@ -81,6 +83,8 @@ public final class DragonMemories {
                 TACTICAL_LANDING_POSITION,
                 ROOST_SLEEP_POSITION,
                 TARGET_VISIBLE,
+                RECENT_TARGET_SIGHT,
+                LAST_SEEN_WALK_TARGET,
                 LAST_SEEN_TARGET,
                 INVESTIGATION_TARGET,
                 SCENT_CANDIDATE,

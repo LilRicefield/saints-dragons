@@ -232,6 +232,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
                 || !dragon.canSwim()
                 || dragon.isInWaterOrBubble()
                 || attackTarget == null
+                || !context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)
                 || !DragonTargetingHelper.isMovementAnchorInWater(attackTarget)) {
             targetingWaterEntry = false;
             waterEntryTarget = null;
@@ -254,6 +255,7 @@ public class MoveToGroundWalkTargetBehaviour<T extends RideableDragonBase> exten
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
         return target != null
                 && target.isAlive()
+                && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)
                 && DragonTargetingHelper.isMovementAnchorInWater(target);
     }
 

@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -50,6 +51,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
     private boolean retreatUsed;
     private int retreatAimUnlockTick;
+    private long learningTrial;
+    private DragonCombatLearning.Outcome learningOutcome = DragonCombatLearning.Outcome.CANCELLED;
+    private int learningFiringTicks;
     private final Set<BlockPos> energizedRedstoneWires = new HashSet<>();
     public RaevyxBeamAbility(DragonAbilityType<Raevyx, RaevyxBeamAbility> type, Raevyx user) {
         super(type, user, user.getControllingPassenger() != null ? RIDER_TRACK : AI_TRACK, 0);
@@ -67,6 +71,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             shotGrace.reset();
             retreatUsed = false;
             retreatAimUnlockTick = 0;
+            learningTrial = 0;
+            learningFiringTicks = 0;
+            learningOutcome = DragonCombatLearning.Outcome.CANCELLED;
             if (aiControlled) wyvern.setAiBeamDecision("windup");
             if (!wyvern.canUseBeam()) {
                 interrupt();
@@ -74,6 +81,9 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             }
 
             hasBeamFired = false;
+            learningTrial = aiControlled && !wyvern.level().isClientSide
+                    ? wyvern.getCombatLearning().beginAttack(DragonCombatLearning.Attack.BEAM,
+                            wyvern.getTarget(), STARTUP_TICKS) : 0;
             beamLoopActive = false;
             beamStartPlayed = true;
             wyvern.setBeamGlowActive(true);
@@ -91,6 +101,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
                 return;
             }
             wyvern.setBeaming(true);
+            if (learningTrial != 0) wyvern.getCombatLearning().releaseAttack(learningTrial);
             if (aiControlled) wyvern.setAiBeamDecision("firing");
             wyvern.triggerAnim(RaevyxAnimationHandler.FAST_ACTION_CONTROLLER, "lightning_beaming");
             beamLoopActive = true;
@@ -109,7 +120,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
 
         if (section.sectionType == AbilitySectionType.ACTIVE) {
             Raevyx wyvern = getUser();
-            if (aiControlled) wyvern.setAiBeamDecision("burst-complete");
+            if (aiControlled) stopAiBeam("burst-complete");
             wyvern.setBeaming(false);
             wyvern.setBeamGlowActive(false);
             wyvern.clearBeamPath();
@@ -134,6 +145,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     @Override
     public void end() {
         Raevyx wyvern = getUser();
+        if (learningTrial != 0) {
+            wyvern.getCombatLearning().finishAttack(learningTrial, learningOutcome);
+            learningTrial = 0;
+        }
         wyvern.getCombatAim().clear();
         if (isUsing() && aiControlled && !wyvern.level().isClientSide) {
             wyvern.finishAiBeam();
@@ -172,6 +187,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             releaseEnergizedRedstone(wyvern);
             return;
         }
+        learningFiringTicks++;
         damageAlongBeam(wyvern, path.origin(), path.impact());
     }
 
@@ -226,6 +242,15 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
     }
 
     private boolean stopAiBeam(String reason) {
+        learningOutcome = switch (reason) {
+            case "blocked", "retreat-blocked" -> DragonCombatLearning.Outcome.BLOCKED;
+            case "close-melee", "flanked", "retreat-spent", "burst-complete", "aligning", "out_of_arc", "out_of_range"
+                    -> learningFiringTicks >= 8 ? DragonCombatLearning.Outcome.COMPLETED
+                    : DragonCombatLearning.Outcome.RESPONSE_ONLY;
+            // Only recordHit confirms success; another attacker can also push the target below this threshold.
+            case "mercy-threshold" -> DragonCombatLearning.Outcome.RESPONSE_ONLY;
+            default -> DragonCombatLearning.Outcome.CANCELLED;
+        };
         getUser().setAiBeamDecision(reason);
         return false;
     }
@@ -316,8 +341,11 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         LivingEntity target = wyvern.getTarget();
         if (!isValidTarget(target)
                 || !wyvern.isTargetValid(target)
-                || isAllied(wyvern, target)
-                || DragonElementalImmunity.isElectricityImmune(target)) {
+                || isAllied(wyvern, target)) {
+            return;
+        }
+        if (DragonElementalImmunity.isElectricityImmune(target)) {
+            wyvern.getCombatLearning().recordContact(learningTrial);
             return;
         }
 
@@ -337,8 +365,10 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
             return;
         }
         if (!target.hurt(resolveBeamDamageSource(wyvern, target), Math.min(damage, allowedDamage))) {
+            wyvern.getCombatLearning().recordContact(learningTrial);
             return;
         }
+        wyvern.getCombatLearning().recordHit(learningTrial, target);
         if (isAtAiBeamMercyThreshold(target)) {
             stopAiBeam("mercy-threshold");
             interrupt();

@@ -63,6 +63,10 @@ public final class DragonBrainDebugTracker {
                 "ROOST_SLEEP", memories, markers);
         captureMemory(dragon, brain, DragonMemories.TARGET_VISIBLE,
                 "TARGET_VISIBLE", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.RECENT_TARGET_SIGHT,
+                "RECENT_TARGET_SIGHT", memories, markers);
+        captureMemory(dragon, brain, DragonMemories.LAST_SEEN_WALK_TARGET,
+                "LAST_SEEN_WALK_TARGET", memories, markers);
         captureMemory(dragon, brain, DragonMemories.LAST_SEEN_TARGET,
                 "LAST_SEEN_TARGET", memories, markers);
         captureMemory(dragon, brain, DragonMemories.INVESTIGATION_TARGET,

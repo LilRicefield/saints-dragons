@@ -1,6 +1,8 @@
 // zap van dink
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 
@@ -98,7 +100,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
+public class Raevyx extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider, DragonCombatLearner,
         PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon {
     private static final RaevyxBrain DRAGON_BRAIN = new RaevyxBrain();
     @Override
@@ -298,6 +300,16 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             this, DragonCombatFlightProfile.raevyx(BEAM_RANGE), this::isAiAirBeamReady,
             () -> getActiveAbility() != null || isDashing() || isDodging() || isGroundRending()
                     || areRiderControlsLocked() || isTamingStunned());
+
+    private final DragonCombatLearning combatLearning = new DragonCombatLearning(this, DragonCombatLearning.Profile.standard());
+
+    @Override
+    public DragonCombatLearning getCombatLearning() {
+        return combatLearning;
+    }
+
+    @Override
+    public boolean canLearnCombat() { return !isTamingStunned(); }
 
     private boolean aiBeamNeedsFollowup;
     private int aiBeamPursuitTicks;

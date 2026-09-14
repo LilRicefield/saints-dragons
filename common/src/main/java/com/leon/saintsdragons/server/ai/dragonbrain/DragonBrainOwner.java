@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.ai.Brain;
@@ -110,7 +111,11 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             @SuppressWarnings("unchecked")
             Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
             dragon.refreshMountedCombatTarget();
-            DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
+            var perceivedTarget = DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
+            var learning = DragonCombatLearner.get(dragon);
+            if (learning != null) {
+                learning.observe(perceivedTarget, brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(false));
+            }
             DragonCombatFlightState combatFlight = DragonCombatFlightState.get(dragon);
             if (combatFlight != null) combatFlight.observe();
             updateActivity(brain, dragon);
@@ -136,6 +141,7 @@ public interface DragonBrainOwner<T extends DragonEntity> {
         return brain.hasMemoryValue(DragonMemories.ATTACK_TARGET)
                 && !brain.hasMemoryValue(DragonMemories.RESCUE_TARGET)
                 && !brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(true)
+                && !(brain.getActiveActivities().contains(Activity.FIGHT) && DragonPerception.isSightInterruption(brain))
                 && !brain.hasMemoryValue(DragonMemories.INTERCEPT_PROJECTILE)
                 ? Activity.IDLE : Activity.FIGHT;
     }

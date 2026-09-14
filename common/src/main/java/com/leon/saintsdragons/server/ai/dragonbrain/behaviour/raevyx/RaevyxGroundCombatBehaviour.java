@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.ability.abilities.raevyx.RaevyxBeamAbility;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
@@ -372,7 +373,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
                 || attackCooldown > 0
                 || !beamReady
                 || !hasLineOfSight
-                || gap < BEAM_MIN_GAP
+                || gap < BEAM_MIN_GAP + dragon.getCombatLearning().expectation(dragon.getTarget(),
+                        DragonCombatLearning.Attack.BEAM, false).spacingBonus()
                 || dragon.getBeamEnergy() < 0.6F
                 || beamDecisionTicks > 0
                 || beamLockTicks > 0
@@ -389,6 +391,8 @@ public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
         if (recentDamageTicks > 0) {
             chance *= 0.8F;
         }
+        chance *= (float) dragon.getCombatLearning().expectation(dragon.getTarget(),
+                DragonCombatLearning.Attack.BEAM, false).attackWeight();
         if (dragon.getRandom().nextFloat() >= chance) {
             return false;
         }
