@@ -172,6 +172,10 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
 
         if (releaseRequested) {
             releaseTicks++;
+            if (!getUser().level().isClientSide && getChargeLevel(releaseChargeTicks) == 3
+                    && releaseTicks == FIRE_RELEASE_TICKS - 2) {
+                getUser().level().broadcastEntityEvent(getUser(), Ignivorus.FIREBALL_PRE_SHOT_STAR_EVENT);
+            }
             if (releaseTicks >= FIRE_RELEASE_TICKS) {
                 fireFireball(releaseChargeTicks);
                 hasFired = true;

@@ -3,6 +3,10 @@ package com.leon.saintsdragons.client.renderer.ignivorus;
 import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusFireballModel;
 import com.leon.saintsdragons.client.renderer.vfx.ScrollingFireballVertexConsumer;
+import com.leon.saintsdragons.client.renderer.vfx.BillboardFlashRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.BeamRenderTypes;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import net.minecraft.resources.ResourceLocation;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireballEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -18,12 +22,22 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class IgnivorusFireballRenderer extends GeoEntityRenderer<IgnivorusFireballEntity> {
     private static final float FRAME_TICKS = 2.0F;
     private static final int FRAME_COUNT = 2;
+    private static final ResourceLocation STAR = SaintsDragonsCommon.rl("textures/particle/shared/stars/star.png");
+    private static final BillboardFlashRenderer.Style STAR_STYLE =
+            new BillboardFlashRenderer.Style(7.5F, 4.0F, 1.0F, 0.85F, 0.3F);
 
     @Override
     public void render(IgnivorusFireballEntity entity, float entityYaw, float partialTick,
                        PoseStack poses, MultiBufferSource buffers, int packedLight) {
         if (ShaderPassCompatibility.isIrisShadowPass()) return;
         super.render(entity, entityYaw, partialTick, poses, buffers, LightTexture.FULL_BRIGHT);
+        if (entity.getVisualScale() >= 8.0F) {
+            MultiBufferSource compatible = ignored -> buffers.getBuffer(BeamRenderTypes.translucent(STAR));
+            BillboardFlashRenderer.render(poses, compatible, STAR,
+                    0, entity.getBbHeight() * 0.5F, 0, 1.0F, entity.getVisualAge(partialTick),
+                    entity.getUUID().getLeastSignificantBits() ^ 0x6A09E667F3BCC909L,
+                    STAR_STYLE, 147 / 255.0F, 110 / 255.0F, 1.0F);
+        }
     }
 
     public IgnivorusFireballRenderer(EntityRendererProvider.Context context) {

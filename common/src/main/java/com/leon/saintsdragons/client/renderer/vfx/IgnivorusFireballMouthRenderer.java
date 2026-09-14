@@ -17,6 +17,8 @@ import net.minecraft.world.phys.Vec3;
 public final class IgnivorusFireballMouthRenderer {
     private static final ResourceLocation[] LEVEL_THREE_BITE = reversedFrames("shared/bite/violet_bite", 16, 0);
     private static final ResourceLocation[] LEVEL_THREE_GLITTER = frames("shared/stars/violet_swirl_glitter", 17);
+    private static final ResourceLocation[] LEVEL_THREE_IMPACT = frames("shared/rings/violet_impact/violet_impact", 10);
+    private static final ResourceLocation PRE_SHOT_STAR = SaintsDragonsCommon.rl("textures/particle/shared/stars/star.png");
     private static final ResourceLocation[] LEVEL_THREE_SHARP = frames("shared/explosions/sharp_explosion/sharp_explosion", 8);
     private static final ResourceLocation[] ABSORB_FIRE = frames("shared/fire/better_fire/better_fire", 8);
     private static final ResourceLocation ABSORB_EMITTER = SaintsDragonsCommon.rl("textures/particle/shared/emitters/glowing_emitter.png");
@@ -42,6 +44,7 @@ public final class IgnivorusFireballMouthRenderer {
     public static void render(Ignivorus dragon, Vec3 mouth, PoseStack poses,
                               MultiBufferSource buffers, float partialTick) {
         renderCharge(dragon, mouth, poses, buffers, partialTick);
+        renderPreShotStar(dragon, mouth, poses, buffers, partialTick);
         float age = dragon.getFireballMouthAge(partialTick);
         if (!dragon.isAlive() || mouth == null || age < 0.0F || age >= 10.0F
                 || ShaderPassCompatibility.isIrisShadowPass()) return;
@@ -50,6 +53,8 @@ public final class IgnivorusFireballMouthRenderer {
                 Mth.rotLerp(partialTick, dragon.yHeadRotO, dragon.yHeadRot));
         Vec3 anchor = mouth.subtract(dragon.position()).add(forward.scale(0.8D));
         if (dragon.isLevelThreeFireballMouth()) {
+            layer(poses, buffers, LEVEL_THREE_IMPACT, age, 0.5F, anchor, 6.5F, 1, 1, 1);
+            layer(poses, buffers, LEVEL_THREE_GLITTER, age, 0.5F, anchor, 7.0F, 1, 1, 1);
             int shotTick = Math.round(dragon.tickCount + partialTick - age);
             Integer previous = LAST_BURST.put(dragon, shotTick);
             if (previous == null || previous != shotTick) {
@@ -84,6 +89,21 @@ public final class IgnivorusFireballMouthRenderer {
             Minecraft.getInstance().particleEngine.createParticle(ModParticles.CINDERVANE_MOUTH_EMITTER.get(),
                     point.x, point.y, point.z, velocity.x, velocity.y, velocity.z);
         }
+    }
+
+    private static void renderPreShotStar(Ignivorus dragon, Vec3 mouth, PoseStack poses,
+                                          MultiBufferSource buffers, float partialTick) {
+        float age = dragon.getFireballPreShotStarAge(partialTick);
+        if (!dragon.isAlive() || mouth == null || age < 0 || age >= 2
+                || ShaderPassCompatibility.isIrisShadowPass()) return;
+        Vec3 forward = Vec3.directionFromRotation(Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot()),
+                Mth.rotLerp(partialTick, dragon.yHeadRotO, dragon.yHeadRot));
+        Vec3 anchor = mouth.subtract(dragon.position()).add(forward.scale(1.0D));
+        float pulse = Mth.sin(age / 2.0F * Mth.PI);
+        MultiBufferSource compatible = ignored -> buffers.getBuffer(BeamRenderTypes.translucent(PRE_SHOT_STAR));
+        BillboardFlashRenderer.renderQuad(poses, compatible, PRE_SHOT_STAR,
+                (float) anchor.x, (float) anchor.y, (float) anchor.z,
+                8.0F + pulse * 2.0F, 0, 1, 214 / 255.0F, 244 / 255.0F, pulse);
     }
 
     private static void emitLevelThreeMuzzleBurst(Ignivorus dragon, Vec3 origin, Vec3 forward) {
