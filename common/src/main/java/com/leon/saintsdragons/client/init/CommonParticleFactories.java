@@ -50,6 +50,10 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.CINDERVANE_CRASH_SPLATTER.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_SPLATTER));
+        register(registrar, ModParticles.CINDERVANE_CRASH_CIRCLE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_CIRCLE));
+        register(registrar, ModParticles.CINDERVANE_CRASH_GROUND.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_GROUND));
+        register(registrar, ModParticles.CINDERVANE_CRASH_FIRE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_FIRE));
         register(registrar, ModParticles.CINDERVANE_DARK_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.DARK_FIRE));
         register(registrar, ModParticles.CINDERVANE_FIRE_BODY_SMOKE.get(), CindervaneFireBodySmokeParticle.Factory::new);
         register(registrar, ModParticles.CINDERVANE_FIRE_BODY_STAR.get(), CindervaneFireBodyStarParticle.Factory::new);

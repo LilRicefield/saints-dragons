@@ -17,7 +17,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public class SonicRingParticle extends TextureSheetParticle {
-    private final SpriteSet sprites;
     private final float yaw;
     private final float pitch;
     private final float baseSize;
@@ -26,7 +25,6 @@ public class SonicRingParticle extends TextureSheetParticle {
                                 double xSpeed, double ySpeed, double zSpeed,
                                 SonicRingData data, SpriteSet sprites) {
         super(level, x, y, z, xSpeed, ySpeed, zSpeed);
-        this.sprites = sprites;
         this.yaw = data.yaw();
         this.pitch = data.pitch();
         this.baseSize = data.scale();
@@ -36,7 +34,7 @@ public class SonicRingParticle extends TextureSheetParticle {
         this.xd = xSpeed;
         this.yd = ySpeed;
         this.zd = zSpeed;
-        this.setSpriteFromAge(this.sprites);
+        this.setSprite(sprites.get(0, 1));
     }
 
     @Override
@@ -50,7 +48,6 @@ public class SonicRingParticle extends TextureSheetParticle {
             return;
         }
 
-        this.setSpriteFromAge(this.sprites);
         this.move(this.xd, this.yd, this.zd);
         this.xd *= 0.86D;
         this.yd *= 0.86D;
@@ -59,9 +56,9 @@ public class SonicRingParticle extends TextureSheetParticle {
 
     @Override
     public void render(VertexConsumer buffer, Camera camera, float partialTicks) {
-        float progress = (this.age + partialTicks) / this.lifetime;
-        this.quadSize = this.baseSize * (1.0F - progress - (float) Math.pow(2000.0D, -progress));
-        this.alpha = Math.max(0.0F, 0.95F * (1.0F - progress));
+        float progress = Mth.clamp((this.age + partialTicks) / this.lifetime, 0.0F, 1.0F);
+        this.quadSize = this.baseSize * Math.max(0.0F, 1.0F - progress - (float) Math.pow(2000.0D, -progress));
+        this.alpha = 0.95F * (1.0F - progress * progress * (3.0F - 2.0F * progress));
 
         Vec3 cameraPos = camera.getPosition();
         float x = (float) (Mth.lerp(partialTicks, this.xo, this.x) - cameraPos.x());

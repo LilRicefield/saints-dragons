@@ -663,6 +663,13 @@
       }
     ]
   },
+  "cindervane_fire_body_explosion": {
+    "subtitle": "subtitles.saintsdragons.cindervane_fire_body_explosion",
+    "sounds": [{
+      "name": "saintsdragons:entity/cindervane/cindervane_fire_body_explosion",
+      "attenuation_distance": 96
+    }]
+  },
   "cindervane_fire_body_start": {
     "subtitle": "subtitles.saintsdragons.cindervane_fire_body_start",
     "sounds": [

@@ -10,7 +10,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class CindervaneFireImpactParticle extends TextureSheetParticle {
-    public enum Kind { FIRE, SMALL, GROUND }
+    public enum Kind { FIRE, SMALL, GROUND, CRASH_FIRE, CRASH_GROUND, CRASH_CIRCLE, CRASH_SPLATTER }
     private final SpriteSet sprites;
     private final Kind kind;
     private final int frames;
@@ -22,9 +22,29 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
         super(level, x, y, z);
         this.sprites = sprites;
         this.kind = kind;
-        this.frames = kind == Kind.FIRE ? 7 : kind == Kind.SMALL ? 5 : 6;
-        this.size = kind == Kind.FIRE ? 4.375F : kind == Kind.SMALL ? 2.75F : 6.75F;
-        this.ticksPerFrame = kind == Kind.GROUND ? 2.0F : 1.0F;
+        this.frames = switch (kind) {
+            case FIRE, CRASH_FIRE -> 7;
+            case SMALL -> 5;
+            case CRASH_CIRCLE -> 12;
+            case CRASH_SPLATTER -> 10;
+            default -> 6;
+        };
+        this.size = switch (kind) {
+            case FIRE -> 4.375F;
+            case SMALL -> 2.75F;
+            case GROUND -> 6.75F;
+            case CRASH_FIRE -> 9.0F;
+            case CRASH_GROUND -> 12.0F;
+            case CRASH_CIRCLE -> 13.0F;
+            case CRASH_SPLATTER -> 10.0F;
+        };
+        this.ticksPerFrame = switch (kind) {
+            case GROUND, CRASH_GROUND -> 2.0F;
+            case CRASH_FIRE -> 1.5F;
+            case CRASH_CIRCLE -> 0.75F;
+            default -> 1.0F;
+        };
+        if (kind == Kind.CRASH_CIRCLE) setColor(1.0F, 0.48F, 0.08F);
         this.lifetime = (int) Math.ceil(frames * ticksPerFrame);
         this.hasPhysics = false;
         this.xd = this.yd = this.zd = 0;
@@ -48,7 +68,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
         alpha = 1.0F - fade * fade * (3.0F - 2.0F * fade);
         quadSize = size * (0.75F + 0.5F * progress);
         setSprite(sprites.get(Math.min(frames - 1, (int) (time / ticksPerFrame)), frames - 1));
-        if (kind != Kind.GROUND) {
+        if (kind != Kind.GROUND && kind != Kind.CRASH_GROUND && kind != Kind.CRASH_CIRCLE) {
             super.render(buffer, camera, partialTick);
             return;
         }
@@ -61,7 +81,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
     }
 
     private void vertex(VertexConsumer buffer, float x, float y, float z, float u, float v) {
-        buffer.vertex(x, y, z).uv(u, v).color(1.0F, 1.0F, 1.0F, alpha).uv2(0xF000F0).endVertex();
+        buffer.vertex(x, y, z).uv(u, v).color(rCol, gCol, bCol, alpha).uv2(0xF000F0).endVertex();
     }
 
     @Override

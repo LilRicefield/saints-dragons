@@ -9,6 +9,8 @@ import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.common.particle.SonicRingData;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
@@ -236,6 +238,8 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public int groundTicks;
     public int timeFlying = 0;
     private int fireBodySuppressionTicks;
+    private Vec3 lastFireBodyDiveRingPosition;
+    private int fireBodyDiveRingCooldown;
     private boolean fireBodyCrashArmed;
     private double fireBodyCrashMaxHeight;
     private boolean autoGrabPassengerMountAllowed;
@@ -529,6 +533,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (level().isClientSide) {
             return;
         }
+        tickFireBodyDiveRing();
         if (fireBodySuppressionTicks > 0) {
             fireBodySuppressionTicks--;
         }
@@ -1038,6 +1043,34 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         super.travel(motion);
     }
 
+    private void tickFireBodyDiveRing() {
+        Vec3 currentPosition = position();
+        Vec3 movement = lastFireBodyDiveRingPosition == null
+                ? Vec3.ZERO : currentPosition.subtract(lastFireBodyDiveRingPosition);
+        lastFireBodyDiveRingPosition = currentPosition;
+        if (!isAlive() || !isBreathingFire() || isFireBodySuppressed() || isInWaterOrBubble()
+                || onGround() || !isFlying() || !isRiderDiving()
+                || !(getControllingPassenger() instanceof Player) || movement.y >= 0.0D
+                || movement.lengthSqr() < 1.0E-4D) {
+            fireBodyDiveRingCooldown = 0;
+            return;
+        }
+        if (fireBodyDiveRingCooldown > 0) {
+            fireBodyDiveRingCooldown--;
+            return;
+        }
+        if (!(level() instanceof ServerLevel server)) return;
+        Vec3 direction = movement.normalize();
+        Vec3 origin = currentPosition.add(0.0D, getBbHeight() * 0.52D, 0.0D)
+                .add(direction.scale(Math.max(1.6D, getBbWidth() * 0.6D)));
+        float yaw = (float) Math.atan2(direction.x, direction.z);
+        float pitch = (float) Math.asin(-direction.y);
+        float scale = 5.0F + getRandom().nextFloat() * 1.1F;
+        server.sendParticles(new SonicRingData(yaw, pitch, scale, 16),
+                origin.x, origin.y, origin.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        fireBodyDiveRingCooldown = 3;
+    }
+
     private void handleFireBodyCrash() {
         boolean fireActive = this.isBreathingFire();
         boolean airborne = !this.onGround();
@@ -1227,10 +1260,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (allowGriefing) {
             carveFireBodyImprint(server, BlockPos.containing(x, y, z));
         }
-        server.sendParticles(ParticleTypes.FLAME, x, y + 0.8D, z, 150, 2.0D, 1.0D, 2.0D, 0.2D);
-        server.sendParticles(ParticleTypes.SMALL_FLAME, x, y + 0.5D, z, 120, 1.8D, 0.8D, 1.8D, 0.15D);
-        server.sendParticles(ParticleTypes.LAVA, x, y + 0.5D, z, 40, 1.3D, 0.6D, 1.3D, 0.12D);
-        server.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.5D, z, 80, 2.2D, 0.7D, 2.2D, 0.05D);
+        spawnFireBodyCrashEffects(server, impact);
 
         if (allowBlockIgnition) {
             BlockPos.MutableBlockPos flamePos = new BlockPos.MutableBlockPos();
@@ -1255,6 +1285,32 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
             }
         }
         this.forceEndActiveAbility();
+    }
+
+    private void spawnFireBodyCrashEffects(ServerLevel server, Vec3 impact) {
+        server.playSound(null, impact.x, impact.y, impact.z,
+                ModSounds.CINDERVANE_FIRE_BODY_EXPLOSION.get(), net.minecraft.sounds.SoundSource.NEUTRAL,
+                2.0F, 1.0F);
+        var ground = server.clip(new net.minecraft.world.level.ClipContext(
+                impact.add(0, 1, 0), impact.add(0, -16, 0),
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE, this));
+        for (ServerPlayer player : server.players()) {
+            if (player.distanceToSqr(impact) > 256.0D * 256.0D) continue;
+            server.sendParticles(player, ModParticles.CINDERVANE_CRASH_SPLATTER.get(), true,
+                    impact.x, impact.y + 3.1D, impact.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.CINDERVANE_CRASH_FIRE.get(), true,
+                    impact.x, impact.y + 3.0D, impact.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), true,
+                    impact.x, impact.y + 0.8D, impact.z, 64, 1.5D, 0.4D, 1.5D, 0);
+            if (ground.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+                Vec3 point = ground.getLocation();
+                server.sendParticles(player, ModParticles.CINDERVANE_CRASH_GROUND.get(), true,
+                        point.x, point.y + 0.04D, point.z, 1, 0, 0, 0, 0);
+                server.sendParticles(player, ModParticles.CINDERVANE_CRASH_CIRCLE.get(), true,
+                        point.x, point.y + 0.07D, point.z, 1, 0, 0, 0, 0);
+            }
+        }
     }
 
     private boolean isFireBodyImmuneBlock(BlockState state) {

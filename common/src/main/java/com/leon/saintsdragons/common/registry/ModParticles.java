@@ -94,6 +94,18 @@ public final class ModParticles {
                 }
             });
 
+    public static final Supplier<SimpleParticleType> CINDERVANE_CRASH_SPLATTER =
+            REGISTER.register("cindervane_crash_splatter", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_CRASH_FIRE =
+            REGISTER.register("cindervane_crash_fire", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_CRASH_GROUND =
+            REGISTER.register("cindervane_crash_ground", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> CINDERVANE_CRASH_CIRCLE =
+            REGISTER.register("cindervane_crash_circle", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_BODY_SMOKE =
             REGISTER.register("cindervane_fire_body_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
 
