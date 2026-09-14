@@ -155,6 +155,24 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> CINDERVANE_GROUND_IMPACT =
             REGISTER.register("cindervane_ground_impact", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_FIRE_TRAIL =
+            REGISTER.register("ignivorus_charged_fire_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_SPEC_TRAIL =
+            REGISTER.register("ignivorus_charged_spec_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_MORE_SPEC_TRAIL =
+            REGISTER.register("ignivorus_charged_more_spec_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_EMBER_TRAIL =
+            REGISTER.register("ignivorus_charged_ember_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_EMITTER_TRAIL =
+            REGISTER.register("ignivorus_charged_emitter_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_STAR_TRAIL =
+            REGISTER.register("ignivorus_charged_star_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_FIREBALL_FIRE_TRAIL =
             REGISTER.register("cindervane_fireball_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
 

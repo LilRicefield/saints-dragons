@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.particle.CindervaneFireTrailParticle;
+import com.leon.saintsdragons.client.particle.IgnivorusChargedFireballTrailParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireImpactParticle;
 import com.leon.saintsdragons.client.particle.CindervaneImpactEmitterParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireBodyStarParticle;
@@ -50,6 +51,12 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.IGNIVORUS_CHARGED_FIRE_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.FIRE));
+        register(registrar, ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.SPEC));
+        register(registrar, ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.MORE_SPEC));
+        register(registrar, ModParticles.IGNIVORUS_CHARGED_EMBER_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.EMBER));
+        register(registrar, ModParticles.IGNIVORUS_CHARGED_EMITTER_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.EMITTER));
+        register(registrar, ModParticles.IGNIVORUS_CHARGED_STAR_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.STAR));
         register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_CIRCLE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_CIRCLE, 1.2F));
         register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_TOON.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.TOON, 2.0F));
         register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_GROUND.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.GROUND, 2.25F));

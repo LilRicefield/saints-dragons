@@ -10,6 +10,10 @@ public final class IgnivorusFireballTrail {
     private IgnivorusFireballTrail() {}
 
     public static void emit(IgnivorusFireballEntity dragon) {
+        if (dragon.getVisualScale() >= 8.0F) {
+            emitCharged(dragon);
+            return;
+        }
         float sizeMultiplier = dragon.getVisualScale() >= 6.0F ? 1.5F : 1.0F;
         var random = dragon.level().random;
         Vec3 velocity = dragon.getDeltaMovement();
@@ -45,6 +49,36 @@ public final class IgnivorusFireballTrail {
             Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.45D));
             spawn(sizeMultiplier, ModParticles.CINDERVANE_MOUTH_EMITTER.get(),
                     point.x, point.y, point.z, drift.x, drift.y, drift.z);
+        }
+    }
+
+    private static void emitCharged(IgnivorusFireballEntity fireball) {
+        var random = fireball.level().random;
+        Vec3 velocity = fireball.getDeltaMovement();
+        Vec3 center = fireball.position().add(0, fireball.getBbHeight() * 0.5D, 0);
+        Vec3 forward = velocity.normalize();
+        if (forward.lengthSqr() < 1.0E-6D) forward = Vec3.directionFromRotation(fireball.getXRot(), fireball.getYRot());
+        Vec3 right = forward.cross(Math.abs(forward.y) > 0.99D ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0)).normalize();
+        Vec3 up = right.cross(forward).normalize();
+        for (int sample = 0; sample < 6; sample++) {
+            Vec3 origin = center.subtract(velocity.scale((sample + random.nextDouble()) / 6.0D));
+            for (int layer = 0; layer < 7; layer++) {
+                if (layer == 5 && (sample & 1) != 0) continue;
+                SimpleParticleType type = switch (layer) {
+                    case 0, 6 -> ModParticles.IGNIVORUS_CHARGED_FIRE_TRAIL.get();
+                    case 1 -> ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get();
+                    case 2 -> ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get();
+                    case 3 -> ModParticles.IGNIVORUS_CHARGED_EMBER_TRAIL.get();
+                    case 4 -> ModParticles.IGNIVORUS_CHARGED_EMITTER_TRAIL.get();
+                    default -> ModParticles.IGNIVORUS_CHARGED_STAR_TRAIL.get();
+                };
+                double angle = random.nextDouble() * Math.PI * 2;
+                double radius = (layer >= 3 && layer <= 5 ? 0.8D : 0.25D) + random.nextDouble() * 1.3D;
+                Vec3 offset = right.scale(Math.cos(angle) * radius).add(up.scale(Math.sin(angle) * radius));
+                Vec3 point = origin.add(offset);
+                Vec3 drift = velocity.scale(0.04D).add(offset.scale(0.06D)).add(0, 0.025D, 0);
+                spawn(1, type, point.x, point.y, point.z, drift.x, drift.y, drift.z);
+            }
         }
     }
 

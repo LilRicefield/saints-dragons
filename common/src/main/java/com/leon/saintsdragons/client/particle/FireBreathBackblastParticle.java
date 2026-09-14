@@ -34,6 +34,7 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
     private int sparksEmitted;
     private boolean starEmitted;
     private boolean chargeBurst;
+    private boolean levelThreeCharge;
 
     private FireBreathBackblastParticle(ClientLevel level, double x, double y, double z,
                                     double vx, double vy, double vz, SpriteSet sprites) {
@@ -112,6 +113,13 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
         chargeBurst = true;
     }
 
+    public void configureLevelThreeCharge() {
+        lifetime = 9;
+        maxRange = 16.0D;
+        chargeBurst = true;
+        levelThreeCharge = true;
+    }
+
     private void emitAccents() {
         if (chargeBurst) return;
         Vec3 position = new Vec3(xo, yo, zo).lerp(new Vec3(x, y, z), random.nextDouble());
@@ -145,9 +153,11 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
         float renderAge = Math.max(0, age - 1 + partialTicks);
         setSprite(sprites.get((int) (renderAge / FRAME_TICKS) % FRAMES, FRAMES - 1));
         float progress = Mth.clamp(renderAge / lifetime, 0, 1);
+        if (levelThreeCharge) IgnivorusChargedFireballTrailParticle.applyFireColor(this, progress);
         float grow = smooth(Mth.clamp(progress / 0.18F, 0, 1));
         float fade = 1 - smooth(Mth.clamp((progress - 0.45F) / 0.55F, 0, 1));
         quadSize = peakSize * Mth.lerp(grow, 0.4F, 1.0F) * Mth.lerp(fade, 0.3F, 1.0F);
+        if (levelThreeCharge) quadSize *= 1.5F;
         alpha = 0.9F * grow * fade;
         super.render(buffer, camera, partialTicks);
     }

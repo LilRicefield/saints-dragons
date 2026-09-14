@@ -2509,22 +2509,29 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public static final byte FIREBALL_LEVEL_TWO_CHARGE_EVENT = 82;
+    public static final byte FIREBALL_LEVEL_THREE_CHARGE_EVENT = 85;
     private int fireballChargeVfxLevel;
     public static final byte FIREBALL_CHARGE_EVENT = 81;
     private int fireballChargeVfxTick = Integer.MIN_VALUE;
     public static final byte FIREBALL_LEVEL_TWO_MOUTH_EVENT = 83;
+    public static final byte FIREBALL_LEVEL_THREE_MOUTH_EVENT = 84;
+    private boolean levelThreeFireballMouth;
     private boolean levelTwoFireballMouth;
     public static final byte FIREBALL_MOUTH_EVENT = 80;
     private int fireballMouthTick = Integer.MIN_VALUE;
 
     @Override
     public void handleEntityEvent(byte eventId) {
-        if (eventId == FIREBALL_CHARGE_EVENT || eventId == FIREBALL_LEVEL_TWO_CHARGE_EVENT) {
-            fireballChargeVfxLevel = eventId == FIREBALL_CHARGE_EVENT ? 1 : 2;
+        if (eventId == FIREBALL_CHARGE_EVENT || eventId == FIREBALL_LEVEL_TWO_CHARGE_EVENT
+                || eventId == FIREBALL_LEVEL_THREE_CHARGE_EVENT) {
+            fireballChargeVfxLevel = eventId == FIREBALL_CHARGE_EVENT ? 1
+                    : eventId == FIREBALL_LEVEL_TWO_CHARGE_EVENT ? 2 : 3;
             fireballChargeVfxTick = tickCount;
             return;
         }
-        if (eventId == FIREBALL_MOUTH_EVENT || eventId == FIREBALL_LEVEL_TWO_MOUTH_EVENT) {
+        if (eventId == FIREBALL_MOUTH_EVENT || eventId == FIREBALL_LEVEL_TWO_MOUTH_EVENT
+                || eventId == FIREBALL_LEVEL_THREE_MOUTH_EVENT) {
+            levelThreeFireballMouth = eventId == FIREBALL_LEVEL_THREE_MOUTH_EVENT;
             levelTwoFireballMouth = eventId == FIREBALL_LEVEL_TWO_MOUTH_EVENT;
             fireballMouthTick = tickCount;
             return;
@@ -2540,6 +2547,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public boolean isLevelTwoFireballMouth() { return levelTwoFireballMouth; }
+    public boolean isLevelThreeFireballMouth() { return levelThreeFireballMouth; }
 
     public float getFireballMouthAge(float partialTick) {
         return fireballMouthTick == Integer.MIN_VALUE ? -1.0F : tickCount - fireballMouthTick + partialTick;

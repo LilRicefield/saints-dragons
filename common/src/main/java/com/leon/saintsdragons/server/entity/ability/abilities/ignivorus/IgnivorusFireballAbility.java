@@ -291,8 +291,11 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
                 fireball.trackCombatResult(learningTrial, launch.expectedDistance());
                 learningTrial = 0;
             }
-            server.broadcastEntityEvent(dragon, getChargeLevel(chargeAtRelease) == 2
-                    ? Ignivorus.FIREBALL_LEVEL_TWO_MOUTH_EVENT : Ignivorus.FIREBALL_MOUTH_EVENT);
+            server.broadcastEntityEvent(dragon, switch (getChargeLevel(chargeAtRelease)) {
+                case 3 -> Ignivorus.FIREBALL_LEVEL_THREE_MOUTH_EVENT;
+                case 2 -> Ignivorus.FIREBALL_LEVEL_TWO_MOUTH_EVENT;
+                default -> Ignivorus.FIREBALL_MOUTH_EVENT;
+            });
         } else if (aiControlled) {
             dragon.setAiFireballDecision("spawn-rejected");
         }
@@ -462,6 +465,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             case 3 -> {
                 dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_charge");
                 if (!dragon.level().isClientSide) {
+                    dragon.level().broadcastEntityEvent(dragon, Ignivorus.FIREBALL_LEVEL_THREE_CHARGE_EVENT);
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_CHARGE.get(), 1.0f, 1.0f, 94);
                 }
             }

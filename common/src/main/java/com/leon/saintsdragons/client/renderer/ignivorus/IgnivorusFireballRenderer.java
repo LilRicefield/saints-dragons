@@ -1,7 +1,6 @@
 package com.leon.saintsdragons.client.renderer.ignivorus;
 
 import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusFireballModel;
 import com.leon.saintsdragons.client.renderer.vfx.ScrollingFireballVertexConsumer;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireballEntity;
@@ -19,28 +18,17 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class IgnivorusFireballRenderer extends GeoEntityRenderer<IgnivorusFireballEntity> {
     private static final float FRAME_TICKS = 2.0F;
     private static final int FRAME_COUNT = 2;
-    private final net.minecraft.client.renderer.block.BlockRenderDispatcher blockRenderer;
 
     @Override
     public void render(IgnivorusFireballEntity entity, float entityYaw, float partialTick,
                        PoseStack poses, MultiBufferSource buffers, int packedLight) {
         if (ShaderPassCompatibility.isIrisShadowPass()) return;
-        if (entity.getVisualScale() >= 8.0F) {
-            float scale = entity.getVisualScale();
-            poses.pushPose();
-            poses.translate(-0.5D * scale, 0.0D, -0.5D * scale);
-            poses.scale(scale, scale, scale);
-            blockRenderer.renderSingleBlock(entity.getBlockState(), poses, buffers, packedLight, OverlayTexture.NO_OVERLAY);
-            poses.popPose();
-            return;
-        }
         super.render(entity, entityYaw, partialTick, poses, buffers, LightTexture.FULL_BRIGHT);
     }
 
     public IgnivorusFireballRenderer(EntityRendererProvider.Context context) {
         super(context, new IgnivorusFireballModel());
         this.shadowRadius = 0.0F;
-        this.blockRenderer = context.getBlockRenderDispatcher();
     }
 
     @Override
@@ -55,7 +43,8 @@ public class IgnivorusFireballRenderer extends GeoEntityRenderer<IgnivorusFireba
         poses.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
         poses.mulPose(Axis.XP.rotationDegrees(-pitch));
         if (entity.getVisualScale() >= 6.0F) {
-            poses.scale(3.0F, 3.0F, 3.0F);
+            float scale = entity.getVisualScale() >= 8.0F ? 3.0F : 2.4F;
+            poses.scale(scale, scale, scale);
             poses.translate(0.0D, -7.0D / 16.0D, 0.0D);
         } else {
             float scale = entity.getVisualScale() * 0.35F;

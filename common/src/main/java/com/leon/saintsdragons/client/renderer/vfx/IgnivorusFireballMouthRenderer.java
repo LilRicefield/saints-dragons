@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.client.particle.CindervaneFireTrailParticle;
 import com.leon.saintsdragons.client.particle.FireBreathBackblastParticle;
+import com.leon.saintsdragons.client.particle.IgnivorusChargedFireballTrailParticle;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
@@ -14,6 +15,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class IgnivorusFireballMouthRenderer {
+    private static final ResourceLocation[] LEVEL_THREE_BITE = reversedFrames("shared/bite/violet_bite", 16, 0);
+    private static final ResourceLocation[] LEVEL_THREE_GLITTER = frames("shared/stars/violet_swirl_glitter", 17);
+    private static final ResourceLocation[] LEVEL_THREE_SHARP = frames("shared/explosions/sharp_explosion/sharp_explosion", 8);
     private static final ResourceLocation[] ABSORB_FIRE = frames("shared/fire/better_fire/better_fire", 8);
     private static final ResourceLocation ABSORB_EMITTER = SaintsDragonsCommon.rl("textures/particle/shared/emitters/glowing_emitter.png");
     private static final ResourceLocation[] LEVEL_TWO_SHARP = reversedFrames("shared/explosions/sharp_impact/sharp_impact", 7, 0);
@@ -31,6 +35,7 @@ public final class IgnivorusFireballMouthRenderer {
     private static final ResourceLocation[] SHOOT_SHARP = frames("shared/explosions/sharp_impact/sharp_impact", 8);
     private static final ResourceLocation[] STEAM = frames("shared/explosions/steamy_explosion/steamy_explosion", 16);
     private static final java.util.Map<Ignivorus, Integer> LAST_BURST = new java.util.WeakHashMap<>();
+    private static final java.util.Map<Ignivorus, Integer> LAST_CHARGE_BURST = new java.util.WeakHashMap<>();
 
     private IgnivorusFireballMouthRenderer() {}
 
@@ -44,6 +49,17 @@ public final class IgnivorusFireballMouthRenderer {
                 Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot()),
                 Mth.rotLerp(partialTick, dragon.yHeadRotO, dragon.yHeadRot));
         Vec3 anchor = mouth.subtract(dragon.position()).add(forward.scale(0.8D));
+        if (dragon.isLevelThreeFireballMouth()) {
+            int shotTick = Math.round(dragon.tickCount + partialTick - age);
+            Integer previous = LAST_BURST.put(dragon, shotTick);
+            if (previous == null || previous != shotTick) {
+                Vec3 origin = new Vec3(Mth.lerp(partialTick, dragon.xOld, dragon.getX()),
+                        Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
+                        Mth.lerp(partialTick, dragon.zOld, dragon.getZ())).add(anchor);
+                emitLevelThreeMuzzleBurst(dragon, origin, forward);
+            }
+            return;
+        }
         boolean levelTwo = dragon.isLevelTwoFireballMouth();
         float burstScale = levelTwo ? 1.5F : 1.0F;
         if (levelTwo) {
@@ -70,8 +86,59 @@ public final class IgnivorusFireballMouthRenderer {
         }
     }
 
+    private static void emitLevelThreeMuzzleBurst(Ignivorus dragon, Vec3 origin, Vec3 forward) {
+        var random = dragon.getRandom();
+        var engine = Minecraft.getInstance().particleEngine;
+        for (int i = 0; i < 180; i++) {
+            boolean fire = i < 72;
+            var type = fire ? ModParticles.IGNIVORUS_CHARGED_FIRE_TRAIL.get()
+                    : i < 96 ? ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get()
+                    : i < 120 ? ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get()
+                    : i < 140 ? ModParticles.IGNIVORUS_CHARGED_STAR_TRAIL.get()
+                    : i < 164 ? ModParticles.IGNIVORUS_CHARGED_EMITTER_TRAIL.get()
+                    : ModParticles.IGNIVORUS_CHARGED_EMBER_TRAIL.get();
+            double angle = random.nextDouble() * Math.PI * 2;
+            double vertical = random.nextDouble() * 2 - 1;
+            double horizontal = Math.sqrt(Math.max(0, 1 - vertical * vertical));
+            Vec3 outward = new Vec3(Math.cos(angle) * horizontal, vertical, Math.sin(angle) * horizontal);
+            Vec3 point = origin.add(outward.scale(0.4D + random.nextDouble() * 1.2D));
+            Vec3 velocity = outward.scale(0.45D + random.nextDouble() * 0.95D)
+                    .add(forward.scale(0.45D)).add(dragon.getDeltaMovement().scale(0.65D));
+            var particle = engine.createParticle(type, point.x, point.y, point.z, velocity.x, velocity.y, velocity.z);
+            if (particle instanceof IgnivorusChargedFireballTrailParticle burst) {
+                burst.setBurstSizeMultiplier(fire ? 1.6F : i < 120 ? 1.25F : 1.0F);
+            }
+        }
+    }
+
     private static void renderCharge(Ignivorus dragon, Vec3 mouth, PoseStack poses,
                                      MultiBufferSource buffers, float partialTick) {
+        if (dragon.isAlive() && mouth != null && dragon.getFireballChargeLevel() == 3
+                && !ShaderPassCompatibility.isIrisShadowPass()) {
+            renderLevelThreeBackblast(dragon, mouth, partialTick);
+            float introAge = dragon.getFireballChargeVfxAge(partialTick);
+            if (introAge >= 0 && dragon.getFireballChargeVfxLevel() == 3) {
+                Vec3 forward = Vec3.directionFromRotation(
+                        Mth.lerp(partialTick, dragon.xRotO, dragon.getXRot()),
+                        Mth.rotLerp(partialTick, dragon.yHeadRotO, dragon.yHeadRot));
+                Vec3 anchor = mouth.subtract(dragon.position()).add(forward.scale(0.8D));
+                layer(poses, buffers, LEVEL_THREE_GLITTER, introAge, 0.5F, anchor, 6.0F, 1, 1, 1);
+                layer(poses, buffers, LEVEL_THREE_SHARP, introAge, 1.0F, anchor, 5.5F,
+                        147 / 255.0F, 110 / 255.0F, 1.0F);
+                layer(poses, buffers, LEVEL_THREE_BITE, introAge, 1.0F, anchor, 5.0F, 1, 1, 1);
+                if (introAge < LEVEL_THREE_BITE.length * 0.5F) {
+                    int chargeTick = Math.round(dragon.tickCount + partialTick - introAge);
+                    Integer previous = LAST_CHARGE_BURST.put(dragon, chargeTick);
+                    if (previous == null || previous != chargeTick) {
+                        Vec3 origin = new Vec3(Mth.lerp(partialTick, dragon.xOld, dragon.getX()),
+                                Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
+                                Mth.lerp(partialTick, dragon.zOld, dragon.getZ())).add(anchor);
+                        emitLevelThreeChargeBurst(dragon, origin, forward);
+                    }
+                }
+            }
+            return;
+        }
         float age = dragon.getFireballChargeVfxAge(partialTick);
         if (!dragon.isAlive() || mouth == null || age < 0.0F
                 || ShaderPassCompatibility.isIrisShadowPass()) return;
@@ -120,6 +187,64 @@ public final class IgnivorusFireballMouthRenderer {
             if (particle instanceof FireBreathBackblastParticle backblast) {
                 if (levelTwo) backblast.configureLevelTwoChargeBurst();
                 else backblast.configureChargeBurst();
+            }
+        }
+    }
+
+    private static void emitLevelThreeChargeBurst(Ignivorus dragon, Vec3 origin, Vec3 forward) {
+        var random = dragon.getRandom();
+        var engine = Minecraft.getInstance().particleEngine;
+        for (int i = 0; i < 80; i++) {
+            boolean fire = i < 40;
+            var type = fire ? ModParticles.IGNIVORUS_CHARGED_FIRE_TRAIL.get()
+                    : i < 60 ? ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get()
+                    : ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get();
+            double angle = random.nextDouble() * Math.PI * 2;
+            double height = random.nextDouble() * 2 - 1;
+            double horizontal = Math.sqrt(Math.max(0, 1 - height * height));
+            Vec3 outward = new Vec3(Math.cos(angle) * horizontal, height, Math.sin(angle) * horizontal);
+            Vec3 point = origin.add(outward.scale(0.4D + random.nextDouble() * 0.8D));
+            Vec3 velocity = outward.scale(0.45D + random.nextDouble() * 0.7D)
+                    .add(forward.scale(0.2D)).add(dragon.getDeltaMovement().scale(0.65D));
+            var particle = engine.createParticle(type, point.x, point.y, point.z, velocity.x, velocity.y, velocity.z);
+            if (particle instanceof IgnivorusChargedFireballTrailParticle burst) {
+                burst.setBurstSizeMultiplier(fire ? 1.25F : 1.15F);
+            }
+        }
+    }
+
+    private static void renderLevelThreeBackblast(Ignivorus dragon, Vec3 mouth, float partialTick) {
+        Integer previous = LAST_CHARGE_EMISSION.put(dragon, dragon.tickCount);
+        if (previous != null && previous == dragon.tickCount) return;
+        Vec3 origin = mouth.subtract(dragon.position()).add(
+                Mth.lerp(partialTick, dragon.xOld, dragon.getX()),
+                Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
+                Mth.lerp(partialTick, dragon.zOld, dragon.getZ()));
+        Vec3 forward = Vec3.directionFromRotation(0,
+                Mth.rotLerp(partialTick, dragon.yBodyRotO, dragon.yBodyRot));
+        Vec3 right = forward.cross(new Vec3(0, 1, 0)).normalize();
+        var random = dragon.getRandom();
+        var engine = Minecraft.getInstance().particleEngine;
+        for (int side : new int[] {-1, 1}) {
+            Vec3 start = origin.subtract(forward.scale(0.35D)).add(right.scale(side * 0.75D));
+            for (int i = 0; i < 6; i++) {
+                double angle = Math.toRadians(38 + random.nextDouble() * 20);
+                Vec3 direction = forward.scale(-Math.cos(angle)).add(right.scale(side * Math.sin(angle)))
+                        .add(0, (random.nextDouble() - 0.5D) * 0.22D, 0).normalize();
+                Vec3 launch = direction.scale(1.8D + random.nextDouble() * 0.5D);
+                Vec3 point = start.add(direction.scale(random.nextDouble() * 0.5D));
+                var particle = engine.createParticle(ModParticles.FIRE_BREATH_BACKBLAST.get(),
+                        point.x, point.y, point.z, launch.x, launch.y, launch.z);
+                if (particle instanceof FireBreathBackblastParticle backblast) backblast.configureLevelThreeCharge();
+                var type = switch (i) {
+                    case 0 -> ModParticles.IGNIVORUS_CHARGED_STAR_TRAIL.get();
+                    case 1 -> ModParticles.IGNIVORUS_CHARGED_EMBER_TRAIL.get();
+                    case 2, 3 -> ModParticles.IGNIVORUS_CHARGED_EMITTER_TRAIL.get();
+                    case 4 -> ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get();
+                    default -> ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get();
+                };
+                Vec3 drift = launch.scale(0.6D).add(dragon.getDeltaMovement().scale(0.65D));
+                engine.createParticle(type, point.x, point.y, point.z, drift.x, drift.y, drift.z);
             }
         }
     }

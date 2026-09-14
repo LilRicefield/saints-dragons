@@ -16,14 +16,27 @@ public class IgnivorusFireballModel extends GeoModel<IgnivorusFireballEntity> {
     private static final ResourceLocation STAGE_TWO_TEXTURE = SaintsDragonsCommon.rl("textures/objects/shared/fireball/fireball_stage_2.png");
     private static final ResourceLocation STAGE_TWO_ANIMATION = SaintsDragonsCommon.rl("animations/objects/shared/fireball/fireball_stage_2.animation.json");
 
-    @Override
-    public ResourceLocation getModelResource(IgnivorusFireballEntity entity) { return entity.getVisualScale() >= 6.0F ? STAGE_TWO_MODEL : MODEL; }
+    private static final ResourceLocation STAGE_THREE_MODEL = SaintsDragonsCommon.rl("geo/objects/ignivorus/ignivorus_fireball_stage_3.geo.json");
+    private static final ResourceLocation STAGE_THREE_TEXTURE = SaintsDragonsCommon.rl("textures/objects/ignivorus/ignivorus_fireball_stage_3.png");
+    private static final ResourceLocation STAGE_THREE_ANIMATION = SaintsDragonsCommon.rl("animations/objects/ignivorus/ignivorus_fireball_stage_3.animation.json");
 
     @Override
-    public ResourceLocation getTextureResource(IgnivorusFireballEntity entity) { return entity.getVisualScale() >= 6.0F ? STAGE_TWO_TEXTURE : TEXTURE; }
+    public ResourceLocation getModelResource(IgnivorusFireballEntity entity) {
+        if (entity.getVisualScale() >= 8.0F) return STAGE_THREE_MODEL;
+        return entity.getVisualScale() >= 6.0F ? STAGE_TWO_MODEL : MODEL;
+    }
 
     @Override
-    public ResourceLocation getAnimationResource(IgnivorusFireballEntity entity) { return entity.getVisualScale() >= 6.0F ? STAGE_TWO_ANIMATION : ANIMATION; }
+    public ResourceLocation getTextureResource(IgnivorusFireballEntity entity) {
+        if (entity.getVisualScale() >= 8.0F) return STAGE_THREE_TEXTURE;
+        return entity.getVisualScale() >= 6.0F ? STAGE_TWO_TEXTURE : TEXTURE;
+    }
+
+    @Override
+    public ResourceLocation getAnimationResource(IgnivorusFireballEntity entity) {
+        if (entity.getVisualScale() >= 8.0F) return STAGE_THREE_ANIMATION;
+        return entity.getVisualScale() >= 6.0F ? STAGE_TWO_ANIMATION : ANIMATION;
+    }
 
     @Override
     public RenderType getRenderType(IgnivorusFireballEntity entity, ResourceLocation texture) {

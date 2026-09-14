@@ -209,14 +209,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     }
 
     private void spawnTrailParticles() {
-        if (getVisualScale() < 8.0F) {
-            com.leon.saintsdragons.client.particle.IgnivorusFireballTrail.emit(this);
-            return;
-        }
-        float scale = getVisualScale();
-        level().addParticle(ParticleTypes.FLAME, getX(), getY() + 0.2D * scale, getZ(), 0.0D, 0.011D, 0.0D);
-        level().addParticle(ParticleTypes.SMALL_FLAME, getX(), getY() + 0.2D * scale, getZ(), 0.0D, 0.003D, 0.0D);
-        level().addParticle(ParticleTypes.FALLING_LAVA, getX(), getY(), getZ(), 0.0D, -0.035D, 0.0D);
+        com.leon.saintsdragons.client.particle.IgnivorusFireballTrail.emit(this);
     }
 
     private void explode() {
