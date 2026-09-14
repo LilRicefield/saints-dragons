@@ -645,7 +645,7 @@
 				{
 					"name": "fireBone",
 					"parent": "headController",
-					"pivot": [-5.06603, 68.45, -233.05]
+					"pivot": [-0.16603, 68.45, -238.05]
 				},
 				{
 					"name": "leftfrontleg",

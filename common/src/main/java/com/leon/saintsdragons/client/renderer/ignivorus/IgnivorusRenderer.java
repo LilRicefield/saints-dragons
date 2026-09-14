@@ -105,6 +105,8 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
             IgnivorusSkyfallSphereRenderer.render(entity, poseStack, bufferSource, partialTick);
             IgnivorusSkyfallRaysRenderer.render(entity, getBoneWorldPosition("middlebody"),
                     poseStack, bufferSource, partialTick);
+            com.leon.saintsdragons.client.renderer.vfx.IgnivorusFireballMouthRenderer.render(
+                    entity, getBoneWorldPosition(FIRE_BONE), poseStack, bufferSource, partialTick);
             sendBonePositionsToServer(entity);
             DragonDiveTrailRenderer.render(entity,
                     getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),

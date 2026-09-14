@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
@@ -27,15 +28,29 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class IgnivorusMagmaBlockEntity extends Entity {
+public class IgnivorusFireballEntity extends Entity implements software.bernie.geckolib.animatable.GeoEntity {
+    private final AnimatableInstanceCache animationCache =
+            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public void registerControllers(software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar controllers) {}
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return animationCache;
+    }
+
+    public float getVisualAge(float partialTick) { return livedTicks + partialTick; }
+
     private static final EntityDataAccessor<BlockState> DATA_BLOCK_STATE =
-            SynchedEntityData.defineId(IgnivorusMagmaBlockEntity.class, EntityDataSerializers.BLOCK_STATE);
+            SynchedEntityData.defineId(IgnivorusFireballEntity.class, EntityDataSerializers.BLOCK_STATE);
     private static final EntityDataAccessor<Float> DATA_SCALE =
-            SynchedEntityData.defineId(IgnivorusMagmaBlockEntity.class, EntityDataSerializers.FLOAT);
+            SynchedEntityData.defineId(IgnivorusFireballEntity.class, EntityDataSerializers.FLOAT);
 
     private Ignivorus owner;
     private double impactRadius;
@@ -46,14 +61,15 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     private static final SphereOffsets OFFSETS_RADIUS_6 = SphereOffsets.create(6);
     private static final SphereOffsets OFFSETS_RADIUS_12 = SphereOffsets.create(12);
 
-    public IgnivorusMagmaBlockEntity(EntityType<? extends IgnivorusMagmaBlockEntity> type, Level level) {
+    public IgnivorusFireballEntity(EntityType<? extends IgnivorusFireballEntity> type, Level level) {
         super(type, level);
         this.blocksBuilding = true;
+        this.setNoGravity(true);
         this.refreshDimensions();
     }
 
-    public IgnivorusMagmaBlockEntity(Level level, Vec3 pos, Ignivorus owner,
-                                     double impactRadius, float impactDamage, int lifetimeTicks) {
+    public IgnivorusFireballEntity(Level level, Vec3 pos, Ignivorus owner,
+                                   double impactRadius, float impactDamage, int lifetimeTicks) {
         this(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), level);
         this.setPos(pos);
         this.owner = owner;
@@ -99,12 +115,6 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         }
         livedTicks++;
 
-        if (!this.isNoGravity()) {
-            float gravityProgress = Math.min(1.0f, livedTicks / 20.0f);
-            double gravity = -0.05D * gravityProgress; // Max gravity of -0.05
-            this.setDeltaMovement(this.getDeltaMovement().add(0.0D, gravity, 0.0D));
-        }
-
         Vec3 currentPos = this.position();
         Vec3 motion = this.getDeltaMovement();
         Vec3 nextPos = currentPos.add(motion);
@@ -138,9 +148,6 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         }
 
         if (!level().isClientSide) {
-            if (!this.isNoGravity()) {
-                this.setDeltaMovement(this.getDeltaMovement().scale(0.99D));
-            }
             if (livedTicks > lifetimeTicks) {
                 explode();
                 return;
@@ -154,9 +161,6 @@ public class IgnivorusMagmaBlockEntity extends Entity {
                 explode();
             }
         } else {
-            if (!this.isNoGravity()) {
-                this.setDeltaMovement(this.getDeltaMovement().scale(0.99D));
-            }
             spawnTrailParticles();
         }
     }
@@ -184,10 +188,51 @@ public class IgnivorusMagmaBlockEntity extends Entity {
     }
 
     private void spawnTrailParticles() {
+        if (getVisualScale() <= 4.01F) {
+            spawnStageOneTrail();
+            return;
+        }
         float scale = getVisualScale();
         level().addParticle(ParticleTypes.FLAME, getX(), getY() + 0.2D * scale, getZ(), 0.0D, 0.011D, 0.0D);
         level().addParticle(ParticleTypes.SMALL_FLAME, getX(), getY() + 0.2D * scale, getZ(), 0.0D, 0.003D, 0.0D);
         level().addParticle(ParticleTypes.FALLING_LAVA, getX(), getY(), getZ(), 0.0D, -0.035D, 0.0D);
+    }
+
+    private void spawnStageOneTrail() {
+        Vec3 velocity = getDeltaMovement();
+        Vec3 center = position().add(0.0D, getBbHeight() * 0.5D, 0.0D);
+        for (int sample = 0; sample < 6; sample++) {
+            double along = (sample + random.nextDouble()) / 6.0D;
+            Vec3 origin = center.subtract(velocity.scale(along));
+            for (int layer = 0; layer < 5; layer++) {
+                var type = switch (layer) {
+                    case 0 -> ModParticles.CINDERVANE_DARK_FIRE_TRAIL.get();
+                    case 1 -> ModParticles.CINDERVANE_FIRE_TRAIL.get();
+                    case 2 -> ModParticles.IGNIVORUS_FIREBALL_BRIGHT_FIRE.get();
+                    case 3 -> ModParticles.IGNIVORUS_FIREBALL_ORANGE_SPEC.get();
+                    default -> ModParticles.CINDERVANE_SPEC_TRAIL.get();
+                };
+                double spread = layer == 0 ? 1.8D : layer == 2 ? 0.9D : 1.4D;
+                Vec3 offset = new Vec3(random.nextDouble() - 0.5D, random.nextDouble() - 0.5D,
+                        random.nextDouble() - 0.5D).scale(spread);
+                Vec3 point = origin.add(offset);
+                Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.12D)).add(0.0D, 0.025D, 0.0D);
+                level().addParticle(type, true, point.x, point.y, point.z, drift.x, drift.y, drift.z);
+            }
+            Vec3 smoke = origin.add((random.nextDouble() - 0.5D) * 1.8D,
+                    (random.nextDouble() - 0.5D) * 1.8D, (random.nextDouble() - 0.5D) * 1.8D);
+            level().addParticle(ModParticles.CINDERVANE_FIRE_BODY_SMOKE.get(), true,
+                    smoke.x, smoke.y, smoke.z, velocity.x * 0.025D,
+                    velocity.y * 0.025D + 0.035D, velocity.z * 0.025D);
+        }
+        for (int i = 0; i < 16; i++) {
+            Vec3 offset = new Vec3(random.nextDouble() - 0.5D, random.nextDouble() - 0.5D,
+                    random.nextDouble() - 0.5D);
+            Vec3 point = center.add(offset.scale(1.2D));
+            Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.45D));
+            level().addParticle(ModParticles.CINDERVANE_MOUTH_EMITTER.get(), true,
+                    point.x, point.y, point.z, drift.x, drift.y, drift.z);
+        }
     }
 
     private void explode() {
@@ -202,11 +247,15 @@ public class IgnivorusMagmaBlockEntity extends Entity {
         boolean aiFireball = owner != null && owner.getControllingPassenger() == null;
         boolean allowGriefing = DragonGriefingRules.canDestroyBlocks(server);
 
-        // Core explosion particles - scale with fireball size
-        server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),
-                0.6D * scale, 0.4D * scale, 0.6D * scale, 0.05D);
-        server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
-                0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
+        if (scale <= 4.01F) {
+            spawnStageOneImpact(server, impact);
+        } else {
+            // Core explosion particles - scale with fireball size
+            server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),
+                    0.6D * scale, 0.4D * scale, 0.6D * scale, 0.05D);
+            server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
+                    0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
+        }
 
         if (scale >= 6.0F) {
             server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
@@ -258,6 +307,25 @@ public class IgnivorusMagmaBlockEntity extends Entity {
             igniteArea(server, impactPos);
         }
         discard();
+    }
+
+    private void spawnStageOneImpact(ServerLevel server, Vec3 impact) {
+        HitResult ground = server.clip(new ClipContext(impact.add(0, 0.5, 0), impact.add(0, -6, 0),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        for (var player : server.players()) {
+            if (player.distanceToSqr(impact) > 256.0D * 256.0D) continue;
+            server.sendParticles(player, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), true,
+                    impact.x, impact.y + 0.6D, impact.z, 48, 0.18D, 0.12D, 0.18D, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_FIREBALL_EXPLOSION.get(), true,
+                    impact.x, impact.y + 1.8D, impact.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_FIREBALL_SMALL_EXPLOSION.get(), true,
+                    impact.x, impact.y + 0.9D, impact.z, 1, 0, 0, 0, 0);
+            if (ground.getType() == HitResult.Type.BLOCK) {
+                Vec3 point = ground.getLocation();
+                server.sendParticles(player, ModParticles.IGNIVORUS_FIREBALL_GROUND_IMPACT.get(), true,
+                        point.x, point.y + 0.04D, point.z, 1, 0, 0, 0, 0);
+            }
+        }
     }
 
     private void destroyBlocks(ServerLevel server, BlockPos center, int radius, boolean maxPower) {

@@ -17,10 +17,10 @@ import com.leon.saintsdragons.server.entity.draconianswarm.Whettled;
 import com.leon.saintsdragons.server.entity.effect.cindervane.CindervaneFireballEntity;
 import com.leon.saintsdragons.server.entity.effect.DragonWaterSplashEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFlameEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireballEntity;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaPillarEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusSkyfallEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusSkyfallRingEntity;
 import com.leon.saintsdragons.server.entity.effect.LightningVisualEntity;
 import com.leon.saintsdragons.server.entity.effect.raevyx.RaevyxLightningChainEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPillarEntity;
@@ -170,8 +170,8 @@ public final class ModEntities {
                     .noSummon()
                     .build("cindervane_magma_block"));
 
-    public static final Supplier<EntityType<IgnivorusMagmaBlockEntity>> IGNIVORUS_MAGMA_BLOCK =
-            REGISTER.register("ignivorus_magma_block", () -> EntityType.Builder.<IgnivorusMagmaBlockEntity>of(IgnivorusMagmaBlockEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<IgnivorusFireballEntity>> IGNIVORUS_MAGMA_BLOCK =
+            REGISTER.register("ignivorus_magma_block", () -> EntityType.Builder.<IgnivorusFireballEntity>of(IgnivorusFireballEntity::new, MobCategory.MISC)
                     .sized(5.0F, 5.0F)
                     .clientTrackingRange(64)
                     .updateInterval(1)
@@ -197,8 +197,8 @@ public final class ModEntities {
                     .noSummon()
                     .build("ignivorus_flame"));
 
-    public static final Supplier<EntityType<IgnivorusNovaEntity>> IGNIVORUS_NOVA =
-            REGISTER.register("ignivorus_nova", () -> EntityType.Builder.<IgnivorusNovaEntity>of(IgnivorusNovaEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<IgnivorusSkyfallEntity>> IGNIVORUS_NOVA =
+            REGISTER.register("ignivorus_nova", () -> EntityType.Builder.<IgnivorusSkyfallEntity>of(IgnivorusSkyfallEntity::new, MobCategory.MISC)
                     .sized(1.0F, 1.0F)
                     .clientTrackingRange(128)
                     .updateInterval(1)
@@ -206,8 +206,8 @@ public final class ModEntities {
                     .noSummon()
                     .build("ignivorus_nova"));
 
-    public static final Supplier<EntityType<IgnivorusNovaRingEntity>> IGNIVORUS_NOVA_RING =
-            REGISTER.register("ignivorus_nova_ring", () -> EntityType.Builder.<IgnivorusNovaRingEntity>of(IgnivorusNovaRingEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<IgnivorusSkyfallRingEntity>> IGNIVORUS_NOVA_RING =
+            REGISTER.register("ignivorus_nova_ring", () -> EntityType.Builder.<IgnivorusSkyfallRingEntity>of(IgnivorusSkyfallRingEntity::new, MobCategory.MISC)
                     .sized(1.0F, 0.1F)
                     .clientTrackingRange(128)
                     .updateInterval(1)

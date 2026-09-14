@@ -12,8 +12,8 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaEntity;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusSkyfallEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusSkyfallRingEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.network.chat.Component;
@@ -276,7 +276,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
         Vec3 novaPos = center.add(0, 1.0, 0);
 
-        IgnivorusNovaEntity nova = new IgnivorusNovaEntity(
+        IgnivorusSkyfallEntity nova = new IgnivorusSkyfallEntity(
                 server,
                 novaPos,
                 dragon,
@@ -285,7 +285,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         server.addFreshEntity(nova);
 
         if (!airSkyfallMode) {
-        IgnivorusNovaRingEntity ring = new IgnivorusNovaRingEntity(
+        IgnivorusSkyfallRingEntity ring = new IgnivorusSkyfallRingEntity(
                 server,
                 center.add(0, 0.1, 0)
         );

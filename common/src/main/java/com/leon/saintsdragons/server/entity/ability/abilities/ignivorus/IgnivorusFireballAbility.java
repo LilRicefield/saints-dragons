@@ -8,7 +8,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusMagmaBlockEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireballEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
@@ -22,7 +22,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
 
     private static final int COOLDOWN_TICKS = 20;
     private static final int MAGMA_LIFETIME_TICKS = 200;
-    private static final double FIREBALL_SPEED = 3.5D;
+    private static final double FIREBALL_SPEED = 5.0D;
     private static final int FIRE_RELEASE_TICKS = 15;
     private static final int CHARGE_LEVEL_2_TICKS = 25;
     private static final int CHARGE_LEVEL_3_TICKS = 50;
@@ -194,12 +194,14 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         double radius = BASE_IMPACT_RADIUS * multiplier;
         float scale = BASE_SCALE * multiplier;
 
-        IgnivorusMagmaBlockEntity fireball = new IgnivorusMagmaBlockEntity(server, spawnPos, dragon,
+        IgnivorusFireballEntity fireball = new IgnivorusFireballEntity(server, spawnPos, dragon,
                 radius, damage, MAGMA_LIFETIME_TICKS);
         fireball.setDeltaMovement(direction.scale(FIREBALL_SPEED));
         fireball.setVisualScale(scale);
         fireball.hasImpulse = true;
-        server.addFreshEntity(fireball);
+        if (server.addFreshEntity(fireball)) {
+            server.broadcastEntityEvent(dragon, Ignivorus.FIREBALL_MOUTH_EVENT);
+        }
     }
 
     private void resetChargeState() {
@@ -239,6 +241,7 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             case 1 -> {
                 dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level1_charge");
                 if (!dragon.level().isClientSide) {
+                    dragon.level().broadcastEntityEvent(dragon, Ignivorus.FIREBALL_CHARGE_EVENT);
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_CHARGE.get(), 1.0f, 1.0f, 54);
                 }
             }

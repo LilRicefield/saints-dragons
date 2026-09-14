@@ -32,6 +32,7 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
     private final int starAge;
     private int sparksEmitted;
     private boolean starEmitted;
+    private boolean chargeBurst;
 
     private FireBreathBackblastParticle(ClientLevel level, double x, double y, double z,
                                     double vx, double vy, double vz, SpriteSet sprites) {
@@ -99,7 +100,13 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
         emitAccents();
     }
 
+    public void configureChargeBurst() {
+        lifetime = Math.min(lifetime, 5);
+        chargeBurst = true;
+    }
+
     private void emitAccents() {
+        if (chargeBurst) return;
         Vec3 position = new Vec3(xo, yo, zo).lerp(new Vec3(x, y, z), random.nextDouble());
         var engine = Minecraft.getInstance().particleEngine;
         if (!starEmitted && starAge >= 0 && age >= starAge) {

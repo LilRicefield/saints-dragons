@@ -18,7 +18,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
     private final float size;
 
     private CindervaneFireImpactParticle(ClientLevel level, double x, double y, double z,
-                                         SpriteSet sprites, Kind kind) {
+                                         SpriteSet sprites, Kind kind, float sizeMultiplier) {
         super(level, x, y, z);
         this.sprites = sprites;
         this.kind = kind;
@@ -29,7 +29,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
             case CRASH_SPLATTER -> 10;
             default -> 6;
         };
-        this.size = switch (kind) {
+        this.size = sizeMultiplier * (switch (kind) {
             case FIRE -> 4.375F;
             case SMALL -> 2.75F;
             case GROUND -> 6.75F;
@@ -37,7 +37,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
             case CRASH_GROUND -> 12.0F;
             case CRASH_CIRCLE -> 13.0F;
             case CRASH_SPLATTER -> 10.0F;
-        };
+        });
         this.ticksPerFrame = switch (kind) {
             case GROUND, CRASH_GROUND -> 2.0F;
             case CRASH_FIRE -> 1.5F;
@@ -90,11 +90,15 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
     @Override
     public ParticleRenderType getRenderType() { return ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT; }
 
-    public record Factory(SpriteSet sprites, Kind kind) implements ParticleProvider<SimpleParticleType> {
+    public record Factory(SpriteSet sprites, Kind kind, float sizeMultiplier) implements ParticleProvider<SimpleParticleType> {
+        public Factory(SpriteSet sprites, Kind kind) {
+            this(sprites, kind, 1.0F);
+        }
+
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                        double vx, double vy, double vz) {
-            return new CindervaneFireImpactParticle(level, x, y, z, sprites, kind);
+            return new CindervaneFireImpactParticle(level, x, y, z, sprites, kind, sizeMultiplier);
         }
     }
 }

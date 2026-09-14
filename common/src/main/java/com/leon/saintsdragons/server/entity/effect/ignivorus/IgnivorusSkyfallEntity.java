@@ -25,25 +25,25 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-public class IgnivorusNovaEntity extends Entity {
+public class IgnivorusSkyfallEntity extends Entity {
 
     private static final int DURATION = 20;
     private static final double MAX_RADIUS = 48.0;
 
     private static final EntityDataAccessor<Float> DATA_DAMAGE =
-            SynchedEntityData.defineId(IgnivorusNovaEntity.class, EntityDataSerializers.FLOAT);
+            SynchedEntityData.defineId(IgnivorusSkyfallEntity.class, EntityDataSerializers.FLOAT);
 
     private UUID ownerUUID;
     private Entity owner;
     private int age;
     private final Set<UUID> damagedEntities = new HashSet<>();
 
-    public IgnivorusNovaEntity(EntityType<? extends IgnivorusNovaEntity> type, Level level) {
+    public IgnivorusSkyfallEntity(EntityType<? extends IgnivorusSkyfallEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
     }
 
-    public IgnivorusNovaEntity(Level level, Vec3 position, Entity owner, float damage) {
+    public IgnivorusSkyfallEntity(Level level, Vec3 position, Entity owner, float damage) {
         this(ModEntities.IGNIVORUS_NOVA.get(), level);
         setPos(position);
         this.ownerUUID = owner != null ? owner.getUUID() : null;

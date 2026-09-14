@@ -1,7 +1,7 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusNovaRingEntity;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusSkyfallRingEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,7 +15,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-public class IgnivorusNovaRingRenderer extends EntityRenderer<IgnivorusNovaRingEntity> {
+public class IgnivorusNovaRingRenderer extends EntityRenderer<IgnivorusSkyfallRingEntity> {
 
     private static final int TOTAL_FRAMES = 7;
     private static final ResourceLocation[] TEXTURES = new ResourceLocation[TOTAL_FRAMES];
@@ -32,7 +32,7 @@ public class IgnivorusNovaRingRenderer extends EntityRenderer<IgnivorusNovaRingE
     }
 
     @Override
-    public void render(@NotNull IgnivorusNovaRingEntity entity, float entityYaw, float partialTicks,
+    public void render(@NotNull IgnivorusSkyfallRingEntity entity, float entityYaw, float partialTicks,
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
 
         float scale = entity.getScale(partialTicks);
@@ -106,7 +106,7 @@ public class IgnivorusNovaRingRenderer extends EntityRenderer<IgnivorusNovaRingE
     }
 
     @Override
-    public @NotNull ResourceLocation getTextureLocation(@NotNull IgnivorusNovaRingEntity entity) {
+    public @NotNull ResourceLocation getTextureLocation(@NotNull IgnivorusSkyfallRingEntity entity) {
         return TEXTURES[0];
     }
 }

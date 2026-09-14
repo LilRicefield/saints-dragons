@@ -11,18 +11,18 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
-public class IgnivorusNovaRingEntity extends Entity {
+public class IgnivorusSkyfallRingEntity extends Entity {
 
     private static final int DURATION = 20;
 
     private int age;
 
-    public IgnivorusNovaRingEntity(EntityType<? extends IgnivorusNovaRingEntity> type, Level level) {
+    public IgnivorusSkyfallRingEntity(EntityType<? extends IgnivorusSkyfallRingEntity> type, Level level) {
         super(type, level);
         this.noPhysics = true;
     }
 
-    public IgnivorusNovaRingEntity(Level level, Vec3 position) {
+    public IgnivorusSkyfallRingEntity(Level level, Vec3 position) {
         this(ModEntities.IGNIVORUS_NOVA_RING.get(), level);
         setPos(position);
     }

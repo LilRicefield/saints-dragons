@@ -50,6 +50,11 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.IGNIVORUS_FIREBALL_GROUND_IMPACT.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.GROUND, 1.5F));
+        register(registrar, ModParticles.IGNIVORUS_FIREBALL_SMALL_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.SMALL, 1.5F));
+        register(registrar, ModParticles.IGNIVORUS_FIREBALL_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.FIRE, 1.5F));
+        register(registrar, ModParticles.IGNIVORUS_FIREBALL_ORANGE_SPEC.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.ORANGE_SPEC));
+        register(registrar, ModParticles.IGNIVORUS_FIREBALL_BRIGHT_FIRE.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.BRIGHT_FIRE));
         register(registrar, ModParticles.CINDERVANE_CRASH_SPLATTER.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_SPLATTER));
         register(registrar, ModParticles.CINDERVANE_CRASH_CIRCLE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_CIRCLE));
         register(registrar, ModParticles.CINDERVANE_CRASH_GROUND.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_GROUND));

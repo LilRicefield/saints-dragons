@@ -11,10 +11,10 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class CindervaneFireTrailParticle extends TextureSheetParticle {
-    public enum Kind { FIRE, DARK_FIRE, SPEC, MORE_SPEC, BETTER_FIRE, FIREBALL_FIRE }
+    public enum Kind { FIRE, DARK_FIRE, BRIGHT_FIRE, ORANGE_SPEC, SPEC, MORE_SPEC, BETTER_FIRE, FIREBALL_FIRE }
 
     private final SpriteSet sprites;
-    private final float ticksPerFrame;
+    private float ticksPerFrame;
     private final int frames;
     private float size;
     private final float aspectRatio;
@@ -23,7 +23,7 @@ public final class CindervaneFireTrailParticle extends TextureSheetParticle {
                                         double vx, double vy, double vz, SpriteSet sprites, Kind kind) {
         super(level, x, y, z);
         this.sprites = sprites;
-        boolean spec = kind == Kind.SPEC || kind == Kind.MORE_SPEC;
+        boolean spec = kind == Kind.SPEC || kind == Kind.MORE_SPEC || kind == Kind.ORANGE_SPEC;
         boolean fireball = kind == Kind.FIREBALL_FIRE;
         this.aspectRatio = fireball ? 32.0F / 48.0F : 1.0F;
         this.frames = kind == Kind.MORE_SPEC ? 11 : fireball || kind == Kind.BETTER_FIRE ? 8 : spec ? 12 : 17;
@@ -39,12 +39,20 @@ public final class CindervaneFireTrailParticle extends TextureSheetParticle {
         this.quadSize = size;
         setColor(1.0F, spec ? 0.78F : fireball ? 0.60F : 0.48F, spec ? 0.28F : fireball ? 0.12F : 0.08F);
         if (kind == Kind.DARK_FIRE) setColor(0.75F, 0.25F, 0.035F);
+        if (kind == Kind.BRIGHT_FIRE) setColor(1.0F, 0.78F, 0.28F);
+        if (kind == Kind.ORANGE_SPEC) setColor(1.0F, 0.48F, 0.08F);
         setSprite(sprites.get(0, frames - 1));
     }
 
     public void setBodySizeMultiplier(float multiplier) {
         this.size *= multiplier;
         this.quadSize = size;
+    }
+
+    public void setAnimationSpeed(float multiplier) {
+        if (!Float.isFinite(multiplier) || multiplier <= 0.0F) return;
+        ticksPerFrame /= multiplier;
+        lifetime = Math.max(1, (int) Math.ceil(frames * ticksPerFrame));
     }
 
     @Override

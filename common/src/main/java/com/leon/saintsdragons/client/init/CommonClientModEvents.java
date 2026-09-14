@@ -10,7 +10,7 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.client.renderer.cindervane.CindervaneRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusFlameRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusRenderer;
-import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaBlockRenderer;
+import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusFireballRenderer;
 import com.leon.saintsdragons.client.renderer.ignivorus.IgnivorusMagmaPillarRenderer;
 import net.minecraft.client.renderer.entity.NoopRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.IgnivorusNovaRingRenderer;
@@ -61,7 +61,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.MOOP.get(), MoopRenderer::new);
         registrar.register(ModEntities.MOSSBACK.get(), MossbackRenderer::new);
         registrar.register(ModEntities.CINDERVANE_MAGMA_BLOCK.get(), CindervaneFireballRenderer::new);
-        registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusMagmaBlockRenderer::new);
+        registrar.register(ModEntities.IGNIVORUS_MAGMA_BLOCK.get(), IgnivorusFireballRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_MAGMA_PILLAR.get(), IgnivorusMagmaPillarRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_FLAME.get(), IgnivorusFlameRenderer::new);
         registrar.register(ModEntities.IGNIVORUS_NOVA.get(), NoopRenderer::new);
