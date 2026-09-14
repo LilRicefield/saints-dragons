@@ -10,7 +10,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class CindervaneFireImpactParticle extends TextureSheetParticle {
-    public enum Kind { FIRE, SMALL, GROUND, CRASH_FIRE, CRASH_GROUND, CRASH_CIRCLE, CRASH_SPLATTER }
+    public enum Kind { FIRE, SMALL, GROUND, CRASH_FIRE, CRASH_GROUND, CRASH_CIRCLE, CRASH_SPLATTER, TOON }
     private final SpriteSet sprites;
     private final Kind kind;
     private final int frames;
@@ -27,6 +27,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
             case SMALL -> 5;
             case CRASH_CIRCLE -> 12;
             case CRASH_SPLATTER -> 10;
+            case TOON -> 8;
             default -> 6;
         };
         this.size = sizeMultiplier * (switch (kind) {
@@ -37,6 +38,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
             case CRASH_GROUND -> 12.0F;
             case CRASH_CIRCLE -> 13.0F;
             case CRASH_SPLATTER -> 10.0F;
+            case TOON -> 5.0F;
         });
         this.ticksPerFrame = switch (kind) {
             case GROUND, CRASH_GROUND -> 2.0F;

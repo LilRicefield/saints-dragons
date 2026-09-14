@@ -121,6 +121,21 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> IGNIVORUS_FIREBALL_GROUND_IMPACT =
             REGISTER.register("ignivorus_fireball_ground_impact", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_TWO_IMPACT_EXPLOSION =
+            REGISTER.register("ignivorus_level_two_impact_explosion", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_TWO_IMPACT_SMALL_EXPLOSION =
+            REGISTER.register("ignivorus_level_two_impact_small_explosion", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_TWO_IMPACT_GROUND =
+            REGISTER.register("ignivorus_level_two_impact_ground", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_TWO_IMPACT_TOON =
+            REGISTER.register("ignivorus_level_two_impact_toon", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_TWO_IMPACT_CIRCLE =
+            REGISTER.register("ignivorus_level_two_impact_circle", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_BODY_SMOKE =
             REGISTER.register("cindervane_fire_body_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
 

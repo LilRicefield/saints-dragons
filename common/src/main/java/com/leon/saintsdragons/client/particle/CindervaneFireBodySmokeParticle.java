@@ -13,7 +13,7 @@ public final class CindervaneFireBodySmokeParticle extends TextureSheetParticle 
     private static final float FRAME_TICKS = 0.85F;
     private static final float ANIMATION_TICKS = FRAMES * FRAME_TICKS;
     private final SpriteSet sprites;
-    private final float peakSize;
+    private float peakSize;
     private final float spin;
 
     private CindervaneFireBodySmokeParticle(ClientLevel level, double x, double y, double z,
@@ -32,6 +32,11 @@ public final class CindervaneFireBodySmokeParticle extends TextureSheetParticle 
         quadSize = peakSize * 0.45F;
         alpha = 0.18F;
         setSprite(sprites.get(0, FRAMES - 1));
+    }
+
+    public void setSizeMultiplier(float multiplier) {
+        peakSize *= multiplier;
+        quadSize *= multiplier;
     }
 
     @Override

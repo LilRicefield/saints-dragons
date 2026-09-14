@@ -8,7 +8,7 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.util.Mth;
 
 public final class CindervaneImpactEmitterParticle extends TextureSheetParticle {
-    private final float size;
+    private float size;
 
     private CindervaneImpactEmitterParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites) {
         super(level, x, y, z);
@@ -27,6 +27,11 @@ public final class CindervaneImpactEmitterParticle extends TextureSheetParticle 
         this.hasPhysics = false;
         setColor(1.0F, 0.72F, 0.16F);
         pickSprite(sprites);
+    }
+
+    public void setSizeMultiplier(float multiplier) {
+        size *= multiplier;
+        quadSize *= multiplier;
     }
 
     @Override

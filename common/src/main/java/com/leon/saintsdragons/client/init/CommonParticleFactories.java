@@ -50,6 +50,11 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_CIRCLE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_CIRCLE, 1.2F));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_TOON.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.TOON, 2.0F));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_GROUND.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.GROUND, 2.25F));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_SMALL_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.SMALL, 2.25F));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.FIRE, 2.25F));
         register(registrar, ModParticles.IGNIVORUS_FIREBALL_GROUND_IMPACT.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.GROUND, 1.5F));
         register(registrar, ModParticles.IGNIVORUS_FIREBALL_SMALL_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.SMALL, 1.5F));
         register(registrar, ModParticles.IGNIVORUS_FIREBALL_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.FIRE, 1.5F));

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 public final class FireBreathBackblastParticle extends TextureSheetParticle {
     private static final double RANGE = 8.0;
+    private double maxRange = RANGE;
     private static final int FRAMES = 17;
     private static final float FRAME_TICKS = 0.5F;
     private final SpriteSet sprites;
@@ -80,7 +81,7 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
         }
         Vec3 start = new Vec3(x, y, z);
         Vec3 velocity = new Vec3(xd, yd, zd);
-        double travel = Math.min(velocity.length(), RANGE - distance);
+        double travel = Math.min(velocity.length(), maxRange - distance);
         Vec3 end = start.add(velocity.normalize().scale(travel));
         var contextEntity = Minecraft.getInstance().getCameraEntity();
         if (contextEntity == null || !level.hasChunksAt(BlockPos.containing(start), BlockPos.containing(end))) {
@@ -96,12 +97,18 @@ public final class FireBreathBackblastParticle extends TextureSheetParticle {
         }
         setPos(end.x, end.y, end.z);
         distance += travel;
-        if (distance >= RANGE) stopped = true;
+        if (distance >= maxRange) stopped = true;
         emitAccents();
     }
 
     public void configureChargeBurst() {
         lifetime = Math.min(lifetime, 5);
+        chargeBurst = true;
+    }
+
+    public void configureLevelTwoChargeBurst() {
+        lifetime = 8;
+        maxRange = 12.0D;
         chargeBurst = true;
     }
 

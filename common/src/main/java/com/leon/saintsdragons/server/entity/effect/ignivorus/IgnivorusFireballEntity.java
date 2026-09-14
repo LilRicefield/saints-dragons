@@ -57,7 +57,12 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     private float impactDamage;
     private int lifetimeTicks;
     private int livedTicks;
+    private double distanceTravelled;
 
+    private static final double STAGE_ONE_STRAIGHT_DISTANCE = 25.0D;
+    private static final double STAGE_TWO_STRAIGHT_DISTANCE = 50.0D;
+    private static final double STAGE_THREE_STRAIGHT_DISTANCE = 85.0D;
+    private static final double FIREBALL_GRAVITY = 0.01D;
     private static final SphereOffsets OFFSETS_RADIUS_6 = SphereOffsets.create(6);
     private static final SphereOffsets OFFSETS_RADIUS_12 = SphereOffsets.create(12);
 
@@ -115,6 +120,11 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
         }
         livedTicks++;
 
+        double straightDistance = getVisualScale() >= 8.0F ? STAGE_THREE_STRAIGHT_DISTANCE
+                : getVisualScale() >= 6.0F ? STAGE_TWO_STRAIGHT_DISTANCE : STAGE_ONE_STRAIGHT_DISTANCE;
+        if (distanceTravelled >= straightDistance) {
+            setDeltaMovement(getDeltaMovement().add(0.0D, -FIREBALL_GRAVITY, 0.0D));
+        }
         Vec3 currentPos = this.position();
         Vec3 motion = this.getDeltaMovement();
         Vec3 nextPos = currentPos.add(motion);
@@ -147,6 +157,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
             this.setPos(nextPos);
         }
 
+        distanceTravelled += position().distanceTo(currentPos);
         if (!level().isClientSide) {
             if (livedTicks > lifetimeTicks) {
                 explode();
@@ -188,51 +199,14 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     }
 
     private void spawnTrailParticles() {
-        if (getVisualScale() <= 4.01F) {
-            spawnStageOneTrail();
+        if (getVisualScale() < 8.0F) {
+            com.leon.saintsdragons.client.particle.IgnivorusFireballTrail.emit(this);
             return;
         }
         float scale = getVisualScale();
         level().addParticle(ParticleTypes.FLAME, getX(), getY() + 0.2D * scale, getZ(), 0.0D, 0.011D, 0.0D);
         level().addParticle(ParticleTypes.SMALL_FLAME, getX(), getY() + 0.2D * scale, getZ(), 0.0D, 0.003D, 0.0D);
         level().addParticle(ParticleTypes.FALLING_LAVA, getX(), getY(), getZ(), 0.0D, -0.035D, 0.0D);
-    }
-
-    private void spawnStageOneTrail() {
-        Vec3 velocity = getDeltaMovement();
-        Vec3 center = position().add(0.0D, getBbHeight() * 0.5D, 0.0D);
-        for (int sample = 0; sample < 6; sample++) {
-            double along = (sample + random.nextDouble()) / 6.0D;
-            Vec3 origin = center.subtract(velocity.scale(along));
-            for (int layer = 0; layer < 5; layer++) {
-                var type = switch (layer) {
-                    case 0 -> ModParticles.CINDERVANE_DARK_FIRE_TRAIL.get();
-                    case 1 -> ModParticles.CINDERVANE_FIRE_TRAIL.get();
-                    case 2 -> ModParticles.IGNIVORUS_FIREBALL_BRIGHT_FIRE.get();
-                    case 3 -> ModParticles.IGNIVORUS_FIREBALL_ORANGE_SPEC.get();
-                    default -> ModParticles.CINDERVANE_SPEC_TRAIL.get();
-                };
-                double spread = layer == 0 ? 1.8D : layer == 2 ? 0.9D : 1.4D;
-                Vec3 offset = new Vec3(random.nextDouble() - 0.5D, random.nextDouble() - 0.5D,
-                        random.nextDouble() - 0.5D).scale(spread);
-                Vec3 point = origin.add(offset);
-                Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.12D)).add(0.0D, 0.025D, 0.0D);
-                level().addParticle(type, true, point.x, point.y, point.z, drift.x, drift.y, drift.z);
-            }
-            Vec3 smoke = origin.add((random.nextDouble() - 0.5D) * 1.8D,
-                    (random.nextDouble() - 0.5D) * 1.8D, (random.nextDouble() - 0.5D) * 1.8D);
-            level().addParticle(ModParticles.CINDERVANE_FIRE_BODY_SMOKE.get(), true,
-                    smoke.x, smoke.y, smoke.z, velocity.x * 0.025D,
-                    velocity.y * 0.025D + 0.035D, velocity.z * 0.025D);
-        }
-        for (int i = 0; i < 16; i++) {
-            Vec3 offset = new Vec3(random.nextDouble() - 0.5D, random.nextDouble() - 0.5D,
-                    random.nextDouble() - 0.5D);
-            Vec3 point = center.add(offset.scale(1.2D));
-            Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.45D));
-            level().addParticle(ModParticles.CINDERVANE_MOUTH_EMITTER.get(), true,
-                    point.x, point.y, point.z, drift.x, drift.y, drift.z);
-        }
     }
 
     private void explode() {
@@ -249,7 +223,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
 
         if (scale <= 4.01F) {
             spawnStageOneImpact(server, impact);
-        } else {
+        } else if (scale >= 8.0F) {
             // Core explosion particles - scale with fireball size
             server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),
                     0.6D * scale, 0.4D * scale, 0.6D * scale, 0.05D);
@@ -257,14 +231,14 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
                     0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
         }
 
-        if (scale >= 6.0F) {
+        if (scale >= 8.0F) {
             server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
                     0.9D * scale, 0.7D * scale, 0.9D * scale, 0.06D);
             server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, capParticles(10, scale, 50),
                     1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
-            if (allowGriefing) {
-                destroyBlocks(server, impactPos, 6, false);
-            }
+        }
+        if (scale >= 6.0F && allowGriefing) {
+            destroyBlocks(server, impactPos, 6, false);
         }
         if (scale >= 8.0F) {
 
@@ -277,6 +251,8 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
                 destroyBlocks(server, impactPos, 12, true);
             }
         }
+
+        if (scale > 4.01F && scale < 8.0F) spawnStageTwoImpact(server, impact);
 
         float volume = 1.0F + (scale * 0.2F);
         float pitch = Math.max(0.4F, 0.9F / scale);
@@ -307,6 +283,29 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
             igniteArea(server, impactPos);
         }
         discard();
+    }
+
+    private void spawnStageTwoImpact(ServerLevel server, Vec3 impact) {
+        HitResult ground = server.clip(new ClipContext(impact.add(0, 0.5, 0), impact.add(0, -12, 0),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        for (var player : server.players()) {
+            if (player.distanceToSqr(impact) > 256.0D * 256.0D) continue;
+            server.sendParticles(player, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), true,
+                    impact.x, impact.y + 0.9D, impact.z, 72, 0.3D, 0.18D, 0.3D, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_EXPLOSION.get(), true,
+                    impact.x, impact.y + 2.7D, impact.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_SMALL_EXPLOSION.get(), true,
+                    impact.x, impact.y + 1.35D, impact.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_TOON.get(), true,
+                    impact.x, impact.y + 2.0D, impact.z, 1, 0, 0, 0, 0);
+            if (ground.getType() == HitResult.Type.BLOCK) {
+                Vec3 point = ground.getLocation();
+                server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_GROUND.get(), true,
+                        point.x, point.y + 0.04D, point.z, 1, 0, 0, 0, 0);
+                server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_CIRCLE.get(), true,
+                        point.x, point.y + 0.07D, point.z, 1, 0, 0, 0, 0);
+            }
+        }
     }
 
     private void spawnStageOneImpact(ServerLevel server, Vec3 impact) {
@@ -417,6 +416,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
         this.livedTicks = tag.getInt("Lived");
+        this.distanceTravelled = tag.getDouble("DistanceTravelled");
         this.lifetimeTicks = tag.getInt("Lifetime");
         this.impactRadius = tag.getDouble("ImpactRadius");
         this.impactDamage = tag.getFloat("ImpactDamage");
@@ -432,6 +432,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
         tag.putInt("Lived", livedTicks);
+        tag.putDouble("DistanceTravelled", distanceTravelled);
         tag.putInt("Lifetime", lifetimeTicks);
         tag.putDouble("ImpactRadius", impactRadius);
         tag.putFloat("ImpactDamage", impactDamage);

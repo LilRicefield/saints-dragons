@@ -2481,28 +2481,38 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         );
     }
 
+    public static final byte FIREBALL_LEVEL_TWO_CHARGE_EVENT = 82;
+    private int fireballChargeVfxLevel;
     public static final byte FIREBALL_CHARGE_EVENT = 81;
     private int fireballChargeVfxTick = Integer.MIN_VALUE;
+    public static final byte FIREBALL_LEVEL_TWO_MOUTH_EVENT = 83;
+    private boolean levelTwoFireballMouth;
     public static final byte FIREBALL_MOUTH_EVENT = 80;
     private int fireballMouthTick = Integer.MIN_VALUE;
 
     @Override
     public void handleEntityEvent(byte eventId) {
-        if (eventId == FIREBALL_CHARGE_EVENT) {
+        if (eventId == FIREBALL_CHARGE_EVENT || eventId == FIREBALL_LEVEL_TWO_CHARGE_EVENT) {
+            fireballChargeVfxLevel = eventId == FIREBALL_CHARGE_EVENT ? 1 : 2;
             fireballChargeVfxTick = tickCount;
             return;
         }
-        if (eventId == FIREBALL_MOUTH_EVENT) {
+        if (eventId == FIREBALL_MOUTH_EVENT || eventId == FIREBALL_LEVEL_TWO_MOUTH_EVENT) {
+            levelTwoFireballMouth = eventId == FIREBALL_LEVEL_TWO_MOUTH_EVENT;
             fireballMouthTick = tickCount;
             return;
         }
         super.handleEntityEvent(eventId);
     }
 
+    public int getFireballChargeVfxLevel() { return fireballChargeVfxLevel; }
+
     public float getFireballChargeVfxAge(float partialTick) {
-        return fireballChargeVfxTick == Integer.MIN_VALUE || getFireballChargeLevel() == 0
+        return fireballChargeVfxTick == Integer.MIN_VALUE || getFireballChargeLevel() != fireballChargeVfxLevel
                 ? -1.0F : tickCount - fireballChargeVfxTick + partialTick;
     }
+
+    public boolean isLevelTwoFireballMouth() { return levelTwoFireballMouth; }
 
     public float getFireballMouthAge(float partialTick) {
         return fireballMouthTick == Integer.MIN_VALUE ? -1.0F : tickCount - fireballMouthTick + partialTick;

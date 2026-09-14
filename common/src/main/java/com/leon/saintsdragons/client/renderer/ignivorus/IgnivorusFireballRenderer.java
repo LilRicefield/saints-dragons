@@ -25,7 +25,7 @@ public class IgnivorusFireballRenderer extends GeoEntityRenderer<IgnivorusFireba
     public void render(IgnivorusFireballEntity entity, float entityYaw, float partialTick,
                        PoseStack poses, MultiBufferSource buffers, int packedLight) {
         if (ShaderPassCompatibility.isIrisShadowPass()) return;
-        if (entity.getVisualScale() > 4.01F) {
+        if (entity.getVisualScale() >= 8.0F) {
             float scale = entity.getVisualScale();
             poses.pushPose();
             poses.translate(-0.5D * scale, 0.0D, -0.5D * scale);
@@ -54,9 +54,14 @@ public class IgnivorusFireballRenderer extends GeoEntityRenderer<IgnivorusFireba
         poses.translate(0.0, entity.getBbHeight() * 0.5, 0.0);
         poses.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
         poses.mulPose(Axis.XP.rotationDegrees(-pitch));
-        float scale = entity.getVisualScale() * 0.35F;
-        poses.scale(scale, scale, scale);
-        poses.translate(0.0, -0.25, 0.0);
+        if (entity.getVisualScale() >= 6.0F) {
+            poses.scale(3.0F, 3.0F, 3.0F);
+            poses.translate(0.0D, -7.0D / 16.0D, 0.0D);
+        } else {
+            float scale = entity.getVisualScale() * 0.35F;
+            poses.scale(scale, scale, scale);
+            poses.translate(0.0, -0.25, 0.0);
+        }
     }
 
     @Override

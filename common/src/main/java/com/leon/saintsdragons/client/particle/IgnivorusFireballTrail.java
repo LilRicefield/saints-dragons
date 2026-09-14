@@ -1,0 +1,58 @@
+package com.leon.saintsdragons.client.particle;
+
+import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireballEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.world.phys.Vec3;
+
+public final class IgnivorusFireballTrail {
+    private IgnivorusFireballTrail() {}
+
+    public static void emit(IgnivorusFireballEntity dragon) {
+        float sizeMultiplier = dragon.getVisualScale() >= 6.0F ? 1.5F : 1.0F;
+        var random = dragon.level().random;
+        Vec3 velocity = dragon.getDeltaMovement();
+        Vec3 center = dragon.position().add(0.0D, dragon.getBbHeight() * 0.5D, 0.0D);
+        for (int sample = 0; sample < 6; sample++) {
+            double along = (sample + random.nextDouble()) / 6.0D;
+            Vec3 origin = center.subtract(velocity.scale(along));
+            for (int layer = 0; layer < 5; layer++) {
+                var type = switch (layer) {
+                    case 0 -> ModParticles.CINDERVANE_DARK_FIRE_TRAIL.get();
+                    case 1 -> ModParticles.CINDERVANE_FIRE_TRAIL.get();
+                    case 2 -> ModParticles.IGNIVORUS_FIREBALL_BRIGHT_FIRE.get();
+                    case 3 -> ModParticles.IGNIVORUS_FIREBALL_ORANGE_SPEC.get();
+                    default -> ModParticles.CINDERVANE_SPEC_TRAIL.get();
+                };
+                double spread = (layer == 0 ? 1.8D : layer == 2 ? 0.9D : 1.4D) * sizeMultiplier;
+                Vec3 offset = new Vec3(random.nextDouble() - 0.5D, random.nextDouble() - 0.5D,
+                        random.nextDouble() - 0.5D).scale(spread);
+                Vec3 point = origin.add(offset);
+                Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.12D)).add(0.0D, 0.025D, 0.0D);
+                spawn(sizeMultiplier, type, point.x, point.y, point.z, drift.x, drift.y, drift.z);
+            }
+            Vec3 smoke = origin.add((random.nextDouble() - 0.5D) * 1.8D * sizeMultiplier,
+                    (random.nextDouble() - 0.5D) * 1.8D * sizeMultiplier, (random.nextDouble() - 0.5D) * 1.8D * sizeMultiplier);
+            spawn(sizeMultiplier, ModParticles.CINDERVANE_FIRE_BODY_SMOKE.get(),
+                    smoke.x, smoke.y, smoke.z, velocity.x * 0.025D,
+                    velocity.y * 0.025D + 0.035D, velocity.z * 0.025D);
+        }
+        for (int i = 0; i < 16; i++) {
+            Vec3 offset = new Vec3(random.nextDouble() - 0.5D, random.nextDouble() - 0.5D,
+                    random.nextDouble() - 0.5D);
+            Vec3 point = center.add(offset.scale(1.2D * sizeMultiplier));
+            Vec3 drift = velocity.scale(0.08D).add(offset.scale(0.45D));
+            spawn(sizeMultiplier, ModParticles.CINDERVANE_MOUTH_EMITTER.get(),
+                    point.x, point.y, point.z, drift.x, drift.y, drift.z);
+        }
+    }
+
+    private static void spawn(float size, SimpleParticleType type, double x, double y, double z,
+                              double vx, double vy, double vz) {
+        var particle = Minecraft.getInstance().particleEngine.createParticle(type, x, y, z, vx, vy, vz);
+        if (particle instanceof CindervaneFireTrailParticle fire) fire.setBodySizeMultiplier(size);
+        else if (particle instanceof CindervaneFireBodySmokeParticle smoke) smoke.setSizeMultiplier(size);
+        else if (particle instanceof CindervaneImpactEmitterParticle emitter) emitter.setSizeMultiplier(size);
+    }
+}
