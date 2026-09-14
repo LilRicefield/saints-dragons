@@ -21,19 +21,20 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public final class FireBreathParticle extends TextureSheetParticle {
-    private static final int FRAME_COUNT = 24;
+    private static final int SPRITE_COUNT = 29;
+    private static final int[] COLORS = {0xfffff3, 0xfdfba5, 0xffc300, 0xff8816, 0xc4422d, 0x8f3527, 0x632618, 0x46201e};
     private static final float FRAME_TICKS = 0.35F;
     private static final float GROWTH_TICKS = 5.0F;
     private static final int IMPACT_FADE_TICKS = 3;
     private static final float EMBER_EMITTER_CHANCE = 0.15F;
     private static final int MAX_EMBERS = 2;
     private static final float SMOKE_SCALE = 1.25F;
-    private static final float CORE_SCALE = 0.65F;
-    private static final double SMOKE_DEPTH_OFFSET = 0.04;
     private static final double EMBER_SPREAD_X_DEGREES = -40.0;
     private static final double EMBER_SPREAD_Y_DEGREES = 40.0;
 
     private final SpriteSet sprites;
+    private final int frameCount;
+    private final int spriteOffset;
     private final Vec3 origin;
     private final Vec3 forward;
     private final Vec3 spread;
@@ -52,10 +53,12 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private boolean emittedSmoke;
 
     private FireBreathParticle(ClientLevel level, double x, double y, double z, Vec3 velocity,
-                              FireBreathParticleData data, SpriteSet sprites, double launchFraction, boolean core) {
+                              FireBreathParticleData data, SpriteSet sprites, double launchFraction, boolean core, boolean spec) {
         super(level, x, y, z);
         this.sprites = sprites;
-        this.frameOffset = random.nextInt(FRAME_COUNT);
+        this.frameCount = spec ? 12 : 17;
+        this.spriteOffset = spec ? 17 : 0;
+        this.frameOffset = random.nextInt(frameCount);
         this.emitsEmber = random.nextFloat() < EMBER_EMITTER_CHANCE;
         this.emberEmissionAge = 2 + random.nextInt(5);
         this.origin = new Vec3(x, y, z);
@@ -63,7 +66,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
         this.speed = Mth.clamp(velocity.length(), 0.5, 12) * (0.75 + random.nextDouble() * 0.25);
         this.range = data.range();
         this.visualScale = data.scale();
-        this.fullSize = (1.6F + random.nextFloat() * 0.4F) * visualScale;
+        this.fullSize = (1.6F + random.nextFloat() * 0.4F) * visualScale * (spec ? 0.7F : 1.0F);
         this.spin = (random.nextFloat() - 0.5F) * 0.04F;
 
         Vec3 reference = Math.abs(forward.y) > 0.99 ? new Vec3(1, 0, 0) : new Vec3(0, 1, 0);
@@ -80,7 +83,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
         this.roll = this.oRoll = random.nextFloat() * (float) (Math.PI * 2);
         this.quadSize = fullSize * 0.45F;
         this.setColor(1.0F, 0.42F, 0.035F);
-        this.setSprite(sprites.get(frameOffset, FRAME_COUNT - 1));
+        this.setSprite(sprites.get(spriteOffset + frameOffset, SPRITE_COUNT - 1));
         if (launchFraction > 0) {
             // Fill a one-tick emission interval, checking terrain before placing the particle.
             advanceFlame(speed * launchFraction);
@@ -138,7 +141,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
             setPos(end.x, end.y, end.z);
         }
         setBoundingBox(new AABB(new Vec3(x, y, z), new Vec3(x, y, z))
-                .inflate(fullSize * SMOKE_SCALE + SMOKE_DEPTH_OFFSET));
+                .inflate(fullSize * SMOKE_SCALE));
     }
 
     private void emitEmbers() {
@@ -179,64 +182,26 @@ public final class FireBreathParticle extends TextureSheetParticle {
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float renderAge = Math.max(0, age - 1 + partialTicks);
-        int frame = ((int) (renderAge / FRAME_TICKS) + frameOffset) % FRAME_COUNT;
-        setSprite(sprites.get(frame, FRAME_COUNT - 1));
+        int frame = ((int) (renderAge / FRAME_TICKS) + frameOffset) % frameCount;
+        setSprite(sprites.get(spriteOffset + frame, SPRITE_COUNT - 1));
         float growth = Mth.clamp(renderAge / GROWTH_TICKS, 0, 1);
         this.quadSize = fullSize * Mth.lerp(growth, 0.45F, 1.0F);
         float fade = Mth.clamp((lifetime - 1 - renderAge) / 3.0F, 0, 1);
         if (impactAge >= 0) {
             fade = Math.min(fade, Mth.clamp(1 - (renderAge - impactAge) / IMPACT_FADE_TICKS, 0, 1));
         }
-        float flameSize = quadSize;
         Vec3 position = new Vec3(Mth.lerp(partialTicks, xo, x), Mth.lerp(partialTicks, yo, y),
                 Mth.lerp(partialTicks, zo, z));
-        Vec3 behind = position.subtract(camera.getPosition()).normalize().scale(SMOKE_DEPTH_OFFSET);
-        double oldX = x, oldY = y, oldZ = z, oldXo = xo, oldYo = yo, oldZo = zo;
-        x += behind.x;
-        y += behind.y;
-        z += behind.z;
-        xo += behind.x;
-        yo += behind.y;
-        zo += behind.z;
-        this.quadSize = flameSize * SMOKE_SCALE;
-        this.setColor(0.8667F, 0.3137F, 0.0F);
-        this.alpha = fade;
-        try {
-            super.render(buffer, camera, partialTicks);
-        } finally {
-            x = oldX;
-            y = oldY;
-            z = oldZ;
-            xo = oldXo;
-            yo = oldYo;
-            zo = oldZo;
-            this.quadSize = flameSize;
-            this.setColor(1.0F, 0.42F, 0.035F);
-            this.alpha = fade;
-        }
+        float progress = (float) Mth.clamp(position.subtract(origin).dot(forward) / range, 0, 1);
+        float colorPosition = progress * (COLORS.length - 1);
+        int index = Math.min(COLORS.length - 2, Mth.floor(colorPosition));
+        float blend = colorPosition - index;
+        int from = COLORS[index], to = COLORS[index + 1];
+        setColor(Mth.lerp(blend, (from >> 16) & 255, (to >> 16) & 255) / 255.0F,
+                Mth.lerp(blend, (from >> 8) & 255, (to >> 8) & 255) / 255.0F,
+                Mth.lerp(blend, from & 255, to & 255) / 255.0F);
+        alpha = fade;
         super.render(buffer, camera, partialTicks);
-        x -= behind.x;
-        y -= behind.y;
-        z -= behind.z;
-        xo -= behind.x;
-        yo -= behind.y;
-        zo -= behind.z;
-        this.quadSize = flameSize * CORE_SCALE;
-        this.setColor(1.0F, 0.70F, 0.18F);
-        this.alpha = fade;
-        try {
-            super.render(buffer, camera, partialTicks);
-        } finally {
-            x = oldX;
-            y = oldY;
-            z = oldZ;
-            xo = oldXo;
-            yo = oldYo;
-            zo = oldZo;
-            this.quadSize = flameSize;
-            this.setColor(1.0F, 0.6431F, 0.4157F);
-            this.alpha =  fade;
-        }
     }
 
     @Override
@@ -259,10 +224,9 @@ public final class FireBreathParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(@NotNull FireBreathParticleData data, @NotNull ClientLevel level,
                                        double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
-            float amount = (3 + level.random.nextInt(3)) * 3 * data.density();
-            int count = (int) amount;
-            if (level.random.nextFloat() < amount - count) count++;
-            if (count == 0) return null;
+            if (data.density() <= 0) return null;
+            int fireCount = 48;
+            int specCount = 32;
             Vec3 velocity = new Vec3(xSpeed, ySpeed, zSpeed);
             for (int i = 0; i < 3; i++) {
                 Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
@@ -273,11 +237,17 @@ public final class FireBreathParticle extends TextureSheetParticle {
                         x, y, z, xSpeed, ySpeed, zSpeed);
             }
             emitForwardGlows(level, new Vec3(x, y, z), velocity);
-            for (int i = 1; i < count; i++) {
+            for (int i = 1; i < fireCount; i++) {
                 Minecraft.getInstance().particleEngine.add(
-                        new FireBreathParticle(level, x, y, z, velocity, data, sprites, (double) i / count, i % 3 == 0));
+                        new FireBreathParticle(level, x, y, z, velocity, data, sprites,
+                                (double) i / fireCount, i % 3 == 0, false));
             }
-            return new FireBreathParticle(level, x, y, z, velocity, data, sprites, 0, true);
+            for (int i = 0; i < specCount; i++) {
+                Minecraft.getInstance().particleEngine.add(
+                        new FireBreathParticle(level, x, y, z, velocity, data, sprites,
+                                (i + 0.5D) / specCount, false, true));
+            }
+            return new FireBreathParticle(level, x, y, z, velocity, data, sprites, 0, true, false);
         }
 
         private void emitForwardGlows(ClientLevel level, Vec3 origin, Vec3 velocity) {

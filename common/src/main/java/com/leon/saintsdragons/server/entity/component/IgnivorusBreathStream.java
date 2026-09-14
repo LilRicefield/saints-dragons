@@ -12,7 +12,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.level.block.state.BlockState;
 import java.util.LinkedHashMap;
@@ -27,6 +26,7 @@ import java.util.Set;
 public final class IgnivorusBreathStream {
     static final int DAMAGE_INTERVAL = 10;
     private static final double BACKBLAST_SIDE_OFFSET = 0.75;
+    private static final double VFX_VIEWER_RANGE = 512.0D;
     private final Ignivorus dragon;
     private final SweptBreathStream<FireSection> stream = new SweptBreathStream<>(DAMAGE_INTERVAL, ExpandingBreathSection.MAX_TICKS);
 
@@ -60,7 +60,6 @@ public final class IgnivorusBreathStream {
         if (canBreakBlocks) stream.forEachPayload(payload -> payload.breaking = true);
 
         FireBreathParticleData particle = new FireBreathParticleData((float) section.range(), 1.0F);
-        AABB visibleArea = new AABB(origin, origin.add(direction.normalize().scale(section.range()))).inflate(64);
         Vec3 bodyForward = Vec3.directionFromRotation(0, dragon.yBodyRot);
         Vec3 bodyRight = bodyForward.cross(new Vec3(0, 1, 0)).normalize();
         Vec3 backblastStart = origin.subtract(bodyForward.scale(0.35));
@@ -72,7 +71,7 @@ public final class IgnivorusBreathStream {
         Vec3 leftLaunch = backward.subtract(sideways);
         Vec3 rightLaunch = backward.add(sideways);
         for (ServerPlayer viewer : level.players()) {
-            if (visibleArea.contains(viewer.position())) {
+            if (viewer.position().distanceToSqr(origin) <= VFX_VIEWER_RANGE * VFX_VIEWER_RANGE) {
                 level.sendParticles(viewer, particle, true, origin.x, origin.y, origin.z, 0,
                         velocity.x, velocity.y, velocity.z, 1);
                 level.sendParticles(viewer, ModParticles.FIRE_BREATH_BACKBLAST.get(), true,
