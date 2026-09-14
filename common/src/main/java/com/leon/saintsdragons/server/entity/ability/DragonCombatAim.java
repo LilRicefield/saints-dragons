@@ -37,6 +37,32 @@ public final class DragonCombatAim {
     }
 
     public @Nullable Vec3 track(LivingEntity target, Vec3 origin, Profile profile) {
+        return track(target, origin, profile, Vec3.ZERO);
+    }
+
+    public @Nullable Vec3 track(LivingEntity target, Vec3 origin, Profile profile, Vec3 aimOffset) {
+        if (!canControl() || target == null || !dragon.isTargetValid(target)) {
+            clear();
+            return null;
+        }
+        if (this.target == target && this.profile == profile && isActive() && updatedTick == dragon.tickCount) {
+            return direction;
+        }
+        Vec3 aimPoint;
+        var learning = DragonCombatLearner.get(dragon);
+        if (learning != null) {
+            aimPoint = learning.predictCenter(target, profile.leadTicks(), 2.0D);
+        } else {
+            Vec3 lead = target.getDeltaMovement().scale(profile.leadTicks());
+            if (lead.lengthSqr() > 4.0D) lead = lead.normalize().scale(2.0D);
+            aimPoint = target.getEyePosition().add(0, -0.25D, 0).add(lead);
+        }
+        return trackPoint(target, origin, profile, aimPoint == null ? null : aimPoint.add(aimOffset));
+    }
+
+    // Projectile abilities supply their own travel-time and gravity-compensated aim point.
+    public @Nullable Vec3 trackPoint(LivingEntity target, Vec3 origin, Profile profile,
+                                    @Nullable Vec3 aimPoint) {
         if (!canControl() || target == null || !dragon.isTargetValid(target)) {
             clear();
             return null;
@@ -53,19 +79,9 @@ public final class DragonCombatAim {
         this.profile = profile;
         if (!changed && updatedTick == dragon.tickCount) return direction;
         updatedTick = dragon.tickCount;
-        // A short, bounded lead compensates tracking lag without predicting a long hitscan flight time.
-        Vec3 aimPoint;
         var learning = DragonCombatLearner.get(dragon);
-        if (learning != null) {
-            // Hitscan uses zero flight-time lead. Longer intercepts belong to the movement planner.
-            aimPoint = learning.predictCenter(target, profile.leadTicks(), 2.0D);
-            // Hold the last aim during lost sight; reaction grace must not become wall tracking.
-            if (aimPoint == null) return direction;
-        } else {
-            Vec3 lead = target.getDeltaMovement().scale(profile.leadTicks());
-            if (lead.lengthSqr() > 4.0D) lead = lead.normalize().scale(2.0D);
-            aimPoint = target.getEyePosition().add(0, -0.25D, 0).add(lead);
-        }
+        // Hold the last aim during lost sight; reaction grace must not become wall tracking.
+        if (aimPoint == null || learning != null && !learning.hasVisibleObservation(target)) return direction;
         Vec3 wanted = DragonAimHelper.directionTo(origin, aimPoint);
         if (wanted == null) return direction;
         desired = wanted;
@@ -173,6 +189,22 @@ public final class DragonCombatAim {
 
     public boolean ready(int ticks) {
         return isActive() && shot == Shot.ALIGNED && alignedTicks >= ticks;
+    }
+
+    public Shot assessDirection(@Nullable Vec3 wanted, double toleranceDegrees) {
+        if (!isActive() || wanted == null) return recordShot(Shot.NO_TARGET);
+        var learning = DragonCombatLearner.get(dragon);
+        if (learning != null && !learning.hasVisibleObservation(target)) return recordShot(Shot.BLOCKED);
+        Vec3 normalized = DragonAimHelper.normalizeOrNull(wanted);
+        if (normalized == null) return recordShot(Shot.NO_TARGET);
+        float bodyPitch = dragon.isAerial()
+                ? -DragonFlightVisuals.computeAiPitchTarget(dragon.getDeltaMovement()) * Mth.RAD_TO_DEG : 0.0F;
+        if (Math.abs(Mth.wrapDegrees(yaw(normalized) - dragon.yBodyRot)) > profile.yawLimit()
+                || Math.abs(pitch(normalized) - bodyPitch) > profile.pitchLimit()) {
+            return recordShot(Shot.OUT_OF_ARC);
+        }
+        return recordShot(direction.dot(normalized) >= Math.cos(Math.toRadians(toleranceDegrees))
+                ? Shot.ALIGNED : Shot.ALIGNING);
     }
 
     public DragonFlightRequest firingApproach(LivingEntity target, double maximumSpeed,

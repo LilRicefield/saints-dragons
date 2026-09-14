@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.effect.ignivorus;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
@@ -58,6 +59,8 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     private int lifetimeTicks;
     private int livedTicks;
     private double distanceTravelled;
+    private long learningTrial;
+    private double learningExpectedDistance;
 
     private static final double STAGE_ONE_STRAIGHT_DISTANCE = 25.0D;
     private static final double STAGE_TWO_STRAIGHT_DISTANCE = 50.0D;
@@ -111,6 +114,17 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
         return this.entityData.get(DATA_SCALE);
     }
 
+    public void trackCombatResult(long token, double expectedDistance) {
+        learningTrial = token;
+        learningExpectedDistance = expectedDistance;
+    }
+
+    public static Vec3 motionForTick(Vec3 motion, double travelled, float scale) {
+        double straightDistance = scale >= 8.0F ? STAGE_THREE_STRAIGHT_DISTANCE
+                : scale >= 6.0F ? STAGE_TWO_STRAIGHT_DISTANCE : STAGE_ONE_STRAIGHT_DISTANCE;
+        return travelled >= straightDistance ? motion.add(0, -FIREBALL_GRAVITY, 0) : motion;
+    }
+
     @Override
     public void tick() {
 
@@ -120,11 +134,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
         }
         livedTicks++;
 
-        double straightDistance = getVisualScale() >= 8.0F ? STAGE_THREE_STRAIGHT_DISTANCE
-                : getVisualScale() >= 6.0F ? STAGE_TWO_STRAIGHT_DISTANCE : STAGE_ONE_STRAIGHT_DISTANCE;
-        if (distanceTravelled >= straightDistance) {
-            setDeltaMovement(getDeltaMovement().add(0.0D, -FIREBALL_GRAVITY, 0.0D));
-        }
+        setDeltaMovement(motionForTick(getDeltaMovement(), distanceTravelled, getVisualScale()));
         Vec3 currentPos = this.position();
         Vec3 motion = this.getDeltaMovement();
         Vec3 nextPos = currentPos.add(motion);
@@ -263,11 +273,18 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
         List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area,
                 target -> target.isAlive()
                         && target != owner
-                        && (owner == null || !owner.isAlly(target))
-                        && !DragonElementalImmunity.isFireImmune(target));
+                        && (owner == null || !owner.isAlly(target)));
 
         for (LivingEntity target : hits) {
-            target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);
+            if (DragonElementalImmunity.isFireImmune(target)) {
+                if (owner != null) owner.getCombatLearning().recordContact(learningTrial, target);
+                continue;
+            }
+            boolean damaged = target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);
+            if (owner != null) {
+                if (damaged) owner.getCombatLearning().recordHit(learningTrial, target);
+                else owner.getCombatLearning().recordContact(learningTrial, target);
+            }
             target.setSecondsOnFire((int)(4 * scale));
 
             // Knockback for larger explosions - stronger for max charge
@@ -281,6 +298,13 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
 
         if (allowGriefing) {
             igniteArea(server, impactPos);
+        }
+        if (owner != null && learningTrial != 0) {
+            // An early collision prevented the intended shot; a hit still counts through either outcome.
+            owner.getCombatLearning().finishAttack(learningTrial,
+                    distanceTravelled + impactRadius < learningExpectedDistance
+                            ? DragonCombatLearning.Outcome.BLOCKED : DragonCombatLearning.Outcome.COMPLETED);
+            learningTrial = 0;
         }
         discard();
     }

@@ -774,6 +774,7 @@ public final class DragonPathDebugTracker {
         if (dragon instanceof Ignivorus ignivorus) {
             summary.append(",ignivorus={phase=").append(ignivorus.getAiPhaseDecision())
                     .append(",breath=").append(ignivorus.getAiFireBreathDecision())
+                    .append(",fireball=").append(ignivorus.getAiFireballDecision())
                     .append(",energy=").append(Mth.floor(ignivorus.getFireBreathEnergy() * 100.0F))
                     .append(",breathReady=").append(ignivorus.isAiAirBreathReady()).append('}');
         }

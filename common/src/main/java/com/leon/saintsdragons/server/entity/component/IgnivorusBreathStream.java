@@ -32,6 +32,9 @@ public final class IgnivorusBreathStream {
 
     private static final class FireSection {
         boolean breaking;
+        final long learningTrial;
+
+        FireSection(long learningTrial) { this.learningTrial = learningTrial; }
     }
     private final IgnivorusBreathTerrain terrain = new IgnivorusBreathTerrain();
     private final Map<BlockPos, Long> recentImpacts = new HashMap<>();
@@ -42,13 +45,17 @@ public final class IgnivorusBreathStream {
     }
 
     public void emit(Vec3 origin, Vec3 direction, boolean canBreakBlocks) {
+        emit(origin, direction, canBreakBlocks, 0);
+    }
+
+    public void emit(Vec3 origin, Vec3 direction, boolean canBreakBlocks, long learningTrial) {
         if (!(dragon.level() instanceof ServerLevel level) || !dragon.isAlive()
                 || lastEmissionTick == dragon.tickCount || direction.lengthSqr() < 1.0E-8) return;
         lastEmissionTick = dragon.tickCount;
         Vec3 velocity = direction.normalize().scale(ExpandingBreathSection.DEFAULT_SPEED);
         ExpandingBreathSection section = new ExpandingBreathSection(origin, velocity,
                 ExpandingBreathSection.DEFAULT_RANGE);
-        stream.emit(section, new FireSection());
+        stream.emit(section, new FireSection(learningTrial));
         // At the six-second mark, fire already in flight becomes destructive too.
         if (canBreakBlocks) stream.forEachPayload(payload -> payload.breaking = true);
 
@@ -92,11 +99,17 @@ public final class IgnivorusBreathStream {
         Map<BlockPos, BlockState> blockHits = new LinkedHashMap<>();
         Set<BlockPos> cookingHits = new HashSet<>();
         stream.tick(level, (payload, target) -> canHit(target), (payload, target, sweep) -> {
+            if (DragonElementalImmunity.isFireImmune(target)) {
+                dragon.getCombatLearning().recordContact(payload.learningTrial, target);
+                return false;
+            }
             // Preserve vanilla hurt immunity, shields, armor and damage-event cancellation.
             if (damage > 0 && target.hurt(level.damageSources().mobAttack(dragon), damage)) {
+                dragon.getCombatLearning().recordHit(payload.learningTrial, target);
                 target.setSecondsOnFire(3);
                 return true;
             }
+            dragon.getCombatLearning().recordContact(payload.learningTrial, target);
             return false;
         }, (payload, sweep) -> {
             Vec3 impact = sweep.blockImpact();
@@ -124,8 +137,7 @@ public final class IgnivorusBreathStream {
         return target.isAlive() && !target.isRemoved() && target != dragon
                 && !dragon.hasIndirectPassenger(target) && !dragon.isAlly(target)
                 && !(target instanceof Ignivorus baby && baby.isBaby())
-                && !(target instanceof Player player && (player.isCreative() || player.isSpectator()))
-                && !DragonElementalImmunity.isFireImmune(target);
+                && !(target instanceof Player player && (player.isCreative() || player.isSpectator()));
     }
 
     public void clear() {

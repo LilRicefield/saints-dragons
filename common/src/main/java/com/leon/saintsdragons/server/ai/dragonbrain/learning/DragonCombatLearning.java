@@ -60,6 +60,7 @@ public final class DragonCombatLearning {
     private double motionConfidence;
     private long nextToken;
     private Trial trial;
+    private final LinkedHashMap<Long, PendingResult> pendingResults = new LinkedHashMap<>();
     private String lastResult = "none";
 
     public DragonCombatLearning(DragonEntity dragon, Profile profile) {
@@ -87,8 +88,16 @@ public final class DragonCombatLearning {
             clear();
             return;
         }
+        for (var iterator = pendingResults.values().iterator(); iterator.hasNext();) {
+            PendingResult pending = iterator.next();
+            if (!canSee || target == null || target != dragon.getTarget()
+                    || !pending.trial.target.equals(target.getUUID())) pending.trial.obscured = true;
+            if (now >= pending.deadline) {
+                iterator.remove();
+                finishTrial(pending.trial, pending.outcome);
+            }
+        }
         if (target == null || target != dragon.getTarget() || !dragon.isTargetValid(target)) {
-            if (target != null && !target.isAlive()) targets.remove(target.getUUID());
             resetTracking();
             return;
         }
@@ -118,7 +127,8 @@ public final class DragonCombatLearning {
         }
         boolean anchorChanged = !anchor.getUUID().equals(movementAnchor);
         if (anchorChanged) {
-            trial = null;
+            if (trial != null) finishAttack(trial.token, Outcome.CANCELLED);
+            pendingResults.values().forEach(pending -> pending.trial.obscured = true);
             resetMotion();
             movementAnchor = anchor.getUUID();
         }
@@ -129,7 +139,8 @@ public final class DragonCombatLearning {
         } else {
             Vec3 measured = observed.subtract(position).scale(1.0D / Math.max(1, elapsed));
             if (measured.length() > profile.maximumObservedSpeed()) {
-                trial = null;
+                if (trial != null) finishAttack(trial.token, Outcome.CANCELLED);
+                pendingResults.values().forEach(pending -> pending.trial.obscured = true);
                 resetMotion();
             } else {
                 double error = measured.subtract(velocity).length();
@@ -192,17 +203,47 @@ public final class DragonCombatLearning {
     }
 
     public void recordHit(long token, LivingEntity target) {
-        if (matches(token) && trial.target.equals(target.getUUID()) && available()) trial.hit = true;
+        Trial attack = findTrial(token);
+        if (attack != null && target != null && attack.target.equals(target.getUUID()) && available()) attack.hit = true;
     }
 
     public void recordContact(long token) {
-        if (matches(token)) trial.contact = true;
+        Trial attack = findTrial(token);
+        if (attack != null) attack.contact = true;
+    }
+
+    public void recordContact(long token, LivingEntity target) {
+        Trial attack = findTrial(token);
+        if (attack != null && target != null && attack.target.equals(target.getUUID())) attack.contact = true;
+    }
+
+    public void deferAttackResult(long token, Outcome outcome, int waitTicks) {
+        if (!matches(token)) return;
+        captureResponse(trial);
+        pendingResults.put(token, new PendingResult(trial, outcome, now() + Mth.clamp(waitTicks, 1, 240)));
+        trial = null;
+        // A released stream or projectile can outlive its ability, including another attack starting.
+        while (pendingResults.size() > 4) {
+            finishAttack(pendingResults.keySet().iterator().next(), Outcome.CANCELLED);
+        }
+    }
+
+    private @Nullable Trial findTrial(long token) {
+        if (token == 0) return null;
+        if (matches(token)) return trial;
+        PendingResult pending = pendingResults.get(token);
+        return pending == null ? null : pending.trial;
     }
 
     public void finishAttack(long token, Outcome outcome) {
-        if (!matches(token)) return;
-        Trial ended = trial;
-        trial = null;
+        Trial ended = findTrial(token);
+        if (ended == null) return;
+        if (matches(token)) trial = null;
+        else pendingResults.remove(token);
+        finishTrial(ended, outcome);
+    }
+
+    private void finishTrial(Trial ended, Outcome outcome) {
         if (!available()) return;
         captureResponse(ended);
         if (outcome == Outcome.CANCELLED && !ended.hit) {
@@ -263,11 +304,11 @@ public final class DragonCombatLearning {
         LivingEntity target = dragon.getTarget();
         Expectation expectation = expectation(target, primaryAttack(), dragon.isAerial());
         return String.format(Locale.ROOT,
-                "sight=%s,samples=%d,motion=%.2f,targets=%d,attack=%s,expected=%s:%.2f,trials=%d,success=%.2f,outcomes=%d,prediction=%.2f/%d,last=%s",
+                "sight=%s,samples=%d,motion=%.2f,targets=%d,attack=%s,expected=%s:%.2f,trials=%d,success=%.2f,outcomes=%d,prediction=%.2f/%d,pending=%d,last=%s",
                 hasVisibleObservation(target), samples, motionConfidence, targets.size(), primaryAttack(),
                 expectation.response(), expectation.confidence(),
                 expectation.observations(), expectation.successRate(), expectation.outcomes(),
-                expectation.predictionAccuracy(), expectation.predictions(), lastResult);
+                expectation.predictionAccuracy(), expectation.predictions(), pendingResults.size(), lastResult);
     }
 
     private void resetMotion() {
@@ -279,6 +320,7 @@ public final class DragonCombatLearning {
     }
 
     private void resetTracking() {
+        if (trial != null) finishAttack(trial.token, Outcome.CANCELLED);
         currentTarget = movementAnchor = null;
         visible = false;
         trial = null;
@@ -287,6 +329,7 @@ public final class DragonCombatLearning {
 
     public void clear() {
         targets.clear();
+        pendingResults.clear();
         resetTracking();
         lastResult = "none";
     }
@@ -294,6 +337,8 @@ public final class DragonCombatLearning {
     private static boolean finite(Vec3 value) {
         return Double.isFinite(value.x) && Double.isFinite(value.y) && Double.isFinite(value.z);
     }
+
+    private record PendingResult(Trial trial, Outcome outcome, long deadline) { }
 
     private static final class TargetMemory {
         long lastSeen;

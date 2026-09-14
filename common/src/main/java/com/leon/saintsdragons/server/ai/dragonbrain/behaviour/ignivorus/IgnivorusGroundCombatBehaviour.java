@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -61,7 +62,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
                         && dragon.combatManager.canStart(ModAbilities.IGNIVORUS_FIREBALL)
                         && dragon.getAiCombatPacing().canUse(ModAbilities.IGNIVORUS_FIREBALL, true))
                     && dragon.hasAiFireballShot(target, 64.0D);
-            if (breathReady || fireballReady) gap = 22.0D;
+            if (breathReady || fireballReady) gap = 22.0D + (breathReady ? dragon.getAiBreathSpacingBonus(target) : 0);
         }
         return gap + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
     }
@@ -302,7 +303,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
 
         dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
-        if (fireballMode == FireballMode.STATIONARY) {
+        if (fireball.updateAiAim().needsAlignment() || fireballMode == FireballMode.STATIONARY) {
             stopMovement("ignivorus-combat:stationary-fireball");
         }
 
@@ -469,6 +470,13 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
         if (!eligible || score < MIN_ABILITY_SCORE) {
             return current;
         }
+        DragonCombatLearning.Attack learnedAttack = switch (action) {
+            case FIRE_BREATH -> DragonCombatLearning.Attack.BREATH;
+            case FIREBALL -> DragonCombatLearning.Attack.PROJECTILE;
+            default -> null;
+        };
+        if (learnedAttack != null) score *= dragon.getCombatLearning()
+                .expectation(dragon.getTarget(), learnedAttack, false).attackWeight();
         if (action == lastAction) {
             score -= 28.0D;
         } else if (action == previousAction) {

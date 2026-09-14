@@ -22,9 +22,12 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -37,6 +40,7 @@ import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
 import com.leon.saintsdragons.server.flight.DragonRiderFlight;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
@@ -114,7 +118,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
-        PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon {
+        PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon, DragonCombatLearner {
     private static final IgnivorusBrain DRAGON_BRAIN = new IgnivorusBrain();
     private static final ResourceKey<Structure> IGNIVORUS_ROOST_STRUCTURE = ResourceKey.create(
             Registries.STRUCTURE,
@@ -328,6 +332,23 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     public int groundTicks;
     private Vec3 fireAimDir;
     private String aiFireBreathDecision = "idle";
+    private String aiFireballDecision = "idle";
+    private final DragonCombatLearning combatLearning = new DragonCombatLearning(this,
+            new DragonCombatLearning.Profile(DragonCombatLearning.Attack.BREATH, 2, 1200, 4, 6.0D, 20.0D, 12.0D));
+
+    @Override
+    public DragonCombatLearning getCombatLearning() { return combatLearning; }
+
+    @Override
+    public boolean canLearnCombat() { return !isTamingStunned(); }
+
+    public double getAiBreathSpacingBonus(LivingEntity target) {
+        return combatLearning.expectation(target, DragonCombatLearning.Attack.BREATH, isAerial()).spacingBonus() * 0.75D;
+    }
+
+    public String getAiFireballDecision() { return aiFireballDecision; }
+
+    public void setAiFireballDecision(String decision) { aiFireballDecision = decision; }
     private final IgnivorusBreathStream fireBreathStream = new IgnivorusBreathStream(this);
     private int fireTime = 0;
     private Vec3 fireServerTarget = null;
@@ -2392,6 +2413,8 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public DragonCombatAim.Shot getAiFireBreathShot(LivingEntity target, double range) {
+        // Readiness probes must not replace an active fireball's ballistic aim with breath aim.
+        if (isAbilityActive(ModAbilities.IGNIVORUS_FIREBALL)) return DragonCombatAim.Shot.NO_TARGET;
         Vec3 origin = getFireBreathStartAnchor(1.0F);
         if (origin == null || target == null) return DragonCombatAim.Shot.NO_TARGET;
         Vec3 direction = refreshFireAimDirection(origin, true);
@@ -2461,7 +2484,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public void emitFireBreathSection(Vec3 origin, Vec3 direction, boolean canBreakBlocks) {
-        fireBreathStream.emit(origin, direction, canBreakBlocks);
+        emitFireBreathSection(origin, direction, canBreakBlocks, 0);
+    }
+
+    public void emitFireBreathSection(Vec3 origin, Vec3 direction, boolean canBreakBlocks, long learningTrial) {
+        fireBreathStream.emit(origin, direction, canBreakBlocks, learningTrial);
     }
 
     public void clearFireBreathPath() {
@@ -2573,7 +2600,11 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     public Vec3 refreshFireAimDirection(Vec3 start, boolean smooth) {
         if (!level().isClientSide && getControllingPassenger() == null && isTargetValid(getTarget())) {
-            fireAimDir = getCombatAim().track(getTarget(), start, isAerial() ? AIR_FIRE_AIM : DragonCombatAim.FIRE);
+            DragonAbility<?> active = getActiveAbility();
+            Vec3 aimOffset = active instanceof IgnivorusFireBreathAbility breath
+                    ? breath.getLearnedAimOffset() : Vec3.ZERO;
+            fireAimDir = getCombatAim().track(getTarget(), start,
+                    isAerial() ? AIR_FIRE_AIM : DragonCombatAim.FIRE, aimOffset);
             return fireAimDir;
         }
         Vec3 desired = computeRawFireAimDirection(start);
@@ -2611,7 +2642,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return DragonAimHelper.fallbackHeadDirection(this);
     }
 
-    private Vec3 clampFireDirection(Vec3 desiredDir) {
+    public Vec3 clampFireDirection(Vec3 desiredDir) {
         return DragonAimHelper.clampDirectionToHead(
                 desiredDir,
                 this.yHeadRot,

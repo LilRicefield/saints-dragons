@@ -6,11 +6,15 @@ import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AirCombatMovementBehaviour;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
+import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -36,6 +40,7 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
     private long nextAttackDecision;
     private long nextApproach;
     private long routeIssuedAt;
+    private long nextFireballRoute;
     private String lastDecision = "idle";
     @Nullable private Vec3 routeTarget;
     @Nullable private Vec3 approachAnchor;
@@ -85,7 +90,7 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
             return;
         }
         if (dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIREBALL)) {
-            lastDecision = "fireball:measured-approach";
+            tickFireballPass(context, target, hasLineOfSight);
             return;
         }
         if (phase == AirPhase.BREATH_PASS || phase == AirPhase.FIREBALL_PASS) {
@@ -141,7 +146,7 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
     private void tickChase(DragonBrainContext<Ignivorus> context, LivingEntity target, boolean visible) {
         Ignivorus dragon = context.dragon();
         double gap = bodyGap(dragon, target);
-        if (visible && dragon.shouldFavorRangedCombat(target) && gap < 10.0D
+        if (visible && dragon.shouldFavorRangedCombat(target) && gap < 10.0D + dragon.getAiBreathSpacingBonus(target)
                 && dragon.level().getGameTime() >= nextApproach && rangedReady(dragon, target)) {
             nextApproach = dragon.level().getGameTime() + 20;
             enterEgress(context, target, "make-firing-space");
@@ -189,8 +194,17 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         Ignivorus dragon = context.dragon();
         Vec3 radial = horizontal(dragon.position().subtract(targetCenter(target)), dragon);
         Vec3 tangent = new Vec3(-radial.z, 0, radial.x).scale(attackSide);
+        var expectation = dragon.getCombatLearning().expectation(target, DragonCombatLearning.Attack.BREATH, true);
+        double learnedSide = switch (expectation.response()) {
+            case LEFT -> 4.0D * expectation.confidence();
+            case RIGHT -> -4.0D * expectation.confidence();
+            default -> 0.0D;
+        };
+        Vec3 attackForward = radial.scale(-1);
+        Vec3 learnedOffset = new Vec3(-attackForward.z, 0, attackForward.x).scale(learnedSide);
         Vec3 destination = attackPosition(dragon, target, predictedFeet(dragon, target, 4)
-                .add(radial.scale(30 + dragon.getBbWidth() * 0.5D)).add(tangent.scale(12)), 14);
+                .add(radial.scale(30 + dragon.getBbWidth() * 0.5D + dragon.getAiBreathSpacingBonus(target)))
+                .add(tangent.scale(12)).add(learnedOffset), 14);
         if (destination == null) {
             deferApproach(dragon);
             enterEgress(context, target, "no-firing-space");
@@ -223,11 +237,19 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
             boolean favorRanged = dragon.shouldFavorRangedCombat(target);
             boolean fireballReady = canUseAirFireball(dragon, target)
                     && dragon.hasAiFireballShot(target, 64);
-            if (fireballReady && (!breathReady || dragon.getRandom().nextFloat() < (favorRanged ? 0.50F : 0.35F))
+            double fireballWeight = dragon.getCombatLearning()
+                    .expectation(target, DragonCombatLearning.Attack.PROJECTILE, true).attackWeight();
+            double breathWeight = dragon.getCombatLearning()
+                    .expectation(target, DragonCombatLearning.Attack.BREATH, true).attackWeight();
+            double baseChance = favorRanged ? 0.50D : 0.35D;
+            double fireballChance = baseChance * fireballWeight
+                    / (baseChance * fireballWeight + (1.0D - baseChance) * breathWeight);
+            if (fireballReady && (!breathReady || dragon.getRandom().nextFloat() < fireballChance)
                     && dragon.combatManager.tryUseAiAbility(ModAbilities.IGNIVORUS_FIREBALL,
                     true, 12, favorRanged ? 240 : 400, 60, 80)) {
                 phase = AirPhase.FIREBALL_PASS;
                 phaseTicks = 0;
+                nextFireballRoute = 0;
                 dragon.getCombatFlightState().holdFlightFor(60);
                 lastDecision = favorRanged ? "fireball:ground-target-opening" : "fireball:phase2-opening";
                 return;
@@ -263,6 +285,52 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         lastDecision = "breath:committed-pass";
     }
 
+    private void tickFireballPass(DragonBrainContext<Ignivorus> context, LivingEntity target, boolean visible) {
+        Ignivorus dragon = context.dragon();
+        DragonAbility<?> active = dragon.getActiveAbility();
+        if (!(active instanceof IgnivorusFireballAbility fireball)) return;
+        if (phase != AirPhase.FIREBALL_PASS) {
+            phase = AirPhase.FIREBALL_PASS;
+            phaseTicks = 0;
+            nextFireballRoute = 0;
+        }
+        DragonCombatAim.Shot shot = fireball.updateAiAim();
+        dragon.getCombatFlightState().holdFlightFor(20);
+        if (!visible) {
+            lastDecision = "fireball:hold-last-course";
+            return;
+        }
+        long now = dragon.level().getGameTime();
+        if (now >= nextFireballRoute) {
+            nextFireballRoute = now + 10;
+            Vec3 toward = horizontal(targetCenter(target).subtract(dragon.position()), dragon);
+            Vec3 heading = horizontal(dragon.getDeltaMovement().horizontalDistanceSqr() > 0.04D
+                    ? dragon.getDeltaMovement() : Vec3.directionFromRotation(0, dragon.yBodyRot), dragon);
+            boolean turnAround = heading.dot(toward) < 0;
+            Vec3 destination = turnAround
+                    ? dragon.position().add(DragonAimHelper.turnDirection(heading, toward, 45).scale(22))
+                    : dragon.getCombatAim().firingApproach(target, APPROACH_SPEED,
+                            28 + dragon.getBbWidth() * 0.5D, attackSide * 6).target();
+            destination = attackPosition(dragon, target, destination, 14);
+            if (destination == null) {
+                fireball.cancelAiCast("no-alignment-space");
+                enterEgress(context, target, "fireball:no-alignment-space");
+                return;
+            }
+            issueRoute(context, destination, APPROACH_SPEED, DragonFlightRequest.Arrival.BRAKE);
+        }
+        if (routeFailed(dragon)) {
+            fireball.cancelAiCast("alignment-route-blocked");
+            enterEgress(context, target, "fireball:alignment-route-blocked");
+            return;
+        }
+        double speed = Math.min(APPROACH_SPEED,
+                (shot.needsAlignment() ? 0.4D : 0.65D) / Math.max(0.01D, dragon.getFlightSpeed()));
+        context.memories().set(DragonMemories.MOVEMENT_INTENT,
+                DragonMovementIntent.flight(DragonFlightRequest.track(routeTarget, speed, 3)));
+        lastDecision = "fireball:" + shot.reason();
+    }
+
     private void tickBreathPass(DragonBrainContext<Ignivorus> context, LivingEntity target) {
         Ignivorus dragon = context.dragon();
         Vec3 offset = targetCenter(target).subtract(dragon.getBoundingBox().getCenter());
@@ -272,8 +340,8 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
                 : runDirection != null && offset.dot(runDirection) < -6 ? "passed-target"
                 : reachedRoute(dragon) || phaseTicks >= 170 ? "pass-complete" : null;
         if (stop != null) {
-            dragon.setAiFireBreathDecision(stop);
-            dragon.forceEndAbility(ModAbilities.IGNIVORUS_FIRE_BREATH);
+            DragonAbility<?> active = dragon.getActiveAbility();
+            if (active instanceof IgnivorusFireBreathAbility breath) breath.finishAiPass(stop);
             enterEgress(context, target, stop);
         } else {
             lastDecision = "breath:committed-pass";
@@ -382,6 +450,13 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
     }
 
     private Vec3 predictedFeet(Ignivorus dragon, LivingEntity target, double ticks) {
+        Vec3 prediction = dragon.getCombatLearning().predictCenter(target, ticks, 12);
+        if (prediction != null) {
+            if (!dragon.getCombatFlightState().targetNeedsFlight()) {
+                prediction = new Vec3(prediction.x, targetCenter(target).y, prediction.z);
+            }
+            return prediction.add(0, -dragon.getBbHeight() * 0.5D, 0);
+        }
         Vec3 velocity = dragon.getCombatFlightState().targetVelocity();
         if (!dragon.getCombatFlightState().targetNeedsFlight()) velocity = velocity.multiply(1, 0, 1);
         Vec3 lead = velocity.scale(ticks);

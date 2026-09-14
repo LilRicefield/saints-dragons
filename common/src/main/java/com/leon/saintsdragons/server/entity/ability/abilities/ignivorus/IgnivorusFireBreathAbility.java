@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.common.particle.FireBreathBurstData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -45,6 +46,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private boolean openingBurstEmitted = false;
     private boolean aiControlled;
     private int aiActiveTicks;
+    private long learningTrial;
+    private int learningFiringTicks;
+    private DragonCombatLearning.Outcome learningOutcome = DragonCombatLearning.Outcome.CANCELLED;
+    private Vec3 learnedAimOffset = Vec3.ZERO;
     private final DragonCombatAim.ShotGrace shotGrace = new DragonCombatAim.ShotGrace();
     private static final double AI_START_GAP = 10.0D;
     private static final double AI_STOP_GAP = 6.0D;
@@ -66,6 +71,10 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             aiControlled = dragon.getControllingPassenger() == null;
             aiActiveTicks = aiControlled ? 80 + dragon.getRandom().nextInt(81) : RIDER_ACTIVE_TICKS;
             shotGrace.reset();
+            learningTrial = 0;
+            learningFiringTicks = 0;
+            learningOutcome = DragonCombatLearning.Outcome.CANCELLED;
+            learnedAimOffset = Vec3.ZERO;
             if (aiControlled) dragon.setAiFireBreathDecision("windup");
         }
         if (!dragon.level().isClientSide && aiControlled && !canContinueAiBreath(false)) {
@@ -79,6 +88,22 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                 return;
             }
             breathStartPlayed = true;
+            if (aiControlled && !dragon.level().isClientSide) {
+                LivingEntity target = dragon.getTarget();
+                learningTrial = dragon.getCombatLearning().beginAttack(DragonCombatLearning.Attack.BREATH,
+                        target, STARTUP_TICKS);
+                var expectation = dragon.getCombatLearning().expectation(target,
+                        DragonCombatLearning.Attack.BREATH, dragon.isAerial());
+                double side = switch (expectation.response()) {
+                    case LEFT -> 1.0D;
+                    case RIGHT -> -1.0D;
+                    default -> 0.0D;
+                };
+                if (side != 0 && expectation.confidence() > 0 && target != null) {
+                    Vec3 forward = target.position().subtract(dragon.position()).multiply(1, 0, 1).normalize();
+                    learnedAimOffset = new Vec3(-forward.z, 0, forward.x).scale(side * 2.0D * expectation.confidence());
+                }
+            }
             breathLoopActive = false;
             dragon.setBreathingFire(false);
             dragon.setFireBreathProgress(0);
@@ -90,6 +115,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             }
 
         } else if (section.sectionType == ACTIVE) {
+            dragon.getCombatLearning().releaseAttack(learningTrial);
             openingBurstEmitted = false;
             if (aiControlled) dragon.setAiFireBreathDecision("breathing");
             dragon.setBreathingFire(true);
@@ -106,7 +132,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
         if (section.sectionType == ACTIVE) {
             Ignivorus dragon = getUser();
-            if (aiControlled) dragon.setAiFireBreathDecision("burst-complete");
+            if (aiControlled) stopAiBreath("burst-complete");
             dragon.setBreathingFire(false);
             dragon.clearFireBreathPath();
             triggerBreathStop(dragon);
@@ -126,6 +152,14 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     @Override
     public void end() {
         Ignivorus dragon = getUser();
+        if (learningTrial != 0) {
+            if (learningFiringTicks > 0) {
+                dragon.getCombatLearning().deferAttackResult(learningTrial, learningOutcome,
+                        ExpandingBreathSection.MAX_TICKS + 1);
+            } else dragon.getCombatLearning().finishAttack(learningTrial, learningOutcome);
+            learningTrial = 0;
+        }
+        learnedAimOffset = Vec3.ZERO;
         dragon.getCombatAim().clear();
         if (isUsing() && aiControlled && !dragon.level().isClientSide) {
             // Shared across ground/air combat, and measured from completion or cancellation.
@@ -174,7 +208,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
                     .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID)
                     .extraDouble("fire_breath_drain_per_tick", DEFAULT_FIRE_BREATH_DRAIN_PER_TICK);
             if (dragon.isFireBreathDepleted() || dragon.getFireBreathEnergy() <= 0) {
-                if (aiControlled) dragon.setAiFireBreathDecision("energy-depleted");
+                if (aiControlled) stopAiBreath("energy-depleted");
                 interrupt();
                 return;
             }
@@ -197,7 +231,8 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             return;
         }
         dragon.syncFireBreathPath(origin, origin.add(aim.normalize().scale(ExpandingBreathSection.DEFAULT_RANGE)));
-        dragon.emitFireBreathSection(origin, aim, getTicksInSection() >= BLOCK_BREAK_START_TICKS);
+        dragon.emitFireBreathSection(origin, aim, getTicksInSection() >= BLOCK_BREAK_START_TICKS, learningTrial);
+        if (!dragon.level().isClientSide) learningFiringTicks++;
         if (!openingBurstEmitted && dragon.level() instanceof ServerLevel level) {
             openingBurstEmitted = true;
             for (ServerPlayer viewer : level.players()) {
@@ -212,7 +247,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     public static boolean canStartAiBreath(Ignivorus dragon, LivingEntity target) {
         return isValidTarget(target) && dragon.isTargetValid(target)
                 && dragon.canUseFireBreath() && dragon.getFireBreathEnergy() >= 0.4F
-                && bodyGap(dragon, target) >= AI_START_GAP
+                && bodyGap(dragon, target) >= AI_START_GAP + dragon.getAiBreathSpacingBonus(target)
                 && dragon.hasAiFireBreathShot(target, ExpandingBreathSection.DEFAULT_RANGE * 0.85D);
     }
 
@@ -235,9 +270,24 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     }
 
     private boolean stopAiBreath(String reason) {
+        learningOutcome = switch (reason) {
+            case "blocked", "blocked-pass" -> DragonCombatLearning.Outcome.BLOCKED;
+            case "close-melee", "target-underneath", "burst-complete", "passed-target", "pass-complete",
+                    "energy-depleted", "aligning", "out_of_arc", "out_of_range"
+                    -> learningFiringTicks >= 10 ? DragonCombatLearning.Outcome.COMPLETED
+                    : DragonCombatLearning.Outcome.RESPONSE_ONLY;
+            default -> DragonCombatLearning.Outcome.CANCELLED;
+        };
         getUser().setAiFireBreathDecision(reason);
         return false;
     }
+
+    public void finishAiPass(String reason) {
+        stopAiBreath(reason);
+        getUser().forceEndAbility(getAbilityType());
+    }
+
+    public Vec3 getLearnedAimOffset() { return learnedAimOffset; }
 
     private static double bodyGap(Ignivorus dragon, LivingEntity target) {
         return Math.max(0.0D, dragon.distanceTo(target) - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D);
