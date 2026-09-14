@@ -17,7 +17,7 @@ public abstract class IgnivorusSkyfallSphereRenderer extends RenderType {
             DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 16384, false, true,
             CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
-                    .setTextureState(new TextureStateShard(SaintsDragonsCommon.rl("textures/particle/blank.png"), false, false))
+                    .setTextureState(new TextureStateShard(SaintsDragonsCommon.rl("textures/particle/shared/misc/blank.png"), false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                     .setCullState(NO_CULL)
                     .setDepthTestState(LEQUAL_DEPTH_TEST)

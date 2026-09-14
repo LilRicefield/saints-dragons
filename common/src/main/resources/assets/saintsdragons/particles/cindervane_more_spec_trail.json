@@ -1,15 +1,15 @@
 {
   "textures": [
-    "saintsdragons:more_fire_specs0",
-    "saintsdragons:more_fire_specs1",
-    "saintsdragons:more_fire_specs2",
-    "saintsdragons:more_fire_specs3",
-    "saintsdragons:more_fire_specs4",
-    "saintsdragons:more_fire_specs5",
-    "saintsdragons:more_fire_specs6",
-    "saintsdragons:more_fire_specs7",
-    "saintsdragons:more_fire_specs8",
-    "saintsdragons:more_fire_specs9",
-    "saintsdragons:more_fire_specs10"
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs0",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs1",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs2",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs3",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs4",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs5",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs6",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs7",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs8",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs9",
+    "saintsdragons:shared/fire/more_fire_specs/more_fire_specs10"
   ]
 }

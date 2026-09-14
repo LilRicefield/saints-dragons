@@ -10,11 +10,11 @@ import software.bernie.geckolib.model.GeoModel;
 import software.bernie.geckolib.model.data.EntityModelData;
 
 public class WingedModel extends GeoModel<Winged> {
-    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/winged.geo.json");
+    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/entity/draconian_swarm/winged/winged.geo.json");
     private static final ResourceLocation TEXTURE =
             SaintsDragonsCommon.rl("textures/entity/draconian_swarm/winged/winged.png");
     private static final ResourceLocation ANIMATIONS =
-            SaintsDragonsCommon.rl("animations/entity/winged.animation.json");
+            SaintsDragonsCommon.rl("animations/entity/draconian_swarm/winged/winged.animation.json");
 
     @Override
     public ResourceLocation getModelResource(Winged animatable) {

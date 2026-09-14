@@ -13,13 +13,13 @@ public final class RaevyxBeamLightningRenderer {
     private static final float RIBBON_TEXTURE_CYCLES = 2.0F;
     private static final float OBSERVER_RIBBON_WIDTH_SCALE = 1.5F;
     private static final ResourceLocation LIGHTNING_BEAM_TEXTURE =
-            SaintsDragonsCommon.rl("textures/particle/lightning_beam.png");
+            SaintsDragonsCommon.rl("textures/particle/raevyx/beam/lightning_beam.png");
     private static final ResourceLocation LIGHTNING_BEAM_AURA_TEXTURE =
-            SaintsDragonsCommon.rl("textures/particle/lightning_beam_aura.png");
+            SaintsDragonsCommon.rl("textures/particle/raevyx/beam/lightning_beam_aura.png");
     private static final ResourceLocation LIGHTNING_BEAM_SWIRL_TEXTURE =
-            SaintsDragonsCommon.rl("textures/particle/lightning_beam_swirl.png");
+            SaintsDragonsCommon.rl("textures/particle/raevyx/beam/lightning_beam_swirl.png");
     private static final ResourceLocation LIGHTNING_BEAM_SECOND_SWIRL_TEXTURE =
-            SaintsDragonsCommon.rl("textures/particle/lightning_beam_second_swirl.png");
+            SaintsDragonsCommon.rl("textures/particle/raevyx/beam/lightning_beam_second_swirl.png");
     private static final BeamRibbonRenderer.Style LIGHTNING_BEAM_STYLE =
             new BeamRibbonRenderer.Style(
                     0.75F,
@@ -75,7 +75,7 @@ public final class RaevyxBeamLightningRenderer {
                     0.75F, 0.25F);
     private static final long FAST_LINE_SEED_SALT = 0xD1B54A32D192ED03L;
     private static final ResourceLocation STAR_TEXTURE =
-            SaintsDragonsCommon.rl("textures/particle/star.png");
+            SaintsDragonsCommon.rl("textures/particle/shared/stars/star.png");
     private static final BeamStarFlashRenderer.Style STAR_STYLE =
             new BeamStarFlashRenderer.Style(
                     16,
@@ -104,11 +104,11 @@ public final class RaevyxBeamLightningRenderer {
     static {
         for (int frame = 0; frame < FAST_LINE_TEXTURES.length; frame++) {
             FAST_LINE_TEXTURES[frame] = SaintsDragonsCommon.rl(
-                    "textures/particle/fast_lines" + frame + ".png");
+                    "textures/particle/raevyx/beam/fast_lines/fast_lines" + frame + ".png");
         }
         for (int frame = 0; frame < LIGHTNING_ZAP_TEXTURES.length; frame++) {
             LIGHTNING_ZAP_TEXTURES[frame] = SaintsDragonsCommon.rl(
-                    "textures/particle/lightning_zap" + frame + ".png");
+                    "textures/particle/shared/lightning/lightning_zap/lightning_zap" + frame + ".png");
         }
     }
 

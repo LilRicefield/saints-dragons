@@ -1,14 +1,14 @@
 {
   "textures": [
-    "saintsdragons:splatter_orange0",
-    "saintsdragons:splatter_orange1",
-    "saintsdragons:splatter_orange2",
-    "saintsdragons:splatter_orange3",
-    "saintsdragons:splatter_orange4",
-    "saintsdragons:splatter_orange5",
-    "saintsdragons:splatter_orange6",
-    "saintsdragons:splatter_orange7",
-    "saintsdragons:splatter_orange8",
-    "saintsdragons:splatter_orange9"
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange0",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange1",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange2",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange3",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange4",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange5",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange6",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange7",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange8",
+    "saintsdragons:shared/explosions/splatter_orange/splatter_orange9"
   ]
 }

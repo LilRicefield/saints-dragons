@@ -11,11 +11,11 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class RaevyxBeamIntroRenderer {
-    private static final ResourceLocation WIDE_STAR = SaintsDragonsCommon.rl("textures/particle/wider_star.png");
-    private static final ResourceLocation[] MORE_SWIRL = frames("more_swirl", 25);
-    private static final ResourceLocation[] STEAM = frames("steamy_explosion", 16);
-    private static final ResourceLocation[] SHARP = frames("sharp_explosion", 8);
-    private static final ResourceLocation[] GLASS = {SaintsDragonsCommon.rl("textures/particle/glass_shatter.png")};
+    private static final ResourceLocation WIDE_STAR = SaintsDragonsCommon.rl("textures/particle/shared/stars/wider_star.png");
+    private static final ResourceLocation[] MORE_SWIRL = frames("raevyx/beam/more_swirl/more_swirl", 25);
+    private static final ResourceLocation[] STEAM = frames("shared/explosions/steamy_explosion/steamy_explosion", 16);
+    private static final ResourceLocation[] SHARP = frames("shared/explosions/sharp_explosion/sharp_explosion", 8);
+    private static final ResourceLocation[] GLASS = {SaintsDragonsCommon.rl("textures/particle/shared/misc/glass_shatter.png")};
     private static final float GLASS_TICKS = 5.0F;
     private static final float GLASS_START_HALF_SIZE = 4.0F;
     private static final float GLASS_END_HALF_SIZE = 5.0F;

@@ -37,7 +37,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     private static final double FIRST_PERSON_START_OFFSET = 1.0D;
     private static final double ORIGIN_STAR_FORWARD_OFFSET = 2.0D;
     private static final long ORIGIN_STAR_SEED_SALT = 0x3C6EF372FE94F82BL;
-    private static final ResourceLocation ORIGIN_STAR_TEXTURE = SaintsDragonsCommon.rl("textures/particle/star.png");
+    private static final ResourceLocation ORIGIN_STAR_TEXTURE = SaintsDragonsCommon.rl("textures/particle/shared/stars/star.png");
     private static final BillboardFlashRenderer.Style ORIGIN_STAR_STYLE =
             new BillboardFlashRenderer.Style(5.0F, 4.0F, 1.0F, 0.85F, 0.3F);
     private static final long MOUTH_SWIRL_SEED_SALT = 0x510E527FADE682D1L;
@@ -56,15 +56,15 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
 
     static {
         for (int frame = 0; frame < MOUTH_SWIRL_TEXTURES.length; frame++) {
-            MOUTH_SWIRL_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/swirl" + frame + ".png");
+            MOUTH_SWIRL_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/raevyx/beam/swirl/swirl" + frame + ".png");
         }
         for (int frame = 0; frame < MOUTH_RING_TEXTURES.length; frame++) {
-            MOUTH_RING_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/second_impact_ring" + frame + ".png");
+            MOUTH_RING_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/shared/rings/second_impact_ring/second_impact_ring" + frame + ".png");
         }
     }
     private static final ResourceLocation[] WIND_TEXTURES = {
-            SaintsDragonsCommon.rl("textures/particle/wind.png"),
-            SaintsDragonsCommon.rl("textures/particle/wind2.png")
+            SaintsDragonsCommon.rl("textures/particle/raevyx/beam/wind/wind.png"),
+            SaintsDragonsCommon.rl("textures/particle/raevyx/beam/wind/wind2.png")
     };
 
     private static final class BeamState {

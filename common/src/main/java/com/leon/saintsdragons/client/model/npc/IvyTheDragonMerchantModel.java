@@ -11,7 +11,7 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 public class IvyTheDragonMerchantModel extends DefaultedEntityGeoModel<IvyTheDragonMerchant> {
     public IvyTheDragonMerchantModel() {
-        super(SaintsDragonsCommon.rl("ivy_oleander"));
+        super(SaintsDragonsCommon.rl("ivy_oleander/ivy_oleander"));
     }
 
     @Override

@@ -6,9 +6,9 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 
 public class VolitansBurrowMoundModel extends GeoModel<VolitansBurrowMoundEntity> {
-    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/blocks/burrow_mound.geo.json");
-    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/blocks/burrow_mound.png");
-    private static final ResourceLocation ANIMATION = SaintsDragonsCommon.rl("animations/blocks/burrow_mound.animation.json");
+    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/objects/volitans/burrow_mound.geo.json");
+    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/objects/volitans/burrow_mound.png");
+    private static final ResourceLocation ANIMATION = SaintsDragonsCommon.rl("animations/objects/volitans/burrow_mound.animation.json");
 
     @Override
     public ResourceLocation getModelResource(VolitansBurrowMoundEntity animatable) {

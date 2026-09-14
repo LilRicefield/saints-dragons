@@ -38,11 +38,11 @@ public class RaevyxGroundRendTrailRenderer extends EntityRenderer<LightningVisua
 
     static {
         for (int frame = 0; frame < SLASH_FRAME_COUNT; frame++) {
-            SLASH_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/slash_line" + frame + ".png");
+            SLASH_TEXTURES[frame] = SaintsDragonsCommon.rl("textures/particle/shared/lightning/slash_line/slash_line" + frame + ".png");
         }
         for (int frame = 0; frame < STORM_FRAME_COUNT; frame++) {
             STORM_TEXTURES[frame] = SaintsDragonsCommon.rl(
-                    "textures/particle/katana_lightning_storm" + frame + ".png");
+                    "textures/particle/shared/lightning/katana_lightning_storm/katana_lightning_storm" + frame + ".png");
         }
     }
 

@@ -11,8 +11,8 @@ import net.minecraft.world.phys.Vec3;
 
 public final class CindervaneFireballMouthRenderer {
     private static final java.util.Map<Cindervane, Integer> LAST_SPARK_BURST = new java.util.WeakHashMap<>();
-    private static final ResourceLocation[] SMOKE = frames("smoke_bomb_orange", 10);
-    private static final ResourceLocation[] CIRCLE = frames("circle_thinning", 12);
+    private static final ResourceLocation[] SMOKE = frames("cindervane/fireball/smoke_bomb_orange/smoke_bomb_orange", 10);
+    private static final ResourceLocation[] CIRCLE = frames("shared/rings/circle_thinning/circle_thinning", 12);
     private static final float CIRCLE_FRAME_TICKS = 0.5F;
     private static final float SMOKE_FRAME_TICKS = 1.0F;
     private static final AttachedPlaneFlipbookRenderer.Style CIRCLE_STYLE =

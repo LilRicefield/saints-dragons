@@ -8,9 +8,9 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class RaevyxBeamImpactRenderer {
-    private static final ResourceLocation[] CIRCLE = frames("circle_thinning", 12);
-    private static final ResourceLocation[] ZAP = frames("lightning_zap", 16);
-    private static final ResourceLocation STAR = SaintsDragonsCommon.rl("textures/particle/star.png");
+    private static final ResourceLocation[] CIRCLE = frames("shared/rings/circle_thinning/circle_thinning", 12);
+    private static final ResourceLocation[] ZAP = frames("shared/lightning/lightning_zap/lightning_zap", 16);
+    private static final ResourceLocation STAR = SaintsDragonsCommon.rl("textures/particle/shared/stars/star.png");
     private static final float CIRCLE_FRAME_TICKS = 0.25F;
     private static final float ZAP_FRAME_TICKS = 1.0F;
     private static final float CIRCLE_HALF_SIZE = 4.0F;

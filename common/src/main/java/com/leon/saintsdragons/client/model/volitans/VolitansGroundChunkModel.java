@@ -6,9 +6,9 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.GeoModel;
 
 public class VolitansGroundChunkModel extends GeoModel<VolitansGroundChunkEntity> {
-    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/blocks/ground_chunk.geo.json");
+    private static final ResourceLocation MODEL = SaintsDragonsCommon.rl("geo/objects/volitans/ground_chunk.geo.json");
     private static final ResourceLocation TEXTURE = new ResourceLocation("minecraft", "textures/block/dirt.png");
-    private static final ResourceLocation ANIMATION = SaintsDragonsCommon.rl("animations/blocks/ground_chunk.animation.json");
+    private static final ResourceLocation ANIMATION = SaintsDragonsCommon.rl("animations/objects/volitans/ground_chunk.animation.json");
 
     @Override
     public ResourceLocation getModelResource(VolitansGroundChunkEntity animatable) {

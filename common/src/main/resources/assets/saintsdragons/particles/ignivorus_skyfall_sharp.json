@@ -1,12 +1,12 @@
 {
   "textures": [
-    "saintsdragons:sharp_explosion0",
-    "saintsdragons:sharp_explosion1",
-    "saintsdragons:sharp_explosion2",
-    "saintsdragons:sharp_explosion3",
-    "saintsdragons:sharp_explosion4",
-    "saintsdragons:sharp_explosion5",
-    "saintsdragons:sharp_explosion6",
-    "saintsdragons:sharp_explosion7"
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion0",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion1",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion2",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion3",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion4",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion5",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion6",
+    "saintsdragons:shared/explosions/sharp_explosion/sharp_explosion7"
   ]
 }

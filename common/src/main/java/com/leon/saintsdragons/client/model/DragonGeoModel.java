@@ -21,13 +21,13 @@ public abstract class DragonGeoModel<T extends DragonEntity> extends DefaultedEn
 
     protected DragonGeoModel(String dragonId, boolean hasBabyResources) {
         super(SaintsDragonsCommon.rl(dragonId));
-        this.model = SaintsDragonsCommon.rl("geo/entity/" + dragonId + ".geo.json");
-        this.animation = SaintsDragonsCommon.rl("animations/entity/" + dragonId + ".animation.json");
+        this.model = SaintsDragonsCommon.rl("geo/entity/" + dragonId + "/" + dragonId + ".geo.json");
+        this.animation = SaintsDragonsCommon.rl("animations/entity/" + dragonId + "/" + dragonId + ".animation.json");
         this.maleTexture = SaintsDragonsCommon.rl("textures/entity/" + dragonId + "/" + dragonId + ".png");
         this.femaleTexture = SaintsDragonsCommon.rl("textures/entity/" + dragonId + "/" + dragonId + "_female.png");
         if (hasBabyResources) {
-            this.babyModel = SaintsDragonsCommon.rl("geo/entity/baby_" + dragonId + ".geo.json");
-            this.babyAnimation = SaintsDragonsCommon.rl("animations/entity/baby_" + dragonId + ".animation.json");
+            this.babyModel = SaintsDragonsCommon.rl("geo/entity/" + dragonId + "/baby_" + dragonId + ".geo.json");
+            this.babyAnimation = SaintsDragonsCommon.rl("animations/entity/" + dragonId + "/baby_" + dragonId + ".animation.json");
             this.babyMaleTexture = SaintsDragonsCommon.rl("textures/entity/" + dragonId + "/baby_" + dragonId + ".png");
             this.babyFemaleTexture = SaintsDragonsCommon.rl("textures/entity/" + dragonId + "/baby_" + dragonId + "_female.png");
         } else {

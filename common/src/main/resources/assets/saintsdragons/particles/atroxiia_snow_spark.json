@@ -1,10 +1,10 @@
 {
   "textures": [
-    "saintsdragons:snow_spark0",
-    "saintsdragons:snow_spark1",
-    "saintsdragons:snow_spark2",
-    "saintsdragons:snow_spark3",
-    "saintsdragons:snow_spark4",
-    "saintsdragons:snow_spark5"
+    "saintsdragons:atroxiia/ice/snow_spark/snow_spark0",
+    "saintsdragons:atroxiia/ice/snow_spark/snow_spark1",
+    "saintsdragons:atroxiia/ice/snow_spark/snow_spark2",
+    "saintsdragons:atroxiia/ice/snow_spark/snow_spark3",
+    "saintsdragons:atroxiia/ice/snow_spark/snow_spark4",
+    "saintsdragons:atroxiia/ice/snow_spark/snow_spark5"
   ]
 }

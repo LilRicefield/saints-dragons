@@ -11,8 +11,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class VolitansPoisonBallChargeRenderer {
-    private static final ResourceLocation[] CHARGE = frames("poison_ball_charge", 8);
-    private static final ResourceLocation[] SHOT = frames("second_poison_explosion", 12);
+    private static final ResourceLocation[] CHARGE = frames("volitans/poison/poison_ball_charge/poison_ball_charge", 8);
+    private static final ResourceLocation[] SHOT = frames("volitans/poison/second_poison_explosion/second_poison_explosion", 12);
     private static final float CHARGE_FRAME_TICKS = 0.75F;
     private static final float SHOT_FRAME_TICKS = 0.75F;
     private static final double FORWARD_OFFSET = 1.2D;

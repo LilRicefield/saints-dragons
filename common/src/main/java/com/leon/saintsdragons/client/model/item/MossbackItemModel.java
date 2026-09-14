@@ -19,8 +19,8 @@ public class MossbackItemModel extends GeoModel<MossbackItem> {
     @Override
     public ResourceLocation getModelResource(MossbackItem animatable) {
         return SaintsDragonsCommon.rl(baby
-                ? "geo/entity/baby_mossback.geo.json"
-                : "geo/entity/mossback.geo.json");
+                ? "geo/entity/mossback/baby_mossback.geo.json"
+                : "geo/entity/mossback/mossback.geo.json");
     }
 
     @Override
@@ -33,7 +33,7 @@ public class MossbackItemModel extends GeoModel<MossbackItem> {
     @Override
     public ResourceLocation getAnimationResource(MossbackItem animatable) {
         return SaintsDragonsCommon.rl(baby
-                ? "animations/entity/baby_mossback.animation.json"
-                : "animations/entity/mossback.animation.json");
+                ? "animations/entity/mossback/baby_mossback.animation.json"
+                : "animations/entity/mossback/mossback.animation.json");
     }
 }

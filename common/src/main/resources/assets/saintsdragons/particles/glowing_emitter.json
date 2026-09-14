@@ -1,5 +1,5 @@
 {
   "textures": [
-    "saintsdragons:glowing_emitter"
+    "saintsdragons:shared/emitters/glowing_emitter"
   ]
 }

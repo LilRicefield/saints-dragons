@@ -1,10 +1,10 @@
 {
   "textures": [
-    "saintsdragons:fire_ground_impact0",
-    "saintsdragons:fire_ground_impact1",
-    "saintsdragons:fire_ground_impact2",
-    "saintsdragons:fire_ground_impact3",
-    "saintsdragons:fire_ground_impact4",
-    "saintsdragons:fire_ground_impact5"
+    "saintsdragons:shared/explosions/fire_ground_impact/fire_ground_impact0",
+    "saintsdragons:shared/explosions/fire_ground_impact/fire_ground_impact1",
+    "saintsdragons:shared/explosions/fire_ground_impact/fire_ground_impact2",
+    "saintsdragons:shared/explosions/fire_ground_impact/fire_ground_impact3",
+    "saintsdragons:shared/explosions/fire_ground_impact/fire_ground_impact4",
+    "saintsdragons:shared/explosions/fire_ground_impact/fire_ground_impact5"
   ]
 }

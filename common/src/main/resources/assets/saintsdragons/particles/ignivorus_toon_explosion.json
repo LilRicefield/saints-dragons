@@ -1,12 +1,12 @@
 {
   "textures": [
-    "saintsdragons:toon_explosion0",
-    "saintsdragons:toon_explosion1",
-    "saintsdragons:toon_explosion2",
-    "saintsdragons:toon_explosion3",
-    "saintsdragons:toon_explosion4",
-    "saintsdragons:toon_explosion5",
-    "saintsdragons:toon_explosion6",
-    "saintsdragons:toon_explosion7"
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion0",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion1",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion2",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion3",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion4",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion5",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion6",
+    "saintsdragons:shared/explosions/toon_explosion/toon_explosion7"
   ]
 }

@@ -1,7 +1,7 @@
 {
   "textures": [
-    "saintsdragons:poison_fume1",
-    "saintsdragons:poison_fume2",
-    "saintsdragons:poison_fume3"
+    "saintsdragons:volitans/poison/poison_fume/poison_fume1",
+    "saintsdragons:volitans/poison/poison_fume/poison_fume2",
+    "saintsdragons:volitans/poison/poison_fume/poison_fume3"
   ]
 }

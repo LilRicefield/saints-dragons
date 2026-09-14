@@ -27,7 +27,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class VolitansBurrowMoundRenderer extends GeoEntityRenderer<VolitansBurrowMoundEntity> {
-    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/blocks/burrow_mound.png");
+    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/objects/volitans/burrow_mound.png");
     private static final float MODEL_FORWARD_YAW_OFFSET = 0.0F;
     private final Deque<Boolean> blockMaterialStack = new ArrayDeque<>();
     private MultiBufferSource currentBufferSource;

@@ -16,7 +16,7 @@ public abstract class CindervaneFireBodyActivationRenderer extends RenderType {
     private static final ResourceLocation[] CIRCLE = new ResourceLocation[12];
     static {
         for (int i = 0; i < CIRCLE.length; i++) {
-            CIRCLE[i] = SaintsDragonsCommon.rl("textures/particle/circle_thinning" + i + ".png");
+            CIRCLE[i] = SaintsDragonsCommon.rl("textures/particle/shared/rings/circle_thinning/circle_thinning" + i + ".png");
         }
     }
 
@@ -24,7 +24,7 @@ public abstract class CindervaneFireBodyActivationRenderer extends RenderType {
             DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 16384, false, true,
             CompositeState.builder()
                     .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
-                    .setTextureState(new TextureStateShard(SaintsDragonsCommon.rl("textures/particle/blank.png"), false, false))
+                    .setTextureState(new TextureStateShard(SaintsDragonsCommon.rl("textures/particle/shared/misc/blank.png"), false, false))
                     .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                     .setCullState(NO_CULL)
                     .setDepthTestState(LEQUAL_DEPTH_TEST)

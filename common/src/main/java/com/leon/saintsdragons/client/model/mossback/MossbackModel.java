@@ -6,12 +6,12 @@ import net.minecraft.resources.ResourceLocation;
 import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class MossbackModel extends DefaultedEntityGeoModel<Mossback> {
-    private static final ResourceLocation ADULT_MODEL = SaintsDragonsCommon.rl("geo/entity/mossback.geo.json");
-    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/baby_mossback.geo.json");
+    private static final ResourceLocation ADULT_MODEL = SaintsDragonsCommon.rl("geo/entity/mossback/mossback.geo.json");
+    private static final ResourceLocation BABY_MODEL = SaintsDragonsCommon.rl("geo/entity/mossback/baby_mossback.geo.json");
     private static final ResourceLocation ADULT_TEXTURE = SaintsDragonsCommon.rl("textures/entity/mossback/mossback.png");
     private static final ResourceLocation BABY_TEXTURE = SaintsDragonsCommon.rl("textures/entity/mossback/baby_mossback.png");
-    private static final ResourceLocation ADULT_ANIMATION = SaintsDragonsCommon.rl("animations/entity/mossback.animation.json");
-    private static final ResourceLocation BABY_ANIMATION = SaintsDragonsCommon.rl("animations/entity/baby_mossback.animation.json");
+    private static final ResourceLocation ADULT_ANIMATION = SaintsDragonsCommon.rl("animations/entity/mossback/mossback.animation.json");
+    private static final ResourceLocation BABY_ANIMATION = SaintsDragonsCommon.rl("animations/entity/mossback/baby_mossback.animation.json");
 
     public MossbackModel() {
         super(SaintsDragonsCommon.rl("mossback"));

@@ -18,10 +18,10 @@ import org.joml.Vector3f;
 
 public class DragonWaterSplashRenderer extends EntityRenderer<DragonWaterSplashEntity> {
     private static final ResourceLocation[] TEXTURES = {
-            SaintsDragonsCommon.rl("textures/particle/watersplash0.png"),
-            SaintsDragonsCommon.rl("textures/particle/watersplash1.png"),
-            SaintsDragonsCommon.rl("textures/particle/watersplash2.png"),
-            SaintsDragonsCommon.rl("textures/particle/watersplash3.png")
+            SaintsDragonsCommon.rl("textures/particle/shared/water/watersplash/watersplash0.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/water/watersplash/watersplash1.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/water/watersplash/watersplash2.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/water/watersplash/watersplash3.png")
     };
 
     public DragonWaterSplashRenderer(EntityRendererProvider.Context context) {

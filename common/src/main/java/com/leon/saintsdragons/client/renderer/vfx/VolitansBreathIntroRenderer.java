@@ -9,8 +9,8 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class VolitansBreathIntroRenderer {
-    private static final ResourceLocation[] START = frames("water_breath_start", 17);
-    private static final ResourceLocation[] IMPACT = frames("water_breathing_impact", 6);
+    private static final ResourceLocation[] START = frames("volitans/water/water_breath_start/water_breath_start", 17);
+    private static final ResourceLocation[] IMPACT = frames("volitans/water/water_breathing_impact/water_breathing_impact", 6);
     private static final float START_FRAME_TICKS = 0.75F;
     private static final float IMPACT_FRAME_TICKS = 1.0F;
     private static final float START_HALF_SIZE = 2.5F;

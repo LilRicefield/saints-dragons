@@ -21,7 +21,7 @@ public class ImpactRingRenderer extends EntityRenderer<ImpactRingEntity> {
 
     static {
         for (int i = 0; i < TOTAL_FRAMES; i++) {
-            TEXTURES[i] = SaintsDragonsCommon.rl("textures/particle/impact_ring" + i + ".png");
+            TEXTURES[i] = SaintsDragonsCommon.rl("textures/particle/shared/rings/impact_ring/impact_ring" + i + ".png");
         }
     }
 

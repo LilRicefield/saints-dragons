@@ -6,6 +6,6 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class MoopModel extends DefaultedEntityGeoModel<Moop> {
     public MoopModel() {
-        super(SaintsDragonsCommon.rl("moop"));
+        super(SaintsDragonsCommon.rl("moop/moop"));
     }
 }

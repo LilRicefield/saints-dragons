@@ -26,7 +26,7 @@ public final class VolitansWaterRingRenderer {
 
     static {
         for (int i = 0; i < FRAMES.length; i++) {
-            FRAMES[i] = SaintsDragonsCommon.rl("textures/particle/sword_ring" + i + ".png");
+            FRAMES[i] = SaintsDragonsCommon.rl("textures/particle/shared/rings/sword_ring/sword_ring" + i + ".png");
         }
     }
 

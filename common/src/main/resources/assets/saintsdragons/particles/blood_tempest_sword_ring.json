@@ -1,12 +1,12 @@
 {
   "textures": [
-    "saintsdragons:sword_ring0",
-    "saintsdragons:sword_ring1",
-    "saintsdragons:sword_ring2",
-    "saintsdragons:sword_ring3",
-    "saintsdragons:sword_ring4",
-    "saintsdragons:sword_ring5",
-    "saintsdragons:sword_ring6",
-    "saintsdragons:sword_ring7"
+    "saintsdragons:shared/rings/sword_ring/sword_ring0",
+    "saintsdragons:shared/rings/sword_ring/sword_ring1",
+    "saintsdragons:shared/rings/sword_ring/sword_ring2",
+    "saintsdragons:shared/rings/sword_ring/sword_ring3",
+    "saintsdragons:shared/rings/sword_ring/sword_ring4",
+    "saintsdragons:shared/rings/sword_ring/sword_ring5",
+    "saintsdragons:shared/rings/sword_ring/sword_ring6",
+    "saintsdragons:shared/rings/sword_ring/sword_ring7"
   ]
 }

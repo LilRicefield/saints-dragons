@@ -7,11 +7,11 @@ import software.bernie.geckolib.model.GeoModel;
 
 public class VolitansSpineModel extends GeoModel<VolitansSpineEntity> {
     private static final ResourceLocation MODEL =
-            SaintsDragonsCommon.rl("geo/entity/volitans_spine.geo.json");
+            SaintsDragonsCommon.rl("geo/objects/volitans/volitans_spine.geo.json");
     private static final ResourceLocation TEXTURE =
-            SaintsDragonsCommon.rl("textures/entity/volitans/volitans_spine.png");
+            SaintsDragonsCommon.rl("textures/objects/volitans/volitans_spine.png");
     private static final ResourceLocation ANIMATION =
-            SaintsDragonsCommon.rl("animations/entity/volitans_spine.animation.json");
+            SaintsDragonsCommon.rl("animations/objects/volitans/volitans_spine.animation.json");
 
     @Override
     public ResourceLocation getModelResource(VolitansSpineEntity animatable) {

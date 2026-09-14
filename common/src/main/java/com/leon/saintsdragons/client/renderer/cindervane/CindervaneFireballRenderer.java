@@ -21,10 +21,10 @@ import software.bernie.geckolib.renderer.GeoEntityRenderer;
 public class CindervaneFireballRenderer extends GeoEntityRenderer<CindervaneFireballEntity> {
     private static final float FRAME_TICKS = 2.0F;
     private static final int FRAME_COUNT = 2;
-    private static final ResourceLocation[] FIRE = frames("fire", 17);
-    private static final ResourceLocation[] SPEC = frames("fire_spec", 12);
-    private static final ResourceLocation[] EMBER = { SaintsDragonsCommon.rl("textures/particle/ember.png") };
-    private static final ResourceLocation[] EMITTER = { SaintsDragonsCommon.rl("textures/particle/glowing_emitter.png") };
+    private static final ResourceLocation[] FIRE = frames("shared/fire/fire/fire", 17);
+    private static final ResourceLocation[] SPEC = frames("shared/fire/fire_spec/fire_spec", 12);
+    private static final ResourceLocation[] EMBER = { SaintsDragonsCommon.rl("textures/particle/shared/emitters/ember.png") };
+    private static final ResourceLocation[] EMITTER = { SaintsDragonsCommon.rl("textures/particle/shared/emitters/glowing_emitter.png") };
 
     private static ResourceLocation[] frames(String prefix, int count) {
         ResourceLocation[] frames = new ResourceLocation[count];

@@ -1,21 +1,21 @@
 {
   "textures": [
-    "saintsdragons:poison_explosion0",
-    "saintsdragons:poison_explosion1",
-    "saintsdragons:poison_explosion2",
-    "saintsdragons:poison_explosion3",
-    "saintsdragons:poison_explosion4",
-    "saintsdragons:poison_explosion5",
-    "saintsdragons:poison_explosion6",
-    "saintsdragons:poison_explosion7",
-    "saintsdragons:poison_explosion8",
-    "saintsdragons:poison_explosion9",
-    "saintsdragons:poison_explosion10",
-    "saintsdragons:poison_explosion11",
-    "saintsdragons:poison_explosion12",
-    "saintsdragons:poison_explosion13",
-    "saintsdragons:poison_explosion14",
-    "saintsdragons:poison_explosion15",
-    "saintsdragons:poison_explosion16"
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion0",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion1",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion2",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion3",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion4",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion5",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion6",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion7",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion8",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion9",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion10",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion11",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion12",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion13",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion14",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion15",
+    "saintsdragons:volitans/poison/poison_explosion/poison_explosion16"
   ]
 }

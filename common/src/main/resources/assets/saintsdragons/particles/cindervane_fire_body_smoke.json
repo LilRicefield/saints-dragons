@@ -1,18 +1,18 @@
 {
   "textures": [
-    "saintsdragons:smoke0",
-    "saintsdragons:smoke1",
-    "saintsdragons:smoke2",
-    "saintsdragons:smoke3",
-    "saintsdragons:smoke4",
-    "saintsdragons:smoke5",
-    "saintsdragons:smoke6",
-    "saintsdragons:smoke7",
-    "saintsdragons:smoke8",
-    "saintsdragons:smoke9",
-    "saintsdragons:smoke10",
-    "saintsdragons:smoke11",
-    "saintsdragons:smoke12",
-    "saintsdragons:smoke13"
+    "saintsdragons:shared/smoke/smoke/smoke0",
+    "saintsdragons:shared/smoke/smoke/smoke1",
+    "saintsdragons:shared/smoke/smoke/smoke2",
+    "saintsdragons:shared/smoke/smoke/smoke3",
+    "saintsdragons:shared/smoke/smoke/smoke4",
+    "saintsdragons:shared/smoke/smoke/smoke5",
+    "saintsdragons:shared/smoke/smoke/smoke6",
+    "saintsdragons:shared/smoke/smoke/smoke7",
+    "saintsdragons:shared/smoke/smoke/smoke8",
+    "saintsdragons:shared/smoke/smoke/smoke9",
+    "saintsdragons:shared/smoke/smoke/smoke10",
+    "saintsdragons:shared/smoke/smoke/smoke11",
+    "saintsdragons:shared/smoke/smoke/smoke12",
+    "saintsdragons:shared/smoke/smoke/smoke13"
   ]
 }

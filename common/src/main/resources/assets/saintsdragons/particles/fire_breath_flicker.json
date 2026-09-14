@@ -1,9 +1,9 @@
 {
   "textures": [
-    "saintsdragons:fireparticle0",
-    "saintsdragons:fireparticle1",
-    "saintsdragons:fireparticle2",
-    "saintsdragons:fireparticle3",
-    "saintsdragons:fireparticle4"
+    "saintsdragons:shared/fire/fireparticle/fireparticle0",
+    "saintsdragons:shared/fire/fireparticle/fireparticle1",
+    "saintsdragons:shared/fire/fireparticle/fireparticle2",
+    "saintsdragons:shared/fire/fireparticle/fireparticle3",
+    "saintsdragons:shared/fire/fireparticle/fireparticle4"
   ]
 }

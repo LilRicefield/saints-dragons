@@ -14,22 +14,22 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public final class IgnivorusFireballMouthRenderer {
-    private static final ResourceLocation[] ABSORB_FIRE = frames("better_fire", 8);
-    private static final ResourceLocation ABSORB_EMITTER = SaintsDragonsCommon.rl("textures/particle/glowing_emitter.png");
-    private static final ResourceLocation[] LEVEL_TWO_SHARP = reversedFrames("sharp_impact", 7, 0);
-    private static final ResourceLocation[] LEVEL_TWO_GROUND = reversedFrames("fire_ground_impact", 5, 0);
+    private static final ResourceLocation[] ABSORB_FIRE = frames("shared/fire/better_fire/better_fire", 8);
+    private static final ResourceLocation ABSORB_EMITTER = SaintsDragonsCommon.rl("textures/particle/shared/emitters/glowing_emitter.png");
+    private static final ResourceLocation[] LEVEL_TWO_SHARP = reversedFrames("shared/explosions/sharp_impact/sharp_impact", 7, 0);
+    private static final ResourceLocation[] LEVEL_TWO_GROUND = reversedFrames("shared/explosions/fire_ground_impact/fire_ground_impact", 5, 0);
     private static final ResourceLocation[] CHARGE = {
-            SaintsDragonsCommon.rl("textures/particle/smaller_fire_explosion4.png"),
-            SaintsDragonsCommon.rl("textures/particle/smaller_fire_explosion3.png"),
-            SaintsDragonsCommon.rl("textures/particle/smaller_fire_explosion2.png"),
-            SaintsDragonsCommon.rl("textures/particle/smaller_fire_explosion1.png"),
-            SaintsDragonsCommon.rl("textures/particle/smaller_fire_explosion0.png")
+            SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion4.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion3.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion2.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion1.png"),
+            SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion0.png")
     };
     private static final java.util.Map<Ignivorus, Integer> LAST_CHARGE_EMISSION = new java.util.WeakHashMap<>();
-    private static final ResourceLocation[] FIRE = frames("fire_explosion", 7);
-    private static final ResourceLocation[] SPLATTER = frames("splatter_orange", 10);
-    private static final ResourceLocation[] SHOOT_SHARP = frames("sharp_impact", 8);
-    private static final ResourceLocation[] STEAM = frames("steamy_explosion", 16);
+    private static final ResourceLocation[] FIRE = frames("shared/explosions/fire_explosion/fire_explosion", 7);
+    private static final ResourceLocation[] SPLATTER = frames("shared/explosions/splatter_orange/splatter_orange", 10);
+    private static final ResourceLocation[] SHOOT_SHARP = frames("shared/explosions/sharp_impact/sharp_impact", 8);
+    private static final ResourceLocation[] STEAM = frames("shared/explosions/steamy_explosion/steamy_explosion", 16);
     private static final java.util.Map<Ignivorus, Integer> LAST_BURST = new java.util.WeakHashMap<>();
 
     private IgnivorusFireballMouthRenderer() {}

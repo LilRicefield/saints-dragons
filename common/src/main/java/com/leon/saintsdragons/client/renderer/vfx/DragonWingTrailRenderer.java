@@ -16,7 +16,7 @@ import org.joml.Matrix3f;
 import org.joml.Vector3f;
 
 public final class DragonWingTrailRenderer {
-    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/particle/trail.png");
+    private static final ResourceLocation TEXTURE = SaintsDragonsCommon.rl("textures/particle/shared/wind/trail.png");
     private static final RenderType RENDER_TYPE = RenderType.entityTranslucent(TEXTURE);
     private static final float WIDTH = 0.25F;
 

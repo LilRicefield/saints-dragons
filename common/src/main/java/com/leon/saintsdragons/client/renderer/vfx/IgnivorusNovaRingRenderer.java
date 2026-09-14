@@ -22,7 +22,7 @@ public class IgnivorusNovaRingRenderer extends EntityRenderer<IgnivorusSkyfallRi
 
     static {
         for (int i = 0; i < TOTAL_FRAMES; i++) {
-            TEXTURES[i] = SaintsDragonsCommon.rl("textures/particle/sharp_impact" + i + ".png");
+            TEXTURES[i] = SaintsDragonsCommon.rl("textures/particle/shared/explosions/sharp_impact/sharp_impact" + i + ".png");
         }
     }
 

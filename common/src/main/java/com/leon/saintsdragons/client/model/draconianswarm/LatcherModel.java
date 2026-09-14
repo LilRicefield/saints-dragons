@@ -11,11 +11,11 @@ import software.bernie.geckolib.model.data.EntityModelData;
 
 public class LatcherModel extends GeoModel<Latcher> {
     private static final ResourceLocation MODEL =
-            SaintsDragonsCommon.rl("geo/entity/latcher.geo.json");
+            SaintsDragonsCommon.rl("geo/entity/draconian_swarm/latcher/latcher.geo.json");
     private static final ResourceLocation TEXTURE =
             SaintsDragonsCommon.rl("textures/entity/draconian_swarm/latcher/latcher.png");
     private static final ResourceLocation ANIMATIONS =
-            SaintsDragonsCommon.rl("animations/entity/latcher.animation.json");
+            SaintsDragonsCommon.rl("animations/entity/draconian_swarm/latcher/latcher.animation.json");
 
     @Override
     public ResourceLocation getModelResource(Latcher animatable) {

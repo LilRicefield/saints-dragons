@@ -1,12 +1,12 @@
 {
   "textures": [
-    "saintsdragons:fireball_fire0",
-    "saintsdragons:fireball_fire1",
-    "saintsdragons:fireball_fire2",
-    "saintsdragons:fireball_fire3",
-    "saintsdragons:fireball_fire4",
-    "saintsdragons:fireball_fire5",
-    "saintsdragons:fireball_fire6",
-    "saintsdragons:fireball_fire7"
+    "saintsdragons:shared/fire/better_fire/better_fire0",
+    "saintsdragons:shared/fire/better_fire/better_fire1",
+    "saintsdragons:shared/fire/better_fire/better_fire2",
+    "saintsdragons:shared/fire/better_fire/better_fire3",
+    "saintsdragons:shared/fire/better_fire/better_fire4",
+    "saintsdragons:shared/fire/better_fire/better_fire5",
+    "saintsdragons:shared/fire/better_fire/better_fire6",
+    "saintsdragons:shared/fire/better_fire/better_fire7"
   ]
 }

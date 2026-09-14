@@ -1,12 +1,12 @@
 {
   "textures": [
-    "saintsdragons:second_impact_ring0",
-    "saintsdragons:second_impact_ring1",
-    "saintsdragons:second_impact_ring2",
-    "saintsdragons:second_impact_ring3",
-    "saintsdragons:second_impact_ring4",
-    "saintsdragons:second_impact_ring5",
-    "saintsdragons:second_impact_ring6",
-    "saintsdragons:second_impact_ring7"
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring0",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring1",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring2",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring3",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring4",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring5",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring6",
+    "saintsdragons:shared/rings/second_impact_ring/second_impact_ring7"
   ]
 }
