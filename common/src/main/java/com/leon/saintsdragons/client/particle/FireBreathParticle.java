@@ -225,8 +225,8 @@ public final class FireBreathParticle extends TextureSheetParticle {
         public Particle createParticle(@NotNull FireBreathParticleData data, @NotNull ClientLevel level,
                                        double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             if (data.density() <= 0) return null;
-            int fireCount = 48;
-            int specCount = 32;
+            int fireCount = 32;
+            int specCount = 16;
             Vec3 velocity = new Vec3(xSpeed, ySpeed, zSpeed);
             for (int i = 0; i < 3; i++) {
                 Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),

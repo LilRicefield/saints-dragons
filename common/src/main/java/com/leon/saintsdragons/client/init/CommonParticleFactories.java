@@ -51,6 +51,12 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_LARGE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_SPLATTER_LARGE));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_SMALL.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_SPLATTER_SMALL));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_TOON_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_TOON_EXPLOSION));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_GROUND_SMOKE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_SMOKE));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_GROUND_RING.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_RING));
+        register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_GROUND_GLITTER.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_GLITTER));
         register(registrar, ModParticles.IGNIVORUS_CHARGED_FIRE_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.FIRE));
         register(registrar, ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.SPEC));
         register(registrar, ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get(), sprites -> new IgnivorusChargedFireballTrailParticle.Factory(sprites, IgnivorusChargedFireballTrailParticle.Kind.MORE_SPEC));

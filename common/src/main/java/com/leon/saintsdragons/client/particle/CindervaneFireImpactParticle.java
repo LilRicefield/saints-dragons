@@ -10,7 +10,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public final class CindervaneFireImpactParticle extends TextureSheetParticle {
-    public enum Kind { FIRE, SMALL, GROUND, CRASH_FIRE, CRASH_GROUND, CRASH_CIRCLE, CRASH_SPLATTER, TOON }
+    public enum Kind { FIRE, SMALL, GROUND, CRASH_FIRE, CRASH_GROUND, CRASH_CIRCLE, CRASH_SPLATTER, TOON,
+        VIOLET_SMOKE, VIOLET_RING, VIOLET_GLITTER, VIOLET_SPLATTER_LARGE, VIOLET_SPLATTER_SMALL, VIOLET_TOON_EXPLOSION }
     private final SpriteSet sprites;
     private final Kind kind;
     private final int frames;
@@ -27,7 +28,9 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
             case SMALL -> 5;
             case CRASH_CIRCLE -> 12;
             case CRASH_SPLATTER -> 10;
-            case TOON -> 8;
+            case TOON, VIOLET_TOON_EXPLOSION -> 8;
+            case VIOLET_SMOKE, VIOLET_RING, VIOLET_SPLATTER_LARGE, VIOLET_SPLATTER_SMALL -> 10;
+            case VIOLET_GLITTER -> 17;
             default -> 6;
         };
         this.size = sizeMultiplier * (switch (kind) {
@@ -39,11 +42,18 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
             case CRASH_CIRCLE -> 13.0F;
             case CRASH_SPLATTER -> 10.0F;
             case TOON -> 5.0F;
+            case VIOLET_SMOKE -> 12.0F;
+            case VIOLET_RING -> 14.0F;
+            case VIOLET_GLITTER -> 15.0F;
+            case VIOLET_SPLATTER_LARGE -> 12.0F;
+            case VIOLET_SPLATTER_SMALL -> 7.0F;
+            case VIOLET_TOON_EXPLOSION -> 10.0F;
         });
         this.ticksPerFrame = switch (kind) {
             case GROUND, CRASH_GROUND -> 2.0F;
             case CRASH_FIRE -> 1.5F;
             case CRASH_CIRCLE -> 0.75F;
+            case VIOLET_GLITTER -> 0.75F;
             default -> 1.0F;
         };
         if (kind == Kind.CRASH_CIRCLE) setColor(1.0F, 0.48F, 0.08F);
@@ -70,7 +80,8 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
         alpha = 1.0F - fade * fade * (3.0F - 2.0F * fade);
         quadSize = size * (0.75F + 0.5F * progress);
         setSprite(sprites.get(Math.min(frames - 1, (int) (time / ticksPerFrame)), frames - 1));
-        if (kind != Kind.GROUND && kind != Kind.CRASH_GROUND && kind != Kind.CRASH_CIRCLE) {
+        if (kind != Kind.GROUND && kind != Kind.CRASH_GROUND && kind != Kind.CRASH_CIRCLE
+                && kind != Kind.VIOLET_SMOKE && kind != Kind.VIOLET_RING && kind != Kind.VIOLET_GLITTER) {
             super.render(buffer, camera, partialTick);
             return;
         }
@@ -100,6 +111,7 @@ public final class CindervaneFireImpactParticle extends TextureSheetParticle {
         @Override
         public Particle createParticle(SimpleParticleType type, ClientLevel level, double x, double y, double z,
                                        double vx, double vy, double vz) {
+            if (kind == Kind.VIOLET_SMOKE) IgnivorusFireballTrail.emitGroundImpact(level, new Vec3(x, y, z));
             return new CindervaneFireImpactParticle(level, x, y, z, sprites, kind, sizeMultiplier);
         }
     }

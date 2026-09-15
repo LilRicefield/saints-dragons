@@ -173,6 +173,24 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> IGNIVORUS_CHARGED_STAR_TRAIL =
             REGISTER.register("ignivorus_charged_star_trail", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_THREE_GROUND_SMOKE =
+            REGISTER.register("ignivorus_level_three_ground_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_THREE_GROUND_RING =
+            REGISTER.register("ignivorus_level_three_ground_ring", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_THREE_GROUND_GLITTER =
+            REGISTER.register("ignivorus_level_three_ground_glitter", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_THREE_SPLATTER_LARGE =
+            REGISTER.register("ignivorus_level_three_splatter_large", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_THREE_SPLATTER_SMALL =
+            REGISTER.register("ignivorus_level_three_splatter_small", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> IGNIVORUS_LEVEL_THREE_TOON_EXPLOSION =
+            REGISTER.register("ignivorus_level_three_toon_explosion", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_FIREBALL_FIRE_TRAIL =
             REGISTER.register("cindervane_fireball_fire_trail", () -> Services.PLATFORM.createSimpleParticle(false));
 

@@ -48,6 +48,13 @@ public final class IgnivorusChargedFireballTrailParticle extends TextureSheetPar
         quadSize = size;
     }
 
+    public void lingerAfterImpact() {
+        if (kind != Kind.STAR) return;
+        lifetime = 40 + random.nextInt(21);
+        friction = 0.88F;
+        setBurstSizeMultiplier(1.8F);
+    }
+
     @Override
     public void render(VertexConsumer buffer, Camera camera, float partialTick) {
         float time = age + partialTick;
@@ -56,7 +63,8 @@ public final class IgnivorusChargedFireballTrailParticle extends TextureSheetPar
         boolean spark = frames == 1;
         if (kind == Kind.STAR) {
             setColor(1.0F, 214 / 255.0F, 244 / 255.0F);
-            fade *= 0.65F + 0.35F * Mth.sin(progress * Mth.TWO_PI * 2);
+            fade *= 0.65F + 0.35F * Mth.sin(lifetime > 20
+                    ? time * Mth.TWO_PI / 10.0F : progress * Mth.TWO_PI * 2);
         } else {
             int[] palette = kind == Kind.SPEC || kind == Kind.MORE_SPEC ? SPEC_COLORS : FIRE_COLORS;
             float position = progress * (palette.length - 1);

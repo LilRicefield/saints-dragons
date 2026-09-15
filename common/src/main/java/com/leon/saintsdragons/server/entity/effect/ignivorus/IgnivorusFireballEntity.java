@@ -223,6 +223,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
         BlockPos impactPos = BlockPos.containing(impact);
         boolean aiFireball = owner != null && owner.getControllingPassenger() == null;
         boolean allowGriefing = DragonGriefingRules.canDestroyBlocks(server);
+        if (scale >= 8.0F) spawnStageThreeGroundImpact(server, impact);
 
         if (scale <= 4.01F) {
             spawnStageOneImpact(server, impact);
@@ -322,6 +323,28 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
                 server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_TWO_IMPACT_CIRCLE.get(), true,
                         point.x, point.y + 0.07D, point.z, 1, 0, 0, 0, 0);
             }
+        }
+    }
+
+    private void spawnStageThreeGroundImpact(ServerLevel server, Vec3 impact) {
+        HitResult ground = server.clip(new ClipContext(impact.add(0, 0.5D, 0), impact.add(0, -12, 0),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
+        if (ground.getType() != HitResult.Type.BLOCK) return;
+        Vec3 point = ground.getLocation();
+        for (var player : server.players()) {
+            if (player.distanceToSqr(point) > 256.0D * 256.0D) continue;
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_THREE_GROUND_SMOKE.get(), true,
+                    point.x, point.y + 0.04D, point.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_THREE_GROUND_RING.get(), true,
+                    point.x, point.y + 0.07D, point.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_THREE_GROUND_GLITTER.get(), true,
+                    point.x, point.y + 0.10D, point.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_LARGE.get(), true,
+                    point.x, point.y + 3.0D, point.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_SMALL.get(), true,
+                    point.x, point.y + 1.5D, point.z, 1, 0, 0, 0, 0);
+            server.sendParticles(player, ModParticles.IGNIVORUS_LEVEL_THREE_TOON_EXPLOSION.get(), true,
+                    point.x, point.y + 4.0D, point.z, 1, 0, 0, 0, 0);
         }
     }
 

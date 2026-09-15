@@ -9,6 +9,33 @@ import net.minecraft.world.phys.Vec3;
 public final class IgnivorusFireballTrail {
     private IgnivorusFireballTrail() {}
 
+    public static void emitGroundImpact(net.minecraft.client.multiplayer.ClientLevel level, Vec3 origin) {
+        var random = level.random;
+        var engine = Minecraft.getInstance().particleEngine;
+        for (int i = 0; i < 300; i++) {
+            boolean fire = i < 100;
+            boolean star = i >= 240;
+            SimpleParticleType type = fire ? ModParticles.IGNIVORUS_CHARGED_FIRE_TRAIL.get()
+                    : i < 140 ? ModParticles.IGNIVORUS_CHARGED_SPEC_TRAIL.get()
+                    : i < 180 ? ModParticles.IGNIVORUS_CHARGED_MORE_SPEC_TRAIL.get()
+                    : star ? ModParticles.IGNIVORUS_CHARGED_STAR_TRAIL.get()
+                    : ModParticles.IGNIVORUS_CHARGED_EMITTER_TRAIL.get();
+            double angle = random.nextDouble() * Math.PI * 2;
+            double rise = 0.1D + random.nextDouble() * 0.8D;
+            double horizontal = Math.sqrt(1 - rise * rise);
+            Vec3 outward = new Vec3(Math.cos(angle) * horizontal, rise, Math.sin(angle) * horizontal);
+            double radius = star ? 2 + random.nextDouble() * 9 : random.nextDouble() * 2;
+            Vec3 point = origin.add(outward.scale(radius)).add(0, 0.2D, 0);
+            Vec3 velocity = outward.scale(star ? 0.08D + random.nextDouble() * 0.16D
+                    : 0.6D + random.nextDouble() * 1.3D);
+            var particle = engine.createParticle(type, point.x, point.y, point.z, velocity.x, velocity.y, velocity.z);
+            if (particle instanceof IgnivorusChargedFireballTrailParticle burst) {
+                burst.setBurstSizeMultiplier(fire ? 1.8F : i < 180 ? 1.4F : 1.0F);
+                if (star) burst.lingerAfterImpact();
+            }
+        }
+    }
+
     public static void emit(IgnivorusFireballEntity dragon) {
         if (dragon.getVisualScale() >= 8.0F) {
             emitCharged(dragon);
