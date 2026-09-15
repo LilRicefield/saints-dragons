@@ -113,6 +113,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.FIRE_BREATH_BACKBLAST.get(), FireBreathBackblastParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_STAR.get(), FireBreathStarParticle.Factory::new);
         register(registrar, ModParticles.FIRE_BREATH_SMOKE.get(), FireBreathSmokeParticle.Factory::new);
+        register(registrar, ModParticles.IGNIVORUS_EXPLOSION_SPEC.get(), sprites -> new IgnivorusExplosionFireParticle.Factory(sprites, true));
         register(registrar, ModParticles.IGNIVORUS_EXPLOSION_FIRE.get(), IgnivorusExplosionFireParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_EXPLOSION_STAR.get(), IgnivorusExplosionStarParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_NOVA_SPARKLE.get(), IgnivorusNovaSparkleParticle.Factory::new);

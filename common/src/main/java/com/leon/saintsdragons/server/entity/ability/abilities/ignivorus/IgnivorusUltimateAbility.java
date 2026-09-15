@@ -39,7 +39,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
 
     private static final float EXPLOSION_DAMAGE = 200.0F;
 
-    private static final int FIRE_PUFF_COUNT = 48;
+    private static final int FIRE_PUFF_COUNT = 96;
+    private static final int SPEC_PUFF_COUNT = 64;
     private static final double FIRE_PUFF_VIEW_DISTANCE_SQR = 128.0D * 128.0D;
     private static final float PENALTY_HEALTH = 50.0F;
     private static final Component PENALTY_MESSAGE =
@@ -405,7 +406,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             server.sendParticles(viewer, airSkyfallMode ? ModParticles.IGNIVORUS_AIR_AFTERMATH.get() : ModParticles.IGNIVORUS_AFTERMATH.get(), true,
                     center.x, center.y, center.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
         }
-        for (int i = 0; i < FIRE_PUFF_COUNT; i++) {
+        for (int i = 0; i < FIRE_PUFF_COUNT + SPEC_PUFF_COUNT; i++) {
             double theta = random.nextDouble() * Math.PI * 2.0D;
             double phi = Math.acos(1.0D - random.nextDouble() * 1.4D);
             double sinPhi = Math.sin(phi);
@@ -414,7 +415,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             Vec3 vel = dir.scale(1.2D + random.nextDouble() * 1.0D)
                     .add(0.0D, 0.05D + random.nextDouble() * 0.25D, 0.0D);
             for (var viewer : viewers) {
-                server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_FIRE.get(), true,
+                server.sendParticles(viewer, i < FIRE_PUFF_COUNT ? ModParticles.IGNIVORUS_EXPLOSION_FIRE.get()
+                        : ModParticles.IGNIVORUS_EXPLOSION_SPEC.get(), true,
                         pos.x, pos.y, pos.z, 0, vel.x, vel.y, vel.z, 1.0D);
             }
         }

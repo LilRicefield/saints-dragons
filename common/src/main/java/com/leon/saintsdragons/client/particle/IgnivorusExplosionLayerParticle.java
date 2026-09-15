@@ -139,6 +139,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             setSprite(sprites.get(frame, frameCount - 1));
         }
         float progress = Mth.clamp(elapsed / lifetime, 0.0F, 1.0F);
+        if (layer == Layer.SPEC) SkyfallFireColors.apply(this, progress);
         float fadeIn = smooth(Mth.clamp(elapsed / 2.0F, 0.0F, 1.0F));
         float fadeOut = 1.0F - smooth(Mth.clamp((progress - 0.3F) / 0.7F, 0.0F, 1.0F));
         alpha = fadeIn * fadeOut;

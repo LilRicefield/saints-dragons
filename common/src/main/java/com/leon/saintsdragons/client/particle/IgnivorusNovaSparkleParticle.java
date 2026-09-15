@@ -29,7 +29,8 @@ public final class IgnivorusNovaSparkleParticle extends TextureSheetParticle {
         zd = vz;
         hasPhysics = false;
         lifetime = random.nextFloat() < 0.7F ? 55 + random.nextInt(36) : 16 + random.nextInt(10);
-        size = 0.9F + random.nextFloat() * 1.35F;
+        boolean widerStar = random.nextBoolean();
+        size = (0.9F + random.nextFloat() * 1.35F) * (widerStar ? 0.4F : 1.0F);
         spin = (random.nextBoolean() ? 1.0F : -1.0F) * (0.04F + random.nextFloat() * 0.09F);
         phase = random.nextFloat() * Mth.TWO_PI;
         frequency = 0.35F + random.nextFloat() * 0.3F;
@@ -37,7 +38,7 @@ public final class IgnivorusNovaSparkleParticle extends TextureSheetParticle {
         alpha = 0.0F;
         quadSize = size;
         setColor(1.0F, 0.72F + random.nextFloat() * 0.13F, 0.25F);
-        pickSprite(sprites);
+        setSprite(sprites.get(widerStar ? 1 : 0, 1));
         renderType = ShaderPassCompatibility.isShaderPackInUse()
                 ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
                 : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;

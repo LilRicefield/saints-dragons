@@ -17,8 +17,8 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 public final class IgnivorusExplosionFireParticle extends TextureSheetParticle {
-    private static final int FRAME_COUNT = 16;
-    private static final float SCROLL_SPEED = 0.5F;
+    private final int frameCount;
+    private static final float TICKS_PER_FRAME = 0.5F;
     private static final float SIZE_SCALE = 5.0F;
     private static final float TAIL_START = 0.45F;
     private static final float EXPAND_AT_DEATH = 4.0F;
@@ -35,15 +35,16 @@ public final class IgnivorusExplosionFireParticle extends TextureSheetParticle {
     private final float spin;
 
     private IgnivorusExplosionFireParticle(ClientLevel level, double x, double y, double z,
-                                           double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites) {
+                                           double xSpeed, double ySpeed, double zSpeed, SpriteSet sprites, boolean spec) {
         super(level, x, y, z);
         this.sprites = sprites;
+        this.frameCount = spec ? 12 : 17;
         this.xd = xSpeed;
         this.yd = ySpeed;
         this.zd = zSpeed;
         this.hasPhysics = false;
         this.lifetime = 12 + this.random.nextInt(5);
-        this.baseSize = (0.9F + this.random.nextFloat() * 0.5F) * SIZE_SCALE;
+        this.baseSize = (0.9F + this.random.nextFloat() * 0.5F) * SIZE_SCALE * (spec ? 0.65F : 1.0F);
         this.spin = (this.random.nextFloat() - 0.5F) * 0.16F;
         this.roll = this.oRoll = this.random.nextFloat() * (float) (Math.PI * 2.0);
         this.quadSize = 0.0F;
@@ -82,6 +83,7 @@ public final class IgnivorusExplosionFireParticle extends TextureSheetParticle {
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float progress = Mth.clamp((this.age - 1 + partialTicks) / this.lifetime, 0.0F, 1.0F);
+        SkyfallFireColors.apply(this, progress);
         float growIn = smooth(Mth.clamp(progress / 0.18F, 0.0F, 1.0F));
         float tail = Mth.clamp((progress - TAIL_START) / (1.0F - TAIL_START), 0.0F, 1.0F);
         float expand = 1.0F - (1.0F - tail) * (1.0F - tail);
@@ -91,7 +93,7 @@ public final class IgnivorusExplosionFireParticle extends TextureSheetParticle {
         }
 
         float half = this.baseSize * growIn * (1.0F + EXPAND_AT_DEATH * expand);
-        float frameBase = (this.age - 1 + partialTicks) * SCROLL_SPEED;
+        float frameBase = Math.max(0.0F, this.age - 1 + partialTicks) / TICKS_PER_FRAME;
         float rollNow = Mth.lerp(partialTicks, this.oRoll, this.roll);
 
         Vec3 center = new Vec3(
@@ -101,8 +103,8 @@ public final class IgnivorusExplosionFireParticle extends TextureSheetParticle {
                 .subtract(camera.getPosition());
 
         for (float[] layer : LAYERS) {
-            int frame = Math.floorMod(Mth.floor(frameBase + layer[3]), FRAME_COUNT);
-            this.setSprite(this.sprites.get(frame, FRAME_COUNT - 1));
+            int frame = Math.floorMod(Mth.floor(frameBase + layer[3]), frameCount);
+            this.setSprite(this.sprites.get(frame, frameCount - 1));
 
             Quaternionf rotation = new Quaternionf(camera.rotation()).rotateZ(rollNow + layer[4]);
             float layerHalf = half * layer[2];
@@ -142,16 +144,22 @@ public final class IgnivorusExplosionFireParticle extends TextureSheetParticle {
 
     public static final class Factory implements ParticleProvider<SimpleParticleType> {
         private final SpriteSet sprites;
+        private final boolean spec;
 
         public Factory(SpriteSet sprites) {
+            this(sprites, false);
+        }
+
+        public Factory(SpriteSet sprites, boolean spec) {
             this.sprites = sprites;
+            this.spec = spec;
         }
 
         @Override
         public Particle createParticle(@NotNull SimpleParticleType type, @NotNull ClientLevel level,
                                        double x, double y, double z,
                                        double xSpeed, double ySpeed, double zSpeed) {
-            return new IgnivorusExplosionFireParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites);
+            return new IgnivorusExplosionFireParticle(level, x, y, z, xSpeed, ySpeed, zSpeed, this.sprites, spec);
         }
     }
 }

@@ -84,8 +84,8 @@ public final class RaevyxStormLightningRenderer {
             state.lastTick = dragon.tickCount;
             if (dragon.tickCount >= state.nextBody) {
                 state.nextBody = dragon.tickCount + 2;
-                for (int i = 0; i < 2; i++) {
-                    if (state.arcs.stream().filter(arc -> arc.ground == null).count() >= 5) break;
+                for (int i = 0; i < 4; i++) {
+                    if (state.arcs.stream().filter(arc -> arc.ground == null).count() >= 10) break;
                     String[] pair = PAIRS[state.random.nextInt(PAIRS.length)];
                     if (pair.length == 0) continue;
                     String destination = endBone(pair, model);
@@ -147,7 +147,7 @@ public final class RaevyxStormLightningRenderer {
             poses.mulPose(new Quaternionf().rotationTo(0, 0, 1,
                     (float) (delta.x / length), (float) (delta.y / length), (float) (delta.z / length)));
             ProceduralBeamLightningRenderer.emitBolt(buffers.getBuffer(RenderType.lightning()), poses.last().pose(),
-                    length, arc.seed, arc.ground == null ? 0.25F : 1.2F, alpha,
+                    length, arc.seed, arc.ground == null ? 0.35F : 1.2F, alpha,
                     1, gold ? 0.72F : 0.06F, gold ? 0.12F : 0.08F);
             poses.popPose();
         }
