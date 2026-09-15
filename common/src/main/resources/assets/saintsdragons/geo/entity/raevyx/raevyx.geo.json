@@ -40,8 +40,7 @@
 					"parent": "spinBone",
 					"pivot": [0, 54, 11.5],
 					"cubes": [
-						{"origin": [-1, 66, -24], "size": [2, 65, 39], "uv": [506, 725]},
-						{"origin": [-15, 32, -27], "size": [30, 34, 39], "uv": [732, 0]}
+						{"origin": [-1, 66, -24], "size": [2, 65, 39], "uv": [506, 725]}
 					]
 				},
 				{
@@ -55,7 +54,7 @@
 					"pivot": [0, 54, -29],
 					"cubes": [
 						{"origin": [-10, 39, -51], "size": [20, 26, 27], "uv": [350, 737]},
-						{"origin": [-1, 65, -51], "size": [2, 25, 26], "uv": [588, 821]}
+						{"origin": [-1, 65, -49], "size": [2, 25, 26], "uv": [588, 821]}
 					]
 				},
 				{
@@ -223,7 +222,7 @@
 					]
 				},
 				{
-					"name": "leftmiddlephalanegs",
+					"name": "leftmiddlephalanges",
 					"parent": "leftinnerphalanges",
 					"pivot": [121.12705, 63.5, -45.24741],
 					"cubes": [
@@ -233,8 +232,8 @@
 					]
 				},
 				{
-					"name": "lefttmostmiddlephalanges",
-					"parent": "leftmiddlephalanegs",
+					"name": "leftmostmiddlephalanges",
+					"parent": "leftmiddlephalanges",
 					"pivot": [121.12705, 63.5, -45.24741],
 					"cubes": [
 						{"origin": [120.12705, 61, -46.24741], "size": [186, 3, 3], "pivot": [121.12705, 63.5, -45.24741], "rotation": [0, -30, 0], "uv": [588, 662]},
@@ -244,7 +243,7 @@
 				},
 				{
 					"name": "leftouterphalanges",
-					"parent": "lefttmostmiddlephalanges",
+					"parent": "leftmostmiddlephalanges",
 					"pivot": [120.62705, 63, -44.74741],
 					"cubes": [
 						{"origin": [120.12705, 60.5, -47.24741], "size": [76, 4, 3], "uv": [732, 245]},
@@ -336,11 +335,18 @@
 					"pivot": [-273.89141, 62.625, -25.29368]
 				},
 				{
+					"name": "bodyBone",
+					"parent": "upperbody",
+					"pivot": [0, 49, -7.5],
+					"cubes": [
+						{"origin": [-15, 32, -27], "size": [30, 34, 39], "uv": [732, 0]}
+					]
+				},
+				{
 					"name": "hip",
 					"parent": "spinBone",
 					"pivot": [4.33333, 52.16667, 12.16667],
 					"cubes": [
-						{"origin": [-12, 39.75, 10], "size": [24, 25.5, 33], "uv": [732, 179]},
 						{"origin": [-1, 64.75, 12], "size": [2, 46.5, 31], "uv": [588, 744]}
 					]
 				},
@@ -518,6 +524,14 @@
 					"cubes": [
 						{"origin": [-10.25, 0, 24], "size": [2.5, 3, 10.5], "pivot": [-9, 1.75, 26.75], "rotation": [0, -45, 0], "uv": [490, 860]},
 						{"origin": [-9, 0, 19], "size": [0, 5, 15.5], "pivot": [-9, 1.75, 26.75], "rotation": [0, -45, 0], "uv": [68, 860]}
+					]
+				},
+				{
+					"name": "hipBone",
+					"parent": "hip",
+					"pivot": [0, 50, 23],
+					"cubes": [
+						{"origin": [-12, 39.75, 10], "size": [24, 25.5, 33], "uv": [732, 179]}
 					]
 				},
 				{

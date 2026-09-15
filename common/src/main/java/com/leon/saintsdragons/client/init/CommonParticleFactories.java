@@ -5,6 +5,7 @@ import com.leon.saintsdragons.client.particle.IgnivorusChargedFireballTrailParti
 import com.leon.saintsdragons.client.particle.CindervaneFireImpactParticle;
 import com.leon.saintsdragons.client.particle.CindervaneImpactEmitterParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireBodyStarParticle;
+import com.leon.saintsdragons.client.particle.RaevyxStormAuraParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireBodySmokeParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaSnowDustParticle;
@@ -79,6 +80,10 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.CINDERVANE_CRASH_FIRE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.CRASH_FIRE));
         register(registrar, ModParticles.CINDERVANE_DARK_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.DARK_FIRE));
         register(registrar, ModParticles.CINDERVANE_FIRE_BODY_SMOKE.get(), CindervaneFireBodySmokeParticle.Factory::new);
+        register(registrar, ModParticles.RAEVYX_STORM_AURA.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 0));
+        register(registrar, ModParticles.RAEVYX_STORM_ZAP.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 1));
+        register(registrar, ModParticles.RAEVYX_STORM_EMITTER.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 2));
+        register(registrar, ModParticles.RAEVYX_STORM_STAR.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 3));
         register(registrar, ModParticles.CINDERVANE_FIRE_BODY_STAR.get(), CindervaneFireBodyStarParticle.Factory::new);
         register(registrar, ModParticles.CINDERVANE_MORE_SPEC_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.MORE_SPEC));
         register(registrar, ModParticles.CINDERVANE_MOUTH_EMITTER.get(), CindervaneImpactEmitterParticle.MouthFactory::new);

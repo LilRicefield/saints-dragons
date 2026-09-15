@@ -139,6 +139,18 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_BODY_SMOKE =
             REGISTER.register("cindervane_fire_body_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> RAEVYX_STORM_AURA =
+            REGISTER.register("raevyx_storm_aura", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> RAEVYX_STORM_ZAP =
+            REGISTER.register("raevyx_storm_zap", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> RAEVYX_STORM_EMITTER =
+            REGISTER.register("raevyx_storm_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> RAEVYX_STORM_STAR =
+            REGISTER.register("raevyx_storm_star", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> CINDERVANE_FIRE_BODY_STAR =
             REGISTER.register("cindervane_fire_body_star", () -> Services.PLATFORM.createSimpleParticle(true));
 

@@ -571,6 +571,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     @Override
     protected void defineSynchedData() {
         super.defineSynchedData();
+        this.entityData.define(DATA_STORM_AURA, false);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_GLOW, false);
@@ -1707,7 +1708,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (tickCount % 5 == 0) {
             tickSuperchargeTimer();
             tickTempInvulnTimer();
-            tickSuperchargeVfx();
+            syncStormAura();
         }
         if (tickCount % 100 == 0) {
             tickRecentAggroCleanup();
@@ -2116,13 +2117,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
     }
     
-    private void tickSuperchargeVfx() {
-        if (isSupercharged() && this.level().isThundering() && superchargeVfxCooldown-- <= 0) {
-            spawnSuperchargeVfx();
-            superchargeVfxCooldown = 6 + this.random.nextInt(6);
-        }
+    private void syncStormAura() {
+        if (this.level().isClientSide) return;
+        this.entityData.set(DATA_STORM_AURA, isSupercharged() && this.level().isThundering());
     }
-    
+
     private void tickFeedingCooldown() {
         if (level().isClientSide) {
             return;
@@ -2497,6 +2496,10 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
                 && Math.abs(this.entityData.get(DATA_RIDER_STRAFE)) > 0.1f;
     }
 
+    private static final EntityDataAccessor<Boolean> DATA_STORM_AURA = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+
+    public boolean isStormAuraActive() { return this.entityData.get(DATA_STORM_AURA); }
+
     private int superchargeTicks = 0;
     public void startSupercharge(int ticks) {
         boolean wasNotSupercharged = !isSupercharged();
@@ -2506,7 +2509,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(configuredMaxHealth(config, BABY_MAX_HEALTH) * 2.0D);
             this.setHealth(this.getMaxHealth());
             this.allowGroundBeamDuringStorm = true;
-            this.superchargeVfxCooldown = 20;
+            syncStormAura();
         }
     }
     
@@ -2527,39 +2530,6 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         this.setInvulnerable(true);
     }
 
-    private int superchargeVfxCooldown = 0;
-    private void spawnSuperchargeVfx() {
-        if (!(this.level() instanceof ServerLevel server)) return;
-        Vec3 center = this.position().add(0, this.getBbHeight() * 0.6, 0);
-        double radius = Math.max(this.getBoundingBox().getXsize(), this.getBoundingBox().getZsize()) * 0.55;
-        int bursts = 2 + this.random.nextInt(3);
-        for (int i = 0; i < bursts; i++) {
-            Vec3 dir = randomUnit(this.random);
-            double length = 0.4 + this.random.nextDouble() * 0.7;
-            Vec3 offset = randomUnit(this.random).scale(radius * 0.35);
-            Vec3 from = center.add(offset);
-            Vec3 to = from.add(dir.scale(length));
-            float size = 0.5f + this.random.nextFloat() * 0.25f;
-            emitMicroArc(server, from, to, size);
-        }
-        server.sendParticles(ParticleTypes.ELECTRIC_SPARK,
-                center.x, center.y, center.z,
-                3, radius * 0.15, radius * 0.15, radius * 0.15, 0.0);
-    }
-    private void emitMicroArc(ServerLevel server, Vec3 from, Vec3 to, float size) {
-        Vec3 delta = to.subtract(from);
-        int steps = 2 + this.random.nextInt(3);
-        Vec3 step = delta.scale(1.0 / steps);
-        Vec3 pos = from;
-        Vec3 dir = step.lengthSqr() > 1.0e-6 ? step.normalize() : randomUnit(this.random);
-        for (int i = 0; i <= steps; i++) {
-            if (this.random.nextFloat() < 0.7f) {
-                server.sendParticles(new RaevyxLightningStormData(size, this.getTextureVariant() == VARIANT_NIGHT_GOLD),
-                        pos.x, pos.y, pos.z, 1, dir.x, dir.y, dir.z, 0.0);
-            }
-            pos = pos.add(step);
-        }
-    }
     public void spawnGroundRendTrailParticles(Vec3 forwardDir, double speed) {
         if (!(this.level() instanceof ServerLevel server) || !this.onGround() || speed <= 0.0D) {
             clearGroundRendTrailAnchors();

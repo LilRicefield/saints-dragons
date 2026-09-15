@@ -15,7 +15,17 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormAuraParticles;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.RenderType;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.util.RenderUtils;
+import org.joml.Matrix4f;
+import java.util.Map;
+import java.util.HashMap;
+
 public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
+    private final Map<String, Matrix4f> stormTransforms = new HashMap<>();
     private static final double BEAM_CULL_PADDING = 2.0D;
     private static final double BEAM_RENDER_DISTANCE = 256.0D;
     private static final String PASSENGER_BONE = "passengerBone";
@@ -29,6 +39,39 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
         this.addRenderLayer(new RaevyxNightEmissiveLayer(this));
         this.addRenderLayer(new RaevyxGlowLayer(this));
         this.addRenderLayer(new RaevyxLightningBeamLayer());
+    }
+
+    @Override
+    public void render(Raevyx entity, float entityYaw, float partialTick, PoseStack poses,
+                       MultiBufferSource buffers, int packedLight) {
+        stormTransforms.clear();
+        try {
+            super.render(entity, entityYaw, partialTick, poses, buffers, packedLight);
+        } finally {
+            stormTransforms.clear();
+        }
+    }
+
+    @Override
+    public void renderRecursively(PoseStack poses, Raevyx entity, GeoBone bone, RenderType renderType,
+                                  MultiBufferSource buffers, VertexConsumer buffer, boolean isReRender,
+                                  float partialTick, int packedLight, int packedOverlay,
+                                  float red, float green, float blue, float alpha) {
+        super.renderRecursively(poses, entity, bone, renderType, buffers, buffer, isReRender,
+                partialTick, packedLight, packedOverlay, red, green, blue, alpha);
+        if (isReRender || !entity.isStormAuraActive() || !RaevyxStormAuraParticles.samplesBone(bone.getName())) return;
+        poses.pushPose();
+        try {
+            RenderUtils.translateMatrixToBone(poses, bone);
+            RenderUtils.translateToPivotPoint(poses, bone);
+            RenderUtils.rotateMatrixAroundBone(poses, bone);
+            RenderUtils.scaleMatrixForBone(poses, bone);
+            RenderUtils.translateAwayFromPivotPoint(poses, bone);
+            stormTransforms.put(bone.getName(), RenderUtils.invertAndMultiplyMatrices(
+                    poses.last().pose(), this.entityRenderTranslations));
+        } finally {
+            poses.popPose();
+        }
     }
 
     @Override
@@ -91,6 +134,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     @Override
     protected void afterDragonRender(Raevyx entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+        RaevyxStormAuraParticles.emit(entity, this.lastBakedModel, stormTransforms, partialTick);
         RaevyxLightningBeamLayer.renderFlashes(entity, poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
