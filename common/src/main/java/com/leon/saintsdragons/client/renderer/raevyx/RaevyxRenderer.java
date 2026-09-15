@@ -16,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormAuraParticles;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormLightningRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderType;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -59,7 +60,9 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
                                   float red, float green, float blue, float alpha) {
         super.renderRecursively(poses, entity, bone, renderType, buffers, buffer, isReRender,
                 partialTick, packedLight, packedOverlay, red, green, blue, alpha);
-        if (isReRender || !entity.isStormAuraActive() || !RaevyxStormAuraParticles.samplesBone(bone.getName())) return;
+        if (isReRender || !entity.isStormAuraActive()
+                || !(RaevyxStormAuraParticles.samplesBone(bone.getName())
+                || RaevyxStormLightningRenderer.samplesBone(bone.getName()))) return;
         poses.pushPose();
         try {
             RenderUtils.translateMatrixToBone(poses, bone);
@@ -135,6 +138,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
     @Override
     protected void afterDragonRender(Raevyx entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
         RaevyxStormAuraParticles.emit(entity, this.lastBakedModel, stormTransforms, partialTick);
+        RaevyxStormLightningRenderer.render(entity, this.lastBakedModel, stormTransforms, poseStack, bufferSource, partialTick);
         RaevyxLightningBeamLayer.renderFlashes(entity, poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
