@@ -5,7 +5,6 @@ import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -15,6 +14,7 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
@@ -23,20 +23,38 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.core.animation.AnimationController;
+import software.bernie.geckolib.core.animation.RawAnimation;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.UUID;
 
-public class VolitansPoisonBallEntity extends Entity {
+public class VolitansPoisonOrbEntity extends Entity implements GeoEntity {
+    private final AnimatableInstanceCache animationCache =
+           GeckoLibUtil.createInstanceCache(this);
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return animationCache;
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+        controllers.add(new AnimationController<>(this, "orb", 0,
+                state -> state.setAndContinue(RawAnimation.begin().thenLoop("spin"))));
+    }
+
     private static final EntityDataAccessor<Float> DATA_SCALE =
-            SynchedEntityData.defineId(VolitansPoisonBallEntity.class, EntityDataSerializers.FLOAT);
+            SynchedEntityData.defineId(VolitansPoisonOrbEntity.class, EntityDataSerializers.FLOAT);
 
     private UUID ownerUUID;
     private LivingEntity owner;
@@ -47,16 +65,16 @@ public class VolitansPoisonBallEntity extends Entity {
     private int lifetimeTicks;
     private int livedTicks;
 
-    public VolitansPoisonBallEntity(EntityType<? extends VolitansPoisonBallEntity> type, Level level) {
+    public VolitansPoisonOrbEntity(EntityType<? extends VolitansPoisonOrbEntity> type, Level level) {
         super(type, level);
         this.blocksBuilding = true;
         this.noPhysics = true;
         this.refreshDimensions();
     }
 
-    public VolitansPoisonBallEntity(Level level, Vec3 pos, @Nullable LivingEntity owner,
-                                    double impactRadius, float impactDamage,
-                                    int poisonDurationTicks, int poisonAmplifier, int lifetimeTicks) {
+    public VolitansPoisonOrbEntity(Level level, Vec3 pos, @Nullable LivingEntity owner,
+                                   double impactRadius, float impactDamage,
+                                   int poisonDurationTicks, int poisonAmplifier, int lifetimeTicks) {
         this(ModEntities.VOLITANS_POISON_BALL.get(), level);
         this.setPos(pos);
         this.owner = owner;
@@ -87,6 +105,7 @@ public class VolitansPoisonBallEntity extends Entity {
 
     @Override
     public void tick() {
+        super.tick();
         livedTicks++;
 
         Vec3 currentPos = this.position();
@@ -100,12 +119,8 @@ public class VolitansPoisonBallEntity extends Entity {
 
         Vec3 nextPos = currentPos.add(motion);
 
-        net.minecraft.world.phys.BlockHitResult blockHit = level().clip(new net.minecraft.world.level.ClipContext(
-                currentPos,
-                nextPos,
-                net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                net.minecraft.world.level.ClipContext.Fluid.NONE,
-                this
+        BlockHitResult blockHit = level().clip(new ClipContext(
+                currentPos, nextPos, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this
         ));
 
         boolean hitBlock = blockHit.getType() == HitResult.Type.BLOCK;
@@ -138,7 +153,7 @@ public class VolitansPoisonBallEntity extends Entity {
                 motion = motion.scale(0.99D);
             }
             this.setDeltaMovement(motion);
-            spawnTrailParticles();
+            spawnTrailParticles(currentPos);
         }
     }
 
@@ -163,10 +178,27 @@ public class VolitansPoisonBallEntity extends Entity {
         });
     }
 
-    private void spawnTrailParticles() {
-        float scale = getVisualScale();
-        level().addParticle(ParticleTypes.ENTITY_EFFECT, getX(), getY() + 0.2D * scale, getZ(), 0.25D, 0.75D, 0.2D);
-        level().addParticle(ParticleTypes.WITCH, getX(), getY() + 0.1D * scale, getZ(), 0.0D, 0.01D, 0.0D);
+    private void spawnTrailParticles(Vec3 previous) {
+        Vec3 travel = position().subtract(previous);
+        int samples = 2 * Math.min(24, Math.max(3, (int) Math.ceil(travel.length() / 0.25)));
+        for (int i = 0; i < samples; i++) {
+            Vec3 point = previous.add(travel.scale((i + random.nextDouble()) / samples));
+            double spread = 0.18 * getVisualScale();
+            if (i % 2 == 0) {
+                level().addParticle(ModParticles.VOLITANS_POISON_ORB_EMITTER.get(), true,
+                        point.x + (random.nextDouble() - 0.5) * spread,
+                        point.y + (random.nextDouble() - 0.5) * spread,
+                        point.z + (random.nextDouble() - 0.5) * spread,
+                        (random.nextDouble() - 0.5) * 0.15, random.nextDouble() * 0.1,
+                        (random.nextDouble() - 0.5) * 0.15);
+            }
+            level().addParticle(ModParticles.VOLITANS_POISON_ORB_TRAIL.get(), true,
+                    point.x + (random.nextDouble() - 0.5) * spread,
+                    point.y + (random.nextDouble() - 0.5) * spread,
+                    point.z + (random.nextDouble() - 0.5) * spread,
+                    (random.nextDouble() - 0.5) * 0.04, 0.025,
+                    (random.nextDouble() - 0.5) * 0.04);
+        }
     }
 
     private void explode() {
@@ -186,11 +218,6 @@ public class VolitansPoisonBallEntity extends Entity {
                     impact.x, impact.y + 0.35D * scale, impact.z, 0, scale, 0, 0, 1.0D);
         }
 
-        int effectCount = Math.min(80, Math.max(8, (int) (14 * scale)));
-        server.sendParticles(ParticleTypes.ENTITY_EFFECT, impact.x, impact.y + 0.35D * scale, impact.z,
-                effectCount, 0.7D * scale, 0.45D * scale, 0.7D * scale, 0.0D);
-        server.sendParticles(ParticleTypes.WITCH, impact.x, impact.y + 0.35D * scale, impact.z,
-                effectCount / 2, 0.65D * scale, 0.4D * scale, 0.65D * scale, 0.03D);
         server.playSound(null, blockPosition(), SoundEvents.SLIME_BLOCK_BREAK, getSoundSource(), 1.0F + scale * 0.08F, 0.8F);
 
         LivingEntity ownerEntity = getOwner();
@@ -310,7 +337,7 @@ public class VolitansPoisonBallEntity extends Entity {
 
     @Override
     public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return super.hurt(source, amount);
         }
         return false;
@@ -318,7 +345,7 @@ public class VolitansPoisonBallEntity extends Entity {
 
     @Override
     public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
-        return !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY);
+        return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     @Override

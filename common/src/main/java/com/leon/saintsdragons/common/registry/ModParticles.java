@@ -22,6 +22,12 @@ public final class ModParticles {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.PARTICLE_TYPE, () -> BuiltInRegistries.PARTICLE_TYPE, SaintsDragonsCommon.MOD_ID);
 
+    public static final Supplier<SimpleParticleType> VOLITANS_POISON_ORB_EMITTER =
+            REGISTER.register("volitans_poison_orb_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> VOLITANS_POISON_ORB_TRAIL =
+            REGISTER.register("volitans_poison_orb_trail", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> ATROXIIA_QUAKE_SMOKE =
             REGISTER.register("atroxiia_quake_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
 

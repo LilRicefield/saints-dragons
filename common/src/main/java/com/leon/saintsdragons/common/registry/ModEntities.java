@@ -27,7 +27,7 @@ import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautAmethystPi
 import com.leon.saintsdragons.server.entity.effect.GroundFissureEntity;
 import com.leon.saintsdragons.server.entity.effect.stegonaut.StegonautGroundChunkEntity;
 import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
-import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonOrbEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.ArrowOfVenomEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansBurrowMoundEntity;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansGroundChunkEntity;
@@ -303,8 +303,8 @@ public final class ModEntities {
                     .noSummon()
                     .build("volitans_water_breath"));
 
-    public static final Supplier<EntityType<VolitansPoisonBallEntity>> VOLITANS_POISON_BALL =
-            REGISTER.register("volitans_poison_ball", () -> EntityType.Builder.<VolitansPoisonBallEntity>of(VolitansPoisonBallEntity::new, MobCategory.MISC)
+    public static final Supplier<EntityType<VolitansPoisonOrbEntity>> VOLITANS_POISON_BALL =
+            REGISTER.register("volitans_poison_ball", () -> EntityType.Builder.<VolitansPoisonOrbEntity>of(VolitansPoisonOrbEntity::new, MobCategory.MISC)
                     .sized(1.0F, 1.0F)
                     .clientTrackingRange(64)
                     .updateInterval(1)

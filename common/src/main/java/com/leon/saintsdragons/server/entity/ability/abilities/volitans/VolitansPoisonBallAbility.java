@@ -7,7 +7,7 @@ import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.dragons.volitans.handlers.VolitansAnimationHandler;
-import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonBallEntity;
+import com.leon.saintsdragons.server.entity.effect.volitans.VolitansPoisonOrbEntity;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 
@@ -164,7 +164,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
 
         int poisonDurationTicks = (int) Math.round(dragon.getConfiguredExtra("poison_ball_poison_duration_ticks", POISON_DURATION_TICKS));
         int poisonAmplifier = dragon.getConfiguredPoisonAmplifier("poison_ball_poison_level", POISON_AMPLIFIER + 1);
-        VolitansPoisonBallEntity projectile = new VolitansPoisonBallEntity(
+        VolitansPoisonOrbEntity projectile = new VolitansPoisonOrbEntity(
                 server, spawnPos, dragon,
                 IMPACT_RADIUS, dragon.getConfiguredAbilityDamage("poison_ball", IMPACT_DAMAGE),
                 Math.max(0, poisonDurationTicks), Math.max(-1, poisonAmplifier), PROJECTILE_LIFETIME_TICKS

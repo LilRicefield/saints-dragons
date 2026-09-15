@@ -1,5 +1,11 @@
 package com.leon.saintsdragons.client.renderer.volitans;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.util.RenderUtils;
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.layer.volitans.VolitansNightEmissiveLayer;
@@ -18,6 +24,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
+    private Vec3 renderedMouthOffset;
     private static final float PASSENGER_X = 0.0f;
     private static final float PASSENGER_Y = -3.0f;
     private static final float PASSENGER_Z = 0.0f;
@@ -29,6 +36,38 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     public VolitansRenderer(EntityRendererProvider.Context context) {
         super(context, new VolitansModel());
         this.addRenderLayer(new VolitansNightEmissiveLayer(this));
+    }
+
+    @Override
+    public void render(Volitans entity, float yaw, float partialTick, PoseStack poses,
+                       MultiBufferSource buffers, int packedLight) {
+        renderedMouthOffset = null;
+        try {
+            super.render(entity, yaw, partialTick, poses, buffers, packedLight);
+        } finally {
+            renderedMouthOffset = null;
+        }
+    }
+
+    @Override
+    public void renderRecursively(PoseStack poses, Volitans entity, GeoBone bone, RenderType type,
+                                  MultiBufferSource buffers, VertexConsumer buffer, boolean isReRender,
+                                  float partialTick, int light, int overlay, float red, float green, float blue, float alpha) {
+        super.renderRecursively(poses, entity, bone, type, buffers, buffer, isReRender,
+                partialTick, light, overlay, red, green, blue, alpha);
+        if (isReRender || !BREATH_BONE.equals(bone.getName())) return;
+        poses.pushPose();
+        try {
+            RenderUtils.translateMatrixToBone(poses, bone);
+            RenderUtils.translateToPivotPoint(poses, bone);
+            RenderUtils.rotateMatrixAroundBone(poses, bone);
+            RenderUtils.scaleMatrixForBone(poses, bone);
+            var matrix = RenderUtils.invertAndMultiplyMatrices(poses.last().pose(), this.entityRenderTranslations);
+            var point = matrix.transformPosition(new org.joml.Vector3f());
+            renderedMouthOffset = new Vec3(point.x, point.y, point.z);
+        } finally {
+            poses.popPose();
+        }
     }
 
     @Override
@@ -62,7 +101,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
         sendBreathLocatorToServer(entity);
         VolitansWaterRingRenderer.render(entity, poseStack, bufferSource, partialTick);
         VolitansBreathIntroRenderer.render(entity, poseStack, bufferSource, partialTick);
-        VolitansPoisonBallChargeRenderer.render(entity, poseStack, bufferSource, partialTick);
+        VolitansPoisonBallChargeRenderer.render(entity, renderedMouthOffset, poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
                 getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),

@@ -28,7 +28,7 @@ import com.leon.saintsdragons.client.renderer.volitans.VolitansRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.ArrowOfVenomRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansBurrowMoundRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansGroundChunkRenderer;
-import com.leon.saintsdragons.client.renderer.volitans.VolitansPoisonBallRenderer;
+import com.leon.saintsdragons.client.renderer.volitans.VolitansPoisonOrbRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansSpineRenderer;
 import com.leon.saintsdragons.client.renderer.volitans.VolitansWaterBreathRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.VisualFallingBlockRenderer;
@@ -77,7 +77,7 @@ public final class CommonClientModEvents {
         registrar.register(ModEntities.VOLITANS_SPINE.get(), VolitansSpineRenderer::new);
         registrar.register(ModEntities.ARROW_OF_VENOM.get(), ArrowOfVenomRenderer::new);
         registrar.register(ModEntities.VOLITANS_WATER_BREATH.get(), VolitansWaterBreathRenderer::new);
-        registrar.register(ModEntities.VOLITANS_POISON_BALL.get(), VolitansPoisonBallRenderer::new);
+        registrar.register(ModEntities.VOLITANS_POISON_BALL.get(), VolitansPoisonOrbRenderer::new);
         registrar.register(ModEntities.IVY_THE_DRAGON_MERCHANT.get(), IvyTheDragonMerchantRenderer::new);
         registrar.register(ModEntities.ATROXIIA.get(), AtroxiiaRenderer::new);
         registrar.register(ModEntities.LATCHER.get(), LatcherRenderer::new);

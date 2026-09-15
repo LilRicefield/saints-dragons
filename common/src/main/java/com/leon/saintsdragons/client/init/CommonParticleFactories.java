@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.init;
 
+import com.leon.saintsdragons.client.particle.VolitansPoisonOrbTrailParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaIceBurstParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaQuakeSmokeParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireTrailParticle;
@@ -51,6 +52,8 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.VOLITANS_POISON_ORB_EMITTER.get(), sprites -> new VolitansPoisonOrbTrailParticle.Factory(sprites, true));
+        register(registrar, ModParticles.VOLITANS_POISON_ORB_TRAIL.get(), VolitansPoisonOrbTrailParticle.Factory::new);
         register(registrar, ModParticles.ATROXIIA_QUAKE_SMOKE.get(), AtroxiiaQuakeSmokeParticle.Factory::new);
         register(registrar, ModParticles.ATROXIIA_ICE_BURST.get(), AtroxiiaIceBurstParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_LARGE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_SPLATTER_LARGE));

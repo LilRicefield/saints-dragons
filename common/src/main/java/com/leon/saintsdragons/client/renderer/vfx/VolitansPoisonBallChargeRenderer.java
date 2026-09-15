@@ -21,14 +21,17 @@ public final class VolitansPoisonBallChargeRenderer {
 
     private VolitansPoisonBallChargeRenderer() {}
 
-    public static void render(Volitans dragon, PoseStack poses, MultiBufferSource buffers, float partialTick) {
+    public static void render(Volitans dragon, Vec3 mouthOffset, PoseStack poses, MultiBufferSource buffers, float partialTick) {
         if (!dragon.isAlive()) return;
         float chargeAge = dragon.getPoisonBallChargeAge(partialTick);
         float fireAge = dragon.getPoisonBallFireAge(partialTick);
         boolean firing = fireAge >= 0 && fireAge < SHOT.length * SHOT_FRAME_TICKS;
         if (chargeAge < 0 && !firing) return;
-        Vec3 mouth = dragon.getClientLocatorPosition("breathBoneOrigin");
-        if (mouth == null) return;
+        if (mouthOffset == null) return;
+        Vec3 renderOrigin = new Vec3(Mth.lerp(partialTick, dragon.xOld, dragon.getX()),
+                Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
+                Mth.lerp(partialTick, dragon.zOld, dragon.getZ()));
+        Vec3 mouth = renderOrigin.add(mouthOffset);
 
         var rider = dragon.getControllingPassenger();
         Vec3 forward = rider != null ? rider.getViewVector(partialTick) : dragon.getViewVector(partialTick);
@@ -39,10 +42,7 @@ public final class VolitansPoisonBallChargeRenderer {
             if (aim != null) forward = aim;
         }
         forward = forward.normalize();
-        Vec3 renderOrigin = new Vec3(Mth.lerp(partialTick, dragon.xOld, dragon.getX()),
-                Mth.lerp(partialTick, dragon.yOld, dragon.getY()),
-                Mth.lerp(partialTick, dragon.zOld, dragon.getZ()));
-        Vec3 anchor = mouth.add(forward.scale(FORWARD_OFFSET)).subtract(renderOrigin);
+        Vec3 anchor = mouthOffset.add(forward.scale(FORWARD_OFFSET));
         if (chargeAge >= 0) {
             int frame = Mth.floor(chargeAge / CHARGE_FRAME_TICKS) % CHARGE.length;
             float halfSize = Mth.lerp(Mth.clamp(chargeAge / 13.0F, 0, 1), 1.5F, 3.0F);
