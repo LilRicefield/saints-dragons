@@ -177,14 +177,24 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void setupFastActionController(AnimationController<Ignivorus> controller) {
+        controller.triggerableAnim("fireball_level1_charge_ground",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge_ground"));
+        controller.triggerableAnim("fireball_level1_shoot_ground",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_shoots_ground"));
+        controller.triggerableAnim("fireball_level2_charge_ground",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_charge_ground"));
+        controller.triggerableAnim("fireball_level2_shoot_ground",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_shoots_ground"));
+        controller.triggerableAnim("fireball_level3_charge_ground",
+                RawAnimation.begin().thenPlayAndHold("animation.ignivorus.fireball_level3_charge_ground"));
+        controller.triggerableAnim("fireball_level3_shoot_ground",
+                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_shoots_ground"));
         controller.triggerableAnim("fireball_level1_charge",
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_charge"));
         controller.triggerableAnim("fireball_level2_charge",
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level2_charge"));
         controller.triggerableAnim("fireball_level3_charge",
-                RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level3_charge"));
-        controller.triggerableAnim("fireball_level3_hold",
-                RawAnimation.begin().thenLoop("animation.ignivorus.fireball_level3_hold"));
+                RawAnimation.begin().thenPlayAndHold("animation.ignivorus.fireball_level3_charge"));
         controller.triggerableAnim("fireball_level1_shoot",
                 RawAnimation.begin().thenPlay("animation.ignivorus.fireball_level1_shoots"));
         controller.triggerableAnim("fireball_level2_shoot",

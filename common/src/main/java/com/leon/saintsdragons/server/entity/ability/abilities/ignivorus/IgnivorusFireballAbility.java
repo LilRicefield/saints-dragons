@@ -48,7 +48,6 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private boolean releaseRequested = false;
     private int releaseTicks = 0;
     private int releaseChargeTicks = 0;
-    private boolean level3HoldActive = false;
     private boolean aiAirCast;
     private boolean aiControlled;
     private long learningTrial;
@@ -103,7 +102,6 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             releaseRequested = false;
             releaseTicks = 0;
             releaseChargeTicks = 0;
-            level3HoldActive = false;
             lastChargeAnimLevel = 0;
             getUser().setFireballChargeLevel(0);
         }
@@ -196,10 +194,6 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             lastChargeAnimLevel = currentChargeLevel;
         }
 
-        if (chargeTicks >= MAX_CHARGE_TICKS && !level3HoldActive) {
-            triggerHoldAnimation();
-            level3HoldActive = true;
-        }
     }
 
     @Override
@@ -312,7 +306,6 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         releaseRequested = false;
         releaseTicks = 0;
         releaseChargeTicks = 0;
-        level3HoldActive = false;
         aiReleasePending = false;
         aiAlignmentTicks = 0;
         aiAimTick = Integer.MIN_VALUE;
@@ -449,25 +442,31 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
                 .abilityDamage("fireball", DEFAULT_IMPACT_DAMAGE);
     }
 
+    private String fireballAnimation(String animation) {
+        Ignivorus dragon = getUser();
+        boolean airborne = dragon.isFlying() || dragon.isTakeoff() || dragon.isLanding() || dragon.isHovering();
+        return !dragon.isPhase2Active() && !airborne && dragon.onGround() ? animation + "_ground" : animation;
+    }
+
     private void triggerChargeAnimation(int level) {
         Ignivorus dragon = getUser();
         switch (level) {
             case 1 -> {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level1_charge");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, fireballAnimation("fireball_level1_charge"));
                 if (!dragon.level().isClientSide) {
                     dragon.level().broadcastEntityEvent(dragon, Ignivorus.FIREBALL_CHARGE_EVENT);
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_CHARGE.get(), 1.0f, 1.0f, 54);
                 }
             }
             case 2 -> {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level2_charge");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, fireballAnimation("fireball_level2_charge"));
                 if (!dragon.level().isClientSide) {
                     dragon.level().broadcastEntityEvent(dragon, Ignivorus.FIREBALL_LEVEL_TWO_CHARGE_EVENT);
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL2_CHARGE.get(), 1.0f, 1.0f, 68);
                 }
             }
             case 3 -> {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_charge");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, fireballAnimation("fireball_level3_charge"));
                 if (!dragon.level().isClientSide) {
                     dragon.level().broadcastEntityEvent(dragon, Ignivorus.FIREBALL_LEVEL_THREE_CHARGE_EVENT);
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_CHARGE.get(), 1.0f, 1.0f, 94);
@@ -477,27 +476,24 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         }
     }
 
-    private void triggerHoldAnimation() {
-        getUser().triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_hold");
-    }
 
     private void triggerShootAnimation(int level) {
         Ignivorus dragon = getUser();
         switch (level) {
             case 2 -> {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level2_shoot");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, fireballAnimation("fireball_level2_shoot"));
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL2_SHOOTS.get(), 1.0f, 1.0f, 76);
                 }
             }
             case 3 -> {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level3_shoot");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, fireballAnimation("fireball_level3_shoot"));
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL3_SHOOTS.get(), 1.0f, 1.0f, 45);
                 }
             }
             default -> {
-                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, "fireball_level1_shoot");
+                dragon.triggerAnim(IgnivorusAnimationHandler.FAST_ACTION_CONTROLLER, fireballAnimation("fireball_level1_shoot"));
                 if (!dragon.level().isClientSide) {
                     dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_LEVEL1_SHOOTS.get(), 1.0f, 1.0f, 66);
                 }
