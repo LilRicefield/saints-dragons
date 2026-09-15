@@ -7,7 +7,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearnin
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
@@ -227,33 +226,12 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
 
         if (scale <= 4.01F) {
             spawnStageOneImpact(server, impact);
-        } else if (scale >= 8.0F) {
-            // Core explosion particles - scale with fireball size
-            server.sendParticles(ParticleTypes.LAVA, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(10, scale, 60),
-                    0.6D * scale, 0.4D * scale, 0.6D * scale, 0.05D);
-            server.sendParticles(ParticleTypes.FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
-                    0.7D * scale, 0.5D * scale, 0.7D * scale, 0.1D);
-        }
-
-        if (scale >= 8.0F) {
-            server.sendParticles(ParticleTypes.LARGE_SMOKE, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(14, scale, 70),
-                    0.9D * scale, 0.7D * scale, 0.9D * scale, 0.06D);
-            server.sendParticles(ParticleTypes.ASH, impact.x, impact.y + 2.0D * scale, impact.z, capParticles(10, scale, 50),
-                    1.2D * scale, 1.0D * scale, 1.2D * scale, 0.1D);
         }
         if (scale >= 6.0F && allowGriefing) {
             destroyBlocks(server, impactPos, 6, false);
         }
-        if (scale >= 8.0F) {
-
-            server.sendParticles(ParticleTypes.EXPLOSION_EMITTER, impact.x, impact.y + 0.5D, impact.z, 1,
-                    0.0D, 0.0D, 0.0D, 0.0D);
-            server.sendParticles(ParticleTypes.SOUL_FIRE_FLAME, impact.x, impact.y + 0.5D * scale, impact.z, capParticles(16, scale, 60),
-                    2.0D * scale, 1.0D * scale, 2.0D * scale, 0.2D);
-
-            if (allowGriefing) {
-                destroyBlocks(server, impactPos, 12, true);
-            }
+        if (scale >= 8.0F && allowGriefing) {
+            destroyBlocks(server, impactPos, 12, true);
         }
 
         if (scale > 4.01F && scale < 8.0F) spawnStageTwoImpact(server, impact);
@@ -543,10 +521,6 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     @Nullable
     public Ignivorus getOwner() {
         return owner;
-    }
-
-    private static int capParticles(int base, float scale, int max) {
-        return Math.min(max, Math.max(1, (int) (base * scale)));
     }
 
     private static final class SphereOffsets {
