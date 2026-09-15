@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.client.init;
 
+import com.leon.saintsdragons.client.particle.AtroxiiaIceBurstParticle;
+import com.leon.saintsdragons.client.particle.AtroxiiaQuakeSmokeParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireTrailParticle;
 import com.leon.saintsdragons.client.particle.IgnivorusChargedFireballTrailParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireImpactParticle;
@@ -7,9 +9,6 @@ import com.leon.saintsdragons.client.particle.CindervaneImpactEmitterParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireBodyStarParticle;
 import com.leon.saintsdragons.client.particle.RaevyxStormAuraParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireBodySmokeParticle;
-import com.leon.saintsdragons.client.particle.AtroxiiaSnowParticle;
-import com.leon.saintsdragons.client.particle.AtroxiiaSnowDustParticle;
-import com.leon.saintsdragons.client.particle.AtroxiiaSnowShardParticle;
 import com.leon.saintsdragons.client.particle.BloodTempestKatanaRingParticle;
 import com.leon.saintsdragons.client.particle.BloodTempestKatanaGlintParticle;
 import com.leon.saintsdragons.client.particle.BloodTempestKatanaImpactParticle;
@@ -52,6 +51,8 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.ATROXIIA_QUAKE_SMOKE.get(), AtroxiiaQuakeSmokeParticle.Factory::new);
+        register(registrar, ModParticles.ATROXIIA_ICE_BURST.get(), AtroxiiaIceBurstParticle.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_LARGE.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_SPLATTER_LARGE));
         register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_SPLATTER_SMALL.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_SPLATTER_SMALL));
         register(registrar, ModParticles.IGNIVORUS_LEVEL_THREE_TOON_EXPLOSION.get(), sprites -> new CindervaneFireImpactParticle.Factory(sprites, CindervaneFireImpactParticle.Kind.VIOLET_TOON_EXPLOSION));
@@ -158,10 +159,6 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.SECOND_IMPACT_RING.get(), SecondImpactRingParticle.Factory::new);
         register(registrar, ModParticles.MOSSBACK_POISON_FUME.get(), MossbackPoisonFumeParticle.Factory::new);
         register(registrar, ModParticles.DRACONIAN_NUCLEUS_PARTICLE.get(), DraconianNucleusParticle.Factory::new);
-        register(registrar, ModParticles.ATROXIIA_SNOW.get(), AtroxiiaSnowParticle.FlakeFactory::new);
-        register(registrar, ModParticles.ATROXIIA_SNOW_SHARD.get(), AtroxiiaSnowShardParticle.Factory::new);
-        register(registrar, ModParticles.ATROXIIA_SNOW_SPARK.get(), AtroxiiaSnowParticle.SparkFactory::new);
-        register(registrar, ModParticles.ATROXIIA_SNOW_DUST.get(), AtroxiiaSnowDustParticle.Factory::new);
     }
 
     private static <T extends ParticleOptions> void register(Registrar registrar,

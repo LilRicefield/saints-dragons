@@ -2,18 +2,14 @@ package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
-import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaAnimationHandler;
-import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -32,22 +28,10 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
     private static final int QUAKE_ONE_TICKS = (int) Math.round(1.7083D * 20.0D);
     private static final int QUAKE_TWO_TICKS = (int) Math.round(0.85 * 20.0D);
     private static final int CHAIN_TICK = (int) Math.round(1.1D * 20.0D);
-    private static final int SNOW_BURST_TICK = (int) Math.round(0.90D * 20.0D);
-    private static final int QUAKE_TWO_SNOW_BURST_TICK = (int) Math.round(0.70D * 20.0D);
+    private static final int QUAKE_ONE_IMPACT_TICK = (int) Math.round(0.90D * 20.0D);
+    private static final int QUAKE_TWO_IMPACT_TICK = (int) Math.round(0.70D * 20.0D);
+    private static final int QUAKE_TWO_TAIL_FLASH_TICK = (int) Math.round(0.33D * 20.0D);
     private static final int COOLDOWN_TICKS = 50;
-    private static final int SNOWFLAKE_COUNT = 128;
-    private static final int SNOW_SPARK_COUNT = 128;
-    private static final int SNOW_SHARD_COUNT = 64;
-    private static final int SNOWFLAKE_RING_COUNT = 128;
-    private static final int SNOW_DUST_RING_COUNT = 64;
-    private static final double SNOWFLAKE_RING_SPEED = 1.0D;
-    private static final double SNOWFLAKE_RING_LIFT = 0.025D;
-    private static final double SNOW_DUST_RING_SPEED = 0.72D;
-    private static final double SNOW_DUST_RING_LIFT = 0.055D;
-    private static final double SNOW_DUST_RING_ANGLE_OFFSET = Math.PI / SNOW_DUST_RING_COUNT * 0.5D;
-    private static final float IMPACT_RING_SCALE = 0.45F;
-    private static final double INNER_BURST_RADIUS = 1.5D;
-    private static final double OUTER_BURST_RADIUS = 15.0D;
     private static final float DEFAULT_QUAKE_DAMAGE = 25.0F;
     private static final double QUAKE_RADIUS = 20.0D;
     private static final double QUAKE_VERTICAL_RADIUS = 6.0D;
@@ -66,8 +50,8 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
     private int phaseTicks;
     private boolean releaseRequested;
     private boolean chainRequested;
-    private boolean spawnedSnowBurst;
-    private boolean spawnedQuakeTwoSnowBurst;
+    private boolean appliedQuakeOneImpact;
+    private boolean appliedQuakeTwoImpact;
 
     private enum Phase {
         QUAKE_ONE,
@@ -94,8 +78,8 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
         phaseTicks = 0;
         releaseRequested = false;
         chainRequested = false;
-        spawnedSnowBurst = false;
-        spawnedQuakeTwoSnowBurst = false;
+        appliedQuakeOneImpact = false;
+        appliedQuakeTwoImpact = false;
         getUser().lockRiderControls(3);
         getUser().triggerAnim(AtroxiiaAnimationHandler.MOVEMENT_CONTROLLER, "helheim_quake1");
         getUser().getSoundHandler().playMovingEntitySound(
@@ -109,8 +93,8 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
         phaseTicks++;
 
         if (phase == Phase.QUAKE_ONE) {
-            if (!spawnedSnowBurst && phaseTicks >= SNOW_BURST_TICK) {
-                spawnedSnowBurst = true;
+            if (!appliedQuakeOneImpact && phaseTicks >= QUAKE_ONE_IMPACT_TICK) {
+                appliedQuakeOneImpact = true;
                 getUser().triggerScreenShake(QUAKE_ONE_SCREEN_SHAKE, QUAKE_ONE_SCREEN_SHAKE_TICKS);
                 AtroxiiaFrostWalker.freezeNearbyWater(getUser(), FROST_WALKER_LEVEL);
                 performQuakeImpact();
@@ -121,8 +105,11 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
                 end();
             }
         } else {
-            if (!spawnedQuakeTwoSnowBurst && phaseTicks >= QUAKE_TWO_SNOW_BURST_TICK) {
-                spawnedQuakeTwoSnowBurst = true;
+            if (phaseTicks == QUAKE_TWO_TAIL_FLASH_TICK && getUser().level() instanceof ServerLevel server) {
+                server.broadcastEntityEvent(getUser(), Atroxiia.QUAKE_TAIL_FLASH_EVENT);
+            }
+            if (!appliedQuakeTwoImpact && phaseTicks >= QUAKE_TWO_IMPACT_TICK) {
+                appliedQuakeTwoImpact = true;
                 getUser().triggerScreenShake(QUAKE_TWO_SCREEN_SHAKE, QUAKE_TWO_SCREEN_SHAKE_TICKS);
                 performQuakeImpact();
             }
@@ -152,7 +139,16 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
     }
 
     private void performQuakeImpact() {
-        spawnSnowBurst();
+        Atroxiia dragon = getUser();
+        if (dragon.level() instanceof ServerLevel server) {
+            Vec3 origin = new Vec3(dragon.getX(), dragon.getBoundingBox().minY + 0.12, dragon.getZ());
+            for (var viewer : server.players()) {
+                if (viewer.distanceToSqr(origin) <= 256.0 * 256.0) {
+                    server.sendParticles(viewer, ModParticles.ATROXIIA_ICE_BURST.get(), true,
+                            origin.x, origin.y, origin.z, 0, 0, 0, 0, 0);
+                }
+            }
+        }
         applyQuakeDamage();
     }
 
@@ -194,7 +190,7 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
                 continue;
             }
 
-            AtroxiiaFrostImpact.apply(dragon, target, stunTicks);
+            AtroxiiaFrostImpact.apply(dragon, target, stunTicks, false);
             Vec3 direction = target.position().subtract(dragon.position());
             direction = new Vec3(direction.x, 0.0D, direction.z);
             if (direction.lengthSqr() < 1.0E-4D) {
@@ -210,92 +206,4 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
         }
     }
 
-    private void spawnSnowBurst() {
-        Atroxiia dragon = getUser();
-        if (!(dragon.level() instanceof ServerLevel server)) {
-            return;
-        }
-
-        spawnWindRing(server, ModParticles.ATROXIIA_SNOW.get(), SNOWFLAKE_COUNT,
-                0.045D, 0.14D, 0.025D, 0.11D, 0.08D, 0.2D, 1.7D);
-        spawnWindRing(server, ModParticles.ATROXIIA_SNOW_SPARK.get(), SNOW_SPARK_COUNT,
-                0.12D, 0.28D, 0.07D, 0.22D, 0.11D, 0.1D, 1.25D);
-        spawnWindRing(server, ModParticles.ATROXIIA_SNOW_SHARD.get(), SNOW_SHARD_COUNT,
-                0.09D, 0.22D, 0.05D, 0.18D, 0.1D, 0.15D, 1.4D);
-        spawnSnowflakeRing(server);
-        spawnSnowDustRing(server);
-        spawnImpactRing(server);
-    }
-
-    private void spawnImpactRing(ServerLevel server) {
-        Atroxiia dragon = getUser();
-        Vec3 origin = new Vec3(dragon.getX(), dragon.getBoundingBox().minY, dragon.getZ());
-        server.addFreshEntity(new ImpactRingEntity(server, origin, IMPACT_RING_SCALE));
-    }
-
-    private void spawnSnowflakeRing(ServerLevel server) {
-        Atroxiia dragon = getUser();
-        double y = dragon.getBoundingBox().minY + 0.35D;
-        for (int i = 0; i < SNOWFLAKE_RING_COUNT; i++) {
-            double angle = Math.PI * 2.0D * i / SNOWFLAKE_RING_COUNT;
-            server.sendParticles(
-                    ParticleTypes.SNOWFLAKE,
-                    dragon.getX(), y, dragon.getZ(),
-                    0,
-                    Math.cos(angle) * SNOWFLAKE_RING_SPEED,
-                    SNOWFLAKE_RING_LIFT,
-                    Math.sin(angle) * SNOWFLAKE_RING_SPEED,
-                    1.0D
-            );
-        }
-    }
-
-    private void spawnSnowDustRing(ServerLevel server) {
-        Atroxiia dragon = getUser();
-        double y = dragon.getBoundingBox().minY + 0.42D;
-        for (int i = 0; i < SNOW_DUST_RING_COUNT; i++) {
-            double angle = Math.PI * 2.0D * i / SNOW_DUST_RING_COUNT
-                    + SNOW_DUST_RING_ANGLE_OFFSET;
-            server.sendParticles(
-                    ModParticles.ATROXIIA_SNOW_DUST.get(),
-                    dragon.getX(), y, dragon.getZ(),
-                    0,
-                    Math.cos(angle) * SNOW_DUST_RING_SPEED,
-                    SNOW_DUST_RING_LIFT,
-                    Math.sin(angle) * SNOW_DUST_RING_SPEED,
-                    1.0D
-            );
-        }
-    }
-
-    private void spawnWindRing(ServerLevel server, ParticleOptions particle, int count,
-                               double minimumSpeed, double maximumSpeed,
-                               double minimumLift, double maximumLift,
-                               double maximumTangentSpeed,
-                               double minimumHeight, double maximumHeight) {
-        Atroxiia dragon = getUser();
-        RandomSource random = dragon.getRandom();
-        double centerY = dragon.getBoundingBox().minY;
-
-        for (int i = 0; i < count; i++) {
-            double angle = random.nextDouble() * Math.PI * 2.0D;
-            double radiusProgress = Math.sqrt(random.nextDouble());
-            double radius = INNER_BURST_RADIUS
-                    + (OUTER_BURST_RADIUS - INNER_BURST_RADIUS) * radiusProgress;
-            double x = dragon.getX() + Math.cos(angle) * radius;
-            double y = centerY + minimumHeight
-                    + random.nextDouble() * (maximumHeight - minimumHeight);
-            double z = dragon.getZ() + Math.sin(angle) * radius;
-
-            double gustAngle = angle + (random.nextDouble() - 0.5D) * 0.55D;
-            double outwardSpeed = minimumSpeed
-                    + random.nextDouble() * (maximumSpeed - minimumSpeed);
-            double tangentSpeed = (random.nextDouble() * 2.0D - 1.0D) * maximumTangentSpeed;
-            double xSpeed = Math.cos(gustAngle) * outwardSpeed - Math.sin(gustAngle) * tangentSpeed;
-            double ySpeed = minimumLift + random.nextDouble() * (maximumLift - minimumLift);
-            double zSpeed = Math.sin(gustAngle) * outwardSpeed + Math.cos(gustAngle) * tangentSpeed;
-
-            server.sendParticles(particle, x, y, z, 0, xSpeed, ySpeed, zSpeed, 1.0D);
-        }
-    }
 }

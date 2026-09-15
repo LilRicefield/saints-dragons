@@ -21,6 +21,10 @@ final class AtroxiiaFrostImpact {
     }
 
     static void apply(Atroxiia dragon, LivingEntity target, int stunTicks) {
+        apply(dragon, target, stunTicks, true);
+    }
+
+    static void apply(Atroxiia dragon, LivingEntity target, int stunTicks, boolean spawnParticles) {
         boolean enabled = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.ATROXIIA_ID)
                 .abilityEnabled("frost_impact", true);
@@ -38,7 +42,7 @@ final class AtroxiiaFrostImpact {
             int frozenTicks = target.getTicksRequiredToFreeze() + duration * 2;
             target.setTicksFrozen(Math.max(target.getTicksFrozen(), frozenTicks));
         }
-        spawnSnowBurst(dragon, target);
+        if (spawnParticles) spawnSnowBurst(dragon, target);
 
         if (target instanceof Cindervane cindervane) {
             cindervane.suppressFireBody(CINDERVANE_FIRE_BODY_SUPPRESSION_TICKS);

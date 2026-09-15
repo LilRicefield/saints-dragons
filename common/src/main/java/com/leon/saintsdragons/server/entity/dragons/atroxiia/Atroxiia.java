@@ -76,6 +76,20 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer, ScentAssessingDragon {
+    public static final byte QUAKE_TAIL_FLASH_EVENT = 85;
+    private int clientQuakeTailFlashTick = -100;
+
+    public int getClientQuakeTailFlashTick() { return clientQuakeTailFlashTick; }
+
+    @Override
+    public void handleEntityEvent(byte eventId) {
+        if (eventId == QUAKE_TAIL_FLASH_EVENT) {
+            clientQuakeTailFlashTick = tickCount;
+            return;
+        }
+        super.handleEntityEvent(eventId);
+    }
+
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.BOOLEAN);
     private static final AtroxiiaBrain DRAGON_BRAIN = new AtroxiiaBrain();

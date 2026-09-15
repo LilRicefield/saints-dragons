@@ -22,6 +22,12 @@ public final class ModParticles {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.PARTICLE_TYPE, () -> BuiltInRegistries.PARTICLE_TYPE, SaintsDragonsCommon.MOD_ID);
 
+    public static final Supplier<SimpleParticleType> ATROXIIA_QUAKE_SMOKE =
+            REGISTER.register("atroxiia_quake_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<SimpleParticleType> ATROXIIA_ICE_BURST =
+            REGISTER.register("atroxiia_ice_burst", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> VOLITANS_WATER_BREATH =
             REGISTER.register("volitans_water_breath", () -> Services.PLATFORM.createSimpleParticle(false));
     public static final Supplier<SimpleParticleType> VOLITANS_POISON_BREATH =
@@ -366,18 +372,6 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> DRACONIAN_NUCLEUS_PARTICLE =
             REGISTER.register("draconian_nucleus_particle", () -> Services.PLATFORM.createSimpleParticle(true));
-
-    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW =
-            REGISTER.register("atroxiia_snow", () -> Services.PLATFORM.createSimpleParticle(false));
-
-    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW_SHARD =
-            REGISTER.register("atroxiia_snow_shard", () -> Services.PLATFORM.createSimpleParticle(false));
-
-    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW_SPARK =
-            REGISTER.register("atroxiia_snow_spark", () -> Services.PLATFORM.createSimpleParticle(false));
-
-    public static final Supplier<SimpleParticleType> ATROXIIA_SNOW_DUST =
-            REGISTER.register("atroxiia_snow_dust", () -> Services.PLATFORM.createSimpleParticle(false));
 
     private ModParticles() {
     }

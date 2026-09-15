@@ -48,6 +48,16 @@ public final class IgnivorusChargedFireballTrailParticle extends TextureSheetPar
         quadSize = size;
     }
 
+    private float starRed = 1.0F;
+    private float starGreen = 214 / 255.0F;
+    private float starBlue = 244 / 255.0F;
+
+    public void setStarColor(float red, float green, float blue) {
+        starRed = red;
+        starGreen = green;
+        starBlue = blue;
+    }
+
     public void lingerAfterImpact() {
         if (kind != Kind.STAR) return;
         lifetime = 40 + random.nextInt(21);
@@ -62,7 +72,7 @@ public final class IgnivorusChargedFireballTrailParticle extends TextureSheetPar
         float fade = smooth(progress / 0.10F) * (1 - smooth((progress - 0.45F) / 0.55F));
         boolean spark = frames == 1;
         if (kind == Kind.STAR) {
-            setColor(1.0F, 214 / 255.0F, 244 / 255.0F);
+            setColor(starRed, starGreen, starBlue);
             fade *= 0.65F + 0.35F * Mth.sin(lifetime > 20
                     ? time * Mth.TWO_PI / 10.0F : progress * Mth.TWO_PI * 2);
         } else {
