@@ -13,14 +13,16 @@ import java.util.WeakHashMap;
 
 public final class RaevyxStormAuraParticles {
     private static final String[][] ANCHORS = {
-            {"neck1Controller"}, {"neck2Controller"}, {"neck3Controller"}, {"bodyBone"},
+            {"headController"}, {"neck1Controller"}, {"neck2Controller"}, {"neck3Controller"}, {"bodyBone"},
             {"tail1"}, {"tail2"}, {"tail3"}, {"tail4"}, {"tail5"},
             {"leftwing"}, {"leftwingarm"}, {"rightwing"}, {"rightwingarm"},
             {"leftlegpart"}, {"leftanklepart"}, {"leftfemurpart"},
             {"rightlegpart"}, {"rightanklepart"}, {"rightfemurpart"}, {"leftouterphalanges"},
-            {"justleft"} ,{"leftmostmiddlephalanges"}, {"leftmiddlephalanges"}, {"leftinnerphalanges"},
-            {"rightouterphalanges"}, {"justright"} ,{"rightmostmiddlephalanges"}, {"rightmiddlephalanges"},
-            {"rightinnerphalanges"}
+            {"justleft"}, {"justleft2"}, {"justleft3"}, {"justleft4"} ,{"leftmostmiddlephalanges"}, {"leftmiddlephalanges"}, {"leftinnerphalanges"},
+            {"rightouterphalanges"}, {"justright"}, {"justright2"}, {"justright3"}, {"justright4"} ,{"rightmostmiddlephalanges"}, {"rightmiddlephalanges"},
+            {"rightinnerphalanges"}, {"thagomizer"}, {"spine1"}, {"spine2"}, {"spine3"}, {"spine4"}, {"spine5"}, {"spine6"}, {"spine7"}, {"spine8"}, {"spine9"}, {"spine10"}, {"spine11"},
+            {"leftwingwebbing"}, {"leftwingarmwebbing"}, {"leftinnerphalangeswebbing"}, {"leftmiddlephalangeswebbing"}, {"leftmostmiddlephalangeswebbing"}, {"leftouterphalangeswebbing"},
+            {"rightwingwebbing"}, {"rightwingarmwebbing"}, {"rightinnerphalangeswebbing"}, {"rightmiddlephalangeswebbing"}, {"rightmostmiddlephalangeswebbing"}, {"rightouterphalangeswebbing"}
     };
     private static final Map<Raevyx, Integer> LAST_TICK = new WeakHashMap<>();
 
@@ -43,12 +45,13 @@ public final class RaevyxStormAuraParticles {
                 Mth.lerp(partialTick, dragon.zOld, dragon.getZ()));
         var random = dragon.getRandom();
         boolean gold = dragon.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
-        for (int layer = 0; layer < 5; layer++) {
-            int count = layer < 2 ? 3 : layer == 2 ? 10 : layer == 3 ? 12 : 4;
+        for (int layer = 0; layer < 6; layer++) {
+            int count = layer < 2 ? 3 : layer == 2 ? 30 : layer == 3 ? 12 : layer == 4 ? 12 : 8;
             var type = switch (layer) {
                 case 0 -> ModParticles.RAEVYX_STORM_AURA.get();
                 case 1 -> ModParticles.RAEVYX_STORM_ZAP.get();
                 case 2, 4 -> ModParticles.RAEVYX_STORM_EMITTER.get();
+                case 5 -> ModParticles.RAEVYX_STORM_FIRE_SPEC.get();
                 default -> ModParticles.RAEVYX_STORM_STAR.get();
             };
             for (int i = 0; i < count; i++) {

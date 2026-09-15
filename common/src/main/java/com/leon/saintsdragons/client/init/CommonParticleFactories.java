@@ -83,6 +83,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.RAEVYX_STORM_AURA.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 0));
         register(registrar, ModParticles.RAEVYX_STORM_ZAP.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 1));
         register(registrar, ModParticles.RAEVYX_STORM_EMITTER.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 2));
+        register(registrar, ModParticles.RAEVYX_STORM_FIRE_SPEC.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 4));
         register(registrar, ModParticles.RAEVYX_STORM_STAR.get(), sprites -> new RaevyxStormAuraParticle.Factory(sprites, 3));
         register(registrar, ModParticles.CINDERVANE_FIRE_BODY_STAR.get(), CindervaneFireBodyStarParticle.Factory::new);
         register(registrar, ModParticles.CINDERVANE_MORE_SPEC_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.MORE_SPEC));

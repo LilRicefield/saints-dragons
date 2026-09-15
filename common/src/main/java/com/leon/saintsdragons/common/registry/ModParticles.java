@@ -148,6 +148,9 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> RAEVYX_STORM_EMITTER =
             REGISTER.register("raevyx_storm_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> RAEVYX_STORM_FIRE_SPEC =
+            REGISTER.register("raevyx_storm_fire_spec", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> RAEVYX_STORM_STAR =
             REGISTER.register("raevyx_storm_star", () -> Services.PLATFORM.createSimpleParticle(true));
 
