@@ -95,5 +95,8 @@ public final class SaintsDragonEntityTypeTagsProvider extends EntityTypeTagsProv
 
         tag(EntityTypeTags.POWDER_SNOW_WALKABLE_MOBS)
                 .add(ModEntities.ATROXIIA.get());
+
+        tag(EntityTypeTags.FREEZE_IMMUNE_ENTITY_TYPES)
+                .add(ModEntities.ATROXIIA.get());
     }
 }
