@@ -2,7 +2,7 @@
 
 ## Third-party art
 
-**Pixel Art Assets — Will Tice / unTied Games**
+**Pixel Art Assets - Will Tice / unTied Games**
 
 The following purchased visual assets come from [Will Tice / unTied Games](https://untiedgames.com/):
 
