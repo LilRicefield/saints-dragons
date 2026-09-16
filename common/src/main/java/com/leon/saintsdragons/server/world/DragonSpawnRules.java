@@ -1,10 +1,10 @@
 package com.leon.saintsdragons.server.world;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.LevelAccessor;
@@ -16,7 +16,11 @@ public final class DragonSpawnRules {
     private static final double ANY_DRAGON_RADIUS = 160.0D;
     private static final int MAX_NEARBY_SAME_SPECIES = 0;
     private static final int MAX_NEARBY_TOTAL_DRAGONS = 2;
-    private static final int MIN_COMPETING_CREATURE_WEIGHT = 20;
+    private static final int MIN_COMPETING_CREATURE_WEIGHT = 5;
+    private static final double CINDERVANE_SAME_SPECIES_RADIUS = 64.0D;
+    private static final double CINDERVANE_ANY_DRAGON_RADIUS = 128.0D;
+    private static final int CINDERVANE_SAME_SPECIES_LIMIT = 2;
+    private static final int CINDERVANE_TOTAL_DRAGON_LIMIT = 4;
 
     private DragonSpawnRules() {
     }
@@ -26,17 +30,13 @@ public final class DragonSpawnRules {
 
         // Read the final biome pool here so Forge/Fabric biome modification order cannot
         // change eligibility. Our own spawns must not make an otherwise sparse pool qualify.
-        EntityType<?> firstCompetitor = null;
-        boolean multipleTypes = false;
         long competingWeight = 0;
         for (var entry : level.getBiome(pos).value().getMobSettings().getMobs(MobCategory.CREATURE).unwrap()) {
             int weight = entry.getWeight().asInt();
             if (weight <= 0 || entry.maxCount <= 0
                     || BuiltInRegistries.ENTITY_TYPE.getKey(entry.type).getNamespace().equals("saintsdragons")) continue;
-            if (firstCompetitor == null) firstCompetitor = entry.type;
-            else if (firstCompetitor != entry.type) multipleTypes = true;
             competingWeight += weight;
-            if (multipleTypes && competingWeight >= MIN_COMPETING_CREATURE_WEIGHT) return true;
+            if (competingWeight >= MIN_COMPETING_CREATURE_WEIGHT) return true;
         }
         return false;
     }
@@ -79,25 +79,31 @@ public final class DragonSpawnRules {
             return true;
         }
 
+        boolean cindervane = dragonClass == Cindervane.class;
+        double sameSpeciesRadius = cindervane ? CINDERVANE_SAME_SPECIES_RADIUS : SAME_SPECIES_RADIUS;
+        double anyDragonRadius = cindervane ? CINDERVANE_ANY_DRAGON_RADIUS : ANY_DRAGON_RADIUS;
+        int sameSpeciesLimit = cindervane ? CINDERVANE_SAME_SPECIES_LIMIT : MAX_NEARBY_SAME_SPECIES + 1;
+        int totalDragonLimit = cindervane ? CINDERVANE_TOTAL_DRAGON_LIMIT : MAX_NEARBY_TOTAL_DRAGONS + 1;
         AABB sameSpeciesBounds = AABB.ofSize(
                 net.minecraft.world.phys.Vec3.atCenterOf(pos),
-                SAME_SPECIES_RADIUS * 2.0D,
-                SAME_SPECIES_RADIUS * 2.0D,
-                SAME_SPECIES_RADIUS * 2.0D
+                sameSpeciesRadius * 2.0D,
+                sameSpeciesRadius * 2.0D,
+                sameSpeciesRadius * 2.0D
         );
-        int nearbySameSpecies = serverLevel.getEntitiesOfClass(dragonClass, sameSpeciesBounds, DragonEntity::isAlive).size();
-        if (nearbySameSpecies > MAX_NEARBY_SAME_SPECIES) {
+        int nearbySameSpecies = serverLevel.getEntitiesOfClass(dragonClass, sameSpeciesBounds,
+                dragon -> dragon.isAlive() && (!cindervane || !dragon.isTame())).size();
+        if (nearbySameSpecies >= sameSpeciesLimit) {
             return false;
         }
 
         AABB anyDragonBounds = AABB.ofSize(
                 net.minecraft.world.phys.Vec3.atCenterOf(pos),
-                ANY_DRAGON_RADIUS * 2.0D,
-                ANY_DRAGON_RADIUS * 2.0D,
-                ANY_DRAGON_RADIUS * 2.0D
+                anyDragonRadius * 2.0D,
+                anyDragonRadius * 2.0D,
+                anyDragonRadius * 2.0D
         );
         int nearbyDragons = serverLevel.getEntitiesOfClass(DragonEntity.class, anyDragonBounds, dragon -> dragon.isAlive() && !dragon.isTame()).size();
-        return nearbyDragons <= MAX_NEARBY_TOTAL_DRAGONS;
+        return nearbyDragons < totalDragonLimit;
     }
 
     public static boolean isNaturalWildSpawn(MobSpawnType spawnType) {
