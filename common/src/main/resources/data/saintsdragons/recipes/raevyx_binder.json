@@ -1,17 +1,11 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "WSW",
-    "HCH",
-    " S "
+    "SSS",
+    "SCS",
+    "SSS"
   ],
   "key": {
-    "W": {
-      "item": "saintsdragons:raevyx_wingtalon"
-    },
-    "H": {
-      "item": "saintsdragons:raevyx_wing_hide"
-    },
     "S": {
       "item": "saintsdragons:raevyx_scale"
     },

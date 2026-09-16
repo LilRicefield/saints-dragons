@@ -25,48 +25,18 @@
         ]
       }
     },
-    "has_raevyx_wing_hide": {
-      "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "saintsdragons:raevyx_wing_hide"
-            ]
-          }
-        ]
-      }
-    },
-    "has_raevyx_wingtalon": {
-      "trigger": "minecraft:inventory_changed",
-      "conditions": {
-        "items": [
-          {
-            "items": [
-              "saintsdragons:raevyx_wingtalon"
-            ]
-          }
-        ]
-      }
+    "requirements": [
+      [
+        "has_dragon_binder_core"
+      ],
+      [
+        "has_raevyx_scale"
+      ]
+    ],
+    "rewards": {
+      "recipes": [
+        "saintsdragons:raevyx_binder"
+      ]
     }
-  },
-  "requirements": [
-    [
-      "has_dragon_binder_core"
-    ],
-    [
-      "has_raevyx_scale"
-    ],
-    [
-      "has_raevyx_wing_hide"
-    ],
-    [
-      "has_raevyx_wingtalon"
-    ]
-  ],
-  "rewards": {
-    "recipes": [
-      "saintsdragons:raevyx_binder"
-    ]
   }
 }

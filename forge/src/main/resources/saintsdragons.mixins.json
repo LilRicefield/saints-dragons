@@ -27,7 +27,8 @@
     "client.LivingEntityRendererMixin",
     "client.InventoryScreenMixin",
     "client.EntityTurnMixin",
-    "client.DragonPartAttackMixin"
+    "client.DragonPartAttackMixin",
+    "client.DragonPartInteractionMixin"
   ],
   "server": [],
   "injectors": {
