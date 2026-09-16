@@ -129,8 +129,6 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .addOptionalTag(rl("c", "is_windswept"))
                 .addOptionalTag(rl("c", "badlands"))
                 .addOptionalTag(rl("c", "is_badlands"))
-                .addOptionalTag(rl("c", "desert"))
-                .addOptionalTag(rl("c", "is_desert"))
                 .addOptionalTag(rl("forge", "is_mountain"))
                 .addOptionalTag(rl("forge", "is_peak"))
                 .addOptionalTag(rl("forge", "is_slope"))
@@ -139,8 +137,7 @@ public final class SaintsDragonBiomeTagsProvider extends BiomeTagsProvider {
                 .add(Biomes.FROZEN_PEAKS)
                 .add(Biomes.GROVE)
                 .add(Biomes.CHERRY_GROVE)
-                .add(Biomes.MEADOW)
-                .add(Biomes.DESERT);
+                .add(Biomes.MEADOW);
         for (ResourceLocation biome : CINDERVANE_COMPAT_BIOMES) {
             cindervaneBiomes.addOptional(biome);
         }

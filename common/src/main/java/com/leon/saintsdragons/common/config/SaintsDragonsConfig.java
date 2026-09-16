@@ -19,11 +19,11 @@ public final class SaintsDragonsConfig {
     public static final int RAEVYX_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int RAEVYX_MAX_GROUP_SIZE_DEFAULT = 2;
 
-    public static final int STEGONAUT_SPAWN_WEIGHT_DEFAULT = 10;
+    public static final int STEGONAUT_SPAWN_WEIGHT_DEFAULT = 7;
     public static final int STEGONAUT_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int STEGONAUT_MAX_GROUP_SIZE_DEFAULT = 4;
 
-    public static final int CINDERVANE_SPAWN_WEIGHT_DEFAULT = 10;
+    public static final int CINDERVANE_SPAWN_WEIGHT_DEFAULT = 8;
     public static final int CINDERVANE_MIN_GROUP_SIZE_DEFAULT = 1;
     public static final int CINDERVANE_MAX_GROUP_SIZE_DEFAULT = 2;
 
