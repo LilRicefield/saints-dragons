@@ -757,7 +757,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public double getSwimSpeed() {
-        return 1;
+        return DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID)
+                .extraDouble("swim_speed", 1.45D);
     }
 
     @Override
