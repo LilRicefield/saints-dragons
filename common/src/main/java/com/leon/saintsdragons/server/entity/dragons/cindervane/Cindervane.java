@@ -451,6 +451,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                                        BlockPos pos,
                                        RandomSource random) {
         return !level.getBiome(pos).is(Biomes.SNOWY_SLOPES)
+                && DragonSpawnRules.hasEstablishedCreaturePool(level, spawnType, pos)
                 && DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
                 && DragonSpawnRules.passesNearbyDragonDensityCheck(level, spawnType, pos, Cindervane.class);
     }

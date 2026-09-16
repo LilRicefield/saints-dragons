@@ -3,6 +3,9 @@ package com.leon.saintsdragons.server.world;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
@@ -13,8 +16,29 @@ public final class DragonSpawnRules {
     private static final double ANY_DRAGON_RADIUS = 160.0D;
     private static final int MAX_NEARBY_SAME_SPECIES = 0;
     private static final int MAX_NEARBY_TOTAL_DRAGONS = 2;
+    private static final int MIN_COMPETING_CREATURE_WEIGHT = 20;
 
     private DragonSpawnRules() {
+    }
+
+    public static boolean hasEstablishedCreaturePool(LevelAccessor level, MobSpawnType spawnType, BlockPos pos) {
+        if (!isNaturalWildSpawn(spawnType)) return true;
+
+        // Read the final biome pool here so Forge/Fabric biome modification order cannot
+        // change eligibility. Our own spawns must not make an otherwise sparse pool qualify.
+        EntityType<?> firstCompetitor = null;
+        boolean multipleTypes = false;
+        long competingWeight = 0;
+        for (var entry : level.getBiome(pos).value().getMobSettings().getMobs(MobCategory.CREATURE).unwrap()) {
+            int weight = entry.getWeight().asInt();
+            if (weight <= 0 || entry.maxCount <= 0
+                    || BuiltInRegistries.ENTITY_TYPE.getKey(entry.type).getNamespace().equals("saintsdragons")) continue;
+            if (firstCompetitor == null) firstCompetitor = entry.type;
+            else if (firstCompetitor != entry.type) multipleTypes = true;
+            competingWeight += weight;
+            if (multipleTypes && competingWeight >= MIN_COMPETING_CREATURE_WEIGHT) return true;
+        }
+        return false;
     }
 
     public static boolean hasDryGroundSpawnSpace(LevelAccessor level, BlockPos pos) {
