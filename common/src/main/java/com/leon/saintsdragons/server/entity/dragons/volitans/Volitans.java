@@ -1,5 +1,8 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
+import com.leon.saintsdragons.server.entity.component.VolitansWaterCombatMovement;
 import com.leon.saintsdragons.server.entity.component.VolitansBreathStream;
 import com.leon.saintsdragons.server.entity.component.VolitansBreathCombatComponent;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightProfile;
@@ -101,7 +104,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer, ScentAssessingDragon {
+public class Volitans extends RideableFlyingDragon implements DragonCombatLearner, SemiAquaticDragon, ShakesScreen, DragonAirCombatSettingsProvider, PassiveTreeDestroyer, ScentAssessingDragon {
     private static final VolitansBrain DRAGON_BRAIN = new VolitansBrain();
     @Override
     public EnumSet<DragonMovementCapability> movementCapabilities() {
@@ -262,6 +265,18 @@ public class Volitans extends RideableFlyingDragon implements SemiAquaticDragon,
 
     private final AnimatableInstanceCache dragonCache = GeckoLibUtil.createInstanceCache(this);
     private final VolitansBreathStream breathStream = new VolitansBreathStream(this);
+    private final DragonCombatLearning combatLearning = new DragonCombatLearning(this,
+            DragonCombatLearning.Profile.standard(DragonCombatLearning.Attack.BREATH));
+    private final VolitansWaterCombatMovement waterCombatMovement = new VolitansWaterCombatMovement(this);
+
+    @Override
+    public DragonCombatLearning getCombatLearning() { return combatLearning; }
+
+    @Override
+    public boolean canLearnCombat() { return !isTamingStunned(); }
+
+    public VolitansWaterCombatMovement getWaterCombatMovement() { return waterCombatMovement; }
+
     private final VolitansBreathCombatComponent breathCombat = new VolitansBreathCombatComponent(this);
     private final DragonCombatFlightState combatFlightState = new DragonCombatFlightState(this,
             DragonCombatFlightProfile.volitans(VolitansBreathMotion.RANGE),

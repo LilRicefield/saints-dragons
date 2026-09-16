@@ -64,6 +64,7 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
     @Override
     protected void stop(DragonBrainContext<Volitans> context) {
         dragon.setAggressive(false);
+        dragon.getWaterCombatMovement().reset();
         attackCooldown = 0;
     }
 
@@ -78,10 +79,10 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
             return;
         }
 
-        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
+        if (!hasLineOfSight) return;
+        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         if (dragon.isGroundCombatAbilityActive()) {
             return;
@@ -92,11 +93,7 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
         }
 
         if (gap <= GORE_RANGE) {
-            tryMelee(target, gap);
-            return;
-        }
-
-        if (!hasLineOfSight) {
+            if (!dragon.getWaterCombatMovement().makingSpace(target)) tryMelee(target, gap);
             return;
         }
 
@@ -135,7 +132,8 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
 
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
-        return dragon == null ? Map.of() : Map.of("breath", dragon.getBreathCombat().debugSummary());
+        return dragon == null ? Map.of() : Map.of("breath", dragon.getBreathCombat().debugSummary(),
+                "swim_tactic", dragon.getWaterCombatMovement().debugSummary());
     }
 
     private void tryMelee(LivingEntity target, double gap) {

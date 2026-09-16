@@ -25,8 +25,8 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
     private static final double POISON_BALL_MAX_RANGE = 24.0D;
     private static final double ROAR_OPEN_RANGE = 14.0D;
     public static final float CHASE_SPEED = 1.2F;
-    private static final double BURROW_MIN_RANGE = 10.0D;
-    private static final double BURROW_MAX_RANGE = 30.0D;
+    private static final double BURROW_MIN_RANGE = 8.0D;
+    private static final double BURROW_MAX_RANGE = 40.0D;
     private static final double BURROW_CHASE_SPEED = 1.55D;
     private static final int MELEE_CADENCE_TICKS = 30;
     private static final int INITIAL_CHASE_COMMIT_TICKS = 32;
@@ -44,6 +44,12 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
     private Volitans dragon;
     private DragonBrainContext<Volitans> currentContext;
     private int burrowCooldown = 0;
+    private long nextBurrowDecision;
+    private int retreatTicks;
+    private Vec3 lastVisibleGroundTarget;
+    private Vec3 burrowProgressOrigin;
+    private long burrowProgressTick;
+    private String burrowDecision = "idle";
     private int poisonBallHoldTicks = 0;
     private boolean usedRoarOpener = false;
     private int roarOpenerWindowTicks;
@@ -111,6 +117,8 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
         wasAbilityHoldingLastTick = false;
         wasBurrowAbilityHoldingLastTick = false;
         previousGap = Double.NaN;
+        retreatTicks = 0;
+        lastVisibleGroundTarget = null;
         lastGap = -1.0D;
         lastGapDelta = 0.0D;
         lastTargetAwaySpeed = 0.0D;
@@ -163,11 +171,14 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
             return;
         }
 
-        dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-
         double gap = getGapToTarget(target);
         boolean hasLineOfSight = dragon.getSensing().hasLineOfSight(target);
         TargetMotion targetMotion = updateTargetMotion(target, gap, hasLineOfSight);
+        if (hasLineOfSight) {
+            dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+            lastVisibleGroundTarget = DragonTargetingHelper.movementAnchor(target).position();
+            retreatTicks = targetMotion.awaySpeed() >= RETREATING_SPEED ? Math.min(60, retreatTicks + 1) : Math.max(0, retreatTicks - 2);
+        }
 
         if (handleActiveAbility(target, gap, hasLineOfSight)) {
             wasAbilityHoldingLastTick = true;
@@ -199,16 +210,16 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
             return;
         }
 
+        if (tryBurrowApproach(context, gap)) {
+            commitment = CombatCommitment.BURROW;
+            lastDecision = "burrow:" + burrowDecision;
+            return;
+        }
+
         if (hasLineOfSight && dragon.getBreathCombat().tryStart(target)) {
             claimMovementForAbility();
             commitment = CombatCommitment.PRESSURE;
             lastDecision = "pressure:breath";
-            return;
-        }
-
-        if (!hasLineOfSight && tryBurrowApproach(context, gap)) {
-            commitment = CombatCommitment.BURROW;
-            lastDecision = "burrow:lost-route";
             return;
         }
 
@@ -238,11 +249,6 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
         }
 
         pressureDecisionCooldown = PRESSURE_DECISION_INTERVAL_TICKS;
-        if (tryBurrowApproach(context, gap)) {
-            commitment = CombatCommitment.BURROW;
-            lastDecision = "burrow:tactical-approach";
-            return;
-        }
         if (tryRoarOpener(gap)) {
             commitment = CombatCommitment.PRESSURE;
             lastDecision = "pressure:roar-opener";
@@ -295,17 +301,31 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
                 return true;
             }
             if (dragon.isBurrowing()) {
-                dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
-                dragon.getAIMovement().moveToGroundTarget(
-                        DragonTargetingHelper.livingMovementAnchor(target),
-                        BURROW_CHASE_SPEED,
-                        true
-                );
+                Vec3 destination = lastVisibleGroundTarget;
+                if (hasLineOfSight) {
+                    dragon.getLookControl().setLookAt(target, 30.0F, 30.0F);
+                    destination = DragonTargetingHelper.movementAnchor(target).position();
+                    lastVisibleGroundTarget = destination;
+                }
+                if (destination == null) {
+                    dragon.requestBurrowExit(false);
+                    return true;
+                }
+                dragon.getAIMovement().moveToGroundPosition(destination, BURROW_CHASE_SPEED, true);
+                long now = dragon.level().getGameTime();
+                if (burrowProgressOrigin == null || dragon.position().distanceToSqr(burrowProgressOrigin) > 2.25D) {
+                    burrowProgressOrigin = dragon.position();
+                    burrowProgressTick = now;
+                }
+                boolean targetReachable = hasLineOfSight && !DragonTargetingHelper.movementAnchor(target).isInWaterOrBubble()
+                        && Math.abs(destination.y - dragon.getY()) < 6;
+                if (targetReachable && gap <= 4.75D) dragon.requestBurrowExit(true);
+                else if (now - burrowProgressTick >= 50
+                        || (!hasLineOfSight && dragon.position().distanceToSqr(destination) < 9)
+                        || (hasLineOfSight && !targetReachable)) dragon.requestBurrowExit(false);
             } else {
+                burrowProgressOrigin = null;
                 holdForCommittedAbility();
-            }
-            if (dragon.isBurrowing() && gap <= 4.75D) {
-                dragon.requestBurrowExit(true);
             }
             return true;
         }
@@ -361,19 +381,32 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
             return false;
         }
 
+        LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
+        if (target == null || !dragon.onGround() || !lastLineOfSight
+                || DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)
+                || DragonTargetingHelper.isMovementAnchorInWater(target)
+                || !DragonTargetingHelper.movementAnchor(target).onGround()
+                || Math.abs(target.getY() - dragon.getY()) > 6
+                || !canUseAiAbility(ModAbilities.VOLITANS_BURROW, true)) return false;
+        if (context.gameTime() < nextBurrowDecision) return false;
+        nextBurrowDecision = context.gameTime() + 20;
         long unreachableSince = context.memories()
                 .get(DragonMemories.CANT_REACH_WALK_TARGET_SINCE)
                 .orElse(Long.MAX_VALUE);
         boolean routeStalled = unreachableSince != Long.MAX_VALUE
                 && context.gameTime() - unreachableSince >= BURROW_ROUTE_STALL_TICKS;
-        boolean underPressure = dragon.hurtTime > 0;
-        if (!routeStalled && !underPressure) {
-            return false;
-        }
+        boolean underPressure = dragon.hurtTime > 0 || (dragon.getLastHurtByMob() != null
+                && dragon.tickCount - dragon.getLastHurtByMobTimestamp() < 40);
+        boolean retreating = retreatTicks >= 20;
+        boolean distant = gap >= 16;
+        double chance = routeStalled ? 1.0D : underPressure || retreating ? 0.7D : distant ? 0.3D : 0;
+        if (dragon.getRandom().nextDouble() >= chance) return false;
+        burrowDecision = routeStalled ? "route-stalled" : underPressure ? "under-pressure" : retreating ? "intercept-retreat" : "close-distance";
         if (!startAiAbility(ModAbilities.VOLITANS_BURROW, true, 14, 0, 80, 28)) {
             return false;
         }
-        burrowCooldown = 220;
+        burrowCooldown = 160 + dragon.getRandom().nextInt(61);
+        burrowProgressOrigin = null;
         return true;
     }
 
@@ -537,6 +570,9 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
         details.put("chase_commit_ticks", Integer.toString(chaseCommitTicks));
         details.put("pressure_cooldown", Integer.toString(pressureDecisionCooldown));
         details.put("line_of_sight", Boolean.toString(lastLineOfSight));
+        details.put("burrow_reason", burrowDecision);
+        details.put("burrow_cooldown", Integer.toString(burrowCooldown));
+        details.put("retreat_ticks", Integer.toString(retreatTicks));
         if (dragon != null) details.put("breath", dragon.getBreathCombat().debugSummary());
         return Map.copyOf(details);
     }

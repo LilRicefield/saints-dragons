@@ -84,8 +84,9 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                 new AsyncWaterChaseTargetBehaviour<>(
                                         (dragon, target) -> dragon.isBreathing() ? 0.16D : 0.28D,
                                         8.0F,
-                                        (dragon, target) -> dragon.shouldAiHoldPositionForAbility() || dragon.isGroundMobilityActive(),
-                                        (dragon, target) -> dragon.getBreathCombat().waterDestination(target)
+                                        (dragon, target) -> dragon.shouldAiHoldPositionForAbility() || dragon.isGroundMobilityActive()
+                                                || dragon.getWaterCombatMovement().holdForMelee(),
+                                        (dragon, target) -> dragon.getWaterCombatMovement().destination(target)
                                 ),
                                 groundCombat,
                                 new VolitansWaterCombatBehaviour()

@@ -42,7 +42,7 @@ public final class VolitansBreathStream {
                 || lastEmissionTick == dragon.tickCount || direction.lengthSqr() < 1.0E-8) return;
         lastEmissionTick = dragon.tickCount;
         boolean poison = dragon.isPoisonBreathMode();
-        Payload payload = new Payload(poison,
+        Payload payload = new Payload(dragon.getBreathCombat().learningTrial(), poison,
                 dragon.getConfiguredAbilityDamage(poison ? "poison_breath" : "water_breath", poison ? 1.4F : 1.8F),
                 poison ? 0.0F : 0.14F,
                 Math.max(0, (int) Math.round(dragon.getConfiguredExtra("poison_breath_poison_duration_ticks", 80))),
@@ -73,8 +73,14 @@ public final class VolitansBreathStream {
             return;
         }
         Set<BlockPos> waterContacts = new HashSet<>();
-        stream.tick(level, this::canHit, (payload, target, sweep) -> {
-            if (payload.damage() > 0) target.hurt(level.damageSources().mobAttack(dragon), payload.damage());
+        stream.tick(level, (payload, target) -> canHit(target), (payload, target, sweep) -> {
+            dragon.getCombatLearning().recordContact(payload.learningTrial(), target);
+            if (payload.poison() && !dragon.isVenomNeutralized() && DragonElementalImmunity.isPoisonImmune(target)) {
+                return false;
+            }
+            if (payload.damage() > 0 && target.hurt(level.damageSources().mobAttack(dragon), payload.damage())) {
+                dragon.getCombatLearning().recordHit(payload.learningTrial(), target);
+            }
             if (payload.poison() && !dragon.isVenomNeutralized()
                     && payload.poisonTicks() > 0 && payload.poisonAmplifier() >= 0) {
                 target.addEffect(new MobEffectInstance(MobEffects.POISON, payload.poisonTicks(), payload.poisonAmplifier()));
@@ -88,6 +94,7 @@ public final class VolitansBreathStream {
             }
             return true;
         }, (payload, sweep) -> {
+            if (sweep.blockPos() != null) dragon.getCombatLearning().recordContact(payload.learningTrial());
             if (payload.poison()) return;
             if (sweep.blockPos() != null) waterContacts.add(sweep.blockPos());
             Vec3 extent = sweep.toHalf();
@@ -114,16 +121,15 @@ public final class VolitansBreathStream {
         }
     }
 
-    private boolean canHit(Payload payload, LivingEntity target) {
+    private boolean canHit(LivingEntity target) {
         return target.isAlive() && !target.isRemoved() && target != dragon
                 && !dragon.hasIndirectPassenger(target) && !dragon.isAlly(target) && !dragon.isAlliedTo(target)
-                && !(target instanceof Player player && (player.isCreative() || player.isSpectator()))
-                && !(payload.poison() && !dragon.isVenomNeutralized() && DragonElementalImmunity.isPoisonImmune(target));
+                && !(target instanceof Player player && (player.isCreative() || player.isSpectator()));
     }
 
     public void clear() {
         stream.clear();
     }
 
-    private record Payload(boolean poison, float damage, float push, int poisonTicks, int poisonAmplifier) {}
+    private record Payload(long learningTrial, boolean poison, float damage, float push, int poisonTicks, int poisonAmplifier) {}
 }

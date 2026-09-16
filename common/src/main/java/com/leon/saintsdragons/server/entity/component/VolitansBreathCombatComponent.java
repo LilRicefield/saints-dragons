@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.component;
 import com.leon.saintsdragons.common.particle.VolitansBreathMotion;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -31,6 +32,8 @@ public final class VolitansBreathCombatComponent {
     private boolean passInAir;
     private long passUntil;
     private int side = 1;
+    private long learningTrial;
+    private int firingOpportunityTicks;
 
     public VolitansBreathCombatComponent(Volitans dragon) {
         this.dragon = dragon;
@@ -80,6 +83,10 @@ public final class VolitansBreathCombatComponent {
 
     public void begin() {
         running = true;
+        firingOpportunityTicks = 0;
+        LivingEntity target = dragon.getTarget();
+        learningTrial = target != null ? dragon.getCombatLearning().beginAttack(
+                DragonCombatLearning.Attack.BREATH, target, 17) : 0;
         burstTicks = 40 + dragon.getRandom().nextInt(41);
         extended = false;
         shotGrace.reset();
@@ -90,6 +97,7 @@ public final class VolitansBreathCombatComponent {
     }
 
     public void startedBreathing() {
+        dragon.getCombatLearning().releaseAttack(learningTrial);
         lastMode = dragon.getBreathMode();
         waterBursts = lastMode == 0 ? Math.min(2, waterBursts + 1) : 0;
         decision = "breathing:" + modeName(lastMode);
@@ -105,6 +113,7 @@ public final class VolitansBreathCombatComponent {
         }
         DragonCombatAim.Shot shot = dragon.getAiBreathShot(target);
         if (!shotGrace.allows(shot, dragon.tickCount, 20, 12)) return stop("shot:" + shot.name().toLowerCase(java.util.Locale.ROOT));
+        if (active && shot == DragonCombatAim.Shot.ALIGNED) firingOpportunityTicks++;
         if (active && activeTicks >= burstTicks) {
             if (!extended && shot == DragonCombatAim.Shot.ALIGNED && gap(target) >= 10
                     && dragon.getWaterBreathEnergy() >= 0.4F
@@ -122,6 +131,14 @@ public final class VolitansBreathCombatComponent {
     public void end() {
         if (!running) return;
         running = false;
+        DragonCombatLearning.Outcome outcome = switch (decision) {
+            case "shot:blocked" -> DragonCombatLearning.Outcome.BLOCKED;
+            case "melee-range", "target-underneath", "burst-complete", "shot:aligning", "shot:out_of_arc", "shot:out_of_range" ->
+                    firingOpportunityTicks >= 10 ? DragonCombatLearning.Outcome.COMPLETED : DragonCombatLearning.Outcome.RESPONSE_ONLY;
+            default -> DragonCombatLearning.Outcome.CANCELLED;
+        };
+        dragon.getCombatLearning().deferAttackResult(learningTrial, outcome, VolitansBreathMotion.LIFETIME + 2);
+        learningTrial = 0;
         int recovery = 40 + dragon.getRandom().nextInt(21);
         recoveryUntil = dragon.level().getGameTime() + recovery;
         dragon.getAiCombatPacing().recordUse(ModAbilities.VOLITANS_BREATH, 12, recovery, true, 20, 0);
@@ -129,6 +146,8 @@ public final class VolitansBreathCombatComponent {
         passDestination = null;
         passUntil = dragon.level().getGameTime() + 24;
     }
+
+    public long learningTrial() { return learningTrial; }
 
     public boolean makingSpace() {
         return !running && passDirection != null && dragon.level().getGameTime() < passUntil;
@@ -164,16 +183,8 @@ public final class VolitansBreathCombatComponent {
     public double groundStopDistance(LivingEntity target) {
         double radii = (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
         return ready(target) && dragon.getAiBreathShot(target) == DragonCombatAim.Shot.ALIGNED
-                ? 18 + radii : 3.5D + radii;
-    }
-
-    public Vec3 waterDestination(LivingEntity target) {
-        if (DragonTargetingHelper.isMovementAnchorInWater(target)
-                && (running || makingSpace() || ready(target) && gap(target) >= START_GAP
-                && dragon.getAiBreathShot(target) != DragonCombatAim.Shot.BLOCKED)) {
-            return movingDestination(target, false);
-        }
-        return DragonTargetingHelper.movementAnchor(target).getBoundingBox().getCenter();
+                ? 18 + radii + dragon.getCombatLearning().expectation(target,
+                DragonCombatLearning.Attack.BREATH, false).spacingBonus() * 0.5D : 3.5D + radii;
     }
 
     public String debugSummary() {
