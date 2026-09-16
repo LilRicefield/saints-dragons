@@ -69,6 +69,9 @@ public final class DragonCombatAim {
             clear();
             return null;
         }
+        var decisions = dragon.getCombatDecisionSupport();
+        if (decisions != null && !decisions.claimAim(profile)) return null;
+        if (decisions != null) decisions.rememberShotOrigin(origin);
         boolean changed = this.target != target || this.profile != profile || !isActive();
         if (changed) {
             direction = DragonAimHelper.fallbackHeadDirection(dragon);
@@ -186,6 +189,8 @@ public final class DragonCombatAim {
             alignedTicks = 0;
         }
         shot = value;
+        var decisions = dragon.getCombatDecisionSupport();
+        if (decisions != null) decisions.observeShot(profile, value, Math.abs(yawError) + Math.abs(pitchError));
         return value;
     }
 

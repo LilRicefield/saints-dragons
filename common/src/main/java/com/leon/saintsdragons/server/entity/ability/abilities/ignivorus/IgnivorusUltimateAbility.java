@@ -182,7 +182,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
         dragon.setDeltaMovement(Vec3.ZERO);
         dragon.setUltimateCameraZoomActive(false);
-        dragon.triggerHitboxAnimation(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, airSkyfallMode ? "skyfall_air" : phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
+        dragon.triggerAnim(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, airSkyfallMode ? "skyfall_air" : phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
         if (!dragon.level().isClientSide) {
             dragon.getSoundHandler().playMovingEntitySound(
                     airSkyfallMode ? ModSounds.IGNIVORUS_SKYFALL_AIR.get()
@@ -244,7 +244,7 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         transitionsToPhase2 = false;
         transitionsAfterLanding = false;
         if (groundSkyfallMode || airSkyfallMode) {
-            getUser().stopHitboxAnimation(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
+            getUser().stopTriggeredAnimation(airSkyfallMode ? AnimationHelper.FLIGHT_CONTROLLER : IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
                     airSkyfallMode ? "skyfall_air" : phase2SkyfallMode ? "skyfall_phase2" : "skyfall");
         }
         releaseLocks();

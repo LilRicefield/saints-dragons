@@ -50,7 +50,7 @@ public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
 
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
-            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "bite");
+            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "bite");
             if (!dragon.level().isClientSide) {
                 dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_BITE.get(), 1.0f, 1.0f, 60);
             }

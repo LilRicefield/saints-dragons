@@ -15,11 +15,14 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOneShotBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.entity.base.DragonLocomotionMode;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
+import net.minecraft.world.entity.ai.memory.WalkTarget;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -75,7 +78,18 @@ public class SetWalkTargetToAttackTargetBehaviour<T extends RideableDragonBase> 
         boolean requiresWaterEntry = dragon.canSwim()
                 && movementAnchor.isInWaterOrBubble()
                 && !dragon.isInWaterOrBubble();
-        if (movementLocked.test(dragon, target)
+        boolean locked = movementLocked.test(dragon, target);
+        var decisions = DragonCombatDecisionSupport.get(dragon);
+        if (decisions != null && !locked && !requiresWaterEntry
+                && !DragonTargetingHelper.isBiteOnlyPreyTarget(dragon, target)) {
+            Vec3 reposition = decisions.groundReposition(target);
+            if (reposition != null) {
+                context.memories().set(DragonMemories.WALK_TARGET,
+                        new WalkTarget(reposition, speedModifier.apply(dragon, target), 1));
+                return;
+            }
+        }
+        if (locked
                 || !requiresWaterEntry
                 && dragon.getSensing().hasLineOfSight(target)
                 && dragon.distanceToSqr(movementAnchor) <= movementCloseEnough * movementCloseEnough) {

@@ -4,12 +4,13 @@
   "package": "com.leon.saintsdragons.fabric.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "DragonPartQueryMixin",
     "BrewingStandBlockEntityMixin",
     "IgnivorusPartLifecycleMixin",
     "PotionBrewingMixin",
     "PlayerDefaultAttributesMixin",
-    "RangedAttributeAccessor"
+    "RangedAttributeAccessor",
+    "ServerboundInteractPacketIdAccessor",
+    "MultipartInteractionBridgeMixin"
   ],
   "client": [
     "ClientLevelEntityMapAccessor",

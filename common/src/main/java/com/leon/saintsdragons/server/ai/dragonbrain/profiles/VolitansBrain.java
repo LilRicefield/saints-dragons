@@ -37,6 +37,9 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public final class VolitansBrain implements DragonBrainOwner<Volitans> {
+    @Override
+    public boolean usesCombatDecisionSupport() { return true; }
+
     private static final DragonRescueFallingOwnerBehaviour.Config RESCUE_CONFIG =
             DragonRescueFallingOwnerBehaviour.Config.volitans();
 

@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 
@@ -32,6 +33,11 @@ public class LookAtAttackTargetBehaviour<T extends DragonEntity> extends DragonB
 
     @Override
     protected void tick(DragonBrainContext<T> context) {
+        if (context.dragon() instanceof RideableFlyingDragon flying
+                && flying.getCombatDecisionSupport() != null && flying.getCombatAim().isActive()) {
+            flying.getCombatAim().applyFacing();
+            return;
+        }
         if (!context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) {
             return;
         }

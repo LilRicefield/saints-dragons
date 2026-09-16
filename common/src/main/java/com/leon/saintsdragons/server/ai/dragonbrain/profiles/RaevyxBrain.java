@@ -34,6 +34,9 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
+    @Override
+    public boolean usesCombatDecisionSupport() { return true; }
+
     private static final DragonRescueFallingOwnerBehaviour.Config RESCUE_CONFIG =
             DragonRescueFallingOwnerBehaviour.Config.raevyx();
 

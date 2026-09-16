@@ -14,6 +14,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDiagnostics
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObservation;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
@@ -740,7 +741,9 @@ public final class DragonPathDebugTracker {
                 .orElse(null);
         String summary = commitment == null ? "none" : commitment.summary();
         var learning = DragonCombatLearner.get(dragon);
-        return learning == null ? summary : summary + ",combat_learning={" + learning.debugSummary() + '}';
+        if (learning != null) summary += ",combat_learning={" + learning.debugSummary() + '}';
+        var decisions = DragonCombatDecisionSupport.get(dragon);
+        return decisions == null ? summary : summary + ",combat_execution={" + decisions.summary() + '}';
     }
 
     private static String pursuitSummary(DragonEntity dragon) {

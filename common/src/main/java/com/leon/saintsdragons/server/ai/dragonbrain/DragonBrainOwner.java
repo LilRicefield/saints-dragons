@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain;
 import com.google.common.collect.ImmutableList;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.*;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.mojang.datafixers.util.Pair;
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -25,6 +26,8 @@ import java.util.List;
 import java.util.Set;
 
 public interface DragonBrainOwner<T extends DragonEntity> {
+    default boolean usesCombatDecisionSupport() { return false; }
+
     default List<MemoryModuleType<?>> getDragonBrainMemories() {
         return DragonMemories.all();
     }
@@ -112,6 +115,10 @@ public interface DragonBrainOwner<T extends DragonEntity> {
             Brain<T> brain = (Brain<T>)(Brain<?>)dragon.getBrain();
             dragon.refreshMountedCombatTarget();
             var perceivedTarget = DragonPerception.refreshTargetVisibility(brain, dragon, level.getGameTime());
+            if (usesCombatDecisionSupport() && dragon instanceof RideableFlyingDragon flying) {
+                flying.enableCombatDecisionSupport().observe(perceivedTarget,
+                        brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(false));
+            }
             var learning = DragonCombatLearner.get(dragon);
             if (learning != null) {
                 learning.observe(perceivedTarget, brain.getMemory(DragonMemories.TARGET_VISIBLE).orElse(false));

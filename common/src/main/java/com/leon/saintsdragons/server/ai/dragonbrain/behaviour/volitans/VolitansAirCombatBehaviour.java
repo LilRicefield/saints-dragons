@@ -227,7 +227,20 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         }
         double y = dragon.getCombatFlightState().targetNeedsFlight() ? destination.y
                 : DragonTargetingHelper.movementAnchor(target).getY() + 8;
-        Vec3 fitted = space.fitDestination(new Vec3(destination.x, Mth.clamp(y, floor, Math.max(floor, ceiling)), destination.z));
+        Vec3 preferred = new Vec3(destination.x, Mth.clamp(y, floor, Math.max(floor, ceiling)), destination.z);
+        Vec3 fitted;
+        boolean passing = dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH) || dragon.getBreathCombat().makingSpace();
+        var decisions = dragon.getCombatDecisionSupport();
+        if (!passing && decisions != null) {
+            double maximumY = ceiling;
+            fitted = decisions.choosePosition("water-air-approach", target, preferred, dragon.getBreathOrigin(),
+                    VolitansBreathCombatComponent.FIRING_RANGE, candidate -> {
+                        Vec3 fit = space.fitDestination(candidate);
+                        return fit != null && fit.y <= maximumY ? fit : null;
+                    });
+        } else {
+            fitted = space.fitDestination(preferred);
+        }
         if (fitted == null || fitted.y > ceiling) {
             context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.holdPosition());
             // Give the normal chase/landing planner the next opening if this firing lane is unusable.
@@ -235,7 +248,6 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
             dragon.getCombatFlightState().deferRangedFlightFor(60);
             return;
         }
-        boolean passing = dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH) || dragon.getBreathCombat().makingSpace();
         double speed = passing ? Mth.clamp(0.42D + dragon.getCombatFlightState().targetVelocity().length(), 0.42D, 1.25D)
                 / Math.max(0.01D, dragon.getFlightSpeed()) : POSITION_SPEED;
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(

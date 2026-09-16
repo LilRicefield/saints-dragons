@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.learning;
 
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.util.Mth;
@@ -248,6 +249,8 @@ public final class DragonCombatLearning {
         captureResponse(ended);
         if (outcome == Outcome.CANCELLED && !ended.hit) {
             lastResult = ended.attack.name().toLowerCase(Locale.ROOT) + ":cancelled";
+            var decisions = DragonCombatDecisionSupport.get(dragon);
+            if (decisions != null) decisions.attackResult(ended.target, outcome, false, false);
             return;
         }
         TargetMemory memory = targets.get(ended.target);
@@ -272,6 +275,8 @@ public final class DragonCombatLearning {
             if (ended.hit) habits.hits++;
             else habits.misses++;
         }
+        var decisions = DragonCombatDecisionSupport.get(dragon);
+        if (decisions != null) decisions.attackResult(ended.target, outcome, ended.hit, scored);
         lastResult = ended.attack.name().toLowerCase(Locale.ROOT) + ":"
                 + (ended.hit ? "hit" : scored ? "miss" : "unscored")
                 + ",end=" + outcome.name().toLowerCase(Locale.ROOT)

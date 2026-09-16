@@ -4,18 +4,14 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.init.CommonServerLifecycleEvents;
 import com.leon.saintsdragons.common.item.BloodTempestArmorSetBonus;
 import com.leon.saintsdragons.common.item.DragonlordArmorSetBonus;
-import com.leon.saintsdragons.fabric.entity.part.FabricDragonPartIndex;
-import com.leon.saintsdragons.fabric.entity.part.IgnivorusPartProvider;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.npc.IvyTheDragonMerchant;
 import net.fabricmc.fabric.api.entity.event.v1.ServerEntityWorldChangeEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -26,17 +22,6 @@ public final class FabricServerEvents {
     }
 
     public static void init() {
-        ServerEntityEvents.ENTITY_LOAD.register((entity, level) -> {
-            if (entity instanceof IgnivorusPartProvider provider) {
-                provider.saintsdragons$refreshParts();
-            }
-        });
-        ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> {
-            if (entity instanceof Ignivorus dragon && level instanceof FabricDragonPartIndex.Access access) {
-                access.saintsdragons$partIndex().remove(dragon);
-            }
-        });
-
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
                 server.execute(() -> CommonServerLifecycleEvents.onPlayerJoin(handler.player)));
 

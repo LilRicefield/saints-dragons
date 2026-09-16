@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.component;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatPositioning;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
@@ -107,6 +108,12 @@ public final class VolitansWaterCombatMovement {
         // Cut across a broad arc so the next leg faces into the target's area for a breath pass.
         double sweep = Math.toRadians((ranged ? 75 : 45) * side);
         if (gap > 30) sweep = Math.toRadians(15 * side);
+        Vec3 best = null;
+        Vec3 preferred = null;
+        double bestScore = -Double.MAX_VALUE;
+        int bestAttempt = 0;
+        var decisions = dragon.getCombatDecisionSupport();
+        Vec3 mouth = decisions == null ? dragon.getEyePosition() : dragon.getBreathOrigin();
         for (int attempt = 0; attempt < 6; attempt++) {
             double turn = attempt % 2 == 0 ? sweep : -sweep;
             double horizontalScale = attempt < 4 ? 1 : 0.65;
@@ -116,9 +123,20 @@ public final class VolitansWaterCombatMovement {
                     : attempt < 4 ? -Math.min(3, dragon.getBbHeight()) : 0;
             Vec3 candidate = center.add(radial.scale(desiredRange * horizontalScale))
                     .add(0, vertical - dragon.getBbHeight() * 0.5, 0);
+            if (preferred == null) preferred = candidate;
             if (!canOccupy(candidate)) continue;
-            destination = candidate;
-            if (attempt % 2 != 0) side = -side;
+            double score = decisions == null ? -attempt : DragonCombatPositioning.score(dragon, decisions,
+                    center, preferred, mouth, VolitansBreathCombatComponent.FIRING_RANGE, candidate);
+            if (score > bestScore) {
+                best = candidate;
+                bestScore = score;
+                bestAttempt = attempt;
+            }
+            if (decisions == null) break;
+        }
+        if (best != null) {
+            destination = best;
+            if (bestAttempt % 2 != 0) side = -side;
             if (approachMelee) meleeUntil = now + 50;
             decision = approachMelee ? "melee-approach" : breath ? "breath-pass" : gap < 7 ? "make-space" : "swim-flank";
             return destination;

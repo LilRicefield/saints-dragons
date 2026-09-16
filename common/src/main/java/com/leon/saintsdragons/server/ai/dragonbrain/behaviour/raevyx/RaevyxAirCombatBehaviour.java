@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
@@ -686,7 +687,12 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         tangent = tangent.add(targetLeft.scale(side * 4.0D * expected.confidence()));
         Vec3 position = flightFeet(dragon, center).add(radial.scale(spacing)).add(tangent);
         position = groundAttackPosition(dragon, target, position, attackHeight * 0.75D);
-        Vec3 fitted = dragon.getAIMovement().flightSpace().fitDestination(position);
+        var decisions = dragon.getCombatDecisionSupport();
+        Vec3 mouth = dragon.getBeamStartAnchor(1.0F);
+        Vec3 fitted = decisions == null ? dragon.getAIMovement().flightSpace().fitDestination(position)
+                : decisions.choosePosition("beam-setup", target, position,
+                mouth == null ? dragon.getEyePosition() : mouth, RANGED_MAX_RANGE,
+                dragon.getAIMovement().flightSpace()::fitDestination);
         if (fitted == null) return false;
         beamSetupTarget = fitted;
         beamSetupAnchor = targetCenter(target);
@@ -844,6 +850,12 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void abandonBeamSetup(DragonBrainContext<Raevyx> context, LivingEntity target, String reason) {
         Raevyx dragon = context.dragon();
+        var decisions = dragon.getCombatDecisionSupport();
+        if (decisions != null) {
+            if (reason.contains("route-failed")) decisions.fail(DragonCombatDecisionSupport.Failure.ROUTE_FAILED, beamSetupTarget);
+            else if (reason.contains("alignment-timeout")) decisions.failSetup(beamSetupTarget);
+            else if (reason.contains("shot-blocked")) decisions.fail(DragonCombatDecisionSupport.Failure.BLOCKED_SHOT, beamSetupTarget);
+        }
         beamRetryTick = dragon.tickCount + 100;
         beamAlignmentTicks = 0;
         dragon.getCombatAim().clear();

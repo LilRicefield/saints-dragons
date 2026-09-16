@@ -75,27 +75,27 @@ public record IgnivorusAnimationHandler(Ignivorus dragon) {
     }
 
     public void triggerDrinkingAnimation() {
-        dragon.triggerHitboxAnimation(MOVEMENT_CONTROLLER, DRINKING_TRIGGER);
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, DRINKING_TRIGGER);
     }
 
     public void triggerBulldozeEnterAnimation() {
-        dragon.triggerHitboxAnimation(MOVEMENT_CONTROLLER, "bulldozer_enter");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "bulldozer_enter");
     }
 
     public void triggerBulldozeExitAnimation() {
-        dragon.triggerHitboxAnimation(MOVEMENT_CONTROLLER, "bulldozer_exit");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "bulldozer_exit");
     }
 
     public void triggerPhase2EnterAnimation() {
-        dragon.triggerHitboxAnimation(MOVEMENT_CONTROLLER, "phase2_enter");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "phase2_enter");
     }
 
     public void triggerPhase2ExitAnimation() {
-        dragon.triggerHitboxAnimation(MOVEMENT_CONTROLLER, "phase2_exit");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "phase2_exit");
     }
 
     public void triggerLeapImpactAnimation() {
-        dragon.triggerHitboxAnimation(MOVEMENT_CONTROLLER, "leap_impact");
+        dragon.triggerAnim(MOVEMENT_CONTROLLER, "leap_impact");
     }
 
     public void setupActionController(AnimationController<Ignivorus> controller) {

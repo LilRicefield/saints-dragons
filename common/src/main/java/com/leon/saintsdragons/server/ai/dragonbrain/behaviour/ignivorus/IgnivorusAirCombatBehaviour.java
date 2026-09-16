@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -202,9 +203,13 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         };
         Vec3 attackForward = radial.scale(-1);
         Vec3 learnedOffset = new Vec3(-attackForward.z, 0, attackForward.x).scale(learnedSide);
-        Vec3 destination = attackPosition(dragon, target, predictedFeet(dragon, target, 4)
+        Vec3 preferred = predictedFeet(dragon, target, 4)
                 .add(radial.scale(30 + dragon.getBbWidth() * 0.5D + dragon.getAiBreathSpacingBonus(target)))
-                .add(tangent.scale(12)).add(learnedOffset), 14);
+                .add(tangent.scale(12)).add(learnedOffset);
+        var decisions = dragon.getCombatDecisionSupport();
+        Vec3 destination = decisions == null ? attackPosition(dragon, target, preferred, 14)
+                : decisions.choosePosition("fire-approach", target, preferred, dragon.getFireBreathStartAnchor(1.0F), FIRING_RANGE,
+                candidate -> attackPosition(dragon, target, candidate, 14));
         if (destination == null) {
             deferApproach(dragon);
             enterEgress(context, target, "no-firing-space");
@@ -224,6 +229,12 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         if (phaseTicks >= APPROACH_TIMEOUT || routeFailed(dragon) || !visible
                 || !rangedReady(dragon, target) || bodyGap(dragon, target) < 8
                 || approachAnchor == null || targetCenter(target).distanceToSqr(approachAnchor) > 400) {
+            var decisions = dragon.getCombatDecisionSupport();
+            if (decisions != null && visible && approachAnchor != null
+                    && targetCenter(target).distanceToSqr(approachAnchor) <= 144) {
+                if (routeFailed(dragon)) decisions.fail(DragonCombatDecisionSupport.Failure.ROUTE_FAILED, routeTarget);
+                else if (phaseTicks >= APPROACH_TIMEOUT) decisions.failSetup(routeTarget);
+            }
             deferApproach(dragon);
             enterEgress(context, target, "approach-aborted");
             return;
@@ -311,7 +322,10 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
                     ? dragon.position().add(DragonAimHelper.turnDirection(heading, toward, 45).scale(22))
                     : dragon.getCombatAim().firingApproach(target, APPROACH_SPEED,
                             28 + dragon.getBbWidth() * 0.5D, attackSide * 6).target();
-            destination = attackPosition(dragon, target, destination, 14);
+            var decisions = dragon.getCombatDecisionSupport();
+            destination = decisions == null || turnAround ? attackPosition(dragon, target, destination, 14)
+                    : decisions.choosePosition("fireball-approach", target, destination, dragon.getFireBreathStartAnchor(1.0F), FIRING_RANGE,
+                    candidate -> attackPosition(dragon, target, candidate, 14));
             if (destination == null) {
                 fireball.cancelAiCast("no-alignment-space");
                 enterEgress(context, target, "fireball:no-alignment-space");

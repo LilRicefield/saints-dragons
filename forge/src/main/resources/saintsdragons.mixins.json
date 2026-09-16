@@ -11,6 +11,8 @@
     "PlayerMixin",
     "RangedAttributeAccessor",
     "RedStoneWireBlockMixin",
+    "ServerboundInteractPacketAccessor",
+    "ServerGamePacketListenerMixin",
     "StructureTemplateEntityMixin"
   ],
   "client": [
@@ -26,11 +28,11 @@
     "client.BloodTempestAfterimageItemRendererMixin",
     "client.LivingEntityRendererMixin",
     "client.InventoryScreenMixin",
-    "client.EntityTurnMixin",
-    "client.DragonPartAttackMixin",
-    "client.DragonPartInteractionMixin"
+    "client.EntityTurnMixin"
   ],
-  "server": [],
+  "server": [
+  ],
+
   "injectors": {
     "defaultRequire": 1
   },

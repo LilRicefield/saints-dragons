@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.base;
 
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
@@ -90,6 +91,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private final DragonFlightStateEvaluator.AnimationState flightAnimationState = new DragonFlightStateEvaluator.AnimationState();
     private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
     private final DragonCombatAim combatAim = new DragonCombatAim(this);
+    private DragonCombatDecisionSupport combatDecisionSupport;
     protected final PathNavigateGround groundNav;
     protected final FlyingPathNavigation airNav;
     protected final AsyncFlightController asyncAirController;
@@ -123,6 +125,15 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
 
     public DragonCombatAim getCombatAim() {
         return combatAim;
+    }
+
+    public @Nullable DragonCombatDecisionSupport getCombatDecisionSupport() {
+        return combatDecisionSupport;
+    }
+
+    public DragonCombatDecisionSupport enableCombatDecisionSupport() {
+        if (combatDecisionSupport == null) combatDecisionSupport = new DragonCombatDecisionSupport(this);
+        return combatDecisionSupport;
     }
 
     protected abstract EntityDataAccessor<Boolean> getFlyingDataAccessor();

@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonSensoryObse
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonPerception;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTactic;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalCommitment;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonTacticalProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
@@ -35,6 +36,8 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     private DragonTacticalCommitment lastCommitment;
     private long flightRevision = -1;
     private String flightSummary;
+    private long executionRevision = -1;
+    private String executionSummary;
     private WeakReference<DragonCombatLearning> combatLearning;
 
     public DragonTacticalPlannerBehaviour() {
@@ -61,6 +64,8 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         }
         DragonCombatFlightState combatFlight = DragonCombatFlightState.get(context.dragon());
         flightSummary = combatFlight == null ? null : combatFlight.summary();
+        var decisions = DragonCombatDecisionSupport.get(context.dragon());
+        executionSummary = decisions == null ? null : decisions.summary();
         if (DragonPerception.isSightInterruption(context.dragon().getBrain())
                 && inactiveReason(context.dragon()) == null) {
             var current = context.memories().get(DragonMemories.TACTICAL_COMMITMENT).orElse(null);
@@ -72,10 +77,13 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
             }
         }
         long revision = combatFlight == null ? -1 : combatFlight.revision();
-        if (context.gameTime() < nextEvaluationTick && flightRevision == revision) {
+        long decisionRevision = decisions == null ? -1 : decisions.revision();
+        if (context.gameTime() < nextEvaluationTick && flightRevision == revision
+                && executionRevision == decisionRevision) {
             return;
         }
         flightRevision = revision;
+        executionRevision = decisionRevision;
 
         DragonTacticalProfile profile = DragonTacticalProfile.forDragon(context.dragon());
         nextEvaluationTick = context.gameTime() + profile.evaluationIntervalTicks();
@@ -87,7 +95,8 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
                 current,
                 evaluation,
                 profile,
-                context.gameTime()
+                context.gameTime(),
+                decisions == null || current == null ? 0 : decisions.tacticPenalty(current.tactic())
         );
         context.memories().set(DragonMemories.TACTICAL_COMMITMENT, decided);
         lastCommitment = decided;
@@ -164,8 +173,11 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
             if (targetVisible) {
                 for (DragonCombatFlightState.Option option : combatFlight.options(target, focus)) {
                     int bias = learningBias(dragon, target, option.tactic());
-                    evaluation.add(option.tactic(), option.score() + bias, targetUuid, option.focus(),
-                            bias == 0 ? option.reason() : option.reason() + ":learned=" + bias);
+                    var decisions = DragonCombatDecisionSupport.get(dragon);
+                    int penalty = decisions == null ? 0 : decisions.tacticPenalty(option.tactic());
+                    evaluation.add(option.tactic(), option.score() + bias - penalty, targetUuid, option.focus(),
+                            option.reason() + (bias == 0 ? "" : ":learned=" + bias)
+                                    + (penalty == 0 ? "" : ":execution-penalty=" + penalty));
                 }
             }
             return;
@@ -265,7 +277,7 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     private DragonTacticalCommitment decide(@Nullable DragonTacticalCommitment current,
                                              Evaluation evaluation,
                                              DragonTacticalProfile profile,
-                                             long gameTime) {
+                                             long gameTime, int executionPenalty) {
         Plan candidate = evaluation.best();
         if (current == null) {
             return start(candidate, candidate, evaluation, profile, gameTime, "initial:" + candidate.reason());
@@ -295,6 +307,9 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         if (gameTime >= current.expiresAt()) {
             return start(candidate, candidate, evaluation, profile, gameTime,
                     "expired:" + candidate.reason());
+        }
+        if (!sameSubject && executionPenalty > 0 && candidate.score() > currentPlan.score()) {
+            return start(candidate, candidate, evaluation, profile, gameTime, "execution-failed:" + candidate.reason());
         }
         if (!sameSubject && gameTime < current.minimumEndsAt()) {
             return retain(current, currentPlan, candidate, evaluation,
@@ -430,6 +445,7 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
                 Math.max(0L, lastCommitment.expiresAt() - lastGameTime) + "t");
         details.put("scores", lastCommitment.scoresSummary());
         if (flightSummary != null) details.put("combat_flight", flightSummary);
+        if (executionSummary != null) details.put("combat_execution", executionSummary);
         var learning = combatLearning == null ? null : combatLearning.get();
         if (learning != null) details.put("combat_learning", learning.debugSummary());
         return Map.copyOf(details);

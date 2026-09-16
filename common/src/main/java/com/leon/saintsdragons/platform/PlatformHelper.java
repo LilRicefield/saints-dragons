@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.platform;
 
+import java.nio.file.Path;
+import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.server.level.ServerLevel;
@@ -7,14 +9,10 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
-
-import java.nio.file.Path;
-import java.util.function.Supplier;
 
 public interface PlatformHelper {
     RegistryHelper getRegistryHelper();
@@ -47,12 +45,11 @@ public interface PlatformHelper {
                          Item.Properties properties);
    SimpleParticleType createSimpleParticle(boolean overrideLimiter);
     Path getConfigDirectory();
-    double getPlayerAttackReach(Player player);
 
     default boolean canDragonBreakBlock(ServerLevel level,
-                                        LivingEntity dragon,
-                                        BlockPos pos,
-                                        BlockState state) {
+                                       LivingEntity dragon,
+                                       BlockPos pos,
+                                       BlockState state) {
         return true;
     }
 }
