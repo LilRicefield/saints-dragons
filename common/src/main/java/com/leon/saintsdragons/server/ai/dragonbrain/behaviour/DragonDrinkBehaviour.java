@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.Future;
 
@@ -429,7 +430,7 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         Map<String, String> details = new LinkedHashMap<>();
-        details.put("drink_phase", phase.name().toLowerCase(java.util.Locale.ROOT));
+        details.put("drink_phase", phase.name().toLowerCase(Locale.ROOT));
         details.put("drink_decision", decision);
         details.put("drink_site", site == null ? "none" : site.water().toShortString());
         details.put("drink_route_nodes", Integer.toString(routeNodes));

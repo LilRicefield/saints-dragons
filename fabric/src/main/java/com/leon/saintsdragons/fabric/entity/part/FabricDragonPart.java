@@ -1,9 +1,13 @@
 package com.leon.saintsdragons.fabric.entity.part;
 
 import com.leon.saintsdragons.server.entity.base.DragonPartEntity;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.part.IgnivorusHitboxes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -16,47 +20,40 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * Fabric-specific implementation of dragon hitbox parts.
- * Since Fabric doesn't have PartEntity, we create a custom Entity that acts as a hitbox-only entity.
- * Supports both standard centered boxes and elongated boxes that stretch toward a target point.
- */
+import java.util.concurrent.atomic.AtomicInteger;
+
 public class FabricDragonPart extends Entity implements DragonPartEntity {
+    private static final AtomicInteger CLIENT_IDS = new AtomicInteger(-1);
     public final @Nullable Entity parent;
     public final String partName;
-    private EntityDimensions size;
+    private final int partIndex;
+    private EntityDimensions size = EntityDimensions.scalable(1.0F, 1.0F);
     private float damageMultiplier = 1.0f;
-    private float baseWidth;
-    private float baseHeight;
 
-    public FabricDragonPart(Entity parent, String partName, float width, float height) {
+    public FabricDragonPart(Entity parent, int index) {
         super(FabricPartEntities.DRAGON_PART, parent.level());
         this.parent = parent;
-        this.partName = partName;
-        this.baseWidth = width;
-        this.baseHeight = height;
-        this.size = EntityDimensions.scalable(width, height);
-        this.refreshDimensions();
+        this.partIndex = index;
+        var region = IgnivorusHitboxes.REGIONS.get(index);
+        this.partName = region.name();
+        this.damageMultiplier = region.damage();
+        this.size = EntityDimensions.scalable(1.0F, 1.0F);
         this.noPhysics = true;
         this.setNoGravity(true);
+        if (level().isClientSide) setId(CLIENT_IDS.getAndDecrement());
     }
 
     public FabricDragonPart(EntityType<? extends FabricDragonPart> type, Level level) {
         super(type, level);
         this.parent = null;
+        this.partIndex = -1;
         this.partName = "unknown";
-        this.baseWidth = 0.0f;
-        this.baseHeight = 0.0f;
         this.size = EntityDimensions.scalable(0.0f, 0.0f);
         this.noPhysics = true;
         this.setNoGravity(true);
     }
 
-    public FabricDragonPart setDamageMultiplier(float multiplier) {
-        this.damageMultiplier = multiplier;
-        return this;
-    }
-
+    @Override
     public float getDamageMultiplier() {
         return damageMultiplier;
     }
@@ -66,58 +63,35 @@ public class FabricDragonPart extends Entity implements DragonPartEntity {
         return parent;
     }
 
-    public void updatePosition(double x, double y, double z) {
-        this.setPos(x, y, z);
-        this.xOld = x;
-        this.yOld = y;
-        this.zOld = z;
-        this.setBoundingBox(this.size.makeBoundingBox(x, y, z));
-    }
+    @Override public int getPartIndex() { return partIndex; }
 
-    /**
-     * Updates position and creates an elongated bounding box that stretches toward the next bone.
-     * This eliminates dead zones between adjacent hitbox segments.
-     */
-    public void updatePositionElongated(double x, double y, double z,
-                                         double nextX, double nextY, double nextZ,
-                                         float stretchFactor) {
-        this.setPos(x, y, z);
-        this.xOld = x;
-        this.yOld = y;
-        this.zOld = z;
-
-        // Calculate the point we're stretching toward
-        double stretchX = x + (nextX - x) * stretchFactor;
-        double stretchY = y + (nextY - y) * stretchFactor;
-        double stretchZ = z + (nextZ - z) * stretchFactor;
-
-        // Create base box at current position
-        AABB baseBox = this.size.makeBoundingBox(x, y, z);
-
-        // Expand the box to include the stretch point with half the base dimensions
-        double halfWidth = baseWidth / 2.0;
-        double halfHeight = baseHeight / 2.0;
-
-        double minX = Math.min(baseBox.minX, stretchX - halfWidth);
-        double minY = Math.min(baseBox.minY, stretchY - halfHeight);
-        double minZ = Math.min(baseBox.minZ, stretchZ - halfWidth);
-        double maxX = Math.max(baseBox.maxX, stretchX + halfWidth);
-        double maxY = Math.max(baseBox.maxY, stretchY + halfHeight);
-        double maxZ = Math.max(baseBox.maxZ, stretchZ + halfWidth);
-
-        this.setBoundingBox(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
+    @Override
+    public void updateBounds(AABB bounds) {
+        xOld = getX(); yOld = getY(); zOld = getZ();
+        xo = getX(); yo = getY(); zo = getZ();
+        Vec3 center = bounds.getCenter();
+        setPos(center.x, bounds.minY, center.z);
+        setBoundingBox(bounds);
+        size = EntityDimensions.scalable((float) Math.max(bounds.getXsize(), bounds.getZsize()), (float) bounds.getYsize());
     }
 
     @Override
     public boolean isPickable() {
-        return true;
+        return !isRemoved() && getDragonParent() instanceof Ignivorus dragon
+                && dragon.isAlive() && !dragon.isBaby();
+    }
+
+    @Override public boolean isAlive() {
+        return !isRemoved() && getDragonParent() != null && getDragonParent().isAlive();
+    }
+
+    @Override
+    public Entity getRootVehicle() {
+        return getDragonParent() == null ? this : getDragonParent().getRootVehicle();
     }
 
     @Override
     public boolean startRiding(@NotNull Entity entity, boolean force) {
-        if (parent != null) {
-            return entity.startRiding(parent, force);
-        }
         return false;
     }
 
@@ -136,38 +110,21 @@ public class FabricDragonPart extends Entity implements DragonPartEntity {
     }
 
     @Override
-    public net.minecraft.world.InteractionResult interact(@NotNull Player player,
-                                                           @NotNull net.minecraft.world.InteractionHand hand) {
-        // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
-        return net.minecraft.world.InteractionResult.PASS;
+    public InteractionResult interact(@NotNull Player player,
+                                                           @NotNull InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
     @Override
-    public net.minecraft.world.InteractionResult interactAt(@NotNull Player player,
+    public InteractionResult interactAt(@NotNull Player player,
                                                              @NotNull Vec3 vec,
-                                                             @NotNull net.minecraft.world.InteractionHand hand) {
-        // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
-        return net.minecraft.world.InteractionResult.PASS;
+                                                             @NotNull InteractionHand hand) {
+        return InteractionResult.PASS;
     }
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
-        // Only process damage on server side
-        if (this.level().isClientSide) {
-            return !this.isInvulnerableTo(source);
-        }
-
-        if (this.isInvulnerableTo(source)) {
-            return false;
-        }
-
-        if (parent == null) {
-            return false;
-        }
-
-        // Apply damage multiplier based on which part was hit
-        float adjustedAmount = amount * damageMultiplier;
-        return parent.hurt(source, adjustedAmount);
+        return isPickable() && hurtParent(source, amount);
     }
 
     @Override
@@ -177,17 +134,14 @@ public class FabricDragonPart extends Entity implements DragonPartEntity {
 
     @Override
     protected void defineSynchedData() {
-        // No synced data needed for hitbox parts
     }
 
     @Override
     protected void readAdditionalSaveData(@NotNull CompoundTag tag) {
-        // Parts don't save data
     }
 
     @Override
     protected void addAdditionalSaveData(@NotNull CompoundTag tag) {
-        // Parts don't save data
     }
 
     @Override
@@ -202,7 +156,6 @@ public class FabricDragonPart extends Entity implements DragonPartEntity {
 
     @Override
     public @Nullable Packet<ClientGamePacketListener> getAddEntityPacket() {
-        // Parts are not synced to client as separate entities
         return null;
     }
 
@@ -214,9 +167,6 @@ public class FabricDragonPart extends Entity implements DragonPartEntity {
     @Override
     public void tick() {
         super.tick();
-
-        // Safety cleanup: if the parent despawns/unloads client-side, orphaned parts
-        // can remain in the client entity map and stack up on re-entry.
         if (this.parent == null
             || this.parent.isRemoved()
             || this.parent.level() != this.level()) {

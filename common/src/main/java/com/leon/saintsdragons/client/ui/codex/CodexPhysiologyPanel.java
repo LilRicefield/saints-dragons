@@ -5,6 +5,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+
+import java.util.List;
 
 public class CodexPhysiologyPanel {
     private final ResourceLocation healthIcon;
@@ -35,7 +38,7 @@ public class CodexPhysiologyPanel {
     public void draw(GuiGraphics guiGraphics, Font font, CodexTab activeTab, CodexDragonEntry selected,
                      int leftPos, int topPos, int mouseX, int mouseY, int ecologyPage,
                      CodexEcologyPanel ecologyPanel, CodexAllyPanel allyPanel,
-                     java.util.List<String> allyList, int allyScrollOffset) {
+                     List<String> allyList, int allyScrollOffset) {
         int left = CodexLayout.getDetailLeft(leftPos);
         int top = CodexLayout.getDetailTop(topPos);
         int right = CodexLayout.getDetailRight(leftPos);
@@ -223,7 +226,7 @@ public class CodexPhysiologyPanel {
 
     private void drawWrappedLine(GuiGraphics guiGraphics, Font font, Component text,
                                  int x, int y, int width, int maxLines) {
-        java.util.List<net.minecraft.util.FormattedCharSequence> lines = font.split(text, width);
+        List<FormattedCharSequence> lines = font.split(text, width);
         int count = Math.min(lines.size(), maxLines);
         for (int i = 0; i < count; i++) {
             guiGraphics.drawString(font, lines.get(i), x, y + (i * font.lineHeight), CodexLayout.TEXT_COLOR, false);

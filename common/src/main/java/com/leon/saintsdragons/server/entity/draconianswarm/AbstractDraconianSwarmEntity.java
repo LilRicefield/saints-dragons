@@ -42,6 +42,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -448,7 +449,7 @@ public abstract class AbstractDraconianSwarmEntity extends Monster implements Ge
     }
 
     @Override
-    protected void checkFallDamage(double y, boolean onGround, @NotNull net.minecraft.world.level.block.state.BlockState state,
+    protected void checkFallDamage(double y, boolean onGround, @NotNull BlockState state,
                                    @NotNull BlockPos pos) {
     }
 

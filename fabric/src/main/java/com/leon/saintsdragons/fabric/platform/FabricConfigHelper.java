@@ -4,6 +4,9 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import net.fabricmc.loader.api.FabricLoader;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Fabric config helper that optionally hooks into Cloth Config.
  */
@@ -69,8 +72,8 @@ public final class FabricConfigHelper implements ConfigHelper {
             }
 
             @Override
-            public ListValue defineList(String key, java.util.List<String> defaultValue) {
-                return () -> new java.util.ArrayList<>(defaultValue);
+            public ListValue defineList(String key, List<String> defaultValue) {
+                return () -> new ArrayList<>(defaultValue);
             }
 
             @Override

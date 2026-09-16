@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.AABB;
@@ -48,6 +49,6 @@ public record MessageDragonAbilityDebugBox(
 
     public static void handle(MessageDragonAbilityDebugBox message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleAbilityDebugBox(message));
+                ClientPacketHandlers.handleAbilityDebugBox(message));
     }
 }

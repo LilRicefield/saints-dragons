@@ -17,7 +17,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandler<Ignivorus> {
     public IgnivorusInteractionHandler(Ignivorus dragon) {
@@ -65,11 +67,11 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         }
         if (!client) {
             consumeHeldItem(player, itemstack);
-            dragon.triggerAnim("interaction", "eat");
+            dragon.triggerHitboxAnimation("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(20);
-            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
+            boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean beef = itemstack.is(Items.BEEF);
             if (legacyTaming && hearty) {
                 dragon.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 200, 1));
             }
@@ -124,7 +126,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 dragon.canFeed(),
                 23,
                 () -> {
-                    dragon.triggerAnim("interaction", "eat");
+                    dragon.triggerHitboxAnimation("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown
@@ -159,7 +161,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 "entity.saintsdragons.ignivorus.still_eating",
                 61,
                 () -> {
-                    dragon.triggerAnim("interaction", "eat");
+                    dragon.triggerHitboxAnimation("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown
@@ -168,7 +170,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
     private InteractionResult handleBabyTaming(Player player, ItemStack itemstack, DragonAttributeConfig config) {
         var baby = dragon.getBabyComponent();
-        boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
+        boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
         boolean validFood = dragon.isFood(itemstack);
         if (baby == null) {
             return validFood ? InteractionResult.sidedSuccess(dragon.level().isClientSide) : InteractionResult.PASS;
@@ -184,7 +186,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 61,
                 hearty,
                 () -> {
-                    dragon.triggerAnim("interaction", "eat");
+                    dragon.triggerHitboxAnimation("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown,
@@ -207,11 +209,11 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
         if (!dragon.level().isClientSide) {
             consumeHeldItem(player, itemstack);
-            dragon.triggerAnim("interaction", "eat");
+            dragon.triggerHitboxAnimation("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(23);
-            boolean hearty = itemstack.is(com.leon.saintsdragons.common.registry.ModItems.HEARTY_DRAGON_MEAL.get());
-            boolean beef = itemstack.is(net.minecraft.world.item.Items.BEEF);
+            boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
+            boolean beef = itemstack.is(Items.BEEF);
             boolean wasHungry = dragon.isHungry();
             if (dragon.isBaby()) {
                 if (baby != null) {
@@ -274,7 +276,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
     }
 
     @Override
-    protected net.minecraft.world.item.Item getBinderItem() {
+    protected Item getBinderItem() {
         return ModItems.IGNIVORUS_BINDER.get();
     }
 
@@ -286,13 +288,13 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
             return config.extraDouble("taming_chance_hearty", 25.0D);
         }
-        if (food.is(net.minecraft.world.item.Items.BEEF)) {
+        if (food.is(Items.BEEF)) {
             return config.extraDouble("taming_chance_beef", 20.0D);
         }
-        if (food.is(net.minecraft.world.item.Items.MUTTON)) {
+        if (food.is(Items.MUTTON)) {
             return config.extraDouble("taming_chance_mutton", 14.2857D);
         }
-        if (food.is(net.minecraft.world.item.Items.PORKCHOP)) {
+        if (food.is(Items.PORKCHOP)) {
             return config.extraDouble("taming_chance_porkchop", 14.2857D);
         }
         return config.extraDouble("taming_chance_base", 14.2857D);

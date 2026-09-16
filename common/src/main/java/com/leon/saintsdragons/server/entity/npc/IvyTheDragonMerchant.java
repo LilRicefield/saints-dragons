@@ -48,6 +48,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.OwnableEntity;
 import net.minecraft.world.entity.RelativeMovement;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -862,7 +863,7 @@ public class IvyTheDragonMerchant extends AbstractVillager implements GeoEntity,
         }
 
         double damage = 1.0D;
-        Multimap<net.minecraft.world.entity.ai.attributes.Attribute, AttributeModifier> modifiers =
+        Multimap<Attribute, AttributeModifier> modifiers =
                 sword.getAttributeModifiers(EquipmentSlot.MAINHAND);
         for (AttributeModifier modifier : modifiers.get(Attributes.ATTACK_DAMAGE)) {
             if (modifier.getOperation() == AttributeModifier.Operation.ADDITION) {

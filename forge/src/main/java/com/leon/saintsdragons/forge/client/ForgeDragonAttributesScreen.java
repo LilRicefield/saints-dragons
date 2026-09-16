@@ -12,6 +12,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.draconianswarm.AbstractDraconianSwarmEntity;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.AABB;
@@ -64,70 +65,70 @@ public final class ForgeDragonAttributesScreen extends ForgePagedConfigScreen {
         int startX = (width - totalWidth) / 2;
         int y = 32;
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.cindervane"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.cindervane"), button -> {
             if (section != Section.CINDERVANE) {
                 section = Section.CINDERVANE;
                 rebuildWidgets();
             }
         }).bounds(startX, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.stegonaut"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.stegonaut"), button -> {
             if (section != Section.STEGONAUT) {
                 section = Section.STEGONAUT;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing), y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.raevyx"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.raevyx"), button -> {
             if (section != Section.RAEVYX) {
                 section = Section.RAEVYX;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 2, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.varasuchus"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.varasuchus"), button -> {
             if (section != Section.VARASUCHUS) {
                 section = Section.VARASUCHUS;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 3, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.ignivorus"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.ignivorus"), button -> {
             if (section != Section.IGNIVORUS) {
                 section = Section.IGNIVORUS;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 4, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.volitans"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.volitans"), button -> {
             if (section != Section.VOLITANS) {
                 section = Section.VOLITANS;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 5, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.nulljaw"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.nulljaw"), button -> {
             if (section != Section.NULLJAW) {
                 section = Section.NULLJAW;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 6, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.draconian_swarm"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.draconian_swarm"), button -> {
             if (section != Section.DRACONIAN_SWARM) {
                 section = Section.DRACONIAN_SWARM;
                 rebuildWidgets();
             }
         }).bounds(startX + (buttonWidth + spacing) * 7, y, buttonWidth, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("config.saintsdragons.attributes.atroxiia"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("config.saintsdragons.attributes.atroxiia"), button -> {
             if (section != Section.ATROXIIA) {
                 section = Section.ATROXIIA;
                 rebuildWidgets();
             }
         }).bounds(width / 2 - 40, y + 22, 80, 20).build());
 
-        addRenderableWidget(net.minecraft.client.gui.components.Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
+        addRenderableWidget(Button.builder(Component.translatable("saintsdragons.config_screen.reset"), button -> {
             resetSection();
             rebuildWidgets();
         }).bounds(width / 2 - 150, height - 28, 60, 20).build());

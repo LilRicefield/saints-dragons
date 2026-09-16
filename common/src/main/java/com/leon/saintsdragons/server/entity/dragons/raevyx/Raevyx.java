@@ -945,7 +945,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return clientBeamEnd != null ? clientBeamEnd : (serverPos != null ? serverPos : Vec3.ZERO);
     }
 
-    public void setBeamStartPosition(@org.jetbrains.annotations.Nullable Vec3 pos) {
+    public void setBeamStartPosition(@Nullable Vec3 pos) {
         if (pos == null) {
             this.entityData.set(DATA_BEAM_START_SET, false);
         } else {
@@ -2011,7 +2011,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         beamPathRefreshTick = -1;
     }
 
-    private void updateBeamOffsets(@org.jetbrains.annotations.Nullable Vec3 direction) {
+    private void updateBeamOffsets(@Nullable Vec3 direction) {
         if (direction == null || direction.lengthSqr() < 1.0E-6) {
             beamYawOffsetRad = 0.0f;
             beamPitchOffsetRad = 0.0f;

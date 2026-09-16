@@ -173,7 +173,7 @@ public final class DragonDestructionManager {
             if (DragonGriefingRules.isProtectedFromPassiveTreeDestruction(level, search.pos())) {
                 continue;
             }
-            for (net.minecraft.core.Direction direction : net.minecraft.core.Direction.values()) {
+            for (Direction direction : Direction.values()) {
                 open.addLast(new LeafSearchNode(
                         search.pos().relative(direction).immutable(), search.distance() + 1));
             }

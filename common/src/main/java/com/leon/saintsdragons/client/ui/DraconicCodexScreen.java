@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexRequest;
 import com.leon.saintsdragons.common.network.MessageDraconicCodexRemoveEntry;
 import com.leon.saintsdragons.common.network.MessageGlobalAllyManagement;
+import com.leon.saintsdragons.common.network.MessageGlobalAllyRequest;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.client.ui.codex.CodexAllyPanel;
@@ -26,12 +27,14 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.NotNull;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Environment(EnvType.CLIENT)
 public class DraconicCodexScreen extends Screen {
@@ -104,8 +107,8 @@ public class DraconicCodexScreen extends Screen {
     private int listScrollOffset = 0;
     private CodexTab activeTab;
     private final List<CodexDragonEntry> dragonEntries = new ArrayList<>();
-    private java.util.UUID selectedDragonId;
-    private java.util.UUID pendingSelectionId;
+    private UUID selectedDragonId;
+    private UUID pendingSelectionId;
     private List<String> allyList = new ArrayList<>();
     private int allyScrollOffset = 0;
     private int ecologyPage = 1;
@@ -115,7 +118,7 @@ public class DraconicCodexScreen extends Screen {
     private Button refreshEntryButton;
     @Nullable
     private Button removeEntryButton;
-    public DraconicCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
+    public DraconicCodexScreen(@Nullable UUID preselectedDragonId, CodexTab initialTab) {
         super(Component.translatable("saintsdragons.gui.draconic_codex.title"));
         this.pendingSelectionId = preselectedDragonId;
         this.activeTab = initialTab;
@@ -130,7 +133,7 @@ public class DraconicCodexScreen extends Screen {
         this.leftPos = Math.max(0, (this.width - actualWidth) / 2);
         this.topPos = Math.max(0, (this.height - actualHeight) / 2);
         requestCodexRefresh(false);
-        NetworkHandler.sendToServer(com.leon.saintsdragons.common.network.MessageGlobalAllyRequest.INSTANCE);
+        NetworkHandler.sendToServer(MessageGlobalAllyRequest.INSTANCE);
 
         refreshEntryButton = addRenderableWidget(new ImageButton(
                 leftPos + REFRESH_ICON_OFFSET_X,
@@ -229,7 +232,7 @@ public class DraconicCodexScreen extends Screen {
             int listLeft = CodexLayout.getListLeft(leftPos);
             int listTop = CodexLayout.getListTop(topPos);
             int listRight = listLeft + CodexLayout.LIST_WIDTH;
-            java.util.UUID clickedId = dragonListPanel.handleClick(mouseX, mouseY, this.font, listLeft, listTop, listRight,
+            UUID clickedId = dragonListPanel.handleClick(mouseX, mouseY, this.font, listLeft, listTop, listRight,
                     dragonEntries, listScrollOffset);
             if (clickedId != null) {
                 CodexDragonEntry clickedEntry = dragonEntries.stream()
@@ -377,7 +380,7 @@ public class DraconicCodexScreen extends Screen {
             return;
         }
 
-        java.util.UUID dragonId = selected.entityId();
+        UUID dragonId = selected.entityId();
         Component title = Component.translatable(
                 "saintsdragons.gui.draconic_codex.remove_entry.confirm.title",
                 selected.displayName()
@@ -423,7 +426,7 @@ public class DraconicCodexScreen extends Screen {
             return;
         }
 
-        net.minecraft.sounds.SoundEvent grumbleSound = switch (dragonType) {
+        SoundEvent grumbleSound = switch (dragonType) {
             case "raevyx" -> ModSounds.RAEVYX_GRUMBLE_1.get();
             case "ignivorus" -> ModSounds.IGNIVORUS_GRUMBLE_1.get();
             case "cindervane" -> ModSounds.CINDERVANE_GRUMBLE_1.get();

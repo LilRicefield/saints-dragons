@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -190,7 +191,7 @@ public final class NulljawPackCombatCoordinator {
 
             double searchRadius = Math.max(
                     requestingDragon.getPackSearchRadius(),
-                    requestingDragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.FOLLOW_RANGE)
+                    requestingDragon.getAttributeValue(Attributes.FOLLOW_RANGE)
             );
             AABB searchBounds = target.getBoundingBox().inflate(searchRadius);
             List<Nulljaw> candidates = level.getEntitiesOfClass(

@@ -13,6 +13,8 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Locale;
+
 public final class DragonCombatAim {
     public static final Profile BEAM = new Profile(40, 50, 9, 0.0);
     public static final Profile FIRE = new Profile(70, 55, 6, 1.0);
@@ -237,7 +239,7 @@ public final class DragonCombatAim {
     }
 
     public String debugSummary() {
-        return !isActive() ? "idle" : shot.name().toLowerCase(java.util.Locale.ROOT)
+        return !isActive() ? "idle" : shot.name().toLowerCase(Locale.ROOT)
                 + ",yaw=" + Mth.floor(Math.abs(yawError)) + ",pitch=" + Mth.floor(Math.abs(pitchError))
                 + ",stable=" + alignedTicks;
     }
@@ -283,6 +285,6 @@ public final class DragonCombatAim {
         ALIGNED, ALIGNING, OUT_OF_ARC, BLOCKED, OUT_OF_RANGE, NO_TARGET;
 
         public boolean needsAlignment() { return this == ALIGNING || this == OUT_OF_ARC; }
-        public String reason() { return name().toLowerCase(java.util.Locale.ROOT); }
+        public String reason() { return name().toLowerCase(Locale.ROOT); }
     }
 }

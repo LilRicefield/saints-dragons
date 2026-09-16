@@ -223,9 +223,9 @@ public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
-                return java.util.List.of(target);
+                return List.of(target);
             }
-            return java.util.List.of();
+            return List.of();
         }
 
         return DragonMeleeGeometry.findForwardTargets(

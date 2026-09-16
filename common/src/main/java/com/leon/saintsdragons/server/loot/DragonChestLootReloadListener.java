@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -63,7 +64,7 @@ public final class DragonChestLootReloadListener extends SimpleJsonResourceReloa
     }
 
     private static Map<ResourceLocation, JsonElement> readJsonMap(ResourceManager resourceManager) {
-        Map<ResourceLocation, JsonElement> result = new java.util.HashMap<>();
+        Map<ResourceLocation, JsonElement> result = new HashMap<>();
         resourceManager.listResources("dragon_chest_loot", id -> id.getPath().endsWith(".json")).forEach((file, resource) -> {
             ResourceLocation fileId = fileToReloadId(file);
             try (BufferedReader reader = resource.openAsReader()) {

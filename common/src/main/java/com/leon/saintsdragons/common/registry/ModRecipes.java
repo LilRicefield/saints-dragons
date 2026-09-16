@@ -7,6 +7,7 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.RecipeType;
 
@@ -38,7 +39,7 @@ public final class ModRecipes {
         SERIALIZERS.register();
     }
 
-    private static <T extends net.minecraft.world.item.crafting.Recipe<?>> RecipeType<T> simpleType(String name) {
+    private static <T extends Recipe<?>> RecipeType<T> simpleType(String name) {
         return new RecipeType<>() {
             @Override
             public String toString() {

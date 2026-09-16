@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.camera.DragonDiveEffectIntensity;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Axis;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -84,7 +85,7 @@ public final class SpeedLineOverlay {
         int color = (alpha << 24) | (LINE_COLOR & 0x00FFFFFF);
         graphics.pose().pushPose();
         graphics.pose().translate(line.x, line.y, 0.0F);
-        graphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(line.angle));
+        graphics.pose().mulPose(Axis.ZP.rotationDegrees(line.angle));
         graphics.fill(0, -line.thickness / 2, line.length, line.thickness / 2, color);
         graphics.pose().popPose();
     }

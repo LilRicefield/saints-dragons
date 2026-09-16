@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -58,7 +59,7 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
         }
         if (section.sectionType == STARTUP) {
             Ignivorus dragon = getUser();
-            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "roar");
+            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "roar");
             dragon.lockAbilities(STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS);
             dragon.triggerScreenShake(1.8F);
 
@@ -135,14 +136,15 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
             BlockPos column = BlockPos.containing(base.x, base.y, base.z);
             BlockPos ground = server.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, column);
             Vec3 spawnPos = new Vec3(base.x, ground.getY(), base.z);
+            Vec3 impact = spawnPos.add(0.0D, 0.02D, 0.0D);
+            server.sendParticles(ModParticles.IGNIVORUS_MAGMA_PILLARS_IMPACT.get(),
+                    impact.x, impact.y, impact.z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
 
-            IgnivorusMagmaPillarEntity pillar = new IgnivorusMagmaPillarEntity(
-                    server, spawnPos, dragon, waveIndex, pillarYaw,
+            IgnivorusMagmaPillarEntity pillar = new IgnivorusMagmaPillarEntity(server, spawnPos, dragon, waveIndex, pillarYaw,
                     resolveMagmaPillarDamage() + waveIndex * DAMAGE_PER_WAVE,
                     BASE_KNOCKBACK + waveIndex * KNOCKBACK_PER_WAVE,
                     PILLAR_WARMUP_TICKS,
                     PILLAR_LIFETIME_TICKS);
-
             server.addFreshEntity(pillar);
             server.playSound(null, spawnPos.x, spawnPos.y, spawnPos.z,
                     ModSounds.IGNIVORUS_MAGMA_PILLAR.get(), SoundSource.HOSTILE,

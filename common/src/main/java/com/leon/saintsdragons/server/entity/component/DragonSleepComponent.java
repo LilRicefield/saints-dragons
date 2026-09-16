@@ -11,6 +11,8 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.Locale;
+
 public final class DragonSleepComponent {
     private static final int RECENT_COMBAT_SLEEP_BLOCK_TICKS = 20 * 30;
     private static final float MAX_SLEEP_PRESSURE = 100.0F;
@@ -393,14 +395,14 @@ public final class DragonSleepComponent {
             return false;
         }
         if (!dragon.isSleeping() && !dragon.isSleepingEntering()) {
-            lastDecision = "alerted-by-" + sound.kind().name().toLowerCase(java.util.Locale.ROOT);
+            lastDecision = "alerted-by-" + sound.kind().name().toLowerCase(Locale.ROOT);
             return false;
         }
 
         sleepActionCooldown = 0;
         if (tryWakeUp()) {
             currentPhase = SleepPhase.EXITING;
-            lastDecision = "waking-from-" + sound.kind().name().toLowerCase(java.util.Locale.ROOT);
+            lastDecision = "waking-from-" + sound.kind().name().toLowerCase(Locale.ROOT);
             return true;
         }
         return false;
@@ -424,8 +426,8 @@ public final class DragonSleepComponent {
 
         lastDisturbanceTick = gameTime;
         sleepDisturbance = Math.min(MAX_SLEEP_DISTURBANCE, sleepDisturbance + amount);
-        String kind = sound.kind().name().toLowerCase(java.util.Locale.ROOT);
-        lastDisturbanceCause = kind + "+" + String.format(java.util.Locale.ROOT, "%.1f", amount);
+        String kind = sound.kind().name().toLowerCase(Locale.ROOT);
+        lastDisturbanceCause = kind + "+" + String.format(Locale.ROOT, "%.1f", amount);
         if (sleepDisturbance < WAKE_SLEEP_DISTURBANCE) {
             lastDecision = "disturbed-by-" + kind;
             return true;

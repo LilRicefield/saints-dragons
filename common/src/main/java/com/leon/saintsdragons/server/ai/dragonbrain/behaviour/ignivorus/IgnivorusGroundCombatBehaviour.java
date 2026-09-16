@@ -79,7 +79,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
             return false;
         }
 
-        if (target instanceof net.minecraft.world.entity.player.Player player) {
+        if (target instanceof Player player) {
             if (player.isCreative() || player.isSpectator()) {
                 return false;
             }

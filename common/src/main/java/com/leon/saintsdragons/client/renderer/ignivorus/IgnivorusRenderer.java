@@ -2,20 +2,24 @@ package com.leon.saintsdragons.client.renderer.ignivorus;
 
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.model.ignivorus.IgnivorusModel;
-import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
-import com.leon.saintsdragons.client.renderer.vfx.IgnivorusSkyfallRaysRenderer;
-import com.leon.saintsdragons.client.renderer.vfx.IgnivorusSkyfallSphereRenderer;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
+import com.leon.saintsdragons.client.renderer.vfx.*;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer;
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusNightEmissiveLayer;
-import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
-import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import net.minecraft.client.Minecraft;
+import com.leon.saintsdragons.server.entity.part.IgnivorusHitboxes;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.AABB;
+import org.joml.Matrix4f;
+import software.bernie.geckolib.cache.object.GeoBone;
+import software.bernie.geckolib.util.RenderUtils;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.WeakHashMap;
 
 public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final float PASSENGER_X = 0.0f, PASSENGER_Y = -3.0f, PASSENGER_Z = 0.0f;
@@ -36,9 +40,6 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     private static final String RIGHT_FRONT_LEG_BONE = "rightfrontleg";
     private static final String LEFT_BACK_LEG_BONE = "leftbackleg";
     private static final String RIGHT_BACK_LEG_BONE = "rightbackleg";
-    private static final int SYNC_INTERVAL_TICKS = 2;
-    private static final double SNAPSHOT_PRECISION = 1000.0D;
-    private final Map<Ignivorus, Integer> lastBoneSnapshotHashes = new WeakHashMap<>();
 
     public IgnivorusRenderer(EntityRendererProvider.Context context) {
         super(context, new IgnivorusModel());
@@ -99,15 +100,15 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     }
 
     @Override
-    protected void afterDragonRender(Ignivorus entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
-                                     net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
+    protected void afterDragonRender(Ignivorus entity, PoseStack poseStack,
+                                     MultiBufferSource bufferSource, float partialTick) {
         if (!entity.isBaby()) {
             IgnivorusSkyfallSphereRenderer.render(entity, poseStack, bufferSource, partialTick);
             IgnivorusSkyfallRaysRenderer.render(entity, getBoneWorldPosition("middlebody"),
                     poseStack, bufferSource, partialTick);
-            com.leon.saintsdragons.client.renderer.vfx.IgnivorusFireballMouthRenderer.render(
+            IgnivorusFireballMouthRenderer.render(
                     entity, getBoneWorldPosition(FIRE_BONE), poseStack, bufferSource, partialTick);
-            sendBonePositionsToServer(entity);
+            captureCollisionPose(entity);
             DragonDiveTrailRenderer.render(entity,
                     getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),
                     getBoneWorldPosition(DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE),
@@ -117,62 +118,45 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
         }
     }
 
-    private void sendBonePositionsToServer(Ignivorus entity) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player == null || !entity.isAlive()) {
-            return;
-        }
-        if (minecraft.player.distanceToSqr(entity) > 96.0D * 96.0D) {
-            return;
-        }
+    private final Map<String, Matrix4f> collisionTransforms = new HashMap<>();
 
-        if ((entity.tickCount + entity.getId()) % SYNC_INTERVAL_TICKS != 0) {
-            return;
-        }
-
-        java.util.Map<String, Vec3> positions =
-                new java.util.HashMap<>(MessageDragonBonePositions.SYNCED_BONES.length);
-        for (String boneName : MessageDragonBonePositions.SYNCED_BONES) {
-           Vec3 pos = entity.getClientLocatorPosition(boneName);
-            if (pos != null) {
-                positions.put(boneName, pos);
-            }
-        }
-
-        if (positions.isEmpty()) {
-            return;
-        }
-
-        int snapshotHash = computeSnapshotHash(positions);
-        Integer previousHash = lastBoneSnapshotHashes.put(entity, snapshotHash);
-        if (previousHash != null && previousHash == snapshotHash) {
-            return;
-        }
-
-        if (!positions.isEmpty()) {
-            NetworkHandler.sendToServer(
-                new MessageDragonBonePositions(entity.getId(), positions)
-            );
+    @Override
+    public void render(Ignivorus entity, float yaw, float partialTick, PoseStack poses,
+                       MultiBufferSource buffers, int light) {
+        collisionTransforms.clear();
+        try {
+            super.render(entity, yaw, partialTick, poses, buffers, light);
+        } finally {
+            collisionTransforms.clear();
         }
     }
 
-    private static int computeSnapshotHash(java.util.Map<String, Vec3> positions) {
-        int hash = 1;
-        for (String boneName : MessageDragonBonePositions.SYNCED_BONES) {
-            Vec3 pos = positions.get(boneName);
-            if (pos == null) {
-                continue;
-            }
-            hash = 31 * hash + boneName.hashCode();
-            hash = 31 * hash + quantize(pos.x);
-            hash = 31 * hash + quantize(pos.y);
-            hash = 31 * hash + quantize(pos.z);
+    @Override
+    public void renderRecursively(PoseStack poses, Ignivorus entity, GeoBone bone, RenderType type, MultiBufferSource buffers, VertexConsumer vertices, boolean reRender,
+                                  float partialTick, int light, int overlay, float red, float green, float blue, float alpha) {
+        super.renderRecursively(poses, entity, bone, type, buffers, vertices, reRender, partialTick,
+                light, overlay, red, green, blue, alpha);
+        if (reRender || entity.isBaby()
+                || !RenderPassContext.isExtractionAllowed(entity.getId())
+                || !IgnivorusHitboxes.BONES.contains(bone.getName())) return;
+        poses.pushPose();
+        try {
+            RenderUtils.prepMatrixForBone(poses, bone);
+            collisionTransforms.put(bone.getName(), RenderUtils.invertAndMultiplyMatrices(
+                    poses.last().pose(), this.entityRenderTranslations));
+        } finally {
+            poses.popPose();
         }
-        return hash;
     }
 
-    private static int quantize(double value) {
-        return (int) Math.round(value * SNAPSHOT_PRECISION);
+    private void captureCollisionPose(Ignivorus entity) {
+        if (lastBakedModel == null || collisionTransforms.isEmpty()) return;
+        var regions = IgnivorusHitboxes.REGIONS;
+        AABB[] snapshot = new AABB[regions.size()];
+        for (int i = 0; i < snapshot.length; i++) {
+            snapshot[i] = DragonBoneSurfaceSampler.bounds(
+                    lastBakedModel, collisionTransforms, regions.get(i).bones());
+        }
+        entity.getCollisionState().captureClientBounds(snapshot);
     }
-
 }

@@ -12,6 +12,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public final class DragonPerceptionBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
@@ -68,7 +69,7 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
             remembered = heard;
             // Hearing can guide investigation without replacing the last actual sighting.
             lastObservation = "heard_target_"
-                    + heard.kind().name().toLowerCase(java.util.Locale.ROOT);
+                    + heard.kind().name().toLowerCase(Locale.ROOT);
         }
         boolean hasFreshEvidence = remembered != null
                 && target.getUUID().equals(remembered.sourceUuid());
@@ -93,7 +94,7 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
         DragonSensoryObservation focus = hasFreshEvidence ? remembered : investigation;
         if (!hasFreshEvidence) {
             lastObservation = "investigating_"
-                    + focus.kind().name().toLowerCase(java.util.Locale.ROOT);
+                    + focus.kind().name().toLowerCase(Locale.ROOT);
         } else if (!lastObservation.startsWith("heard_target_")) {
             lastObservation = "last_seen";
         }
@@ -125,7 +126,7 @@ public final class DragonPerceptionBehaviour<T extends DragonEntity> extends Dra
                 8.0F,
                 dragon.getMaxHeadXRot()
         );
-        lastObservation = "heard_" + heard.kind().name().toLowerCase(java.util.Locale.ROOT);
+        lastObservation = "heard_" + heard.kind().name().toLowerCase(Locale.ROOT);
     }
 
     @Override

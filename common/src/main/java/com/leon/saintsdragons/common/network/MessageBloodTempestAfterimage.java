@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -32,7 +33,7 @@ public record MessageBloodTempestAfterimage(int entityId, BloodTempestAfterimage
 
     public static void handle(MessageBloodTempestAfterimage message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleBloodTempestAfterimage(message));
+                ClientPacketHandlers.handleBloodTempestAfterimage(message));
     }
 
     private static void writeVec3(FriendlyByteBuf buffer, Vec3 position) {

@@ -15,6 +15,8 @@ import com.leon.saintsdragons.client.renderer.layer.atroxiia.AtroxiiaNightEmissi
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 
+import org.joml.Vector3f;
+
 public class AtroxiiaRenderer extends DragonGeoEntityRenderer<Atroxiia> {
     private Vec3 tailTipPosition;
     private static final String PASSENGER_BONE = "passengerBone";
@@ -52,7 +54,7 @@ public class AtroxiiaRenderer extends DragonGeoEntityRenderer<Atroxiia> {
             RenderUtils.rotateMatrixAroundBone(poses, bone);
             RenderUtils.scaleMatrixForBone(poses, bone);
             var matrix = RenderUtils.invertAndMultiplyMatrices(poses.last().pose(), this.entityRenderTranslations);
-            var point = matrix.transformPosition(new org.joml.Vector3f());
+            var point = matrix.transformPosition(new Vector3f());
             tailTipPosition = new Vec3(point.x + Mth.lerp(partialTick, entity.xOld, entity.getX()),
                     point.y + Mth.lerp(partialTick, entity.yOld, entity.getY()),
                     point.z + Mth.lerp(partialTick, entity.zOld, entity.getZ()));

@@ -2,6 +2,7 @@ package com.leon.saintsdragons.util.animation;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -79,7 +80,11 @@ public final class AnimationHelper {
     }
 
     public static void triggerRestAnimation(RideableDragonBase dragon, String animation) {
-        dragon.triggerAnim(MOVEMENT_CONTROLLER, animation);
+        if (dragon instanceof Ignivorus ignivorus) {
+            ignivorus.triggerHitboxAnimation(MOVEMENT_CONTROLLER, animation);
+        } else {
+            dragon.triggerAnim(MOVEMENT_CONTROLLER, animation);
+        }
     }
 
     public static PlayState idle(AnimationState<?> state) {

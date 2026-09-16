@@ -13,6 +13,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Locale;
+
 public final class VolitansBreathCombatComponent {
     public static final double FIRING_RANGE = VolitansBreathMotion.RANGE * 0.9D;
     private static final double START_GAP = 7.0D;
@@ -112,7 +114,7 @@ public final class VolitansBreathCombatComponent {
             return stop("target-underneath");
         }
         DragonCombatAim.Shot shot = dragon.getAiBreathShot(target);
-        if (!shotGrace.allows(shot, dragon.tickCount, 20, 12)) return stop("shot:" + shot.name().toLowerCase(java.util.Locale.ROOT));
+        if (!shotGrace.allows(shot, dragon.tickCount, 20, 12)) return stop("shot:" + shot.name().toLowerCase(Locale.ROOT));
         if (active && shot == DragonCombatAim.Shot.ALIGNED) firingOpportunityTicks++;
         if (active && activeTicks >= burstTicks) {
             if (!extended && shot == DragonCombatAim.Shot.ALIGNED && gap(target) >= 10

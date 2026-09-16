@@ -4,8 +4,10 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import java.util.UUID;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -61,7 +63,7 @@ public final class DragonHappinessComponent {
         this.happiness = clamped;
         dragon.getEntityData().set(dataAccessor, clamped);
         if (!dragon.level().isClientSide && dragon.isTame() && dragon.getOwnerUUID() != null) {
-            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) dragon.level();
+            ServerLevel serverLevel = (ServerLevel) dragon.level();
             DragonCodexSavedData.get(serverLevel).updateDragonStats(dragon.getOwnerUUID(), dragon);
         }
     }
@@ -116,14 +118,14 @@ public final class DragonHappinessComponent {
         return 1;
     }
 
-    public void applyHitPenalty(net.minecraft.server.level.ServerLevel serverLevel) {
+    public void applyHitPenalty(ServerLevel serverLevel) {
         if (!SaintsDragonsConfig.HAPPINESS_DECAY_ENABLED.get()) {
             return;
         }
         setHappiness(this.happiness - HAPPINESS_HIT_PENALTY);
         if (this.happiness <= HAPPINESS_ANGRY_THRESHOLD) {
             serverLevel.sendParticles(
-                    net.minecraft.core.particles.ParticleTypes.ANGRY_VILLAGER,
+                    ParticleTypes.ANGRY_VILLAGER,
                     dragon.getX(),
                     dragon.getY() + dragon.getBbHeight() + 0.3,
                     dragon.getZ(),

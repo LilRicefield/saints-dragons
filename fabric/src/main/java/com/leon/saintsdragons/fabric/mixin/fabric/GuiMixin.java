@@ -98,7 +98,7 @@ public class GuiMixin {
      * Hide jump meter when riding a dragon
      */
     @Inject(method = "renderJumpMeter", at = @At("HEAD"), cancellable = true)
-    private void onRenderJumpMeter(net.minecraft.world.entity.PlayerRideableJumping mount, GuiGraphics guiGraphics, int x, CallbackInfo ci) {
+    private void onRenderJumpMeter(PlayerRideableJumping mount, GuiGraphics guiGraphics, int x, CallbackInfo ci) {
         if (!renderingGroundDragonBottomSlot && isRidingGroundDragon()) {
             ci.cancel();
         } else if (shouldHideVanillaHud() && !(Minecraft.getInstance().player.getVehicle() instanceof PlayerRideableJumping)) {

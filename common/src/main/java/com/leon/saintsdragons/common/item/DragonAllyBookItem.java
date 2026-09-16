@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.item;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
 import com.leon.saintsdragons.client.ui.codex.CodexTab;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -17,6 +18,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+import java.util.UUID;
+
 public class DragonAllyBookItem extends Item {
     public DragonAllyBookItem(Properties properties) {
         super(properties);
@@ -26,7 +29,7 @@ public class DragonAllyBookItem extends Item {
     public @NotNull InteractionResult interactLivingEntity(@NotNull ItemStack stack, @NotNull Player player, @NotNull LivingEntity target, @NotNull InteractionHand hand) {
         if (target instanceof DragonEntity dragon) {
             if (player.level().isClientSide) {
-                java.util.UUID selectionId = (dragon.isTame() && dragon.isOwnedBy(player)) ? dragon.getUUID() : null;
+                UUID selectionId = (dragon.isTame() && dragon.isOwnedBy(player)) ? dragon.getUUID() : null;
                 openCodexScreen(selectionId, CodexTab.PHYSIOLOGY);
             }
             return InteractionResult.SUCCESS;
@@ -44,7 +47,7 @@ public class DragonAllyBookItem extends Item {
     }
 
     @Environment(EnvType.CLIENT)
-    private void openCodexScreen(@Nullable java.util.UUID preselectedDragonId, CodexTab initialTab) {
-        net.minecraft.client.Minecraft.getInstance().setScreen(new DraconicCodexScreen(preselectedDragonId, initialTab));
+    private void openCodexScreen(@Nullable UUID preselectedDragonId, CodexTab initialTab) {
+        Minecraft.getInstance().setScreen(new DraconicCodexScreen(preselectedDragonId, initialTab));
     }
 }

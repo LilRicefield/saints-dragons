@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.effect.raevyx;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -295,7 +296,7 @@ public class RaevyxLightningChainEntity extends Entity {
             return true;
         }
 
-        if (caster instanceof com.leon.saintsdragons.server.entity.base.DragonEntity dragon && dragon.isAlly(target)) {
+        if (caster instanceof DragonEntity dragon && dragon.isAlly(target)) {
             return false;
         }
 

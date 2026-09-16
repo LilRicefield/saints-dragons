@@ -314,7 +314,7 @@ public final class AsyncDragonPathfinder {
             BlockPos captureMin = minNode.offset(-horizontalClearance, -2, -horizontalClearance);
             BlockPos captureMax = maxNode.offset(horizontalClearance, verticalClearance, horizontalClearance);
             ImmutableBlockSnapshot snapshot = ImmutableBlockSnapshot.capture(serverLevel, captureMin, captureMax);
-            net.minecraft.world.phys.AABB relativeBounds = dragon.getBoundingBox().move(
+            AABB relativeBounds = dragon.getBoundingBox().move(
                     -origin.x,
                     -origin.y,
                     -origin.z

@@ -4,6 +4,8 @@ import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.layer.cindervane.CindervaneNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.layer.DragonEquipmentLayer;
+import com.leon.saintsdragons.client.renderer.vfx.CindervaneFireBodyActivationRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.CindervaneFireballMouthRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.CindervaneFireBodyParticles;
 import com.leon.saintsdragons.client.model.cindervane.CindervaneModel;
@@ -133,9 +135,9 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
                                      MultiBufferSource bufferSource, float partialTick) {
         sendBonePositionsToServer(entity);
         CindervaneFireBodyParticles.emit(entity, this.lastBakedModel, fireBodyTransforms, partialTick);
-        com.leon.saintsdragons.client.renderer.vfx.CindervaneFireBodyActivationRenderer.render(
+        CindervaneFireBodyActivationRenderer.render(
                 entity, poseStack, bufferSource, partialTick);
-        com.leon.saintsdragons.client.renderer.vfx.CindervaneFireballMouthRenderer.render(
+        CindervaneFireballMouthRenderer.render(
                 entity, getBoneWorldPosition("headController"), poseStack, bufferSource, partialTick);
         DragonDiveTrailRenderer.render(entity,
                 getBoneWorldPosition(DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE),

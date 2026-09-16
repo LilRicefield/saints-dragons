@@ -11,6 +11,7 @@ import net.minecraft.client.particle.SpriteSet;
 import net.minecraft.client.particle.TextureSheetParticle;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.joml.Vector3f;
@@ -40,7 +41,7 @@ public final class GroundDecalParticle extends TextureSheetParticle {
         this.hasPhysics = false;
         this.setSprite(sprites.get(this.random));
         double radius = this.finalScale * Math.sqrt(2.0D);
-        this.setBoundingBox(new net.minecraft.world.phys.AABB(x - radius, y - 0.1D, z - radius,
+        this.setBoundingBox(new AABB(x - radius, y - 0.1D, z - radius,
                 x + radius, y + 0.1D, z + radius));
     }
 

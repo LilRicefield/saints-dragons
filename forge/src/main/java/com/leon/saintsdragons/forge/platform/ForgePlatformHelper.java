@@ -2,22 +2,32 @@ package com.leon.saintsdragons.forge.platform;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.leon.saintsdragons.common.item.DraconianSwarmSpawnEggSpawner;
 import com.leon.saintsdragons.common.item.tools.DragonheartSwordItem;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
 import com.leon.saintsdragons.platform.PlatformHelper;
 import com.leon.saintsdragons.platform.RegistryHelper;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.event.ForgeEventFactory;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;
@@ -30,13 +40,13 @@ import java.util.function.Supplier;
 
 public final class ForgePlatformHelper implements PlatformHelper {
     @Override
-    public boolean canDragonBreakBlock(net.minecraft.server.level.ServerLevel level,
-                                      net.minecraft.world.entity.LivingEntity dragon,
-                                      net.minecraft.core.BlockPos pos,
-                                      net.minecraft.world.level.block.state.BlockState state) {
-        return net.minecraftforge.event.ForgeEventFactory.getMobGriefingEvent(level, dragon)
+    public boolean canDragonBreakBlock(ServerLevel level,
+                                      LivingEntity dragon,
+                                      BlockPos pos,
+                                      BlockState state) {
+        return ForgeEventFactory.getMobGriefingEvent(level, dragon)
                 && state.canEntityDestroy(level, pos, dragon)
-                && net.minecraftforge.event.ForgeEventFactory.onEntityDestroyBlock(dragon, pos, state);
+                && ForgeEventFactory.onEntityDestroyBlock(dragon, pos, state);
     }
     // Lazy initialization to avoid ServiceConfigurationError during early class loading
     private ForgeRegistryHelper registryHelper;
@@ -121,8 +131,8 @@ public final class ForgePlatformHelper implements PlatformHelper {
                                              Item.Properties properties) {
         return new ForgeSpawnEggItem(displayEntityType, primaryColor, secondaryColor, properties) {
             @Override
-            public net.minecraft.world.InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
-                return com.leon.saintsdragons.common.item.DraconianSwarmSpawnEggSpawner.useOn(context);
+            public InteractionResult useOn(UseOnContext context) {
+                return DraconianSwarmSpawnEggSpawner.useOn(context);
             }
         };
     }
@@ -153,8 +163,8 @@ public final class ForgePlatformHelper implements PlatformHelper {
     }
 
     @Override
-    public net.minecraft.core.particles.SimpleParticleType createSimpleParticle(boolean overrideLimiter) {
-        return new net.minecraft.core.particles.SimpleParticleType(overrideLimiter);
+    public SimpleParticleType createSimpleParticle(boolean overrideLimiter) {
+        return new SimpleParticleType(overrideLimiter);
     }
 
     @Override
@@ -192,5 +202,9 @@ public final class ForgePlatformHelper implements PlatformHelper {
             );
             return builder.build();
         }
+    }
+    @Override
+    public double getPlayerAttackReach(Player player) {
+        return player.getEntityReach();
     }
 }

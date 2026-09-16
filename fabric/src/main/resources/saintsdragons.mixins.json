@@ -20,7 +20,8 @@
     "EntityTurnMixin",
     "EntityRenderDispatcherMixin",
     "ParticleEngineMixin",
-    "GuiMixin"
+    "GuiMixin",
+    "DragonPartAttackMixin"
   ],
   "mixins": [
     "ChunkGeneratorStructureStateMixin",

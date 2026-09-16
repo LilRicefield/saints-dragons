@@ -49,6 +49,7 @@ import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import java.util.Map;
 import java.util.HashMap;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.level.block.Block;
@@ -61,9 +62,11 @@ import net.minecraft.core.particles.ParticleTypes;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -356,7 +359,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return getTextureVariant() == VARIANT_PIEBALD;
     }
 
-    private final Map<String, Vec3> serverBonePositionCache = new java.util.concurrent.ConcurrentHashMap<>();
+    private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
 
     public Cindervane(EntityType<? extends Cindervane> type, Level level) {
         super(type, level);
@@ -874,7 +877,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
         if (passenger instanceof IvyTheDragonMerchant ivy
                 && ivy.isTame()
-                && java.util.Objects.equals(ivy.getOwnerUUID(), getOwnerUUID())) {
+                && Objects.equals(ivy.getOwnerUUID(), getOwnerUUID())) {
             return hasSaddle() && this.getPassengers().size() < getMaxPassengers();
         }
         if (autoGrabPassengerMountAllowed && passenger instanceof LivingEntity) {
@@ -886,7 +889,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public void setSlashGrabPassenger(@Nullable Entity passenger) {
         UUID newUuid = passenger == null ? null : passenger.getUUID();
         int newId = passenger == null ? -1 : passenger.getId();
-        if (java.util.Objects.equals(this.slashGrabPassengerUuid, newUuid)
+        if (Objects.equals(this.slashGrabPassengerUuid, newUuid)
                 && this.entityData.get(DATA_SLASH_GRAB_PASSENGER_ID) == newId) {
             return;
         }
@@ -1290,12 +1293,12 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     private void spawnFireBodyCrashEffects(ServerLevel server, Vec3 impact) {
         server.playSound(null, impact.x, impact.y, impact.z,
-                ModSounds.CINDERVANE_FIRE_BODY_EXPLOSION.get(), net.minecraft.sounds.SoundSource.NEUTRAL,
+                ModSounds.CINDERVANE_FIRE_BODY_EXPLOSION.get(), SoundSource.NEUTRAL,
                 2.0F, 1.0F);
-        var ground = server.clip(new net.minecraft.world.level.ClipContext(
+        var ground = server.clip(new ClipContext(
                 impact.add(0, 1, 0), impact.add(0, -16, 0),
-                net.minecraft.world.level.ClipContext.Block.COLLIDER,
-                net.minecraft.world.level.ClipContext.Fluid.NONE, this));
+                ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, this));
         for (ServerPlayer player : server.players()) {
             if (player.distanceToSqr(impact) > 256.0D * 256.0D) continue;
             server.sendParticles(player, ModParticles.CINDERVANE_CRASH_SPLATTER.get(), true,
@@ -1304,7 +1307,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                     impact.x, impact.y + 3.0D, impact.z, 1, 0, 0, 0, 0);
             server.sendParticles(player, ModParticles.CINDERVANE_IMPACT_EMITTER.get(), true,
                     impact.x, impact.y + 0.8D, impact.z, 64, 1.5D, 0.4D, 1.5D, 0);
-            if (ground.getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
+            if (ground.getType() == HitResult.Type.BLOCK) {
                 Vec3 point = ground.getLocation();
                 server.sendParticles(player, ModParticles.CINDERVANE_CRASH_GROUND.get(), true,
                         point.x, point.y + 0.04D, point.z, 1, 0, 0, 0, 0);
@@ -1825,7 +1828,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         if (leaderUuid == null || level().isClientSide) {
             return false;
         }
-        var leaderEntity = ((net.minecraft.server.level.ServerLevel) level()).getEntity(leaderUuid);
+        var leaderEntity = ((ServerLevel) level()).getEntity(leaderUuid);
         if (!(leaderEntity instanceof Cindervane leader) || leader == this || !leader.isAerial()) {
             return false;
         }

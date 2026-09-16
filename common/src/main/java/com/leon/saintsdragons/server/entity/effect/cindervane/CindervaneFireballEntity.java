@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.network.protocol.Packet;
@@ -16,6 +17,8 @@ import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.DamageTypeTags;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.Level;
@@ -203,13 +206,13 @@ public class CindervaneFireballEntity extends Entity implements GeoEntity {
 
         AABB area = new AABB(impact.x - impactRadius, impact.y - impactRadius, impact.z - impactRadius,
                 impact.x + impactRadius, impact.y + impactRadius, impact.z + impactRadius);
-        List<net.minecraft.world.entity.LivingEntity> hits = server.getEntitiesOfClass(net.minecraft.world.entity.LivingEntity.class, area,
+        List<LivingEntity> hits = server.getEntitiesOfClass(LivingEntity.class, area,
                 target -> target.isAlive()
                         && target != owner
                         && (owner == null || !owner.isAlly(target))
                         && !DragonElementalImmunity.isFireImmune(target));
 
-        for (net.minecraft.world.entity.LivingEntity target : hits) {
+        for (LivingEntity target : hits) {
             target.hurt(server.damageSources().explosion(this, owner != null ? owner : this), impactDamage);
             target.setSecondsOnFire(4);
         }
@@ -263,7 +266,7 @@ public class CindervaneFireballEntity extends Entity implements GeoEntity {
         this.impactRadius = tag.getDouble("ImpactRadius");
         this.impactDamage = tag.getFloat("ImpactDamage");
         if (tag.contains("BlockState", CompoundTag.TAG_COMPOUND) && level() instanceof ServerLevel server) {
-            BlockState state = NbtUtils.readBlockState(server.holderLookup(net.minecraft.core.registries.Registries.BLOCK), tag.getCompound("BlockState"));
+            BlockState state = NbtUtils.readBlockState(server.holderLookup(Registries.BLOCK), tag.getCompound("BlockState"));
             setBlockState(state.isAir() ? Blocks.MAGMA_BLOCK.defaultBlockState() : state);
         }
     }
@@ -310,8 +313,8 @@ public class CindervaneFireballEntity extends Entity implements GeoEntity {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        if (source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY)) {
+    public boolean hurt(DamageSource source, float amount) {
+        if (source.is(DamageTypeTags.BYPASSES_INVULNERABILITY)) {
             return super.hurt(source, amount);
         }
         return false;
@@ -323,8 +326,8 @@ public class CindervaneFireballEntity extends Entity implements GeoEntity {
     }
 
     @Override
-    public boolean isInvulnerableTo(net.minecraft.world.damagesource.DamageSource source) {
-        return !source.is(net.minecraft.tags.DamageTypeTags.BYPASSES_INVULNERABILITY);
+    public boolean isInvulnerableTo(DamageSource source) {
+        return !source.is(DamageTypeTags.BYPASSES_INVULNERABILITY);
     }
 
     @Override

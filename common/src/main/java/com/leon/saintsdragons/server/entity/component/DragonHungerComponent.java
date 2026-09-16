@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Player;
 
@@ -47,7 +48,7 @@ public final class DragonHungerComponent {
         }
         this.hunger = clamped;
         if (!dragon.level().isClientSide && dragon.isTame() && dragon.getOwnerUUID() != null) {
-            net.minecraft.server.level.ServerLevel serverLevel = (net.minecraft.server.level.ServerLevel) dragon.level();
+            ServerLevel serverLevel = (ServerLevel) dragon.level();
             DragonCodexSavedData.get(serverLevel).updateDragonStats(dragon.getOwnerUUID(), dragon);
         }
     }

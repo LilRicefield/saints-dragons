@@ -3,7 +3,9 @@ package com.leon.saintsdragons.server.entity.component;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.MoverType;
@@ -78,7 +80,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
         ensureStunState();
 
         if (!dragon.level().isClientSide) {
-            dragon.playSound(net.minecraft.sounds.SoundEvents.ARROW_HIT_PLAYER, 1.5F, 0.8F);
+            dragon.playSound(SoundEvents.ARROW_HIT_PLAYER, 1.5F, 0.8F);
         }
     }
 
@@ -217,7 +219,7 @@ public abstract class DragonTamingStunComponent<T extends DragonEntity> {
                     for (var player : nearbyPlayers) {
                         if (player instanceof ServerPlayer serverPlayer) {
                             serverPlayer.displayClientMessage(
-                                    net.minecraft.network.chat.Component.translatable(
+                                    Component.translatable(
                                             getTamingTimeoutTranslationKey(),
                                             dragon.getName()
                                     ),

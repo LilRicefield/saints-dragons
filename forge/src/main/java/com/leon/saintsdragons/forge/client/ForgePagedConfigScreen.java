@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractSliderButton;
@@ -20,6 +21,7 @@ import java.util.function.Consumer;
 import java.util.function.DoubleConsumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntConsumer;
+import java.util.function.IntFunction;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
@@ -213,7 +215,7 @@ public abstract class ForgePagedConfigScreen extends Screen {
 
         protected abstract int getHeight();
 
-        protected void renderLabel(GuiGraphics graphics, net.minecraft.client.gui.Font font) {
+        protected void renderLabel(GuiGraphics graphics, Font font) {
             graphics.drawString(font, label, labelX, y + 6, 0xE0E0E0);
         }
     }
@@ -259,7 +261,7 @@ public abstract class ForgePagedConfigScreen extends Screen {
         }
 
         @Override
-        protected void renderLabel(GuiGraphics graphics, net.minecraft.client.gui.Font font) {
+        protected void renderLabel(GuiGraphics graphics, Font font) {
             graphics.drawString(font, label, labelX, y + 2, 0xFFFFFF);
         }
     }
@@ -299,7 +301,7 @@ public abstract class ForgePagedConfigScreen extends Screen {
         }
 
         @Override
-        protected void renderLabel(GuiGraphics graphics, net.minecraft.client.gui.Font font) {
+        protected void renderLabel(GuiGraphics graphics, Font font) {
             int availableWidth = Math.max(80, inputX + inputWidth - labelX);
             graphics.drawWordWrap(font, label, labelX, y + 2, availableWidth, 0xFFFFAA00);
         }
@@ -765,13 +767,13 @@ public abstract class ForgePagedConfigScreen extends Screen {
         private final int min;
         private final int max;
         private final int defaultValue;
-        private final java.util.function.IntFunction<Component> textGetter;
+        private final IntFunction<Component> textGetter;
         private int value;
         private AbstractSliderButton slider;
 
         protected IntSliderEntry(Component label, IntSupplier getter, IntConsumer setter, Runnable saver,
                                  int min, int max, int defaultValue,
-                                 java.util.function.IntFunction<Component> textGetter) {
+                                 IntFunction<Component> textGetter) {
             super(label);
             this.getter = getter;
             this.setter = setter;

@@ -26,6 +26,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
@@ -337,7 +338,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
         AABB mouthBox = new AABB(attackOrigin, attackOrigin).inflate(1.35D);
         AABB combinedBox = dragonBox.minmax(mouthBox);
 
-        java.util.List<LivingEntity> targets = wyvern.level().getEntitiesOfClass(
+        List<LivingEntity> targets = wyvern.level().getEntitiesOfClass(
                 LivingEntity.class,
                 combinedBox,
                 entity -> entity != wyvern

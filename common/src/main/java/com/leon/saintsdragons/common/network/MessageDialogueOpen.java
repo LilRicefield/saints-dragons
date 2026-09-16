@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueDefinition;
 import net.minecraft.network.FriendlyByteBuf;
@@ -54,7 +55,7 @@ public record MessageDialogueOpen(int entityId, ResourceLocation dialogueId, Str
     }
 
     public static void handle(MessageDialogueOpen message) {
-        Services.PLATFORM.runOnClient(() -> com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDialogueOpen(message));
+        Services.PLATFORM.runOnClient(() -> ClientPacketHandlers.handleDialogueOpen(message));
     }
 
     public record Choice(Component text, String next) {

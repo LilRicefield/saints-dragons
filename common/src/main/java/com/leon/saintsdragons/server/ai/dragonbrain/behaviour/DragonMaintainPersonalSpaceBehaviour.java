@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragonBase>
@@ -232,7 +233,7 @@ public final class DragonMaintainPersonalSpaceBehaviour<T extends RideableDragon
         details.put("crowded_by", Integer.toString(crowdedBy));
         details.put("nearest", nearestNeighborDistance < 0.0D
                 ? "none"
-                : String.format(java.util.Locale.ROOT, "%.2f", nearestNeighborDistance));
+                : String.format(Locale.ROOT, "%.2f", nearestNeighborDistance));
         details.put("target", target == null ? "none" : target.toString());
         return Map.copyOf(details);
     }

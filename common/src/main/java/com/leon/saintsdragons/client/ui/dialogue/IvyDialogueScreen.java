@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
 @Environment(EnvType.CLIENT)
@@ -383,7 +384,7 @@ public class IvyDialogueScreen extends Screen {
         MutableComponent visible = Component.literal("");
         message.text().visit((style, text) -> {
             if (remaining[0] <= 0) {
-                return java.util.Optional.empty();
+                return Optional.empty();
             }
             int textCodePoints = text.codePointCount(0, text.length());
             int keptCodePoints = Math.min(remaining[0], textCodePoints);
@@ -392,7 +393,7 @@ public class IvyDialogueScreen extends Screen {
                 visible.append(Component.literal(text.substring(0, endIndex)).withStyle(style));
             }
             remaining[0] -= keptCodePoints;
-            return java.util.Optional.empty();
+            return Optional.empty();
         }, Style.EMPTY);
         return visible;
     }

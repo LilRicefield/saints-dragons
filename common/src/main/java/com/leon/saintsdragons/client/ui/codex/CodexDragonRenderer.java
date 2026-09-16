@@ -313,7 +313,7 @@ public class CodexDragonRenderer {
         try {
             return new ResourceLocation(id);
         } catch (Exception ignored) {
-            return com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID;
+            return SaintsDragonVariantRegistry.DEFAULT_VARIANT_ID;
         }
     }
 

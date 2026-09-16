@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.config.ToolsArmorConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.*;
+import com.leon.saintsdragons.server.entity.part.IgnivorusHitboxes;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
@@ -42,5 +43,6 @@ public final class SaintsDragonsCommon {
         ModParticles.register();
         SaintsCreativeTab.register();
         NetworkHandler.register();
+        IgnivorusHitboxes.rig();
     }
 }

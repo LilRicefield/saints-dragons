@@ -31,7 +31,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
 
     private int strikesLeft = 0;
     private int strikeCooldown = 0;
-    private java.util.List<Integer> targetIds = java.util.Collections.emptyList();
+    private List<Integer> targetIds = Collections.emptyList();
     private int targetCursor = 0;
 
     public RaevyxRoarAbility(DragonAbilityType<Raevyx, RaevyxRoarAbility> type, Raevyx user) {
@@ -179,7 +179,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
         }
     }
 
-    private static Vec3 randomUnit(java.util.Random rnd) {
+    private static Vec3 randomUnit(Random rnd) {
         double u = rnd.nextDouble();
         double v = rnd.nextDouble();
         double theta = 2 * Math.PI * u;

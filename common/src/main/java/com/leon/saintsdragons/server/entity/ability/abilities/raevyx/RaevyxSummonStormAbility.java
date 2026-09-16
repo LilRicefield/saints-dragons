@@ -10,6 +10,7 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.handlers.RaevyxAnimationHandler;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.sounds.SoundEvents;
 
@@ -128,7 +129,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
                     }
 
                     server.playSound(null, getUser().blockPosition(), SoundEvents.LIGHTNING_BOLT_THUNDER,
-                            net.minecraft.sounds.SoundSource.WEATHER, 6.0f, 0.9f);
+                            SoundSource.WEATHER, 6.0f, 0.9f);
                 }
             }
         }

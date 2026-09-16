@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -25,6 +26,6 @@ public record MessageCameraImpulse(Vec3 origin, float radius, float intensity, i
 
     public static void handle(MessageCameraImpulse message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleCameraImpulse(message));
+                ClientPacketHandlers.handleCameraImpulse(message));
     }
 }

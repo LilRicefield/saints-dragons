@@ -33,6 +33,7 @@ import com.leon.saintsdragons.client.particle.IgnivorusNovaSparkleParticle;
 import com.leon.saintsdragons.client.particle.IgnivorusAftermathParticle;
 import com.leon.saintsdragons.client.particle.IgnivorusAftermathFlameParticle;
 import com.leon.saintsdragons.client.particle.IgnivorusExplosionLayerParticle;
+import com.leon.saintsdragons.client.particle.IgnivorusMagmaPillarsImpactParticles;
 import com.leon.saintsdragons.client.particle.ImpactGlowParticle;
 import com.leon.saintsdragons.client.particle.MossbackPoisonFumeParticle;
 import com.leon.saintsdragons.client.particle.RaevyxLightningChainParticle;
@@ -130,6 +131,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.IGNIVORUS_NOVA_SMOKE.get(), sprites -> new IgnivorusAftermathFlameParticle.Factory(sprites, IgnivorusAftermathFlameParticle.Style.SMOKE));
         register(registrar, ModParticles.IGNIVORUS_EXPLOSION_LAYER.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.EXPLOSION));
         register(registrar, ModParticles.IGNIVORUS_GROUND_IMPACT.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.GROUND));
+        register(registrar, ModParticles.IGNIVORUS_MAGMA_PILLARS_IMPACT.get(), IgnivorusMagmaPillarsImpactParticles.Factory::new);
         register(registrar, ModParticles.IGNIVORUS_FIRE_SPEC.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.SPEC));
         register(registrar, ModParticles.IGNIVORUS_SKYFALL_CHARGE.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.CHARGE));
         register(registrar, ModParticles.IGNIVORUS_SKYFALL_AURA.get(), sprites -> new IgnivorusExplosionLayerParticle.Factory(sprites, IgnivorusExplosionLayerParticle.Layer.AURA));

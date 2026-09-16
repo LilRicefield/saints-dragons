@@ -25,6 +25,7 @@ public final class NetworkHandler {
         }
         registered = true;
 
+
         NETWORK.registerServerbound(
                 MessageDragonRideInput.class,
                 id("dragon_ride_input"),
@@ -257,6 +258,9 @@ public final class NetworkHandler {
                 MessageDraconicCodexRemoveEntry::decode,
                 MessageDraconicCodexRemoveEntry::handle
         );
+        NETWORK.registerServerbound(MessageDragonPartAttack.class, id("dragon_part_attack"),
+                MessageDragonPartAttack::encode, MessageDragonPartAttack::decode, MessageDragonPartAttack::handle);
+
     }
 
     public static void sendToServer(Object message) {

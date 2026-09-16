@@ -16,6 +16,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 
@@ -32,7 +37,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
             new AbilitySectionDuration(AbilitySectionType.RECOVERY, 6)
     };
 
-    private final java.util.Set<Integer> hitIdsThisUse = new java.util.HashSet<>();
+    private final Set<Integer> hitIdsThisUse = new HashSet<>();
 
     public VarasuchusHornGoreAbility(DragonAbilityType<Varasuchus, VarasuchusHornGoreAbility> type, Varasuchus user) {
         super(type, user, TRACK, 3);
@@ -55,8 +60,8 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
         DragonAbilitySection section = getCurrentSection();
         if (section == null) return;
         if (section.sectionType != AbilitySectionType.ACTIVE) return;
-        java.util.List<LivingEntity> candidates = findTargets();
-        java.util.List<LivingEntity> newHits = new java.util.ArrayList<>();
+        List<LivingEntity> candidates = findTargets();
+        List<LivingEntity> newHits = new ArrayList<>();
         for (LivingEntity le : candidates) {
             if (hitIdsThisUse.add(le.getId())) {
                 newHits.add(le);
@@ -69,7 +74,7 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
         }
     }
 
-    private java.util.List<LivingEntity> findTargets() {
+    private List<LivingEntity> findTargets() {
         Varasuchus dragon = getUser();
         boolean ridden = dragon.getControllingPassenger() != null;
         double range = GORE_RANGE;
@@ -77,9 +82,9 @@ public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
         if (!ridden) {
             LivingEntity target = dragon.getTarget();
             if (DragonMeleeGeometry.isDirectAiTargetValid(dragon, target)) {
-                return java.util.List.of(target);
+                return List.of(target);
             }
-            return java.util.List.of();
+            return List.of();
         }
 
         return DragonMeleeGeometry.findForwardTargets(

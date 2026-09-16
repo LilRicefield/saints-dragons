@@ -12,6 +12,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class DragonCombatHandler {
@@ -27,7 +28,7 @@ public class DragonCombatHandler {
         tag.putInt("GlobalAbilityCooldown", Math.max(0, globalCooldown));
         CompoundTag cd = new CompoundTag();
         for (Map.Entry<DragonAbilityType<?, ?>, Integer> e : abilityCooldowns.entrySet()) {
-            String name = com.leon.saintsdragons.common.registry.AbilityRegistry.getName(e.getKey());
+            String name = AbilityRegistry.getName(e.getKey());
             if (name != null && !name.isEmpty()) {
                 cd.putInt(name, Math.max(0, e.getValue()));
             }
@@ -243,7 +244,7 @@ public class DragonCombatHandler {
 
     private boolean isBiteAbility(DragonAbilityType<?, ?> abilityType) {
         String name = AbilityRegistry.getName(abilityType);
-        return name != null && name.toLowerCase(java.util.Locale.ROOT).contains("bite");
+        return name != null && name.toLowerCase(Locale.ROOT).contains("bite");
     }
 
     private boolean isInternalStateAbility(DragonAbilityType<?, ?> abilityType) {
@@ -251,7 +252,7 @@ public class DragonCombatHandler {
         if (name == null) {
             return false;
         }
-        String lowerName = name.toLowerCase(java.util.Locale.ROOT);
+        String lowerName = name.toLowerCase(Locale.ROOT);
         return lowerName.endsWith("_hurt") || lowerName.endsWith("_die");
     }
 

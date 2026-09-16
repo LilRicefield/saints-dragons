@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
@@ -84,7 +85,7 @@ public final class DragonCombatFlightState {
         }
         LivingEntity target = dragon.getBrain().getMemory(DragonMemories.ATTACK_TARGET).orElse(null);
         UUID currentId = target == null ? null : target.getUUID();
-        if (!java.util.Objects.equals(targetId, currentId)) {
+        if (!Objects.equals(targetId, currentId)) {
             targetId = currentId;
             airborneSince = groundedSince = -1;
             targetNeedsFlight = targetSettled = false;

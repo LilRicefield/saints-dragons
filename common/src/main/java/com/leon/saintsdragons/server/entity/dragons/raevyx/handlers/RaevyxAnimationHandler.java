@@ -8,6 +8,8 @@ import software.bernie.geckolib.core.animation.*;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.object.PlayState;
 
+import net.minecraft.util.Mth;
+
 public record RaevyxAnimationHandler(Raevyx wyvern) {
     public static final String MOVEMENT_CONTROLLER = AnimationHelper.MOVEMENT_CONTROLLER;
     public static final String FAST_ACTION_CONTROLLER = "raevyxFastAction";
@@ -256,9 +258,9 @@ public record RaevyxAnimationHandler(Raevyx wyvern) {
 
     private boolean isInvertedGlideWindow(float partialTick) {
         float roll = wyvern.getSmoothedRoll(partialTick);
-        float nearestInvertedRoll = Math.round((roll - net.minecraft.util.Mth.PI) / net.minecraft.util.Mth.TWO_PI)
-                * net.minecraft.util.Mth.TWO_PI + net.minecraft.util.Mth.PI;
-        float offsetDegrees = Math.abs((roll - nearestInvertedRoll) * net.minecraft.util.Mth.RAD_TO_DEG);
+        float nearestInvertedRoll = Math.round((roll - Mth.PI) / Mth.TWO_PI)
+                * Mth.TWO_PI + Mth.PI;
+        float offsetDegrees = Math.abs((roll - nearestInvertedRoll) * Mth.RAD_TO_DEG);
         return offsetDegrees <= INVERTED_GLIDE_ROLL_WINDOW_DEGREES;
     }
 

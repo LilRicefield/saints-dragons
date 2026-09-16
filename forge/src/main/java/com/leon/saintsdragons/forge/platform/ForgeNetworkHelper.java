@@ -13,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public final class ForgeNetworkHelper implements NetworkHelper {
-    private static final String PROTOCOL_VERSION = "1";
+    private static final String PROTOCOL_VERSION = "2";
     private SimpleChannel channel;
     private final AtomicInteger nextId = new AtomicInteger();
 

@@ -5,8 +5,10 @@ import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
@@ -320,8 +322,7 @@ public abstract class RideableDragonBase extends DragonEntity {
 
         if (!hasSecondaryMelee()) {
             if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.displayClientMessage(
-                    net.minecraft.network.chat.Component.translatable("saintsdragons.message.no_secondary_melee"),
+                serverPlayer.displayClientMessage(Component.translatable("saintsdragons.message.no_secondary_melee"),
                     true
                 );
             }
@@ -1003,7 +1004,11 @@ public abstract class RideableDragonBase extends DragonEntity {
         setLastRiderForward(0f);
         setLastRiderStrafe(0f);
         setGroundMoveStateFromAI(0);
-        stopTriggeredAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        if (this instanceof Ignivorus ignivorus) {
+            ignivorus.stopHitboxAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        } else {
+            stopTriggeredAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        }
         forceEndActiveAbility();
         setAggressive(false);
         setTarget(null);

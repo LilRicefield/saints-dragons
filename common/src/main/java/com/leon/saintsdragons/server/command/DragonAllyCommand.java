@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.AABB;
 
 import java.util.Collection;
 import java.util.List;
@@ -30,7 +31,7 @@ public class DragonAllyCommand {
         return SharedSuggestionProvider.suggest(
             source.getLevel().getEntitiesOfClass(DragonEntity.class, 
                 source.getEntity() != null ? source.getEntity().getBoundingBox().inflate(50) : 
-                net.minecraft.world.phys.AABB.ofSize(source.getPosition(), 100, 100, 100))
+                AABB.ofSize(source.getPosition(), 100, 100, 100))
                 .stream()
                 .filter(dragon -> dragon.isTame() && source.getEntity() instanceof Player && dragon.isOwnedBy((Player) source.getEntity()))
                 .map(dragon -> String.valueOf(dragon.getId())),

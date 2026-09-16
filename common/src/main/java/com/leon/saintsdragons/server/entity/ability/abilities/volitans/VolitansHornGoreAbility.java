@@ -12,7 +12,9 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionDuration;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
@@ -33,7 +35,7 @@ public class VolitansHornGoreAbility extends DragonAbility<Volitans> {
             new AbilitySectionDuration(RECOVERY, 8)
     };
 
-    private final java.util.Set<Integer> hitIds = new java.util.HashSet<>();
+    private final Set<Integer> hitIds = new HashSet<>();
     private boolean sentDebugThisUse;
 
     public VolitansHornGoreAbility(DragonAbilityType<Volitans, VolitansHornGoreAbility> type, Volitans user) {

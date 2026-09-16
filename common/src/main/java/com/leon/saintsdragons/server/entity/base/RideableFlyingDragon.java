@@ -1678,7 +1678,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             BlockPos checkPos = dragonPos.below(i);
             BlockState state = level().getBlockState(checkPos);
             if (!state.getCollisionShape(level(), checkPos).isEmpty()
-                    || state.isFaceSturdy(level(), checkPos, net.minecraft.core.Direction.UP)) {
+                    || state.isFaceSturdy(level(), checkPos, Direction.UP)) {
                 foundSolid = true;
                 break;
             }

@@ -3,13 +3,14 @@ package com.leon.saintsdragons.client.particle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.effect.ignivorus.IgnivorusFireballEntity;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.world.phys.Vec3;
 
 public final class IgnivorusFireballTrail {
     private IgnivorusFireballTrail() {}
 
-    public static void emitGroundImpact(net.minecraft.client.multiplayer.ClientLevel level, Vec3 origin) {
+    public static void emitGroundImpact(ClientLevel level, Vec3 origin) {
         var random = level.random;
         var engine = Minecraft.getInstance().particleEngine;
         for (int i = 0; i < 300; i++) {

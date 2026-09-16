@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public final class DragonSleepBehaviour<T extends DragonEntity> extends DragonBehaviour<T> {
@@ -61,9 +62,9 @@ public final class DragonSleepBehaviour<T extends DragonEntity> extends DragonBe
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         Map<String, String> details = new LinkedHashMap<>();
-        details.put("sleepPressure", String.format(java.util.Locale.ROOT, "%.1f", pressure));
+        details.put("sleepPressure", String.format(Locale.ROOT, "%.1f", pressure));
         details.put("sleepDisturbance", String.format(
-                java.util.Locale.ROOT,
+                Locale.ROOT,
                 "%.1f/%.1f",
                 disturbance,
                 wakeDisturbance

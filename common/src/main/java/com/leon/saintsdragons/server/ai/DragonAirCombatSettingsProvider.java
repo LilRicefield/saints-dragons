@@ -12,7 +12,7 @@ public interface DragonAirCombatSettingsProvider {
     }
 
     /** Species-specific movement locks, shared with the planner and landing handoffs. */
-    default @org.jetbrains.annotations.Nullable String getAiAirCombatBlockReason() {
+    default @Nullable String getAiAirCombatBlockReason() {
         return null;
     }
 

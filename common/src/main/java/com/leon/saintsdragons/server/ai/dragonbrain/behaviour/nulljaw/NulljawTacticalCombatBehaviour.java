@@ -9,6 +9,7 @@ import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ShulkerBullet;
 import net.minecraft.world.phys.Vec3;
@@ -172,7 +173,7 @@ public final class NulljawTacticalCombatBehaviour extends DragonBehaviour<Nullja
     }
 
     @Override
-    public List<net.minecraft.world.entity.ai.memory.MemoryModuleType<?>> clearMemoriesWhenStopped() {
+    public List<MemoryModuleType<?>> clearMemoriesWhenStopped() {
         return List.of(DragonMemories.MOVEMENT_INTENT);
     }
 

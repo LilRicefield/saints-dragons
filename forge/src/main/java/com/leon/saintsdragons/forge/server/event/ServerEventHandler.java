@@ -12,6 +12,8 @@ import com.leon.saintsdragons.forge.entity.part.ForgeDragonPart;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.event.TickEvent;
@@ -23,6 +25,9 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mod.EventBusSubscriber(modid = SaintsDragonsCommon.MOD_ID)
 public class ServerEventHandler {
 
@@ -32,13 +37,13 @@ public class ServerEventHandler {
             return;
         }
 
-        java.util.List<DragonBrainDiagnostics.RegisteredBehaviour> behaviours = new java.util.ArrayList<>();
+        List<DragonBrainDiagnostics.RegisteredBehaviour> behaviours = new ArrayList<>();
         event.getTypedBrainBuilder(dragon).getAvailableBehaviorsByPriority().forEach((priority, activities) ->
                 activities.forEach((activity, controls) -> controls.forEach(control -> {
                     @SuppressWarnings("unchecked")
-                    net.minecraft.world.entity.ai.behavior.BehaviorControl<? super net.minecraft.world.entity.LivingEntity>
-                            debugControl = (net.minecraft.world.entity.ai.behavior.BehaviorControl<? super net.minecraft.world.entity.LivingEntity>)
-                            (net.minecraft.world.entity.ai.behavior.BehaviorControl<?>)control;
+                    BehaviorControl<? super LivingEntity>
+                            debugControl = (BehaviorControl<? super LivingEntity>)
+                            (BehaviorControl<?>)control;
                     behaviours.add(new DragonBrainDiagnostics.RegisteredBehaviour(
                             activity, priority, debugControl));
                 })));

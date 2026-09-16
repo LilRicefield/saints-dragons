@@ -2,7 +2,10 @@ package com.leon.saintsdragons.client.ui.codex;
 
 import com.leon.saintsdragons.common.registry.ModTags;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -13,10 +16,12 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.io.BufferedReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.IntConsumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
@@ -36,7 +41,8 @@ public class CodexEcologyPanel {
             new ResourceLocation("saintsdragons", "ignivorus_scale"),
             new ResourceLocation("saintsdragons", "ignivorus_tooth"),
             new ResourceLocation("saintsdragons", "ignivorus_heart"),
-            new ResourceLocation("saintsdragons", "ignivorus_egg")
+            new ResourceLocation("saintsdragons", "ignivorus_egg"),
+            new ResourceLocation("saintsdragons", "ignivorus_wing_hide")
     );
     private static final List<ResourceLocation> ATROXIIA_DROPS = List.of(
             new ResourceLocation("saintsdragons", "atroxiia_scale"),
@@ -44,7 +50,9 @@ public class CodexEcologyPanel {
     );
     private static final List<ResourceLocation> RAEVYX_DROPS = List.of(
             new ResourceLocation("saintsdragons", "raevyx_scale"),
-            new ResourceLocation("saintsdragons", "raevyx_egg")
+            new ResourceLocation("saintsdragons", "raevyx_egg"),
+            new ResourceLocation("saintsdragons", "raevyx_wing_hide"),
+            new ResourceLocation("saintsdragons", "raevyx_wingtalon")
     );
     private static final List<ResourceLocation> VARASUCHUS_DROPS = List.of(
             new ResourceLocation("saintsdragons", "varasuchus_scale"),
@@ -78,7 +86,7 @@ public class CodexEcologyPanel {
     private boolean linkAreaValid = false;
 
 
-    public void initWidgets(java.util.function.Consumer<net.minecraft.client.gui.components.AbstractWidget> addWidget,
+    public void initWidgets(Consumer<AbstractWidget> addWidget,
                             Font font, int leftPos, int topPos, IntSupplier pageSupplier, IntConsumer pageSetter,
                             Supplier<CodexDragonEntry> selectedSupplier, Runnable visibilityUpdater) {
         int contentX = leftPos + 229;
@@ -98,7 +106,7 @@ public class CodexEcologyPanel {
                         })
                 .bounds(centerX - 20, navY, 10, 10)
                 .build();
-        ecologyPrevPageButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+        ecologyPrevPageButton.setTooltip(Tooltip.create(
                 Component.translatable("saintsdragons.gui.draconic_codex.page.previous")));
         addWidget.accept(ecologyPrevPageButton);
 
@@ -117,7 +125,7 @@ public class CodexEcologyPanel {
                         })
                 .bounds(centerX + 13, navY, 10, 10)
                 .build();
-        ecologyNextPageButton.setTooltip(net.minecraft.client.gui.components.Tooltip.create(
+        ecologyNextPageButton.setTooltip(Tooltip.create(
                 Component.translatable("saintsdragons.gui.draconic_codex.page.next")));
         addWidget.accept(ecologyNextPageButton);
 
@@ -301,16 +309,16 @@ public class CodexEcologyPanel {
         int itemY = startY + 10;
         int rowGap = 18;
 
-        net.minecraft.core.Registry<net.minecraft.world.item.Item> registry =
-                net.minecraft.core.registries.BuiltInRegistries.ITEM;
+        Registry<Item> registry =
+                BuiltInRegistries.ITEM;
 
         for (ResourceLocation id : drops) {
-            net.minecraft.world.item.Item item = registry.get(id);
-            if (item == net.minecraft.world.item.Items.AIR) {
+            Item item = registry.get(id);
+            if (item == Items.AIR) {
                 itemY += rowGap;
                 continue;
             }
-            net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item);
+            ItemStack stack = new ItemStack(item);
             guiGraphics.renderItem(stack, itemX, itemY);
             guiGraphics.drawString(font, stack.getHoverName().getString(), itemX + 18, itemY + 4,
                     CodexLayout.TEXT_COLOR, false);

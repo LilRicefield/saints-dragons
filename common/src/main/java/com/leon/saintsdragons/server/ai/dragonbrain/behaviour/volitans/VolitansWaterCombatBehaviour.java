@@ -5,6 +5,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -175,11 +176,11 @@ public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
         }
     }
 
-    private boolean canUseAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+    private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
     }
 
-    private boolean startAiAbility(com.leon.saintsdragons.server.entity.ability.DragonAbilityType<?, ?> abilityType,
+    private boolean startAiAbility(DragonAbilityType<?, ?> abilityType,
                                    boolean majorAbility,
                                    int cadenceTicks,
                                    int abilityCooldownTicks,

@@ -14,6 +14,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
@@ -35,7 +36,9 @@ import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 
@@ -66,7 +69,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private int lifetimeTicks = 36;
     private int livedTicks;
     private int subsideTicks;
-    private final java.util.Set<UUID> hitEntities = new java.util.HashSet<>();
+    private final Set<UUID> hitEntities = new HashSet<>();
     private boolean rotationLocked = false;
     private float lockedHeadYaw = 0.0f;
 
@@ -222,7 +225,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             target.push(knockDir.x, verticalBoost, knockDir.z);
             target.hasImpulse = true;
             target.hurtMarked = true;
-            if (target instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (target instanceof ServerPlayer serverPlayer) {
                 serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
             }
         }

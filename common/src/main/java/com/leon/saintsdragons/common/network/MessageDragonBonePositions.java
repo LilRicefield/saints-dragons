@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -12,15 +14,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Syncs dragon bone positions from client (where GeckoLib renders) to server (where hitboxes are checked).
- * This allows hitboxes to follow the animated model precisely.
- */
 public record MessageDragonBonePositions(
         int entityId,
         Map<String, Vec3> bonePositions
 ) {
-    // Bone names that we sync for hitbox positioning
     public static final String[] SYNCED_BONES = {
             "headController",
             "neck3Controller",
@@ -87,20 +84,8 @@ public record MessageDragonBonePositions(
             return;
         }
 
-        // Find the entity in the server world
         Entity entity = player.serverLevel().getEntity(msg.entityId());
-        if (entity instanceof com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus ignivorus) {
-            // Allow nearby clients tracking the dragon to provide locator updates so multipart
-            // hitboxes stay accurate even when the dragon is not being ridden.
-            if (player.distanceToSqr(ignivorus) > 128.0D * 128.0D) {
-                return;
-            }
-            for (Map.Entry<String, Vec3> entry : msg.bonePositions().entrySet()) {
-                ignivorus.setServerBonePosition(entry.getKey(), entry.getValue());
-            }
-            return;
-        }
-        if (entity instanceof com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane cindervane) {
+        if (entity instanceof Cindervane cindervane) {
             if (player.getVehicle() != cindervane || !cindervane.canBeControlledBy(player)) {
                 return;
             }
@@ -109,9 +94,7 @@ public record MessageDragonBonePositions(
             }
             return;
         }
-        if (entity instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
-            // Allow nearby clients tracking the dragon to provide breath locator updates
-            // so wild/unridden Volitans still spawn breath from the animated mouth.
+        if (entity instanceof Volitans volitans) {
             if (player.distanceToSqr(volitans) > 128.0D * 128.0D) {
                 return;
             }

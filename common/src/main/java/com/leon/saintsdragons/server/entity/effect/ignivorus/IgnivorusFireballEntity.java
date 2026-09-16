@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
+import com.leon.saintsdragons.client.particle.IgnivorusFireballTrail;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
@@ -28,17 +29,20 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.*;
 import org.jetbrains.annotations.NotNull;
+import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.core.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class IgnivorusFireballEntity extends Entity implements software.bernie.geckolib.animatable.GeoEntity {
+public class IgnivorusFireballEntity extends Entity implements GeoEntity {
     private final AnimatableInstanceCache animationCache =
-            software.bernie.geckolib.util.GeckoLibUtil.createInstanceCache(this);
+            GeckoLibUtil.createInstanceCache(this);
 
     @Override
-    public void registerControllers(software.bernie.geckolib.core.animation.AnimatableManager.ControllerRegistrar controllers) {}
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {}
 
     @Override
     public AnimatableInstanceCache getAnimatableInstanceCache() {
@@ -208,7 +212,7 @@ public class IgnivorusFireballEntity extends Entity implements software.bernie.g
     }
 
     private void spawnTrailParticles() {
-        com.leon.saintsdragons.client.particle.IgnivorusFireballTrail.emit(this);
+        IgnivorusFireballTrail.emit(this);
     }
 
     private void explode() {

@@ -1,11 +1,14 @@
 package com.leon.saintsdragons.server.entity.ability;
 
+import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonEntity.VocalEntry;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
+
+import net.minecraft.sounds.SoundEvent;
 
 public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
@@ -45,7 +48,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
     private void playDeathSound(T dragon, String abilityId) {
         if ("volitans_die".equals(abilityId)
-                && dragon instanceof com.leon.saintsdragons.server.entity.dragons.volitans.Volitans volitans) {
+                && dragon instanceof Volitans volitans) {
             float pitch = 0.95f + volitans.getRandom().nextFloat() * 0.1f;
             volitans.playSound(ModSounds.VOLITANS_DIE.get(), 1.6f, pitch);
             return;
@@ -57,7 +60,7 @@ public class DieAbility<T extends DragonEntity> extends DragonAbility<T> {
 
         VocalEntry deathEntry = dragon.getVocalEntries().get(abilityId);
         if (deathEntry != null && deathEntry.soundSupplier() != null) {
-            net.minecraft.sounds.SoundEvent sound = deathEntry.soundSupplier().get();
+            SoundEvent sound = deathEntry.soundSupplier().get();
             float volume = deathEntry.volume();
             float pitch = deathEntry.basePitch() + (dragon.getRandom().nextFloat() - 0.5f) * deathEntry.pitchVariance() * 2f;
             dragon.playSound(sound, volume, pitch);

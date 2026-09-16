@@ -1,13 +1,16 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public record MessageDraconicCodexList(List<Entry> entries) {
     public MessageDraconicCodexList {
@@ -23,7 +26,7 @@ public record MessageDraconicCodexList(List<Entry> entries) {
                     dragon.getName().getString(),
                     dragon.getHealth(),
                     dragon.getMaxHealth(),
-                    dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR),
+                    dragon.getAttributeValue(Attributes.ARMOR),
                     dragon.getHunger(),
                     dragon.getHappiness(),
                     dragon.getCodexTextureVariant(),
@@ -111,7 +114,7 @@ public record MessageDraconicCodexList(List<Entry> entries) {
         int size = buffer.readInt();
         List<Entry> entries = new ArrayList<>(size);
         for (int i = 0; i < size; i++) {
-            java.util.UUID id = buffer.readUUID();
+            UUID id = buffer.readUUID();
             String name = buffer.readUtf(64);
             double currentHealth = buffer.readDouble();
             double maxHealth = buffer.readDouble();
@@ -138,10 +141,10 @@ public record MessageDraconicCodexList(List<Entry> entries) {
     }
 
     public static void handle(MessageDraconicCodexList message) {
-        Services.PLATFORM.runOnClient(() -> com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDraconicCodexList(message));
+        Services.PLATFORM.runOnClient(() -> ClientPacketHandlers.handleDraconicCodexList(message));
     }
 
-    public record Entry(java.util.UUID entityId, String displayName, double currentHealth, double maxHealth,
+    public record Entry(UUID entityId, String displayName, double currentHealth, double maxHealth,
                         double armor, double hunger, double happiness, int variantId, String variantResourceId, byte genderId,
                         boolean genderKnown, String dragonType, boolean isBaby,
                         boolean brushingAvailable, int brushingProgressPercent,

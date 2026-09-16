@@ -12,7 +12,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
+
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class IgnivorusFireballMouthRenderer {
     private static final ResourceLocation[] LEVEL_THREE_BITE = reversedFrames("shared/bite/violet_bite", 16, 0);
@@ -31,13 +35,13 @@ public final class IgnivorusFireballMouthRenderer {
             SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion1.png"),
             SaintsDragonsCommon.rl("textures/particle/shared/explosions/smaller_fire_explosion/smaller_fire_explosion0.png")
     };
-    private static final java.util.Map<Ignivorus, Integer> LAST_CHARGE_EMISSION = new java.util.WeakHashMap<>();
+    private static final Map<Ignivorus, Integer> LAST_CHARGE_EMISSION = new WeakHashMap<>();
     private static final ResourceLocation[] FIRE = frames("shared/explosions/fire_explosion/fire_explosion", 7);
     private static final ResourceLocation[] SPLATTER = frames("shared/explosions/splatter_orange/splatter_orange", 10);
     private static final ResourceLocation[] SHOOT_SHARP = frames("shared/explosions/sharp_impact/sharp_impact", 8);
     private static final ResourceLocation[] STEAM = frames("shared/explosions/steamy_explosion/steamy_explosion", 16);
-    private static final java.util.Map<Ignivorus, Integer> LAST_BURST = new java.util.WeakHashMap<>();
-    private static final java.util.Map<Ignivorus, Integer> LAST_CHARGE_BURST = new java.util.WeakHashMap<>();
+    private static final Map<Ignivorus, Integer> LAST_BURST = new WeakHashMap<>();
+    private static final Map<Ignivorus, Integer> LAST_CHARGE_BURST = new WeakHashMap<>();
 
     private IgnivorusFireballMouthRenderer() {}
 
@@ -276,7 +280,7 @@ public final class IgnivorusFireballMouthRenderer {
             if (time < 0.0F) continue;
             int cycle = (int) (time / 8.0F);
             float progress = (time % 8.0F) / 8.0F;
-            var random = net.minecraft.util.RandomSource.create(dragon.getUUID().getLeastSignificantBits()
+            var random = RandomSource.create(dragon.getUUID().getLeastSignificantBits()
                     ^ (i * 73428767L) ^ (cycle * 912931L));
             double azimuth = random.nextDouble() * Math.PI * 2.0D;
             double vertical = random.nextDouble() * 2.0D - 1.0D;

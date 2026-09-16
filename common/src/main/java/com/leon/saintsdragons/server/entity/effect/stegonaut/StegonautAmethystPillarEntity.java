@@ -12,6 +12,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
@@ -172,7 +173,7 @@ public class StegonautAmethystPillarEntity extends Entity implements GeoEntity {
             Vec3 push = knockDir.normalize().scale(knockbackStrength);
             target.push(push.x, 0.32D, push.z);
             target.hurtMarked = true;
-            if (target instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+            if (target instanceof ServerPlayer serverPlayer) {
                 serverPlayer.connection.send(new ClientboundSetEntityMotionPacket(target));
             }
         }

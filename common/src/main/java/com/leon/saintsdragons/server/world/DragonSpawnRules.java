@@ -10,6 +10,7 @@ import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public final class DragonSpawnRules {
     private static final double SAME_SPECIES_RADIUS = 96.0D;
@@ -85,7 +86,7 @@ public final class DragonSpawnRules {
         int sameSpeciesLimit = cindervane ? CINDERVANE_SAME_SPECIES_LIMIT : MAX_NEARBY_SAME_SPECIES + 1;
         int totalDragonLimit = cindervane ? CINDERVANE_TOTAL_DRAGON_LIMIT : MAX_NEARBY_TOTAL_DRAGONS + 1;
         AABB sameSpeciesBounds = AABB.ofSize(
-                net.minecraft.world.phys.Vec3.atCenterOf(pos),
+                Vec3.atCenterOf(pos),
                 sameSpeciesRadius * 2.0D,
                 sameSpeciesRadius * 2.0D,
                 sameSpeciesRadius * 2.0D
@@ -97,7 +98,7 @@ public final class DragonSpawnRules {
         }
 
         AABB anyDragonBounds = AABB.ofSize(
-                net.minecraft.world.phys.Vec3.atCenterOf(pos),
+                Vec3.atCenterOf(pos),
                 anyDragonRadius * 2.0D,
                 anyDragonRadius * 2.0D,
                 anyDragonRadius * 2.0D

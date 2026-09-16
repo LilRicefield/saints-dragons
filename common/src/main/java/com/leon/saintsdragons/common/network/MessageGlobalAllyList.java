@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -28,6 +29,6 @@ public record MessageGlobalAllyList(List<String> allyList) {
     }
 
     public static void handle(MessageGlobalAllyList message) {
-        Services.PLATFORM.runOnClient(() -> com.leon.saintsdragons.client.network.ClientPacketHandlers.handleGlobalAllyList(message));
+        Services.PLATFORM.runOnClient(() -> ClientPacketHandlers.handleGlobalAllyList(message));
     }
 }

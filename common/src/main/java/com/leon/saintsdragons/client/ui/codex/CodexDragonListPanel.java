@@ -5,11 +5,12 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 public class CodexDragonListPanel {
     public void draw(GuiGraphics guiGraphics, Font font, int left, int top, int right, int bottom,
                      int mouseX, int mouseY, List<CodexDragonEntry> dragonEntries, int listScrollOffset,
-                     java.util.UUID selectedDragonId, boolean loading) {
+                     UUID selectedDragonId, boolean loading) {
         int visibleCount = Math.min(CodexLayout.MAX_VISIBLE_DRAGONS, dragonEntries.size() - listScrollOffset);
         if (visibleCount < 0) {
             visibleCount = 0;
@@ -65,7 +66,7 @@ public class CodexDragonListPanel {
         }
     }
 
-    public java.util.UUID handleClick(double mouseX, double mouseY, Font font, int left, int top, int right,
+    public UUID handleClick(double mouseX, double mouseY, Font font, int left, int top, int right,
                                       List<CodexDragonEntry> dragonEntries, int listScrollOffset) {
         int visibleCount = Math.min(CodexLayout.MAX_VISIBLE_DRAGONS, dragonEntries.size() - listScrollOffset);
         for (int i = 0; i < visibleCount; i++) {

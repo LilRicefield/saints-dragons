@@ -24,6 +24,7 @@ import net.minecraft.world.phys.Vec3;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -256,7 +257,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 ? source.getBoundingBox().getCenter()
                 : observation.position();
         nextSourceWaypointRefreshAt = context.gameTime();
-        investigationKind = observation.kind().name().toLowerCase(java.util.Locale.ROOT);
+        investigationKind = observation.kind().name().toLowerCase(Locale.ROOT);
         searchTicks = 0;
         phase = Phase.TRAVELLING;
         outcome = "new-observation";
@@ -651,7 +652,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     @Override
     public Map<String, String> getDragonBrainDebugDetails() {
         Map<String, String> details = new LinkedHashMap<>();
-        details.put("phase", phase.name().toLowerCase(java.util.Locale.ROOT));
+        details.put("phase", phase.name().toLowerCase(Locale.ROOT));
         details.put("outcome", outcome);
         details.put("destination", destination == null ? "none" : destination.toString());
         details.put("kind", investigationKind);

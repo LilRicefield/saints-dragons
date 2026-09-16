@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.server.entity.part.IgnivorusCollisionState;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
@@ -2007,7 +2008,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         lockRiderControls(WILD_PHASE2_IDLE_TICKS + 1);
         getAIMovement().stopAndClearAllMovement();
         setDeltaMovement(Vec3.ZERO);
-        stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
+        stopHitboxAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
     }
 
     public void completeWildPhase2Transition() {
@@ -2133,7 +2134,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             long now = level().getGameTime();
             if (now - lastAiLandedAnimTick >= 15L) {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
+                triggerHitboxAnimation(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2331,7 +2332,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void onTakeoffStateStarted() {
-        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER,
+        triggerHitboxAnimation(AnimationHelper.FLIGHT_CONTROLLER,
                 isPhase2Active() ? AnimationHelper.PHASE2_TAKEOFF : AnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
     }
@@ -2780,7 +2781,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public void stopDrinkingAnimation() {
-        stopTriggeredAnimation(
+        stopHitboxAnimation(
                 IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
                 IgnivorusAnimationHandler.DRINKING_TRIGGER
         );
@@ -2890,7 +2891,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             @Override
             public void onRiderLanded() {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
+                triggerHitboxAnimation(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -3214,11 +3215,26 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return IgnivorusSoundProfile.INSTANCE;
     }
 
-    private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
+    private final IgnivorusCollisionState collisionState =
+            new IgnivorusCollisionState(this);
 
-    public void setServerBonePosition(String boneName, Vec3 position) {
-        if (boneName == null || position == null) return;
-        this.serverBonePositionCache.put(boneName, position);
+    public IgnivorusCollisionState getCollisionState() {
+        return collisionState;
+    }
+
+    @Override
+    protected boolean updatesModelPoseOnServer() {
+        return true;
+    }
+
+    public void triggerHitboxAnimation(String controller, String animation) {
+        if (!level().isClientSide) collisionState.trigger(controller, animation);
+        triggerAnim(controller, animation);
+    }
+
+    public void stopHitboxAnimation(String controller, String animation) {
+        if (!level().isClientSide) collisionState.stop(controller, animation);
+        stopTriggeredAnimation(controller, animation);
     }
 
     public Vec3 getBonePositionForHitbox(String boneName) {
@@ -3226,7 +3242,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         if (this.level().isClientSide) {
             return this.clientLocatorCache.get(boneName);
         } else {
-            return this.serverBonePositionCache.get(boneName);
+            return collisionState.locator(boneName);
         }
     }
 

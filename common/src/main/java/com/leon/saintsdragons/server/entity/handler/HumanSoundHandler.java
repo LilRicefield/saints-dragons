@@ -1,14 +1,18 @@
 package com.leon.saintsdragons.server.entity.handler;
 
 import com.leon.saintsdragons.server.entity.interfaces.HumanSoundProfile;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.core.animation.AnimationController;
 
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 public class HumanSoundHandler {
@@ -21,12 +25,12 @@ public class HumanSoundHandler {
         this.profile = profile != null ? profile : HumanSoundProfile.EMPTY;
     }
 
-    public void handleAnimationSound(Object keyframeData, software.bernie.geckolib.core.animation.AnimationController<?> controller) {
+    public void handleAnimationSound(Object keyframeData, AnimationController<?> controller) {
         if (!entity.level().isClientSide) return;
         if (keyframeData == null) return;
         String raw = extractSoundString(keyframeData);
         if (raw == null || raw.isEmpty()) return;
-        String sound = raw.toLowerCase(java.util.Locale.ROOT);
+        String sound = raw.toLowerCase(Locale.ROOT);
         String[] parts = sound.split("\\|");
         String soundKey = parts[0];
         float volume = parts.length > 1 ? parseFloat(parts[1], 1.0f) : 1.0f;
@@ -107,9 +111,9 @@ public class HumanSoundHandler {
     }
     private void playDirectSound(String soundId, String locator, float volume, float pitch) {
         try {
-            net.minecraft.resources.ResourceLocation rl = net.minecraft.resources.ResourceLocation.tryParse(soundId);
+            ResourceLocation rl = ResourceLocation.tryParse(soundId);
             if (rl != null) {
-                SoundEvent sound = net.minecraft.core.registries.BuiltInRegistries.SOUND_EVENT.get(rl);
+                SoundEvent sound = BuiltInRegistries.SOUND_EVENT.get(rl);
                 Vec3 position = resolveLocator(locator);
                 playSoundImmediate(sound, position, volume, pitch);
             }

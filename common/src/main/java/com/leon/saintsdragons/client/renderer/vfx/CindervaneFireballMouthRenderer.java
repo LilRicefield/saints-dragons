@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.client.renderer.vfx;
 
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -9,8 +11,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 public final class CindervaneFireballMouthRenderer {
-    private static final java.util.Map<Cindervane, Integer> LAST_SPARK_BURST = new java.util.WeakHashMap<>();
+    private static final Map<Cindervane, Integer> LAST_SPARK_BURST = new WeakHashMap<>();
     private static final ResourceLocation[] SMOKE = frames("cindervane/fireball/smoke_bomb_orange/smoke_bomb_orange", 10);
     private static final ResourceLocation[] CIRCLE = frames("shared/rings/circle_thinning/circle_thinning", 12);
     private static final float CIRCLE_FRAME_TICKS = 0.5F;
@@ -54,7 +59,7 @@ public final class CindervaneFireballMouthRenderer {
     }
 
     private static void emitMouthSparks(Cindervane dragon, Vec3 anchor, Vec3 forward, float age, float partialTick) {
-        if (com.leon.saintsdragons.client.renderer.ShaderPassCompatibility.isIrisShadowPass()) return;
+        if (ShaderPassCompatibility.isIrisShadowPass()) return;
         int shotTick = Math.round(dragon.tickCount + partialTick - age);
         Integer previous = LAST_SPARK_BURST.put(dragon, shotTick);
         if (previous != null && previous == shotTick) return;
@@ -69,8 +74,8 @@ public final class CindervaneFireballMouthRenderer {
                     .add(spread.scale(0.35)).add(dragon.getDeltaMovement().scale(0.65));
             Vec3 point = origin.add(spread.scale(0.3));
             dragon.level().addParticle(i < 8
-                            ? com.leon.saintsdragons.common.registry.ModParticles.FIRE_BREATH_EMBER.get()
-                            : com.leon.saintsdragons.common.registry.ModParticles.CINDERVANE_MOUTH_EMITTER.get(), true,
+                            ? ModParticles.FIRE_BREATH_EMBER.get()
+                            : ModParticles.CINDERVANE_MOUTH_EMITTER.get(), true,
                     point.x, point.y, point.z, velocity.x, velocity.y, velocity.z);
         }
     }

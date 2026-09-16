@@ -4,6 +4,7 @@ import com.leon.saintsdragons.client.camera.ClientCameraImpulse;
 import com.leon.saintsdragons.client.camera.BloodTempestKatanaVisuals;
 import com.leon.saintsdragons.client.camera.DragonlordFlightVisuals;
 import com.leon.saintsdragons.client.camera.DragonlordFlightBoostController;
+import com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail;
 import com.leon.saintsdragons.client.renderer.vfx.BloodTempestSwordRing;
 import com.leon.saintsdragons.sound.client.DragonSoundRuntime;
 import com.leon.saintsdragons.client.sound.SwarmBattleMusicController;
@@ -38,6 +39,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.Entity;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public final class ClientPacketHandlers {
@@ -47,7 +52,7 @@ public final class ClientPacketHandlers {
     public static void handleDraconicCodexList(MessageDraconicCodexList message) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen instanceof DraconicCodexScreen codexScreen) {
-            java.util.List<CodexDragonEntry> entries = new java.util.ArrayList<>();
+            List<CodexDragonEntry> entries = new ArrayList<>();
             for (MessageDraconicCodexList.Entry entry : message.entries()) {
                 entries.add(new CodexDragonEntry(
                         entry.entityId(),
@@ -115,7 +120,7 @@ public final class ClientPacketHandlers {
     }
 
     public static void handleBloodTempestAfterimage(MessageBloodTempestAfterimage message) {
-        com.leon.saintsdragons.client.renderer.vfx.BloodTempestAfterimageTrail.start(
+        BloodTempestAfterimageTrail.start(
                 message.entityId(), message.profile(), message.origin(), message.destination());
 
         Minecraft minecraft = Minecraft.getInstance();
@@ -156,7 +161,7 @@ public final class ClientPacketHandlers {
             return;
         }
 
-        net.minecraft.world.entity.Entity vehicle = minecraft.level.getEntity(message.entityId());
+        Entity vehicle = minecraft.level.getEntity(message.entityId());
         if (vehicle == null) {
             return;
         }

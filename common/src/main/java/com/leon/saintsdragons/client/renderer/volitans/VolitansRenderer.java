@@ -20,8 +20,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
+
+import org.joml.Vector3f;
 
 public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     private Vec3 renderedMouthOffset;
@@ -63,7 +66,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
             RenderUtils.rotateMatrixAroundBone(poses, bone);
             RenderUtils.scaleMatrixForBone(poses, bone);
             var matrix = RenderUtils.invertAndMultiplyMatrices(poses.last().pose(), this.entityRenderTranslations);
-            var point = matrix.transformPosition(new org.joml.Vector3f());
+            var point = matrix.transformPosition(new Vector3f());
             renderedMouthOffset = new Vec3(point.x, point.y, point.z);
         } finally {
             poses.popPose();
@@ -96,8 +99,8 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     }
 
     @Override
-    protected void afterDragonRender(Volitans entity, com.mojang.blaze3d.vertex.PoseStack poseStack,
-                                     net.minecraft.client.renderer.MultiBufferSource bufferSource, float partialTick) {
+    protected void afterDragonRender(Volitans entity, PoseStack poseStack,
+                                     MultiBufferSource bufferSource, float partialTick) {
         sendBreathLocatorToServer(entity);
         VolitansWaterRingRenderer.render(entity, poseStack, bufferSource, partialTick);
         VolitansBreathIntroRenderer.render(entity, poseStack, bufferSource, partialTick);
@@ -122,7 +125,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
             return;
         }
 
-        java.util.Map<String, Vec3> positions = new java.util.HashMap<>(1);
+        Map<String, Vec3> positions = new HashMap<>(1);
         Vec3 breath = entity.getClientLocatorPosition("breathBoneOrigin");
         if (breath != null) {
             positions.put("breathBoneOrigin", breath);
@@ -141,7 +144,7 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
         NetworkHandler.sendToServer(new MessageDragonBonePositions(entity.getId(), positions));
     }
 
-    private static int computeSnapshotHash(java.util.Map<String, Vec3> positions) {
+    private static int computeSnapshotHash(Map<String, Vec3> positions) {
         int hash = 1;
         for (String boneName : new String[] {"breathBoneOrigin"}) {
             Vec3 pos = positions.get(boneName);

@@ -507,7 +507,7 @@ public final class DragonPathDebugTracker {
                                              DragonSensoryObservation observation) {
         return observation.kind().name()
                 + "@" + BlockPos.containing(observation.position()).toShortString()
-                + "(" + String.format(java.util.Locale.ROOT, "%.2f", observation.confidence())
+                + "(" + String.format(Locale.ROOT, "%.2f", observation.confidence())
                 + ",age=" + Math.max(0L, dragon.level().getGameTime() - observation.observedAt())
                 + "t)";
     }
@@ -630,7 +630,7 @@ public final class DragonPathDebugTracker {
                 ? "none"
                 : owner.getName().getString() + "@"
                 + String.format(
-                        java.util.Locale.ROOT,
+                        Locale.ROOT,
                         "%.2f",
                         Math.sqrt(DragonOwnerFollowTarget.anchorDistanceToSqr(rideable, owner))
                 );

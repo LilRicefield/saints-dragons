@@ -6,11 +6,17 @@ import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
 import com.leon.saintsdragons.server.flight.DragonRiderSeat;
 import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,7 +72,7 @@ public record IgnivorusRiderController(Ignivorus dragon) {
         var level = dragon.level();
         if (level == null) return -1;
 
-        final net.minecraft.world.phys.AABB box = dragon.getBoundingBox();
+        final AABB box = dragon.getBoundingBox();
         final int minBuildY = level.getMinBuildHeight();
         final double[] sampleX = {dragon.getX(), box.minX + 0.25D, box.maxX - 0.25D};
         final double[] sampleZ = {dragon.getZ(), box.minZ + 0.25D, box.maxZ - 0.25D};
@@ -76,28 +82,28 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
         for (double sx : sampleX) {
             for (double sz : sampleZ) {
-                int x = net.minecraft.util.Mth.floor(sx);
-                int z = net.minecraft.util.Mth.floor(sz);
-                int startY = net.minecraft.util.Mth.floor(box.minY);
+                int x = Mth.floor(sx);
+                int z = Mth.floor(sz);
+                int startY = Mth.floor(box.minY);
                 int stopY = Math.max(minBuildY, startY - MAX_GROUND_CHECK_DISTANCE);
 
                 for (int y = startY; y >= stopY; y--) {
-                    net.minecraft.core.BlockPos checkPos = new net.minecraft.core.BlockPos(x, y, z);
+                    BlockPos checkPos = new BlockPos(x, y, z);
                     if (!level.hasChunkAt(checkPos)) {
                         continue;
                     }
 
-                    net.minecraft.world.level.block.state.BlockState state = level.getBlockState(checkPos);
+                    BlockState state = level.getBlockState(checkPos);
                     if (!state.getFluidState().isEmpty()) {
                         return -1;
                     }
 
-                    net.minecraft.world.phys.shapes.VoxelShape shape = state.getCollisionShape(level, checkPos);
+                    VoxelShape shape = state.getCollisionShape(level, checkPos);
                     if (shape.isEmpty()) {
                         continue;
                     }
 
-                    double topY = y + shape.max(net.minecraft.core.Direction.Axis.Y);
+                    double topY = y + shape.max(Direction.Axis.Y);
                     double distance = box.minY - topY;
                     if (distance < bestDistance) {
                         bestDistance = distance;

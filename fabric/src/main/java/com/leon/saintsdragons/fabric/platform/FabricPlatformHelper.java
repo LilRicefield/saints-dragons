@@ -3,6 +3,7 @@ package com.leon.saintsdragons.fabric.platform;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
+import com.leon.saintsdragons.common.item.DraconianSwarmSpawnEggSpawner;
 import com.leon.saintsdragons.common.item.tools.DragonheartSwordItem;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
@@ -11,15 +12,19 @@ import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.Tier;
+import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.sounds.SoundEvent;
 
@@ -111,8 +116,8 @@ public final class FabricPlatformHelper implements PlatformHelper {
                                              Item.Properties properties) {
         return new SpawnEggItem(displayEntityType.get(), primaryColor, secondaryColor, properties) {
             @Override
-            public net.minecraft.world.InteractionResult useOn(net.minecraft.world.item.context.UseOnContext context) {
-                return com.leon.saintsdragons.common.item.DraconianSwarmSpawnEggSpawner.useOn(context);
+            public InteractionResult useOn(UseOnContext context) {
+                return DraconianSwarmSpawnEggSpawner.useOn(context);
             }
         };
     }
@@ -143,11 +148,11 @@ public final class FabricPlatformHelper implements PlatformHelper {
     }
 
     @Override
-    public net.minecraft.core.particles.SimpleParticleType createSimpleParticle(boolean overrideLimiter) {
+    public SimpleParticleType createSimpleParticle(boolean overrideLimiter) {
         return new SimpleParticleTypeImpl(overrideLimiter);
     }
 
-    private static final class SimpleParticleTypeImpl extends net.minecraft.core.particles.SimpleParticleType {
+    private static final class SimpleParticleTypeImpl extends SimpleParticleType {
         private SimpleParticleTypeImpl(boolean overrideLimiter) {
             super(overrideLimiter);
         }
@@ -200,5 +205,9 @@ public final class FabricPlatformHelper implements PlatformHelper {
     @Override
     public Path getConfigDirectory() {
         return FabricLoader.getInstance().getConfigDir();
+    }
+    @Override
+    public double getPlayerAttackReach(Player player) {
+        return ReachEntityAttributes.getAttackRange(player, player.isCreative() ? 6.0D : 3.0D);
     }
 }

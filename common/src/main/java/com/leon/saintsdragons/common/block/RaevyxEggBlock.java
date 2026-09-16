@@ -3,6 +3,7 @@ package com.leon.saintsdragons.common.block;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.ModBlockEntities;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
@@ -33,6 +34,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.gameevent.GameEvent;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +134,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
     @Override
     public void tick(@NotNull BlockState state, ServerLevel level, @NotNull BlockPos pos, @NotNull RandomSource random) {
         level.getEntitiesOfClass(LightningBolt.class,
-            new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
+            new AABB(pos).inflate(3.0D))
             .stream()
             .findFirst()
             .ifPresent(bolt -> this.instantHatchFromLightning(level, pos, state));
@@ -145,7 +147,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
                                                                   @NotNull BlockEntityType<T> blockEntityType) {
         return level.isClientSide ? null : createTickerHelper(
                 blockEntityType,
-                com.leon.saintsdragons.common.registry.ModBlockEntities.RAEVYX_EGG.get(),
+                ModBlockEntities.RAEVYX_EGG.get(),
                 this::serverTick
         );
     }
@@ -156,7 +158,7 @@ public class RaevyxEggBlock extends BaseEntityBlock {
         }
 
         serverLevel.getEntitiesOfClass(LightningBolt.class,
-                new net.minecraft.world.phys.AABB(pos).inflate(3.0D))
+                new AABB(pos).inflate(3.0D))
                 .stream()
                 .findFirst()
                 .ifPresent(bolt -> this.instantHatchFromLightning(serverLevel, pos, state));

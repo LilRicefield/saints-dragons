@@ -93,7 +93,7 @@ public class MeleeModeNotification {
         guiGraphics.fill(x, y - 2, x + 1, y + boxHeight - 2, borderColor);
         guiGraphics.fill(x + boxWidth - 1, y - 2, x + boxWidth, y + boxHeight - 2, borderColor);
         guiGraphics.drawString(
-            net.minecraft.client.Minecraft.getInstance().font,
+            Minecraft.getInstance().font,
             message,
             x + padding,
             y,

@@ -13,6 +13,8 @@ import net.minecraft.world.level.Level;
 import javax.annotation.Nullable;
 import java.util.List;
 
+import com.leon.saintsdragons.client.renderer.armor.DraconianArmorTextures;
+
 public class DraconianArmorItem extends ArmorItem {
     public DraconianArmorItem(ArmorMaterial material, Type type, Properties properties) {
         super(material, type, properties);
@@ -25,7 +27,7 @@ public class DraconianArmorItem extends ArmorItem {
             return null;
         }
 
-        return com.leon.saintsdragons.client.renderer.armor.DraconianArmorTextures
+        return DraconianArmorTextures
                 .texture(slot == EquipmentSlot.LEGS)
                 .toString();
     }

@@ -8,6 +8,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.ArrayList;
@@ -58,7 +59,7 @@ public class DragonCodexSavedData extends SavedData {
                 entry.setDisplayName(dragon.getName().getString());
                 entry.setMaxHealth(dragon.getMaxHealth());
                 entry.setCurrentHealth(dragon.getHealth());
-                entry.setArmor(dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR));
+                entry.setArmor(dragon.getAttributeValue(Attributes.ARMOR));
                 entry.setHunger(dragon.getHunger());
                 entry.setHappiness(dragon.getHappiness());
                 entry.setVariantId(resolveVariantId(dragon));
@@ -81,7 +82,7 @@ public class DragonCodexSavedData extends SavedData {
                 dragon.getName().getString(),
                 dragon.getMaxHealth(),
                 dragon.getHealth(),
-                dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR),
+                dragon.getAttributeValue(Attributes.ARMOR),
                 dragon.getHunger(),
                 dragon.getHappiness(),
                 resolveVariantId(dragon),
@@ -180,7 +181,7 @@ public class DragonCodexSavedData extends SavedData {
             if (entry.dragonId().equals(dragon.getUUID())) {
                 entry.setMaxHealth(dragon.getMaxHealth());
                 entry.setCurrentHealth(dragon.getHealth());
-                entry.setArmor(dragon.getAttributeValue(net.minecraft.world.entity.ai.attributes.Attributes.ARMOR));
+                entry.setArmor(dragon.getAttributeValue(Attributes.ARMOR));
                 entry.setHunger(dragon.getHunger());
                 entry.setHappiness(dragon.getHappiness());
                 entry.setVariantId(resolveVariantId(dragon));

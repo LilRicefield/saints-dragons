@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -39,6 +40,6 @@ public record MessageDragonMovingSound(
 
     public static void handle(MessageDragonMovingSound message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDragonMovingSound(message));
+                ClientPacketHandlers.handleDragonMovingSound(message));
     }
 }

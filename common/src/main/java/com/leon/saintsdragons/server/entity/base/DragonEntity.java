@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -42,6 +43,7 @@ import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManage
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.BiConsumer;
@@ -170,7 +172,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private final SmoothValue fallbackBodyRotDeviation = SmoothValue.rotation(0.0);
     private final SmoothValue fallbackPitchDeviation = SmoothValue.rotation(0.0);
     private final SmoothValue fallbackYawVelocity = SmoothValue.value(0.0);
-    private float clientTailDragVelocity = 0.0f;
+    private float tailDragVelocity = 0.0f;
+    private float previousTailDragVelocity = 0.0f;
     private boolean clientBabyStateInitialized;
     private boolean clientBabyState;
     @Nullable
@@ -530,8 +533,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public float smoothTailDragVelocity(float targetDegrees) {
-        clientTailDragVelocity = Mth.lerp(0.15f, clientTailDragVelocity, targetDegrees);
-        return clientTailDragVelocity;
+        tailDragVelocity = Mth.lerp(0.15f, tailDragVelocity, targetDegrees);
+        return tailDragVelocity;
+    }
+
+    public float getTickedTailDragVelocity(float partialTick) {
+        return Mth.lerp(partialTick, previousTailDragVelocity, tailDragVelocity);
+    }
+
+    protected boolean updatesModelPoseOnServer() {
+        return false;
     }
 
     public SmoothValue getBodyRotDeviation() {
@@ -1169,7 +1180,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public static final class VocalEntryBuilder {
-        private final Map<String, VocalEntry> entries = new java.util.HashMap<>();
+        private final Map<String, VocalEntry> entries = new HashMap<>();
 
         public VocalEntryBuilder add(String key, String controller, String animation,
                                      Supplier<SoundEvent> sound, float volume,
@@ -1506,7 +1517,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
             return;
         }
 
-        java.util.UUID ownerUUID = resolveEggOwnerUUID(partner);
+        UUID ownerUUID = resolveEggOwnerUUID(partner);
         if (ownerUUID != null) {
             eggEntity.setOwnerUUID(ownerUUID);
         }
@@ -1515,7 +1526,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     @Nullable
-    protected java.util.UUID resolveEggOwnerUUID(@Nullable DragonEntity partner) {
+    protected UUID resolveEggOwnerUUID(@Nullable DragonEntity partner) {
         if (babyComponent != null) {
             return babyComponent.resolveEggOwnerUUID(partner);
         }
@@ -2114,6 +2125,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public void tick() {
         super.tick();
+        if (updatesModelPoseOnServer()) {
+            tickRotationAnimationState();
+        }
         this.soundHandler.tick();
         tickAbilities();
         if (!level().isClientSide) {
@@ -2150,7 +2164,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
         if (level().isClientSide) {
             syncClientSitProgress();
-            tickClientRotationAnimationState();
+            if (!updatesModelPoseOnServer()) {
+                tickRotationAnimationState();
+            }
         }
     }
 
@@ -2167,10 +2183,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
     }
 
-    private void tickClientRotationAnimationState() {
+    private void tickRotationAnimationState() {
         double bodyYawDelta = Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO) * 2.0;
         fallbackYawVelocity.setTo(bodyYawDelta);
         fallbackYawVelocity.update(0.25f);
+
+        if (updatesModelPoseOnServer()) {
+            previousTailDragVelocity = tailDragVelocity;
+            smoothTailDragVelocity(Mth.clamp((float) fallbackYawVelocity.get(1.0F), -30.0F, 30.0F));
+        }
 
         if (this.isVehicle()) {
             fallbackBodyRotDeviation.setTo(0.0);
@@ -2346,7 +2367,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
         super.setTarget(target);
         if (!level().isClientSide && previousTarget != target) {
-            com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle.combatTargetChanged(this, target);
+            DragonTargetLifecycle.combatTargetChanged(this, target);
         }
         if (target == null) {
             setAggressive(false);

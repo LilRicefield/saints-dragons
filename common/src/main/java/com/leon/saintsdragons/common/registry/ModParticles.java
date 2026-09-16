@@ -10,6 +10,7 @@ import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.SonicRingData;
 import com.leon.saintsdragons.platform.RegistryHelper;
 import com.leon.saintsdragons.platform.Services;
+import com.mojang.serialization.Codec;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -57,7 +58,7 @@ public final class ModParticles {
             REGISTER.register("lightning_storm",
                     () -> new ParticleType<>(false, RaevyxLightningStormData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
+                        public Codec<RaevyxLightningStormData> codec() {
                             return RaevyxLightningStormData.CODEC(this);
                         }
                     });
@@ -66,7 +67,7 @@ public final class ModParticles {
             REGISTER.register("lightning_storm_night_gold",
                     () -> new ParticleType<>(false, RaevyxLightningStormData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningStormData> codec() {
+                        public Codec<RaevyxLightningStormData> codec() {
                             return RaevyxLightningStormData.CODEC(this);
                         }
                     });
@@ -75,7 +76,7 @@ public final class ModParticles {
             REGISTER.register("lightning_chain",
                     () -> new ParticleType<>(false, RaevyxLightningChainData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<RaevyxLightningChainData> codec() {
+                        public Codec<RaevyxLightningChainData> codec() {
                             return RaevyxLightningChainData.CODEC(this);
                         }
                     });
@@ -84,7 +85,7 @@ public final class ModParticles {
             REGISTER.register("raevyx_sonic_ring",
                     () -> new ParticleType<>(false, SonicRingData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<SonicRingData> codec() {
+                        public Codec<SonicRingData> codec() {
                             return SonicRingData.CODEC(this);
                         }
                     });
@@ -93,7 +94,7 @@ public final class ModParticles {
             REGISTER.register("blood_tempest_sword_ring",
                     () -> new ParticleType<>(false, BloodTempestKatanaRingData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<BloodTempestKatanaRingData> codec() {
+                        public Codec<BloodTempestKatanaRingData> codec() {
                             return BloodTempestKatanaRingData.codec(this);
                         }
                     });
@@ -101,7 +102,7 @@ public final class ModParticles {
     public static final Supplier<ParticleType<FireBreathParticleData>> FIRE_BREATH_FLAME =
             REGISTER.register("fire_breath_flame", () -> new ParticleType<>(false, FireBreathParticleData.DESERIALIZER) {
                 @Override
-                public com.mojang.serialization.Codec<FireBreathParticleData> codec() {
+                public Codec<FireBreathParticleData> codec() {
                     return FireBreathParticleData.CODEC;
                 }
             });
@@ -247,7 +248,7 @@ public final class ModParticles {
     public static final Supplier<ParticleType<FireBreathBurstData>> FIRE_BREATH_BURST =
             REGISTER.register("fire_breath_burst", () -> new ParticleType<>(false, FireBreathBurstData.DESERIALIZER) {
                 @Override
-                public com.mojang.serialization.Codec<FireBreathBurstData> codec() {
+                public Codec<FireBreathBurstData> codec() {
                     return FireBreathBurstData.CODEC;
                 }
             });
@@ -295,6 +296,9 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> IGNIVORUS_GROUND_IMPACT =
             REGISTER.register("ignivorus_ground_impact", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_MAGMA_PILLARS_IMPACT =
+            REGISTER.register("ignivorus_magma_pillars_impact", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> IGNIVORUS_FIRE_SPEC =
             REGISTER.register("ignivorus_fire_spec", () -> Services.PLATFORM.createSimpleParticle(true));
 
@@ -325,7 +329,7 @@ public final class ModParticles {
             REGISTER.register("ground_crack",
                     () -> new ParticleType<>(false, GroundDecalParticleData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<GroundDecalParticleData> codec() {
+                        public Codec<GroundDecalParticleData> codec() {
                             return GroundDecalParticleData.codec(this);
                         }
                     });
@@ -334,7 +338,7 @@ public final class ModParticles {
             REGISTER.register("ground_crack_fissure",
                     () -> new ParticleType<>(false, GroundDecalParticleData.DESERIALIZER) {
                         @Override
-                        public com.mojang.serialization.Codec<GroundDecalParticleData> codec() {
+                        public Codec<GroundDecalParticleData> codec() {
                             return GroundDecalParticleData.codec(this);
                         }
                     });

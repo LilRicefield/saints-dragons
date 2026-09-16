@@ -53,6 +53,7 @@ import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobSpawnType;
+import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
 import net.minecraft.world.entity.TamableAnimal;
@@ -544,7 +545,7 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         blended = resolveMountedFlightCollision(blended);
 
         this.setSpeed((float) RIDER_FLIGHT_SPEED);
-        this.move(net.minecraft.world.entity.MoverType.SELF, blended);
+        this.move(MoverType.SELF, blended);
         this.setDeltaMovement(blended);
         this.hasImpulse = true;
     }

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -15,6 +16,6 @@ public record MessageDragonMeleeMode(int mode) {
 
     public static void handle(MessageDragonMeleeMode message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleMeleeMode(message));
+                ClientPacketHandlers.handleMeleeMode(message));
     }
 }

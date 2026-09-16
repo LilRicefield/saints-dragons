@@ -20,6 +20,8 @@ import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.AbstractArrow;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -70,7 +72,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         if (!dragon.isFlying() || dragon.onGround()) {
             return false;
         }
-        if (dragon.getControllingPassenger() instanceof net.minecraft.world.entity.player.Player rider) {
+        if (dragon.getControllingPassenger() instanceof Player rider) {
             return dragon.isTame() && dragon.isOwnedBy(rider) && super.tryAbility();
         }
         return false;
@@ -298,7 +300,7 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
         Vec3 spawnPos = center.add(horizontal.scale(radius));
         spine.setPos(spawnPos.x, spawnPos.y, spawnPos.z);
         spine.shoot(direction.x, direction.y, direction.z, speed, 0.0F);
-        spine.pickup = net.minecraft.world.entity.projectile.AbstractArrow.Pickup.DISALLOWED;
+        spine.pickup = AbstractArrow.Pickup.DISALLOWED;
         dragon.level().addFreshEntity(spine);
     }
 }

@@ -18,6 +18,7 @@ import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
@@ -36,7 +37,7 @@ public class ClientEventHandler {
 
     // Raevyx beam camera state
     private static boolean wasBeaming = false;
-    private static net.minecraft.client.CameraType previousPerspective = null;
+    private static CameraType previousPerspective = null;
     private static float beamCameraForward = 0.0f;
     private static float beamCameraUp = 0.0f;
 
@@ -129,7 +130,7 @@ public class ClientEventHandler {
         Minecraft mc = Minecraft.getInstance();
         if (isBeaming && !wasBeaming) {
             previousPerspective = mc.options.getCameraType();
-            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            mc.options.setCameraType(CameraType.FIRST_PERSON);
             wasBeaming = true;
         } else if (!isBeaming && wasBeaming) {
             if (previousPerspective != null) {

@@ -233,7 +233,7 @@ public final class StegonautLushCaveSpawner {
     private static boolean hasStegonautNearby(ServerLevel level, BlockPos center) {
         return !level.getEntitiesOfClass(
                 Stegonaut.class,
-                new net.minecraft.world.phys.AABB(center).inflate(NEARBY_SEARCH_RADIUS),
+                new AABB(center).inflate(NEARBY_SEARCH_RADIUS),
                 stegonaut -> stegonaut.isAlive() && !stegonaut.isTame()
         ).isEmpty();
     }

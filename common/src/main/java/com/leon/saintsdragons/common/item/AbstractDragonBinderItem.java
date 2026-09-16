@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
@@ -147,7 +148,7 @@ public abstract class AbstractDragonBinderItem<T extends DragonEntity> extends I
             DragonCodexSavedData.get(serverLevel).updateDragonBoundState(player.getUUID(), dragon.getUUID(), true);
         }
 
-        dragon.remove(net.minecraft.world.entity.Entity.RemovalReason.DISCARDED);
+        dragon.remove(Entity.RemovalReason.DISCARDED);
         if (!dragon.isRemoved()) {
             return ItemStack.EMPTY;
         }

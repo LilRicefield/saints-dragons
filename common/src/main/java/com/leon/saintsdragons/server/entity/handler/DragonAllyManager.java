@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 
@@ -109,7 +110,7 @@ public class DragonAllyManager {
     public boolean isAlly(Player player) {
         if (player == null) return false;
         UUID ownerId = getOwnerId();
-        net.minecraft.server.level.ServerLevel serverLevel = getServerLevel();
+        ServerLevel serverLevel = getServerLevel();
         if (ownerId == null || serverLevel == null) return false;
         GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(serverLevel);
         return data.isAlly(ownerId, player.getUUID());
@@ -117,7 +118,7 @@ public class DragonAllyManager {
 
     public boolean isAlly(UUID uuid) {
         UUID ownerId = getOwnerId();
-        net.minecraft.server.level.ServerLevel serverLevel = getServerLevel();
+        ServerLevel serverLevel = getServerLevel();
         if (ownerId == null || serverLevel == null) return false;
         GlobalDragonAllySavedData data = GlobalDragonAllySavedData.get(serverLevel);
         return data.isAlly(ownerId, uuid);
@@ -203,8 +204,8 @@ public class DragonAllyManager {
         return dragon.getOwnerUUID();
     }
 
-    private net.minecraft.server.level.ServerLevel getServerLevel() {
-        if (dragon.level() instanceof net.minecraft.server.level.ServerLevel serverLevel) {
+    private ServerLevel getServerLevel() {
+        if (dragon.level() instanceof ServerLevel serverLevel) {
             return serverLevel;
         }
         return null;

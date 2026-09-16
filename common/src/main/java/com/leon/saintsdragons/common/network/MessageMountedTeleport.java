@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -42,6 +43,6 @@ public record MessageMountedTeleport(
 
     public static void handle(MessageMountedTeleport message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleMountedTeleport(message));
+                ClientPacketHandlers.handleMountedTeleport(message));
     }
 }

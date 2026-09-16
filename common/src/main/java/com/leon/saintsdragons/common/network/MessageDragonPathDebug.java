@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.network;
 
+import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -178,7 +179,7 @@ public record MessageDragonPathDebug(
 
     public static void handle(MessageDragonPathDebug message) {
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.network.ClientPacketHandlers.handleDragonPathDebug(message));
+                ClientPacketHandlers.handleDragonPathDebug(message));
     }
 
     private static void writeVecList(FriendlyByteBuf buffer, List<Vec3> positions) {

@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.common.block;
 
+import com.leon.saintsdragons.client.sound.DraconicCrucibleSmeltingSoundController;
 import com.leon.saintsdragons.common.block.crucible.DraconicCrucibleFuelTier;
 import com.leon.saintsdragons.common.recipe.DraconicCrucibleShapedRecipe;
 import com.leon.saintsdragons.common.recipe.DraconicCrucibleSmeltingRecipe;
@@ -165,7 +166,7 @@ public class DraconicCrucibleBlockEntity extends RandomizableContainerBlockEntit
         boolean smelting = state.hasProperty(DraconicCrucibleBlock.LIT)
                 && state.getValue(DraconicCrucibleBlock.LIT);
         Services.PLATFORM.runOnClient(() ->
-                com.leon.saintsdragons.client.sound.DraconicCrucibleSmeltingSoundController
+                DraconicCrucibleSmeltingSoundController
                         .update(level, pos, smelting));
     }
 

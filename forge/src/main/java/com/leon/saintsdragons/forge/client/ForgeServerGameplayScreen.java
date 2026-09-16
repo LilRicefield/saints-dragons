@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.forge.client;
 
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
+import com.leon.saintsdragons.platform.ConfigHelper;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraftforge.api.distmarker.Dist;
@@ -35,7 +36,7 @@ public final class ForgeServerGameplayScreen extends ForgePagedConfigScreen {
     }
 
     private static void addBoolean(List<ConfigEntry> entries, String key,
-                                   com.leon.saintsdragons.platform.ConfigHelper.BooleanValue value) {
+                                   ConfigHelper.BooleanValue value) {
         entries.add(new BooleanEntry(
                 Component.translatable("saintsdragons.config_screen.others." + key),
                 value::get,

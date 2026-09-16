@@ -316,7 +316,7 @@ public class RaevyxLightningBeamLayer extends GeoRenderLayer<Raevyx> {
     }
 
     private static Vec3 lerpVec(Vec3 a, Vec3 b, float t) {
-        t = net.minecraft.util.Mth.clamp(t, 0.0f, 1.0f);
+        t = Mth.clamp(t, 0.0f, 1.0f);
         return a.add(b.subtract(a).scale(t));
     }
 

@@ -6,6 +6,7 @@ import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.projectile.AbstractArrow;
@@ -86,7 +87,7 @@ public class VolitansSpineEntity extends AbstractArrow implements GeoEntity {
     }
 
     @Override
-    protected boolean canHitEntity(net.minecraft.world.entity.Entity target) {
+    protected boolean canHitEntity(Entity target) {
         if (!super.canHitEntity(target)) {
             return false;
         }

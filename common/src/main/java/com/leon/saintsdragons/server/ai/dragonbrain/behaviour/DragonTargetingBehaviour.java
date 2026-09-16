@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> extends DragonBehaviour<T> {
     private static final String PROJECTILE_THREAT_SOURCE = "projectile_threat";
@@ -207,7 +208,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     @Nullable
     private TargetChoice findProjectileThreat(DragonBrainContext<T> context) {
         DragonAwarenessMemory awareness = DragonAwarenessMemory.get(context.dragon());
-        java.util.UUID sourceUuid = awareness.projectileThreatSource(context.gameTime());
+        UUID sourceUuid = awareness.projectileThreatSource(context.gameTime());
         if (sourceUuid == null) {
             return null;
         }

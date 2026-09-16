@@ -10,6 +10,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.renderer.GeoEntityRenderer;
 
@@ -84,7 +85,7 @@ public class IvyTheDragonMerchantRenderer extends GeoEntityRenderer<IvyTheDragon
     }
 
     private static String resolveChatterText(IvyTheDragonMerchant entity, String translationKey) {
-        String text = net.minecraft.network.chat.Component.translatable(translationKey).getString();
+        String text = Component.translatable(translationKey).getString();
         String name = entity.getIdleChatterName();
         return text.replace("{name}", name);
     }

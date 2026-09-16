@@ -2,13 +2,14 @@ package com.leon.saintsdragons.fabric.platform;
 
 import com.leon.saintsdragons.platform.RegistryHelper;
 import net.minecraft.core.Registry;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.function.Supplier;
 
 public final class FabricRegistryHelper implements RegistryHelper {
     @Override
-    public <T> RegistryWrapper<T> create(net.minecraft.resources.ResourceKey<? extends Registry<T>> registryKey,
+    public <T> RegistryWrapper<T> create(ResourceKey<? extends Registry<T>> registryKey,
                                          Supplier<Registry<T>> backingRegistry,
                                          String modId) {
         Registry<T> registry = backingRegistry.get();

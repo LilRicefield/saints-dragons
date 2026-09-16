@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /** Builds the brain-specific half of the live dragon debug stream. */
@@ -375,6 +376,6 @@ public final class DragonBrainDebugTracker {
     }
 
     private static String decimal(double value) {
-        return String.format(java.util.Locale.ROOT, "%.1f", value);
+        return String.format(Locale.ROOT, "%.1f", value);
     }
 }
