@@ -1,24 +1,21 @@
 package com.leon.saintsdragons.server.entity.base;
 
-import com.leon.saintsdragons.common.network.DragonRiderAction;
-import com.leon.saintsdragons.common.network.MessageDragonRideInput;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.common.network.DragonRiderAction;
+import com.leon.saintsdragons.common.network.MessageDragonRideInput;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.util.Mth;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -33,6 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 public abstract class RideableDragonBase extends DragonEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger(RideableDragonBase.class);
@@ -1004,7 +1005,11 @@ public abstract class RideableDragonBase extends DragonEntity {
         setLastRiderForward(0f);
         setLastRiderStrafe(0f);
         setGroundMoveStateFromAI(0);
-        stopTriggeredAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        if (this instanceof Ignivorus ignivorus) {
+            ignivorus.stopHitboxAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        } else {
+            stopTriggeredAnimation(AnimationHelper.MOVEMENT_CONTROLLER, null);
+        }
         forceEndActiveAbility();
         setAggressive(false);
         setTarget(null);

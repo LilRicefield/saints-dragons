@@ -108,7 +108,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.setBreathingFire(false);
             dragon.setFireBreathProgress(0);
             dragon.clearFireBreathPath();
-            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_start");
+            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_start");
             if (!dragon.level().isClientSide) {
                 float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
                 dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_START.get(), 2.0f, pitch);
@@ -119,7 +119,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             openingBurstEmitted = false;
             if (aiControlled) dragon.setAiFireBreathDecision("breathing");
             dragon.setBreathingFire(true);
-            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breathing");
+            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breathing");
             breathLoopActive = true;
         }
     }
@@ -171,7 +171,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private void triggerBreathStop(Ignivorus dragon) {
         if (breathLoopActive || breathStartPlayed) {
-            dragon.triggerAnim(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_stop");
+            dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_stop");
             if (!dragon.level().isClientSide) {
                 float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
                 dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_END.get(), 2.0f, pitch);

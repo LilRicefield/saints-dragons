@@ -97,8 +97,6 @@ public final class DragonMovementOwnership {
         try {
             runAs(source, false, () -> { action.run(); return null; });
         } finally {
-            // Reserve each command through its application, not locomotion for the entire ability.
-            // Ground walk-target execution must remain available to attacks that allow advancing.
             discardPending();
         }
         return true;

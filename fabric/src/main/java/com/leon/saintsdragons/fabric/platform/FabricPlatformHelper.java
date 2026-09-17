@@ -5,29 +5,31 @@ import com.google.common.collect.Multimap;
 import com.jamieswhiteshirt.reachentityattributes.ReachEntityAttributes;
 import com.leon.saintsdragons.common.item.DraconianSwarmSpawnEggSpawner;
 import com.leon.saintsdragons.common.item.tools.DragonheartSwordItem;
-import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import com.leon.saintsdragons.platform.ConfigHelper;
 import com.leon.saintsdragons.platform.NetworkHelper;
 import com.leon.saintsdragons.platform.PlatformHelper;
 import com.leon.saintsdragons.platform.RegistryHelper;
-import java.nio.file.Path;
-import java.util.function.Supplier;
+import com.leon.saintsdragons.fabric.config.FabricClientConfigAccess;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.core.particles.SimpleParticleType;
-import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.MobBucketItem;
 import net.minecraft.world.item.SpawnEggItem;
 import net.minecraft.world.item.Tier;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.sounds.SoundEvent;
+
+import java.nio.file.Path;
+import java.util.function.Supplier;
 
 public final class FabricPlatformHelper implements PlatformHelper {
     // Lazy initialization to avoid ServiceConfigurationError during early class loading
@@ -203,5 +205,9 @@ public final class FabricPlatformHelper implements PlatformHelper {
     @Override
     public Path getConfigDirectory() {
         return FabricLoader.getInstance().getConfigDir();
+    }
+    @Override
+    public double getPlayerAttackReach(Player player) {
+        return ReachEntityAttributes.getAttackRange(player, player.isCreative() ? 6.0D : 3.0D);
     }
 }

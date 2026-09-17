@@ -67,7 +67,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
         }
         if (!client) {
             consumeHeldItem(player, itemstack);
-            dragon.triggerAnim("interaction", "eat");
+            dragon.triggerHitboxAnimation("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(20);
             boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());
@@ -126,7 +126,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 dragon.canFeed(),
                 23,
                 () -> {
-                    dragon.triggerAnim("interaction", "eat");
+                    dragon.triggerHitboxAnimation("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown
@@ -161,7 +161,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 "entity.saintsdragons.ignivorus.still_eating",
                 61,
                 () -> {
-                    dragon.triggerAnim("interaction", "eat");
+                    dragon.triggerHitboxAnimation("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown
@@ -186,7 +186,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
                 61,
                 hearty,
                 () -> {
-                    dragon.triggerAnim("interaction", "eat");
+                    dragon.triggerHitboxAnimation("interaction", "eat");
                     playEatSound();
                 },
                 dragon::setFeedingCooldown,
@@ -209,7 +209,7 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
         if (!dragon.level().isClientSide) {
             consumeHeldItem(player, itemstack);
-            dragon.triggerAnim("interaction", "eat");
+            dragon.triggerHitboxAnimation("interaction", "eat");
             playEatSound();
             dragon.setFeedingCooldown(23);
             boolean hearty = itemstack.is(ModItems.HEARTY_DRAGON_MEAL.get());

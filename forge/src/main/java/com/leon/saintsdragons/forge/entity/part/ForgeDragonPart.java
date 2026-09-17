@@ -1,6 +1,8 @@
 package com.leon.saintsdragons.forge.entity.part;
 
 import com.leon.saintsdragons.server.entity.base.DragonPartEntity;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
+import com.leon.saintsdragons.server.entity.part.IgnivorusHitboxes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -14,31 +16,26 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.entity.PartEntity;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Forge-specific implementation of dragon hitbox parts using Forge's PartEntity system.
- * Supports both standard centered boxes and elongated boxes that stretch toward a target point.
- */
 public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEntity {
     public final String partName;
-    private EntityDimensions size;
+    private final int partIndex;
+    private EntityDimensions size = EntityDimensions.scalable(1.0F, 1.0F);
     private float damageMultiplier = 1.0f;
-    private float baseWidth;
-    private float baseHeight;
 
-    public ForgeDragonPart(Entity parent, String partName, float width, float height) {
+    public ForgeDragonPart(Entity parent, int index) {
         super(parent);
-        this.partName = partName;
-        this.baseWidth = width;
-        this.baseHeight = height;
-        this.size = EntityDimensions.scalable(width, height);
-        this.refreshDimensions();
+
+        this.partIndex = index;
+        var region = IgnivorusHitboxes.REGIONS.get(index);
+        this.partName = region.name();
+        this.damageMultiplier = region.damage();
+        this.size = EntityDimensions.scalable(1.0F, 1.0F);
+        this.noPhysics = true;
+        this.setNoGravity(true);
+
     }
 
-    public ForgeDragonPart setDamageMultiplier(float multiplier) {
-        this.damageMultiplier = multiplier;
-        return this;
-    }
-
+    @Override
     public float getDamageMultiplier() {
         return damageMultiplier;
     }
@@ -48,67 +45,35 @@ public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEnt
         return getParent();
     }
 
-    public void updatePosition(double x, double y, double z) {
-        this.setPos(x, y, z);
-        this.xOld = x;
-        this.yOld = y;
-        this.zOld = z;
-        this.setBoundingBox(this.size.makeBoundingBox(x, y, z));
-    }
+    @Override public int getPartIndex() { return partIndex; }
 
-    /**
-     * Updates position and creates an elongated bounding box that stretches toward the next bone.
-     * This eliminates dead zones between adjacent hitbox segments.
-     *
-     * @param x Current bone X position
-     * @param y Current bone Y position
-     * @param z Current bone Z position
-     * @param nextX Next bone X position (to stretch toward)
-     * @param nextY Next bone Y position (to stretch toward)
-     * @param nextZ Next bone Z position (to stretch toward)
-     * @param stretchFactor How far toward the next bone to stretch (0.0-1.0, typically 0.5-0.7)
-     */
-    public void updatePositionElongated(double x, double y, double z,
-                                         double nextX, double nextY, double nextZ,
-                                         float stretchFactor) {
-        this.setPos(x, y, z);
-        this.xOld = x;
-        this.yOld = y;
-        this.zOld = z;
-
-        // Calculate the point we're stretching toward
-        double stretchX = x + (nextX - x) * stretchFactor;
-        double stretchY = y + (nextY - y) * stretchFactor;
-        double stretchZ = z + (nextZ - z) * stretchFactor;
-
-        // Create base box at current position
-        AABB baseBox = this.size.makeBoundingBox(x, y, z);
-
-        // Expand the box to include the stretch point with half the base dimensions
-        double halfWidth = baseWidth / 2.0;
-        double halfHeight = baseHeight / 2.0;
-
-        double minX = Math.min(baseBox.minX, stretchX - halfWidth);
-        double minY = Math.min(baseBox.minY, stretchY - halfHeight);
-        double minZ = Math.min(baseBox.minZ, stretchZ - halfWidth);
-        double maxX = Math.max(baseBox.maxX, stretchX + halfWidth);
-        double maxY = Math.max(baseBox.maxY, stretchY + halfHeight);
-        double maxZ = Math.max(baseBox.maxZ, stretchZ + halfWidth);
-
-        this.setBoundingBox(new AABB(minX, minY, minZ, maxX, maxY, maxZ));
+    @Override
+    public void updateBounds(AABB bounds) {
+        xOld = getX(); yOld = getY(); zOld = getZ();
+        xo = getX(); yo = getY(); zo = getZ();
+        Vec3 center = bounds.getCenter();
+        setPos(center.x, bounds.minY, center.z);
+        setBoundingBox(bounds);
+        size = EntityDimensions.scalable((float) Math.max(bounds.getXsize(), bounds.getZsize()), (float) bounds.getYsize());
     }
 
     @Override
     public boolean isPickable() {
-        return true;
+        return !isRemoved() && getDragonParent() instanceof Ignivorus dragon
+                && dragon.isAlive() && !dragon.isBaby();
+    }
+
+    @Override public boolean isAlive() {
+        return !isRemoved() && getDragonParent() != null && getDragonParent().isAlive();
+    }
+
+    @Override
+    public Entity getRootVehicle() {
+        return getDragonParent() == null ? this : getDragonParent().getRootVehicle();
     }
 
     @Override
     public boolean startRiding(@NotNull Entity entity, boolean force) {
-        Entity parent = getParent();
-        if (parent != null) {
-            return entity.startRiding(parent, force);
-        }
         return false;
     }
 
@@ -130,7 +95,6 @@ public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEnt
     @Override
     public InteractionResult interact(@NotNull Player player,
                                                            @NotNull InteractionHand hand) {
-        // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
         return InteractionResult.PASS;
     }
 
@@ -138,29 +102,12 @@ public class ForgeDragonPart extends PartEntity<Entity> implements DragonPartEnt
     public InteractionResult interactAt(@NotNull Player player,
                                         @NotNull Vec3 vec,
                                         @NotNull InteractionHand hand) {
-        // Multipart hitboxes are damage-only. Commands, feeding, and mounting must hit the parent body.
         return InteractionResult.PASS;
     }
 
     @Override
     public boolean hurt(@NotNull DamageSource source, float amount) {
-        // Only process damage on server side
-        if (this.level().isClientSide) {
-            return !this.isInvulnerableTo(source);
-        }
-
-        if (this.isInvulnerableTo(source)) {
-            return false;
-        }
-
-        Entity parent = this.getParent();
-        if (parent == null) {
-            return false;
-        }
-
-        // Apply damage multiplier based on which part was hit
-        float adjustedAmount = amount * damageMultiplier;
-        return parent.hurt(source, adjustedAmount);
+        return isPickable() && hurtParent(source, amount);
     }
 
     @Override

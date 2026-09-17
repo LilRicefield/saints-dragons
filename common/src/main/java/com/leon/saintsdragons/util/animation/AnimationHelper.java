@@ -2,9 +2,9 @@ package com.leon.saintsdragons.util.animation;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
 import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
-import java.util.function.Function;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
@@ -15,6 +15,8 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.animation.AnimationState;
 import software.bernie.geckolib.core.animation.RawAnimation;
 import software.bernie.geckolib.core.object.PlayState;
+
+import java.util.function.Function;
 
 public final class AnimationHelper {
     public static final String MOVEMENT_CONTROLLER = "movement";
@@ -78,7 +80,11 @@ public final class AnimationHelper {
     }
 
     public static void triggerRestAnimation(RideableDragonBase dragon, String animation) {
-        dragon.triggerAnim(MOVEMENT_CONTROLLER, animation);
+        if (dragon instanceof Ignivorus ignivorus) {
+            ignivorus.triggerHitboxAnimation(MOVEMENT_CONTROLLER, animation);
+        } else {
+            dragon.triggerAnim(MOVEMENT_CONTROLLER, animation);
+        }
     }
 
     public static PlayState idle(AnimationState<?> state) {

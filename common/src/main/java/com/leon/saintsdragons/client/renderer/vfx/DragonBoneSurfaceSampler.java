@@ -2,6 +2,7 @@ package com.leon.saintsdragons.client.renderer.vfx;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -17,12 +18,29 @@ import java.util.List;
 import java.util.Map;
 import com.leon.saintsdragons.util.WeakIdentityCache;
 
-final class DragonBoneSurfaceSampler {
+public final class DragonBoneSurfaceSampler {
     private static final WeakIdentityCache<GeoBone, List<Face>> SURFACES = new WeakIdentityCache<>();
     private static final double SURFACE_OFFSET = 0.06;
     record Face(Vec3 origin, Vec3 edgeU, Vec3 edgeV, Vec3 normal) {}
     record WeightedFace(Face face, double cumulativeArea) {}
 
+    public static AABB bounds(BakedGeoModel model, Map<String, Matrix4f> transforms, String[] names) {
+        AABB result = null;
+        for (String name : names) {
+            GeoBone bone = model.getBone(name).orElse(null);
+            Matrix4f transform = transforms.get(name);
+            if (bone == null || transform == null || !isVisible(bone)) continue;
+            for (Face face : SURFACES.computeIfAbsent(bone, DragonBoneSurfaceSampler::cacheSurfaces)) {
+                for (int corner = 0; corner < 4; corner++) {
+                    Vec3 local = face.origin().add(face.edgeU().scale(corner & 1)).add(face.edgeV().scale((corner >> 1) & 1));
+                    Vec3 point = transformPosition(transform, local);
+                    var box = new AABB(point, point);
+                    result = result == null ? box : result.minmax(box);
+                }
+            }
+        }
+        return result == null ? null : result.inflate(0.12D);
+    }
     static List<WeightedFace> animatedSurfaces(BakedGeoModel model, Map<String, Matrix4f> transforms, String[][] anchors) {
         List<WeightedFace> result = new ArrayList<>();
         double totalArea = 0.0;

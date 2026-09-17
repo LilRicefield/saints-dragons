@@ -2,7 +2,6 @@ package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
-
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.ai.navigation.DragonNavigationModeController;

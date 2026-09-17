@@ -1,119 +1,122 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.server.entity.part.IgnivorusCollisionState;
+import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
+
+import com.leon.saintsdragons.util.animation.AnimationHelper;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonMeleeMode;
 import com.leon.saintsdragons.common.network.NetworkHandler;
-import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
-import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.registry.ModBlocks;
 import com.leon.saintsdragons.common.registry.ModEntities;
-import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.registry.ModTags;
+import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
-import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
-import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
-import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusBrain;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatFlightState;
-import com.leon.saintsdragons.server.entity.ability.DragonAbility;
-import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
+import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrain;
+import com.leon.saintsdragons.server.ai.dragonbrain.profiles.IgnivorusBrain;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
+import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
-import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
-import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
+import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.base.DragonVariant;
 import com.leon.saintsdragons.server.entity.base.DragonVariantSet;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
-import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
-import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
-import com.leon.saintsdragons.server.entity.component.DragonRoostComponent;
-import com.leon.saintsdragons.server.entity.component.IgnivorusBreathStream;
-import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.ignivorus.IgnivorusRiderController;
+import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
+import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
+import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireballAbility;
+import com.leon.saintsdragons.server.entity.ability.abilities.ignivorus.IgnivorusFireBreathAbility;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusAnimationHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers.IgnivorusTamingHandler;
-import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonGriefingRules;
+import com.leon.saintsdragons.server.entity.component.DragonBreathComponent;
+import com.leon.saintsdragons.server.entity.component.IgnivorusBreathStream;
+import com.leon.saintsdragons.server.entity.component.DragonForwardMovementComponent;
+import com.leon.saintsdragons.server.entity.component.DragonRoostComponent;
+import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
 import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
-import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
-import com.leon.saintsdragons.server.flight.DragonFlightStateEvaluator;
-import com.leon.saintsdragons.server.flight.DragonFlightVisuals;
-import com.leon.saintsdragons.server.flight.DragonRiderFlight;
+import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
-import com.leon.saintsdragons.util.animation.AnimationHelper;
-import com.mojang.serialization.Dynamic;
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
-import javax.annotation.Nonnull;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.syncher.EntityDataAccessor;
-import net.minecraft.network.syncher.EntityDataSerializers;
-import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.DifficultyInstance;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.world.entity.AgeableMob;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnGroupData;
-import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.ai.Brain;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.MobSpawnType;
+import javax.annotation.Nonnull;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ClipContext;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.Structure;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.util.Mth;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import software.bernie.geckolib.core.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.core.object.PlayState;
 import software.bernie.geckolib.util.GeckoLibUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, DragonAirCombatSettingsProvider,
         PassiveTreeDestroyer, DrinkingDragon, ScentAssessingDragon, DragonCombatLearner {
@@ -2005,7 +2008,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         lockRiderControls(WILD_PHASE2_IDLE_TICKS + 1);
         getAIMovement().stopAndClearAllMovement();
         setDeltaMovement(Vec3.ZERO);
-        stopTriggeredAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
+        stopHitboxAnimation(IgnivorusAnimationHandler.MOVEMENT_CONTROLLER, "skyfall");
     }
 
     public void completeWildPhase2Transition() {
@@ -2131,7 +2134,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             long now = level().getGameTime();
             if (now - lastAiLandedAnimTick >= 15L) {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
+                triggerHitboxAnimation(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -2329,7 +2332,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     protected void onTakeoffStateStarted() {
-        triggerAnim(AnimationHelper.FLIGHT_CONTROLLER,
+        triggerHitboxAnimation(AnimationHelper.FLIGHT_CONTROLLER,
                 isPhase2Active() ? AnimationHelper.PHASE2_TAKEOFF : AnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_TAKEOFF.get(), 1.0f, 1.0f, 69);
     }
@@ -2778,7 +2781,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     @Override
     public void stopDrinkingAnimation() {
-        stopTriggeredAnimation(
+        stopHitboxAnimation(
                 IgnivorusAnimationHandler.MOVEMENT_CONTROLLER,
                 IgnivorusAnimationHandler.DRINKING_TRIGGER
         );
@@ -2888,7 +2891,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             @Override
             public void onRiderLanded() {
                 String landedAnim = isPhase2Active() ? "phase2_landed" : "landed";
-                triggerAnim(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
+                triggerHitboxAnimation(AnimationHelper.MOVEMENT_CONTROLLER, landedAnim);
                 if (isPhase2Active()) {
                     getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_PHASE2_LANDED.get(), 1.0f, 1.0f, 40);
                 } else {
@@ -3212,11 +3215,26 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return IgnivorusSoundProfile.INSTANCE;
     }
 
-    private final Map<String, Vec3> serverBonePositionCache = new ConcurrentHashMap<>();
+    private final IgnivorusCollisionState collisionState =
+            new IgnivorusCollisionState(this);
 
-    public void setServerBonePosition(String boneName, Vec3 position) {
-        if (boneName == null || position == null) return;
-        this.serverBonePositionCache.put(boneName, position);
+    public IgnivorusCollisionState getCollisionState() {
+        return collisionState;
+    }
+
+    @Override
+    protected boolean updatesModelPoseOnServer() {
+        return true;
+    }
+
+    public void triggerHitboxAnimation(String controller, String animation) {
+        if (!level().isClientSide) collisionState.trigger(controller, animation);
+        triggerAnim(controller, animation);
+    }
+
+    public void stopHitboxAnimation(String controller, String animation) {
+        if (!level().isClientSide) collisionState.stop(controller, animation);
+        stopTriggeredAnimation(controller, animation);
     }
 
     public Vec3 getBonePositionForHitbox(String boneName) {
@@ -3224,7 +3242,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         if (this.level().isClientSide) {
             return this.clientLocatorCache.get(boneName);
         } else {
-            return this.serverBonePositionCache.get(boneName);
+            return collisionState.locator(boneName);
         }
     }
 

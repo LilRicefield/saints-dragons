@@ -1,19 +1,18 @@
 package com.leon.saintsdragons.server.entity.base;
 
-import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
-import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
-import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
+import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
+import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonHearingListener;
 import com.leon.saintsdragons.server.ai.dragonbrain.perception.DragonInvestigation;
-import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
-import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
-import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.server.entity.component.DragonAiCombatPacingComponent;
@@ -29,36 +28,33 @@ import com.leon.saintsdragons.server.entity.component.DragonSleepComponent;
 import com.leon.saintsdragons.server.entity.component.ScreenShakeComponent;
 import com.leon.saintsdragons.server.entity.controller.DragonBodyControl;
 import com.leon.saintsdragons.server.entity.controller.DragonLookControl;
-import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
-import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.handler.CompanionCombatRules;
-import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
 import com.leon.saintsdragons.server.entity.handler.DragonCombatHandler;
 import com.leon.saintsdragons.server.entity.handler.DragonSoundHandler;
-import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
-import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
-import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSaddleCarrier;
 import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
+import com.leon.saintsdragons.server.entity.interfaces.DragonSaddleCarrier;
+import com.leon.saintsdragons.server.entity.interfaces.DancingEntity;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapable;
+import com.leon.saintsdragons.server.entity.interfaces.DragonMovementCapability;
 import com.leon.saintsdragons.server.entity.interfaces.SoundHandledDragon;
+import com.leon.saintsdragons.server.entity.handler.DragonAllyManager;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonBreedingRules;
+import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
-import com.leon.saintsdragons.util.math.SmoothValue;
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import com.leon.saintsdragons.util.math.SmoothValue;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.syncher.EntityDataAccessor;
@@ -69,16 +65,17 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.tags.DamageTypeTags;
-import net.minecraft.util.Mth;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.AgeableMob;
+import net.minecraft.world.entity.ai.control.BodyRotationControl;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.SpawnGroupData;
@@ -86,26 +83,29 @@ import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.ai.control.BodyRotationControl;
 import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.ServerLevelAccessor;
 import net.minecraft.world.level.gameevent.DynamicGameEventListener;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.NotNull;
 import software.bernie.geckolib.animatable.GeoEntity;
 import software.bernie.geckolib.core.animation.AnimatableManager;
 import software.bernie.geckolib.core.animation.RawAnimation;
+import com.leon.saintsdragons.server.data.DragonCodexSavedData;
+import java.util.List;
+import java.util.UUID;
+import java.util.EnumSet;
 
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon, DragonMovementCapable, DancingEntity {
     protected static final int DAMAGE_SLEEP_SUPPRESSION_TICKS = 20 * 30;
@@ -172,7 +172,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     private final SmoothValue fallbackBodyRotDeviation = SmoothValue.rotation(0.0);
     private final SmoothValue fallbackPitchDeviation = SmoothValue.rotation(0.0);
     private final SmoothValue fallbackYawVelocity = SmoothValue.value(0.0);
-    private float clientTailDragVelocity = 0.0f;
+    private float tailDragVelocity = 0.0f;
+    private float previousTailDragVelocity = 0.0f;
     private boolean clientBabyStateInitialized;
     private boolean clientBabyState;
     @Nullable
@@ -532,8 +533,16 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     }
 
     public float smoothTailDragVelocity(float targetDegrees) {
-        clientTailDragVelocity = Mth.lerp(0.15f, clientTailDragVelocity, targetDegrees);
-        return clientTailDragVelocity;
+        tailDragVelocity = Mth.lerp(0.15f, tailDragVelocity, targetDegrees);
+        return tailDragVelocity;
+    }
+
+    public float getTickedTailDragVelocity(float partialTick) {
+        return Mth.lerp(partialTick, previousTailDragVelocity, tailDragVelocity);
+    }
+
+    protected boolean updatesModelPoseOnServer() {
+        return false;
     }
 
     public SmoothValue getBodyRotDeviation() {
@@ -2116,6 +2125,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
     @Override
     public void tick() {
         super.tick();
+        if (updatesModelPoseOnServer()) {
+            tickRotationAnimationState();
+        }
         this.soundHandler.tick();
         tickAbilities();
         if (!level().isClientSide) {
@@ -2152,7 +2164,9 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
         if (level().isClientSide) {
             syncClientSitProgress();
-            tickClientRotationAnimationState();
+            if (!updatesModelPoseOnServer()) {
+                tickRotationAnimationState();
+            }
         }
     }
 
@@ -2169,10 +2183,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         }
     }
 
-    private void tickClientRotationAnimationState() {
+    private void tickRotationAnimationState() {
         double bodyYawDelta = Mth.wrapDegrees(this.yBodyRot - this.yBodyRotO) * 2.0;
         fallbackYawVelocity.setTo(bodyYawDelta);
         fallbackYawVelocity.update(0.25f);
+
+        if (updatesModelPoseOnServer()) {
+            previousTailDragVelocity = tailDragVelocity;
+            smoothTailDragVelocity(Mth.clamp((float) fallbackYawVelocity.get(1.0F), -30.0F, 30.0F));
+        }
 
         if (this.isVehicle()) {
             fallbackBodyRotDeviation.setTo(0.0);
