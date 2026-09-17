@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
+import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -341,12 +342,24 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
         dragon.getCombatAim().trackPoint(dragon.getTarget(), origin,
                 dragon.isAerial() ? AIR_AIM : DragonCombatAim.FIRE,
                 aiSolution == null ? null : aiSolution.aimPoint());
+        Vec3 aimedOrigin = getFireballOrigin(dragon);
+        if (aimedOrigin.distanceToSqr(origin) > 1.0E-8D) {
+            aiSolution = predictAiSolution(dragon, aimedOrigin, scale);
+        }
         aiShot = dragon.getCombatAim().assessDirection(aiSolution == null ? null : aiSolution.direction(), 5);
         return aiShot;
     }
 
     public void cancelAiCast(String reason) {
         getUser().setAiFireballDecision(reason);
+        var decisions = getUser().getCombatDecisionSupport();
+        if (decisions != null && aiControlled) {
+            if ("trajectory-blocked".equals(reason)) decisions.fail(
+                    DragonCombatDecisionSupport.Failure.BLOCKED_TRAJECTORY, getUser().position());
+            else if ("alignment-route-blocked".equals(reason)) decisions.fail(
+                    DragonCombatDecisionSupport.Failure.ROUTE_FAILED, getUser().getAIMovement().getDebugMovementTarget());
+            else if (reason.startsWith("alignment-timeout")) decisions.failSetup(getUser().position());
+        }
         if (learningTrial != 0) {
             getUser().getCombatLearning().finishAttack(learningTrial, "trajectory-blocked".equals(reason)
                     ? DragonCombatLearning.Outcome.BLOCKED : DragonCombatLearning.Outcome.CANCELLED);
