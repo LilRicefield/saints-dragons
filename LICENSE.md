@@ -46,7 +46,7 @@ including but not limited to:
 - Sound effects and music (.ogg, .wav, etc.)
 - Marketing artwork and promotional materials
 
-Except where otherwise identified, Part 2 applies only to assets for which Leon Saint is the copyright holder. Third-party assets remain subject to their respective licenses and are identified in the project's credits/attribution notices.
+Except where otherwise identified, Part 2 applies only to assets for which Leon Saint is the copyright holder. Third-party assets remain subject to their respective licenses and are identified in the project's credits/attribution notices. (see CREDIT.md)
 
 YOU MAY:
 - Use these assets as part of the unmodified Saint's Dragons mod
