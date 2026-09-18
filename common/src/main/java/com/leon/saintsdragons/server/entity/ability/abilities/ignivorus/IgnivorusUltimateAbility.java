@@ -397,6 +397,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         for (var viewer : viewers) {
             server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_LAYER.get(), true,
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+            server.sendParticles(viewer, ModParticles.IGNIVORUS_TOON_EXPLOSION.get(), true,
+                    base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
             server.sendParticles(viewer, ModParticles.IGNIVORUS_FIRE_SPEC.get(), true,
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
             if (!airSkyfallMode) {

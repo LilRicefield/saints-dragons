@@ -43,10 +43,6 @@ public final class IgnivorusAftermathParticle extends NoRenderParticle {
                         ground.x, ground.y, ground.z, 0.0D, 0.0D, 0.0D);
             }
         }
-        if (age == 5) {
-            Minecraft.getInstance().particleEngine.createParticle(ModParticles.IGNIVORUS_TOON_EXPLOSION.get(),
-                    x, y + 20.0D, z, 0.0D, 0.0D, 0.0D);
-        }
         if (age >= 12 && age <= 60 && age % 12 == 0) {
             for (Vec3 point : groundPoints) emitFire(point, new Vec3(0.0D, 0.04D, 0.0D));
         }
