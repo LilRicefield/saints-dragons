@@ -299,6 +299,9 @@ public final class ModParticles {
     public static final Supplier<SimpleParticleType> IGNIVORUS_MAGMA_PILLARS_IMPACT =
             REGISTER.register("ignivorus_magma_pillars_impact", () -> Services.PLATFORM.createSimpleParticle(true));
 
+    public static final Supplier<SimpleParticleType> IGNIVORUS_MAGMA_PILLAR_TOON_EXPLOSION =
+            REGISTER.register("ignivorus_magma_pillar_toon_explosion", () -> Services.PLATFORM.createSimpleParticle(true));
+
     public static final Supplier<SimpleParticleType> IGNIVORUS_FIRE_SPEC =
             REGISTER.register("ignivorus_fire_spec", () -> Services.PLATFORM.createSimpleParticle(true));
 

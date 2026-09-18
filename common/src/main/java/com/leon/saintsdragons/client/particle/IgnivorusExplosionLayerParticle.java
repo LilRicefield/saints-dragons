@@ -18,7 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
 public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle {
-    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA, SHARP, SWIRL, ABSORB, CIRCLE, TOON }
+    public enum Layer { EXPLOSION, GROUND, SPEC, CHARGE, AURA, SHARP, SWIRL, ABSORB, CIRCLE, TOON, MAGMA_PILLAR_TOON }
     private static final float TICKS_PER_FRAME = 2.0F;
     private static final int SPARK_COUNT = 64;
     private final SpriteSet sprites;
@@ -33,7 +33,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         super(level, x, y, z);
         this.sprites = sprites;
         this.layer = layer;
-        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND || layer == Layer.SHARP || layer == Layer.SWIRL || layer == Layer.ABSORB || layer == Layer.CIRCLE || layer == Layer.TOON)
+        this.renderType = (layer == Layer.CHARGE || layer == Layer.AURA || layer == Layer.GROUND || layer == Layer.SHARP || layer == Layer.SWIRL || layer == Layer.ABSORB || layer == Layer.CIRCLE || layer == Layer.TOON || layer == Layer.MAGMA_PILLAR_TOON)
                 && ShaderPassCompatibility.isShaderPackInUse()
                 ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
                 : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
@@ -48,10 +48,10 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             case SWIRL -> 31;
             case ABSORB -> 31;
             case CIRCLE -> 12;
-            case TOON -> 8;
+            case TOON, MAGMA_PILLAR_TOON -> 8;
         };
         this.ticksPerFrame = switch (layer) {
-            case CHARGE, SHARP, SWIRL, GROUND, TOON -> 0.5F;
+            case CHARGE, SHARP, SWIRL, GROUND, TOON, MAGMA_PILLAR_TOON -> 0.5F;
             case ABSORB, CIRCLE -> 0.5F;
             case AURA -> 16.0F / frameCount;
             default -> TICKS_PER_FRAME;
@@ -154,8 +154,10 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             alpha = smooth(Mth.clamp(elapsed, 0.0F, 1.0F))
                     * (1.0F - smooth(Mth.clamp((elapsed - 4.0F) / 2.0F, 0.0F, 1.0F)));
         }
-        if (layer == Layer.TOON) {
-            quadSize = Mth.lerp(progress, 8.0F, 16.0F);
+        if (layer == Layer.TOON || layer == Layer.MAGMA_PILLAR_TOON) {
+            boolean skyfallToon = layer == Layer.TOON;
+            quadSize = Mth.lerp(progress, skyfallToon ? 18.0F : 4.0F,
+                    skyfallToon ? 28.0F : 9.0F);
             alpha = fadeIn * (1.0F - smooth(Mth.clamp((elapsed - 10.0F) / 6.0F, 0.0F, 1.0F)));
         }
         if (layer == Layer.ABSORB) {

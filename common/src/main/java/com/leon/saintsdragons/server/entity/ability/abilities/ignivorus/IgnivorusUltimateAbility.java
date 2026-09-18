@@ -314,6 +314,8 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
             if (viewer.distanceToSqr(base) <= FIRE_PUFF_VIEW_DISTANCE_SQR) {
                 server.sendParticles(viewer, ModParticles.IGNIVORUS_SKYFALL_CIRCLE.get(), true,
                         base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
+                server.sendParticles(viewer, ModParticles.IGNIVORUS_TOON_EXPLOSION.get(), true,
+                        base.x, base.y, base.z, 0, 5.0D, 5.0D, 5.0D, 0.0D);
             }
         }
     }
@@ -396,8 +398,6 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
         }
         for (var viewer : viewers) {
             server.sendParticles(viewer, ModParticles.IGNIVORUS_EXPLOSION_LAYER.get(), true,
-                    base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
-            server.sendParticles(viewer, ModParticles.IGNIVORUS_TOON_EXPLOSION.get(), true,
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);
             server.sendParticles(viewer, ModParticles.IGNIVORUS_FIRE_SPEC.get(), true,
                     base.x, base.y, base.z, 0, 0.0D, 0.0D, 0.0D, 0.0D);

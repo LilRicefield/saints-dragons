@@ -5,7 +5,6 @@ import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
@@ -140,10 +139,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         livedTicks++;
         setDeltaMovement(Vec3.ZERO);
 
-        if (level().isClientSide) {
-            spawnClientEffects();
-        }
-
         if (isSubsiding()) {
             subsideTicks++;
             if (!level().isClientSide && subsideTicks >= SUBSIDE_DURATION_TICKS) {
@@ -175,7 +170,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
                 x, y + 0.02D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
         server.sendParticles(ModParticles.IGNIVORUS_GROUND_IMPACT.get(),
                 x, y + 0.04D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
-        server.sendParticles(ModParticles.IGNIVORUS_TOON_EXPLOSION.get(),
+        server.sendParticles(ModParticles.IGNIVORUS_MAGMA_PILLAR_TOON_EXPLOSION.get(),
                 x, y + 2.0D + getVisualScale() * 0.35D, z, 1,
                 0.0D, 0.0D, 0.0D, 0.0D);
         server.sendParticles(ModParticles.CINDERVANE_IMPACT_EMITTER.get(),
@@ -252,8 +247,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
         }
 
         if (firstHit) {
-            server.sendParticles(ParticleTypes.LAVA, getX(), getY() + 2.0D, getZ(), 20,
-                    0.6D, 1.2D, 0.6D, 0.05D);
             server.playSound(null, blockPosition(), ModSounds.IGNIVORUS_MAGMA_PILLAR.get(), SoundSource.HOSTILE,
                     1.4F, 0.8F + server.random.nextFloat() * 0.2F);
         }
@@ -264,22 +257,6 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
             return dragon.isAlly(target);
         }
         return owner != null && (owner.isAlliedTo(target) || target.isAlliedTo(owner));
-    }
-
-    private void spawnClientEffects() {
-        if (level().random.nextFloat() < 0.6f) {
-            level().addParticle(ParticleTypes.SMALL_FLAME,
-                    getX(), getY() + level().random.nextDouble() * 3.0D,
-                    getZ(),
-                    0.0D, 0.01D, 0.0D);
-        }
-        if (level().random.nextFloat() < 0.4f) {
-            level().addParticle(ParticleTypes.FALLING_LAVA,
-                    getX() + (level().random.nextDouble() - 0.5D) * 0.6D,
-                    getY() + 0.1D,
-                    getZ() + (level().random.nextDouble() - 0.5D) * 0.6D,
-                    0.0D, -0.04D, 0.0D);
-        }
     }
 
     @Override
