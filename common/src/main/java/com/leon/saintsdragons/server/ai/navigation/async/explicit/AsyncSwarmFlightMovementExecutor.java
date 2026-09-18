@@ -1,4 +1,4 @@
-package com.leon.saintsdragons.server.ai.navigation.async;
+package com.leon.saintsdragons.server.ai.navigation.async.explicit;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;

@@ -51,13 +51,12 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             case TOON -> 8;
         };
         this.ticksPerFrame = switch (layer) {
-            case CHARGE, SHARP, SWIRL -> 1.0F;
+            case CHARGE, SHARP, SWIRL, GROUND, TOON -> 0.5F;
             case ABSORB, CIRCLE -> 0.5F;
             case AURA -> 16.0F / frameCount;
-            case GROUND -> 24.0F / frameCount;
             default -> TICKS_PER_FRAME;
         };
-        lifetime = layer == Layer.AURA ? 16 : ground ? 24 : Mth.ceil(frameCount * ticksPerFrame);
+        lifetime = layer == Layer.AURA ? 16 : Mth.ceil(frameCount * ticksPerFrame);
         hasPhysics = false;
         alpha = 0.0F;
         setColor(1.0F, 0.65F, 0.18F);
@@ -132,6 +131,9 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
 
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
+        if (ground && ShaderPassCompatibility.isIrisShadowPass()) {
+            return;
+        }
         float elapsed = age + partialTicks;
         if (frameCount > 1) {
             int frame = Math.min((int) (elapsed / ticksPerFrame), frameCount - 1);
@@ -144,7 +146,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
         float fadeOut = 1.0F - smooth(Mth.clamp((progress - 0.3F) / 0.7F, 0.0F, 1.0F));
         alpha = fadeIn * fadeOut;
         quadSize = Mth.lerp(1.0F - (1.0F - progress) * (1.0F - progress),
-                ground ? 10.0F : 12.0F, ground ? 32.0F : 36.0F);
+                ground ? 6.0F : 10.0F, ground ? 8.0F : 16.0F);
         if (layer == Layer.CHARGE) quadSize = Mth.lerp(progress, 24.0F, 36.0F);
         if (layer == Layer.SHARP) quadSize = 16.0F;
         if (layer == Layer.CIRCLE) {
@@ -153,12 +155,12 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
                     * (1.0F - smooth(Mth.clamp((elapsed - 4.0F) / 2.0F, 0.0F, 1.0F)));
         }
         if (layer == Layer.TOON) {
-            quadSize = Mth.lerp(progress, 24.0F, 36.0F);
+            quadSize = Mth.lerp(progress, 8.0F, 16.0F);
             alpha = fadeIn * (1.0F - smooth(Mth.clamp((elapsed - 10.0F) / 6.0F, 0.0F, 1.0F)));
         }
         if (layer == Layer.ABSORB) {
             quadSize = 24.0F;
-            alpha = smooth(Mth.clamp(elapsed / 1.0F, 0.0F, 1.0F))
+            alpha = smooth(Mth.clamp(elapsed, 0.0F, 1.0F))
                     * (1.0F - smooth(Mth.clamp((elapsed - 14.0F) / 1.5F, 0.0F, 1.0F)));
         }
         if (layer == Layer.SWIRL) {
@@ -186,7 +188,7 @@ public final class IgnivorusExplosionLayerParticle extends TextureSheetParticle 
             super.render(buffer, camera, partialTicks);
             return;
         }
-        Vec3 center = new Vec3(x, y, z).subtract(camera.getPosition());
+        Vec3 center = new Vec3(x, y + 0.025D, z).subtract(camera.getPosition());
         corner(buffer, center, -quadSize, -quadSize, getU0(), getV0());
         corner(buffer, center, -quadSize, quadSize, getU0(), getV1());
         corner(buffer, center, quadSize, quadSize, getU1(), getV1());

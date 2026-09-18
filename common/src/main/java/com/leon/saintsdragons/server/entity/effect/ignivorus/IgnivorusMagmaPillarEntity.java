@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.entity.effect.ignivorus;
 
 import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.particles.ParticleTypes;
@@ -72,6 +73,7 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
     private final Set<UUID> hitEntities = new HashSet<>();
     private boolean rotationLocked = false;
     private float lockedHeadYaw = 0.0f;
+    private boolean impactEffectsSpawned;
 
     public IgnivorusMagmaPillarEntity(EntityType<? extends IgnivorusMagmaPillarEntity> type, Level level) {
         super(type, level);
@@ -152,6 +154,10 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
 
         if (!level().isClientSide) {
             resolveOwner();
+            if (!impactEffectsSpawned) {
+                spawnImpactEffects((ServerLevel) level());
+                impactEffectsSpawned = true;
+            }
             if (livedTicks >= warmupTicks) {
                 applyImpact();
             }
@@ -159,6 +165,21 @@ public class IgnivorusMagmaPillarEntity extends Entity implements GeoEntity {
                 beginSubside();
             }
         }
+    }
+
+    private void spawnImpactEffects(ServerLevel server) {
+        double x = getX();
+        double y = getY();
+        double z = getZ();
+        server.sendParticles(ModParticles.IGNIVORUS_MAGMA_PILLARS_IMPACT.get(),
+                x, y + 0.02D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        server.sendParticles(ModParticles.IGNIVORUS_GROUND_IMPACT.get(),
+                x, y + 0.04D, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        server.sendParticles(ModParticles.IGNIVORUS_TOON_EXPLOSION.get(),
+                x, y + 2.0D + getVisualScale() * 0.35D, z, 1,
+                0.0D, 0.0D, 0.0D, 0.0D);
+        server.sendParticles(ModParticles.CINDERVANE_IMPACT_EMITTER.get(),
+                x, y + 0.75D, z, 64, 0.35D, 0.22D, 0.35D, 0.0D);
     }
 
     private void resolveOwner() {
