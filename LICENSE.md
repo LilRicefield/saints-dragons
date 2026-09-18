@@ -46,23 +46,20 @@ including but not limited to:
 - Sound effects and music (.ogg, .wav, etc.)
 - Marketing artwork and promotional materials
 
+Except where otherwise identified, Part 2 applies only to assets for which Leon Saint is the copyright holder. Third-party assets remain subject to their respective licenses and are identified in the project's credits/attribution notices.
+
 YOU MAY:
 - Use these assets as part of the unmodified Saint's Dragons mod
-- Include Saint's Dragons in public or private modpacks, provided the assets
-  remain unaltered and the mod is credited to Leon Saint
-- Create video content, screenshots, or other media featuring these assets
-  for promotional or entertainment purposes
+- Include Saint's Dragons in public or private modpacks, provided the assets remain unaltered and the mod is credited to Leon Saint
+- Create video content, screenshots, or other media featuring these assets for promotional or entertainment purposes
 
 YOU MAY NOT:
-- Extract, modify, reuse, or redistribute the assets outside of Saint's Dragons
-  without explicit written permission from Leon Saint
-- Sell, reupload, or monetize the assets independently or as part of another
-  project
+- Extract, modify, reuse, or redistribute the assets outside of Saint's Dragons without explicit written permission from Leon Saint
+- Sell, reupload, or monetize the assets independently or as part of another project
 - Claim authorship or ownership of the assets
-- Use the assets in competing dragon mods or similar projects without
-  explicit permission
+- Use the assets in dragon mods or similar projects without explicit permission
 
-For additional usage rights or permissions, contact: lilricefield@gmail.com
+For additional usage rights or permissions, contact: lilricearoni@gmail.com
 
 ================================================================================
 
