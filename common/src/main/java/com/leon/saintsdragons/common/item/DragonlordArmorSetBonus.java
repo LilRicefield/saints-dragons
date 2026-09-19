@@ -16,7 +16,6 @@ import com.leon.saintsdragons.server.entity.effect.ImpactRingEntity;
 import com.leon.saintsdragons.server.entity.effect.VisualFallingBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.DamageTypeTags;
 import net.minecraft.util.RandomSource;
@@ -53,7 +52,7 @@ public final class DragonlordArmorSetBonus {
     private static final int LANDING_SCREEN_SHAKE_DURATION = 16;
     private static final float LANDING_SCREEN_SHAKE_RADIUS = 36.0F;
     private static final int DOUBLE_JUMP_FLAME_COUNT = 20;
-    private static final int DOUBLE_JUMP_DUST_COUNT = 14;
+    private static final int DOUBLE_JUMP_SMOKE_COUNT = 14;
     private static final float FALL_DAMAGE_BLOCK_THRESHOLD = 16.0F;
     private static final float VANILLA_PLAYER_MAX_HEALTH = 20.0F;
     private static final UUID DOUBLE_JUMP_MODIFIER_UUID = UUID.fromString("8e8d7d4f-14b7-4df2-aeaf-4b47e6c4f617");
@@ -473,14 +472,34 @@ public final class DragonlordArmorSetBonus {
         double y = player.getY() + 0.35D;
         for (int i = 0; i < DOUBLE_JUMP_FLAME_COUNT; i++) {
             double angle = (Math.PI * 2.0D * i) / DOUBLE_JUMP_FLAME_COUNT;
-            server.sendParticles(ParticleTypes.FLAME,
-                    origin.x, y, origin.z,
-                    0, Math.cos(angle) * 0.18D, 0.02D,
-                    Math.sin(angle) * 0.18D, 1.0D);
+            server.sendParticles(ModParticles.DRAGONLORD_JUMP_FIRE.get(),
+                    origin.x + Math.cos(angle) * 0.3D, y, origin.z + Math.sin(angle) * 0.3D,
+                    0, Math.cos(angle) * 0.35D, 0.02D,
+                    Math.sin(angle) * 0.35D, 1.0D);
+            double specAngle = angle + Math.PI / DOUBLE_JUMP_FLAME_COUNT;
+            server.sendParticles(ModParticles.DRAGONLORD_JUMP_SPEC.get(),
+                    origin.x + Math.cos(specAngle) * 0.3D, y, origin.z + Math.sin(specAngle) * 0.3D,
+                    0, Math.cos(specAngle) * 0.45D, 0.035D,
+                    Math.sin(specAngle) * 0.45D, 1.0D);
         }
-        server.sendParticles(ParticleTypes.POOF,
-                origin.x, player.getBoundingBox().minY - 0.05D, origin.z,
-                DOUBLE_JUMP_DUST_COUNT, 0.35D, 0.04D, 0.35D, 0.04D);
+        for (int i = 0; i < DOUBLE_JUMP_SMOKE_COUNT; i++) {
+            double angle = Math.PI * 2.0D * (i + 0.5D) / DOUBLE_JUMP_SMOKE_COUNT;
+            server.sendParticles(ModParticles.DRAGONLORD_JUMP_SMOKE.get(),
+                    origin.x + Math.cos(angle) * 0.35D, player.getBoundingBox().minY - 0.05D,
+                    origin.z + Math.sin(angle) * 0.35D,
+                    0, Math.cos(angle) * 0.26D, 0.025D, Math.sin(angle) * 0.26D, 1.0D);
+        }
+        var random = player.getRandom();
+        for (int i = 0; i < 28; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0D;
+            double radius = 0.15D + random.nextDouble() * 0.5D;
+            double speed = 0.2D + random.nextDouble() * 0.4D;
+            server.sendParticles(ModParticles.DRAGONLORD_JUMP_EMITTER.get(),
+                    origin.x + Math.cos(angle) * radius, y + (random.nextDouble() - 0.5D) * 0.4D,
+                    origin.z + Math.sin(angle) * radius,
+                    0, Math.cos(angle) * speed, (random.nextDouble() - 0.35D) * 0.3D,
+                    Math.sin(angle) * speed, 1.0D);
+        }
 
         server.playSound(null, player.blockPosition(), ModSounds.DRAGONLORD_ARMOR_DOUBLE_JUMP.get(),
                 SoundSource.PLAYERS, 0.75F, 0.95F + player.getRandom().nextFloat() * 0.1F);

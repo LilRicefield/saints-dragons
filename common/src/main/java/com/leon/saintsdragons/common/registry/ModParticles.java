@@ -24,6 +24,15 @@ public final class ModParticles {
             Services.PLATFORM.getRegistryHelper()
                     .create(Registries.PARTICLE_TYPE, () -> BuiltInRegistries.PARTICLE_TYPE, SaintsDragonsCommon.MOD_ID);
 
+    public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_FIRE =
+            REGISTER.register("dragonlord_jump_fire", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_SPEC =
+            REGISTER.register("dragonlord_jump_spec", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_SMOKE =
+            REGISTER.register("dragonlord_jump_smoke", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_EMITTER =
+            REGISTER.register("dragonlord_jump_emitter", () -> Services.PLATFORM.createSimpleParticle(false));
+
     public static final Supplier<SimpleParticleType> VOLITANS_POISON_ORB_EMITTER =
             REGISTER.register("volitans_poison_orb_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
 

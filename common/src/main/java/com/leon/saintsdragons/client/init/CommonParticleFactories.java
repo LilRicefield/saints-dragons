@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.client.init;
 
 import com.leon.saintsdragons.client.particle.VolitansPoisonOrbTrailParticle;
+import com.leon.saintsdragons.client.particle.DragonlordJumpParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaIceBurstParticle;
 import com.leon.saintsdragons.client.particle.AtroxiiaQuakeSmokeParticle;
 import com.leon.saintsdragons.client.particle.CindervaneFireTrailParticle;
@@ -54,6 +55,10 @@ public final class CommonParticleFactories {
     }
 
     public static void register(Registrar registrar) {
+        register(registrar, ModParticles.DRAGONLORD_JUMP_FIRE.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.FIRE));
+        register(registrar, ModParticles.DRAGONLORD_JUMP_SPEC.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.SPEC));
+        register(registrar, ModParticles.DRAGONLORD_JUMP_SMOKE.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.SMOKE));
+        register(registrar, ModParticles.DRAGONLORD_JUMP_EMITTER.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.EMITTER));
         register(registrar, ModParticles.VOLITANS_POISON_ORB_EMITTER.get(), sprites -> new VolitansPoisonOrbTrailParticle.Factory(sprites, true));
         register(registrar, ModParticles.VOLITANS_POISON_ORB_TRAIL.get(), VolitansPoisonOrbTrailParticle.Factory::new);
         register(registrar, ModParticles.ATROXIIA_QUAKE_SMOKE.get(), AtroxiiaQuakeSmokeParticle.Factory::new);
