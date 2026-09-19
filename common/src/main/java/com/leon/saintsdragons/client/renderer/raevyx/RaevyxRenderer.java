@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormAuraParticles;
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormLightningRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxSummonStormRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderType;
 import software.bernie.geckolib.cache.object.GeoBone;
@@ -89,7 +90,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     @Override
     protected String[] trackedBoneNames() {
-        return new String[] {PASSENGER_BONE, BEAM_BONE, DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE,
+        return new String[] {PASSENGER_BONE, BEAM_BONE, "body", DragonDiveTrailRenderer.LEFT_WING_TRAIL_BONE,
                 DragonDiveTrailRenderer.RIGHT_WING_TRAIL_BONE, DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE};
     }
 
@@ -108,6 +109,10 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
         if (super.shouldRender(entity, frustum, camX, camY, camZ)) {
             return true;
         }
+        float stormAge = entity.getGroundStormVisualAge(1.0F);
+        if (stormAge >= 0 && stormAge < RaevyxSummonStormRenderer.TOTAL_DURATION_TICKS
+                && entity.distanceToSqr(camX, camY, camZ) <= BEAM_RENDER_DISTANCE * BEAM_RENDER_DISTANCE
+                && frustum.isVisible(entity.getBoundingBox().inflate(12.0D))) return true;
         if (!entity.isBeaming()) {
             return false;
         }
@@ -137,6 +142,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     @Override
     protected void afterDragonRender(Raevyx entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+        RaevyxSummonStormRenderer.render(entity, getBoneWorldPosition("body"), poseStack, bufferSource, partialTick);
         RaevyxStormAuraParticles.emit(entity, this.lastBakedModel, stormTransforms, partialTick);
         RaevyxStormLightningRenderer.render(entity, this.lastBakedModel, stormTransforms, poseStack, bufferSource, partialTick);
         RaevyxLightningBeamLayer.renderFlashes(entity, poseStack, bufferSource, partialTick);

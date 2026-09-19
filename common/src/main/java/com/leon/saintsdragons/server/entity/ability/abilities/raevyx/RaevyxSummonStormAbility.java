@@ -21,7 +21,10 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int DEFAULT_COOLDOWN_TICKS = 20 * 240;
     private static final int MIN_SUPERCHARGE_TICKS = 20;
     private static final int MIN_COOLDOWN_TICKS = 20;
-    private static final int GROUND_ONE_SHOT_TICKS = 125;
+    public static final int GROUND_ONE_SHOT_TICKS = 125;
+    public static final int GROUND_INTRO_TICKS = 50;
+    public static final int GROUND_BURST_TICKS = 10;
+    public static final int GROUND_SUPERCHARGE_START_TICKS = GROUND_INTRO_TICKS + GROUND_BURST_TICKS;
     private static final int GROUND_SOUND_TICKS = 140;
     private static final int GROUND_EXTRA_SHAKE_TICK = 38;
     private static final int GROUND_SHAKE_START_TICKS = 49;
@@ -38,6 +41,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private boolean isGroundCast;
     private boolean screenShakeActive;
     private boolean groundExtraShakeTriggered;
+    private boolean superchargeStarted;
     private int activeStartupDuration = AIR_ONE_SHOT_TICKS;
 
     public RaevyxSummonStormAbility(DragonAbilityType<Raevyx, RaevyxSummonStormAbility> type, Raevyx user) {
@@ -58,6 +62,11 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
 
         int ticks = getTicksInSection();
         if (isGroundCast) {
+            if (!getLevel().isClientSide && !superchargeStarted
+                    && getUser().getGroundStormVisualAge(0) >= GROUND_SUPERCHARGE_START_TICKS) {
+                getUser().startSupercharge(getConfiguredSuperchargeTicks());
+                superchargeStarted = true;
+            }
             if (!groundExtraShakeTriggered && ticks >= GROUND_EXTRA_SHAKE_TICK) {
                 groundExtraShakeTriggered = true;
                 getUser().triggerScreenShake(1.8F);
@@ -85,7 +94,9 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     protected void beginSection(DragonAbilitySection section) {
         if (section == null) return;
         if (section.sectionType == AbilitySectionType.STARTUP) {
+            superchargeStarted = false;
             isGroundCast = !getUser().isFlying();
+            getUser().setGroundStormVisuals(isGroundCast);
             activeStartupDuration = isGroundCast ? GROUND_ONE_SHOT_TICKS : AIR_ONE_SHOT_TICKS;
             getUser().startTemporaryInvuln(activeStartupDuration);
             getUser().lockRiderControls(activeStartupDuration);
@@ -108,9 +119,12 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
             }
         } else if (section.sectionType == AbilitySectionType.ACTIVE) {
             if (!getLevel().isClientSide) {
-                int superchargeTicks = getConfiguredSuperchargeTicks();
                 int stormDurationTicks = getConfiguredStormDurationTicks();
-                getUser().startSupercharge(superchargeTicks);
+
+                if (!superchargeStarted) {
+                    getUser().startSupercharge(getConfiguredSuperchargeTicks());
+                    superchargeStarted = true;
+                }
 
                 if (getLevel() instanceof ServerLevel server) {
                     var ld = server.getLevelData();
@@ -150,6 +164,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     }
 
     private void releaseLocks() {
+        getUser().setGroundStormVisuals(false);
         getUser().clearTakeoffLock();
         getUser().clearRiderControlLock();
         screenShakeActive = false;

@@ -16,6 +16,7 @@ The following purchased visual assets come from [Will Tice / unTied Games](https
 - `fire_breath_start`
 - `fire_swirl_explode`
 - `ice_burst`
+- `lightning_burst` effects
 
 The Saint's Dragons team has purchased these assets and lists them here at the
 artist's request. The original artwork is not created by the Saint's Dragons team.

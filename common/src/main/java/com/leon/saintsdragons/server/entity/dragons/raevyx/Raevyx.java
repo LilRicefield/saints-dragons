@@ -572,6 +572,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     protected void defineSynchedData() {
         super.defineSynchedData();
         this.entityData.define(DATA_STORM_AURA, false);
+        this.entityData.define(DATA_GROUND_STORM_START, -1L);
         this.entityData.define(DATA_SCREEN_SHAKE_AMOUNT, 0.0F);
         this.entityData.define(DATA_BEAMING, false);
         this.entityData.define(DATA_BEAM_GLOW, false);
@@ -2119,7 +2120,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     
     private void syncStormAura() {
         if (this.level().isClientSide) return;
-        this.entityData.set(DATA_STORM_AURA, isSupercharged() && this.level().isThundering());
+        this.entityData.set(DATA_STORM_AURA, isSupercharged());
     }
 
     private void tickFeedingCooldown() {
@@ -2497,6 +2498,16 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     private static final EntityDataAccessor<Boolean> DATA_STORM_AURA = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Long> DATA_GROUND_STORM_START = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.LONG);
+
+    public void setGroundStormVisuals(boolean active) {
+        if (!level().isClientSide) entityData.set(DATA_GROUND_STORM_START, active ? level().getGameTime() : -1L);
+    }
+
+    public float getGroundStormVisualAge(float partialTick) {
+        long start = entityData.get(DATA_GROUND_STORM_START);
+        return start < 0 || !isAlive() ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
+    }
 
     public boolean isStormAuraActive() { return this.entityData.get(DATA_STORM_AURA); }
 
