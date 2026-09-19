@@ -108,6 +108,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.VOLITANS_POISON_SKULL.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_SKULL));
         register(registrar, ModParticles.VOLITANS_POISON_FLAME.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_FLAME));
         register(registrar, ModParticles.VOLITANS_POISON_EXPLOSION.get(), sprites -> new VolitansPoisonImpactParticle.Factory(sprites, false));
+        register(registrar, ModParticles.VOLITANS_POISON_GROUND_BURST.get(), com.leon.saintsdragons.client.particle.VolitansPoisonGroundBurstParticle.Factory::new);
         register(registrar, ModParticles.VOLITANS_POISON_CLOUD.get(), sprites -> new VolitansPoisonImpactParticle.Factory(sprites, true));
         register(registrar, ModParticles.VOLITANS_BREATH_BUBBLES.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.BUBBLES));
         register(registrar, ModParticles.VOLITANS_BREATH_EMITTER.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.EMITTER));

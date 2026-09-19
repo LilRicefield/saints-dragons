@@ -34,6 +34,7 @@ import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -73,6 +74,8 @@ import software.bernie.geckolib.core.animation.AnimationController;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.function.Supplier;
 
 public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer, ScentAssessingDragon, DragonSaddleCarrier {
@@ -150,7 +153,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
     private static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
-    private static final int ATROXIIA_CHEST_SLOTS = 15;
+    private static final int ATROXIIA_CHEST_SLOTS = 10;
 
     @Override
     public int getScentAssessmentDurationTicks() {
@@ -179,6 +182,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private final AtroxiiaTamingHandler tamingController = new AtroxiiaTamingHandler(this);
     private final ScreenShakeComponent screenShakeComponent;
     private final SimpleContainer atroxiiaChestInventory = new SimpleContainer(ATROXIIA_CHEST_SLOTS);
+    private final List<ItemStack> pendingChestOverflow = new ArrayList<>();
     private final DragonForwardMovementComponent slitherMovement = new DragonForwardMovementComponent(
             this,
             new DragonForwardMovementComponent.StateAccess() {
@@ -343,12 +347,21 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     private void dropAtroxiiaChestContent() {
+        dropPendingChestOverflow();
         for (int slot = 0; slot < atroxiiaChestInventory.getContainerSize(); slot++) {
             ItemStack stack = atroxiiaChestInventory.getItem(slot);
             if (!stack.isEmpty()) {
                 this.spawnAtLocation(stack.copy());
                 atroxiiaChestInventory.setItem(slot, ItemStack.EMPTY);
             }
+        }
+    }
+
+    private void dropPendingChestOverflow() {
+        if (level().isClientSide) return;
+        var iterator = pendingChestOverflow.iterator();
+        while (iterator.hasNext()) {
+            if (spawnAtLocation(iterator.next().copy()) != null) iterator.remove();
         }
     }
 
@@ -804,6 +817,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         tickSwimPitchVisual();
         if (!level().isClientSide) {
             slitherMovement.tickServerState();
+            dropPendingChestOverflow();
             tamingController.tickServer();
             if (isTamingStunned()) {
                 tamingController.enforceGroundingTick();
@@ -856,6 +870,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     private void dropEquipmentOnDeath() {
+        dropPendingChestOverflow();
         if (hasAtroxiiaChest()) {
             dropAtroxiiaChestContent();
             spawnAtLocation(Items.CHEST);
@@ -1298,6 +1313,9 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         if (hasAtroxiiaChest()) {
             tag.put("AtroxiiiaChestsItems", atroxiiaChestInventory.createTag());
         }
+        ListTag overflow = new ListTag();
+        for (ItemStack stack : pendingChestOverflow) overflow.add(stack.save(new CompoundTag()));
+        tag.put("AtroxiiaChestOverflow", overflow);
     }
 
     @Override
@@ -1312,8 +1330,19 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
                 || tag.contains("AtroxiiaSaddled") && tag.getBoolean("AtroxiiaSaddled");
         setSaddle(restoredSaddle);
         setAtroxiiaChest(restoredChest);
+        atroxiiaChestInventory.clearContent();
+        pendingChestOverflow.clear();
         if (hasAtroxiiaChest() && tag.contains("AtroxiiiaChestsItems", Tag.TAG_LIST)) {
-            atroxiiaChestInventory.fromTag(tag.getList("AtroxiiiaChestsItems", Tag.TAG_COMPOUND));
+            ListTag items = tag.getList("AtroxiiiaChestsItems", Tag.TAG_COMPOUND);
+            for (int i = 0; i < items.size(); i++) {
+                ItemStack remainder = atroxiiaChestInventory.addItem(ItemStack.of(items.getCompound(i)));
+                if (!remainder.isEmpty()) pendingChestOverflow.add(remainder);
+            }
+        }
+        ListTag overflow = tag.getList("AtroxiiaChestOverflow", Tag.TAG_COMPOUND);
+        for (int i = 0; i < overflow.size(); i++) {
+            ItemStack stack = ItemStack.of(overflow.getCompound(i));
+            if (!stack.isEmpty()) pendingChestOverflow.add(stack);
         }
         tamingController.load(tag);
         applyConfiguredAttributes();

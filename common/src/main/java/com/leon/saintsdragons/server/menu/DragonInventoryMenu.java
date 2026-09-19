@@ -27,6 +27,7 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
     private static final int ATTACHMENT_CONTAINER_SLOT = 0;
     private static final int SADDLE_DATA_INDEX = 0;
     private static final int CHEST_DATA_INDEX = 1;
+    private static final int CARGO_SIZE_DATA_INDEX = 2;
     private static final int CARGO_SLOT_START = 2;
     private static final int CARGO_COLUMNS = 5;
     private static final int CARGO_ROWS = 3;
@@ -47,7 +48,7 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
     private final Entity carrierEntity;
 
     public DragonInventoryMenu(int containerId, Inventory playerInventory) {
-        this(containerId, playerInventory, null, new SimpleContainer(CARGO_SLOT_COUNT), new SimpleContainerData(2));
+        this(containerId, playerInventory, null, new SimpleContainer(CARGO_SLOT_COUNT), new SimpleContainerData(3));
     }
 
     public DragonInventoryMenu(int containerId, Inventory playerInventory, Stegonaut stegonaut) {
@@ -55,7 +56,7 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
     }
 
     public DragonInventoryMenu(int containerId, Inventory playerInventory, DragonSaddleCarrier equipmentCarrier) {
-        this(containerId, playerInventory, equipmentCarrier, equipmentCarrier.getAttachedChestInventory(), new SimpleContainerData(2));
+        this(containerId, playerInventory, equipmentCarrier, equipmentCarrier.getAttachedChestInventory(), new SimpleContainerData(3));
         this.data.set(SADDLE_DATA_INDEX, equipmentCarrier.hasSaddle() ? 1 : 0);
         this.data.set(CHEST_DATA_INDEX, equipmentCarrier.hasAttachedChest() ? 1 : 0);
         syncEquipmentIndicators();
@@ -71,6 +72,7 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
         this.carrierEntity = equipmentCarrier instanceof Entity entity ? entity : null;
         this.cargoInventory = cargoInventory;
         this.data = data;
+        this.data.set(CARGO_SIZE_DATA_INDEX, cargoInventory.getContainerSize());
         this.saddleSlotInventory = new SimpleContainer(1);
         this.chestSlotInventory = new SimpleContainer(1);
         this.cargoInventory.startOpen(playerInventory.player);
@@ -105,12 +107,15 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
                 this::syncEquipmentIndicators
         ));
 
+        // Keep network slot IDs stable; smaller inventories get inaccessible empty placeholders.
+        Container unusedSlots = new SimpleContainer(CARGO_SLOT_COUNT);
         for (int row = 0; row < CARGO_ROWS; row++) {
             for (int col = 0; col < CARGO_COLUMNS; col++) {
                 int slotIndex = col + row * CARGO_COLUMNS;
                 int x = 80 + col * 18;
                 int y = 18 + row * 18;
-                this.addSlot(new CargoSlot(this.cargoInventory, slotIndex, x, y));
+                Container slots = slotIndex < cargoInventory.getContainerSize() ? this.cargoInventory : unusedSlots;
+                this.addSlot(new CargoSlot(slots, slotIndex, x, y));
             }
         }
 
@@ -135,6 +140,10 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
 
     public int getChestColumns() {
         return CARGO_COLUMNS;
+    }
+
+    public int getChestRows() {
+        return (this.data.get(CARGO_SIZE_DATA_INDEX) + CARGO_COLUMNS - 1) / CARGO_COLUMNS;
     }
 
     @Override
@@ -193,7 +202,8 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
                         return ItemStack.EMPTY;
                     }
                 } else if (hasChestInstalled()) {
-                    if (!this.moveItemStackTo(stack, CARGO_SLOT_START, CARGO_SLOT_END, false)) {
+                    if (!this.moveItemStackTo(stack, CARGO_SLOT_START,
+                            CARGO_SLOT_START + this.data.get(CARGO_SIZE_DATA_INDEX), false)) {
                         if (index < PLAYER_INV_END) {
                             if (!this.moveItemStackTo(stack, HOTBAR_START, HOTBAR_END, false)) {
                                 return ItemStack.EMPTY;
@@ -348,18 +358,26 @@ public class DragonInventoryMenu extends AbstractContainerMenu {
     }
 
     private final class CargoSlot extends Slot {
+        private final int cargoIndex;
+
         private CargoSlot(Container container, int index, int x, int y) {
             super(container, index, x, y);
+            this.cargoIndex = index;
         }
 
         @Override
         public boolean isActive() {
-            return hasChestInstalled();
+            return hasChestInstalled() && cargoIndex < data.get(CARGO_SIZE_DATA_INDEX);
         }
 
         @Override
         public boolean mayPlace(@NotNull ItemStack stack) {
-            return hasChestInstalled();
+            return isActive();
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return isActive();
         }
     }
 

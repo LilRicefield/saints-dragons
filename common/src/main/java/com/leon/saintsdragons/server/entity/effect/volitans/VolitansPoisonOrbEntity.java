@@ -211,12 +211,19 @@ public class VolitansPoisonOrbEntity extends Entity implements GeoEntity {
         Vec3 impact = position();
         float scale = getVisualScale();
 
+        var groundHit = server.clip(new ClipContext(impact.add(0, 0.5D, 0), impact.add(0, -6.0D, 0),
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, this));
         for (var viewer : server.players()) {
             if (viewer.distanceToSqr(impact) > 128.0D * 128.0D) continue;
             server.sendParticles(viewer, ModParticles.VOLITANS_POISON_CLOUD.get(), true,
                     impact.x, impact.y + 0.35D * scale, impact.z, 0, scale, 0, 0, 1.0D);
             server.sendParticles(viewer, ModParticles.VOLITANS_POISON_EXPLOSION.get(), true,
                     impact.x, impact.y + 0.35D * scale, impact.z, 0, scale, 0, 0, 1.0D);
+            if (groundHit.getType() == HitResult.Type.BLOCK && groundHit.getDirection().getStepY() > 0) {
+                Vec3 ground = groundHit.getLocation();
+                server.sendParticles(viewer, ModParticles.VOLITANS_POISON_GROUND_BURST.get(), true,
+                        ground.x, ground.y + 0.04D, ground.z, 0, scale, 0, 0, 1.0D);
+            }
         }
 
         server.playSound(null, blockPosition(), SoundEvents.SLIME_BLOCK_BREAK, getSoundSource(), 1.0F + scale * 0.08F, 0.8F);

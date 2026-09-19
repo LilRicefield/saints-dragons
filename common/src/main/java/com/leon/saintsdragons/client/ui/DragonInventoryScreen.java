@@ -57,7 +57,7 @@ public class DragonInventoryScreen extends AbstractContainerScreen<DragonInvento
         guiGraphics.blit(TEXTURE, x + 7, y + 39, CHEST_SLOT_U, CHEST_SLOT_V, 18, 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
         if (this.menu.hasChestInstalled()) {
             guiGraphics.blit(TEXTURE, x + 79, y + 17, CHEST_SLOTS_U, CHEST_SLOTS_V,
-                    this.menu.getChestColumns() * 18, 54, TEXTURE_WIDTH, TEXTURE_HEIGHT);
+                    this.menu.getChestColumns() * 18, this.menu.getChestRows() * 18, TEXTURE_WIDTH, TEXTURE_HEIGHT);
         }
 
         if (this.dragon != null) {
