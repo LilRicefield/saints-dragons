@@ -188,14 +188,29 @@ public final class RaevyxStormLightningRenderer {
         return new Anchor(bone, new Vec3(local.x, local.y, local.z));
     }
 
-    private static void impact(Raevyx dragon, Vec3 point, RandomSource random) {
+    static void impact(Raevyx dragon, Vec3 point, RandomSource random) {
+        impact(dragon, point, random, false);
+    }
+
+    static void impact(Raevyx dragon, Vec3 point, RandomSource random, boolean largeImpact) {
         boolean gold = dragon.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
-        for (int i = 0; i < 8; i++) {
-            var particle = Minecraft.getInstance().particleEngine.createParticle(i < 6
+        int count = largeImpact ? 64 : 8;
+        double spread = largeImpact ? 1.8D : 0.3D;
+        for (int i = 0; i < count; i++) {
+            boolean emitter = i < count * 3 / 4;
+            Vec3 position = largeImpact ? point.add((random.nextDouble() - 0.5D) * 5.0D,
+                    0.05D + random.nextDouble() * 0.25D, (random.nextDouble() - 0.5D) * 5.0D) : point;
+            var particle = Minecraft.getInstance().particleEngine.createParticle(emitter
                             ? ModParticles.RAEVYX_STORM_EMITTER.get() : ModParticles.RAEVYX_STORM_STAR.get(),
-                    point.x, point.y, point.z, (random.nextDouble() - 0.5) * 0.3,
-                    0.05 + random.nextDouble() * 0.12, (random.nextDouble() - 0.5) * 0.3);
-            if (particle != null) particle.setColor(1, gold ? 0.72F : 0.06F, gold ? 0.12F : 0.08F);
+                    position.x, position.y, position.z, (random.nextDouble() - 0.5) * spread,
+                    (0.05 + random.nextDouble() * 0.12) * (largeImpact ? 2.5D : 1.0D),
+                    (random.nextDouble() - 0.5) * spread);
+            if (particle != null) {
+                particle.setColor(1, gold ? 0.72F : 0.06F, gold ? 0.12F : 0.08F);
+                if (largeImpact) {
+                    particle.setLifetime(emitter ? 30 : 20);
+                }
+            }
         }
     }
 }

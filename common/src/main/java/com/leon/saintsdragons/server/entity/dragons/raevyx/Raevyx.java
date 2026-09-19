@@ -181,6 +181,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_STEER_OFFSET = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_LAST_DASH_RIGHT = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Boolean> DATA_GROUND_RENDING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Long> DATA_GROUND_REND_START = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.LONG);
     public static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.INT);
     public static final EntityDataAccessor<Boolean> DATA_TAMING_STUNNED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
@@ -609,6 +610,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         this.entityData.define(DATA_RIDER_NUDGE_STEER_OFFSET, 0.0F);
         this.entityData.define(DATA_LAST_DASH_RIGHT, false);
         this.entityData.define(DATA_GROUND_RENDING, false);
+        this.entityData.define(DATA_GROUND_REND_START, -1L);
     }
 
     @Override
@@ -1267,10 +1269,19 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return this.entityData.get(DATA_LAST_DASH_RIGHT);
     }
     public boolean isGroundRending() { return this.entityData.get(DATA_GROUND_RENDING); }
+    public float getGroundRendVisualAge(float partialTick) {
+        long start = entityData.get(DATA_GROUND_REND_START);
+        return start < 0 || !isGroundRending() || !isAlive()
+                ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
+    }
+
     public void setGroundRending(boolean rending) {
         boolean wasGroundRending = this.groundRending;
         this.groundRending = rending;
         this.entityData.set(DATA_GROUND_RENDING, rending);
+        if (!level().isClientSide && (rending != wasGroundRending || !rending)) {
+            entityData.set(DATA_GROUND_REND_START, rending ? level().getGameTime() : -1L);
+        }
         if (rending && !wasGroundRending) {
             // Ground Rend owns continuous horizontal movement for its full animation.
             dashDodgeNudge.cancelActive();

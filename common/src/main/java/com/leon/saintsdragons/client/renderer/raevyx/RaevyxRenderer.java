@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormAuraParticles;
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxStormLightningRenderer;
+import com.leon.saintsdragons.client.renderer.vfx.RaevyxGroundRendLightningRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.RaevyxSummonStormRenderer;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderType;
@@ -110,6 +111,9 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
             return true;
         }
         float stormAge = entity.getStormCastAge(1.0F);
+        if (entity.isGroundRending()
+                && entity.distanceToSqr(camX, camY, camZ) <= BEAM_RENDER_DISTANCE * BEAM_RENDER_DISTANCE
+                && frustum.isVisible(entity.getBoundingBox().inflate(10.0D, 12.0D, 10.0D))) return true;
         if (stormAge >= 0 && stormAge < RaevyxSummonStormRenderer.getTotalDurationTicks(entity)
                 && entity.distanceToSqr(camX, camY, camZ) <= BEAM_RENDER_DISTANCE * BEAM_RENDER_DISTANCE
                 && frustum.isVisible(entity.getBoundingBox().inflate(12.0D))) return true;
@@ -142,6 +146,7 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
 
     @Override
     protected void afterDragonRender(Raevyx entity, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+        RaevyxGroundRendLightningRenderer.render(entity, poseStack, bufferSource, partialTick);
         RaevyxSummonStormRenderer.render(entity, getBoneWorldPosition("body"), poseStack, bufferSource, partialTick);
         RaevyxStormAuraParticles.emit(entity, this.lastBakedModel, stormTransforms, partialTick);
         RaevyxStormLightningRenderer.render(entity, this.lastBakedModel, stormTransforms, poseStack, bufferSource, partialTick);

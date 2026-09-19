@@ -37,8 +37,8 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int GROUND_REND_SOUND_TICKS = 100;
     private static final int SLOWDOWN_START_TICKS = 25;
     private static final int STOP_TICKS = 55;
-    private static final int GROUND_REND_TRAIL_END_TICKS = 40;
-    private static final int FALLING_BLOCK_TICKS = 23;
+    public static final int GROUND_REND_TRAIL_END_TICKS = 40;
+    public static final int FALLING_BLOCK_TICKS = 23;
     private static final int END_DUST_TICKS = 62;
     private static final double DUST_VIEW_DISTANCE = 128.0D;
     private static final double AI_STEER_BACK_RANGE = 6.0D;
