@@ -1,13 +1,16 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "SSS",
+    "NSN",
     "SCS",
-    "SSS"
+    " S "
   ],
   "key": {
     "S": {
       "item": "saintsdragons:raevyx_scale"
+    },
+    "N": {
+      "item": "minecraft:netherite_ingot"
     },
     "C": {
       "item": "saintsdragons:dragon_binder_core"

@@ -25,9 +25,24 @@
         ]
       }
     },
+    "has_netherite_ingot": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:netherite_ingot"
+            ]
+          }
+        ]
+      }
+    },
     "requirements": [
       [
         "has_dragon_binder_core"
+      ],
+      [
+        "has_netherite_ingot"
       ],
       [
         "has_raevyx_scale"
