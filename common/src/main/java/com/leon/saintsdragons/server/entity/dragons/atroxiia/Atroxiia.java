@@ -847,9 +847,11 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
-            DragonLootTables.dropEntityLoot(this, DragonLootTables.ATROXIIA_FEMALE_DEATH, source);
+        if (!level().isClientSide) {
             dropEquipmentOnDeath();
+            if (getGender() == DragonGender.FEMALE) {
+                DragonLootTables.dropEntityLoot(this, DragonLootTables.ATROXIIA_FEMALE_DEATH, source);
+            }
         }
     }
 

@@ -75,6 +75,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.Brain;
 import net.minecraft.world.entity.player.Player;
@@ -2099,8 +2100,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             superchargeTicks -= 5;
             if (superchargeTicks <= 0) {
                 superchargeTicks = 0;
-                DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-                Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(configuredMaxHealth(config, BABY_MAX_HEALTH));
+                syncSuperchargeHealthModifier();
                 if (this.getHealth() > this.getMaxHealth()) {
                     this.setHealth(this.getMaxHealth());
                 }
@@ -2331,7 +2331,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
                                        RandomSource random) {
         if (SaintsDragonsConfig.isRaevyxCustomSpawningEnabled()
                 && DragonSpawnRules.isNaturalWildSpawn(reason)
-                && !DragonSpawnRules.isThundering(level)) {
+                && !DragonSpawnRules.hasWildRaevyxStorm(level)) {
             return false;
         }
         return DragonSpawnRules.hasDryGroundSpawnSpace(level, pos)
@@ -2362,6 +2362,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     public void applyConfiguredAttributes() {
+        syncSuperchargeHealthModifier();
         DragonAttributeConfig config = getConfiguredDragonAttributes();
         applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, 0.0D);
         setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);
@@ -2511,7 +2512,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
 
     public boolean isStormAirCast() { return entityData.get(DATA_STORM_AIR_CAST); }
 
-    public float getStormVisualAge(float partialTick) {
+    public float getStormCastAge(float partialTick) {
         long start = entityData.get(DATA_GROUND_STORM_START);
         return start < 0 || !isAlive() ? -1.0F : Math.max(0, level().getGameTime() - start + partialTick);
     }
@@ -2519,12 +2520,28 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public boolean isStormAuraActive() { return this.entityData.get(DATA_STORM_AURA); }
 
     private int superchargeTicks = 0;
+    private static final UUID SUPERCHARGE_HEALTH_ID = UUID.fromString("08ca1020-8765-44d7-aeba-715454638a25");
+
+    private void syncSuperchargeHealthModifier() {
+        if (level().isClientSide) return;
+        var health = getAttribute(Attributes.MAX_HEALTH);
+        if (health == null) return;
+        if (isSupercharged()) {
+            if (health.getModifier(SUPERCHARGE_HEALTH_ID) == null) {
+                health.addTransientModifier(new AttributeModifier(SUPERCHARGE_HEALTH_ID,
+                        "Raevyx supercharge health", 1.0D, AttributeModifier.Operation.MULTIPLY_BASE));
+            }
+        } else {
+            health.removeModifier(SUPERCHARGE_HEALTH_ID);
+        }
+    }
+
     public void startSupercharge(int ticks) {
+        if (level().isClientSide) return;
         boolean wasNotSupercharged = !isSupercharged();
         this.superchargeTicks = Math.max(this.superchargeTicks, Math.max(0, ticks));
         if (wasNotSupercharged && isSupercharged()) {
-            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-            Objects.requireNonNull(this.getAttribute(Attributes.MAX_HEALTH)).setBaseValue(configuredMaxHealth(config, BABY_MAX_HEALTH) * 2.0D);
+            syncSuperchargeHealthModifier();
             this.setHealth(this.getMaxHealth());
             this.allowGroundBeamDuringStorm = true;
             syncStormAura();
@@ -2967,6 +2984,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             clearSleepCooldowns();
         }
         applyConfiguredAttributes();
+        if (isSupercharged() && tag.contains("Health")) {
+            // Transient modifiers are rebuilt after vanilla loads (and may clamp) saved health.
+            setHealth(Math.min(tag.getFloat("Health"), getMaxHealth()));
+        }
+        syncStormAura();
     }
 
     @Override

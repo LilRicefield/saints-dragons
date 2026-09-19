@@ -45,7 +45,7 @@ public final class RaevyxStormSpawner {
         tickCounters.put(dimensionId, 0);
 
         int weight = SaintsDragonsConfig.RAEVYX_SPAWN_WEIGHT.get();
-        if (weight <= 0 || level.players().isEmpty() || !level.isThundering()) {
+        if (weight <= 0 || level.players().isEmpty() || !DragonSpawnRules.hasWildRaevyxStorm(level)) {
             return;
         }
 

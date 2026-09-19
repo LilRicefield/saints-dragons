@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.world;
 
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
+import com.leon.saintsdragons.server.data.RaevyxStormSavedData;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -111,10 +112,10 @@ public final class DragonSpawnRules {
         return spawnType == MobSpawnType.NATURAL || spawnType == MobSpawnType.CHUNK_GENERATION;
     }
 
-    public static boolean isThundering(LevelAccessor level) {
+    public static boolean hasWildRaevyxStorm(LevelAccessor level) {
         if (!(level instanceof ServerLevelAccessor serverLevelAccessor)) {
             return false;
         }
-        return serverLevelAccessor.getLevel().isThundering();
+        return RaevyxStormSavedData.allowsWildSpawns(serverLevelAccessor.getLevel());
     }
 }

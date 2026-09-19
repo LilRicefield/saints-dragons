@@ -1709,9 +1709,11 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
+        if (!level().isClientSide) {
             dropEquipmentOnDeath();
-            DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
+            if (getGender() == DragonGender.FEMALE) {
+                DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
+            }
         }
     }
 

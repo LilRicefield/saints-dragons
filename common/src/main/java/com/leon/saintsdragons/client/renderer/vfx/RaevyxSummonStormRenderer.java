@@ -21,8 +21,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public final class RaevyxSummonStormRenderer {
-    public static final float DURATION_TICKS = RaevyxSummonStormAbility.GROUND_INTRO_TICKS;
-    private static final float STAR_FLASH_LEAD_TICKS = 7.0F;
     private static final float ZAP_FRAME_TICKS = 0.5F;
     private static final float RING_FRAME_TICKS = 1.0F;
     private static final float RING_RADIUS = 8.0F;
@@ -33,8 +31,7 @@ public final class RaevyxSummonStormRenderer {
     private static final ResourceLocation[] BURST = frames("shared/lightning/lightning_burst/lightning_burst", 8);
     private static final ResourceLocation[] BURST_GROUND = frames("shared/lightning/lightning_burst/lightning_burst_ground", 10);
     private static final ResourceLocation[] BURST_SURROUND = frames("shared/lightning/lightning_burst/lightning_burst_surround", 6);
-    private static final float BURST_FRAME_TICKS = (float) RaevyxSummonStormAbility.GROUND_BURST_TICKS / BURST_GROUND.length;
-    public static final float TOTAL_DURATION_TICKS = RaevyxSummonStormAbility.GROUND_SUPERCHARGE_START_TICKS;
+    private static final float BURST_FRAME_TICKS = (float) RaevyxSummonStormAbility.GROUND_TIMING.burstTicks() / BURST_GROUND.length;
     private static final ResourceLocation GLOW = SaintsDragonsCommon.rl("textures/particle/shared/emitters/glowing_emitter.png");
     private static final ResourceLocation STAR = SaintsDragonsCommon.rl("textures/particle/shared/stars/star.png");
     private static final Map<Raevyx, Long> LAST_BURST_CAST = new WeakHashMap<>();
@@ -43,9 +40,10 @@ public final class RaevyxSummonStormRenderer {
 
     public static void render(Raevyx dragon, Vec3 bodyWorld, PoseStack poses,
                               MultiBufferSource buffers, float partialTick) {
-        float age = dragon.getStormVisualAge(partialTick);
+        float age = dragon.getStormCastAge(partialTick);
         boolean airCast = dragon.isStormAirCast();
-        float introTicks = airCast ? RaevyxSummonStormAbility.AIR_INTRO_TICKS : DURATION_TICKS;
+        var timing = RaevyxSummonStormAbility.timingFor(airCast);
+        float introTicks = timing.introTicks();
         if (age < 0 || age >= getTotalDurationTicks(dragon)
                 || dragon.isBaby() || ShaderPassCompatibility.isIrisShadowPass()) return;
         boolean gold = dragon.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
@@ -77,11 +75,11 @@ public final class RaevyxSummonStormRenderer {
                 (float) center.x, (float) center.y, (float) center.z,
                 8.0F, 0, red, green, blue, visibility);
         renderAbsorption(dragon, center, poses, buffers, age, introTicks, red, green, blue);
-        renderBurstFlash(center, poses, buffers, age - (introTicks - STAR_FLASH_LEAD_TICKS), red, green, blue);
+        renderBurstFlash(center, poses, buffers, age - timing.starFlashTick(), red, green, blue);
     }
 
     public static float getTotalDurationTicks(Raevyx dragon) {
-        return dragon.isStormAirCast() ? RaevyxSummonStormAbility.AIR_SUPERCHARGE_START_TICKS : TOTAL_DURATION_TICKS;
+        return RaevyxSummonStormAbility.timingFor(dragon.isStormAirCast()).chargeTick();
     }
 
     private static void renderBurstFlash(Vec3 center, PoseStack poses, MultiBufferSource buffers,

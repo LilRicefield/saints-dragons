@@ -11,6 +11,7 @@ import com.leon.saintsdragons.server.entity.ability.abilities.stegonaut.Stegonau
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.npc.dialogue.DialogueSessionRegistry;
 import com.leon.saintsdragons.server.world.RaevyxStormSpawner;
+import com.leon.saintsdragons.server.data.RaevyxStormSavedData;
 import com.leon.saintsdragons.server.world.StegonautLushCaveSpawner;
 import com.leon.saintsdragons.server.world.VolitansUnderwaterSpawner;
 import net.minecraft.ChatFormatting;
@@ -28,6 +29,7 @@ public final class CommonServerLifecycleEvents {
     }
 
     public static void onEndServerTick(MinecraftServer server) {
+        RaevyxStormSavedData.tick(server.overworld());
         DragonPathDebugTracker.tick(server);
 
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
