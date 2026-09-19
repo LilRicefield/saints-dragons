@@ -19,6 +19,13 @@
   "item.saintsdragons.dragon_seal_stone": "囚龙宝珠",
   "item.saintsdragons.dragon_binder_core": "龙居核心",
   "item.saintsdragons.dragon_brush": "龙鳞刷",
+  "item.saintsdragons.creative_dragon_gender_wand": "创造模式龙性别魔杖",
+  "item.saintsdragons.creative_dragon_tame_meal": "创造模式驯龙餐",
+  "item.saintsdragons.creative_dragon_variant_brush": "创造模式龙变种刷",
+  "item.saintsdragons.creative_dragon_tool.creative_only": "仅限创造模式使用",
+  "item.saintsdragons.creative_dragon_gender_wand.desc": "右键点击龙以切换其性别。",
+  "item.saintsdragons.creative_dragon_tame_meal.desc": "右键点击未驯服的龙以立即驯服它。",
+  "item.saintsdragons.creative_dragon_variant_brush.desc": "右键点击龙以循环切换其变种。",
   "item.saintsdragons.golden_dragon_brush": "金龙鳞刷",
   "item.saintsdragons.scale_plucker": "龙鳞钳",
   "item.saintsdragons.scale_plucker.not_tamed": "必须先驯服%s才能拔他的鳞片",
@@ -101,6 +108,8 @@
   "item.saintsdragons.atroxiia_scale": "凛蝮龙鳞片",
   "item.saintsdragons.hearty_dragon_meal": "丰盛龙食",
   "item.saintsdragons.bleeding_bolt_music_disc": "音乐唱片",
+  "item.saintsdragons.mossback_music_music_disc": "音乐唱片",
+  "item.saintsdragons.mossback_music_music_disc.desc": "苔背龙之歌",
   "item.saintsdragons.bleeding_bolt_music_disc.desc": "Bleeding Bolt - By Saint",
   "item.saintsdragons.ivy_the_merchant_spawn_egg": "商人常春藤刷怪蛋",
   "item.saintsdragons.ivy_octopus_plushie": "常春藤的章鱼毛绒玩偶",
@@ -1801,8 +1810,6 @@
   "dialogue.saintsdragons.ivy.recruited_visitor_greeting.goodbye.text.0": "旅途平安，无需挂念。",
   "dialogue.saintsdragons.ivy.recruited_visitor_greeting.goodbye.text.1": "很高兴见到你，保重。",
   "dialogue.saintsdragons.ivy.recruited_visitor_greeting.goodbye.text.2": "好吧，保重。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.14": "你觉得我的殷雷龙怎么样？",
   "dialogue.saintsdragons.ivy.dragon_raevyx.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_raevyx.raevyx_1.text": "我觉得你的殷雷龙非常漂亮。",
@@ -1828,18 +1835,12 @@
   "dialogue.saintsdragons.ivy.dragon_raevyx.raevyx_21.text": "嗯…",
   "dialogue.saintsdragons.ivy.dragon_raevyx.raevyx_22.text": "暂且把这个话题先放一放吧。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.taming_method.text": "你是怎么驯服他的？",
-
-
   "dialogue.saintsdragons.ivy.dragon_raevyx.taming_method.choice.0": "我和他打了起来，等我把他打倒后，他就服我了。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.taming_method.choice.1": "我只是在他还是小宝宝的时候正常喂他吃饭，结果就驯服他了。",
-
-
   "dialogue.saintsdragons.ivy.dragon_raevyx.fight_response_1.text": "了不起！我看准的人果然没让我失望！",
   "dialogue.saintsdragons.ivy.dragon_raevyx.fight_response_2.text": "我还以为你已经被他的聚雷束蒸发了。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.fight_response_3.text": "但你现在就站在这里，算我这次小看你了。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.fight_response_4.text": "我真的很高兴你还在这里。",
-
-
   "dialogue.saintsdragons.ivy.dragon_raevyx.baby_tame_notice.text": "你是说你在他还小的时候就驯服他了？",
   "dialogue.saintsdragons.ivy.dragon_raevyx.baby_response_1.text": "哈哈…啊，你怎么和我一个德行。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.baby_response_2.text": "我也在我的殷雷龙还是嫩嫩小雷暴的时候就拐跑她了。",
@@ -1847,13 +1848,10 @@
   "dialogue.saintsdragons.ivy.dragon_raevyx.baby_response_4.text": "这也让他们显得非常可爱和讨人喜欢。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.baby_response_5.text": "看来我们很有共同点。",
   "dialogue.saintsdragons.ivy.dragon_raevyx.baby_response_6.text": "对我来说，其实还蛮不错的。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.15": "我的烬翎龙帅不帅？",
   "dialogue.saintsdragons.ivy.dragon_cindervane.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_1.text": "嗯，还不错…烬翎龙，流火帘，简洁又优雅。",
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_2.text": "大家就是从那时候开始这么称呼这些小面条的。",
-
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_2.choice.0": "那个是你想的吗？",
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_3.text": "...",
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_4.text": "想什么？",
@@ -1878,8 +1876,6 @@
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_22.text": "一地烂摊子…但去他的吧，这也太帅啦！",
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_23.text": "不过，你也驯服了一只，干得不错。",
   "dialogue.saintsdragons.ivy.dragon_cindervane.cindervane_24.text": "至少你没死，嗯哼？",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.16": "我的坚甲龙看起来怎么样？",
   "dialogue.saintsdragons.ivy.dragon_stegonaut.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_1.text": "哦，当然，你现在有一个相当结实的朋友了。",
@@ -1895,8 +1891,6 @@
   "dialogue.saintsdragons.ivy.dragon_stegonaut.stegonaut_11.text": "做得好。有他待在身边会很有好处。",
   "dialogue.saintsdragons.ivy.dragon_stegonaut.no_binder.text": "相信我，你越早给他做个储器越好。",
   "dialogue.saintsdragons.ivy.dragon_stegonaut.has_binder.text": "看上去你已经准备好坚甲龙储器了，干得漂亮%1$s！",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.17": "来见识见识我的蜷鳄龙。",
   "dialogue.saintsdragons.ivy.dragon_varasuchus.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_1.text": "嗯…蜷鳄龙，长的像鳄鱼的什么龙。",
@@ -1923,8 +1917,6 @@
   "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_21.text": "可能我以前在野外看到过他…也可能只是眼花了。",
   "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_22.text": "那样子，几乎是在和虚空拥吻。",
   "dialogue.saintsdragons.ivy.dragon_varasuchus.varasuchus_23.text": "要不试试把蜷鳄龙的蛋带到末地去？谁知道会发生什么呢。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.18": "我想听听你对我的噬焰龙的看法。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_1.text": "你是在开玩笑吧？？",
@@ -1949,7 +1941,6 @@
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_17.text": "好像家住…虚黒城？（是指《怪物猎人》系列的著名怪物—黑龙。虚黒城是游戏里对战黑龙的地方）嗯，管他呢，估计是失散多年的亲戚吧。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_18.text": "几顿痛打之后它就服软了？真不错。其实也有点难以想象。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_19.text": "恭喜你。大概吧。",
-
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_19.choice.0": "怎么，嫉妒我了？",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_20.text": "没有，我才没有！",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_20.choice.0": "有，你有。",
@@ -1958,8 +1949,6 @@
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_22.text": "没没没没有。是你嫉妒我。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_22.choice.0": "好吧，算我这次嫉妒你。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.ignivorus_22.choice.1": "你不如大大方方承认算了。",
-
-
   "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_1.text": "…唉，我承认，我可能有那么一点小小的嫉妒。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_2.text": "我为你感到高兴，但又没那么高兴。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.jealous_admit_3.text": "至于为什么，嗯，就是因为你先我一步证明了他的存在。",
@@ -1974,8 +1963,6 @@
   "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_2.text": "…欲擒故纵！哈哈！你真该照镜子看看自己的表情！",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_3.text": "其实，我还挺喜欢像这样来来回回的跟你闹腾。",
   "dialogue.saintsdragons.ivy.dragon_ignivorus.not_forgiven_4.text": "那就当是个小摩擦，这件事就算过去了吧。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.19": "讲讲你对我蓑鲉龙的看法？",
   "dialogue.saintsdragons.ivy.dragon_volitans.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_volitans.volitans_1.text": "天哪…真的吗？蓑鲉龙？",
@@ -1997,8 +1984,6 @@
   "dialogue.saintsdragons.ivy.dragon_volitans.volitans_17.text": "不过，嘿，%1$s，听你的意思，你已经搞定一只了？",
   "dialogue.saintsdragons.ivy.dragon_volitans.volitans_18.text": "你驯服了一只蓑鲉龙！",
   "dialogue.saintsdragons.ivy.dragon_volitans.volitans_19.text": "恭喜你！你是个了不起的人！",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.20": "关于虚颚龙，你能告诉我些什么？",
   "dialogue.saintsdragons.ivy.dragon_nulljaw.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_1.text": "嗯…这个物种相当了不起。",
@@ -2010,8 +1995,6 @@
   "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_7.text": "不过如果转世投胎可以自己选，那我绝对不会选虚颚龙。",
   "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_8.text": "我怎么说起这个了？不知道。随便说说而已。",
   "dialogue.saintsdragons.ivy.dragon_nulljaw.nulljaw_9.text": "总之，驯服一只，干得不错。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.21": "你对我的凛蝮龙有什么看法？",
   "dialogue.saintsdragons.ivy.dragon_atroxiia.continue": "...",
   "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_1.text": "皇室凛蝮龙。现在这个名字？不是我取的。",
@@ -2035,8 +2018,6 @@
   "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_19.text": "看肩膀就知道了，绝对可以！",
   "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_20.text": "干得漂亮，%1$s。",
   "dialogue.saintsdragons.ivy.dragon_atroxiia.atroxiia_21.text": "你每天都能给我带来惊喜。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.22": "你当商人很久了吗？",
   "dialogue.saintsdragons.ivy.recruited_trader_history.continue": "...",
   "dialogue.saintsdragons.ivy.recruited_trader_history.trader_1.text": "并不是。以前我都是自己一个人四处旅行。",
@@ -2056,8 +2037,6 @@
   "dialogue.saintsdragons.ivy.recruited_trader_history.trader_13.text": "这是个往返于各个聚居地的好理由，不会引来太多注意。",
   "dialogue.saintsdragons.ivy.recruited_trader_history.trader_13.choice.0": "…听着很可疑。",
   "dialogue.saintsdragons.ivy.recruited_trader_history.trader_14.text": "有吗？你想多了吧。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.23": "你喜欢当个商人吗？",
   "dialogue.saintsdragons.ivy.recruited_trading_opinion.continue": "...",
   "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_1.text": "有时候会，嗯。",
@@ -2080,8 +2059,6 @@
   "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_16.text": "一场交易里，无论人们愿意付出什么，得到什么，都可以从中学到很多东西。",
   "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_17.text": "有些人需要食物，有些人需要工具，还有人对三堆腐肉垂涎三尺！我一点也不想知道原因。",
   "dialogue.saintsdragons.ivy.recruited_trading_opinion.trading_18.text": "也许有天我能凭着诱人的甜言蜜语以及可怕的谈判技巧而小有名气。谁知道呢。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.24": "你以前是干什么的？",
   "dialogue.saintsdragons.ivy.recruited_past_work.continue": "...",
   "dialogue.saintsdragons.ivy.recruited_past_work.past_1.text": "当商人以前？",
@@ -2112,8 +2089,6 @@
   "dialogue.saintsdragons.ivy.recruited_past_work.past_23.text": "我呢，除了指甲里的泥，就只剩下几个固执的观点。",
   "dialogue.saintsdragons.ivy.recruited_past_work.past_23.choice.0": "那就已经够格了。",
   "dialogue.saintsdragons.ivy.recruited_past_work.past_24.text": "别在学术圈里说这种话。",
-
-
   "dialogue.saintsdragons.ivy.known_greeting.return_prompt.choice.25": "你最喜欢吃什么？",
   "dialogue.saintsdragons.ivy.recruited_favorite_food.continue": "...",
   "dialogue.saintsdragons.ivy.recruited_favorite_food.food_1.text": "呃…那得看情况。你说的“最喜欢”是指我平时实际吃的，还是指我想吃却吃不到的？",

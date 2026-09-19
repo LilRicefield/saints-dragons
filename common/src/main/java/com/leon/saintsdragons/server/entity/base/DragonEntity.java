@@ -2390,6 +2390,8 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        InteractionResult creativeTool = com.leon.saintsdragons.common.item.CreativeDragonToolItem.tryHandle(this, player, hand);
+        if (creativeTool != InteractionResult.PASS) return creativeTool;
         awardDragonEncounterAdvancement(player);
         if (this.isTame() && this.isOwnedBy(player)) {
             if (canOwnerCommand(player) && hand == InteractionHand.MAIN_HAND && player.getItemInHand(hand).isEmpty()) {

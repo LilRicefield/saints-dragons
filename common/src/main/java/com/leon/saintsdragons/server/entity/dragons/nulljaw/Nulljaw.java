@@ -592,6 +592,8 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
 
     @Override
     public @NotNull InteractionResult mobInteract(@NotNull Player player, @NotNull InteractionHand hand) {
+        InteractionResult creativeTool = com.leon.saintsdragons.common.item.CreativeDragonToolItem.tryHandle(this, player, hand);
+        if (creativeTool != InteractionResult.PASS) return creativeTool;
         awardDragonEncounterAdvancement(player);
         ItemStack heldItem = player.getItemInHand(hand);
         if (ModItems.isDragonBrush(heldItem)) {

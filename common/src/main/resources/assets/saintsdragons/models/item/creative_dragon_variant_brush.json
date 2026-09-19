@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:item/handheld",
+  "textures": {
+    "layer0": "saintsdragons:item/creative_dragon_variant_brush"
+  }
+}

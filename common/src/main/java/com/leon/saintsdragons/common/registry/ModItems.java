@@ -327,6 +327,15 @@ public class ModItems {
                                     .stacksTo(1)
                                     .durability(256)
                     ));
+    public static final Supplier<Item> CREATIVE_DRAGON_GENDER_WAND =
+            REGISTER.register("creative_dragon_gender_wand", () -> new CreativeDragonToolItem(
+                    new Item.Properties().stacksTo(1), CreativeDragonToolItem.Action.GENDER));
+    public static final Supplier<Item> CREATIVE_DRAGON_TAME_MEAL =
+            REGISTER.register("creative_dragon_tame_meal", () -> new CreativeDragonToolItem(
+                    new Item.Properties().stacksTo(1), CreativeDragonToolItem.Action.TAME));
+    public static final Supplier<Item> CREATIVE_DRAGON_VARIANT_BRUSH =
+            REGISTER.register("creative_dragon_variant_brush", () -> new CreativeDragonToolItem(
+                    new Item.Properties().stacksTo(1), CreativeDragonToolItem.Action.VARIANT));
     //end
 
     public static final Supplier<Item> GOLDEN_DRAGON_BRUSH =
@@ -590,6 +599,15 @@ public class ModItems {
                                     .stacksTo(1)
                                     .rarity(Rarity.RARE),
                             20 * 104
+                    ));
+    public static final Supplier<Item> MOSSBACK_MUSIC_MUSIC_DISC =
+            REGISTER.register("mossback_music_music_disc",
+                    () -> new RecordItem(
+                            1,
+                            ModSounds.MOSSBACK_MUSIC.get(),
+                            new Item.Properties()
+                                    .stacksTo(1)
+                                    .rarity(Rarity.COMMON), 20 * 42
                     ));
 
     public static boolean isDragonBrush(ItemStack stack) {

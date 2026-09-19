@@ -35,6 +35,9 @@ public class SaintsCreativeTab {
                                 output.accept(ModItems.GOLDEN_DRAGON_BRUSH.get());
                                 output.accept(ModItems.SCALE_PLUCKER.get());
                                 output.accept(ModItems.HEARTY_DRAGON_MEAL.get());
+                                output.accept(ModItems.CREATIVE_DRAGON_GENDER_WAND.get());
+                                output.accept(ModItems.CREATIVE_DRAGON_TAME_MEAL.get());
+                                output.accept(ModItems.CREATIVE_DRAGON_VARIANT_BRUSH.get());
                                 output.accept(ModItems.RAW_MOOP.get());
                                 output.accept(ModItems.COOKED_MOOP.get());
                                 output.accept(ModItems.BUCKET_OF_MOOP.get());
@@ -93,6 +96,7 @@ public class SaintsCreativeTab {
                                 output.accept(ModPotionItems.POTION_OF_TIDEGUARD.get());
                                 output.accept(ModPotionItems.POTION_OF_SEARING.get());
                                 output.accept(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
+                                output.accept(ModItems.MOSSBACK_MUSIC_MUSIC_DISC.get());
                                 output.accept(ModItems.IGNIVORUS_INCUBATOR_BLOCK.get());
                                 output.accept(ModItems.DRAGONHEART_ORE.get());
                                 output.accept(ModItems.DRAGONHEART_ALLOY_BLOCK.get());

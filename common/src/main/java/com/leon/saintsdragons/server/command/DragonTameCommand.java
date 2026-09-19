@@ -90,17 +90,26 @@ public final class DragonTameCommand {
             throw ERROR_UNKNOWN_DRAGON.create(dragonId.toString());
         }
 
-        // SECURITY: Prevent ownership theft - check if dragon is already tamed by someone else
-        if (dragon.isTame() && dragon.getOwner() != null) {
+        tameDragon(dragon, owner);
+
+        Component successMessage = Component.translatable(
+            "saintsdragons.command.tame.success", dragon.getDisplayName(), owner.getDisplayName());
+        source.sendSuccess(() -> successMessage, false);
+        return 1;
+    }
+
+    /** Shared by the command and the creative meal; never transfer an existing owner's dragon. */
+    public static void tameDragon(DragonEntity dragon, Player owner) throws CommandSyntaxException {
+        if (dragon.isTame() && dragon.getOwnerUUID() != null) {
             if (dragon.isOwnedBy(owner)) {
                 // Already owned by target player
                 throw ERROR_ALREADY_TAMED.create(dragon.getDisplayName().getString());
             } else {
                 // Owned by someone else - require explicit permission override
-                Player currentOwner = (Player) dragon.getOwner();
+                LivingEntity currentOwner = dragon.getOwner();
                 throw ERROR_OWNERSHIP_CONFLICT.create(new Object[]{
                     dragon.getDisplayName().getString(),
-                    currentOwner.getDisplayName().getString()
+                    currentOwner != null ? currentOwner.getDisplayName().getString() : dragon.getOwnerUUID().toString()
                 });
             }
         }
@@ -115,13 +124,6 @@ public final class DragonTameCommand {
             triggerTamingAdvancement(serverPlayer, dragon);
         }
 
-        Component successMessage = Component.translatable(
-            "saintsdragons.command.tame.success",
-            dragon.getDisplayName(),
-            owner.getDisplayName()
-        );
-        source.sendSuccess(() -> successMessage, false);
-        return 1;
     }
 
     /**

@@ -102,7 +102,7 @@ public final class DragonSetGenderCommand {
 
         // Set gender
         DragonGender oldGender = dragon.getGender();
-        dragon.setGender(gender);
+        applyGender(dragon, gender);
 
         // Send success message
         Component successMessage = Component.translatable(
@@ -122,6 +122,10 @@ public final class DragonSetGenderCommand {
         }
 
         return 1;
+    }
+
+    public static void applyGender(DragonEntity dragon, DragonGender gender) {
+        dragon.setGender(gender);
     }
 
     private static DragonEntity findDragon(CommandSourceStack source, UUID id) {

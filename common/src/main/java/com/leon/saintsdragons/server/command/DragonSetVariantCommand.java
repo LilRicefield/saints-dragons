@@ -104,7 +104,7 @@ public final class DragonSetVariantCommand {
         }
 
         ResourceLocation oldVariant = dragon.getCodexTextureVariantId();
-        dragon.setTextureVariantId(variant);
+        applyVariant(dragon, variant);
 
         // Send success message
         String labelKey = dragon.getTextureVariantTranslationKey(variant);
@@ -125,6 +125,10 @@ public final class DragonSetVariantCommand {
         }
 
         return 1;
+    }
+
+    public static void applyVariant(DragonEntity dragon, ResourceLocation variant) {
+        dragon.setTextureVariantId(variant);
     }
 
     private static DragonEntity findDragon(CommandSourceStack source, UUID id) {

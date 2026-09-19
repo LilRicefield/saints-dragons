@@ -203,6 +203,7 @@ public final class SaintsDragonItemTagsProvider extends ItemTagsProvider {
         tag(MINECRAFT_EGGS).addTag(ModTags.Items.DRAGON_EGGS);
         tag(ItemTags.FISHES).add(ModItems.RAW_MOOP.get());
         tag(ItemTags.MUSIC_DISCS).add(ModItems.BLEEDING_BOLT_MUSIC_DISC.get());
+        tag(ItemTags.MUSIC_DISCS).add(ModItems.MOSSBACK_MUSIC_MUSIC_DISC.get());
         tag(ItemTags.TRIMMABLE_ARMOR)
                 .add(ModArmors.DRACONIAN_HELMET.get())
                 .add(ModArmors.DRACONIAN_CHESTPLATE.get())

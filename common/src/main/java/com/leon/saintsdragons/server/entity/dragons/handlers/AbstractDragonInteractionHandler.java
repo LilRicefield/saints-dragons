@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.handlers;
 
 import com.leon.saintsdragons.common.registry.ModItems;
+import com.leon.saintsdragons.common.item.CreativeDragonToolItem;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,6 +21,8 @@ public abstract class AbstractDragonInteractionHandler<T extends RideableDragonB
     }
 
     public final InteractionResult handleInteraction(Player player, InteractionHand hand) {
+        InteractionResult creativeTool = CreativeDragonToolItem.tryHandle(dragon, player, hand);
+        if (creativeTool != InteractionResult.PASS) return creativeTool;
         if (dragon.isDying()) {
             return InteractionResult.PASS;
         }

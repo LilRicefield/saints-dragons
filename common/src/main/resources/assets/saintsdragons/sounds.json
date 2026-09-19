@@ -397,6 +397,15 @@
       }
     ]
   },
+  "mossback_music": {
+    "subtitle": "subtitles.saintsdragons.mossback_music",
+    "sounds": [
+      {
+        "name": "saintsdragons:songs/mossback_music",
+        "stream": true
+      }
+    ]
+  },
   "draconic_codex_flip": {
     "subtitle": "subtitles.saintsdragons.draconic_codex_flip",
     "sounds": [
