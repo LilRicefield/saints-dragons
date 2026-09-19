@@ -41,6 +41,7 @@ import com.leon.saintsdragons.client.particle.RaevyxLightningParticle;
 import com.leon.saintsdragons.client.particle.SecondImpactRingParticle;
 import com.leon.saintsdragons.client.particle.SonicRingParticle;
 import com.leon.saintsdragons.client.particle.VolitansBreathParticle;
+import com.leon.saintsdragons.client.particle.VolitansBreathEmitterParticle;
 import com.leon.saintsdragons.client.particle.VolitansPoisonImpactParticle;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import net.minecraft.client.particle.ParticleProvider;
@@ -101,6 +102,7 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.CINDERVANE_BETTER_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.BETTER_FIRE));
         register(registrar, ModParticles.CINDERVANE_FIRE_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.FIRE));
         register(registrar, ModParticles.CINDERVANE_SPEC_TRAIL.get(), sprites -> new CindervaneFireTrailParticle.Factory(sprites, CindervaneFireTrailParticle.Kind.SPEC));
+        register(registrar, ModParticles.VOLITANS_BREATH_STREAM.get(), sprites -> new VolitansBreathEmitterParticle.Factory());
         register(registrar, ModParticles.VOLITANS_WATER_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.WATER));
         register(registrar, ModParticles.VOLITANS_POISON_BREATH.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON));
         register(registrar, ModParticles.VOLITANS_POISON_SKULL.get(), sprites -> new VolitansBreathParticle.Factory(sprites, VolitansBreathParticle.Kind.POISON_SKULL));

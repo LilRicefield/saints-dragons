@@ -27,7 +27,7 @@ public final class VolitansBreathIntroRenderer {
         boolean impact = fireAge >= 0 && fireAge < IMPACT.length * IMPACT_FRAME_TICKS;
         if (!intro && !impact) return;
 
-        Vec3 mouth = dragon.getClientLocatorPosition("breathBoneOrigin");
+        Vec3 mouth = dragon.getBreathVisualOrigin(partialTick);
         if (mouth == null) return;
         var rider = dragon.getControllingPassenger();
         Vec3 forward = rider != null ? rider.getViewVector(partialTick) : dragon.getViewVector(partialTick);

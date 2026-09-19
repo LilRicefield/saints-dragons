@@ -35,7 +35,7 @@ public final class VolitansWaterRingRenderer {
     public static void render(Volitans dragon, PoseStack poses, MultiBufferSource buffers, float partialTick) {
         if (!dragon.isAlive() || !dragon.isBreathing() || dragon.isPoisonBreathMode()) return;
         float time = dragon.getBreathFireAge(partialTick);
-        Vec3 mouth = dragon.getClientLocatorPosition("breathBoneOrigin");
+        Vec3 mouth = dragon.getBreathVisualOrigin(partialTick);
         if (time < 0 || mouth == null) return;
 
         var rider = dragon.getControllingPassenger();

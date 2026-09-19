@@ -5,6 +5,7 @@ import com.leon.saintsdragons.common.particle.BloodTempestKatanaRingData;
 import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.particle.FireBreathParticleData;
 import com.leon.saintsdragons.common.particle.FireBreathBurstData;
+import com.leon.saintsdragons.common.particle.VolitansBreathParticleData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningChainData;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.common.particle.SonicRingData;
@@ -34,6 +35,14 @@ public final class ModParticles {
 
     public static final Supplier<SimpleParticleType> ATROXIIA_ICE_BURST =
             REGISTER.register("atroxiia_ice_burst", () -> Services.PLATFORM.createSimpleParticle(true));
+
+    public static final Supplier<ParticleType<VolitansBreathParticleData>> VOLITANS_BREATH_STREAM =
+            REGISTER.register("volitans_breath_stream", () -> new ParticleType<>(false, VolitansBreathParticleData.DESERIALIZER) {
+                @Override
+                public Codec<VolitansBreathParticleData> codec() {
+                    return VolitansBreathParticleData.CODEC;
+                }
+            });
 
     public static final Supplier<SimpleParticleType> VOLITANS_WATER_BREATH =
             REGISTER.register("volitans_water_breath", () -> Services.PLATFORM.createSimpleParticle(false));

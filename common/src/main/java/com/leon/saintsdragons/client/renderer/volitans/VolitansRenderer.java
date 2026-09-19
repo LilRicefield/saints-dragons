@@ -4,10 +4,13 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.culling.Frustum;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.util.RenderUtils;
 import com.leon.saintsdragons.client.model.volitans.VolitansModel;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
+import com.leon.saintsdragons.client.renderer.RenderPassContext;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.leon.saintsdragons.client.renderer.layer.volitans.VolitansNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.vfx.DragonDiveTrailRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.VolitansBreathIntroRenderer;
@@ -15,6 +18,7 @@ import com.leon.saintsdragons.client.renderer.vfx.VolitansWaterRingRenderer;
 import com.leon.saintsdragons.client.renderer.vfx.VolitansPoisonBallChargeRenderer;
 import com.leon.saintsdragons.common.network.MessageDragonBonePositions;
 import com.leon.saintsdragons.common.network.NetworkHandler;
+import com.leon.saintsdragons.common.particle.VolitansBreathMotion;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
@@ -58,7 +62,8 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
                                   float partialTick, int light, int overlay, float red, float green, float blue, float alpha) {
         super.renderRecursively(poses, entity, bone, type, buffers, buffer, isReRender,
                 partialTick, light, overlay, red, green, blue, alpha);
-        if (isReRender || !BREATH_BONE.equals(bone.getName())) return;
+        if (isReRender || !BREATH_BONE.equals(bone.getName())
+                || !RenderPassContext.isExtractionAllowed(entity.getId())) return;
         poses.pushPose();
         try {
             RenderUtils.translateMatrixToBone(poses, bone);
@@ -101,6 +106,11 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
     @Override
     protected void afterDragonRender(Volitans entity, PoseStack poseStack,
                                      MultiBufferSource bufferSource, float partialTick) {
+        if (ShaderPassCompatibility.isIrisShadowPass()) return;
+        if (renderedMouthOffset != null) {
+            entity.setClientLocatorPosition("breathVisualOrigin",
+                    entity.getPosition(partialTick).add(renderedMouthOffset));
+        }
         sendBreathLocatorToServer(entity);
         VolitansWaterRingRenderer.render(entity, poseStack, bufferSource, partialTick);
         VolitansBreathIntroRenderer.render(entity, poseStack, bufferSource, partialTick);
@@ -111,6 +121,13 @@ public class VolitansRenderer extends DragonGeoEntityRenderer<Volitans> {
                 getBoneWorldPosition(DragonDiveTrailRenderer.TIP_WING_TRAIL_BONE),
                 bufferSource,
                 poseStack.last());
+    }
+
+    @Override
+    public boolean shouldRender(Volitans entity, Frustum frustum, double camX, double camY, double camZ) {
+        if (super.shouldRender(entity, frustum, camX, camY, camZ)) return true;
+        return entity.isBreathing() && entity.distanceToSqr(camX, camY, camZ) <= 256.0D * 256.0D
+                && frustum.isVisible(entity.getBoundingBox().inflate(VolitansBreathMotion.RANGE + 24.0D));
     }
 
     private void sendBreathLocatorToServer(Volitans entity) {

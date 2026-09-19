@@ -1369,6 +1369,12 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         return computeBreathOriginFallback();
     }
 
+    public Vec3 getBreathVisualOrigin(float partialTick) {
+        Vec3 mouth = getClientLocatorPosition("breathVisualOrigin");
+        if (mouth != null) return mouth;
+        return getBreathOrigin().subtract(position()).add(getPosition(partialTick));
+    }
+
     private Vec3 computeBreathOriginFallback() {
         double x = Mth.lerp((float) 1.0, this.xo, this.getX());
         double y = Mth.lerp((float) 1.0, this.yo, this.getY());

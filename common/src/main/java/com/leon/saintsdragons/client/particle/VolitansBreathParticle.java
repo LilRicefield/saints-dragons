@@ -20,10 +20,14 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumMap;
+import java.util.Map;
+
 public final class VolitansBreathParticle extends TextureSheetParticle {
     private static final int WATER_PARTICLES_PER_SECTION = 32;
     private static final double WATER_EMISSION_INTERVAL_TICKS = 2.0D;
     public enum Kind { WATER, POISON, BUBBLES, EMITTER, STAR, POISON_SKULL, POISON_FLAME }
+    private static final Map<Kind, SpriteSet> STREAM_SPRITES = new EnumMap<>(Kind.class);
 
     private final SpriteSet sprites;
     private final Kind kind;
@@ -36,6 +40,11 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
 
     private VolitansBreathParticle(ClientLevel level, double x, double y, double z,
                                    Vec3 velocity, SpriteSet sprites, Kind kind) {
+        this(level, x, y, z, velocity, sprites, kind, false);
+    }
+
+    private VolitansBreathParticle(ClientLevel level, double x, double y, double z,
+                                   Vec3 velocity, SpriteSet sprites, Kind kind, boolean core) {
         super(level, x, y, z);
         this.sprites = sprites;
         this.kind = kind;
@@ -59,6 +68,7 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
                 : 0.10F + random.nextFloat() * 0.10F;
         Vec3 forward = velocity.lengthSqr() > 1.0E-8 ? velocity.normalize() : new Vec3(0, 0, 1);
         double spread = VolitansBreathMotion.SPREAD * (highlight ? 2.0D : 1.0D);
+        if (core) spread *= 0.1D;
         Vec3 launch = forward.add(
                 (random.nextDouble() - 0.5) * spread,
                 (random.nextDouble() - 0.5) * spread,
@@ -79,6 +89,13 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
         quadSize = 0.34F;
         if (highlight) pickSprite(sprites);
         else setSprite(sprites.get(frameOffset, frames - 1));
+    }
+
+    static VolitansBreathParticle createStreamParticle(ClientLevel level, Vec3 origin, Vec3 velocity,
+                                                       Kind kind, boolean core) {
+        SpriteSet sprites = STREAM_SPRITES.get(kind);
+        return sprites == null ? null : new VolitansBreathParticle(level, origin.x, origin.y, origin.z,
+                velocity, sprites, kind, core);
     }
 
     @Override
@@ -130,6 +147,21 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float time = age + partialTicks;
+        renderAtAge(buffer, camera, partialTicks, time);
+    }
+
+    void renderContinuous(VertexConsumer buffer, Camera camera, float time) {
+        if (time >= lifetime) {
+            remove();
+            return;
+        }
+        // Prepare a tick of motion, then interpolate from this particle's own birth time.
+        // This avoids queuing each frame's new particles until the next engine tick.
+        while (isAlive() && age <= Mth.floor(time)) tick();
+        if (isAlive()) renderAtAge(buffer, camera, Mth.clamp(time - (age - 1), 0, 1), time);
+    }
+
+    private void renderAtAge(VertexConsumer buffer, Camera camera, float partialTicks, float time) {
         float progress = Mth.clamp(time / lifetime, 0.0F, 1.0F);
         int frame = Mth.floor(time / frameTicks) + frameOffset;
         if (!highlight) {
@@ -173,6 +205,7 @@ public final class VolitansBreathParticle extends TextureSheetParticle {
         public Factory(SpriteSet sprites, Kind kind) {
             this.sprites = sprites;
             this.kind = kind;
+            STREAM_SPRITES.put(kind, sprites);
         }
 
         @Override

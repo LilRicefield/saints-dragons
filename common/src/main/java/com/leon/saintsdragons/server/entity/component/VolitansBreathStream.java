@@ -4,7 +4,7 @@ import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonUtilities;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
-import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.common.particle.VolitansBreathParticleData;
 import static com.leon.saintsdragons.common.particle.VolitansBreathMotion.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -52,10 +52,9 @@ public final class VolitansBreathStream {
 
         Vec3 velocity = direction.normalize().scale(SPEED);
         AABB visibleArea = new AABB(origin, origin.add(direction.normalize().scale(RANGE))).inflate(64);
-        var particle = poison ? ModParticles.VOLITANS_POISON_BREATH.get() : ModParticles.VOLITANS_WATER_BREATH.get();
+        var particle = new VolitansBreathParticleData(dragon.getId());
         for (var viewer : level.players()) {
             if (visibleArea.contains(viewer.position())) {
-                // One section packet; each client creates the visual particles locally.
                 level.sendParticles(viewer, particle, true, origin.x, origin.y, origin.z,
                         0, velocity.x, velocity.y, velocity.z, 1.0);
             }
