@@ -58,13 +58,14 @@ public final class RaevyxStormLightningRenderer {
         }
     }
     private record Arc(Anchor start, Anchor end, Vec3 groundStart, Vec3 ground,
-                       int tick, int lifetime, long seed) {}
+                       int tick, int lifetime, long seed, boolean outward) {}
     private static final class State {
         final List<Arc> arcs = new ArrayList<>();
         final RandomSource random = RandomSource.create();
         int lastTick = -1;
         int nextBody;
         int nextGround;
+        int nextOutward;
     }
 
     public static void render(Raevyx dragon, BakedGeoModel model, Map<String, Matrix4f> transforms,
@@ -85,7 +86,7 @@ public final class RaevyxStormLightningRenderer {
             if (dragon.tickCount >= state.nextBody) {
                 state.nextBody = dragon.tickCount + 2;
                 for (int i = 0; i < 4; i++) {
-                    if (state.arcs.stream().filter(arc -> arc.ground == null).count() >= 10) break;
+                    if (state.arcs.stream().filter(arc -> arc.ground == null && !arc.outward).count() >= 10) break;
                     String[] pair = PAIRS[state.random.nextInt(PAIRS.length)];
                     if (pair.length == 0) continue;
                     String destination = endBone(pair, model);
@@ -104,7 +105,7 @@ public final class RaevyxStormLightningRenderer {
                         }
                     }
                     if (start != null && end != null) state.arcs.add(new Arc(start, end, null, null,
-                            dragon.tickCount, 3 + state.random.nextInt(3), state.random.nextLong()));
+                            dragon.tickCount, 3 + state.random.nextInt(3), state.random.nextLong(), false));
                 }
             }
             if (grounded && dragon.tickCount >= state.nextGround) {
@@ -125,10 +126,32 @@ public final class RaevyxStormLightningRenderer {
                         if (hit.getType() != HitResult.Type.BLOCK || hit.getDirection().getStepY() <= 0) continue;
                         Vec3 ground = hit.getLocation().add(0, 0.035, 0);
                         if (from.y - ground.y < 0.25) continue;
-                        state.arcs.add(new Arc(null, null, from, ground, dragon.tickCount, 4, state.random.nextLong()));
+                        state.arcs.add(new Arc(null, null, from, ground, dragon.tickCount, 4, state.random.nextLong(), false));
                         impact(dragon, ground, state.random);
                     }
                 }
+            }
+        }
+        if (dragon.tickCount >= state.nextOutward) {
+            state.nextOutward = dragon.tickCount + 2;
+            Vec3 bodyCenter = dragon.getBoundingBox().getCenter().subtract(dragon.position());
+            // Keep both endpoints bone-local so the whole discharge follows the current animated pose.
+            for (int i = 0; i < 3; i++) {
+                if (state.arcs.stream().filter(arc -> arc.outward).count() >= 6) break;
+                String bone = PAIRS[state.random.nextInt(PAIRS.length)][0];
+                Anchor start = anchor(bone, model, transforms, state.random);
+                if (start == null) continue;
+                Vec3 from = start.position(transforms);
+                Vec3 direction = from.subtract(bodyCenter).normalize().add(
+                        (state.random.nextDouble() - 0.5) * 0.5,
+                        0.15 + state.random.nextDouble() * 0.35,
+                        (state.random.nextDouble() - 0.5) * 0.5).normalize();
+                Vec3 to = from.add(direction.scale(3.0 + state.random.nextDouble() * 4.0));
+                var localEnd = new Matrix4f(transforms.get(bone)).invert().transformPosition(to.toVector3f());
+                if (!Float.isFinite(localEnd.x) || !Float.isFinite(localEnd.y) || !Float.isFinite(localEnd.z)) continue;
+                Anchor end = new Anchor(bone, new Vec3(localEnd.x, localEnd.y, localEnd.z));
+                state.arcs.add(new Arc(start, end, null, null, dragon.tickCount, 4,
+                        state.random.nextLong(), true));
             }
         }
         boolean gold = dragon.getTextureVariant() == Raevyx.VARIANT_NIGHT_GOLD;
@@ -142,12 +165,14 @@ public final class RaevyxStormLightningRenderer {
             float age = dragon.tickCount - arc.tick + partialTick;
             float fade = Mth.clamp(1 - age / arc.lifetime, 0, 1);
             float alpha = Math.min(1, age / 0.2F) * fade;
+            float renderedLength = arc.outward ? length * Mth.clamp(age / 0.45F, 0, 1) : length;
+            if (renderedLength < 0.05F) continue;
             poses.pushPose();
             poses.translate(from.x, from.y, from.z);
             poses.mulPose(new Quaternionf().rotationTo(0, 0, 1,
                     (float) (delta.x / length), (float) (delta.y / length), (float) (delta.z / length)));
             ProceduralBeamLightningRenderer.emitBolt(buffers.getBuffer(RenderType.lightning()), poses.last().pose(),
-                    length, arc.seed, arc.ground == null ? 0.35F : 1.2F, alpha,
+                    renderedLength, arc.seed, arc.outward ? 0.75F : arc.ground == null ? 0.35F : 1.2F, alpha,
                     1, gold ? 0.72F : 0.06F, gold ? 0.12F : 0.08F);
             poses.popPose();
         }

@@ -25,6 +25,9 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     public static final int GROUND_INTRO_TICKS = 50;
     public static final int GROUND_BURST_TICKS = 10;
     public static final int GROUND_SUPERCHARGE_START_TICKS = GROUND_INTRO_TICKS + GROUND_BURST_TICKS;
+    public static final float AIR_INTRO_TICKS = 38.4F;
+    public static final int AIR_BURST_TICKS = 8;
+    public static final float AIR_SUPERCHARGE_START_TICKS = AIR_INTRO_TICKS + AIR_BURST_TICKS;
     private static final int GROUND_SOUND_TICKS = 140;
     private static final int GROUND_EXTRA_SHAKE_TICK = 38;
     private static final int GROUND_SHAKE_START_TICKS = 49;
@@ -61,12 +64,13 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         }
 
         int ticks = getTicksInSection();
+        if (!getLevel().isClientSide && !superchargeStarted
+                && getUser().getStormVisualAge(0) >= (isGroundCast
+                ? GROUND_SUPERCHARGE_START_TICKS : AIR_SUPERCHARGE_START_TICKS)) {
+            getUser().startSupercharge(getConfiguredSuperchargeTicks());
+            superchargeStarted = true;
+        }
         if (isGroundCast) {
-            if (!getLevel().isClientSide && !superchargeStarted
-                    && getUser().getGroundStormVisualAge(0) >= GROUND_SUPERCHARGE_START_TICKS) {
-                getUser().startSupercharge(getConfiguredSuperchargeTicks());
-                superchargeStarted = true;
-            }
             if (!groundExtraShakeTriggered && ticks >= GROUND_EXTRA_SHAKE_TICK) {
                 groundExtraShakeTriggered = true;
                 getUser().triggerScreenShake(1.8F);
@@ -96,7 +100,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
         if (section.sectionType == AbilitySectionType.STARTUP) {
             superchargeStarted = false;
             isGroundCast = !getUser().isFlying();
-            getUser().setGroundStormVisuals(isGroundCast);
+            getUser().setStormVisuals(true, !isGroundCast);
             activeStartupDuration = isGroundCast ? GROUND_ONE_SHOT_TICKS : AIR_ONE_SHOT_TICKS;
             getUser().startTemporaryInvuln(activeStartupDuration);
             getUser().lockRiderControls(activeStartupDuration);
@@ -164,7 +168,7 @@ public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     }
 
     private void releaseLocks() {
-        getUser().setGroundStormVisuals(false);
+        getUser().setStormVisuals(false, false);
         getUser().clearTakeoffLock();
         getUser().clearRiderControlLock();
         screenShakeActive = false;

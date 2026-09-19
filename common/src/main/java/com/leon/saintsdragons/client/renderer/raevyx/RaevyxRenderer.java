@@ -109,8 +109,8 @@ public class RaevyxRenderer extends DragonGeoEntityRenderer<Raevyx> {
         if (super.shouldRender(entity, frustum, camX, camY, camZ)) {
             return true;
         }
-        float stormAge = entity.getGroundStormVisualAge(1.0F);
-        if (stormAge >= 0 && stormAge < RaevyxSummonStormRenderer.TOTAL_DURATION_TICKS
+        float stormAge = entity.getStormVisualAge(1.0F);
+        if (stormAge >= 0 && stormAge < RaevyxSummonStormRenderer.getTotalDurationTicks(entity)
                 && entity.distanceToSqr(camX, camY, camZ) <= BEAM_RENDER_DISTANCE * BEAM_RENDER_DISTANCE
                 && frustum.isVisible(entity.getBoundingBox().inflate(12.0D))) return true;
         if (!entity.isBeaming()) {
