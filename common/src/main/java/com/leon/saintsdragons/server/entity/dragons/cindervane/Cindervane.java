@@ -1709,11 +1709,21 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
 
     @Override
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
-        if (!level().isClientSide) {
+        if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
             dropEquipmentOnDeath();
-            if (getGender() == DragonGender.FEMALE) {
-                DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
-            }
+            DragonLootTables.dropEntityLoot(this, DragonLootTables.CINDERVANE_FEMALE_DEATH, source);
+        }
+    }
+
+    private void dropEquipmentOnDeath() {
+        if (hasCindervaneChest()) {
+            dropCindervaneChestContents();
+            spawnAtLocation(Items.CHEST);
+            setCindervaneChest(false);
+        }
+        if (hasSaddle()) {
+            spawnAtLocation(Items.SADDLE);
+            setSaddle(false);
         }
     }
 
@@ -1775,18 +1785,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         }
 
         applyConfiguredAttributes();
-    }
-
-    private void dropEquipmentOnDeath() {
-        if (hasCindervaneChest()) {
-            dropCindervaneChestContents();
-            spawnAtLocation(Items.CHEST);
-            setCindervaneChest(false);
-        }
-        if (hasSaddle()) {
-            spawnAtLocation(Items.SADDLE);
-            setSaddle(false);
-        }
     }
 
     @Override
@@ -1889,14 +1887,6 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         enforcePrimaryMeleeForFlight(getControllingPassenger() instanceof Player player ? player : null);
         triggerAnim(AnimationHelper.FLIGHT_CONTROLLER, AnimationHelper.TAKEOFF);
         getSoundHandler().playMovingEntitySound(ModSounds.CINDERVANE_TAKEOFF.get(), 1.2f, 1.0f, 55);
-    }
-
-    @Override
-    protected void onLandingDataSet(boolean landing) {
-        if (landing) {
-            setHovering(false);
-            setTakeoff(false);
-        }
     }
 
     @Override

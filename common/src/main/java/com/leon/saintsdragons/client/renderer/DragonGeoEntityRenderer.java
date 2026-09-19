@@ -114,7 +114,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
             }
 
             if (extractWorldRenderData && this.renderedModelThisPass) {
-                sampleLocators(entity, partialTick);
+                sampleLocators(entity);
                 afterDragonRender(entity, poseStack, bufferSource, partialTick);
             }
         } finally {
@@ -194,17 +194,16 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         }
     }
 
-    protected void sampleLocators(T entity, float partialTick) {
+    protected void sampleLocators(T entity) {
         if (this.lastBakedModel == null || entity == null) {
             return;
         }
         for (LocatorSpec spec : locatorSpecs(entity)) {
-            trackBoneToLocators(entity, partialTick, spec.boneName(), spec.x(), spec.y(), spec.z(), spec.locatorNames());
+            trackBoneToLocators(entity, spec.boneName(), spec.x(), spec.y(), spec.z(), spec.locatorNames());
         }
     }
 
-    protected void trackBoneToLocators(T entity, float partialTick, String boneName, float x, float y, float z,
-                                       String... locatorNames) {
+    protected void trackBoneToLocators(T entity, String boneName, float x, float y, float z, String... locatorNames) {
         if (this.lastBakedModel == null || entity == null) {
             return;
         }
@@ -213,7 +212,6 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
             if (world == null) {
                 return;
             }
-            world = world.subtract(entity.position()).add(entity.getPosition(partialTick));
             for (String locatorName : locatorNames) {
                 entity.setClientLocatorPosition(locatorName, world);
             }

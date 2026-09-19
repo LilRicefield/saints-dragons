@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia;
 
+import com.leon.saintsdragons.server.entity.interfaces.*;
+import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -27,14 +29,11 @@ import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaIn
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaSoundProfile;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers.AtroxiiaTamingHandler;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
-import com.leon.saintsdragons.server.entity.interfaces.PassiveTreeDestroyer;
-import com.leon.saintsdragons.server.entity.interfaces.DragonSoundProfile;
-import com.leon.saintsdragons.server.entity.interfaces.ShakesScreen;
-import com.leon.saintsdragons.server.entity.interfaces.ScentAssessingDragon;
 import com.leon.saintsdragons.server.world.DragonSpawnRules;
 import com.leon.saintsdragons.server.loot.DragonLootTables;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -42,8 +41,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.*;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
@@ -56,10 +57,9 @@ import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
@@ -75,7 +75,7 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import java.util.Map;
 import java.util.function.Supplier;
 
-public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer, ScentAssessingDragon {
+public class Atroxiia extends RideableGroundDragon implements ShakesScreen, PassiveTreeDestroyer, ScentAssessingDragon, DragonSaddleCarrier {
     public static final byte QUAKE_TAIL_FLASH_EVENT = 85;
     private int clientQuakeTailFlashTick = -100;
 
@@ -115,6 +115,11 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.BOOLEAN);
     private static final EntityDataAccessor<Float> DATA_SWIM_PITCH_RAD =
             SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_SADDLED =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.BOOLEAN);
+    private static final EntityDataAccessor<Boolean> DATA_HAS_CHEST =
+            SynchedEntityData.defineId(Atroxiia.class, EntityDataSerializers.BOOLEAN);
+
     private static final int MOVEMENT_TRANSITION_TICKS = 4;
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
@@ -145,6 +150,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
     private static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
+    private static final int ATROXIIA_CHEST_SLOTS = 15;
 
     @Override
     public int getScentAssessmentDurationTicks() {
@@ -172,6 +178,7 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private final AtroxiiaInteractionHandler interactionHandler = new AtroxiiaInteractionHandler(this);
     private final AtroxiiaTamingHandler tamingController = new AtroxiiaTamingHandler(this);
     private final ScreenShakeComponent screenShakeComponent;
+    private final SimpleContainer atroxiiaChestInventory = new SimpleContainer(ATROXIIA_CHEST_SLOTS);
     private final DragonForwardMovementComponent slitherMovement = new DragonForwardMovementComponent(
             this,
             new DragonForwardMovementComponent.StateAccess() {
@@ -255,6 +262,8 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         this.entityData.define(DATA_FEEDING_COOLDOWN, 0);
         this.entityData.define(DATA_PITCH_KEY_MODE, false);
         this.entityData.define(DATA_SWIM_PITCH_RAD, 0.0F);
+        this.entityData.define(DATA_HAS_CHEST, false);
+        this.entityData.define(DATA_SADDLED, false);
     }
 
     @Override
@@ -317,9 +326,99 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     @Override
+    protected void onRiderOpenInventory(Player player) {
+        if (player instanceof ServerPlayer serverPlayer) {
+            openAtroxiiaInventory(serverPlayer);
+        }
+    }
+
+    private void openAtroxiiaInventory(ServerPlayer player) {
+        if (!this.isAlive() || player.distanceToSqr(this) > 64.0D) {
+            return;
+        }
+        player.openMenu(new SimpleMenuProvider(
+                (containerId, playerInventory, ignored) -> new DragonInventoryMenu(containerId, playerInventory, this),
+                this.getDisplayName()
+        ));
+    }
+
+    private void dropAtroxiiaChestContent() {
+        for (int slot = 0; slot < atroxiiaChestInventory.getContainerSize(); slot++) {
+            ItemStack stack = atroxiiaChestInventory.getItem(slot);
+            if (!stack.isEmpty()) {
+                this.spawnAtLocation(stack.copy());
+                atroxiiaChestInventory.setItem(slot, ItemStack.EMPTY);
+            }
+        }
+    }
+
+    public void removeAtroxiiaChestAndDropContents() {
+        if (this.level().isClientSide || !hasAtroxiiaChest()) {
+            return;
+        }
+        dropAtroxiiaChestContent();
+        setAtroxiiaChest(false);
+        this.playSound(SoundEvents.DONKEY_CHEST, 1.0F, 1.0F);
+    }
+
+    public boolean hasAtroxiiaChest() {
+        return this.entityData.get(DATA_HAS_CHEST);
+    }
+
+    @Override
+    public boolean hasSaddle() {
+        return this.entityData.get(DATA_SADDLED);
+    }
+
+    @Override
+    public void setSaddle(boolean saddled) {
+        if (!saddled && hasAttachedChest()) {
+            return;
+        }
+        this.entityData.set(DATA_SADDLED, saddled);
+        if (!saddled && isVehicle()) {
+            ejectPassengers();
+        }
+    }
+
+    @Override
+    public boolean hasAttachedChest() {
+        return hasAtroxiiaChest();
+    }
+
+    public void setAtroxiiaChest(boolean value) {
+        if (value && !hasSaddle()) {
+            return;
+        }
+        this.entityData.set(DATA_HAS_CHEST, value);
+        if (!value) {
+            atroxiiaChestInventory.clearContent();
+        }
+    }
+
+    @Override
+    public void setAttachedChest(boolean value) {
+        setAtroxiiaChest(value);
+    }
+
+    public Container getAtroxiiaChestInventory() {
+        return atroxiiaChestInventory;
+    }
+
+    @Override
+    public Container getAttachedChestInventory() {
+        return getAtroxiiaChestInventory();
+    }
+
+    @Override
+    public void removeAttachedChestAndDropContents() {
+        removeAtroxiiaChestAndDropContents();
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
-            case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W -> true;
+            case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, OPEN_INVENTORY -> true;
             default -> super.supportsRiderAction(action);
         };
     }
@@ -750,6 +849,19 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     protected void dropAdditionalDeathLootAfterBase(@NotNull DamageSource source) {
         if (!level().isClientSide && getGender() == DragonGender.FEMALE) {
             DragonLootTables.dropEntityLoot(this, DragonLootTables.ATROXIIA_FEMALE_DEATH, source);
+            dropEquipmentOnDeath();
+        }
+    }
+
+    private void dropEquipmentOnDeath() {
+        if (hasAtroxiiaChest()) {
+            dropAtroxiiaChestContent();
+            spawnAtLocation(Items.CHEST);
+            setAtroxiiaChest(false);
+        }
+        if (hasSaddle()) {
+            spawnAtLocation(Items.SADDLE);
+            setSaddle(false);
         }
     }
 
@@ -1179,6 +1291,11 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         saveRideableData(tag);
         tag.putInt("FeedingCooldownTicks", Math.max(0, this.entityData.get(DATA_FEEDING_COOLDOWN)));
         tamingController.save(tag);
+        tag.putBoolean("AtroxiiaHasChest", hasAtroxiiaChest());
+        tag.putBoolean("AtroxiiaSaddled", hasSaddle());
+        if (hasAtroxiiaChest()) {
+            tag.put("AtroxiiiaChestsItems", atroxiiaChestInventory.createTag());
+        }
     }
 
     @Override
@@ -1187,6 +1304,14 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         loadRideableData(tag);
         if (tag.contains("FeedingCooldownTicks")) {
             setFeedingCooldown(tag.getInt("FeedingCooldownTicks"));
+        }
+        boolean restoredChest = tag.getBoolean("AtroxiiaHasChest");
+        boolean restoredSaddle = restoredChest
+                || tag.contains("AtroxiiaSaddled") && tag.getBoolean("AtroxiiaSaddled");
+        setSaddle(restoredSaddle);
+        setAtroxiiaChest(restoredChest);
+        if (hasAtroxiiaChest() && tag.contains("AtroxiiiaChestsItems", Tag.TAG_LIST)) {
+            atroxiiaChestInventory.fromTag(tag.getList("AtroxiiiaChestsItems", Tag.TAG_COMPOUND));
         }
         tamingController.load(tag);
         applyConfiguredAttributes();

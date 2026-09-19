@@ -8,12 +8,16 @@ import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusGlowLayer
 import com.leon.saintsdragons.client.renderer.layer.ignivorus.IgnivorusNightEmissiveLayer;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.part.IgnivorusHitboxes;
+import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.culling.Frustum;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import software.bernie.geckolib.cache.object.GeoBone;
 import software.bernie.geckolib.util.RenderUtils;
@@ -103,6 +107,11 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
     protected void afterDragonRender(Ignivorus entity, PoseStack poseStack,
                                      MultiBufferSource bufferSource, float partialTick) {
         if (!entity.isBaby()) {
+            Vec3 mouth = getBoneWorldPosition(FIRE_BONE);
+            if (mouth != null && !ShaderPassCompatibility.isIrisShadowPass()) {
+                entity.setClientLocatorPosition("fireBreathVisualOrigin",
+                        mouth.subtract(entity.position()).add(entity.getPosition(partialTick)));
+            }
             IgnivorusSkyfallSphereRenderer.render(entity, poseStack, bufferSource, partialTick);
             IgnivorusSkyfallRaysRenderer.render(entity, getBoneWorldPosition("middlebody"),
                     poseStack, bufferSource, partialTick);
@@ -116,6 +125,13 @@ public class IgnivorusRenderer extends DragonGeoEntityRenderer<Ignivorus> {
                     bufferSource,
                     poseStack.last());
         }
+    }
+
+    @Override
+    public boolean shouldRender(Ignivorus entity, Frustum frustum, double camX, double camY, double camZ) {
+        if (super.shouldRender(entity, frustum, camX, camY, camZ)) return true;
+        return entity.isBreathingFire() && entity.distanceToSqr(camX, camY, camZ) <= 512.0D * 512.0D
+                && frustum.isVisible(entity.getBoundingBox().inflate(ExpandingBreathSection.DEFAULT_RANGE + 32.0D));
     }
 
     private final Map<String, Matrix4f> collisionTransforms = new HashMap<>();

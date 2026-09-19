@@ -3,6 +3,7 @@ package com.leon.saintsdragons.client.particle;
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
 import com.leon.saintsdragons.common.particle.FireBreathParticleData;
 import com.leon.saintsdragons.common.registry.ModParticles;
+import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+
+import java.lang.ref.WeakReference;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public final class FireBreathParticle extends TextureSheetParticle {
     private static final int SPRITE_COUNT = 29;
@@ -52,7 +57,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private final int smokeEmissionAge;
     private boolean emittedSmoke;
 
-    private FireBreathParticle(ClientLevel level, double x, double y, double z, Vec3 velocity,
+    FireBreathParticle(ClientLevel level, double x, double y, double z, Vec3 velocity,
                               FireBreathParticleData data, SpriteSet sprites, double launchFraction, boolean core, boolean spec) {
         super(level, x, y, z);
         this.sprites = sprites;
@@ -116,7 +121,6 @@ public final class FireBreathParticle extends TextureSheetParticle {
     private void advanceFlame(double travel) {
         Vec3 start = new Vec3(x, y, z);
         distance = Math.min(range, distance + travel);
-        // Share the fire's collision envelope; reserve room for the outer rendered layer.
         double spreadWidth = Math.max(0, ExpandingBreathSection.halfWidth(distance) * visualScale - fullSize * SMOKE_SCALE);
         Vec3 end = origin.add(forward.scale(distance)).add(spread.scale(spreadWidth));
         if (!level.hasChunksAt(BlockPos.containing(start), BlockPos.containing(end))) {
@@ -182,6 +186,18 @@ public final class FireBreathParticle extends TextureSheetParticle {
     @Override
     public void render(@NotNull VertexConsumer buffer, @NotNull Camera camera, float partialTicks) {
         float renderAge = Math.max(0, age - 1 + partialTicks);
+        renderAtAge(buffer, camera, partialTicks, renderAge);
+    }
+    void renderContinuous(VertexConsumer buffer, Camera camera, float time) {
+        if (time >= lifetime) {
+            remove();
+            return;
+        }
+        while (isAlive() && age <= Mth.floor(time)) tick();
+        if (isAlive()) renderAtAge(buffer, camera, Mth.clamp(time - (age - 1), 0, 1), time);
+    }
+
+    private void renderAtAge(VertexConsumer buffer, Camera camera, float partialTicks, float renderAge) {
         int frame = ((int) (renderAge / FRAME_TICKS) + frameOffset) % frameCount;
         setSprite(sprites.get(spriteOffset + frame, SPRITE_COUNT - 1));
         float growth = Mth.clamp(renderAge / GROWTH_TICKS, 0, 1);
@@ -216,6 +232,7 @@ public final class FireBreathParticle extends TextureSheetParticle {
 
     public static final class Factory implements ParticleProvider<FireBreathParticleData> {
         private final SpriteSet sprites;
+        private final Map<Ignivorus, WeakReference<IgnivorusBreathParticle>> emitters = new WeakHashMap<>();
 
         public Factory(SpriteSet sprites) {
             this.sprites = sprites;
@@ -225,18 +242,19 @@ public final class FireBreathParticle extends TextureSheetParticle {
         public Particle createParticle(@NotNull FireBreathParticleData data, @NotNull ClientLevel level,
                                        double x, double y, double z, double xSpeed, double ySpeed, double zSpeed) {
             if (data.density() <= 0) return null;
+            if (data.dragonId() >= 0) {
+                if (!(level.getEntity(data.dragonId()) instanceof Ignivorus dragon)) return null;
+                WeakReference<IgnivorusBreathParticle> reference = emitters.get(dragon);
+                IgnivorusBreathParticle emitter = reference == null ? null : reference.get();
+                if (emitter != null && emitter.isManaged()) return null;
+                emitter = new IgnivorusBreathParticle(level, dragon, data, sprites, this);
+                emitters.put(dragon, new WeakReference<>(emitter));
+                return emitter;
+            }
             int fireCount = 32;
             int specCount = 16;
             Vec3 velocity = new Vec3(xSpeed, ySpeed, zSpeed);
-            for (int i = 0; i < 3; i++) {
-                Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
-                        x, y, z, xSpeed, ySpeed, zSpeed);
-            }
-            for (int i = 0; i < 5; i++) {
-                Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_OUTER_FLAME.get(),
-                        x, y, z, xSpeed, ySpeed, zSpeed);
-            }
-            emitForwardGlows(level, new Vec3(x, y, z), velocity);
+            emitSupportingParticles(level, new Vec3(x, y, z), velocity);
             for (int i = 1; i < fireCount; i++) {
                 Minecraft.getInstance().particleEngine.add(
                         new FireBreathParticle(level, x, y, z, velocity, data, sprites,
@@ -248,6 +266,18 @@ public final class FireBreathParticle extends TextureSheetParticle {
                                 (i + 0.5D) / specCount, false, true));
             }
             return new FireBreathParticle(level, x, y, z, velocity, data, sprites, 0, true, false);
+        }
+
+        void emitSupportingParticles(ClientLevel level, Vec3 origin, Vec3 velocity) {
+            for (int i = 0; i < 3; i++) {
+                Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_FLICKER.get(),
+                        origin.x, origin.y, origin.z, velocity.x, velocity.y, velocity.z);
+            }
+            for (int i = 0; i < 5; i++) {
+                Minecraft.getInstance().particleEngine.createParticle(ModParticles.FIRE_BREATH_OUTER_FLAME.get(),
+                        origin.x, origin.y, origin.z, velocity.x, velocity.y, velocity.z);
+            }
+            emitForwardGlows(level, origin, velocity);
         }
 
         private void emitForwardGlows(ClientLevel level, Vec3 origin, Vec3 velocity) {

@@ -2565,6 +2565,10 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public Vec3 getFireBreathStartAnchor(float partialTicks) {
+        if (level().isClientSide) {
+            Vec3 visualMouth = getClientLocatorPosition("fireBreathVisualOrigin");
+            if (visualMouth != null) return visualMouth;
+        }
         Vec3 clientBone = getBonePositionForHitbox("fireBoneOrigin");
         if (clientBone != null) {
             return clientBone;
@@ -2573,6 +2577,13 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     }
 
     public Vec3 getFireBreathVisualDirection(float partialTicks) {
+        Entity rider = getControllingPassenger();
+        if (level().isClientSide && rider instanceof LivingEntity) {
+            Vec3 direction = DragonAimHelper.clampDirectionToHead(rider.getViewVector(partialTicks),
+                    Mth.rotLerp(partialTicks, yHeadRotO, yHeadRot),
+                    Mth.lerp(partialTicks, xRotO, getXRot()), MAX_FIRE_YAW_DEG, MAX_FIRE_PITCH_DEG);
+            if (direction != null) return direction;
+        }
         Vec3 start = getFireBreathStart();
         if (start != null && this.entityData.get(DATA_FIRE_END_SET)) {
             Vec3 end = new Vec3(this.entityData.get(DATA_FIRE_END_X),

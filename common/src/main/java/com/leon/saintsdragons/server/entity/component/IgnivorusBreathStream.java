@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.entity.component;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
 import com.leon.saintsdragons.common.particle.FireBreathParticleData;
-import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
@@ -25,7 +24,6 @@ import java.util.Set;
 
 public final class IgnivorusBreathStream {
     static final int DAMAGE_INTERVAL = 10;
-    private static final double BACKBLAST_SIDE_OFFSET = 0.75;
     private static final double VFX_VIEWER_RANGE = 512.0D;
     private final Ignivorus dragon;
     private final SweptBreathStream<FireSection> stream = new SweptBreathStream<>(DAMAGE_INTERVAL, ExpandingBreathSection.MAX_TICKS);
@@ -59,27 +57,12 @@ public final class IgnivorusBreathStream {
         // At the six-second mark, fire already in flight becomes destructive too.
         if (canBreakBlocks) stream.forEachPayload(payload -> payload.breaking = true);
 
-        FireBreathParticleData particle = new FireBreathParticleData((float) section.range(), 1.0F);
-        Vec3 bodyForward = Vec3.directionFromRotation(0, dragon.yBodyRot);
-        Vec3 bodyRight = bodyForward.cross(new Vec3(0, 1, 0)).normalize();
-        Vec3 backblastStart = origin.subtract(bodyForward.scale(0.35));
-        Vec3 leftStart = backblastStart.subtract(bodyRight.scale(BACKBLAST_SIDE_OFFSET));
-        Vec3 rightStart = backblastStart.add(bodyRight.scale(BACKBLAST_SIDE_OFFSET));
-        double backblastAngle = Math.toRadians(30);
-        Vec3 backward = bodyForward.scale(-Math.cos(backblastAngle));
-        Vec3 sideways = bodyRight.scale(Math.sin(backblastAngle));
-        Vec3 leftLaunch = backward.subtract(sideways);
-        Vec3 rightLaunch = backward.add(sideways);
+        // Identify the emitter so clients can use their current animated mouth pose.
+        FireBreathParticleData particle = new FireBreathParticleData((float) section.range(), 1.0F, 1.0F, dragon.getId());
         for (ServerPlayer viewer : level.players()) {
             if (viewer.position().distanceToSqr(origin) <= VFX_VIEWER_RANGE * VFX_VIEWER_RANGE) {
                 level.sendParticles(viewer, particle, true, origin.x, origin.y, origin.z, 0,
                         velocity.x, velocity.y, velocity.z, 1);
-                level.sendParticles(viewer, ModParticles.FIRE_BREATH_BACKBLAST.get(), true,
-                        leftStart.x, leftStart.y, leftStart.z, 0,
-                        leftLaunch.x, leftLaunch.y, leftLaunch.z, 1);
-                level.sendParticles(viewer, ModParticles.FIRE_BREATH_BACKBLAST.get(), true,
-                        rightStart.x, rightStart.y, rightStart.z, 0,
-                        rightLaunch.x, rightLaunch.y, rightLaunch.z, 1);
             }
         }
     }

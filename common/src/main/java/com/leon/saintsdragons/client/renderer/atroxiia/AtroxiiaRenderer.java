@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.client.renderer.atroxiia;
 
+import com.leon.saintsdragons.client.renderer.layer.DragonEquipmentLayer;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
@@ -26,6 +28,16 @@ public class AtroxiiaRenderer extends DragonGeoEntityRenderer<Atroxiia> {
 
     public AtroxiiaRenderer(EntityRendererProvider.Context context) {
         super(context, new AtroxiiaModel());
+        this.addRenderLayer(new DragonEquipmentLayer<>(
+                this,
+                Atroxiia::hasSaddle,
+                SaintsDragonsCommon.rl("textures/entity/atroxiia/atroxiia_saddle_layer.png")
+        ));
+        this.addRenderLayer(new DragonEquipmentLayer<>(
+                this,
+                Atroxiia::hasAtroxiiaChest,
+                SaintsDragonsCommon.rl("textures/entity/atroxiia/atroxiia_chest_layer.png")
+        ));
         this.addRenderLayer(new AtroxiiaNightEmissiveLayer(this));
     }
 

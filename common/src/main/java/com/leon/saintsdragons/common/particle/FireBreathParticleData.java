@@ -12,15 +12,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
 
-public record FireBreathParticleData(float range, float density, float scale) implements ParticleOptions {
+public record FireBreathParticleData(float range, float density, float scale, int dragonId) implements ParticleOptions {
     public static final Codec<FireBreathParticleData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.FLOAT.fieldOf("range").forGetter(FireBreathParticleData::range),
             Codec.FLOAT.fieldOf("density").forGetter(FireBreathParticleData::density),
-            Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(FireBreathParticleData::scale)
+            Codec.FLOAT.optionalFieldOf("scale", 1.0F).forGetter(FireBreathParticleData::scale),
+            Codec.INT.optionalFieldOf("dragon_id", -1).forGetter(FireBreathParticleData::dragonId)
     ).apply(instance, FireBreathParticleData::new));
 
     public FireBreathParticleData(float range, float density) {
         this(range, density, 1.0F);
+    }
+
+    public FireBreathParticleData(float range, float density, float scale) {
+        this(range, density, scale, -1);
     }
 
     public FireBreathParticleData {
@@ -38,13 +43,25 @@ public record FireBreathParticleData(float range, float density, float scale) im
             reader.expect(' ');
             float density = reader.readFloat();
             reader.expect(' ');
-            return new FireBreathParticleData(range, density, reader.readFloat());
+            float scale = reader.readFloat();
+            int dragonId = -1;
+            if (reader.canRead() && reader.peek() == ' ') {
+                int cursor = reader.getCursor();
+                reader.skip();
+                if (reader.canRead() && reader.peek() == '@') {
+                    reader.skip();
+                    dragonId = reader.readInt();
+                } else {
+                    reader.setCursor(cursor);
+                }
+            }
+            return new FireBreathParticleData(range, density, scale, dragonId);
         }
 
         @Override
         public @NotNull FireBreathParticleData fromNetwork(@NotNull ParticleType<FireBreathParticleData> type,
                                                           @NotNull FriendlyByteBuf buffer) {
-            return new FireBreathParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat());
+            return new FireBreathParticleData(buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readInt());
         }
     };
 
@@ -58,10 +75,12 @@ public record FireBreathParticleData(float range, float density, float scale) im
         buffer.writeFloat(range);
         buffer.writeFloat(density);
         buffer.writeFloat(scale);
+        buffer.writeInt(dragonId);
     }
 
     @Override
     public @NotNull String writeToString() {
-        return String.format(Locale.ROOT, "saintsdragons:fire_breath_flame %s %s %s", range, density, scale);
+        return String.format(Locale.ROOT, "saintsdragons:fire_breath_flame %s %s %s", range, density, scale)
+                + (dragonId < 0 ? "" : " @" + dragonId);
     }
 }

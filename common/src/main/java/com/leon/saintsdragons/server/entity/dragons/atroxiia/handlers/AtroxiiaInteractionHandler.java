@@ -8,6 +8,7 @@ import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.handlers.AbstractDragonInteractionHandler;
 import com.leon.saintsdragons.server.entity.dragons.handlers.DragonBreedingInteractionHelper;
+import com.leon.saintsdragons.server.entity.dragons.handlers.DragonSaddleInteractionHelper;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -170,6 +171,7 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
 
     @Override
     protected InteractionResult handleTamedInteraction(Player player, InteractionHand hand, ItemStack heldItem) {
+        boolean isOwner = dragon.isOwnedBy(player);
         InteractionResult growthStuntResult = tryHandleGrowthStuntingFood(
                 player,
                 heldItem,
@@ -184,6 +186,22 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         );
         if (growthStuntResult != InteractionResult.PASS) {
             return growthStuntResult;
+        }
+
+        if (isOwner) {
+            InteractionResult equipmentResult = DragonSaddleInteractionHelper.handle(
+                    dragon,
+                    dragon,
+                    player,
+                    hand,
+                    heldItem
+            );
+            if (equipmentResult != InteractionResult.PASS) {
+                return equipmentResult;
+            }
+            if (dragon.canOwnerCommand(player) && !dragon.isFood(heldItem) && hand == InteractionHand.MAIN_HAND) {
+                return handleCommandCycling(player);
+            }
         }
 
         if (!dragon.isBaby() && dragon.canReceiveFoodFrom(player)
