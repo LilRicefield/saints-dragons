@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "MMM",
+    "MMM",
+    "MMM"
+  ],
+  "key": {
+    "M": {
+      "item": "saintsdragons:raw_mossback"
+    }
+  },
+  "result": {
+    "item": "saintsdragons:mossback_music_music_disc",
+    "count": 1
+  }
+}
