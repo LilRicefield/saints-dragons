@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.particle;
 
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -16,6 +17,7 @@ public final class DragonlordJumpParticle extends TextureSheetParticle {
     public enum Kind { FIRE, SPEC, SMOKE, EMITTER, STRIKE, GROUND_IMPACT }
 
     private final SpriteSet sprites;
+    private final ParticleRenderType renderType;
     private final Kind kind;
     private final int frames;
     private final float size;
@@ -24,6 +26,9 @@ public final class DragonlordJumpParticle extends TextureSheetParticle {
                                     double vx, double vy, double vz, SpriteSet sprites, Kind kind) {
         super(level, x, y, z);
         this.sprites = sprites;
+        renderType = ShaderPassCompatibility.isShaderPackInUse()
+                ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
+                : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
         this.kind = kind;
         frames = switch (kind) {
             case FIRE -> 17; case SPEC -> 12; case SMOKE -> 14;
@@ -113,7 +118,7 @@ public final class DragonlordJumpParticle extends TextureSheetParticle {
 
     @Override
     public ParticleRenderType getRenderType() {
-        return DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
+        return renderType;
     }
 
     public record Factory(SpriteSet sprites, Kind kind) implements ParticleProvider<SimpleParticleType> {

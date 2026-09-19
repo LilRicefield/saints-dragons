@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.client.particle;
 
+import com.leon.saintsdragons.client.renderer.ShaderPassCompatibility;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Camera;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -12,11 +13,15 @@ public final class VolitansPoisonGroundBurstParticle extends TextureSheetParticl
     private static final int FRAMES = 12;
     private static final float FRAME_TICKS = 0.75F;
     private final SpriteSet sprites;
+    private final ParticleRenderType renderType;
 
     private VolitansPoisonGroundBurstParticle(ClientLevel level, double x, double y, double z,
                                               double scale, SpriteSet sprites) {
         super(level, x, y, z);
         this.sprites = sprites;
+        renderType = ShaderPassCompatibility.isShaderPackInUse()
+                ? ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT
+                : DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
         quadSize = 3.0F * (float) Mth.clamp(scale, 0.25D, 8.0D);
         lifetime = Mth.ceil(FRAMES * FRAME_TICKS);
         hasPhysics = false;
@@ -55,7 +60,7 @@ public final class VolitansPoisonGroundBurstParticle extends TextureSheetParticl
 
     @Override
     public ParticleRenderType getRenderType() {
-        return DragonParticleRenderTypes.TRANSLUCENT_NO_DEPTH_WRITE;
+        return renderType;
     }
 
     public record Factory(SpriteSet sprites) implements ParticleProvider<SimpleParticleType> {
