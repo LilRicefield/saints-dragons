@@ -32,26 +32,28 @@ public final class ModParticles {
             REGISTER.register("dragonlord_jump_smoke", () -> Services.PLATFORM.createSimpleParticle(false));
     public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_EMITTER =
             REGISTER.register("dragonlord_jump_emitter", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_STRIKE =
+            REGISTER.register("dragonlord_jump_strike", () -> Services.PLATFORM.createSimpleParticle(false));
+    public static final Supplier<SimpleParticleType> DRAGONLORD_JUMP_GROUND_IMPACT =
+            REGISTER.register("dragonlord_jump_ground_impact", () -> Services.PLATFORM.createSimpleParticle(false));
 
     public static final Supplier<SimpleParticleType> VOLITANS_POISON_ORB_EMITTER =
             REGISTER.register("volitans_poison_orb_emitter", () -> Services.PLATFORM.createSimpleParticle(true));
-
     public static final Supplier<SimpleParticleType> VOLITANS_POISON_ORB_TRAIL =
             REGISTER.register("volitans_poison_orb_trail", () -> Services.PLATFORM.createSimpleParticle(true));
-
-    public static final Supplier<SimpleParticleType> ATROXIIA_QUAKE_SMOKE =
-            REGISTER.register("atroxiia_quake_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
-
-    public static final Supplier<SimpleParticleType> ATROXIIA_ICE_BURST =
-            REGISTER.register("atroxiia_ice_burst", () -> Services.PLATFORM.createSimpleParticle(true));
-
     public static final Supplier<ParticleType<VolitansBreathParticleData>> VOLITANS_BREATH_STREAM =
             REGISTER.register("volitans_breath_stream", () -> new ParticleType<>(false, VolitansBreathParticleData.DESERIALIZER) {
                 @Override
                 public Codec<VolitansBreathParticleData> codec() {
                     return VolitansBreathParticleData.CODEC;
-                }
-            });
+                }});
+
+    public static final Supplier<SimpleParticleType> ATROXIIA_QUAKE_SMOKE =
+            REGISTER.register("atroxiia_quake_smoke", () -> Services.PLATFORM.createSimpleParticle(true));
+    public static final Supplier<SimpleParticleType> ATROXIIA_ICE_BURST =
+            REGISTER.register("atroxiia_ice_burst", () -> Services.PLATFORM.createSimpleParticle(true));
+
+
 
     public static final Supplier<SimpleParticleType> VOLITANS_WATER_BREATH =
             REGISTER.register("volitans_water_breath", () -> Services.PLATFORM.createSimpleParticle(false));

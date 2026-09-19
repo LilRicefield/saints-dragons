@@ -59,6 +59,8 @@ public final class CommonParticleFactories {
         register(registrar, ModParticles.DRAGONLORD_JUMP_SPEC.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.SPEC));
         register(registrar, ModParticles.DRAGONLORD_JUMP_SMOKE.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.SMOKE));
         register(registrar, ModParticles.DRAGONLORD_JUMP_EMITTER.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.EMITTER));
+        register(registrar, ModParticles.DRAGONLORD_JUMP_STRIKE.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.STRIKE));
+        register(registrar, ModParticles.DRAGONLORD_JUMP_GROUND_IMPACT.get(), sprites -> new DragonlordJumpParticle.Factory(sprites, DragonlordJumpParticle.Kind.GROUND_IMPACT));
         register(registrar, ModParticles.VOLITANS_POISON_ORB_EMITTER.get(), sprites -> new VolitansPoisonOrbTrailParticle.Factory(sprites, true));
         register(registrar, ModParticles.VOLITANS_POISON_ORB_TRAIL.get(), VolitansPoisonOrbTrailParticle.Factory::new);
         register(registrar, ModParticles.ATROXIIA_QUAKE_SMOKE.get(), AtroxiiaQuakeSmokeParticle.Factory::new);

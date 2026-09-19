@@ -27,9 +27,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoItem;
 
@@ -470,6 +472,17 @@ public final class DragonlordArmorSetBonus {
 
         Vec3 origin = player.position();
         double y = player.getY() + 0.35D;
+        server.sendParticles(ModParticles.DRAGONLORD_JUMP_STRIKE.get(),
+                origin.x, origin.y, origin.z, 0, 0, 0, 0, 0);
+        var groundHit = server.clip(new ClipContext(origin.add(0, 0.25D, 0),
+                origin.add(0, -6.0D, 0), ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, player));
+        if (groundHit.getType() == HitResult.Type.BLOCK
+                && groundHit.getDirection().getStepY() > 0) {
+            Vec3 ground = groundHit.getLocation();
+            server.sendParticles(ModParticles.DRAGONLORD_JUMP_GROUND_IMPACT.get(),
+                    ground.x, ground.y + 0.04D, ground.z, 0, 0, 0, 0, 0);
+        }
         for (int i = 0; i < DOUBLE_JUMP_FLAME_COUNT; i++) {
             double angle = (Math.PI * 2.0D * i) / DOUBLE_JUMP_FLAME_COUNT;
             server.sendParticles(ModParticles.DRAGONLORD_JUMP_FIRE.get(),
