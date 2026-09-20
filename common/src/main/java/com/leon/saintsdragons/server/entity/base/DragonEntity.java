@@ -591,6 +591,62 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return hungerComponent != null && hungerComponent.isHungry();
     }
 
+    public int getMaxHunger() {
+        return HUNGER_MAX;
+    }
+
+    public boolean isHungerEnabled() {
+        return SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get();
+    }
+
+    public boolean shouldTickHunger() {
+        return true;
+    }
+
+    public int getHungerDecayIntervalTicks() {
+        return 4800;
+    }
+
+    public int getHungerDecayStep() {
+        return getControllingPassenger() instanceof Player ? 2 : 1;
+    }
+
+    public int getHungerStarvationIntervalTicks() {
+        return 80;
+    }
+
+    public float getHungerStarvationDamage() {
+        return 2.0F;
+    }
+
+    public int getHungerFeedingAmount(boolean heartyMeal) {
+        return heartyMeal ? 20 : 10;
+    }
+
+    public int getHungerHealingIntervalTicks() {
+        return 100;
+    }
+
+    public float getHungerHealingAmount() {
+        return 0.0F;
+    }
+
+    public int getHungerHealingCost() {
+        return 5;
+    }
+
+    public int getMinimumHungerAfterHealing() {
+        return 30;
+    }
+
+    public boolean canHealFromHunger() {
+        return isAlive() && getHealth() < getMaxHealth();
+    }
+
+    public boolean feedHunger(int amount) {
+        return hungerComponent != null && hungerComponent.applyFeeding(amount);
+    }
+
     public int getHappiness() {
         if (happinessComponent == null) {
             return HAPPINESS_MAX;

@@ -1,26 +1,19 @@
 package com.leon.saintsdragons.server.entity.component;
 
-import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.player.Player;
 
 public final class DragonHungerComponent {
     public static final int HUNGER_MAX = 100;
-    private static final int HUNGER_DECAY_INTERVAL_TICKS = 4800;
-    private static final int HUNGER_DECAY_RIDDEN_TICK_MULT = 2;
-    private static final int HUNGER_FEED_AMOUNT = 10;
-    private static final int HUNGER_FEED_AMOUNT_HEARTY = 20;
-    private static final int HUNGER_DAMAGE_INTERVAL_TICKS = 80;
-    private static final float HUNGER_DAMAGE_AMOUNT = 2.0f;
 
     private final DragonEntity dragon;
 
     private int hunger = HUNGER_MAX;
     private int hungerDecayTicks = 0;
+    private int hungerHealingTicks = 0;
 
     public DragonHungerComponent(DragonEntity dragon) {
         this.dragon = dragon;
@@ -39,7 +32,7 @@ public final class DragonHungerComponent {
     }
 
     public void setHunger(int value) {
-        if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
+        if (!dragon.isHungerEnabled()) {
             return;
         }
         int clamped = Mth.clamp(value, 0, HUNGER_MAX);
@@ -54,12 +47,15 @@ public final class DragonHungerComponent {
     }
 
     public boolean applyFeeding(boolean heartyMeal) {
-        if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
+        return applyFeeding(dragon.getHungerFeedingAmount(heartyMeal));
+    }
+
+    public boolean applyFeeding(int amount) {
+        if (!dragon.isHungerEnabled() || amount <= 0) {
             return false;
         }
         boolean wasHungry = isHungry();
-        int amount = heartyMeal ? HUNGER_FEED_AMOUNT_HEARTY : HUNGER_FEED_AMOUNT;
-        setHunger(this.hunger + amount);
+        setHunger(this.hunger + Math.min(amount, HUNGER_MAX));
         return wasHungry;
     }
 
@@ -75,45 +71,77 @@ public final class DragonHungerComponent {
     }
 
     public void tick() {
-        if (!SaintsDragonsConfig.HUNGER_DECAY_ENABLED.get()) {
+        if (!dragon.isHungerEnabled()) {
             hungerDecayTicks = 0;
+            hungerHealingTicks = 0;
             return;
         }
 
-        int decayStep = getDecayStep();
-        hungerDecayTicks += decayStep;
+        if (!dragon.shouldTickHunger() || !dragon.isAlive()) {
+            return;
+        }
+
+        tickDecay();
+        tickHealing();
+    }
+
+    private void tickDecay() {
+        int decayStep = Math.max(0, dragon.getHungerDecayStep());
+        hungerDecayTicks = (int) Math.min(Integer.MAX_VALUE, (long) hungerDecayTicks + decayStep);
 
         if (hunger > 0) {
-            while (hungerDecayTicks >= HUNGER_DECAY_INTERVAL_TICKS && hunger > 0) {
-                hungerDecayTicks -= HUNGER_DECAY_INTERVAL_TICKS;
+            int interval = Math.max(1, dragon.getHungerDecayIntervalTicks());
+            while (hungerDecayTicks >= interval && hunger > 0) {
+                hungerDecayTicks -= interval;
                 setHunger(hunger - 1);
             }
             return;
         }
 
-        while (hungerDecayTicks >= HUNGER_DAMAGE_INTERVAL_TICKS) {
-            hungerDecayTicks -= HUNGER_DAMAGE_INTERVAL_TICKS;
-            dragon.hurt(dragon.damageSources().starve(), HUNGER_DAMAGE_AMOUNT);
+        int interval = Math.max(1, dragon.getHungerStarvationIntervalTicks());
+        float damage = dragon.getHungerStarvationDamage();
+        if (!Float.isFinite(damage) || damage <= 0.0F) {
+            hungerDecayTicks = 0;
+            return;
+        }
+        while (hungerDecayTicks >= interval) {
+            hungerDecayTicks -= interval;
+            dragon.hurt(dragon.damageSources().starve(), damage);
             if (!dragon.isAlive()) {
                 break;
             }
         }
     }
 
-    private int getDecayStep() {
-        if (dragon.getControllingPassenger() instanceof Player) {
-            return HUNGER_DECAY_RIDDEN_TICK_MULT;
+    private void tickHealing() {
+        float amount = dragon.getHungerHealingAmount();
+        if (!Float.isFinite(amount) || amount <= 0.0F || !dragon.canHealFromHunger()) {
+            return;
         }
-        return 1;
+        int interval = Math.max(1, dragon.getHungerHealingIntervalTicks());
+        hungerHealingTicks = (int) Math.min(Integer.MAX_VALUE, (long) hungerHealingTicks + 1);
+        if (hungerHealingTicks < interval) {
+            return;
+        }
+        hungerHealingTicks = 0;
+        int cost = Mth.clamp(dragon.getHungerHealingCost(), 0, HUNGER_MAX);
+        int minimum = Mth.clamp(dragon.getMinimumHungerAfterHealing(), 0, HUNGER_MAX);
+        if (hunger - cost < minimum) {
+            return;
+        }
+        setHunger(hunger - cost);
+        dragon.heal(amount);
     }
 
     public void saveToNBT(CompoundTag tag) {
         tag.putInt("Hunger", this.hunger);
         tag.putInt("HungerDecayTicks", this.hungerDecayTicks);
+        tag.putInt("HungerHealingTicks", this.hungerHealingTicks);
     }
 
     public void loadFromNBT(CompoundTag tag) {
         this.hunger = tag.contains("Hunger") ? Mth.clamp(tag.getInt("Hunger"), 0, HUNGER_MAX) : HUNGER_MAX;
         this.hungerDecayTicks = tag.contains("HungerDecayTicks") ? Math.max(0, tag.getInt("HungerDecayTicks")) : 0;
+        this.hungerHealingTicks = Math.max(0, tag.getInt("HungerHealingTicks"));
     }
 }
