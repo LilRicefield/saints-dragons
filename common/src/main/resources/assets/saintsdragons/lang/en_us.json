@@ -609,6 +609,9 @@
   "saintsdragons.variant.bloodshot": "Bloodshot",
   "saintsdragons.variant.void_kissed": "Void-Kissed",
 
+  "config.jade.plugin_saintsdragons.dragon_info": "Dragon Information",
+  "config.jade.plugin_saintsdragons.egg_timer": "Dragon Egg Hatching Timer",
+  "config.jade.plugin_saintsdragons.draconic_crucible_timer": "Draconic Crucible Processing Timer",
   "jade.saintsdragons.gender": "Gender: %s",
   "jade.saintsdragons.variant": "Variant: %s",
   "jade.saintsdragons.egg_timer": "Hatches In: %s",
