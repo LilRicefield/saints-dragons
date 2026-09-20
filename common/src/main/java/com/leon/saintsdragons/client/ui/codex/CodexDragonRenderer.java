@@ -2,7 +2,7 @@ package com.leon.saintsdragons.client.ui.codex;
 
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.client.ui.DraconicCodexScreen;
-import com.leon.saintsdragons.common.registry.ModEntities;
+import com.leon.saintsdragons.common.codex.DragonCodexRegistry;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.DragonGender;
 import com.leon.saintsdragons.server.entity.variant.SaintsDragonVariantRegistry;
@@ -107,10 +107,10 @@ public class CodexDragonRenderer {
 
         int boxX = leftPos + CodexLayout.DRAGON_RENDER_BOX_X;
         int boxY = topPos + CodexLayout.DRAGON_RENDER_BOX_Y;
-        int centerX = boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE / 2 + getDragonOffsetX(dragon);
-        int centerY = boxY + CodexLayout.DRAGON_RENDER_BOX_SIZE + getDragonOffsetY(dragon);
+        int centerX = boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE / 2 + getFrame(dragon).offsetX();
+        int centerY = boxY + CodexLayout.DRAGON_RENDER_BOX_SIZE + getFrame(dragon).offsetY();
 
-        int size = getDragonScale(dragon);
+        int size = getFrame(dragon).scale();
 
         guiGraphics.enableScissor(boxX, boxY,
                 boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE,
@@ -134,67 +134,18 @@ public class CodexDragonRenderer {
         guiGraphics.disableScissor();
     }
 
-    private int getDragonScale(DragonEntity dragon) {
-        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
-            return IGNIVORUS_SCALE + babyAdjustment(dragon, IGNIVORUS_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
-            return RAEVYX_SCALE + babyAdjustment(dragon, RAEVYX_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.ATROXIIA.get()) {
-            return ATROXIIA_SCALE + babyAdjustment(dragon, ATROXIIA_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.VOLITANS.get()) {
-            return VOLITANS_SCALE + babyAdjustment(dragon, VOLITANS_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.VARASUCHUS.get()) {
-            return VARASUCHUS_SCALE + babyAdjustment(dragon, VARASUCHUS_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
-            return CINDERVANE_SCALE + babyAdjustment(dragon, CINDERVANE_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
-            return STEGONAUT_SCALE + babyAdjustment(dragon, STEGONAUT_BABY_SCALE_ADJUSTMENT);
-        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
-            return NULLJAW_SCALE + babyAdjustment(dragon, NULLJAW_BABY_SCALE_ADJUSTMENT);
+    private CodexPortraitRegistry.Frame getFrame(DragonEntity dragon) {
+        String species = DragonCodexRegistry.speciesKey(dragon);
+        var registered = CodexPortraitRegistry.get(species);
+        if (registered != null) {
+            return registered.frame(dragon.isBaby());
         }
-        return 30;
-    }
-
-    private int getDragonOffsetX(DragonEntity dragon) {
-        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
-            return IGNIVORUS_OFFSET_X + babyAdjustment(dragon, IGNIVORUS_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
-            return RAEVYX_OFFSET_X + babyAdjustment(dragon, RAEVYX_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.ATROXIIA.get()) {
-            return ATROXIIA_OFFSET_X + babyAdjustment(dragon, ATROXIIA_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.VOLITANS.get()) {
-            return VOLITANS_OFFSET_X + babyAdjustment(dragon, VOLITANS_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.VARASUCHUS.get()) {
-            return VARASUCHUS_OFFSET_X + babyAdjustment(dragon, VARASUCHUS_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
-            return CINDERVANE_OFFSET_X + babyAdjustment(dragon, CINDERVANE_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
-            return STEGONAUT_OFFSET_X + babyAdjustment(dragon, STEGONAUT_BABY_OFFSET_X);
-        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
-            return NULLJAW_OFFSET_X + babyAdjustment(dragon, NULLJAW_BABY_OFFSET_X);
+        PortraitDefinition definition = PORTRAIT_DEFINITIONS.get(DragonCodexRegistry.speciesId(species).getPath());
+        if (definition == null || !DragonCodexRegistry.speciesId(species).getNamespace().equals("saintsdragons")) {
+            return new CodexPortraitRegistry.Frame(30, 0, 0);
         }
-        return 0;
-    }
-
-    private int getDragonOffsetY(DragonEntity dragon) {
-        if (dragon.getType() == ModEntities.IGNIVORUS.get()) {
-            return IGNIVORUS_OFFSET_Y + babyAdjustment(dragon, IGNIVORUS_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.RAEVYX.get()) {
-            return RAEVYX_OFFSET_Y + babyAdjustment(dragon, RAEVYX_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.ATROXIIA.get()) {
-            return ATROXIIA_OFFSET_Y + babyAdjustment(dragon, ATROXIIA_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.VOLITANS.get()) {
-            return VOLITANS_OFFSET_Y + babyAdjustment(dragon, VOLITANS_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.VARASUCHUS.get()) {
-            return VARASUCHUS_OFFSET_Y + babyAdjustment(dragon, VARASUCHUS_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.CINDERVANE.get()) {
-            return CINDERVANE_OFFSET_Y + babyAdjustment(dragon, CINDERVANE_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.STEGONAUT.get()) {
-            return STEGONAUT_OFFSET_Y + babyAdjustment(dragon, STEGONAUT_BABY_OFFSET_Y);
-        } else if (dragon.getType() == ModEntities.NULLJAW.get()) {
-            return NULLJAW_OFFSET_Y + babyAdjustment(dragon, NULLJAW_BABY_OFFSET_Y);
-        }
-        return 0;
+        return new CodexPortraitRegistry.Frame(definition.scale(dragon.isBaby()),
+                definition.offsetX(dragon.isBaby()), definition.offsetY(dragon.isBaby()));
     }
 
     private DragonEntity findDragonEntity(Minecraft minecraft, UUID dragonId) {
@@ -208,24 +159,41 @@ public class CodexDragonRenderer {
 
     private void drawStaticPortrait(GuiGraphics guiGraphics, Minecraft minecraft, CodexDragonEntry selected,
                                     int leftPos, int topPos, int mouseX, int mouseY) {
-        PortraitDefinition definition = PORTRAIT_DEFINITIONS.get(selected.dragonType());
-        if (definition == null) {
+        var registered = CodexPortraitRegistry.get(selected.dragonType());
+        var species = DragonCodexRegistry.speciesId(selected.dragonType());
+        PortraitDefinition definition = species.getNamespace().equals("saintsdragons")
+                ? PORTRAIT_DEFINITIONS.get(species.getPath()) : null;
+        if (definition == null && registered == null) {
             return;
         }
 
-        ResourceLocation model = definition.model(selected.isBaby());
-        ResourceLocation texture = selected.isBaby()
-                ? dragonTexture(selected.dragonType(), "baby_" + selected.dragonType(),
-                        DragonGender.fromId(selected.genderId()) == DragonGender.FEMALE)
-                : resolveAdultTexture(selected, definition);
+        ResourceLocation model;
+        ResourceLocation texture;
+        CodexPortraitRegistry.Frame frame;
+        if (registered != null) {
+            model = registered.model().apply(selected);
+            texture = registered.texture().apply(selected);
+            frame = registered.frame(selected.isBaby());
+        } else {
+            model = definition.model(selected.isBaby());
+            texture = selected.isBaby()
+                    ? dragonTexture(species.getPath(), "baby_" + species.getPath(),
+                            DragonGender.fromId(selected.genderId()) == DragonGender.FEMALE)
+                    : resolveAdultTexture(selected, definition);
+            frame = new CodexPortraitRegistry.Frame(definition.scale(selected.isBaby()),
+                    definition.offsetX(selected.isBaby()), definition.offsetY(selected.isBaby()));
+        }
+        if (model == null || texture == null) {
+            return;
+        }
         CodexStaticPortraitRenderer.Portrait portrait = staticPortraits.compute(selected.entityId(), (dragonId, current) ->
                 current != null && current.matches(model, texture)
                         ? current
                         : new CodexStaticPortraitRenderer.Portrait(dragonId, model, texture));
         int boxX = leftPos + CodexLayout.DRAGON_RENDER_BOX_X;
         int boxY = topPos + CodexLayout.DRAGON_RENDER_BOX_Y;
-        int centerX = boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE / 2 + definition.offsetX(selected.isBaby());
-        int centerY = boxY + CodexLayout.DRAGON_RENDER_BOX_SIZE + definition.offsetY(selected.isBaby());
+        int centerX = boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE / 2 + frame.offsetX();
+        int centerY = boxY + CodexLayout.DRAGON_RENDER_BOX_SIZE + frame.offsetY();
         float yaw = (float) Math.atan((centerX - mouseX) / 40.0F);
         float pitch = (float) Math.atan((centerY - CodexLayout.DRAGON_RENDER_BOX_SIZE - mouseY) / 40.0F);
         PoseStack poseStack = guiGraphics.pose();
@@ -236,7 +204,7 @@ public class CodexDragonRenderer {
         poseStack.pushPose();
         try {
             poseStack.translate(centerX, centerY, 50.0D);
-            int scale = definition.scale(selected.isBaby());
+            int scale = frame.scale();
             poseStack.mulPoseMatrix(new Matrix4f().scaling(scale, scale, -scale));
             poseStack.mulPose(new Quaternionf()
                     .rotateZ((float) Math.PI)
@@ -257,20 +225,21 @@ public class CodexDragonRenderer {
     }
 
     private ResourceLocation resolveAdultTexture(CodexDragonEntry selected, PortraitDefinition definition) {
+        String dragonType = definition.dragonId().getPath();
         ResourceLocation variantId = parseVariantId(selected.variantResourceId());
         boolean female = DragonGender.fromId(selected.genderId()) == DragonGender.FEMALE;
         int legacyId = SaintsDragonVariantRegistry.variantIdToLegacy(definition.dragonId(), variantId);
         if (legacyId == 1) {
-            ResourceLocation legacyTexture = resolveLegacyVariantTexture(selected.dragonType(), female);
+            ResourceLocation legacyTexture = resolveLegacyVariantTexture(dragonType, female);
             if (legacyTexture != null) {
                 return legacyTexture;
             }
         }
-        if ("varasuchus".equals(selected.dragonType()) && "void_kissed".equals(variantId.getPath())) {
+        if ("varasuchus".equals(dragonType) && "void_kissed".equals(variantId.getPath())) {
             return dragonTexture("varasuchus", "varasuchus_void_kissed", female);
         }
         if (SaintsDragonVariantRegistry.isLegacyVariant(definition.dragonId(), variantId)) {
-            return dragonTexture(selected.dragonType(), selected.dragonType(), female);
+            return dragonTexture(dragonType, dragonType, female);
         }
         return SaintsDragonVariantRegistry.adultTexture(definition.dragonId(), variantId, female);
     }
@@ -283,10 +252,6 @@ public class CodexDragonRenderer {
             case "cindervane" -> dragonTexture(dragonType, "cindervane_albino", female);
             default -> null;
         };
-    }
-
-    private static int babyAdjustment(DragonEntity dragon, int adjustment) {
-        return dragon.isBaby() ? adjustment : 0;
     }
 
     private static PortraitDefinition portraitDefinition(String dragonType, int scale, int offsetX, int offsetY,

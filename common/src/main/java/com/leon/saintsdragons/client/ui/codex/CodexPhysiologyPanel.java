@@ -64,8 +64,12 @@ public class CodexPhysiologyPanel {
 
         if (activeTab == CodexTab.PHYSIOLOGY) {
             drawHealthStat(guiGraphics, font, selected, leftPos, topPos);
-            drawHungerStat(guiGraphics, font, selected, leftPos, topPos);
-            drawHappinessStat(guiGraphics, font, selected, leftPos, topPos);
+            if (selected.care().hunger()) {
+                drawHungerStat(guiGraphics, font, selected, leftPos, topPos);
+            }
+            if (selected.care().happiness()) {
+                drawHappinessStat(guiGraphics, font, selected, leftPos, topPos);
+            }
             drawVariantStat(guiGraphics, font, selected, leftPos, topPos);
             drawArmorStat(guiGraphics, font, selected, leftPos, topPos);
             drawGenderStat(guiGraphics, font, selected, leftPos, topPos);

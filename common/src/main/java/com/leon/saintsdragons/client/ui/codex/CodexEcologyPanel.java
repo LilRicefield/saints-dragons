@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.client.ui.codex;
 
-import com.leon.saintsdragons.common.registry.ModTags;
+import com.leon.saintsdragons.common.codex.DragonCodexRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
@@ -37,44 +37,6 @@ public class CodexEcologyPanel {
     private static final int SCROLLBAR_WIDTH = 4;
     private static final int SCROLLBAR_GAP = 25;
     private final List<CodexPageLink> ecologyPageLinks = new ArrayList<>();
-    private static final List<ResourceLocation> IGNIVORUS_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "ignivorus_scale"),
-            new ResourceLocation("saintsdragons", "ignivorus_tooth"),
-            new ResourceLocation("saintsdragons", "ignivorus_heart"),
-            new ResourceLocation("saintsdragons", "ignivorus_egg"),
-            new ResourceLocation("saintsdragons", "ignivorus_wing_hide")
-    );
-    private static final List<ResourceLocation> ATROXIIA_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "atroxiia_scale"),
-            new ResourceLocation("saintsdragons", "atroxiia_egg")
-    );
-    private static final List<ResourceLocation> RAEVYX_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "raevyx_scale"),
-            new ResourceLocation("saintsdragons", "raevyx_egg"),
-            new ResourceLocation("saintsdragons", "raevyx_wing_hide"),
-            new ResourceLocation("saintsdragons", "raevyx_wingtalon")
-    );
-    private static final List<ResourceLocation> VARASUCHUS_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "varasuchus_scale"),
-            new ResourceLocation("saintsdragons", "varasuchus_egg")
-    );
-    private static final List<ResourceLocation> CINDERVANE_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "cindervane_scale"),
-            new ResourceLocation("saintsdragons", "cindervane_egg")
-    );
-    private static final List<ResourceLocation> STEGONAUT_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "stegonaut_scale"),
-            new ResourceLocation("saintsdragons", "stegonaut_egg")
-    );
-    private static final List<ResourceLocation> VOLITANS_DROPS = List.of(
-            new ResourceLocation("saintsdragons", "volitans_scale"),
-            new ResourceLocation("saintsdragons", "volitans_spine"),
-            new ResourceLocation("saintsdragons", "volitans_egg"),
-            new ResourceLocation("minecraft", "salmon"),
-            new ResourceLocation("minecraft", "cod"),
-            new ResourceLocation("minecraft", "tropical_fish"),
-            new ResourceLocation("minecraft", "pufferfish")
-    );
     private Button ecologyPrevPageButton;
     private Button ecologyNextPageButton;
     private int linkScrollOffset = 0;
@@ -258,21 +220,25 @@ public class CodexEcologyPanel {
     }
 
     private String getOverviewText(String dragonType) {
-        String text = readCodexText("ecology/" + dragonType + ".txt");
+        var definition = DragonCodexRegistry.get(dragonType);
+        if (definition == null) {
+            return "";
+        }
+        String text = readCodexText(definition.ecologyText());
         if (!text.isBlank()) {
             return text;
         }
-        return Component.translatable("saintsdragons.gui.draconic_codex.ecology." + dragonType + ".page1").getString();
+        return Component.translatable(definition.ecologyTranslationKey()).getString();
     }
 
-    private String readCodexText(String path) {
-        String lang = Minecraft.getInstance().getLanguageManager().getSelected().toLowerCase();
+    private String readCodexText(ResourceLocation path) {
+        String lang = Minecraft.getInstance().getLanguageManager().getSelected().toLowerCase(java.util.Locale.ROOT);
         String localized = readCodexText(path, lang);
         return localized.isBlank() ? readCodexText(path, "en_us") : localized;
     }
 
-    private String readCodexText(String path, String lang) {
-        ResourceLocation resource = new ResourceLocation("saintsdragons", "codex/" + lang + "/" + path);
+    private String readCodexText(ResourceLocation path, String lang) {
+        ResourceLocation resource = new ResourceLocation(path.getNamespace(), "codex/" + lang + "/" + path.getPath());
         try (BufferedReader reader = Minecraft.getInstance().getResourceManager().openAsReader(resource)) {
             StringBuilder text = new StringBuilder();
             String line;
@@ -368,29 +334,13 @@ public class CodexEcologyPanel {
     }
 
     private TagKey<Item> getFavoriteFoods(String dragonType) {
-        return switch (dragonType) {
-            case "atroxiia" -> ModTags.Items.ATROXIIA_FOODS;
-            case "ignivorus" -> ModTags.Items.IGNIVORUS_FOODS;
-            case "raevyx" -> ModTags.Items.RAEVYX_FOODS;
-            case "varasuchus" -> ModTags.Items.VARASUCHUS_FOODS;
-            case "cindervane" -> ModTags.Items.CINDERVANE_FOODS;
-            case "stegonaut" -> ModTags.Items.STEGONAUT_FOODS;
-            case "volitans" -> ModTags.Items.VOLITANS_FOODS;
-            default -> null;
-        };
+        var definition = DragonCodexRegistry.get(dragonType);
+        return definition == null ? null : definition.favoriteFoods();
     }
 
     private List<ResourceLocation> getDrops(String dragonType) {
-        return switch (dragonType) {
-            case "atroxiia" -> ATROXIIA_DROPS;
-            case "ignivorus" -> IGNIVORUS_DROPS;
-            case "raevyx" -> RAEVYX_DROPS;
-            case "varasuchus" -> VARASUCHUS_DROPS;
-            case "cindervane" -> CINDERVANE_DROPS;
-            case "stegonaut" -> STEGONAUT_DROPS;
-            case "volitans" -> VOLITANS_DROPS;
-            default -> List.of();
-        };
+        var definition = DragonCodexRegistry.get(dragonType);
+        return definition == null ? List.of() : definition.drops();
     }
 
     private record SectionLink(String label, int page, boolean active) {

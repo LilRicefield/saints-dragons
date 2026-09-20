@@ -426,17 +426,9 @@ public class DraconicCodexScreen extends Screen {
             return;
         }
 
-        SoundEvent grumbleSound = switch (dragonType) {
-            case "raevyx" -> ModSounds.RAEVYX_GRUMBLE_1.get();
-            case "ignivorus" -> ModSounds.IGNIVORUS_GRUMBLE_1.get();
-            case "cindervane" -> ModSounds.CINDERVANE_GRUMBLE_1.get();
-            case "varasuchus" -> ModSounds.VARASUCHUS_GRUMBLE_1.get();
-            case "stegonaut" -> ModSounds.STEGONAUT_GRUMBLE_1.get();
-            case "volitans" -> ModSounds.VOLITANS_GRUMBLE_3.get();
-            case "nulljaw" -> ModSounds.NULLJAW_GRUMBLE_1.get();
-            case "atroxiia" -> ModSounds.ATROXIIA_GRUMBLE_1.get();
-            default -> null;
-        };
+        var definition = com.leon.saintsdragons.common.codex.DragonCodexRegistry.get(dragonType);
+        SoundEvent grumbleSound = definition != null && definition.selectionSound() != null
+                ? definition.selectionSound().get() : null;
 
         if (grumbleSound != null) {
             this.minecraft.getSoundManager().play(SimpleSoundInstance.forUI(grumbleSound, 1.0f, 0.8f));

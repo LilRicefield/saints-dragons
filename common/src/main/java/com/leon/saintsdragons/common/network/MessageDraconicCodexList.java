@@ -2,7 +2,7 @@ package com.leon.saintsdragons.common.network;
 
 import com.leon.saintsdragons.client.network.ClientPacketHandlers;
 import com.leon.saintsdragons.platform.Services;
-import com.leon.saintsdragons.common.registry.Dragons;
+import com.leon.saintsdragons.common.codex.DragonCodexRegistry;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.data.DragonCodexSavedData;
 import net.minecraft.network.FriendlyByteBuf;
@@ -50,11 +50,7 @@ public record MessageDraconicCodexList(List<Entry> entries) {
     }
 
     private static String getDragonTypeName(DragonEntity dragon) {
-        Dragons type = Dragons.fromEntity(dragon);
-        if (type != null) {
-            return type.getName();
-        }
-        return "ignivorus"; // Default fallback
+        return DragonCodexRegistry.speciesKey(dragon);
     }
 
     public static MessageDraconicCodexList fromEntries(List<DragonCodexSavedData.DragonCodexEntry> codexEntries) {
@@ -99,7 +95,7 @@ public record MessageDraconicCodexList(List<Entry> entries) {
             buffer.writeUtf(entry.variantResourceId(), 128);
             buffer.writeByte(entry.genderId());
             buffer.writeBoolean(entry.genderKnown());
-            buffer.writeUtf(entry.dragonType(), 32);
+            buffer.writeUtf(entry.dragonType(), 32767);
             buffer.writeBoolean(entry.isBaby());
             buffer.writeBoolean(entry.brushingAvailable());
             buffer.writeVarInt(entry.brushingProgressPercent());
@@ -125,7 +121,7 @@ public record MessageDraconicCodexList(List<Entry> entries) {
             String variantResourceId = buffer.readUtf(128);
             byte genderId = buffer.readByte();
             boolean genderKnown = buffer.readBoolean();
-            String dragonType = buffer.readUtf(32);
+            String dragonType = buffer.readUtf(32767);
             boolean isBaby = buffer.readBoolean();
             boolean brushingAvailable = buffer.readBoolean();
             int brushingProgressPercent = buffer.readVarInt();

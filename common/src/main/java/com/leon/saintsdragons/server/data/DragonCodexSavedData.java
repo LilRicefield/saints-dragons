@@ -1,6 +1,6 @@
 package com.leon.saintsdragons.server.data;
 
-import com.leon.saintsdragons.common.registry.Dragons;
+import com.leon.saintsdragons.common.codex.DragonCodexRegistry;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -19,9 +19,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/**
- * Persistent per-player registry for tamed dragons shown in the Draconic Codex.
- */
 public class DragonCodexSavedData extends SavedData {
     private static final String DATA_NAME = "saintsdragons_draconic_codex";
 
@@ -541,11 +538,7 @@ public class DragonCodexSavedData extends SavedData {
     }
 
     private static String resolveDragonType(DragonEntity dragon) {
-        Dragons type = Dragons.fromEntity(dragon);
-        if (type != null) {
-            return type.getName();
-        }
-        return "ignivorus"; // Default fallback
+        return DragonCodexRegistry.speciesKey(dragon);
     }
 
     private static String resolveBiomeId(DragonEntity dragon) {
