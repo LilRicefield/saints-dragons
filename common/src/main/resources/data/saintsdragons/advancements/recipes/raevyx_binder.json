@@ -36,7 +36,8 @@
           }
         ]
       }
-    },
+    }
+  },
     "requirements": [
       [
         "has_dragon_binder_core"
@@ -49,9 +50,6 @@
       ]
     ],
     "rewards": {
-      "recipes": [
-        "saintsdragons:raevyx_binder"
-      ]
+      "recipes": ["saintsdragons:raevyx_binder"]
     }
   }
-}
