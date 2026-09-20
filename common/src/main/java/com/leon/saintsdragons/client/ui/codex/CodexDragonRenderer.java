@@ -107,10 +107,11 @@ public class CodexDragonRenderer {
 
         int boxX = leftPos + CodexLayout.DRAGON_RENDER_BOX_X;
         int boxY = topPos + CodexLayout.DRAGON_RENDER_BOX_Y;
-        int centerX = boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE / 2 + getFrame(dragon).offsetX();
-        int centerY = boxY + CodexLayout.DRAGON_RENDER_BOX_SIZE + getFrame(dragon).offsetY();
+        CodexPortraitRegistry.Frame frame = getFrame(dragon);
+        int centerX = boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE / 2 + frame.offsetX();
+        int centerY = boxY + CodexLayout.DRAGON_RENDER_BOX_SIZE + frame.offsetY();
 
-        int size = getFrame(dragon).scale();
+        int size = frame.scale();
 
         guiGraphics.enableScissor(boxX, boxY,
                 boxX + CodexLayout.DRAGON_RENDER_BOX_SIZE,
