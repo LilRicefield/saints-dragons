@@ -53,6 +53,12 @@ public final class GroundDragonRiderControllerHelper {
 
     public static void positionAnimatedRider(RideableDragonBase dragon, Entity passenger,
                                              Entity.MoveFunction moveFunction, Vec3 logicalSeatOffset) {
+        positionAnimatedRider(dragon, passenger, moveFunction, logicalSeatOffset, "passengerLocator");
+    }
+
+    public static void positionAnimatedRider(RideableDragonBase dragon, Entity passenger,
+                                             Entity.MoveFunction moveFunction, Vec3 logicalSeatOffset,
+                                             String locatorName) {
         if (passenger == null) {
             return;
         }
@@ -61,7 +67,7 @@ public final class GroundDragonRiderControllerHelper {
                 passenger,
                 moveFunction,
                 logicalSeatOffset,
-                dragon.level().isClientSide ? dragon.getClientLocatorPosition("passengerLocator") : null
+                dragon.level().isClientSide ? dragon.getFreshClientLocatorPosition(locatorName, 2) : null
         );
     }
 

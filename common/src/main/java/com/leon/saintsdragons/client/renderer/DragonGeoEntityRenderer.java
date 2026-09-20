@@ -84,6 +84,20 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
                           float alpha) {
         this.lastBakedModel = model;
         enableTrackingForBones(model);
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(entity);
+        if (riderSpec != null) {
+            riderSpec.seats().forEach((index, seat) -> {
+                var bone = model.getBone(seat.boneName());
+                if (bone.isPresent()) {
+                    bone.get().setTrackingMatrices(true);
+                } else if (!isReRender && RenderPassContext.isExtractionAllowed(entity.getId())) {
+                    RiderBullcrap.remove(entity, index);
+                    if (seat.locatorName() != null) {
+                        entity.clearClientLocatorPosition(seat.locatorName());
+                    }
+                }
+            });
+        }
 
         float scale = getRenderScale(entity);
         poseStack.scale(scale, scale, scale);
@@ -98,7 +112,8 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
                        @NotNull PoseStack poseStack, @NotNull MultiBufferSource bufferSource, int packedLight) {
         this.lastBakedModel = null;
         this.renderedModelThisPass = false;
-        boolean extractWorldRenderData = !EntityPreviewRenderContext.isRendering();
+        boolean extractWorldRenderData = !EntityPreviewRenderContext.isRendering()
+                && !ShaderPassCompatibility.isIrisShadowPass();
         try {
             if (extractWorldRenderData) {
                 RenderPassContext.beginExtraction(entity.getId());
@@ -201,6 +216,16 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
         for (LocatorSpec spec : locatorSpecs(entity)) {
             trackBoneToLocators(entity, spec.boneName(), spec.x(), spec.y(), spec.z(), spec.locatorNames());
         }
+        RiderConfig.RiderSpec riderSpec = RiderConfig.getSpec(entity);
+        if (riderSpec != null) {
+            for (RiderConfig.SeatSpec seat : riderSpec.seats().values()) {
+                if (seat.locatorName() != null) {
+                    Vector3f offset = seat.locatorOffset();
+                    trackBoneToLocators(entity, seat.boneName(), offset.x(), offset.y(), offset.z(),
+                            seat.locatorName());
+                }
+            }
+        }
     }
 
     protected void trackBoneToLocators(T entity, String boneName, float x, float y, float z, String... locatorNames) {
@@ -245,7 +270,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
 
         Vector3d boneWorldPosJoml = bone.getWorldPosition();
         Vec3 cameraWorldPos = new Vec3(boneWorldPosJoml.x, boneWorldPosJoml.y, boneWorldPosJoml.z);
-        if (!usesGroundedRawFirstPersonBoneAnchor(animatable)) {
+        if (!usesGroundedRawFirstPersonBoneAnchor(animatable) || !riderSpec.rawGroundedCameraAnchor()) {
             Vector3f firstPersonOffset = RiderConfig.getFirstPersonOffset(animatable, seatIndex);
             Vec3 offsetWorldPos = transformLocator(
                     bone,
@@ -276,7 +301,7 @@ public abstract class DragonGeoEntityRenderer<T extends RideableDragonBase> exte
     }
 
     protected int seatIndexForRiderBone(T animatable, String boneName, RiderConfig.RiderSpec riderSpec) {
-        return boneName.equals(riderSpec.boneName) ? 0 : -1;
+        return riderSpec.seatIndexForBone(boneName);
     }
 
     protected static Vec3 transformLocator(GeoBone bone, float px, float py, float pz) {

@@ -19,6 +19,15 @@ import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.chat.Component;
+import net.minecraft.client.resources.language.I18n;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.client.renderer.RiderConfig;
+import java.util.ArrayList;
+import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.function.BiFunction;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -39,7 +48,7 @@ public final class DragonRideCameraTuning {
 
     public static final double MIN_CAMERA_DISTANCE = 0.0D;
     public static final double MAX_CAMERA_DISTANCE = 100.0D;
-    private static final List<String> CONFIGURABLE_PROFILE_KEYS = List.of(
+    private static final List<String> CONFIGURABLE_PROFILE_KEYS = new ArrayList<>(List.of(
             "cindervane",
             "raevyx",
             "stegonaut",
@@ -48,7 +57,7 @@ public final class DragonRideCameraTuning {
             "volitans",
             "nulljaw",
             "atroxiia"
-    );
+    ));
 
     public static final CameraProfile RAEVYX = new CameraProfile(15.0f, 22.0f, 5.5f, 0.075f, 0.15, 0.12, 1.55, 8.0, 0.0f, 6.0f, 0.15f);
     public static final CameraProfile CINDERVANE = new CameraProfile(7.0f, 25.0f, 5.5f, 0.075f, 0.15, 0.12, 2.4, 9.0, 0.0f, 10.0f, 0.15f);
@@ -62,6 +71,9 @@ public final class DragonRideCameraTuning {
 
     private static final Map<String, CameraProfile> DEFAULT_PROFILES = new LinkedHashMap<>();
     private static final Map<Class<?>, String> PROFILE_KEYS = new HashMap<>();
+    private static final Map<Class<?>, Predicate<Entity>> MODE_SELECTORS = new HashMap<>();
+    private static final Map<Class<?>, BiFunction<Entity, Float, Float>> BANK_ANGLES = new HashMap<>();
+    private static JsonObject retainedConfig = new JsonObject();
     private static Map<String, CameraProfile> activeProfiles = new HashMap<>();
     private static Path configPath;
     private static boolean initialized = false;
@@ -93,6 +105,10 @@ public final class DragonRideCameraTuning {
     }
 
     public static boolean isAirOrWaterMode(Entity vehicle) {
+        Predicate<Entity> selector = findRegistration(MODE_SELECTORS, vehicle);
+        if (selector != null) {
+            return selector.test(vehicle);
+        }
         if (vehicle instanceof Varasuchus varasuchus) {
             return varasuchus.isInWaterOrBubble();
         }
@@ -117,7 +133,54 @@ public final class DragonRideCameraTuning {
         if (vehicle instanceof Atroxiia) {
             return false;
         }
-        return false;
+        return vehicle instanceof RideableDragonBase dragon
+                && (dragon.isFlying() || dragon.isInWaterOrBubble());
+    }
+
+    public static <T extends RideableDragonBase> void register(ResourceLocation id, Class<T> dragonClass,
+                                                               CameraProfile profile) {
+        register(id, dragonClass, profile,
+                dragon -> dragon.isFlying() || dragon.isInWaterOrBubble(), (dragon, partialTick) -> 0.0F);
+    }
+
+    public static <T extends RideableDragonBase> void register(ResourceLocation id, Class<T> dragonClass,
+                                                               CameraProfile profile, Predicate<T> airOrWaterMode,
+                                                               BiFunction<T, Float, Float> bankAngle) {
+        String key = Objects.requireNonNull(id, "id").toString();
+        Objects.requireNonNull(dragonClass, "dragonClass");
+        Objects.requireNonNull(profile, "profile");
+        Objects.requireNonNull(airOrWaterMode, "airOrWaterMode");
+        Objects.requireNonNull(bankAngle, "bankAngle");
+        if (DEFAULT_PROFILES.containsKey(key) || PROFILE_KEYS.containsKey(dragonClass)) {
+            throw new IllegalArgumentException("Camera profile already registered: " + key);
+        }
+        DEFAULT_PROFILES.put(key, profile);
+        PROFILE_KEYS.put(dragonClass, key);
+        MODE_SELECTORS.put(dragonClass, entity -> airOrWaterMode.test(dragonClass.cast(entity)));
+        BANK_ANGLES.put(dragonClass, (entity, tick) -> bankAngle.apply(dragonClass.cast(entity), tick));
+        CONFIGURABLE_PROFILE_KEYS.add(key);
+        if (initialized) {
+            loadFromDisk();
+        }
+    }
+
+    public static boolean supports(Entity vehicle) {
+        return findRegistration(PROFILE_KEYS, vehicle) != null || RiderConfig.getSpec(vehicle) != null;
+    }
+
+    public static Float getRegisteredBankAngle(Entity vehicle, float partialTick) {
+        BiFunction<Entity, Float, Float> supplier = findRegistration(BANK_ANGLES, vehicle);
+        return supplier == null ? null : supplier.apply(vehicle, partialTick);
+    }
+
+    private static <V> V findRegistration(Map<Class<?>, V> registrations, Entity vehicle) {
+        for (Class<?> type = vehicle == null ? null : vehicle.getClass(); type != null; type = type.getSuperclass()) {
+            V value = registrations.get(type);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 
     public static void bootstrap() {
@@ -129,7 +192,7 @@ public final class DragonRideCameraTuning {
         if (vehicle == null) {
             return activeProfiles.getOrDefault("default", DEFAULT);
         }
-        String key = PROFILE_KEYS.get(vehicle.getClass());
+        String key = findRegistration(PROFILE_KEYS, vehicle);
         if (key == null) {
             return activeProfiles.getOrDefault("default", DEFAULT);
         }
@@ -137,7 +200,16 @@ public final class DragonRideCameraTuning {
     }
 
     public static List<String> getConfigurableProfileKeys() {
-        return CONFIGURABLE_PROFILE_KEYS;
+        return List.copyOf(CONFIGURABLE_PROFILE_KEYS);
+    }
+
+    public static Component getProfileDisplayName(String key) {
+        if (!key.contains(":")) {
+            return Component.translatable("config.saintsdragons.attributes." + key);
+        }
+        ResourceLocation id = new ResourceLocation(key);
+        String translation = "entity." + id.getNamespace() + "." + id.getPath().replace('/', '.');
+        return I18n.exists(translation) ? Component.translatable(translation) : Component.literal(key);
     }
 
     public static CameraProfile getProfile(String key) {
@@ -227,6 +299,7 @@ public final class DragonRideCameraTuning {
         try (BufferedReader reader = Files.newBufferedReader(configPath, StandardCharsets.UTF_8)) {
             JsonElement element = JsonParser.parseReader(reader);
             root = GsonHelper.convertToJsonObject(element, FILE_NAME);
+            retainedConfig = root.deepCopy();
         } catch (Exception exception) {
             activeProfiles = new HashMap<>(DEFAULT_PROFILES);
             SaintsDragonsCommon.LOGGER.warn("Could not load dragon rider camera config {}", configPath, exception);
@@ -251,12 +324,6 @@ public final class DragonRideCameraTuning {
                     needsRewrite = true;
                 }
             }
-            for (String key : root.keySet()) {
-                if (!"_note".equals(key) && !CONFIGURABLE_PROFILE_KEYS.contains(key)) {
-                    needsRewrite = true;
-                    break;
-                }
-            }
             activeProfiles = mergedProfiles;
             if (needsRewrite) {
                 try {
@@ -277,7 +344,7 @@ public final class DragonRideCameraTuning {
     }
 
     private static void writeConfig(Map<String, CameraProfile> profiles) throws IOException {
-        JsonObject root = new JsonObject();
+        JsonObject root = retainedConfig.deepCopy();
         root.addProperty("_note", CONFIG_NOTE);
         for (String key : CONFIGURABLE_PROFILE_KEYS) {
             root.add(key, writeProfile(profiles.getOrDefault(key, DEFAULT_PROFILES.get(key))));
@@ -346,6 +413,25 @@ public final class DragonRideCameraTuning {
             float airOrWaterPitchOffset,
             float pitchSmoothing
     ) {
+        public CameraProfile {
+            double[] values = {groundedDistance, airOrWaterDistance, bankShiftMax, zoomSmoothing,
+                    lateralShiftSmoothing, verticalShiftSmoothing, groundedVerticalShift,
+                    airOrWaterVerticalShift, groundedPitchOffset, airOrWaterPitchOffset, pitchSmoothing};
+            for (double value : values) {
+                if (!Double.isFinite(value)) {
+                    throw new IllegalArgumentException("Camera profile values must be finite");
+                }
+            }
+            if (groundedDistance < MIN_CAMERA_DISTANCE || groundedDistance > MAX_CAMERA_DISTANCE
+                    || airOrWaterDistance < MIN_CAMERA_DISTANCE || airOrWaterDistance > MAX_CAMERA_DISTANCE
+                    || zoomSmoothing < 0 || zoomSmoothing > 1
+                    || lateralShiftSmoothing < 0 || lateralShiftSmoothing > 1
+                    || verticalShiftSmoothing < 0 || verticalShiftSmoothing > 1
+                    || pitchSmoothing < 0 || pitchSmoothing > 1) {
+                throw new IllegalArgumentException("Invalid camera distances or smoothing");
+            }
+        }
+
         public float grounded() {
             return groundedDistance;
         }

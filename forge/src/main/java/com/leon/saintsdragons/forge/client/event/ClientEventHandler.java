@@ -216,13 +216,7 @@ public class ClientEventHandler {
     }
 
     private static boolean usesFirstPersonDragonCamera(RideableDragonBase dragon) {
-        return dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Varasuchus
-                || dragon instanceof Stegonaut
-                || dragon instanceof Volitans
-                || dragon instanceof Atroxiia;
+        return com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera.supports(dragon);
     }
 
     private static boolean isFirstPersonBankingCameraEnabled() {

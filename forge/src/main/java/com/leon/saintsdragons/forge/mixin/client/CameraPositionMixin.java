@@ -1,5 +1,6 @@
 package com.leon.saintsdragons.forge.mixin.client;
 
+import com.leon.saintsdragons.client.camera.DragonRideCameraTuning;
 import com.leon.saintsdragons.client.renderer.DragonSeatAnchoredCamera;
 import com.leon.saintsdragons.client.renderer.RiderBullcrap;
 import com.leon.saintsdragons.client.renderer.RiderConfig;
@@ -134,6 +135,11 @@ public abstract class CameraPositionMixin {
     }
 
     private static float getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {
+        Float registeredAngle = DragonRideCameraTuning
+                .getRegisteredBankAngle(dragon, partialTick);
+        if (registeredAngle != null) {
+            return Float.isFinite(registeredAngle) ? registeredAngle : 0.0F;
+        }
         if (dragon instanceof Raevyx raevyx) {
             return raevyx.getBankAngleDegrees(partialTick) + raevyx.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
         }

@@ -200,6 +200,11 @@ public abstract class CameraMixin implements CameraAccessor {
     }
 
     private static float saintsdragons$getBodyRollDegrees(RideableDragonBase dragon, float partialTick) {
+        Float registeredAngle = com.leon.saintsdragons.client.camera.DragonRideCameraTuning
+                .getRegisteredBankAngle(dragon, partialTick);
+        if (registeredAngle != null) {
+            return Float.isFinite(registeredAngle) ? registeredAngle : 0.0F;
+        }
         if (dragon instanceof Raevyx raevyx) {
             return raevyx.getBankAngleDegrees(partialTick) + raevyx.getSmoothedRoll(partialTick) * Mth.RAD_TO_DEG;
         }

@@ -107,6 +107,12 @@ public final class RiderBullcrap {
         FRAME_EXTRACTED_SEATS.removeIf(key -> key.entityUuid.equals(entityUuid));
     }
 
+    public static void remove(Entity entity, int seatIndex) {
+        SeatKey key = SeatKey.of(entity, seatIndex);
+        SNAPSHOTS.remove(key);
+        FRAME_EXTRACTED_SEATS.remove(key);
+    }
+
     public static synchronized void clear() {
         clearInternal();
         activeLevelIdentity = null;

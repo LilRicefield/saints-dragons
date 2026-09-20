@@ -1,11 +1,8 @@
 package com.leon.saintsdragons.client.camera;
 
-import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.world.entity.Entity;
@@ -21,14 +18,7 @@ public final class DragonRideCameraController {
     }
 
     public static boolean supports(Entity vehicle) {
-        return vehicle instanceof Raevyx
-                || vehicle instanceof Cindervane
-                || vehicle instanceof Ignivorus
-                || vehicle instanceof Varasuchus
-                || vehicle instanceof Stegonaut
-                || vehicle instanceof Volitans
-                || vehicle instanceof Nulljaw
-                || vehicle instanceof Atroxiia;
+        return DragonRideCameraTuning.supports(vehicle);
     }
 
     public static CameraOutput update(Entity vehicle, float partialTick) {
@@ -82,6 +72,10 @@ public final class DragonRideCameraController {
     }
 
     private static float getBankAngleDegrees(Entity vehicle, float partialTick) {
+        Float registeredAngle = DragonRideCameraTuning.getRegisteredBankAngle(vehicle, partialTick);
+        if (registeredAngle != null) {
+            return Float.isFinite(registeredAngle) ? registeredAngle : 0.0F;
+        }
         if (vehicle instanceof Raevyx raevyx) {
             return raevyx.getBankAngleDegrees(partialTick);
         }

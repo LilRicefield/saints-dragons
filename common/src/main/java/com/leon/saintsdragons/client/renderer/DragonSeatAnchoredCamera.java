@@ -3,13 +3,6 @@ package com.leon.saintsdragons.client.renderer;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
-import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.stegonaut.Stegonaut;
-import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
-import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
@@ -17,7 +10,6 @@ import org.joml.Vector3f;
 
 public final class DragonSeatAnchoredCamera {
     private static final double MAX_REASONABLE_OFFSET = 20.0D;
-    private static final double GROUNDED_RIDEABLE_CAMERA_LIFT = 1.2D;
 
     private DragonSeatAnchoredCamera() {
     }
@@ -30,20 +22,12 @@ public final class DragonSeatAnchoredCamera {
     }
 
     public static int getSeatIndex(RideableDragonBase dragon, Entity rider) {
-        if (dragon instanceof Cindervane) {
-            return Math.max(dragon.getPassengers().indexOf(rider), 0);
-        }
-        return 0;
+        return dragon.getRiderSeatIndex(rider);
     }
 
     public static boolean supports(RideableDragonBase dragon) {
-        return dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Varasuchus
-                || dragon instanceof Stegonaut
-                || dragon instanceof Volitans
-                || dragon instanceof Atroxiia;
+        RiderConfig.RiderSpec spec = RiderConfig.getSpec(dragon);
+        return spec != null && spec.cameraEnabled();
     }
 
     public static Vec3 computePivot(RideableDragonBase dragon,
@@ -68,7 +52,7 @@ public final class DragonSeatAnchoredCamera {
                 interpZ + seatOffset.z + up.z() * eyeHeight
         );
         if (useGroundedBoneCamera) {
-            pivot = pivot.add(0.0D, GROUNDED_RIDEABLE_CAMERA_LIFT, 0.0D);
+            pivot = pivot.add(0.0D, RiderConfig.getOrDefaultSpec(dragon).groundedCameraLift(), 0.0D);
         }
 
         if (Math.abs(leanX) > 0.001D || Math.abs(leanY) > 0.001D || Math.abs(leanZ) > 0.001D) {

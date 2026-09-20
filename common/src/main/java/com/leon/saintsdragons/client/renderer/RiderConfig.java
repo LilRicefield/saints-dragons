@@ -13,6 +13,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 
 public final class RiderConfig {
 
@@ -120,7 +123,7 @@ public final class RiderConfig {
     public static final double ATROXIIA_CAPTURE_DISTANCE = 80.0;
     public static final float ATROXIIA_YAW_OFFSET_DEG = -180.0f;
 
-    private static final Map<Class<?>, RiderSpec> RIDER_CONFIGS = createConfigs();
+    private static final Map<Class<?>, RiderSpec> RIDER_CONFIGS = new ConcurrentHashMap<>(createConfigs());
 
     private RiderConfig() {
     }
@@ -198,7 +201,17 @@ public final class RiderConfig {
                 ATROXIIA_CAPTURE_DISTANCE,
                 ATROXIIA_YAW_OFFSET_DEG
         ));
-        return Map.copyOf(riderConfigs);
+        riderConfigs.get(Nulljaw.class).withCamera(false, true, 1.2D);
+        riderConfigs.replaceAll((type, spec) -> spec.snapshot());
+        return riderConfigs;
+    }
+
+    public static void register(Class<? extends RideableDragonBase> dragonClass, RiderSpec spec) {
+        Objects.requireNonNull(dragonClass, "dragonClass");
+        RiderSpec snapshot = Objects.requireNonNull(spec, "spec").snapshot();
+        if (RIDER_CONFIGS.putIfAbsent(dragonClass, snapshot) != null) {
+            throw new IllegalArgumentException("Rider attachments already registered for " + dragonClass.getName());
+        }
     }
 
     @Nullable
@@ -206,7 +219,13 @@ public final class RiderConfig {
         if (dragon == null) {
             return null;
         }
-        return RIDER_CONFIGS.get(dragon.getClass());
+        for (Class<?> type = dragon.getClass(); type != null; type = type.getSuperclass()) {
+            RiderSpec spec = RIDER_CONFIGS.get(type);
+            if (spec != null) {
+                return spec;
+            }
+        }
+        return null;
     }
 
     public static RiderSpec getOrDefaultSpec(Object dragon) {
@@ -242,11 +261,18 @@ public final class RiderConfig {
         public final double maxCaptureDistance;
         public final float yawOffsetDeg;
         private final Map<Integer, SeatSpec> seatSpecs = new HashMap<>();
+        private boolean frozen;
+        private boolean cameraEnabled = true;
+        private boolean rawGroundedCameraAnchor = true;
+        private double groundedCameraLift = 1.2D;
 
         public RiderSpec(String boneName, Vector3f offset, Vector3f firstPersonOffset, long staleMs, double maxCaptureDistance, float yawOffsetDeg) {
+            if (staleMs < 0L || !Double.isFinite(maxCaptureDistance) || maxCaptureDistance <= 0.0D) {
+                throw new IllegalArgumentException("Invalid attachment lifetime or capture distance");
+            }
             this.boneName = boneName;
-            this.offset = offset;
-            this.firstPersonOffset = firstPersonOffset;
+            this.offset = new Vector3f(offset);
+            this.firstPersonOffset = new Vector3f(firstPersonOffset);
             this.staleMs = staleMs;
             this.maxCaptureDistance = maxCaptureDistance;
             this.yawOffsetDeg = yawOffsetDeg;
@@ -261,12 +287,89 @@ public final class RiderConfig {
             this(boneName, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 200L, 80.0, -180.0f);
         }
 
-        private SeatSpec getSeatSpec(int seatIndex) {
+        public SeatSpec getSeatSpec(int seatIndex) {
             return seatSpecs.getOrDefault(seatIndex, seatSpecs.get(0));
         }
 
-        private void setSeat(int seatIndex, SeatSpec spec) {
-            seatSpecs.put(seatIndex, spec);
+        public RiderSpec setSeat(int seatIndex, SeatSpec spec) {
+            checkMutable();
+            if (seatIndex <= 0) {
+                throw new IllegalArgumentException("Configure seat zero in the RiderSpec constructor");
+            }
+            seatSpecs.put(seatIndex, Objects.requireNonNull(spec, "spec"));
+            return this;
+        }
+
+        public RiderSpec withLocator(int seatIndex, String locatorName, Vector3f modelPixelOffset) {
+            checkMutable();
+            SeatSpec seat = seatSpecs.get(seatIndex);
+            if (seat == null) {
+                throw new IllegalArgumentException("Unknown seat " + seatIndex);
+            }
+            seatSpecs.put(seatIndex, new SeatSpec(seat.boneName, seat.offset, seat.yawOffsetDeg,
+                    seat.firstPersonOffset, locatorName, modelPixelOffset));
+            return this;
+        }
+
+        public RiderSpec withCamera(boolean enabled, boolean rawGroundedAnchor, double groundedLift) {
+            checkMutable();
+            if (!Double.isFinite(groundedLift)) {
+                throw new IllegalArgumentException("Camera lift must be finite");
+            }
+            cameraEnabled = enabled;
+            rawGroundedCameraAnchor = rawGroundedAnchor;
+            groundedCameraLift = groundedLift;
+            return this;
+        }
+
+        public boolean cameraEnabled() {
+            return cameraEnabled;
+        }
+
+        public boolean rawGroundedCameraAnchor() {
+            return rawGroundedCameraAnchor;
+        }
+
+        public double groundedCameraLift() {
+            return groundedCameraLift;
+        }
+
+        public Map<Integer, SeatSpec> seats() {
+            return Map.copyOf(seatSpecs);
+        }
+
+        public int seatIndexForBone(String name) {
+            for (Map.Entry<Integer, SeatSpec> seat : seatSpecs.entrySet()) {
+                if (seat.getValue().boneName.equals(name)) {
+                    return seat.getKey();
+                }
+            }
+            return -1;
+        }
+
+        private void checkMutable() {
+            if (frozen) {
+                throw new IllegalStateException("Registered rider attachments are immutable");
+            }
+        }
+
+        private RiderSpec snapshot() {
+            RiderSpec copy = new RiderSpec(boneName, offset, firstPersonOffset,
+                    staleMs, maxCaptureDistance, yawOffsetDeg);
+            copy.seatSpecs.clear();
+            copy.seatSpecs.putAll(seatSpecs);
+            java.util.Set<String> bones = new java.util.HashSet<>();
+            java.util.Set<String> locators = new java.util.HashSet<>();
+            for (int index = 0; index < seatSpecs.size(); index++) {
+                SeatSpec seat = seatSpecs.get(index);
+                if (seat == null || !bones.add(seat.boneName)
+                        || (seat.locatorName != null && !locators.add(seat.locatorName))) {
+                    throw new IllegalArgumentException("Seats must be contiguous with unique bones and locators");
+                }
+            }
+            copy.withCamera(cameraEnabled, rawGroundedCameraAnchor, groundedCameraLift);
+            copy.frozen = true;
+            return copy;
         }
     }
 
@@ -275,13 +378,47 @@ public final class RiderConfig {
         private final Vector3f offset;
         private final float yawOffsetDeg;
         private final Vector3f firstPersonOffset;
+        private final String locatorName;
+        private final Vector3f locatorOffset;
 
 
         public SeatSpec(String boneName, Vector3f offset, float yawOffsetDeg, Vector3f firstPersonOffset) {
+            this(boneName, offset, yawOffsetDeg, firstPersonOffset, null, new Vector3f());
+        }
+
+        public SeatSpec(String boneName, Vector3f offset, float yawOffsetDeg, Vector3f firstPersonOffset,
+                        @Nullable String locatorName, Vector3f modelPixelOffset) {
+            if (Objects.requireNonNull(boneName, "boneName").isBlank()
+                    || !Float.isFinite(yawOffsetDeg) || (locatorName != null && locatorName.isBlank())) {
+                throw new IllegalArgumentException("Invalid seat bone, locator, or yaw");
+            }
             this.boneName = boneName;
-            this.offset = offset;
+            this.offset = finiteCopy(offset);
             this.yawOffsetDeg = yawOffsetDeg;
-            this.firstPersonOffset = firstPersonOffset;
+            this.firstPersonOffset = finiteCopy(firstPersonOffset);
+            this.locatorName = locatorName;
+            this.locatorOffset = finiteCopy(modelPixelOffset);
+        }
+
+        public String boneName() {
+            return boneName;
+        }
+
+        @Nullable
+        public String locatorName() {
+            return locatorName;
+        }
+
+        public Vector3f locatorOffset() {
+            return new Vector3f(locatorOffset);
+        }
+
+        private static Vector3f finiteCopy(Vector3f vector) {
+            Objects.requireNonNull(vector, "offset");
+            if (!Float.isFinite(vector.x()) || !Float.isFinite(vector.y()) || !Float.isFinite(vector.z())) {
+                throw new IllegalArgumentException("Seat offsets must be finite");
+            }
+            return new Vector3f(vector);
         }
     }
 }

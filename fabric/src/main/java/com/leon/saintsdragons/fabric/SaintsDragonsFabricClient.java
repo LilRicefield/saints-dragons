@@ -24,11 +24,30 @@ import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.CoreShaderRegistrationCallback;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import net.minecraft.client.renderer.RenderType;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.resources.ResourceLocation;
+import com.leon.saintsdragons.client.renderer.DragonAttachmentReloadListener;
+import com.leon.saintsdragons.common.SaintsDragonsCommon;
 
 public final class SaintsDragonsFabricClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(
+                new SimpleSynchronousResourceReloadListener() {
+                    @Override
+                    public ResourceLocation getFabricId() {
+                        return SaintsDragonsCommon.rl("rider_attachments");
+                    }
+
+                    @Override
+                    public void onResourceManagerReload(ResourceManager resourceManager) {
+                        new DragonAttachmentReloadListener().onResourceManagerReload(resourceManager);
+                    }
+                });
         CoreShaderRegistrationCallback.EVENT.register(context -> context.register(
                 DragonParticleShaders.IMPACT_GLOW,
                 DefaultVertexFormat.PARTICLE,

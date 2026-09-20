@@ -2,6 +2,10 @@ package com.leon.saintsdragons.server.entity.base;
 
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
+import com.leon.saintsdragons.server.flight.DragonSeatDefinition;
+import com.leon.saintsdragons.server.flight.DragonRiderSeat;
+import com.leon.saintsdragons.server.entity.controller.GroundDragonRiderControllerHelper;
+import java.util.List;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
@@ -40,6 +44,7 @@ public abstract class RideableDragonBase extends DragonEntity {
     private static final int MAX_PERSISTED_FLIGHT_MODE = 5;
     private final Set<String> warnedMissingActions = new HashSet<>();
     protected final Map<String, Vec3> clientLocatorCache = new ConcurrentHashMap<>();
+    private final Map<String, Integer> clientLocatorTicks = new ConcurrentHashMap<>();
     private static final EntityDataAccessor<Integer> DATA_MELEE_MODE =
             SynchedEntityData.defineId(RideableDragonBase.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Boolean> DATA_RIDER_LOCKED =
@@ -109,7 +114,98 @@ public abstract class RideableDragonBase extends DragonEntity {
         if (name == null || pos == null) {
             return;
         }
+        if (!Double.isFinite(pos.x) || !Double.isFinite(pos.y) || !Double.isFinite(pos.z)) {
+            clearClientLocatorPosition(name);
+            return;
+        }
         this.clientLocatorCache.put(name, pos);
+        this.clientLocatorTicks.put(name, tickCount);
+    }
+
+    public void clearClientLocatorPosition(String name) {
+        this.clientLocatorCache.remove(name);
+        this.clientLocatorTicks.remove(name);
+    }
+
+    public void clearClientLocatorPositions() {
+        this.clientLocatorCache.clear();
+        this.clientLocatorTicks.clear();
+    }
+
+    @Nullable
+    public Vec3 getFreshClientLocatorPosition(String name, int maxAgeTicks) {
+        Integer sampledAt = clientLocatorTicks.get(name);
+        if (sampledAt == null || maxAgeTicks < 0 || tickCount - sampledAt > maxAgeTicks) {
+            return null;
+        }
+        return getClientLocatorPosition(name);
+    }
+
+    public List<DragonSeatDefinition> getRiderSeats() {
+        return List.of();
+    }
+
+    public int getRiderSeatIndex(Entity passenger) {
+        return getPassengers().indexOf(passenger);
+    }
+
+    public int getControllingSeatIndex() {
+        return 0;
+    }
+
+    public boolean canOccupyRiderSeat(Entity passenger, int seatIndex) {
+        return isAlive() && !isDying() && !isBaby() && passenger instanceof Player
+                && seatIndex >= 0 && seatIndex < getRiderSeats().size()
+                && (seatIndex != getControllingSeatIndex()
+                    || canBeControlledBy((Player) passenger));
+    }
+
+    @Override
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        if (getRiderSeats().isEmpty()) {
+            return super.canAddPassenger(passenger);
+        }
+        return canOccupyRiderSeat(passenger, getPassengers().size());
+    }
+
+    @Override
+    @Nullable
+    public LivingEntity getControllingPassenger() {
+        if (getRiderSeats().isEmpty()) {
+            return super.getControllingPassenger();
+        }
+        for (Entity passenger : getPassengers()) {
+            if (getRiderSeatIndex(passenger) == getControllingSeatIndex()
+                    && passenger instanceof Player player && canBeControlledBy(player)) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public double getPassengersRidingOffset() {
+        List<DragonSeatDefinition> seats = getRiderSeats();
+        return seats.isEmpty() ? super.getPassengersRidingOffset() : seats.get(0).offset().y;
+    }
+
+    @Override
+    protected void positionRider(@NotNull Entity passenger, @NotNull Entity.MoveFunction moveFunction) {
+        int seatIndex = getRiderSeatIndex(passenger);
+        List<DragonSeatDefinition> seats = getRiderSeats();
+        if (seatIndex < 0 || seatIndex >= seats.size()) {
+            super.positionRider(passenger, moveFunction);
+            return;
+        }
+        DragonSeatDefinition seat = seats.get(seatIndex);
+        DragonRiderSeat.positionAnimatedRider(this, passenger, moveFunction, seat.offset(),
+                level().isClientSide ? getFreshClientLocatorPosition(seat.locatorName(), 2) : null);
+    }
+
+    @Override
+    public @NotNull Vec3 getDismountLocationForPassenger(@NotNull LivingEntity passenger) {
+        return getRiderSeats().isEmpty() ? super.getDismountLocationForPassenger(passenger)
+                : GroundDragonRiderControllerHelper.getDismountLocationForPassenger(this, passenger);
     }
 
     @Override
@@ -145,6 +241,9 @@ public abstract class RideableDragonBase extends DragonEntity {
     }
 
     public void handleRiderNetworkInput(ServerPlayer player, MessageDragonRideInput msg) {
+        if (!getRiderSeats().isEmpty() && getControllingPassenger() != player) {
+            return;
+        }
         boolean locked = isRiderInputLocked(player);
         applyRiderVerticalInput(player, msg.goingUp(), msg.goingDown(), locked);
         handleRiderAction(player, msg.action(), msg.abilityName(), locked);

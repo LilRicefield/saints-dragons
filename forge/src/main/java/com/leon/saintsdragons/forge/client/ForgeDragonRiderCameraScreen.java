@@ -18,8 +18,7 @@ public final class ForgeDragonRiderCameraScreen extends ForgePagedConfigScreen {
     protected void buildEntries(List<ConfigEntry> entries) {
         DragonRideCameraTuning.bootstrap();
         for (String dragonKey : DragonRideCameraTuning.getConfigurableProfileKeys()) {
-            entries.add(new SectionEntry(Component.translatable(
-                    "config.saintsdragons.attributes." + dragonKey)));
+            entries.add(new SectionEntry(DragonRideCameraTuning.getProfileDisplayName(dragonKey)));
             entries.add(new DoubleEntry(
                     Component.translatable("saintsdragons.config_screen.dragon_rider_camera.grounded_distance"),
                     () -> DragonRideCameraTuning.getProfile(dragonKey).groundedDistance(),

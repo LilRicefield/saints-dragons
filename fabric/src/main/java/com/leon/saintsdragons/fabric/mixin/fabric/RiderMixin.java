@@ -56,8 +56,8 @@ public abstract class RiderMixin {
         if (riderSpec == null) {
             return;
         }
-        int seatIndex = dragon.getPassengers().indexOf(player);
-        if (seatIndex < 0) {
+        int seatIndex = dragon.getRiderSeatIndex(player);
+        if (seatIndex < 0 || !riderSpec.seats().containsKey(seatIndex)) {
             return;
         }
 

@@ -741,7 +741,7 @@ public class SaintsDragonsModMenuIntegration implements ModMenuApi {
                     .setSaveConsumer(value -> DragonRideCameraTuning.setAirOrWaterDistance(dragonKey, value))
                     .build());
             addSubCategory(category, entryBuilder,
-                    Component.translatable("config.saintsdragons.attributes." + dragonKey), entries);
+                    DragonRideCameraTuning.getProfileDisplayName(dragonKey), entries);
         }
     }
 

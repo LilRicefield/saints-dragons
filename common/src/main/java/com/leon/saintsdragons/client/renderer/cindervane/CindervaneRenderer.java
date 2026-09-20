@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.client.renderer.cindervane;
 
-import com.leon.saintsdragons.client.renderer.RiderConfig;
 import com.leon.saintsdragons.client.renderer.DragonGeoEntityRenderer;
 import com.leon.saintsdragons.client.renderer.layer.cindervane.CindervaneNightEmissiveLayer;
 import com.leon.saintsdragons.client.renderer.layer.DragonEquipmentLayer;
@@ -117,17 +116,6 @@ public class CindervaneRenderer extends DragonGeoEntityRenderer<Cindervane> {
                 new LocatorSpec(AUTO_MOUNT_BONE, AUTO_MOUNT_OFFSET_X, AUTO_MOUNT_OFFSET_Y, AUTO_MOUNT_OFFSET_Z,
                         AUTO_MOUNT_LOCATOR)
         };
-    }
-
-    @Override
-    protected int seatIndexForRiderBone(Cindervane animatable, String boneName, RiderConfig.RiderSpec riderSpec) {
-        if (boneName.equals(RiderConfig.getSeatBoneName(animatable, 0))) {
-            return 0;
-        }
-        if (boneName.equals(RiderConfig.getSeatBoneName(animatable, 1))) {
-            return 1;
-        }
-        return -1;
     }
 
     @Override
