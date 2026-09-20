@@ -798,7 +798,7 @@ public abstract class RideableDragonBase extends DragonEntity {
         return altitude != Double.POSITIVE_INFINITY && altitude >= -0.25D && altitude <= maxAltitude;
     }
     @Override
-    public final boolean isFlying() {
+    public boolean isFlying() {
         return isDragonFlying();
     }
 
