@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import net.minecraft.world.entity.ai.util.DefaultRandomPos;
 import net.minecraft.world.phys.Vec3;
@@ -81,14 +82,10 @@ public final class DragonGroundWanderBehaviour<T extends RideableDragonBase> ext
     }
 
     private boolean basicConditions(T dragon) {
-        return !dragon.isAerial()
-                && !dragon.isOrderedToSit()
+        return DragonBehaviourEligibility.rejection(dragon, DragonBehaviourEligibility.AMBIENT) == null
+                && !dragon.isAerial()
                 && !dragon.isSittingDownAnimation()
-                && !dragon.isVehicle()
-                && !dragon.isPassenger()
-                && !dragon.isInLove()
                 && (dragon.canSwim() || !dragon.isInWaterOrBubble())
-                && (dragon.getTarget() == null || !dragon.getTarget().isAlive())
                 && (!dragon.isTame() || dragon.getCommand() == 2)
                 && eligibility.test(dragon);
     }

@@ -220,7 +220,7 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
 
     @Nullable
     protected T findMate(ServerLevel level, T dragon) {
-        List<T> candidates = level.getEntitiesOfClass(
+        List<T> candidates = dragon.getBrainUtilities().nearby().find(level,
                 partnerClass,
                 dragon.getBoundingBox().inflate(partnerRange),
                 candidate -> candidate != dragon && candidate.isAlive()

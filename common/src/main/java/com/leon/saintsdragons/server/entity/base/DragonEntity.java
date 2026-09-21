@@ -7,6 +7,7 @@ import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainUtilities;
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -108,6 +109,13 @@ import java.util.UUID;
 import java.util.EnumSet;
 
 public abstract class DragonEntity extends TamableAnimal implements GeoEntity, SoundHandledDragon, DragonMovementCapable, DancingEntity {
+    private DragonBrainUtilities brainUtilities;
+
+    public final DragonBrainUtilities getBrainUtilities() {
+        if (brainUtilities == null) brainUtilities = new DragonBrainUtilities();
+        return brainUtilities;
+    }
+
     protected static final int DAMAGE_SLEEP_SUPPRESSION_TICKS = 20 * 30;
     private static final DragonVariantSet DEFAULT_VARIANTS = DragonVariantSet.of(
             DragonVariant.of(0, "default", 1)
@@ -1464,6 +1472,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     @Override
     public void remove(@NotNull Entity.RemovalReason reason) {
+        if (brainUtilities != null) brainUtilities.clear();
         removeCodexEntryForTerminalRemoval(reason);
         if (shouldLogDragonRemoval(reason)) {
             System.out.println("[SD-DRAGON-REMOVE] type=" + EntityType.getKey(this.getType())

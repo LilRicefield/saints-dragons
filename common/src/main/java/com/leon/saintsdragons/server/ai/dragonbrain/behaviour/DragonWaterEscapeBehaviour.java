@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
@@ -174,8 +175,8 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     }
 
     private boolean shouldEscapeWater(T dragon) {
-        return startCondition.test(dragon)
-                && !dragon.isVehicle()
+        return DragonBehaviourEligibility.rejection(dragon, DragonBehaviourEligibility.EMERGENCY) == null
+                && startCondition.test(dragon)
                 && !dragon.isAerial()
                 && dragon.isInWaterOrBubble();
     }

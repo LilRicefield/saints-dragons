@@ -2,6 +2,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
@@ -109,12 +110,10 @@ public final class DragonSwimWanderBehaviour<T extends RideableDragonBase & Semi
     }
 
     private boolean basicConditions(T dragon) {
-        return dragon.canSwim()
+        return DragonBehaviourEligibility.rejection(dragon, DragonBehaviourEligibility.AMBIENT) == null
+                && dragon.canSwim()
                 && dragon.isInWaterOrBubble()
-                && !dragon.isVehicle()
                 && !dragon.isAerial()
-                && !dragon.isInLove()
-                && (dragon.getTarget() == null || !dragon.getTarget().isAlive())
                 && (!dragon.isTame() || dragon.getCommand() == 2)
                 && eligibility.test(dragon);
     }

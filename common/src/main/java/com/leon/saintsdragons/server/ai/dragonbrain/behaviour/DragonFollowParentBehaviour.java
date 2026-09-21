@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
@@ -108,7 +109,8 @@ public class DragonFollowParentBehaviour<T extends DragonEntity> extends DragonB
 
     @Nullable
     private T resolveParent(T baby) {
-        List<T> nearby = baby.level().getEntitiesOfClass(dragonClass,
+        if (!(baby.level() instanceof ServerLevel level)) return null;
+        List<T> nearby = baby.getBrainUtilities().nearby().find(level, dragonClass,
                 baby.getBoundingBox().inflate(20.0D, 8.0D, 20.0D),
                 adult -> !adult.isBaby() && adult.isAlive());
         UUID assigned = baby.getAssignedParentUuid();

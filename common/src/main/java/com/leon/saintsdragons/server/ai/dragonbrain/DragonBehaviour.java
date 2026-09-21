@@ -70,8 +70,7 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
     }
 
     protected static boolean hasCommittedAction(DragonEntity dragon) {
-        return dragon.getActiveAbility() != null || dragon.combatManager.hasActiveOverlay()
-                || dragon.areRiderControlsLocked();
+        return DragonBehaviourEligibility.hasCommittedAction(dragon);
     }
 
     final void bindActivity(Activity activity, int priority) {
@@ -120,15 +119,26 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
         DragonBrainContext<T> context = new DragonBrainContext<>(dragon, level);
         cooldownEndsAtTick = context.gameTime() + Math.max(0, cooldownForTicks(context));
         asMovementOwner(dragon, true, () -> {
-            stop(context);
-            context.memories().eraseAll(clearMemoriesWhenStopped());
+            try {
+                stop(context);
+                context.memories().eraseAll(clearMemoriesWhenStopped());
+            } finally {
+                context.utilities().resources().release(this, context.memories());
+            }
             return null;
         });
     }
 
     private <R> R asMovementOwner(T dragon, boolean cleanup, Supplier<R> action) {
-        return dragon instanceof RideableDragonBase rideable
-                ? rideable.getAIMovement().brainMovement().runAs(this, cleanup, action) : action.get();
+        return dragon.getBrainUtilities().resources().runAs(this, cleanup,
+                () -> dragon instanceof RideableDragonBase rideable
+                        ? rideable.getAIMovement().brainMovement().runAs(this, cleanup, action) : action.get());
+    }
+
+    protected final boolean completeTask(T dragon, DragonBehaviourResources.TaskToken token, Runnable action) {
+        if (dragon.isRemoved()) return false;
+        return dragon.getBrainUtilities().resources().complete(token,
+                () -> asMovementOwner(dragon, false, () -> { action.run(); return null; }));
     }
 
     public List<MemoryModuleType<?>> clearMemoriesWhenStopped() {

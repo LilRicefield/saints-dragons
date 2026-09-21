@@ -141,7 +141,7 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
         }
 
         double radius = Math.max(8.0D, member.getPackSearchRadius());
-        List<T> nearby = level.getEntitiesOfClass(memberClass, member.getBoundingBox().inflate(radius),
+        List<T> nearby = member.getBrainUtilities().nearby().find(level, memberClass, member.getBoundingBox().inflate(radius),
                 candidate -> candidate == member || usableLeader(member, candidate));
         T best = member.canLeadPack() ? member : null;
         for (T candidate : nearby) {
@@ -178,7 +178,7 @@ public final class DragonGroundPackFollowBehaviour<T extends RideableDragonBase 
         if (max <= 1) return false;
         AABB box = candidate.getBoundingBox().inflate(Math.max(8.0D, candidate.getPackSearchRadius()));
         UUID leaderId = candidate.getUUID();
-        long followers = level.getEntitiesOfClass(memberClass, box,
+        long followers = member.getBrainUtilities().nearby().find(level, memberClass, box,
                         other -> other != candidate && leaderId.equals(other.getPackLeaderUuid()))
                 .stream().count();
         return leaderId.equals(member.getPackLeaderUuid()) ? followers <= max - 1 : followers < max - 1;

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.interfaces.SemiAquaticDragon;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -132,7 +133,8 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
     @Nullable
     private LivingEntity resolveTarget(T dragon) {
         if (dragon.isBaby() && !dragon.isTame() && dragon.getOwner() == null) {
-            List<T> nearby = dragon.level().getEntitiesOfClass(
+            if (!(dragon.level() instanceof ServerLevel level)) return null;
+            List<T> nearby = dragon.getBrainUtilities().nearby().find(level,
                     dragonClass,
                     dragon.getBoundingBox().inflate(12.0D, 6.0D, 12.0D),
                     candidate -> candidate != dragon && candidate.isAlive() && !candidate.isBaby()

@@ -26,6 +26,10 @@ public final class DragonBrainContext<T extends DragonEntity> {
         return memories;
     }
 
+    public DragonBrainUtilities utilities() {
+        return dragon.getBrainUtilities();
+    }
+
     public long gameTime() {
         return level.getGameTime();
     }

@@ -257,7 +257,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         }
 
         double radius = Math.max(8.0D, member.getPackSearchRadius());
-        List<T> nearby = level.getEntitiesOfClass(memberClass, member.getBoundingBox().inflate(radius),
+        List<T> nearby = member.getBrainUtilities().nearby().find(level, memberClass, member.getBoundingBox().inflate(radius),
                 candidate -> candidate == member || usableLeader(member, candidate));
         T best = member.canLeadPack() ? member : null;
         for (T candidate : nearby) {
@@ -295,7 +295,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         if (max <= 1) return false;
         AABB box = candidate.getBoundingBox().inflate(Math.max(8.0D, candidate.getPackSearchRadius()));
         UUID leaderId = candidate.getUUID();
-        List<T> nearby = level.getEntitiesOfClass(memberClass, box,
+        List<T> nearby = member.getBrainUtilities().nearby().find(level, memberClass, box,
                 other -> other == candidate || compatibleMember(member, other));
         long followers = nearby.stream()
                 .filter(other -> other != candidate && leaderId.equals(other.getPackLeaderUuid()))

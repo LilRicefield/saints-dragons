@@ -3,12 +3,18 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourSequence;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonDestinationMemory;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementProgress;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonSiteReservations;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncDragonPathfinder;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.interfaces.DrinkingDragon;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.util.Mth;
@@ -22,28 +28,33 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.Future;
 
 public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingDragon>
         extends DragonBehaviour<T> {
     private static final int STABLE_GROUND_TICKS = 3;
+    private static final ResourceLocation DRINK_SITE = new ResourceLocation("saintsdragons", "drink_site");
+    private static final DragonBehaviourEligibility.Policy DRINK_POLICY = DragonBehaviourEligibility.AMBIENT.also(
+            DragonBehaviourEligibility.Blocker.AERIAL, DragonBehaviourEligibility.Blocker.IN_WATER);
 
     private final Config config;
+    private final DragonMovementProgress progress = new DragonMovementProgress();
+    private DragonBehaviourSequence<DragonBrainContext<T>> sequence;
+    private DragonSiteReservations.Ticket siteTicket;
+    private long movementGeneration = -1L;
+    private boolean usedRememberedSites;
     private Phase phase = Phase.IDLE;
     private List<DrinkSite> candidates = List.of();
     private int candidateIndex;
-    private int pathGeneration;
     private int routeNodes;
     private int stableGroundTicks;
     private int waterSourcesScanned;
     private int validSitesFound;
     private long phaseEndsAt;
     private boolean completed;
+    private boolean drinkingAnimationStarted;
     private String decision = "not-checked";
     @Nullable
     private DrinkSite site;
-    @Nullable
-    private Future<?> pathRequest;
 
     public DragonDrinkBehaviour(Config config) {
         this.config = config;
@@ -63,7 +74,7 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
             decision = "ineligible:" + ineligibleReason;
             return false;
         }
-        candidates = findSites(dragon);
+        candidates = findSites(context, true);
         if (candidates.isEmpty()) {
             decision = "no-water";
         } else {
@@ -82,20 +93,29 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
             decision = "interrupted:" + ineligibleReason;
             return false;
         }
-        if (context.gameTime() > phaseEndsAt) {
-            decision = "failed:timeout";
+        if (site != null && (!DragonDestinationMemory.loaded(context.level(), site.water())
+                || !isDrinkableWater(context.dragon(), site.water()))) {
+            decision = "interrupted:site-invalid";
             return false;
         }
-        return site == null || isDrinkableWater(context.dragon(), site.water());
+        return true;
     }
 
     @Override
     protected void start(DragonBrainContext<T> context) {
         T dragon = context.dragon();
         completed = false;
+        drinkingAnimationStarted = false;
         candidateIndex = 0;
         routeNodes = 0;
         stableGroundTicks = 0;
+        movementGeneration = -1L;
+        progress.reset();
+        sequence = new DragonBehaviourSequence<>(List.of(
+                DragonBehaviourSequence.Step.of("approach", config.approachTimeoutTicks(), this::tickApproachStage),
+                DragonBehaviourSequence.Step.of("align", config.alignTicks() + 2, this::tickAlignStage),
+                DragonBehaviourSequence.Step.of("drink", Math.max(1, dragon.getDrinkingDurationTicks()) + 2, this::tickDrinkStage)
+        ));
         if (candidates.isEmpty()) {
             phase = Phase.FAILED;
             decision = "failed:no-water";
@@ -108,23 +128,51 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
         if (dragon instanceof RideableFlyingDragon flyingDragon) {
             flyingDragon.switchToGroundNavigation();
         }
+        sequence.start(context, context.gameTime());
     }
 
     @Override
     protected void tick(DragonBrainContext<T> context) {
-        T dragon = context.dragon();
-        switch (phase) {
-            case SETTLING -> tickSettling(dragon);
-            case PLANNING -> dragon.getAIMovement().setGroundIdle();
-            case APPROACH -> tickApproach(context, dragon);
-            case ALIGN -> tickAlignment(context, dragon);
-            case DRINKING -> tickDrinking(context, dragon);
-            default -> {
-            }
+        if (siteTicket != null && !siteTicket.renew()) {
+            phase = Phase.FAILED;
+            decision = "interrupted:site-reservation-expired";
+        }
+        if (sequence == null) return;
+        var result = sequence.tick(context, context.gameTime());
+        if (result == DragonBehaviourSequence.Result.TIMED_OUT) {
+            if (site != null && sequence.stepName().equals("approach")) rejectSite(context, site.water());
+            phase = Phase.FAILED;
+            decision = "failed:timeout:" + sequence.stepName();
         }
     }
 
-    private void tickSettling(T dragon) {
+    private DragonBehaviourSequence.Result tickApproachStage(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        switch (phase) {
+            case SETTLING -> tickSettling(context);
+            case PLANNING -> dragon.getAIMovement().setGroundIdle();
+            case APPROACH -> tickApproach(context, dragon);
+            default -> {
+            }
+        }
+        return phase == Phase.FAILED ? DragonBehaviourSequence.Result.FAILURE
+                : phase == Phase.ALIGN ? DragonBehaviourSequence.Result.SUCCESS : DragonBehaviourSequence.Result.RUNNING;
+    }
+
+    private DragonBehaviourSequence.Result tickAlignStage(DragonBrainContext<T> context) {
+        if (phase == Phase.ALIGN) tickAlignment(context, context.dragon());
+        return phase == Phase.FAILED ? DragonBehaviourSequence.Result.FAILURE
+                : phase == Phase.DRINKING ? DragonBehaviourSequence.Result.SUCCESS : DragonBehaviourSequence.Result.RUNNING;
+    }
+
+    private DragonBehaviourSequence.Result tickDrinkStage(DragonBrainContext<T> context) {
+        if (phase == Phase.DRINKING) tickDrinking(context, context.dragon());
+        return phase == Phase.FAILED ? DragonBehaviourSequence.Result.FAILURE
+                : phase == Phase.COMPLETE ? DragonBehaviourSequence.Result.SUCCESS : DragonBehaviourSequence.Result.RUNNING;
+    }
+
+    private void tickSettling(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
         dragon.getAIMovement().setGroundIdle();
         if (!dragon.onGround()) {
             stableGroundTicks = 0;
@@ -137,21 +185,29 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
         }
         phase = Phase.PLANNING;
         decision = "planning";
-        requestNextPath(dragon);
+        requestNextPath(context);
     }
 
     private void tickApproach(DragonBrainContext<T> context, T dragon) {
         dragon.setGroundMoveStateFromAI(1);
-        if (dragon.getAIMovement().isPathing()) {
+        if (!dragon.getAIMovement().isMovementCommandCurrent(movementGeneration)) {
+            phase = Phase.FAILED;
+            decision = "interrupted:movement-replaced";
             return;
         }
-        if (dragon.getAIMovement().hasFailed()
-                || !dragon.getAIMovement().hasArrived()
-                || site == null
-                || !isDryStandingPosition(dragon, dragon.position())
-                || !canDrinkFromCurrentPosition(dragon, site)) {
-            phase = Phase.FAILED;
-            decision = "failed:approach";
+        boolean arrived = site != null && dragon.getAIMovement().hasArrived()
+                && isDryStandingPosition(dragon, dragon.position()) && canDrinkFromCurrentPosition(dragon, site);
+        var path = dragon.getNavigation().getPath();
+        var result = progress.observe(dragon.position(), context.gameTime(), site != null
+                        && DragonDestinationMemory.loaded(context.level(), site.water()) && isDrinkableWater(dragon, site.water()),
+                arrived, dragon.getAIMovement().hasFailed(), path == null ? -1 : path.getNextNodeIndex());
+        if (result == DragonMovementProgress.Status.IN_PROGRESS) return;
+        if (result != DragonMovementProgress.Status.ARRIVED) {
+            if (site != null) rejectSite(context, site.water());
+            dragon.getAIMovement().stopIfMovementCommandCurrent(movementGeneration);
+            phase = Phase.PLANNING;
+            decision = "retry:approach:" + result.name().toLowerCase(Locale.ROOT);
+            requestNextPath(context);
             return;
         }
 
@@ -174,6 +230,7 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
         }
 
         dragon.startDrinkingAnimation();
+        drinkingAnimationStarted = true;
         phase = Phase.DRINKING;
         decision = "drinking";
         phaseEndsAt = context.gameTime() + Math.max(1, dragon.getDrinkingDurationTicks());
@@ -191,6 +248,8 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
             completed = true;
             phase = Phase.COMPLETE;
             decision = "complete";
+            context.utilities().destinations().remember(DRINK_SITE, context.level(), site.water(),
+                    DragonDestinationMemory.Outcome.SUCCESS, 20 * 300);
         }
     }
 
@@ -206,25 +265,46 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
 
     @Override
     protected void stop(DragonBrainContext<T> context) {
-        pathGeneration++;
-        if (pathRequest != null) {
-            pathRequest.cancel(true);
-            pathRequest = null;
-        }
+        if (sequence != null) sequence.cancel(context);
         context.dragon().getAIMovement().stop();
-        if (phase == Phase.DRINKING && !completed) {
+        if (drinkingAnimationStarted && !completed) {
             context.dragon().stopDrinkingAnimation();
         }
+        drinkingAnimationStarted = false;
         phase = Phase.IDLE;
         candidates = List.of();
         candidateIndex = 0;
         routeNodes = 0;
         stableGroundTicks = 0;
         site = null;
+        siteTicket = null;
+        movementGeneration = -1L;
+        context.dragon().combatManager.recordAiDecision("drink", decision);
     }
 
-    private void requestNextPath(T dragon) {
-        if (candidateIndex >= candidates.size()) {
+    private void requestNextPath(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        if (siteTicket != null) siteTicket.release();
+        siteTicket = null;
+        DrinkSite candidate = null;
+        while (true) {
+            if (candidateIndex >= candidates.size() && usedRememberedSites) {
+                candidates = findSites(context, false);
+                candidateIndex = 0;
+            }
+            if (candidateIndex >= candidates.size()) break;
+            DrinkSite next = candidates.get(candidateIndex++);
+            if (!DragonDestinationMemory.loaded(context.level(), next.water())
+                    || !isDrinkableWater(dragon, next.water())
+                    || context.utilities().destinations().rejected(DRINK_SITE, context.level(), next.water())) continue;
+            var ticket = DragonSiteReservations.claim(context.level(), DRINK_SITE, next.water(), dragon.getUUID(), 60);
+            if (ticket == null) continue;
+            siteTicket = ticket;
+            context.utilities().resources().onStop(this, "drink-site", ticket::release);
+            candidate = next;
+            break;
+        }
+        if (candidate == null) {
             phase = Phase.FAILED;
             if (!decision.startsWith("path-rejected:")) {
                 decision = "failed:no-route";
@@ -232,7 +312,6 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
             return;
         }
 
-        DrinkSite candidate = candidates.get(candidateIndex++);
         if (isDryStandingPosition(dragon, dragon.position())
                 && canDrinkFromCurrentPosition(dragon, candidate)) {
             site = new DrinkSite(dragon.position(), candidate.water());
@@ -243,33 +322,55 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
             return;
         }
 
-        int generation = ++pathGeneration;
         site = candidate;
-        pathRequest = AsyncDragonPathfinder.calculateGroundPathAsync(
+        var request = context.utilities().resources().beginTask(this, "drink-path");
+        long requestedMovementGeneration = dragon.getAIMovement().getMovementCommandGeneration();
+        DrinkSite requestedSite = candidate;
+        request.bind(AsyncDragonPathfinder.calculateGroundPathAsync(
                 dragon,
                 candidate.stance(),
                 0,
                 true,
-                path -> acceptPath(dragon, candidate, generation, path)
-        );
+                path -> completeTask(dragon, request,
+                        () -> acceptPath(context, requestedSite, requestedMovementGeneration, path))
+        ));
     }
 
-    private void acceptPath(T dragon, DrinkSite candidate, int generation, @Nullable Path path) {
-        if (generation != pathGeneration || phase != Phase.PLANNING || dragon.isRemoved()) {
+    private void acceptPath(DragonBrainContext<T> context, DrinkSite candidate,
+                            long requestedMovementGeneration, @Nullable Path path) {
+        T dragon = context.dragon();
+        if (phase != Phase.PLANNING || dragon.isRemoved()) {
             return;
         }
-        pathRequest = null;
+        if (!dragon.getAIMovement().isMovementCommandCurrent(requestedMovementGeneration)) {
+            phase = Phase.FAILED;
+            decision = "interrupted:movement-replaced";
+            return;
+        }
+        if (!DragonDestinationMemory.loaded(context.level(), candidate.water())) {
+            phase = Phase.FAILED;
+            decision = "interrupted:water-unloaded";
+            return;
+        }
+        String ineligible = ineligibleReason(dragon);
+        if (ineligible != null || siteTicket == null || !siteTicket.renew()) {
+            phase = Phase.FAILED;
+            decision = "interrupted:" + (ineligible == null ? "site-reservation-expired" : ineligible);
+            return;
+        }
         String rejection = pathRejection(dragon, candidate, path);
         if (rejection != null) {
             decision = "path-rejected:" + rejection;
-            requestNextPath(dragon);
+            rejectSite(context, candidate.water());
+            requestNextPath(context);
             return;
         }
         Vec3 endpoint = path.getEntityPosAtNode(dragon, path.getNodeCount() - 1);
         DrinkSite reachableSite = new DrinkSite(endpoint, candidate.water());
         if (!isSiteValid(dragon, reachableSite)) {
             decision = "path-rejected:unsafe-endpoint";
-            requestNextPath(dragon);
+            rejectSite(context, candidate.water());
+            requestNextPath(context);
             return;
         }
 
@@ -283,10 +384,13 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
                 approachArrivalTolerance(dragon, reachableSite)
         )) {
             decision = "path-rejected:navigation";
-            requestNextPath(dragon);
+            rejectSite(context, candidate.water());
+            requestNextPath(context);
             return;
         }
         phase = Phase.APPROACH;
+        movementGeneration = dragon.getAIMovement().getMovementCommandGeneration();
+        progress.begin(reachableSite.stance(), dragon.position(), context.gameTime(), config.approachTimeoutTicks(), 80, 0.5D);
         decision = "approaching";
     }
 
@@ -302,6 +406,7 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
             return "too-long";
         }
         Vec3 endpoint = path.getEntityPosAtNode(dragon, path.getNodeCount() - 1);
+        if (!dragon.level().hasChunkAt(BlockPos.containing(endpoint))) return "unloaded-endpoint";
         if (!isDryStandingPosition(dragon, endpoint)) {
             return "wet-endpoint";
         }
@@ -310,9 +415,21 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
                 : "endpoint-out-of-reach";
     }
 
-    private List<DrinkSite> findSites(T dragon) {
+    private List<DrinkSite> findSites(DragonBrainContext<T> context, boolean useMemory) {
+        T dragon = context.dragon();
         waterSourcesScanned = 0;
         validSitesFound = 0;
+        usedRememberedSites = false;
+        if (useMemory) {
+            var remembered = context.utilities().destinations().known(DRINK_SITE, context.level(), dragon.blockPosition(),
+                    config.searchRadius(), position -> isDrinkableWater(dragon, position));
+            if (!remembered.isEmpty()) {
+                usedRememberedSites = true;
+                validSitesFound = remembered.size();
+                return remembered.stream().limit(config.maxCandidateSites())
+                        .map(water -> new DrinkSite(Vec3.atBottomCenterOf(water.above()), water)).toList();
+            }
+        }
         BlockPos origin = dragon.blockPosition();
         List<DrinkSite> sites = new ArrayList<>();
         int radius = config.searchRadius();
@@ -330,7 +447,9 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
                 }
                 for (int dy = upwardRange; dy >= -downwardRange; dy--) {
                     BlockPos water = column.offset(0, dy, 0);
-                    if (!isSourceWaterAccessible(dragon, water)) {
+                    if (!DragonDestinationMemory.loaded(context.level(), water)
+                            || !isSourceWaterAccessible(dragon, water)
+                            || context.utilities().destinations().rejected(DRINK_SITE, context.level(), water)) {
                         continue;
                     }
                     waterSourcesScanned++;
@@ -352,6 +471,11 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
     private boolean isSiteValid(T dragon, DrinkSite candidate) {
         return isDrinkableWater(dragon, candidate.water())
                 && canDrinkFromPosition(dragon, candidate.stance(), candidate.water());
+    }
+
+    private void rejectSite(DragonBrainContext<T> context, BlockPos water) {
+        context.utilities().destinations().remember(DRINK_SITE, context.level(), water,
+                DragonDestinationMemory.Outcome.FAILED, 20 * 30);
     }
 
     private boolean isDryStandingPosition(T dragon, Vec3 position) {
@@ -404,16 +528,10 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
 
     @Nullable
     private String ineligibleReason(T dragon) {
-        if (!dragon.isAlive() || dragon.isDying()) return "dying";
+        String common = DragonBehaviourEligibility.rejection(dragon, DRINK_POLICY);
+        if (common != null) return common;
         if (dragon.isBaby()) return "baby";
-        if (dragon.isAerial()) return "aerial";
-        if (dragon.isInWaterOrBubble()) return "in-water";
-        if (dragon.isOrderedToSit() || dragon.isInSittingPose() || dragon.isInSitTransition()) return "sitting";
-        if (dragon.isVehicle() || dragon.isPassenger()) return "ridden";
-        if (dragon.isInLove()) return "breeding";
-        if (dragon.isAggressive() || dragon.getTarget() != null && dragon.getTarget().isAlive()) return "combat";
-        if (dragon.getActiveAbility() != null || dragon.areRiderControlsLocked()) return "ability";
-        if (dragon.isSleeping() || dragon.isSleepTransitioning() || dragon.wantsToSleep()) return "sleep";
+        if (dragon.wantsToSleep()) return "sleep";
         if (dragon.isTame() && dragon.getCommand() != 2) return "tamed-command";
         return null;
     }
@@ -439,6 +557,8 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
         Map<String, String> details = new LinkedHashMap<>();
         details.put("drink_phase", phase.name().toLowerCase(Locale.ROOT));
         details.put("drink_decision", decision);
+        details.put("sequence", sequence == null ? "none" : sequence.stepName() + ":" + sequence.result().name());
+        details.put("progress", progress.status().name());
         details.put("drink_site", site == null ? "none" : site.water().toShortString());
         details.put("drink_route_nodes", Integer.toString(routeNodes));
         details.put("drink_grounded", stableGroundTicks + "/" + STABLE_GROUND_TICKS);

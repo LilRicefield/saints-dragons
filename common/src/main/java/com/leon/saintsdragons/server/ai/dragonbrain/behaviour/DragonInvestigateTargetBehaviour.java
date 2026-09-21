@@ -4,6 +4,7 @@ import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettings;
 import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
@@ -713,11 +714,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
                 && (target != null || !dragon.isInLove() && !context.memories().has(DragonMemories.BREED_TARGET))
                 && !targetVisible
                 && context.memories().has(DragonMemories.INVESTIGATION_TARGET)
-                && !dragon.isVehicle()
-                && !dragon.isPassenger()
-                && !dragon.isOrderedToSit()
-                && !dragon.isSleepLocked()
-                && !dragon.isDying();
+                && DragonBehaviourEligibility.rejection(dragon, DragonBehaviourEligibility.INVESTIGATION) == null;
     }
 
     @Override
