@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -67,7 +69,7 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                         groundCombat::getPreferredStopDistance,
                                         (dragon, targetEntity) -> groundCombat.isGroundMovementLocked()
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),
+                                new AsyncWaterChaseTargetBehaviour<>(IgnivorusStatProfile.Brain.WATER_CHASE_SPEED, IgnivorusStatProfile.Brain.WATER_CHASE_TURN_DEGREES),
                                 groundCombat
                         )
                         .clearWhenStopped(
@@ -90,9 +92,9 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                 DragonBehaviourGroup.<Ignivorus>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
+                                        new DragonWaterEscapeBehaviour<>(IgnivorusStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, IgnivorusStatProfile.Brain.WATER_ESCAPE_SPEED),
                                         new DragonBreedBehaviour<>(
-                                                1.0D,
+                                                IgnivorusStatProfile.Brain.BREED_SPEED,
                                                 Ignivorus.class,
                                                 Ignivorus.BREED_PARTNER_RANGE,
                                                 Ignivorus.BREED_DISTANCE_SQR
@@ -101,9 +103,9 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                 Ignivorus.ROOST_SLEEP_RADIUS,
                                                 Ignivorus.ROOST_TERRITORY_RADIUS,
                                                 Ignivorus.ROOST_TERRITORY_RETURN_RADIUS,
-                                                1.0F,
-                                                0.25D,
-                                                8.0F,
+                                                IgnivorusStatProfile.Brain.ROOST_RETURN_GROUND_SPEED,
+                                                IgnivorusStatProfile.Brain.ROOST_RETURN_SWIM_SPEED,
+                                                IgnivorusStatProfile.Brain.ROOST_RETURN_SWIM_TURN_DEGREES,
                                                 1.5D
                                         ),
                                         new DragonFollowOwnerBehaviour<>(
@@ -113,13 +115,13 @@ public class IgnivorusBrain implements DragonBrainOwner<Ignivorus> {
                                                         Ignivorus.TAKEOFF_ANIMATION_TICKS
                                                 )
                                         ),
-                                        new DragonFollowParentBehaviour<>(Ignivorus.class, 1.1D),
+                                        new DragonFollowParentBehaviour<>(Ignivorus.class, IgnivorusStatProfile.Brain.FOLLOW_PARENT_SPEED),
                                         new DragonDrinkBehaviour<>(
                                                 DragonDrinkBehaviour.Config.standard().withSearchRadius(20)
                                         ),
                                         new IgnivorusAutonomousFlightBehaviour(),
                                         new DragonGroundWanderBehaviour<>(
-                                                1.0D,
+                                                IgnivorusStatProfile.Brain.GROUND_WANDER_SPEED,
                                                 120,
                                                 10,
                                                 dragon -> !dragon.isInWaterOrBubble()

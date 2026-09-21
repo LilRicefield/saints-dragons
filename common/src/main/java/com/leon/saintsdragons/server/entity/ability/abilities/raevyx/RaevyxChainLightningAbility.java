@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -21,16 +23,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class RaevyxChainLightningAbility {
-    private static final float BITE_CHAIN_DAMAGE = 10.0F;
-    private static final double BITE_CHAIN_RADIUS = 8.0D;
-    private static final int BITE_CHAIN_JUMPS = 5;
+    private static final float BITE_CHAIN_DAMAGE = RaevyxStatProfile.ChainLightningAbility.BITE_CHAIN_DAMAGE;
+    private static final double BITE_CHAIN_RADIUS = RaevyxStatProfile.ChainLightningAbility.BITE_CHAIN_RADIUS;
+    private static final int BITE_CHAIN_JUMPS = RaevyxStatProfile.ChainLightningAbility.BITE_CHAIN_JUMPS;
     private static final float BITE_CHAIN_FALLOFF = 0.75F;
     private static final int CHAIN_VISUAL_LIFETIME = 5;
 
-    private static final float IMPACT_CHAIN_DAMAGE_MIN = 7.0F;
-    private static final float IMPACT_CHAIN_DAMAGE_MAX = 15.0F;
-    private static final double IMPACT_CHAIN_RADIUS = 12.0D;
-    private static final int IMPACT_CHAIN_JUMPS = 4;
+    private static final float IMPACT_CHAIN_DAMAGE_MIN = RaevyxStatProfile.ChainLightningAbility.IMPACT_CHAIN_DAMAGE_MIN;
+    private static final float IMPACT_CHAIN_DAMAGE_MAX = RaevyxStatProfile.ChainLightningAbility.IMPACT_CHAIN_DAMAGE_MAX;
+    private static final double IMPACT_CHAIN_RADIUS = RaevyxStatProfile.ChainLightningAbility.IMPACT_CHAIN_RADIUS;
+    private static final int IMPACT_CHAIN_JUMPS = RaevyxStatProfile.ChainLightningAbility.IMPACT_CHAIN_JUMPS;
     private static final float IMPACT_CHAIN_FALLOFF = 0.8F;
 
     private RaevyxChainLightningAbility() {

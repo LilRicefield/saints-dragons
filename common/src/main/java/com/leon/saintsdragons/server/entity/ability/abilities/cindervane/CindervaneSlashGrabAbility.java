@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -24,8 +26,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class CindervaneSlashGrabAbility extends DragonAbility<Cindervane> {
-    private static final float DEFAULT_DAMAGE_HIT_1 = 5.0f;
-    private static final float DEFAULT_DAMAGE_HIT_2 = 7.0f;
+    private static final float DEFAULT_DAMAGE_HIT_1 = CindervaneStatProfile.SlashGrabAbility.DEFAULT_DAMAGE_HIT_1;
+    private static final float DEFAULT_DAMAGE_HIT_2 = CindervaneStatProfile.SlashGrabAbility.DEFAULT_DAMAGE_HIT_2;
 
     private static final int DEFAULT_HIT_1_TICK = 16;
     private static final int DEFAULT_DISMOUNT_TICK = 26;
@@ -36,7 +38,7 @@ public class CindervaneSlashGrabAbility extends DragonAbility<Cindervane> {
     private static final double GRAB_SIDE_OFFSET = 1.60D;
     private static final double GRAB_FORWARD_OFFSET = 5.25D;
     private static final double GRAB_VERTICAL_OFFSET = 1.15D;
-    private static final double GRAB_SEARCH_RADIUS = 3.00D;
+    private static final double GRAB_SEARCH_RADIUS = CindervaneStatProfile.SlashGrabAbility.GRAB_SEARCH_RADIUS;
     private static final double DEFAULT_MAX_TARGET_WIDTH = 4.30D;
     private static final double DEFAULT_MAX_TARGET_HEIGHT = 4.30D;
 

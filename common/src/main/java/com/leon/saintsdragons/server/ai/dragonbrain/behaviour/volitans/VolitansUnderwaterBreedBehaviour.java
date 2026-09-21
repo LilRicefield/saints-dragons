@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonBreedBehaviour;
 import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
@@ -11,9 +13,9 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 public final class VolitansUnderwaterBreedBehaviour extends DragonBreedBehaviour<Volitans> {
-    private static final int NEST_SEARCH_RADIUS = 8;
+    private static final int NEST_SEARCH_RADIUS = VolitansStatProfile.UnderwaterBreedBehaviour.NEST_SEARCH_RADIUS;
     private static final int NEST_SEARCH_DEPTH = 12;
-    private static final double COURTSHIP_SWIM_SPEED_SCALE = 0.20D;
+    private static final double COURTSHIP_SWIM_SPEED_SCALE = VolitansStatProfile.UnderwaterBreedBehaviour.COURTSHIP_SWIM_SPEED_SCALE;
 
     public VolitansUnderwaterBreedBehaviour(double speedModifier,
                                             double partnerRange,

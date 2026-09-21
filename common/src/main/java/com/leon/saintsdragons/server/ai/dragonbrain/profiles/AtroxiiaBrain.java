@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -70,7 +72,7 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
                                         AtroxiiaGroundCombatBehaviour::meleeStopRange,
                                         (dragon, target) -> AtroxiiaGroundCombatBehaviour.isMovementCommitted(dragon)
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<>(0.30D, 8.0F),
+                                new AsyncWaterChaseTargetBehaviour<>(AtroxiiaStatProfile.Brain.WATER_CHASE_SPEED, AtroxiiaStatProfile.Brain.WATER_CHASE_TURN_DEGREES),
                                 new AtroxiiaGroundCombatBehaviour(),
                                 new AtroxiiaWaterCombatBehaviour()
                         )
@@ -84,12 +86,12 @@ public final class AtroxiiaBrain implements DragonBrainOwner<Atroxiia> {
                 DragonBehaviourGroup.<Atroxiia>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
-                                        new DragonBreedBehaviour<>(1.0D, Atroxiia.class,
+                                        new DragonWaterEscapeBehaviour<>(AtroxiiaStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, AtroxiiaStatProfile.Brain.WATER_ESCAPE_SPEED),
+                                        new DragonBreedBehaviour<>(AtroxiiaStatProfile.Brain.BREED_SPEED, Atroxiia.class,
                                                 Atroxiia.BREED_PARTNER_RANGE, Atroxiia.BREED_DISTANCE_SQR),
                                         new DragonGroundFollowOwnerBehaviour<>(
                                                 DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
-                                        new DragonGroundWanderBehaviour<>(1.0D, 100)
+                                        new DragonGroundWanderBehaviour<>(AtroxiiaStatProfile.Brain.GROUND_WANDER_SPEED, 100)
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)

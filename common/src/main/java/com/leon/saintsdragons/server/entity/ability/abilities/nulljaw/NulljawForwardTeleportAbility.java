@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -10,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.ACTIVE;
 
 public final class NulljawForwardTeleportAbility extends DragonAbility<Nulljaw> {
-    private static final int COOLDOWN_TICKS = 40;
+    private static final int COOLDOWN_TICKS = NulljawStatProfile.ForwardTeleportAbility.COOLDOWN_TICKS;
     private static final DragonAbilitySection[] TRACK = {
             new DragonAbilitySection.AbilitySectionInstant(ACTIVE)
     };

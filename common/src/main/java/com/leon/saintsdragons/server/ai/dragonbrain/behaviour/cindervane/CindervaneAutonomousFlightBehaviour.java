@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBehaviour;
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
@@ -9,9 +11,9 @@ import net.minecraft.world.phys.Vec3;
 import java.util.UUID;
 
 public class CindervaneAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Cindervane> {
-    private static final double CRUISE_SPEED = 1.25D;
-    private static final double LANDING_SPEED = 1.0D;
-    private static final double AUTONOMOUS_DIVE_SPEED = 2.2D;
+    private static final double CRUISE_SPEED = CindervaneStatProfile.AutonomousFlightBehaviour.CRUISE_SPEED;
+    private static final double LANDING_SPEED = CindervaneStatProfile.AutonomousFlightBehaviour.LANDING_SPEED;
+    private static final double AUTONOMOUS_DIVE_SPEED = CindervaneStatProfile.AutonomousFlightBehaviour.AUTONOMOUS_DIVE_SPEED;
 
     private boolean wasThundering;
     private boolean wasRaining;

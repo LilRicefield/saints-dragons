@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.common.item.StegonautBinderItem;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -27,10 +29,10 @@ import java.util.Set;
 import java.util.UUID;
 
 public class StegonautBuffAbility {
-    private static final double BUFF_RANGE = 8.0D;
+    private static final double BUFF_RANGE = StegonautStatProfile.BuffAbility.BUFF_RANGE;
     private static final int UPDATE_INTERVAL = 20;
-    private static final int BUFF_DURATION_TICKS = 40;
-    private static final int RESISTANCE_AMPLIFIER = 0;
+    private static final int BUFF_DURATION_TICKS = StegonautStatProfile.BuffAbility.BUFF_DURATION_TICKS;
+    private static final int RESISTANCE_AMPLIFIER = StegonautStatProfile.BuffAbility.RESISTANCE_AMPLIFIER;
     private static final int ABSORPTION_AMPLIFIER = 0;
 
     private static final Map<ResourceKey<Level>, Set<UUID>> PORTABLE_BUFF_TARGETS = new HashMap<>();

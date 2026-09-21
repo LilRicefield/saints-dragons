@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -13,10 +15,10 @@ import java.util.Comparator;
 import java.util.Map;
 
 public final class NulljawTemptBehaviour extends DragonBehaviour<Nulljaw> {
-    private static final double START_RANGE = 32.0D;
-    private static final double CONTINUE_RANGE = 34.0D;
+    private static final double START_RANGE = NulljawStatProfile.TemptBehaviour.START_RANGE;
+    private static final double CONTINUE_RANGE = NulljawStatProfile.TemptBehaviour.CONTINUE_RANGE;
     private static final double STOP_DISTANCE_SQR = 5.0D * 5.0D;
-    private static final double SPEED = 1.0D;
+    private static final double SPEED = NulljawStatProfile.TemptBehaviour.SPEED;
 
     @Nullable
     private Player player;

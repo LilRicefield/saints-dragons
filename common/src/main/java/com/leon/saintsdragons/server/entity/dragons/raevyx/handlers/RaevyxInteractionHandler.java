@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.raevyx.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -310,14 +312,14 @@ public class RaevyxInteractionHandler extends AbstractDragonInteractionHandler<R
 
     private double getTamingChance(ItemStack food, DragonAttributeConfig config) {
         if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
-            return config.extraDouble("taming_chance_hearty", 33.3333D);
+            return config.extraDouble("taming_chance_hearty", RaevyxStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_HEARTY);
         }
         if (food.is(Items.MUTTON)) {
-            return config.extraDouble("taming_chance_mutton", 20.0D);
+            return config.extraDouble("taming_chance_mutton", RaevyxStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_MUTTON);
         }
         if (food.is(Items.PORKCHOP)) {
-            return config.extraDouble("taming_chance_porkchop", 20.0D);
+            return config.extraDouble("taming_chance_porkchop", RaevyxStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_PORKCHOP);
         }
-        return config.extraDouble("taming_chance_base", 20.0D);
+        return config.extraDouble("taming_chance_base", RaevyxStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BASE);
     }
 }

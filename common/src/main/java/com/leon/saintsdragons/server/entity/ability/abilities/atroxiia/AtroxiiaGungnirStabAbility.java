@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -19,15 +21,15 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class AtroxiiaGungnirStabAbility extends DragonAbility<Atroxiia> {
     private static final int ANIMATION_TICKS = 37;
     private static final int FIRST_NUDGE_TICK = 12;
-    private static final int SECOND_NUDGE_AND_DAMAGE_TICK = 17;
+    private static final int SECOND_NUDGE_AND_DAMAGE_TICK = AtroxiiaStatProfile.GungnirStabAbility.SECOND_NUDGE_AND_DAMAGE_TICK;
     private static final int SHORT_NUDGE_TICKS = 4;
     private static final int FAR_NUDGE_TICKS = 7;
     private static final double SHORT_NUDGE_DISTANCE = 2.0D;
     private static final double FAR_NUDGE_DISTANCE = 8.0D;
-    private static final double DAMAGE_RANGE = 20.0D;
-    private static final double DAMAGE_HORIZONTAL = 3.0D;
-    private static final double DAMAGE_VERTICAL = 4.0D;
-    private static final float DEFAULT_DAMAGE = 40.0F;
+    private static final double DAMAGE_RANGE = AtroxiiaStatProfile.GungnirStabAbility.DAMAGE_RANGE;
+    private static final double DAMAGE_HORIZONTAL = AtroxiiaStatProfile.GungnirStabAbility.DAMAGE_HORIZONTAL;
+    private static final double DAMAGE_VERTICAL = AtroxiiaStatProfile.GungnirStabAbility.DAMAGE_VERTICAL;
+    private static final float DEFAULT_DAMAGE = AtroxiiaStatProfile.GungnirStabAbility.DEFAULT_DAMAGE;
     private static final int POST_HIT_STUN_TICKS = 40;
 
     private static final DragonAbilitySection[] TRACK = {

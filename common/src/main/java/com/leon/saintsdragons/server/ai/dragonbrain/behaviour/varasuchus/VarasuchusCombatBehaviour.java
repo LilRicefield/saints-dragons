@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -16,13 +18,13 @@ import java.util.Map;
 
 
 public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
-    public static final float CHASE_SPEED = 1.5F;
-    public static final double BITE_RANGE = 5.0D;
-    public static final double LAND_PREY_BITE_RANGE = 1.45D;
-    private static final double HORN_RANGE = 5.0D;
-    private static final double CLAW_RANGE = 3.5D;
+    public static final float CHASE_SPEED = VarasuchusStatProfile.CombatBehaviour.CHASE_SPEED;
+    public static final double BITE_RANGE = VarasuchusStatProfile.CombatBehaviour.BITE_RANGE;
+    public static final double LAND_PREY_BITE_RANGE = VarasuchusStatProfile.CombatBehaviour.LAND_PREY_BITE_RANGE;
+    private static final double HORN_RANGE = VarasuchusStatProfile.CombatBehaviour.HORN_RANGE;
+    private static final double CLAW_RANGE = VarasuchusStatProfile.CombatBehaviour.CLAW_RANGE;
     private static final int MELEE_CADENCE_TICKS = 30;
-    private static final float PHASE_TWO_HEALTH_THRESHOLD = 0.5F;
+    private static final float PHASE_TWO_HEALTH_THRESHOLD = VarasuchusStatProfile.CombatBehaviour.PHASE_TWO_HEALTH_THRESHOLD;
 
     private Varasuchus drake;
     private DragonBrainContext<Varasuchus> currentContext;

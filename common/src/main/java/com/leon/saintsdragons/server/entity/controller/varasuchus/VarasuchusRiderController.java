@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.server.entity.controller.GroundDragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
 import com.leon.saintsdragons.server.flight.DragonRiderSeatOffsets;
@@ -36,7 +38,7 @@ public record VarasuchusRiderController(Varasuchus drake) {
     public float getRiddenSpeed(Player player) {
         if (drake.isInWater()) {
             double baseSpeed = drake.getSwimSpeed();
-            double speed = drake.isAccelerating() ? baseSpeed * 1.3D : baseSpeed;
+            double speed = drake.isAccelerating() ? baseSpeed * VarasuchusStatProfile.RiderController.SWIM_SPRINT_MULTIPLIER : baseSpeed;
             return (float) speed;
         } else {
             double speed = drake.isAccelerating() ? Varasuchus.RIDER_RUN_SPEED : Varasuchus.RIDER_WALK_SPEED;

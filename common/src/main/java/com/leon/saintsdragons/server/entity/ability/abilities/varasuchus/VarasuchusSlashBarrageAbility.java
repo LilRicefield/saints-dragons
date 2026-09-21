@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -24,8 +26,8 @@ public class VarasuchusSlashBarrageAbility extends DragonAbility<Varasuchus> {
     private static final int TOTAL_TICKS = 93;
     private static final int SOUND_TICKS = 140;
     private static final int[] HIT_TICKS = new int[] {2, 8, 14, 20, 24, 30, 36, 41, 46, 51, 61, 71, 78, 82};
-    private static final float HIT_DAMAGE = 15.0F;
-    private static final double CLAW_RANGE = 6.5;
+    private static final float HIT_DAMAGE = VarasuchusStatProfile.SlashBarrageAbility.HIT_DAMAGE;
+    private static final double CLAW_RANGE = VarasuchusStatProfile.SlashBarrageAbility.CLAW_RANGE;
     private static final double CLAW_HORIZONTAL = 3.0;
     private static final double CLAW_VERTICAL = 4.0;
     private static final double CLAW_ANGLE_DEG = 100.0;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -23,8 +25,8 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 
 public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
-    public static final double MELEE_ENGAGE_RANGE = 6.0D;
-    public static final float CHASE_SPEED = 1.75F;
+    public static final double MELEE_ENGAGE_RANGE = IgnivorusStatProfile.GroundCombatBehaviour.MELEE_ENGAGE_RANGE;
+    public static final float CHASE_SPEED = IgnivorusStatProfile.GroundCombatBehaviour.CHASE_SPEED;
     private Ignivorus dragon;
     private DragonBrainContext<Ignivorus> currentContext;
     private int attackCooldown = 0;
@@ -37,14 +39,14 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     private CombatAction lastAction = CombatAction.NONE;
     private CombatAction previousAction = CombatAction.NONE;
     private static final int DECISION_INTERVAL_TICKS = 8;
-    private static final int FIREBALL_DECISION_COOLDOWN_TICKS = 140;
-    private static final int FIREBALL_POST_COOLDOWN_TICKS = 200;
+    private static final int FIREBALL_DECISION_COOLDOWN_TICKS = IgnivorusStatProfile.GroundCombatBehaviour.FIREBALL_DECISION_COOLDOWN_TICKS;
+    private static final int FIREBALL_POST_COOLDOWN_TICKS = IgnivorusStatProfile.GroundCombatBehaviour.FIREBALL_POST_COOLDOWN_TICKS;
     private static final double FIREBALL_MIN_GAP = 8.0;
     private static final double FIREBALL_MAX_GAP = 48.0;
     private static final double BODY_SLAM_POINT_BLANK_GAP = 2.5D;
-    private static final double AI_PHASE2_LEAP_TRIGGER_GAP = 24.0;
-    private static final double AI_PHASE2_LEAP_MAX_GAP = 56.0;
-    private static final int AI_PHASE2_LEAP_POST_COOLDOWN = 30;
+    private static final double AI_PHASE2_LEAP_TRIGGER_GAP = IgnivorusStatProfile.GroundCombatBehaviour.AI_PHASE2_LEAP_TRIGGER_GAP;
+    private static final double AI_PHASE2_LEAP_MAX_GAP = IgnivorusStatProfile.GroundCombatBehaviour.AI_PHASE2_LEAP_MAX_GAP;
+    private static final int AI_PHASE2_LEAP_POST_COOLDOWN = IgnivorusStatProfile.GroundCombatBehaviour.AI_PHASE2_LEAP_POST_COOLDOWN;
     private static final double MIN_ABILITY_SCORE = 50.0D;
 
     public IgnivorusGroundCombatBehaviour() {

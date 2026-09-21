@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -31,12 +33,12 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
     private static final int QUAKE_ONE_IMPACT_TICK = (int) Math.round(0.90D * 20.0D);
     private static final int QUAKE_TWO_IMPACT_TICK = (int) Math.round(0.70D * 20.0D);
     private static final int QUAKE_TWO_TAIL_FLASH_TICK = (int) Math.round(0.33D * 20.0D);
-    private static final int COOLDOWN_TICKS = 50;
-    private static final float DEFAULT_QUAKE_DAMAGE = 25.0F;
-    private static final double QUAKE_RADIUS = 20.0D;
-    private static final double QUAKE_VERTICAL_RADIUS = 6.0D;
-    private static final double DEFAULT_QUAKE_ONE_KNOCKBACK = 0.75D;
-    private static final double DEFAULT_QUAKE_TWO_KNOCKBACK = 1.8D;
+    private static final int COOLDOWN_TICKS = AtroxiiaStatProfile.HelheimQuakeAbility.COOLDOWN_TICKS;
+    private static final float DEFAULT_QUAKE_DAMAGE = AtroxiiaStatProfile.HelheimQuakeAbility.DEFAULT_QUAKE_DAMAGE;
+    private static final double QUAKE_RADIUS = AtroxiiaStatProfile.HelheimQuakeAbility.QUAKE_RADIUS;
+    private static final double QUAKE_VERTICAL_RADIUS = AtroxiiaStatProfile.HelheimQuakeAbility.QUAKE_VERTICAL_RADIUS;
+    private static final double DEFAULT_QUAKE_ONE_KNOCKBACK = AtroxiiaStatProfile.HelheimQuakeAbility.DEFAULT_QUAKE_ONE_KNOCKBACK;
+    private static final double DEFAULT_QUAKE_TWO_KNOCKBACK = AtroxiiaStatProfile.HelheimQuakeAbility.DEFAULT_QUAKE_TWO_KNOCKBACK;
     private static final double QUAKE_ONE_LIFT = 0.2D;
     private static final double QUAKE_TWO_LIFT = 0.5D;
     private static final int DEFAULT_QUAKE_STUN_TICKS = 5 * 20;
@@ -44,7 +46,7 @@ public class AtroxiiaHelheimQuakeAbility extends DragonAbility<Atroxiia> {
     private static final int QUAKE_ONE_SCREEN_SHAKE_TICKS = 6;
     private static final float QUAKE_TWO_SCREEN_SHAKE = 1.1F;
     private static final int QUAKE_TWO_SCREEN_SHAKE_TICKS = 10;
-    private static final int FROST_WALKER_LEVEL = 10;
+    private static final int FROST_WALKER_LEVEL = AtroxiiaStatProfile.HelheimQuakeAbility.FROST_WALKER_LEVEL;
 
     private Phase phase = Phase.QUAKE_ONE;
     private int phaseTicks;

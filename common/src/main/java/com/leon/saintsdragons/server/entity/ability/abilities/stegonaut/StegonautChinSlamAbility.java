@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -20,10 +22,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class StegonautChinSlamAbility extends DragonAbility<Stegonaut> {
-    private static final float BASE_DAMAGE = 8.0f;
+    private static final float BASE_DAMAGE = StegonautStatProfile.ChinSlamAbility.BASE_DAMAGE;
     private static final int HIT_TICK = 13;
-    private static final float ARMOR_PENETRATION = 4.0f;
-    private static final double RANGE = 5.0;
+    private static final float ARMOR_PENETRATION = StegonautStatProfile.ChinSlamAbility.ARMOR_PENETRATION;
+    private static final double RANGE = StegonautStatProfile.ChinSlamAbility.RANGE;
     private static final double SLAM_ANGLE_DEG = 95.0;
     private static final double SWEEP_HORIZONTAL = 4.5;
     private static final double SWEEP_VERTICAL = 4.5;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.server.entity.interfaces.*;
 import com.leon.saintsdragons.server.menu.DragonInventoryMenu;
 import com.mojang.serialization.Dynamic;
@@ -127,9 +129,9 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
     private static final int FLEX_CONTROL_LOCK_TICKS = 67;
-    private static final int FLEX_COOLDOWN_TICKS = 120;
-    public static final double BREED_PARTNER_RANGE = 20.0D;
-    public static final double BREED_DISTANCE_SQR = 36.0D;
+    private static final int FLEX_COOLDOWN_TICKS = AtroxiiaStatProfile.Entity.FLEX_COOLDOWN_TICKS;
+    public static final double BREED_PARTNER_RANGE = AtroxiiaStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = AtroxiiaStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final int SIT_DOWN_TICKS = 48;
     private static final int SIT_UP_TICKS = 25;
     private static final int FALL_ASLEEP_TICKS = 38;
@@ -140,19 +142,19 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     public static final int EAT_ANIMATION_TICKS = 40;
     public static final int HURT_SOUND_TICKS = 20;
     public static final int EAT_SOUND_TICKS = 60;
-    private static final double BABY_MAX_HEALTH = 30.0D;
-    private static final double BABY_ARMOR = 0.0D;
-    private static final double GROUND_MOVEMENT_SPEED = 0.33D;
-    private static final double RIDER_JUMP_STRENGTH = 1.15D;
-    private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
+    private static final double BABY_MAX_HEALTH = AtroxiiaStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = AtroxiiaStatProfile.Entity.BABY_ARMOR;
+    private static final double GROUND_MOVEMENT_SPEED = AtroxiiaStatProfile.Entity.GROUND_MOVEMENT_SPEED;
+    private static final double RIDER_JUMP_STRENGTH = AtroxiiaStatProfile.Entity.RIDER_JUMP_STRENGTH;
+    private static final double RIDER_JUMP_FORWARD_BOOST = AtroxiiaStatProfile.Entity.RIDER_JUMP_FORWARD_BOOST;
     private static final float MAX_UP_STEP = 1.25F;
-    public static final double RIDER_WALK_SPEED = 0.12D;
-    public static final double RIDER_RUN_SPEED = 0.28D;
+    public static final double RIDER_WALK_SPEED = AtroxiiaStatProfile.Entity.RIDER_WALK_SPEED;
+    public static final double RIDER_RUN_SPEED = AtroxiiaStatProfile.Entity.RIDER_RUN_SPEED;
     private static final double SLITHER_NUDGE_DISTANCE = 24.0D;
     private static final double SLITHER_AUTO_MOVE_SPEED = RIDER_RUN_SPEED * 4.0D;
-    private static final double PRECISE_STRIKE_NUDGE_DRAG = 0.78D;
+    private static final double PRECISE_STRIKE_NUDGE_DRAG = AtroxiiaStatProfile.Entity.PRECISE_STRIKE_NUDGE_DRAG;
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final float DEFAULT_TAMING_STUN_HEALTH = 60.0F;
+    private static final float DEFAULT_TAMING_STUN_HEALTH = AtroxiiaStatProfile.Entity.DEFAULT_TAMING_STUN_HEALTH;
     private static final int ATROXIIA_CHEST_SLOTS = 10;
 
     @Override
@@ -304,10 +306,10 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
-                .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .add(Attributes.FOLLOW_RANGE, AtroxiiaStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE)
+                .add(Attributes.KNOCKBACK_RESISTANCE, AtroxiiaStatProfile.Entity.ATTRIBUTE_KNOCKBACK_RESISTANCE)
                 .add(Attributes.ARMOR, config.armor())
-                .add(Attributes.ATTACK_DAMAGE, 10.0D);
+                .add(Attributes.ATTACK_DAMAGE, AtroxiiaStatProfile.Entity.ATTRIBUTE_ATTACK_DAMAGE);
     }
 
     public void applyConfiguredAttributes() {

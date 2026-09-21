@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -86,7 +88,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                                 || dragon.isGroundRending()
                                 ),
                                 new RaevyxGroundCombatBehaviour(),
-                                new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F)
+                                new AsyncWaterChaseTargetBehaviour<>(RaevyxStatProfile.Brain.WATER_CHASE_SPEED, RaevyxStatProfile.Brain.WATER_CHASE_TURN_DEGREES)
                         )
                         .clearWhenStopped(
                                 DragonMemories.MOVEMENT_INTENT,
@@ -108,10 +110,10 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                 DragonBehaviourGroup.<Raevyx>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
-                                        new DragonFollowParentBehaviour<>(Raevyx.class, 1.15D),
+                                        new DragonWaterEscapeBehaviour<>(RaevyxStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, RaevyxStatProfile.Brain.WATER_ESCAPE_SPEED),
+                                        new DragonFollowParentBehaviour<>(Raevyx.class, RaevyxStatProfile.Brain.FOLLOW_PARENT_SPEED),
                                         new DragonBreedBehaviour<>(
-                                                1.0D,
+                                                RaevyxStatProfile.Brain.BREED_SPEED,
                                                 Raevyx.class,
                                                 Raevyx.BREED_PARTNER_RANGE,
                                                 Raevyx.BREED_DISTANCE_SQR
@@ -125,7 +127,7 @@ public class RaevyxBrain implements DragonBrainOwner<Raevyx> {
                                         ),
                                         new DragonDrinkBehaviour<>(DragonDrinkBehaviour.Config.standard()),
                                         new RaevyxAutonomousFlightBehaviour(),
-                                        new DragonGroundWanderBehaviour<>(1.0D, 60)
+                                        new DragonGroundWanderBehaviour<>(RaevyxStatProfile.Brain.GROUND_WANDER_SPEED, 60)
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)

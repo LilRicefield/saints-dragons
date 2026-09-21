@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -23,7 +25,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public final class RaevyxTargetingBehaviour extends DragonTargetingBehaviour<Raevyx> {
-    private static final double BABY_PROTECTION_RANGE = 16.0D;
+    private static final double BABY_PROTECTION_RANGE = RaevyxStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
 
     private int lastOwnerHurtTimestamp;
     private int lastOwnerAttackTimestamp;

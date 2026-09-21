@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -20,9 +22,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class StegonautBiteAbility extends DragonAbility<Stegonaut> {
-    private static final float BASE_DAMAGE = 5.0f;
+    private static final float BASE_DAMAGE = StegonautStatProfile.BiteAbility.BASE_DAMAGE;
     private static final int HIT_TICK = 13;
-    private static final double RANGE = 4.0;
+    private static final double RANGE = StegonautStatProfile.BiteAbility.RANGE;
     private static final double ANGLE_DEGREES = 80.0;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {

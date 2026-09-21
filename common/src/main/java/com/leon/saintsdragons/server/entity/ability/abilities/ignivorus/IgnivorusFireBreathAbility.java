@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
@@ -29,7 +31,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
     private static final int RIDER_ACTIVE_TICKS = 240;
     private static final int AI_ACTIVE_TICKS = 240;
     private static final int BLOCK_BREAK_START_TICKS = 120;
-    private static final int COOLDOWN_TICKS = 40;
+    private static final int COOLDOWN_TICKS = IgnivorusStatProfile.FireBreathAbility.COOLDOWN_TICKS;
     private static final float DEFAULT_FIRE_BREATH_DRAIN_PER_TICK = 1.0f / RIDER_ACTIVE_TICKS;
     private static final DragonAbilitySection[] RIDER_TRACK = new DragonAbilitySection[]{
         new AbilitySectionDuration(STARTUP, STARTUP_TICKS),

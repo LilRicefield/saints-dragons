@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -11,9 +13,9 @@ import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import java.util.Map;
 
 public class StegonautGroundCombatBehaviour extends DragonBehaviour<Stegonaut> {
-    public static final double GROUND_ATTACK_RANGE = 3.4D;
-    public static final double WATER_ATTACK_RANGE = 6.0D;
-    private static final int ATTACK_COOLDOWN_TICKS = 26;
+    public static final double GROUND_ATTACK_RANGE = StegonautStatProfile.GroundCombatBehaviour.GROUND_ATTACK_RANGE;
+    public static final double WATER_ATTACK_RANGE = StegonautStatProfile.GroundCombatBehaviour.WATER_ATTACK_RANGE;
+    private static final int ATTACK_COOLDOWN_TICKS = StegonautStatProfile.GroundCombatBehaviour.ATTACK_COOLDOWN_TICKS;
 
     private int attackCooldown;
 

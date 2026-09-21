@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
@@ -90,24 +92,24 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT =
             SynchedEntityData.defineId(Stegonaut.class, EntityDataSerializers.FLOAT);
-    public static final double BREED_PARTNER_RANGE = 20.0D;
-    public static final double BREED_DISTANCE_SQR = 2500.0D;
+    public static final double BREED_PARTNER_RANGE = StegonautStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = StegonautStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
-    private static final double BABY_MAX_HEALTH = 50.0D;
-    private static final double BABY_ARMOR = 5.0D;
-    private static final double GROUND_MOVEMENT_SPEED = 0.28D;
+    private static final double BABY_MAX_HEALTH = StegonautStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = StegonautStatProfile.Entity.BABY_ARMOR;
+    private static final double GROUND_MOVEMENT_SPEED = StegonautStatProfile.Entity.GROUND_MOVEMENT_SPEED;
     private static final float BABY_HITBOX_SCALE = 0.65F;
     private static final float MAX_UP_STEP = 1.25F;
-    private static final double RIDER_JUMP_STRENGTH = 0.75D;
-    private static final double RIDER_JUMP_FORWARD_BOOST = 0.7D;
+    private static final double RIDER_JUMP_STRENGTH = StegonautStatProfile.Entity.RIDER_JUMP_STRENGTH;
+    private static final double RIDER_JUMP_FORWARD_BOOST = StegonautStatProfile.Entity.RIDER_JUMP_FORWARD_BOOST;
     private static final int FLEX_CONTROL_LOCK_TICKS = 100;
-    private static final int FLEX_COOLDOWN_TICKS = 160;
+    private static final int FLEX_COOLDOWN_TICKS = StegonautStatProfile.Entity.FLEX_COOLDOWN_TICKS;
     private static final int STEGONAUT_CHEST_SLOTS = 15;
-    public static final double RIDER_WALK_SPEED = 0.1D;
-    public static final double RIDER_RUN_SPEED = 0.25D;
+    public static final double RIDER_WALK_SPEED = StegonautStatProfile.Entity.RIDER_WALK_SPEED;
+    public static final double RIDER_RUN_SPEED = StegonautStatProfile.Entity.RIDER_RUN_SPEED;
     private static final int MAX_PACK_SIZE = 4;
-    private static final double PACK_SEARCH_RADIUS = 48.0D;
+    private static final double PACK_SEARCH_RADIUS = StegonautStatProfile.Entity.PACK_SEARCH_RADIUS;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
              .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble1", ModSounds.STEGONAUT_GRUMBLE_1, 0.6f, 1.1f, 0.2f, false, false, true)
              .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.stegonaut.grumble2", ModSounds.STEGONAUT_GRUMBLE_2, 0.6f, 1.1f, 0.2f, false, false, true)
@@ -191,12 +193,12 @@ public class Stegonaut extends RideableGroundDragon implements PackMember<Stegon
 
     public static AttributeSupplier.Builder createAttributes() {
         return Mob.createMobAttributes()
-                .add(Attributes.MAX_HEALTH, 100.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .add(Attributes.MAX_HEALTH, StegonautStatProfile.Entity.ATTRIBUTE_MAX_HEALTH)
+                .add(Attributes.KNOCKBACK_RESISTANCE, StegonautStatProfile.Entity.ATTRIBUTE_KNOCKBACK_RESISTANCE)
                 .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
-                .add(Attributes.ATTACK_DAMAGE, 2.0D)
-                .add(Attributes.ARMOR, 15.0D)
-                .add(Attributes.FOLLOW_RANGE, 32.0D);
+                .add(Attributes.ATTACK_DAMAGE, StegonautStatProfile.Entity.ATTRIBUTE_ATTACK_DAMAGE)
+                .add(Attributes.ARMOR, StegonautStatProfile.Entity.ATTRIBUTE_ARMOR)
+                .add(Attributes.FOLLOW_RANGE, StegonautStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE);
     }
 
     @Override

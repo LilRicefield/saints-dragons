@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -21,9 +23,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class CindervaneBiteAbility extends DragonAbility<Cindervane> {
-    private static final float BASE_DAMAGE = 12.0f;
-    private static final double RANGE = 4;
-    private static final double AIR_RANGE_BONUS = 0.6;
+    private static final float BASE_DAMAGE = CindervaneStatProfile.BiteAbility.BASE_DAMAGE;
+    private static final double RANGE = CindervaneStatProfile.BiteAbility.RANGE;
+    private static final double AIR_RANGE_BONUS = CindervaneStatProfile.BiteAbility.AIR_RANGE_BONUS;
     private static final double HITBOX_FORWARD_OFFSET = 5.0;
     private static final int DEBUG_COLOR = 0xFF5533;
     private static final int DEBUG_TICKS = 20;

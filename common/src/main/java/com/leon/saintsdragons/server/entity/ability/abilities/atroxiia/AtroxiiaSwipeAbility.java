@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -20,8 +22,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class AtroxiiaSwipeAbility extends DragonAbility<Atroxiia> {
-    private static final float BASE_DAMAGE = 12.0F;
-    private static final double RANGE = 6.0D;
+    private static final float BASE_DAMAGE = AtroxiiaStatProfile.SwipeAbility.BASE_DAMAGE;
+    private static final double RANGE = AtroxiiaStatProfile.SwipeAbility.RANGE;
     private static final double SWEEP_HORIZONTAL = 4.5D;
     private static final double SWEEP_VERTICAL = 3.5D;
     private static final double ANGLE_DEG = 115.0D;

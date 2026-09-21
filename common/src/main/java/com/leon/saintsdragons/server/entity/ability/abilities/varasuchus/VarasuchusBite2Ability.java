@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -23,12 +25,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class VarasuchusBite2Ability extends DragonAbility<Varasuchus> {
     private static final int SOUND_TICKS = 24;
-    private static final float BASE_DAMAGE = 25.0f;
-    private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
-    private static final double RANGE = 6.0;
+    private static final float BASE_DAMAGE = VarasuchusStatProfile.Bite2Ability.BASE_DAMAGE;
+    private static final float DEFAULT_ATTACK_DAMAGE = VarasuchusStatProfile.Bite2Ability.DEFAULT_ATTACK_DAMAGE;
+    private static final double RANGE = VarasuchusStatProfile.Bite2Ability.RANGE;
     private static final double HITBOX_HALF_WIDTH = 2.4;
     private static final double HITBOX_HALF_HEIGHT = 1.55;
-    private static final double CLOSE_HIT_RANGE = 2.75;
+    private static final double CLOSE_HIT_RANGE = VarasuchusStatProfile.Bite2Ability.CLOSE_HIT_RANGE;
     private static final double ANGLE_DEGREES = 95.0;
 
 

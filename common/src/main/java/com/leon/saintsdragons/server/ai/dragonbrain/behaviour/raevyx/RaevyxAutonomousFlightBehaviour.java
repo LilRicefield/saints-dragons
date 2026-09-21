@@ -1,12 +1,14 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.AutonomousFlightBehaviour;
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
 public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Raevyx> {
-    private static final double CRUISE_SPEED = 2.6D;
-    private static final double LANDING_SPEED = 1.45D;
+    private static final double CRUISE_SPEED = RaevyxStatProfile.AutonomousFlightBehaviour.CRUISE_SPEED;
+    private static final double LANDING_SPEED = RaevyxStatProfile.AutonomousFlightBehaviour.LANDING_SPEED;
 
     public RaevyxAutonomousFlightBehaviour() {
         super(DragonFlightBehaviorProfile.raevyx(), CRUISE_SPEED, LANDING_SPEED, Raevyx.TAKEOFF_ANIMATION_TICKS);

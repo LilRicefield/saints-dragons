@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -286,17 +288,17 @@ public class IgnivorusInteractionHandler extends AbstractDragonInteractionHandle
 
     private double getTamingChance(ItemStack food, DragonAttributeConfig config) {
         if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
-            return config.extraDouble("taming_chance_hearty", 25.0D);
+            return config.extraDouble("taming_chance_hearty", IgnivorusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_HEARTY);
         }
         if (food.is(Items.BEEF)) {
-            return config.extraDouble("taming_chance_beef", 20.0D);
+            return config.extraDouble("taming_chance_beef", IgnivorusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BEEF);
         }
         if (food.is(Items.MUTTON)) {
-            return config.extraDouble("taming_chance_mutton", 14.2857D);
+            return config.extraDouble("taming_chance_mutton", IgnivorusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_MUTTON);
         }
         if (food.is(Items.PORKCHOP)) {
-            return config.extraDouble("taming_chance_porkchop", 14.2857D);
+            return config.extraDouble("taming_chance_porkchop", IgnivorusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_PORKCHOP);
         }
-        return config.extraDouble("taming_chance_base", 14.2857D);
+        return config.extraDouble("taming_chance_base", IgnivorusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BASE);
     }
 }

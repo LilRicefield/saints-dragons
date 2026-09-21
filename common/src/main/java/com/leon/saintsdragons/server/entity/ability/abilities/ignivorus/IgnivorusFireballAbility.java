@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
@@ -28,9 +30,9 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
             new AbilitySectionInfinite(ACTIVE)
     };
 
-    private static final int COOLDOWN_TICKS = 20;
+    private static final int COOLDOWN_TICKS = IgnivorusStatProfile.FireballAbility.COOLDOWN_TICKS;
     private static final int MAGMA_LIFETIME_TICKS = 200;
-    private static final double FIREBALL_SPEED = 5.0D;
+    private static final double FIREBALL_SPEED = IgnivorusStatProfile.FireballAbility.FIREBALL_SPEED;
     private static final int FIRE_RELEASE_TICKS = 15;
     private static final int AI_ALIGNMENT_TICKS = 30;
     private static final DragonCombatAim.Profile AIR_AIM = new DragonCombatAim.Profile(70, 55, 3, 0);
@@ -39,10 +41,10 @@ public class IgnivorusFireballAbility extends DragonAbility<Ignivorus> {
     private static final int MAX_CHARGE_TICKS = 95;
     private static final int MIN_CHARGE_DISPLAY_TICKS = 3;
     private static final float BASE_SCALE = 4.0F;
-    private static final double BASE_IMPACT_RADIUS = 8.0D;
-    private static final float DEFAULT_IMPACT_DAMAGE = 70.0F;
-    private static final float LEVEL_2_MULTIPLIER = 1.5F;
-    private static final float LEVEL_3_MULTIPLIER = 2.0F;
+    private static final double BASE_IMPACT_RADIUS = IgnivorusStatProfile.FireballAbility.BASE_IMPACT_RADIUS;
+    private static final float DEFAULT_IMPACT_DAMAGE = IgnivorusStatProfile.FireballAbility.DEFAULT_IMPACT_DAMAGE;
+    private static final float LEVEL_2_MULTIPLIER = IgnivorusStatProfile.FireballAbility.LEVEL_2_MULTIPLIER;
+    private static final float LEVEL_3_MULTIPLIER = IgnivorusStatProfile.FireballAbility.LEVEL_3_MULTIPLIER;
     private int chargeTicks = 0;
     private int lastChargeAnimLevel = 0;
     private boolean hasFired = false;

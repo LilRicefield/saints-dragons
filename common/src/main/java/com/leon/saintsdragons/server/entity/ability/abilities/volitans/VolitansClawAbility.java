@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -19,8 +21,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class VolitansClawAbility extends DragonAbility<Volitans> {
-    private static final float BASE_DAMAGE = 11.0f;
-    private static final double RANGE = 3.5;
+    private static final float BASE_DAMAGE = VolitansStatProfile.ClawAbility.BASE_DAMAGE;
+    private static final double RANGE = VolitansStatProfile.ClawAbility.RANGE;
     private static final double HITBOX_FORWARD_OFFSET = 2.0;
     private static final int DEBUG_COLOR = 0x66FFAA;
     private static final int DEBUG_TICKS = 20;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -16,10 +18,10 @@ import java.util.UUID;
 import java.util.WeakHashMap;
 
 public final class NulljawPackCombatCoordinator {
-    private static final double ORBIT_RADIUS = 8.5D;
-    private static final double STAGE_RADIUS = 10.0D;
+    private static final double ORBIT_RADIUS = NulljawStatProfile.PackCombatCoordinator.ORBIT_RADIUS;
+    private static final double STAGE_RADIUS = NulljawStatProfile.PackCombatCoordinator.STAGE_RADIUS;
     private static final double EGRESS_DISTANCE = 11.0D;
-    private static final double ORBIT_ANGULAR_SPEED = 0.035D;
+    private static final double ORBIT_ANGULAR_SPEED = NulljawStatProfile.PackCombatCoordinator.ORBIT_ANGULAR_SPEED;
     private static final double STAGE_ARRIVAL_DISTANCE_SQR = 9.0D;
     private static final double EGRESS_ARRIVAL_DISTANCE_SQR = 12.25D;
     private static final double TARGET_PREDICTION_TICKS = 2.0D;

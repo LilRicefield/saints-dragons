@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.controller.GroundDragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
@@ -13,13 +15,13 @@ import org.jetbrains.annotations.Nullable;
 
 public record AtroxiiaRiderController(Atroxiia dragon) {
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final double SWIM_SPEED = 0.30D;
-    private static final double SPRINT_SWIM_SPEED = 0.42D;
-    private static final double SWIM_RESPONSE = 0.28D;
-    private static final double SWIM_ASCEND_THRUST = 0.10D;
-    private static final double SWIM_DESCEND_THRUST = 0.12D;
-    private static final double SWIM_VERTICAL_LIMIT = 0.36D;
-    private static final double SWIM_PITCH_VERTICAL_SCALE = 0.65D;
+    private static final double SWIM_SPEED = AtroxiiaStatProfile.RiderController.SWIM_SPEED;
+    private static final double SPRINT_SWIM_SPEED = AtroxiiaStatProfile.RiderController.SPRINT_SWIM_SPEED;
+    private static final double SWIM_RESPONSE = AtroxiiaStatProfile.RiderController.SWIM_RESPONSE;
+    private static final double SWIM_ASCEND_THRUST = AtroxiiaStatProfile.RiderController.SWIM_ASCEND_THRUST;
+    private static final double SWIM_DESCEND_THRUST = AtroxiiaStatProfile.RiderController.SWIM_DESCEND_THRUST;
+    private static final double SWIM_VERTICAL_LIMIT = AtroxiiaStatProfile.RiderController.SWIM_VERTICAL_LIMIT;
+    private static final double SWIM_PITCH_VERTICAL_SCALE = AtroxiiaStatProfile.RiderController.SWIM_PITCH_VERTICAL_SCALE;
 
     @Nullable
     public Player getRidingPlayer() {

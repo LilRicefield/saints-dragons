@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -16,12 +18,12 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class NulljawFloatWanderBehaviour extends DragonBehaviour<Nulljaw> {
-    private static final int HORIZONTAL_RANGE = 16;
-    private static final int VERTICAL_RANGE = 8;
+    private static final int HORIZONTAL_RANGE = NulljawStatProfile.FloatWanderBehaviour.HORIZONTAL_RANGE;
+    private static final int VERTICAL_RANGE = NulljawStatProfile.FloatWanderBehaviour.VERTICAL_RANGE;
     private static final int TARGET_ATTEMPTS = 8;
     private static final int MIN_REST_TICKS = 20;
     private static final int RANDOM_REST_TICKS = 41;
-    private static final double SPEED = 1.0D;
+    private static final double SPEED = NulljawStatProfile.FloatWanderBehaviour.SPEED;
 
     @Nullable
     private Vec3 target;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -23,9 +25,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class IgnivorusWingSwipeAbility extends DragonAbility<Ignivorus> {
 
-    private static final float DEFAULT_DAMAGE = 15.0f;
-    private static final double AOE_RADIUS = 22.0;
-    private static final double KNOCKBACK_STRENGTH = 4.0;
+    private static final float DEFAULT_DAMAGE = IgnivorusStatProfile.WingSwipeAbility.DEFAULT_DAMAGE;
+    private static final double AOE_RADIUS = IgnivorusStatProfile.WingSwipeAbility.AOE_RADIUS;
+    private static final double KNOCKBACK_STRENGTH = IgnivorusStatProfile.WingSwipeAbility.KNOCKBACK_STRENGTH;
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 12),
             new AbilitySectionDuration(ACTIVE, 2),

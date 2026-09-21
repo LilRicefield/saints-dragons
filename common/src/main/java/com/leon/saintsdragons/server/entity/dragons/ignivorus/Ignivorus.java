@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.server.entity.part.IgnivorusCollisionState;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
@@ -145,7 +147,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return SCENT_ASSESSMENT_ANIMATION_TICKS;
     }
 
-    public static final double BASE_FOLLOW_RANGE = 128.0D;
+    public static final double BASE_FOLLOW_RANGE = IgnivorusStatProfile.Entity.BASE_FOLLOW_RANGE;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
@@ -236,60 +238,60 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             SynchedEntityData.defineId(Ignivorus.class, EntityDataSerializers.BOOLEAN);
 
     private static final double MODEL_SCALE = 1.0D;
-    private static final float FIRE_BREATH_ENERGY_REGEN = 0.0025f;
+    private static final float FIRE_BREATH_ENERGY_REGEN = IgnivorusStatProfile.Entity.FIRE_BREATH_ENERGY_REGEN;
     private static final float FIRE_BREATH_DEPLETED_THRESHOLD = 0.01f;
     private static final float FIRE_BREATH_REARM_THRESHOLD = 0.20f;
-    private static final float BARREL_ROLL_INPUT_SPEED = 0.235f;
-    private static final int RIDER_LANDING_BLEND_DURATION = 5;
-    public static final double BREED_PARTNER_RANGE = 20.0D;
-    public static final double BREED_DISTANCE_SQR = 2500.0D;
-    public static final double RIDER_WALK_SPEED = 0.225D;
-    public static final double RIDER_RUN_SPEED = 0.4D;
-    public static final double RIDER_BULLDOZE_SPEED = 0.55D;
+    private static final float BARREL_ROLL_INPUT_SPEED = IgnivorusStatProfile.Entity.BARREL_ROLL_INPUT_SPEED;
+    private static final int RIDER_LANDING_BLEND_DURATION = IgnivorusStatProfile.Entity.RIDER_LANDING_BLEND_DURATION;
+    public static final double BREED_PARTNER_RANGE = IgnivorusStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = IgnivorusStatProfile.Entity.BREED_DISTANCE_SQR;
+    public static final double RIDER_WALK_SPEED = IgnivorusStatProfile.Entity.RIDER_WALK_SPEED;
+    public static final double RIDER_RUN_SPEED = IgnivorusStatProfile.Entity.RIDER_RUN_SPEED;
+    public static final double RIDER_BULLDOZE_SPEED = IgnivorusStatProfile.Entity.RIDER_BULLDOZE_SPEED;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
-    public static final double RIDER_PHASE2_WALK_SPEED = 0.15D;
-    public static final double RIDER_PHASE2_RUN_SPEED = 0.32D;
+    public static final double RIDER_PHASE2_WALK_SPEED = IgnivorusStatProfile.Entity.RIDER_PHASE2_WALK_SPEED;
+    public static final double RIDER_PHASE2_RUN_SPEED = IgnivorusStatProfile.Entity.RIDER_PHASE2_RUN_SPEED;
     private static final float DEFAULT_MAX_UP_STEP = 1.5F;
     private static final float BULLDOZE_MAX_UP_STEP = 0;
-    private static final double BULLDOZE_TUNNEL_REACH = 2.5D;
+    private static final double BULLDOZE_TUNNEL_REACH = IgnivorusStatProfile.Entity.BULLDOZE_TUNNEL_REACH;
     private static final double BULLDOZE_HEAD_FORWARD_FALLBACK = 0.5D;
     private static final double BULLDOZE_TUNNEL_HALF_WIDTH = 7.0D;
     private static final int BULLDOZE_TUNNEL_HEIGHT = 7;
     private static final int BULLDOZE_TUNNEL_MAX_BREAKS_PER_TICK = 60;
-    private static final double BULLDOZE_BODY_COLLISION_REACH = 8.0D;
-    private static final double BULLDOZE_DAMAGE_FORWARD_REACH = 4.5D;
-    private static final double BULLDOZE_DAMAGE_HALF_WIDTH = 7.0D;
-    private static final double BULLDOZE_DAMAGE_HALF_HEIGHT = 2.5D;
+    private static final double BULLDOZE_BODY_COLLISION_REACH = IgnivorusStatProfile.Entity.BULLDOZE_BODY_COLLISION_REACH;
+    private static final double BULLDOZE_DAMAGE_FORWARD_REACH = IgnivorusStatProfile.Entity.BULLDOZE_DAMAGE_FORWARD_REACH;
+    private static final double BULLDOZE_DAMAGE_HALF_WIDTH = IgnivorusStatProfile.Entity.BULLDOZE_DAMAGE_HALF_WIDTH;
+    private static final double BULLDOZE_DAMAGE_HALF_HEIGHT = IgnivorusStatProfile.Entity.BULLDOZE_DAMAGE_HALF_HEIGHT;
     private static final int BULLDOZE_ENTER_TICKS = 25;
     private static final float MAX_FIRE_YAW_DEG = 70.0F;
     private static final float MAX_FIRE_PITCH_DEG = 55.0F;
-    private static final double LEAP_ARC_FORWARD_DISTANCE = 42.0D;
-    private static final double LEAP_ARC_HEIGHT = 15.0D;
-    private static final int LEAP_ARC_ASCENT_TICKS = 20;
-    private static final int LEAP_ARC_DESCENT_TICKS = 10;
+    private static final double LEAP_ARC_FORWARD_DISTANCE = IgnivorusStatProfile.Entity.LEAP_ARC_FORWARD_DISTANCE;
+    private static final double LEAP_ARC_HEIGHT = IgnivorusStatProfile.Entity.LEAP_ARC_HEIGHT;
+    private static final int LEAP_ARC_ASCENT_TICKS = IgnivorusStatProfile.Entity.LEAP_ARC_ASCENT_TICKS;
+    private static final int LEAP_ARC_DESCENT_TICKS = IgnivorusStatProfile.Entity.LEAP_ARC_DESCENT_TICKS;
     private static final int LEAP_ARC_DURATION_TICKS = LEAP_ARC_ASCENT_TICKS + LEAP_ARC_DESCENT_TICKS;
-    private static final float LEAP_SLAM_DAMAGE = 50.0F;
-    private static final float DEFAULT_BULLDOZE_DAMAGE = 10.0F;
-    private static final double LEAP_SLAM_RADIUS = 20.0D;
-    private static final double LEAP_KNOCKBACK = 5.5D;
-    private static final double LEAP_LIFT = 0.8D;
-    private static final double LEAP_IMPACT_TRIGGER_HEIGHT = 7.0D;
-    private static final int LEAP_GROUNDED_FAILSAFE_TICKS = 6;
-    private static final int LEAP_COOLDOWN_TICKS = 140;
-    private static final int LEAP_WINDUP_TICKS = 20;
-    private static final int LEAP_STATE_NONE = 0;
-    private static final int LEAP_STATE_TAKEOFF = 1;
-    private static final int LEAP_IMPACT_RECOVERY_DURATION = 18;
+    private static final float LEAP_SLAM_DAMAGE = IgnivorusStatProfile.Entity.LEAP_SLAM_DAMAGE;
+    private static final float DEFAULT_BULLDOZE_DAMAGE = IgnivorusStatProfile.Entity.DEFAULT_BULLDOZE_DAMAGE;
+    private static final double LEAP_SLAM_RADIUS = IgnivorusStatProfile.Entity.LEAP_SLAM_RADIUS;
+    private static final double LEAP_KNOCKBACK = IgnivorusStatProfile.Entity.LEAP_KNOCKBACK;
+    private static final double LEAP_LIFT = IgnivorusStatProfile.Entity.LEAP_LIFT;
+    private static final double LEAP_IMPACT_TRIGGER_HEIGHT = IgnivorusStatProfile.Entity.LEAP_IMPACT_TRIGGER_HEIGHT;
+    private static final int LEAP_GROUNDED_FAILSAFE_TICKS = IgnivorusStatProfile.Entity.LEAP_GROUNDED_FAILSAFE_TICKS;
+    private static final int LEAP_COOLDOWN_TICKS = IgnivorusStatProfile.Entity.LEAP_COOLDOWN_TICKS;
+    private static final int LEAP_WINDUP_TICKS = IgnivorusStatProfile.Entity.LEAP_WINDUP_TICKS;
+    private static final int LEAP_STATE_NONE = IgnivorusStatProfile.Entity.LEAP_STATE_NONE;
+    private static final int LEAP_STATE_TAKEOFF = IgnivorusStatProfile.Entity.LEAP_STATE_TAKEOFF;
+    private static final int LEAP_IMPACT_RECOVERY_DURATION = IgnivorusStatProfile.Entity.LEAP_IMPACT_RECOVERY_DURATION;
     private static final int FLEX_CONTROL_LOCK_TICKS = 170;
-    private static final int FLEX_COOLDOWN_TICKS = 200;
+    private static final int FLEX_COOLDOWN_TICKS = IgnivorusStatProfile.Entity.FLEX_COOLDOWN_TICKS;
     private static final float SHAKE_DECAY_PER_TICK = 0.025F;
-    private static final double BABY_MAX_HEALTH = 90.0D;
-    private static final double BABY_ARMOR = 0.0D;
-    private static final double GROUND_MOVEMENT_SPEED = 0.30D;
-    public static final double ROOST_SLEEP_RADIUS = 6.0D;
-    public static final double ROOST_TERRITORY_RADIUS = 64.0D;
-    public static final double ROOST_TERRITORY_RETURN_RADIUS = 48.0D;
-    public static final double ROOST_WANDER_RADIUS = 56.0D;
+    private static final double BABY_MAX_HEALTH = IgnivorusStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = IgnivorusStatProfile.Entity.BABY_ARMOR;
+    private static final double GROUND_MOVEMENT_SPEED = IgnivorusStatProfile.Entity.GROUND_MOVEMENT_SPEED;
+    public static final double ROOST_SLEEP_RADIUS = IgnivorusStatProfile.Entity.ROOST_SLEEP_RADIUS;
+    public static final double ROOST_TERRITORY_RADIUS = IgnivorusStatProfile.Entity.ROOST_TERRITORY_RADIUS;
+    public static final double ROOST_TERRITORY_RETURN_RADIUS = IgnivorusStatProfile.Entity.ROOST_TERRITORY_RETURN_RADIUS;
+    public static final double ROOST_WANDER_RADIUS = IgnivorusStatProfile.Entity.ROOST_WANDER_RADIUS;
     private static final int ROOST_SLEEP_SETTLE_TICKS = 60;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
@@ -560,7 +562,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
     public static AttributeSupplier.Builder createAttributes() {
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
-        double attackDamage = config.abilityDamage("bite", 15.0D);
+        double attackDamage = config.abilityDamage("bite", IgnivorusStatProfile.Entity.FALLBACK_BITE);
         return createMobAttributes()
             .add(Attributes.MAX_HEALTH, config.maxHealth())
             .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
@@ -568,7 +570,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             .add(Attributes.ATTACK_DAMAGE, attackDamage)
             .add(Attributes.FOLLOW_RANGE, BASE_FOLLOW_RANGE)
             .add(Attributes.ARMOR, config.armor())
-            .add(Attributes.KNOCKBACK_RESISTANCE, 2.0D);
+            .add(Attributes.KNOCKBACK_RESISTANCE, IgnivorusStatProfile.Entity.ATTRIBUTE_KNOCKBACK_RESISTANCE);
     }
 
 
@@ -860,7 +862,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         return getFireballChargeLevel() > 0;
     }
 
-    private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
+    private static final float TAMING_HEALTH_RATIO = IgnivorusStatProfile.Entity.TAMING_HEALTH_RATIO;
     public boolean isTamingStunned() {
         return this.entityData.get(DATA_TAMING_STUNNED);
     }
@@ -1982,7 +1984,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.IGNIVORUS_ID);
         double healthFraction = Mth.clamp(
-                config.extraDouble("ultimate_trigger_health_fraction", 0.6D),
+                config.extraDouble("ultimate_trigger_health_fraction", IgnivorusStatProfile.Entity.FALLBACK_ULTIMATE_TRIGGER_HEALTH_FRACTION),
                 0.0D,
                 1.0D
         );
@@ -2266,7 +2268,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
             return;
         }
         DragonAttributeConfig config = getConfiguredDragonAttributes();
-        double attackDamage = config.abilityDamage("bite", 15.0D);
+        double attackDamage = config.abilityDamage("bite", IgnivorusStatProfile.Entity.FALLBACK_BITE);
 
         applyConfiguredFlyingHealthAndArmor(config, BABY_MAX_HEALTH, BABY_ARMOR);
         setAttributeBase(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED);

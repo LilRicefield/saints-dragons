@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -21,10 +23,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class IgnivorusBiteAbility extends DragonAbility<Ignivorus> {
-    private static final float BASE_DAMAGE = 50.0f;
-    private static final float ARMOR_PENETRATION = 5.0f;
-    private static final double RANGE = 6.0;
-    private static final double AIR_RANGE_BONUS = 2.0;
+    private static final float BASE_DAMAGE = IgnivorusStatProfile.BiteAbility.BASE_DAMAGE;
+    private static final float ARMOR_PENETRATION = IgnivorusStatProfile.BiteAbility.ARMOR_PENETRATION;
+    private static final double RANGE = IgnivorusStatProfile.BiteAbility.RANGE;
+    private static final double AIR_RANGE_BONUS = IgnivorusStatProfile.BiteAbility.AIR_RANGE_BONUS;
     private static final double HITBOX_FORWARD_OFFSET = 5.0;
     private static final int DEBUG_COLOR = 0xFF6A22;
     private static final int DEBUG_TICKS = 20;

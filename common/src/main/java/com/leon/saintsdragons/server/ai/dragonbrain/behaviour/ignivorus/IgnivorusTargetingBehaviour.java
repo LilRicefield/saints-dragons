@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -22,7 +24,7 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public final class IgnivorusTargetingBehaviour extends DragonTargetingBehaviour<Ignivorus> {
-    private static final double BABY_PROTECTION_RANGE = 16.0D;
+    private static final double BABY_PROTECTION_RANGE = IgnivorusStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
 
     private int lastOwnerHurtTimestamp;
     private int lastOwnerAttackTimestamp;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -32,8 +34,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 
 public class IgnivorusStompAbility extends DragonAbility<Ignivorus> {
-    private static final float DEFAULT_DAMAGE = 18.0f;
-    private static final double AOE_RADIUS = 18.0;
+    private static final float DEFAULT_DAMAGE = IgnivorusStatProfile.StompAbility.DEFAULT_DAMAGE;
+    private static final double AOE_RADIUS = IgnivorusStatProfile.StompAbility.AOE_RADIUS;
     private static final double UPWARD_FORCE = 0.75;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[]{

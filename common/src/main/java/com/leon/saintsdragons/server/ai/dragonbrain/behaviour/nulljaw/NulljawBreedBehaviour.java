@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
@@ -16,7 +18,7 @@ import net.minecraft.world.entity.ExperienceOrb;
 import net.minecraft.world.level.GameRules;
 
 public final class NulljawBreedBehaviour extends DragonBreedBehaviour<Nulljaw> {
-    private static final double BREED_FLIGHT_SPEED = 0.22D;
+    private static final double BREED_FLIGHT_SPEED = NulljawStatProfile.BreedBehaviour.BREED_FLIGHT_SPEED;
 
     public NulljawBreedBehaviour(double speedModifier, double partnerRange, double breedDistanceSqr) {
         super(speedModifier, Nulljaw.class, partnerRange, breedDistanceSqr);

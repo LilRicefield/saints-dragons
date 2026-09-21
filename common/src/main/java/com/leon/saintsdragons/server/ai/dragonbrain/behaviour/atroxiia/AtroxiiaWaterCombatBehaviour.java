@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -11,7 +13,7 @@ import net.minecraft.world.entity.ai.memory.MemoryStatus;
 import java.util.Map;
 
 public final class AtroxiiaWaterCombatBehaviour extends DragonBehaviour<Atroxiia> {
-    private static final double BITE_RANGE = 5.0D;
+    private static final double BITE_RANGE = AtroxiiaStatProfile.WaterCombatBehaviour.BITE_RANGE;
     private static final int ATTACK_CADENCE_TICKS = 24;
 
     public AtroxiiaWaterCombatBehaviour() {

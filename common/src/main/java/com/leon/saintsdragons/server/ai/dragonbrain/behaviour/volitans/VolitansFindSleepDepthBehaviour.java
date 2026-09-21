@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -14,9 +16,9 @@ import java.util.Map;
 
 public final class VolitansFindSleepDepthBehaviour extends DragonBehaviour<Volitans> {
     private static final int TARGET_ATTEMPTS = 24;
-    private static final int HORIZONTAL_RADIUS = 14;
+    private static final int HORIZONTAL_RADIUS = VolitansStatProfile.FindSleepDepthBehaviour.HORIZONTAL_RADIUS;
     private static final int DOWN_SCAN_BLOCKS = 24;
-    private static final int COOLDOWN_TICKS = 80;
+    private static final int COOLDOWN_TICKS = VolitansStatProfile.FindSleepDepthBehaviour.COOLDOWN_TICKS;
     private static final double ARRIVAL_DISTANCE_SQR = 9.0D;
     private static final int FLOOR_CLEARANCE_BLOCKS = 2;
 

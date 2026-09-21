@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
@@ -14,16 +16,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public record RaevyxRiderController(Raevyx wyvern) {
-    private static final double BASE_FLIGHT_SPEED_MULT = 4.0;
-    private static final double SPRINT_FLIGHT_SPEED_MULT = 6.0;
-    private static final double DRAG_NO_INPUT = 0.5;
+    private static final double BASE_FLIGHT_SPEED_MULT = RaevyxStatProfile.RiderController.BASE_FLIGHT_SPEED_MULT;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = RaevyxStatProfile.RiderController.SPRINT_FLIGHT_SPEED_MULT;
+    private static final double DRAG_NO_INPUT = RaevyxStatProfile.RiderController.DRAG_NO_INPUT;
     private static final double STRAFE_POWER = 0.5;
-    private static final double ASCEND_THRUST = 1.2D;
-    private static final double DESCEND_THRUST = 1.0D;
-    private static final double TERMINAL_VELOCITY = 1.5D;
-    private static final double FLIGHT_ACCELERATION = 0.45D;
-    private static final double DIVE_SPEED_MULTIPLIER = 3.0D;
-    private static final double DIVE_ACCELERATION = 0.35D;
+    private static final double ASCEND_THRUST = RaevyxStatProfile.RiderController.ASCEND_THRUST;
+    private static final double DESCEND_THRUST = RaevyxStatProfile.RiderController.DESCEND_THRUST;
+    private static final double TERMINAL_VELOCITY = RaevyxStatProfile.RiderController.TERMINAL_VELOCITY;
+    private static final double FLIGHT_ACCELERATION = RaevyxStatProfile.RiderController.FLIGHT_ACCELERATION;
+    private static final double DIVE_SPEED_MULTIPLIER = RaevyxStatProfile.RiderController.DIVE_SPEED_MULTIPLIER;
+    private static final double DIVE_ACCELERATION = RaevyxStatProfile.RiderController.DIVE_ACCELERATION;
 
     @Nullable
     public Player getRidingPlayer() {

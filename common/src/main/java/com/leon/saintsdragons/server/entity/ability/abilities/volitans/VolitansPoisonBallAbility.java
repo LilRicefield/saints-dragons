@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -23,7 +25,7 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
             new AbilitySectionInfinite(ACTIVE)
     };
 
-    private static final int COOLDOWN_TICKS = 20;
+    private static final int COOLDOWN_TICKS = VolitansStatProfile.PoisonBallAbility.COOLDOWN_TICKS;
     private static final int READY_TICKS = 13; // 0.625s
     private static final int SHOOT_RELEASE_TICKS = 8; // 0.4167s
     private static final int RELEASE_TAKEOFF_BLOCK_TICKS = 16;
@@ -31,11 +33,11 @@ public class VolitansPoisonBallAbility extends DragonAbility<Volitans> {
     private static final int SHOOT_SOUND_TICKS = 52; // 2.60s
 
     private static final int PROJECTILE_LIFETIME_TICKS = 200;
-    private static final double PROJECTILE_SPEED = 3.5D;
+    private static final double PROJECTILE_SPEED = VolitansStatProfile.PoisonBallAbility.PROJECTILE_SPEED;
     private static final float PROJECTILE_SCALE = 2.2F;
-    private static final double IMPACT_RADIUS = 5.0D;
-    private static final float IMPACT_DAMAGE = 12.0F;
-    private static final int POISON_DURATION_TICKS = 120;
+    private static final double IMPACT_RADIUS = VolitansStatProfile.PoisonBallAbility.IMPACT_RADIUS;
+    private static final float IMPACT_DAMAGE = VolitansStatProfile.PoisonBallAbility.IMPACT_DAMAGE;
+    private static final int POISON_DURATION_TICKS = VolitansStatProfile.PoisonBallAbility.POISON_DURATION_TICKS;
     private static final int POISON_AMPLIFIER = 0;
     private static final double TARGET_LEAD_FACTOR = 0.6D;
 

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -107,8 +109,8 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                                         (dragon, target) -> combat.isMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(
-                                        (dragon, target) -> 0.30D,
-                                        8.0F,
+                                        (dragon, target) -> VarasuchusStatProfile.Brain.WATER_CHASE_SPEED,
+                                        VarasuchusStatProfile.Brain.WATER_CHASE_TURN_DEGREES,
                                         (dragon, target) -> combat.isMovementLocked()
                                 ),
                                 combat
@@ -124,7 +126,7 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
                                         new DragonBreedBehaviour<>(
-                                                1.0D,
+                                                VarasuchusStatProfile.Brain.BREED_SPEED,
                                                 Varasuchus.class,
                                                 Varasuchus.BREED_PARTNER_RANGE,
                                                 Varasuchus.BREED_DISTANCE_SQR
@@ -133,31 +135,31 @@ public class VarasuchusBrain implements DragonBrainOwner<Varasuchus> {
                                                 Varasuchus.ROOST_SLEEP_RADIUS,
                                                 Varasuchus.ROOST_TERRITORY_RADIUS,
                                                 Varasuchus.ROOST_TERRITORY_RETURN_RADIUS,
-                                                1.0F,
-                                                0.25D,
-                                                8.0F
+                                                VarasuchusStatProfile.Brain.ROOST_RETURN_GROUND_SPEED,
+                                                VarasuchusStatProfile.Brain.ROOST_RETURN_SWIM_SPEED,
+                                                VarasuchusStatProfile.Brain.ROOST_RETURN_SWIM_TURN_DEGREES
                                         ),
                                         new DragonWaterEscapeBehaviour<>(
-                                                8.0F,
-                                                0.30D,
+                                                VarasuchusStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES,
+                                                VarasuchusStatProfile.Brain.WATER_ESCAPE_SPEED,
                                                 Varasuchus::shouldLeaveWater,
                                                 VarasuchusBrain::canContinueLeavingWater
                                         ),
-                                        new DragonFindWaterBehaviour<>(1.0D),
+                                        new DragonFindWaterBehaviour<>(VarasuchusStatProfile.Brain.FIND_WATER_SPEED),
                                         new DragonGroundFollowOwnerBehaviour<>(
                                                 DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
                                         new DragonSwimFollowBehaviour<>(
-                                                Varasuchus.class, 8.0F, 0.25D, 20.0D, 16.0D),
+                                                Varasuchus.class, VarasuchusStatProfile.Brain.SWIM_FOLLOW_TURN_DEGREES, VarasuchusStatProfile.Brain.SWIM_FOLLOW_SPEED, 20.0D, 16.0D),
                                         new DragonSwimWanderBehaviour<>(
-                                                6.0F,
-                                                0.20D,
+                                                VarasuchusStatProfile.Brain.SWIM_WANDER_TURN_DEGREES,
+                                                VarasuchusStatProfile.Brain.SWIM_WANDER_SPEED,
                                                 30,
                                                 dragon -> !dragon.shouldSuspendRoostWandering(),
                                                 Varasuchus::isWithinRoostTerritory
                                         ),
-                                        new DragonFollowParentBehaviour<>(Varasuchus.class, 1.1D),
+                                        new DragonFollowParentBehaviour<>(Varasuchus.class, VarasuchusStatProfile.Brain.FOLLOW_PARENT_SPEED),
                                         new DragonGroundWanderBehaviour<>(
-                                                0.85D,
+                                                VarasuchusStatProfile.Brain.GROUND_WANDER_SPEED,
                                                 100,
                                                 10,
                                                 dragon -> !dragon.isInWaterOrBubble()

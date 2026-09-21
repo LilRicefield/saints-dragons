@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -43,27 +45,27 @@ public class VolitansBurrowAbility extends DragonAbility<Volitans> {
     private static final int EXIT_BURROW_SOUND_TICKS = 100;
     private static final int GROUND_CHUNK_INTERVAL_TICKS = 6;
     private static final double GROUND_CHUNK_MIN_DISTANCE_SQR = 2.25D;
-    private static final double BURROW_MOVEMENT_PARTICLE_SPEED_SQR = 0.015D;
-    private static final int COOLDOWN_TICKS = 50;
-    private static final float EXIT_DAMAGE = 30.0F;
-    private static final double EXIT_RADIUS = 12.0D;
+    private static final double BURROW_MOVEMENT_PARTICLE_SPEED_SQR = VolitansStatProfile.BurrowAbility.BURROW_MOVEMENT_PARTICLE_SPEED_SQR;
+    private static final int COOLDOWN_TICKS = VolitansStatProfile.BurrowAbility.COOLDOWN_TICKS;
+    private static final float EXIT_DAMAGE = VolitansStatProfile.BurrowAbility.EXIT_DAMAGE;
+    private static final double EXIT_RADIUS = VolitansStatProfile.BurrowAbility.EXIT_RADIUS;
     private static final double EXIT_UPWARD_KNOCK = 1.0D;
     private static final double EXIT_DUST_COLUMN_HEIGHT = 6.0D;
     private static final int EXIT_DUST_COLUMN_STEPS = 10;
     private static final int EXIT_DUST_COLUMN_PARTICLES_PER_STEP = 5;
-    private static final double EXIT_DUST_COLUMN_SPEED = 0.32D;
+    private static final double EXIT_DUST_COLUMN_SPEED = VolitansStatProfile.BurrowAbility.EXIT_DUST_COLUMN_SPEED;
     private static final int EXIT_LATE_DUST_COUNT = 42;
-    private static final double EXIT_LATE_DUST_RADIUS = 4.2D;
-    private static final double EXIT_LATE_DUST_SPEED = 0.18D;
+    private static final double EXIT_LATE_DUST_RADIUS = VolitansStatProfile.BurrowAbility.EXIT_LATE_DUST_RADIUS;
+    private static final double EXIT_LATE_DUST_SPEED = VolitansStatProfile.BurrowAbility.EXIT_LATE_DUST_SPEED;
     private static final int EXIT_BLOCK_PARTICLE_COUNT = 120;
     private static final int EXIT_BLOCK_TRAIL_PARTICLE_COUNT = 96;
     private static final int EXIT_FALLING_BLOCK_COUNT = 16;
     private static final int EXIT_FALLING_BLOCK_LIFETIME = 48;
-    private static final double EXIT_FALLING_BLOCK_RADIUS = 3.8D;
-    private static final double EXIT_FALLING_BLOCK_SPEED_MIN = 0.32D;
-    private static final double EXIT_FALLING_BLOCK_SPEED_MAX = 0.62D;
-    private static final double EXIT_FALLING_BLOCK_UP_SPEED_MIN = 0.32D;
-    private static final double EXIT_FALLING_BLOCK_UP_SPEED_MAX = 0.58D;
+    private static final double EXIT_FALLING_BLOCK_RADIUS = VolitansStatProfile.BurrowAbility.EXIT_FALLING_BLOCK_RADIUS;
+    private static final double EXIT_FALLING_BLOCK_SPEED_MIN = VolitansStatProfile.BurrowAbility.EXIT_FALLING_BLOCK_SPEED_MIN;
+    private static final double EXIT_FALLING_BLOCK_SPEED_MAX = VolitansStatProfile.BurrowAbility.EXIT_FALLING_BLOCK_SPEED_MAX;
+    private static final double EXIT_FALLING_BLOCK_UP_SPEED_MIN = VolitansStatProfile.BurrowAbility.EXIT_FALLING_BLOCK_UP_SPEED_MIN;
+    private static final double EXIT_FALLING_BLOCK_UP_SPEED_MAX = VolitansStatProfile.BurrowAbility.EXIT_FALLING_BLOCK_UP_SPEED_MAX;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),

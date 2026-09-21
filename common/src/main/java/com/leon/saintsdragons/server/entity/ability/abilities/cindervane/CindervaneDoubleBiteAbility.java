@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -17,7 +19,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class CindervaneDoubleBiteAbility extends DragonAbility<Cindervane> {
-    private static final float BASE_DAMAGE_PER_BITE = 15.0F;
+    private static final float BASE_DAMAGE_PER_BITE = CindervaneStatProfile.DoubleBiteAbility.BASE_DAMAGE_PER_BITE;
     private static final int[] DAMAGE_OUTPUT_TICKS = {4, 11};
     private static final int ANIMATION_TICKS = 16;
     private static final int SOUND_TICKS = 20;

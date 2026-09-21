@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.LivingEntity;
@@ -8,17 +10,17 @@ import net.minecraft.world.phys.Vec3;
 import java.util.List;
 
 public final class CindervanePackFlightCoordinator {
-    private static final double NEIGHBOR_RADIUS = 42.0D;
-    private static final double SEPARATION_RANGE = 30.0D;
+    private static final double NEIGHBOR_RADIUS = CindervaneStatProfile.PackFlightCoordinator.NEIGHBOR_RADIUS;
+    private static final double SEPARATION_RANGE = CindervaneStatProfile.PackFlightCoordinator.SEPARATION_RANGE;
     private static final double FORMATION_MIN_DISTANCE = 32.0D;
     private static final double FORMATION_MAX_DISTANCE = 90.0D;
     private static final double CRUISE_COHESION_WEIGHT = 0.50D;
     private static final double CRUISE_ALIGNMENT_WEIGHT = 0.45D;
     private static final double CRUISE_SEPARATION_WEIGHT = 1.35D;
-    private static final double FOLLOW_FORMATION_WEIGHT = 1.20D;
-    private static final double FOLLOW_COHESION_WEIGHT = 0.25D;
-    private static final double FOLLOW_ALIGNMENT_WEIGHT = 0.35D;
-    private static final double FOLLOW_SEPARATION_WEIGHT = 1.55D;
+    private static final double FOLLOW_FORMATION_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_FORMATION_WEIGHT;
+    private static final double FOLLOW_COHESION_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_COHESION_WEIGHT;
+    private static final double FOLLOW_ALIGNMENT_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_ALIGNMENT_WEIGHT;
+    private static final double FOLLOW_SEPARATION_WEIGHT = CindervaneStatProfile.PackFlightCoordinator.FOLLOW_SEPARATION_WEIGHT;
 
     private CindervanePackFlightCoordinator() {
     }

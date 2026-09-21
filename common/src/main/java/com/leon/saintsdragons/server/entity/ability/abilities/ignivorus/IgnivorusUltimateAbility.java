@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -34,15 +36,15 @@ public class IgnivorusUltimateAbility extends DragonAbility<Ignivorus> {
     private static final int SKYFALL_ABSORB_TICK = 5 * 20;
     private static final double EXPLOSION_VISUAL_HEIGHT = 20.0D;
 
-    private static final int COOLDOWN_TICKS_RIDER = 0;
-    private static final int COOLDOWN_TICKS_AI = 6000;
+    private static final int COOLDOWN_TICKS_RIDER = IgnivorusStatProfile.UltimateAbility.COOLDOWN_TICKS_RIDER;
+    private static final int COOLDOWN_TICKS_AI = IgnivorusStatProfile.UltimateAbility.COOLDOWN_TICKS_AI;
 
-    private static final float EXPLOSION_DAMAGE = 200.0F;
+    private static final float EXPLOSION_DAMAGE = IgnivorusStatProfile.UltimateAbility.EXPLOSION_DAMAGE;
 
     private static final int FIRE_PUFF_COUNT = 96;
     private static final int SPEC_PUFF_COUNT = 64;
     private static final double FIRE_PUFF_VIEW_DISTANCE_SQR = 128.0D * 128.0D;
-    private static final float PENALTY_HEALTH = 50.0F;
+    private static final float PENALTY_HEALTH = IgnivorusStatProfile.UltimateAbility.PENALTY_HEALTH;
     private static final Component PENALTY_MESSAGE =
             Component.translatable("saintsdragons.message.ignivorus.ultimate_penalty");
     private static final Component REQUIREMENT_MESSAGE =

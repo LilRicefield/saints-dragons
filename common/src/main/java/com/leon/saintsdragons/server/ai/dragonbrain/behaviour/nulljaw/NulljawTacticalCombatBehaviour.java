@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -19,13 +21,13 @@ import java.util.List;
 import java.util.Map;
 
 public final class NulljawTacticalCombatBehaviour extends DragonBehaviour<Nulljaw> {
-    private static final double EXTRA_BITE_REACH = 1.5D;
+    private static final double EXTRA_BITE_REACH = NulljawStatProfile.TacticalCombatBehaviour.EXTRA_BITE_REACH;
     private static final double WAYPOINT_CHANGE_DISTANCE_SQR = 16.0D;
-    private static final double PROJECTILE_EAT_REACH = 1.25D;
-    private static final double PROJECTILE_CHASE_SPEED = 1.35D;
+    private static final double PROJECTILE_EAT_REACH = NulljawStatProfile.TacticalCombatBehaviour.PROJECTILE_EAT_REACH;
+    private static final double PROJECTILE_CHASE_SPEED = NulljawStatProfile.TacticalCombatBehaviour.PROJECTILE_CHASE_SPEED;
     private static final double PROJECTILE_MIN_LEAD_TICKS = 1.5D;
     private static final double PROJECTILE_MAX_LEAD_TICKS = 10.0D;
-    private static final double PROJECTILE_VELOCITY_BLEND = 0.65D;
+    private static final double PROJECTILE_VELOCITY_BLEND = NulljawStatProfile.TacticalCombatBehaviour.PROJECTILE_VELOCITY_BLEND;
     private static final int PROJECTILE_OBSTRUCTED_REFRESH_TICKS = 5;
     private static final double PROJECTILE_OBSTRUCTED_RETARGET_DISTANCE_SQR = 9.0D;
 

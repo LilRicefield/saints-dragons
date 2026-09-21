@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
 import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
@@ -32,18 +34,18 @@ public class VolitansUltimateAbility extends DragonAbility<Volitans> {
     private static final int SLAMMING_ANIM_TICKS = 25;
     private static final int SLAM_MAX_TICKS = 12000; // Failsafe timeout - usually ends on ground impact
     private static final int RECOVERY_TICKS = 20;
-    private static final int COOLDOWN_TICKS = 40;
+    private static final int COOLDOWN_TICKS = VolitansStatProfile.UltimateAbility.COOLDOWN_TICKS;
     private static final int POST_IMPACT_TAKEOFF_BLOCK_TICKS = 8;
 
-    private static final double SLAM_INITIAL_SPEED = -2.5D;
+    private static final double SLAM_INITIAL_SPEED = VolitansStatProfile.UltimateAbility.SLAM_INITIAL_SPEED;
     private static final double SLAM_EXTRA_PULL_PER_TICK = 0.15D;
     private static final double HORIZONTAL_DAMPING = 0.78D;
 
-    private static final float BASE_DAMAGE = 24.0F;
-    private static final double IMPACT_RADIUS = 20.0D;
+    private static final float BASE_DAMAGE = VolitansStatProfile.UltimateAbility.BASE_DAMAGE;
+    private static final double IMPACT_RADIUS = VolitansStatProfile.UltimateAbility.IMPACT_RADIUS;
     private static final float IMPACT_SCREEN_SHAKE = 1.2F;
     private static final int IMPACT_SHAKE_TICKS = 12;
-    private static final int POISON_DURATION_TICKS = 20 * 30; // 30 seconds
+    private static final int POISON_DURATION_TICKS = VolitansStatProfile.UltimateAbility.POISON_DURATION_TICKS; // 30 seconds
     private static final int POISON_AMPLIFIER = 1;
     private static final int STUN_TICKS = 40;
     private static final int SLAMMING_SOUND_TICKS = 90;

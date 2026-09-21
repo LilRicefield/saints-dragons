@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -18,23 +20,23 @@ import java.util.Map;
 import java.util.UUID;
 
 public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxiia> {
-    public static final float CHASE_SPEED = 1.45F;
-    public static final double MELEE_STOP_RANGE = 6.0D;
+    public static final float CHASE_SPEED = AtroxiiaStatProfile.GroundCombatBehaviour.CHASE_SPEED;
+    public static final double MELEE_STOP_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.MELEE_STOP_RANGE;
 
-    private static final double SLAM_RANGE = 2.75D;
-    private static final double SWIPE_RANGE = 6.0D;
-    private static final double PRECISE_STRIKE_MIN_RANGE = 3.0D;
-    private static final double PRECISE_STRIKE_MAX_RANGE = 6.5D;
-    private static final double GUNGNIR_MIN_RANGE = 4.0D;
-    private static final double GUNGNIR_MAX_RANGE = 8.0D;
+    private static final double SLAM_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.SLAM_RANGE;
+    private static final double SWIPE_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.SWIPE_RANGE;
+    private static final double PRECISE_STRIKE_MIN_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.PRECISE_STRIKE_MIN_RANGE;
+    private static final double PRECISE_STRIKE_MAX_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.PRECISE_STRIKE_MAX_RANGE;
+    private static final double GUNGNIR_MIN_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.GUNGNIR_MIN_RANGE;
+    private static final double GUNGNIR_MAX_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.GUNGNIR_MAX_RANGE;
     private static final double GUNGNIR_FACING_DOT = 0.82D;
-    private static final double GUNGNIR_MAX_LATERAL_SPEED = 0.16D;
-    private static final double GUNGNIR_RETREAT_SPEED = 0.04D;
+    private static final double GUNGNIR_MAX_LATERAL_SPEED = AtroxiiaStatProfile.GroundCombatBehaviour.GUNGNIR_MAX_LATERAL_SPEED;
+    private static final double GUNGNIR_RETREAT_SPEED = AtroxiiaStatProfile.GroundCombatBehaviour.GUNGNIR_RETREAT_SPEED;
     private static final double GUNGNIR_LUNGE_DISTANCE = 8.0D;
     private static final int GUNGNIR_PRESSURE_TRIGGER_TICKS = 12;
     private static final int GUNGNIR_COMBO_WINDOW_TICKS = 100;
-    private static final double DEVASTATING_SWEEP_POINT_BLANK_RANGE = 2.5D;
-    private static final double QUAKE_RANGE = 18.0D;
+    private static final double DEVASTATING_SWEEP_POINT_BLANK_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.DEVASTATING_SWEEP_POINT_BLANK_RANGE;
+    private static final double QUAKE_RANGE = AtroxiiaStatProfile.GroundCombatBehaviour.QUAKE_RANGE;
     private static final int KITE_PRESSURE_TRIGGER_TICKS = 50;
     private static final int DECISION_INTERVAL_TICKS = 6;
     private static final double FACING_DOT = 0.42D;

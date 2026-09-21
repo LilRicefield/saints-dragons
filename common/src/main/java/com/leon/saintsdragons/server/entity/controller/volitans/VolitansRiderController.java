@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
@@ -17,19 +19,19 @@ import org.jetbrains.annotations.Nullable;
 
 public final class VolitansRiderController {
     private static final float RIDER_KEY_PITCH_DEG = 25.0F;
-    private static final double BASE_FLIGHT_SPEED_MULT = 4.0;
-    private static final double SPRINT_FLIGHT_SPEED_MULT = 5.0;
+    private static final double BASE_FLIGHT_SPEED_MULT = VolitansStatProfile.RiderController.BASE_FLIGHT_SPEED_MULT;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = VolitansStatProfile.RiderController.SPRINT_FLIGHT_SPEED_MULT;
     private static final double STRAFE_POWER = 0.4;
-    private static final double ASCEND_THRUST = 0.45D;
-    private static final double DESCEND_THRUST = 0.85D;
-    private static final double TERMINAL_VELOCITY = 1.5D;
-    private static final double FLIGHT_ACCELERATION = 0.35D;
-    private static final double DIVE_SPEED_MULTIPLIER = 2.75D;
-    private static final double DIVE_ACCELERATION = 0.30D;
-    private static final double SWIM_ASCEND_THRUST = 0.18D;
-    private static final double SWIM_DESCEND_THRUST = 0.20D;
-    private static final double SWIM_VERTICAL_LIMIT = 0.55D;
-    private static final double SWIM_PITCH_VERTICAL_SCALE = 0.65D;
+    private static final double ASCEND_THRUST = VolitansStatProfile.RiderController.ASCEND_THRUST;
+    private static final double DESCEND_THRUST = VolitansStatProfile.RiderController.DESCEND_THRUST;
+    private static final double TERMINAL_VELOCITY = VolitansStatProfile.RiderController.TERMINAL_VELOCITY;
+    private static final double FLIGHT_ACCELERATION = VolitansStatProfile.RiderController.FLIGHT_ACCELERATION;
+    private static final double DIVE_SPEED_MULTIPLIER = VolitansStatProfile.RiderController.DIVE_SPEED_MULTIPLIER;
+    private static final double DIVE_ACCELERATION = VolitansStatProfile.RiderController.DIVE_ACCELERATION;
+    private static final double SWIM_ASCEND_THRUST = VolitansStatProfile.RiderController.SWIM_ASCEND_THRUST;
+    private static final double SWIM_DESCEND_THRUST = VolitansStatProfile.RiderController.SWIM_DESCEND_THRUST;
+    private static final double SWIM_VERTICAL_LIMIT = VolitansStatProfile.RiderController.SWIM_VERTICAL_LIMIT;
+    private static final double SWIM_PITCH_VERTICAL_SCALE = VolitansStatProfile.RiderController.SWIM_PITCH_VERTICAL_SCALE;
 
     private final Volitans dragon;
 
@@ -105,7 +107,7 @@ public final class VolitansRiderController {
     }
 
     public void handleGroundTravel(Player rider, Vec3 motion) {
-        float speed = (float) (dragon.isAccelerating() ? 0.34D : 0.24D);
+        float speed = (float) (dragon.isAccelerating() ? VolitansStatProfile.RiderController.GROUND_RUN_SPEED : VolitansStatProfile.RiderController.GROUND_WALK_SPEED);
         dragon.setRunning(dragon.isAccelerating() && rider.zza > 0.05F);
         dragon.setSpeed(speed);
         dragon.moveRelative(speed, motion);
@@ -121,7 +123,7 @@ public final class VolitansRiderController {
 
         double swimSpeed = dragon.getRiderSwimSpeed();
         if (dragon.isAccelerating()) {
-            swimSpeed *= 1.6D;
+            swimSpeed *= VolitansStatProfile.RiderController.SWIM_SPRINT_MULTIPLIER;
         }
 
         double forwardInput = motion.z;

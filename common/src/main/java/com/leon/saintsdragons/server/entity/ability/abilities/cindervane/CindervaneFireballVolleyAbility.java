@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -22,7 +24,7 @@ public class CindervaneFireballVolleyAbility extends DragonAbility<Cindervane> {
     private static final int BLOCKS_PER_VOLLEY = 3;
     private static final int VOLLEY_INTERVAL_TICKS = 10;
     private static final int ACTIVE_DURATION_TICKS = VOLLEY_INTERVAL_TICKS * (MAX_VOLLEYS - 1) + 1;
-    private static final double DEFAULT_COOLDOWN_SECONDS = 20.0D;
+    private static final double DEFAULT_COOLDOWN_SECONDS = CindervaneStatProfile.FireballVolleyAbility.DEFAULT_COOLDOWN_SECONDS;
     private static final double TICKS_PER_SECOND = 20.0D;
     private static final int MAGMA_BLOCK_LIFETIME = 200;
 
@@ -34,10 +36,10 @@ public class CindervaneFireballVolleyAbility extends DragonAbility<Cindervane> {
 
     private static final double SPAWN_FORWARD_OFFSET = 5.0D;
     private static final double SPAWN_VERTICAL_OFFSET = 1.5D;
-    private static final double VELOCITY_DOWN = -0.15D;
-    private static final double VELOCITY_FORWARD = 0.55D;
-    private static final double MAGMA_IMPACT_RADIUS = 7.0D;
-    private static final float DEFAULT_IMPACT_DAMAGE = 20.0F;
+    private static final double VELOCITY_DOWN = CindervaneStatProfile.FireballVolleyAbility.VELOCITY_DOWN;
+    private static final double VELOCITY_FORWARD = CindervaneStatProfile.FireballVolleyAbility.VELOCITY_FORWARD;
+    private static final double MAGMA_IMPACT_RADIUS = CindervaneStatProfile.FireballVolleyAbility.MAGMA_IMPACT_RADIUS;
+    private static final float DEFAULT_IMPACT_DAMAGE = CindervaneStatProfile.FireballVolleyAbility.DEFAULT_IMPACT_DAMAGE;
 
     private int ticksSinceVolley;
     private int volleysFired;

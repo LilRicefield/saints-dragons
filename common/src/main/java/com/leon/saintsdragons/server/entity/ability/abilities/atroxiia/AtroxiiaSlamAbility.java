@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -20,8 +22,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class AtroxiiaSlamAbility extends DragonAbility<Atroxiia> {
-    private static final float BASE_DAMAGE = 16.0F;
-    private static final double RANGE = 5.5D;
+    private static final float BASE_DAMAGE = AtroxiiaStatProfile.SlamAbility.BASE_DAMAGE;
+    private static final double RANGE = AtroxiiaStatProfile.SlamAbility.RANGE;
     private static final double SWEEP_HORIZONTAL = 4.0D;
     private static final double SWEEP_VERTICAL = 4.0D;
     private static final double ANGLE_DEG = 100.0D;

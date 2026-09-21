@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -15,12 +17,12 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Map;
 
 public class VolitansWaterCombatBehaviour extends DragonBehaviour<Volitans> {
-    private static final int ROAR_COOLDOWN_TICKS = 200;
-    private static final double BITE_RANGE = 4.1D;
-    private static final double CLAW_RANGE = 5.1D;
-    private static final double GORE_RANGE = 6.2D;
-    private static final double ROAR_MIN_RANGE = 4.5D;
-    private static final double ROAR_MAX_RANGE = 12.0D;
+    private static final int ROAR_COOLDOWN_TICKS = VolitansStatProfile.WaterCombatBehaviour.ROAR_COOLDOWN_TICKS;
+    private static final double BITE_RANGE = VolitansStatProfile.WaterCombatBehaviour.BITE_RANGE;
+    private static final double CLAW_RANGE = VolitansStatProfile.WaterCombatBehaviour.CLAW_RANGE;
+    private static final double GORE_RANGE = VolitansStatProfile.WaterCombatBehaviour.GORE_RANGE;
+    private static final double ROAR_MIN_RANGE = VolitansStatProfile.WaterCombatBehaviour.ROAR_MIN_RANGE;
+    private static final double ROAR_MAX_RANGE = VolitansStatProfile.WaterCombatBehaviour.ROAR_MAX_RANGE;
     private static final int MELEE_CADENCE_TICKS = 30;
 
     private Volitans dragon;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -37,10 +39,10 @@ public class IgnivorusRoarAbility extends DragonAbility<Ignivorus> {
     private static final double LANE_SPACING = 5.0D;
     private static final double BASE_FORWARD_OFFSET = 20.0D;
     private static final double FORWARD_STEP = 6.0D;
-    private static final float BASE_DAMAGE = 18.0f;
-    private static final float DAMAGE_PER_WAVE = 4.0f;
-    private static final double BASE_KNOCKBACK = 0.9D;
-    private static final double KNOCKBACK_PER_WAVE = 0.2D;
+    private static final float BASE_DAMAGE = IgnivorusStatProfile.RoarAbility.BASE_DAMAGE;
+    private static final float DAMAGE_PER_WAVE = IgnivorusStatProfile.RoarAbility.DAMAGE_PER_WAVE;
+    private static final double BASE_KNOCKBACK = IgnivorusStatProfile.RoarAbility.BASE_KNOCKBACK;
+    private static final double KNOCKBACK_PER_WAVE = IgnivorusStatProfile.RoarAbility.KNOCKBACK_PER_WAVE;
     private static final int PILLAR_WARMUP_TICKS = 5;
     private static final int PILLAR_LIFETIME_TICKS = 34;
     private boolean soundQueued;

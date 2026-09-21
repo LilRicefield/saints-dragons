@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -20,14 +22,14 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class AtroxiiaDevastatingSweepAbility extends DragonAbility<Atroxiia> {
-    private static final float BASE_DAMAGE = 13.0F;
+    private static final float BASE_DAMAGE = AtroxiiaStatProfile.DevastatingSweepAbility.BASE_DAMAGE;
     private static final int HIT_TICK = 10;
     private static final int ACTIVE_TICKS = 2;
     private static final int RECOVERY_TICKS = 14;
-    private static final double RADIUS = 12.0D;
-    private static final double VERTICAL_RANGE = 6.0D;
-    private static final double KNOCKBACK = 1.65D;
-    private static final double KNOCKBACK_Y = 0.32D;
+    private static final double RADIUS = AtroxiiaStatProfile.DevastatingSweepAbility.RADIUS;
+    private static final double VERTICAL_RANGE = AtroxiiaStatProfile.DevastatingSweepAbility.VERTICAL_RANGE;
+    private static final double KNOCKBACK = AtroxiiaStatProfile.DevastatingSweepAbility.KNOCKBACK;
+    private static final double KNOCKBACK_Y = AtroxiiaStatProfile.DevastatingSweepAbility.KNOCKBACK_Y;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, HIT_TICK),

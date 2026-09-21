@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.common.particle.ExpandingBreathSection;
 import com.leon.saintsdragons.server.ai.dragonbrain.tactical.DragonCombatDecisionSupport;
@@ -26,11 +28,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviour<Ignivorus> {
-    private static final double CHASE_SPEED = 6.25D;
-    private static final double DIVE_SPEED = 7.0D;
-    private static final double APPROACH_SPEED = 2.4D;
-    private static final double BREATH_PASS_SPEED = 2.8D;
-    private static final double EGRESS_SPEED = 3.5D;
+    private static final double CHASE_SPEED = IgnivorusStatProfile.AirCombatBehaviour.CHASE_SPEED;
+    private static final double DIVE_SPEED = IgnivorusStatProfile.AirCombatBehaviour.DIVE_SPEED;
+    private static final double APPROACH_SPEED = IgnivorusStatProfile.AirCombatBehaviour.APPROACH_SPEED;
+    private static final double BREATH_PASS_SPEED = IgnivorusStatProfile.AirCombatBehaviour.BREATH_PASS_SPEED;
+    private static final double EGRESS_SPEED = IgnivorusStatProfile.AirCombatBehaviour.EGRESS_SPEED;
     private static final double FIRING_RANGE = ExpandingBreathSection.DEFAULT_RANGE * 0.65D;
     private static final int APPROACH_TIMEOUT = 80;
 

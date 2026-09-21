@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -24,13 +26,13 @@ public class VarasuchusTailguardAbility extends DragonAbility<Varasuchus> {
     private static final int MAX_HOLD_TICKS = Math.max(1, MAX_USE_TICKS - STARTUP_TICKS);
     private static final int CANCEL_TICKS = (int) Math.round(0.4063D * 20.0D);
     private static final int PARRY_TICKS = (int) Math.round(0.8333D * 20.0D);
-    private static final int GUARD_COOLDOWN_TICKS = 4 * 10;
-    private static final int PARRY_COOLDOWN_TICKS = 15 * 20;
-    private static final float DEFAULT_PARRY_DAMAGE = 10.0F;
-    private static final double PARRY_RANGE_SQR = 8.0D * 8.0D;
+    private static final int GUARD_COOLDOWN_TICKS = VarasuchusStatProfile.TailguardAbility.GUARD_COOLDOWN_TICKS;
+    private static final int PARRY_COOLDOWN_TICKS = VarasuchusStatProfile.TailguardAbility.PARRY_COOLDOWN_TICKS;
+    private static final float DEFAULT_PARRY_DAMAGE = VarasuchusStatProfile.TailguardAbility.DEFAULT_PARRY_DAMAGE;
+    private static final double PARRY_RANGE_SQR = VarasuchusStatProfile.TailguardAbility.PARRY_RANGE_SQR;
     private static final double PARRY_SWEEP_HORIZONTAL = 6.5D;
     private static final double PARRY_SWEEP_VERTICAL = 3.0D;
-    private static final double KNOCKBACK_STRENGTH = 1.5D;
+    private static final double KNOCKBACK_STRENGTH = VarasuchusStatProfile.TailguardAbility.KNOCKBACK_STRENGTH;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionInfinite(ACTIVE)

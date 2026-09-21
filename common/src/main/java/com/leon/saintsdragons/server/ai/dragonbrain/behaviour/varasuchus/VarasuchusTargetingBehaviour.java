@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonHuntAndEatBehaviour;
@@ -21,8 +23,8 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public final class VarasuchusTargetingBehaviour extends DragonTargetingBehaviour<Varasuchus> {
-    private static final double BABY_PROTECTION_RANGE = 16.0D;
-    private static final double COMMITTED_RETENTION_MULTIPLIER = 2.0D;
+    private static final double BABY_PROTECTION_RANGE = VarasuchusStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
+    private static final double COMMITTED_RETENTION_MULTIPLIER = VarasuchusStatProfile.TargetingBehaviour.COMMITTED_RETENTION_MULTIPLIER;
 
     private int lastOwnerHurtTimestamp;
     private int lastOwnerAttackTimestamp;

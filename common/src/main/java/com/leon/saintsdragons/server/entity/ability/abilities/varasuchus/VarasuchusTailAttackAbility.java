@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -23,12 +25,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 
 public class VarasuchusTailAttackAbility extends DragonAbility<Varasuchus> {
-    private static final float DEFAULT_DAMAGE = 8.0f;
-    private static final double RANGE = 9.8;
+    private static final float DEFAULT_DAMAGE = VarasuchusStatProfile.TailAttackAbility.DEFAULT_DAMAGE;
+    private static final double RANGE = VarasuchusStatProfile.TailAttackAbility.RANGE;
     private static final double TAIL_ANGLE_DEG = 170.0;
     private static final double TAIL_SWIPE_HORIZONTAL = 4.0;
     private static final double TAIL_SWIPE_VERTICAL = 7.0;
-    private static final double KNOCKBACK_STRENGTH = 1.4;
+    private static final double KNOCKBACK_STRENGTH = VarasuchusStatProfile.TailAttackAbility.KNOCKBACK_STRENGTH;
     private static final int CONTROL_LOCK_TICKS = (int) Math.round(1.4583 * 20);
     private static final int TAIL_ATTACK_SOUND_TICKS = 50;
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {

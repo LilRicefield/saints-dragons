@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -25,10 +27,10 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 
 public class VarasuchusHornGoreAbility extends DragonAbility<Varasuchus> {
-    private static final float DEFAULT_PHASE1_DAMAGE = 16.0f;
-    private static final float DEFAULT_PHASE2_DAMAGE = 20.8f;
-    private static final float DEFAULT_ATTACK_DAMAGE = 10.0f;
-    private static final double GORE_RANGE = 5.0;
+    private static final float DEFAULT_PHASE1_DAMAGE = VarasuchusStatProfile.HornGoreAbility.DEFAULT_PHASE1_DAMAGE;
+    private static final float DEFAULT_PHASE2_DAMAGE = VarasuchusStatProfile.HornGoreAbility.DEFAULT_PHASE2_DAMAGE;
+    private static final float DEFAULT_ATTACK_DAMAGE = VarasuchusStatProfile.HornGoreAbility.DEFAULT_ATTACK_DAMAGE;
+    private static final double GORE_RANGE = VarasuchusStatProfile.HornGoreAbility.GORE_RANGE;
     private static final double GORE_ANGLE_DEG = 90.0;
     private static final double AI_DIRECT_EXTRA_REACH = GORE_RANGE;
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {

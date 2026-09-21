@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -21,24 +23,24 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class AtroxiiaPreciseStrikeAbility extends DragonAbility<Atroxiia> {
-    private static final float BASE_DAMAGE = 10.0F;
+    private static final float BASE_DAMAGE = AtroxiiaStatProfile.PreciseStrikeAbility.BASE_DAMAGE;
     private static final int ANIMATION_TICKS = 100;
     private static final int RECOVERY_TICKS = 8;
-    private static final int FIRST_NUDGE_AND_DAMAGE_TICK = 11;
+    private static final int FIRST_NUDGE_AND_DAMAGE_TICK = AtroxiiaStatProfile.PreciseStrikeAbility.FIRST_NUDGE_AND_DAMAGE_TICK;
     private static final int PULL_TARGETS_TICK = 25;
     private static final int SECOND_NUDGE_TICK = 39;
-    private static final int SECOND_DAMAGE_TICK = 45;
+    private static final int SECOND_DAMAGE_TICK = AtroxiiaStatProfile.PreciseStrikeAbility.SECOND_DAMAGE_TICK;
     private static final int THIRD_NUDGE_TICK = 53;
-    private static final int THIRD_DAMAGE_TICK = 64;
+    private static final int THIRD_DAMAGE_TICK = AtroxiiaStatProfile.PreciseStrikeAbility.THIRD_DAMAGE_TICK;
     private static final int NUDGE_TICKS = 5;
     private static final double NUDGE_DISTANCE = 5.0D;
-    private static final double RANGE = 8.5D;
+    private static final double RANGE = AtroxiiaStatProfile.PreciseStrikeAbility.RANGE;
     private static final double SWEEP_HORIZONTAL = 10.5D;
     private static final double SWEEP_VERTICAL = 10.5D;
     private static final double ANGLE_DEG = 100.0D;
     private static final double PULL_STRENGTH = 1.0D;
-    private static final double DAMAGE_KNOCKBACK = 0.75D;
-    private static final double DAMAGE_KNOCKBACK_Y = 0.16D;
+    private static final double DAMAGE_KNOCKBACK = AtroxiiaStatProfile.PreciseStrikeAbility.DAMAGE_KNOCKBACK;
+    private static final double DAMAGE_KNOCKBACK_Y = AtroxiiaStatProfile.PreciseStrikeAbility.DAMAGE_KNOCKBACK_Y;
     private static final int POST_COMBO_STUN_TICKS = 40;
     private static final float THIRD_STRIKE_SCREEN_SHAKE = 0.75F;
     private static final int THIRD_STRIKE_SCREEN_SHAKE_TICKS = 8;

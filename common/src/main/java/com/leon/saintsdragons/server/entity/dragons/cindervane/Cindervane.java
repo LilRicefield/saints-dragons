@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
@@ -156,9 +158,9 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public static final int VARIANT_DEFAULT = 0;
     public static final int VARIANT_ALBINO = 1;
     public static final int VARIANT_PIEBALD = 2;
-    private static final double BABY_MAX_HEALTH = 40.0D;
-    private static final double BABY_ARMOR = 0.0D;
-    private static final double GROUND_MOVEMENT_SPEED = 0.30D;
+    private static final double BABY_MAX_HEALTH = CindervaneStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = CindervaneStatProfile.Entity.BABY_ARMOR;
+    private static final double GROUND_MOVEMENT_SPEED = CindervaneStatProfile.Entity.GROUND_MOVEMENT_SPEED;
     private static final DragonVariantSet VARIANTS = DragonVariantSet.of(
             DragonVariant.of(VARIANT_DEFAULT, "default", 85),
             DragonVariant.of(VARIANT_ALBINO, "albino", 15),
@@ -197,23 +199,23 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
                     5.0D
             );
     private static final double FIRE_BODY_CRASH_MIN_DROP = 7.0D;
-    private static final float FIRE_BODY_EXPLOSION_RADIUS = 15.0F;
-    private static final double FIRE_BODY_IMPRINT_RADIUS = 9.0D;
-    private static final int RIDER_LANDING_BLEND_DURATION = 3;
+    private static final float FIRE_BODY_EXPLOSION_RADIUS = CindervaneStatProfile.Entity.FIRE_BODY_EXPLOSION_RADIUS;
+    private static final double FIRE_BODY_IMPRINT_RADIUS = CindervaneStatProfile.Entity.FIRE_BODY_IMPRINT_RADIUS;
+    private static final int RIDER_LANDING_BLEND_DURATION = CindervaneStatProfile.Entity.RIDER_LANDING_BLEND_DURATION;
     private static final double FIRE_BODY_IMPRINT_DEPTH_FACTOR = 0.6D;
-    private static final float FIRE_BODY_EXPLOSION_DAMAGE = 200.0F;
-    private static final float FIRE_BODY_SELF_DAMAGE_ON_CRASH = 40.0F;
-    public static final double BREED_PARTNER_RANGE = 20.0D;
-    public static final double BREED_DISTANCE_SQR = 2500.0D;
+    private static final float FIRE_BODY_EXPLOSION_DAMAGE = CindervaneStatProfile.Entity.FIRE_BODY_EXPLOSION_DAMAGE;
+    private static final float FIRE_BODY_SELF_DAMAGE_ON_CRASH = CindervaneStatProfile.Entity.FIRE_BODY_SELF_DAMAGE_ON_CRASH;
+    public static final double BREED_PARTNER_RANGE = CindervaneStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = CindervaneStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final int MAX_PACK_SIZE = 4;
-    private static final double PACK_SEARCH_RADIUS = 48.0D;
+    private static final double PACK_SEARCH_RADIUS = CindervaneStatProfile.Entity.PACK_SEARCH_RADIUS;
     private static final int MIN_AMBIENT_DELAY = 180;
     private static final int MAX_AMBIENT_DELAY = 420;
     private static final int FLEX_CONTROL_LOCK_TICKS = 69;
-    private static final int FLEX_COOLDOWN_TICKS = 120;
+    private static final int FLEX_COOLDOWN_TICKS = CindervaneStatProfile.Entity.FLEX_COOLDOWN_TICKS;
     private static final int CINDERVANE_CHEST_SLOTS = 15;
-    public static final double RIDER_WALK_SPEED = 0.18D;
-    public static final double RIDER_RUN_SPEED = 0.26D;
+    public static final double RIDER_WALK_SPEED = CindervaneStatProfile.Entity.RIDER_WALK_SPEED;
+    public static final double RIDER_RUN_SPEED = CindervaneStatProfile.Entity.RIDER_RUN_SPEED;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES =
             new VocalEntryBuilder()
@@ -436,7 +438,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
-                .add(Attributes.FOLLOW_RANGE, 64.0D)
+                .add(Attributes.FOLLOW_RANGE, CindervaneStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
                 .add(Attributes.ARMOR, config.armor());
     }

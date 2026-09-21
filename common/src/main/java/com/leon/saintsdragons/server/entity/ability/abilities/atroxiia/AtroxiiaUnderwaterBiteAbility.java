@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -20,12 +22,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public final class AtroxiiaUnderwaterBiteAbility extends DragonAbility<Atroxiia> {
-    private static final float BASE_DAMAGE = 10.0F;
-    private static final double RANGE = 5.0D;
+    private static final float BASE_DAMAGE = AtroxiiaStatProfile.UnderwaterBiteAbility.BASE_DAMAGE;
+    private static final double RANGE = AtroxiiaStatProfile.UnderwaterBiteAbility.RANGE;
     private static final double HITBOX_HALF_WIDTH = 3.0D;
     private static final double HITBOX_HALF_HEIGHT = 2.75D;
     private static final double ANGLE_DEGREES = 95.0D;
-    private static final double CLOSE_HIT_RANGE = 2.5D;
+    private static final double CLOSE_HIT_RANGE = AtroxiiaStatProfile.UnderwaterBiteAbility.CLOSE_HIT_RANGE;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, 9),

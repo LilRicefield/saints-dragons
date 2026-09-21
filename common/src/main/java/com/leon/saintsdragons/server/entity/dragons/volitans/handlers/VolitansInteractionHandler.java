@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -87,8 +89,8 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
             }
 
             double tameChance = hearty
-                    ? config.extraDouble("taming_chance_hearty", 3.0D)
-                    : config.extraDouble("taming_chance_base", 5.0D);
+                    ? config.extraDouble("taming_chance_hearty", VolitansStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_HEARTY)
+                    : config.extraDouble("taming_chance_base", VolitansStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BASE);
             boolean success = DragonTamingChance.rollPercent(dragon.getRandom(), tameChance);
             if (success) {
                 dragon.tame(player);
@@ -160,8 +162,8 @@ public final class VolitansInteractionHandler extends AbstractDragonInteractionH
         }
 
         double tameChance = hearty
-                ? config.extraDouble("taming_chance_hearty", 3.0D)
-                : config.extraDouble("taming_chance_base", 5.0D);
+                ? config.extraDouble("taming_chance_hearty", VolitansStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_HEARTY)
+                : config.extraDouble("taming_chance_base", VolitansStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BASE);
         return baby.tryHandleBabyFoodTaming(
                 player,
                 itemstack,

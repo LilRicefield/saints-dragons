@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAimHelper;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
@@ -19,7 +21,7 @@ public class VolitansBreathAbility extends DragonAbility<Volitans> {
 
     private static final int STARTUP_TICKS = 17;
     private static final int ACTIVE_TICKS_CAP = 20 * 60; // hard failsafe cap, real duration is config-driven
-    private static final int COOLDOWN_TICKS = 20;
+    private static final int COOLDOWN_TICKS = VolitansStatProfile.BreathAbility.COOLDOWN_TICKS;
     private static final int BREATH_START_SOUND_TICKS = 20; // 1.0s
     private static final int BREATH_END_SOUND_TICKS = 50;   // 2.5s
     private static final float BREATH_VOLUME = 2.0F;

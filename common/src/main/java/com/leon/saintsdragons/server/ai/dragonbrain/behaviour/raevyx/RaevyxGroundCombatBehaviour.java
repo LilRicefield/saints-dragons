@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -19,23 +21,23 @@ import net.minecraft.world.entity.player.Player;
 import java.util.Map;
 
 public class RaevyxGroundCombatBehaviour extends DragonBehaviour<Raevyx> {
-    public static final double BITE_ONLY_PREY_RANGE = 1.35D;
-    public static final double GORE_RANGE = 4.5D;
-    public static final float CHASE_SPEED = 1.45F;
+    public static final double BITE_ONLY_PREY_RANGE = RaevyxStatProfile.GroundCombatBehaviour.BITE_ONLY_PREY_RANGE;
+    public static final double GORE_RANGE = RaevyxStatProfile.GroundCombatBehaviour.GORE_RANGE;
+    public static final float CHASE_SPEED = RaevyxStatProfile.GroundCombatBehaviour.CHASE_SPEED;
 
-    private static final double BITE_RANGE = 3.0D;
-    private static final double GROUND_REND_RANGE = 8.5D;
-    private static final double GROUND_REND_MIN_RANGE = 3.4D;
+    private static final double BITE_RANGE = RaevyxStatProfile.GroundCombatBehaviour.BITE_RANGE;
+    private static final double GROUND_REND_RANGE = RaevyxStatProfile.GroundCombatBehaviour.GROUND_REND_RANGE;
+    private static final double GROUND_REND_MIN_RANGE = RaevyxStatProfile.GroundCombatBehaviour.GROUND_REND_MIN_RANGE;
     private static final double BEAM_MIN_GAP = 12.0D;
     private static final double BEAM_START_RANGE = Raevyx.BEAM_RANGE * 0.85D;
     private static final int BEAM_DECISION_TICKS = 10;
-    private static final int GROUND_REND_COOLDOWN_TICKS = 400;
+    private static final int GROUND_REND_COOLDOWN_TICKS = RaevyxStatProfile.GroundCombatBehaviour.GROUND_REND_COOLDOWN_TICKS;
     private static final int MODE_REEVALUATE_TICKS = 6;
-    private static final int DAMAGE_MEMORY_TICKS = 30;
-    private static final double DASH_MIN_RANGE = 8.0D;
-    private static final double DASH_MAX_RANGE = 26.0D;
-    private static final float BUDGET_REGEN_PER_TICK = 0.025F;
-    private static final float DASH_COST = 0.62F;
+    private static final int DAMAGE_MEMORY_TICKS = RaevyxStatProfile.GroundCombatBehaviour.DAMAGE_MEMORY_TICKS;
+    private static final double DASH_MIN_RANGE = RaevyxStatProfile.GroundCombatBehaviour.DASH_MIN_RANGE;
+    private static final double DASH_MAX_RANGE = RaevyxStatProfile.GroundCombatBehaviour.DASH_MAX_RANGE;
+    private static final float BUDGET_REGEN_PER_TICK = RaevyxStatProfile.GroundCombatBehaviour.BUDGET_REGEN_PER_TICK;
+    private static final float DASH_COST = RaevyxStatProfile.GroundCombatBehaviour.DASH_COST;
     private static final float BEAM_COST = 0.25F;
     private static final int MOBILITY_LOCK_TICKS = 24;
     private static final int BEAM_LOCK_TICKS = 30;

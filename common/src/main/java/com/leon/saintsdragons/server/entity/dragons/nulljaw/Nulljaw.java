@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 
@@ -100,33 +102,33 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         return DragonAttributeConfigLoader.NULLJAW_ID;
     }
 
-    private static final double NATURAL_SPAWN_NULLJAW_RADIUS = 96.0D;
+    private static final double NATURAL_SPAWN_NULLJAW_RADIUS = NulljawStatProfile.Entity.NATURAL_SPAWN_NULLJAW_RADIUS;
     private static final int MAX_NEARBY_WILD_NULLJAWS = 4;
-    public static final double BREED_PARTNER_RANGE = 24.0D;
-    public static final double BREED_DISTANCE_SQR = 9.0D;
+    public static final double BREED_PARTNER_RANGE = NulljawStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = NulljawStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final double CARRIED_HITBOX_DOWNWARD_EXTENSION = 1.65D;
     private static final double CARRIED_COLLISION_ESCAPE_LIFT = 0.20D;
     private static final int MAX_CARRIED_RIDER_ESCAPE_LIFTS = 8;
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
-    private static final int TAME_CHANCE_DENOMINATOR = 5;
-    private static final int DEATH_SOUND_DURATION_TICKS = 44;
-    private static final double RIDER_FLIGHT_SPEED = 0.32D;
-    private static final double RIDER_ASCEND_SPEED = 0.16D;
-    private static final double RIDER_DESCEND_SPEED = 0.18D;
+    private static final int TAME_CHANCE_DENOMINATOR = NulljawStatProfile.Entity.TAME_CHANCE_DENOMINATOR;
+    private static final int DEATH_SOUND_DURATION_TICKS = NulljawStatProfile.Entity.DEATH_SOUND_DURATION_TICKS;
+    private static final double RIDER_FLIGHT_SPEED = NulljawStatProfile.Entity.RIDER_FLIGHT_SPEED;
+    private static final double RIDER_ASCEND_SPEED = NulljawStatProfile.Entity.RIDER_ASCEND_SPEED;
+    private static final double RIDER_DESCEND_SPEED = NulljawStatProfile.Entity.RIDER_DESCEND_SPEED;
     private static final double FORWARD_TELEPORT_DISTANCE = 16.0D;
     private static final double FORWARD_TELEPORT_SAMPLE_STEP = 0.5D;
     private static final double MIN_FORWARD_TELEPORT_DISTANCE = 1.0D;
     private static final double GROUND_CLEARANCE_LIFT = 0.08D;
-    private static final double BABY_MAX_HEALTH = 70.0D;
-    private static final double BABY_ARMOR = 4.0D;
+    private static final double BABY_MAX_HEALTH = NulljawStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = NulljawStatProfile.Entity.BABY_ARMOR;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final String CLOAK_ABILITY_ID = "nulljaw_cloak";
     private static final String CLOAK_TICKS_TAG = "NulljawCloakTicks";
     private static final String CLOAK_RIDER_TAG = "NulljawCloakRider";
-    private static final int DEFAULT_CLOAK_DURATION_TICKS = 20 * 60 * 5;
+    private static final int DEFAULT_CLOAK_DURATION_TICKS = NulljawStatProfile.Entity.DEFAULT_CLOAK_DURATION_TICKS;
     private static final int MAX_PACK_SIZE = 4;
-    private static final double PACK_SEARCH_RADIUS = 28.0D;
+    private static final double PACK_SEARCH_RADIUS = NulljawStatProfile.Entity.PACK_SEARCH_RADIUS;
     private static final EntityDataAccessor<Float> DATA_FLIGHT_PITCH =
             SynchedEntityData.defineId(Nulljaw.class, EntityDataSerializers.FLOAT);
     private static final EntityDataAccessor<Integer> DATA_FEEDING_COOLDOWN =
@@ -196,9 +198,9 @@ public class Nulljaw extends RideableFlyingDragon implements PackMember<Nulljaw>
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.NULLJAW_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.20D)
+                .add(Attributes.MOVEMENT_SPEED, NulljawStatProfile.Entity.ATTRIBUTE_MOVEMENT_SPEED)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
-                .add(Attributes.FOLLOW_RANGE, 48.0D)
+                .add(Attributes.FOLLOW_RANGE, NulljawStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE)
                 .add(Attributes.ARMOR, config.armor());
     }
 

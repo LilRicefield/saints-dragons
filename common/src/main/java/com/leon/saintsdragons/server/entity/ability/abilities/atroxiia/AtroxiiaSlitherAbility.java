@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -28,8 +30,8 @@ public final class AtroxiiaSlitherAbility extends DragonAbility<Atroxiia> {
     private static final int NUDGE_TICK = 7;
     private static final int AUTO_MOVE_TICK = 22;
     private static final int STOP_TICK = 67;
-    private static final float DEFAULT_CONTACT_DAMAGE = 5.0F;
-    private static final double CONTACT_KNOCKBACK = 0.35D;
+    private static final float DEFAULT_CONTACT_DAMAGE = AtroxiiaStatProfile.SlitherAbility.DEFAULT_CONTACT_DAMAGE;
+    private static final double CONTACT_KNOCKBACK = AtroxiiaStatProfile.SlitherAbility.CONTACT_KNOCKBACK;
     private static final int CONTACT_HIT_INTERVAL_TICKS = 10;
     private static final double CONTACT_HORIZONTAL_INFLATE = 0.75D;
     private static final double CONTACT_VERTICAL_INFLATE = 0.35D;

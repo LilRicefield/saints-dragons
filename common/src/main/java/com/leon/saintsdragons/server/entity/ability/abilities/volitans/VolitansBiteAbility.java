@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -21,8 +23,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class VolitansBiteAbility extends DragonAbility<Volitans> {
     private static final int SOUND_TICKS = 30;
-    private static final float BASE_DAMAGE = 12.0f;
-    private static final double RANGE = 4.5;
+    private static final float BASE_DAMAGE = VolitansStatProfile.BiteAbility.BASE_DAMAGE;
+    private static final double RANGE = VolitansStatProfile.BiteAbility.RANGE;
     private static final double HITBOX_FORWARD_OFFSET = 2.0;
     private static final int DEBUG_COLOR = 0x33D1FF;
     private static final int DEBUG_TICKS = 20;

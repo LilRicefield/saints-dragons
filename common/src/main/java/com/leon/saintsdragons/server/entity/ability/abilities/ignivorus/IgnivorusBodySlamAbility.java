@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -35,9 +37,9 @@ public class IgnivorusBodySlamAbility extends DragonAbility<Ignivorus> {
     private static final int ACTIVE_TICKS = 7;
     private static final int RECOVERY_TICKS = 8;
     private static final int CONTROL_LOCK_TICKS = 29;
-    private static final int COOLDOWN_TICKS = 20;
+    private static final int COOLDOWN_TICKS = IgnivorusStatProfile.BodySlamAbility.COOLDOWN_TICKS;
 
-    private static final float BASE_DAMAGE = 40.0f;
+    private static final float BASE_DAMAGE = IgnivorusStatProfile.BodySlamAbility.BASE_DAMAGE;
     private static final double PUSH_STRENGTH = 1.1D;
     private static final double LIFT_FORCE = 0.6D;
 

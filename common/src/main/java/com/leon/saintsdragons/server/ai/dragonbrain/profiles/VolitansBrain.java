@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -85,8 +87,8 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                         (dragon, target) -> groundCombat.isGroundMovementLocked()
                                 ),
                                 new AsyncWaterChaseTargetBehaviour<>(
-                                        (dragon, target) -> dragon.isBreathing() ? 0.16D : 0.28D,
-                                        8.0F,
+                                        (dragon, target) -> dragon.isBreathing() ? VolitansStatProfile.Brain.WATER_CHASE_BREATH_SPEED : VolitansStatProfile.Brain.WATER_CHASE_SPEED,
+                                        VolitansStatProfile.Brain.WATER_CHASE_TURN_DEGREES,
                                         (dragon, target) -> dragon.shouldAiHoldPositionForAbility() || dragon.isGroundMobilityActive()
                                                 || dragon.getWaterCombatMovement().holdForMelee(),
                                         (dragon, target) -> dragon.getWaterCombatMovement().destination(target)
@@ -121,12 +123,12 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                         ),
                                         new VolitansFindSleepDepthBehaviour(6.0F, 0.16D),
                                         new DragonWaterEscapeBehaviour<>(
-                                                8.0F,
-                                                0.28D,
+                                                VolitansStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES,
+                                                VolitansStatProfile.Brain.WATER_ESCAPE_SPEED,
                                                 Volitans::shouldLeaveWater,
                                                 VolitansBrain::canContinueLeavingWater
                                         ),
-                                        new DragonFindWaterBehaviour<>(1.0D),
+                                        new DragonFindWaterBehaviour<>(VolitansStatProfile.Brain.FIND_WATER_SPEED),
                                         new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.volitans(),
                                                 dragon -> dragon.startTakeoffSequence(
@@ -136,23 +138,23 @@ public final class VolitansBrain implements DragonBrainOwner<Volitans> {
                                         ),
                                         new DragonSwimFollowBehaviour<>(
                                                 Volitans.class,
-                                                8.0F,
-                                                0.24D,
+                                                VolitansStatProfile.Brain.SWIM_FOLLOW_TURN_DEGREES,
+                                                VolitansStatProfile.Brain.SWIM_FOLLOW_SPEED,
                                                 20.0D,
                                                 8.0D,
                                                 dragon -> !dragon.isSleepLocked()
                                         ),
                                         new VolitansAutonomousFlightBehaviour(),
                                         new DragonGroundWanderBehaviour<>(
-                                                0.9D,
+                                                VolitansStatProfile.Brain.GROUND_WANDER_SPEED,
                                                 70,
                                                 10,
                                                 dragon -> !dragon.isInWaterOrBubble(),
                                                 (dragon, position) -> true
                                         ),
                                         new DragonSwimWanderBehaviour<>(
-                                                6.0F,
-                                                0.20D,
+                                                VolitansStatProfile.Brain.SWIM_WANDER_TURN_DEGREES,
+                                                VolitansStatProfile.Brain.SWIM_WANDER_SPEED,
                                                 30,
                                                 dragon -> !dragon.isSleepLocked(),
                                                 (dragon, position) -> true

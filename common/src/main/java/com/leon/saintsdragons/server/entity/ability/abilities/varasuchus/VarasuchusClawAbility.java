@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -26,12 +28,12 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public class VarasuchusClawAbility extends DragonAbility<Varasuchus> {
-    private static final float BASE_DAMAGE = 12.0f;
-    private static final double RANGE = 6.5;
+    private static final float BASE_DAMAGE = VarasuchusStatProfile.ClawAbility.BASE_DAMAGE;
+    private static final double RANGE = VarasuchusStatProfile.ClawAbility.RANGE;
     private static final double CLAW_ANGLE_DEG = 100.0;
     private static final double CLAW_SWIPE_HORIZONTAL = 3.0;
     private static final double CLAW_SWIPE_VERTICAL = 4.0;
-    private static final double BLOCK_BREAK_RANGE = 6.0;
+    private static final double BLOCK_BREAK_RANGE = VarasuchusStatProfile.ClawAbility.BLOCK_BREAK_RANGE;
     private static final double BLOCK_BREAK_WIDTH = 3.0;
     private static final double BLOCK_BREAK_HEIGHT = 6.0;
 

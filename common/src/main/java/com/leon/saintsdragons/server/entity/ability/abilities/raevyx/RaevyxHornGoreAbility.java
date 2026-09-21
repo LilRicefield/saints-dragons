@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -23,8 +25,8 @@ import java.util.Set;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 public class RaevyxHornGoreAbility extends DragonAbility<Raevyx> {
-    private static final float DEFAULT_GORE_DAMAGE = 15.0f;
-    private static final double GORE_RANGE = 4.0;
+    private static final float DEFAULT_GORE_DAMAGE = RaevyxStatProfile.HornGoreAbility.DEFAULT_GORE_DAMAGE;
+    private static final double GORE_RANGE = RaevyxStatProfile.HornGoreAbility.GORE_RANGE;
     private static final double HITBOX_FORWARD_OFFSET = 2.0;
     private static final int DEBUG_COLOR = 0xFFCC33;
     private static final int DEBUG_TICKS = 20;

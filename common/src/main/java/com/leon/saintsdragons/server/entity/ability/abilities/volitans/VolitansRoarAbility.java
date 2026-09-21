@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.effect.volitans.VolitansSpineEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -30,25 +32,25 @@ public class VolitansRoarAbility extends DragonAbility<Volitans> {
     private static final int ACTIVE_TICKS = 46;
     private static final int RECOVERY_TICKS = 10;
     private static final int ROAR_ANIM_TOTAL_TICKS = STARTUP_TICKS + ACTIVE_TICKS + RECOVERY_TICKS; // 64 ticks (~3.2083s)
-    private static final int SOUND_DURATION_TICKS = 100;
+    private static final int SOUND_DURATION_TICKS = VolitansStatProfile.RoarAbility.SOUND_DURATION_TICKS;
     private static final int AIR_WATER_ROAR_TICKS = 33; // 1.6667s
     private static final int AIR_WATER_ROAR_SOUND_TICKS = 60;
     private static final int GROUNDED_ROAR_TAKEOFF_BLOCK_BUFFER_TICKS = 10;
     private static final int AIR_WATER_SPINE_START_DELAY_TICKS = 5;
     private static final int ROAR_EFFECT_START_TICK = 23;
-    private static final int ROAR_EFFECT_DURATION_TICKS = 40;
+    private static final int ROAR_EFFECT_DURATION_TICKS = VolitansStatProfile.RoarAbility.ROAR_EFFECT_DURATION_TICKS;
     private static final int ROAR_SPINE_PULSE_INTERVAL_TICKS = 6;
-    private static final float GROUNDED_ROAR_DAMAGE = 10.0F;
-    private static final float AIR_WATER_ROAR_DAMAGE = 7.0F;
+    private static final float GROUNDED_ROAR_DAMAGE = VolitansStatProfile.RoarAbility.GROUNDED_ROAR_DAMAGE;
+    private static final float AIR_WATER_ROAR_DAMAGE = VolitansStatProfile.RoarAbility.AIR_WATER_ROAR_DAMAGE;
     private static final float ROAR_SHAKE_INTENSITY = 0.85F;
-    private static final int GROUNDED_POISON_DURATION_TICKS = 1200;
+    private static final int GROUNDED_POISON_DURATION_TICKS = VolitansStatProfile.RoarAbility.GROUNDED_POISON_DURATION_TICKS;
     private static final int GROUNDED_POISON_LEVEL = 3;
-    private static final int AIR_WATER_POISON_DURATION_TICKS = 200;
+    private static final int AIR_WATER_POISON_DURATION_TICKS = VolitansStatProfile.RoarAbility.AIR_WATER_POISON_DURATION_TICKS;
     private static final int AIR_WATER_POISON_LEVEL = 2;
     private static final int GROUNDED_STUN_TICKS = 40;
     private static final int AIR_WATER_STUN_TICKS = 20;
-    private static final double GROUNDED_HIT_RADIUS = 20.0D;
-    private static final double AIR_WATER_HIT_RADIUS = 12.0D;
+    private static final double GROUNDED_HIT_RADIUS = VolitansStatProfile.RoarAbility.GROUNDED_HIT_RADIUS;
+    private static final double AIR_WATER_HIT_RADIUS = VolitansStatProfile.RoarAbility.AIR_WATER_HIT_RADIUS;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(STARTUP, STARTUP_TICKS),

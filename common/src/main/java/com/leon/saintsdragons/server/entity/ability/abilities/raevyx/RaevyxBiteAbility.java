@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
@@ -18,8 +20,8 @@ import java.util.List;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 public class RaevyxBiteAbility extends DragonAbility<Raevyx> {
-    private static final float BASE_DAMAGE = 15.0f;
-    private static final double RANGE = 6.0;
+    private static final float BASE_DAMAGE = RaevyxStatProfile.BiteAbility.BASE_DAMAGE;
+    private static final double RANGE = RaevyxStatProfile.BiteAbility.RANGE;
     private static final double HITBOX_HALF_WIDTH = 3.75;
     private static final double HITBOX_HALF_HEIGHT = 3.4;
     private static final double HITBOX_FORWARD_OFFSET = 2.0;

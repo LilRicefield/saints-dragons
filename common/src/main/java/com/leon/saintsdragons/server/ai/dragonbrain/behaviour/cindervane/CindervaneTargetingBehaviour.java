@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModTags;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -23,8 +25,8 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour<Cindervane> {
-    private static final double BABY_PROTECTION_RANGE = 16.0D;
-    private static final double PACK_ASSIST_RANGE = 36.0D;
+    private static final double BABY_PROTECTION_RANGE = CindervaneStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
+    private static final double PACK_ASSIST_RANGE = CindervaneStatProfile.TargetingBehaviour.PACK_ASSIST_RANGE;
 
     private int lastOwnerHurtTimestamp;
     private int lastOwnerAttackTimestamp;

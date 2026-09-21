@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
 import com.leon.saintsdragons.common.registry.ModParticles;
@@ -35,21 +37,21 @@ public class StegonautGroundSlamAbility extends DragonAbility<Stegonaut> {
             new AbilitySectionInfinite(ACTIVE)
     };
 
-    private static final int COOLDOWN_TICKS = 60;
+    private static final int COOLDOWN_TICKS = StegonautStatProfile.GroundSlamAbility.COOLDOWN_TICKS;
     private static final int FIRST_SLAM_TICKS = (int) Math.round(0.875D * 20.0D) + 5;
     private static final int SECOND_SLAM_TICKS = (int) Math.round(1.25D * 20.0D);
     private static final int FIRST_HIT_TICK = 18;
     private static final int PILLAR_SPAWN_TICK = 25;
-    private static final float DEFAULT_SLAM_DAMAGE = 20.0F;
-    private static final float DEFAULT_PILLAR_DAMAGE = 10.0F;
-    private static final double SLAM_RADIUS = 10.0D;
+    private static final float DEFAULT_SLAM_DAMAGE = StegonautStatProfile.GroundSlamAbility.DEFAULT_SLAM_DAMAGE;
+    private static final float DEFAULT_PILLAR_DAMAGE = StegonautStatProfile.GroundSlamAbility.DEFAULT_PILLAR_DAMAGE;
+    private static final double SLAM_RADIUS = StegonautStatProfile.GroundSlamAbility.SLAM_RADIUS;
     private static final double SLAM_VERTICAL = 3.0D;
-    private static final double DEFAULT_SLAM_KNOCKBACK = 1.35D;
-    private static final float DEFAULT_SLAM2_DAMAGE = 25.0F;
-    private static final double SLAM2_RADIUS = 20.0D;
+    private static final double DEFAULT_SLAM_KNOCKBACK = StegonautStatProfile.GroundSlamAbility.DEFAULT_SLAM_KNOCKBACK;
+    private static final float DEFAULT_SLAM2_DAMAGE = StegonautStatProfile.GroundSlamAbility.DEFAULT_SLAM2_DAMAGE;
+    private static final double SLAM2_RADIUS = StegonautStatProfile.GroundSlamAbility.SLAM2_RADIUS;
     private static final double SLAM2_VERTICAL = 6.0D;
-    private static final double DEFAULT_SLAM2_KNOCKBACK = 1.8D;
-    private static final double DEFAULT_PILLAR_KNOCKBACK = 0.9D;
+    private static final double DEFAULT_SLAM2_KNOCKBACK = StegonautStatProfile.GroundSlamAbility.DEFAULT_SLAM2_KNOCKBACK;
+    private static final double DEFAULT_PILLAR_KNOCKBACK = StegonautStatProfile.GroundSlamAbility.DEFAULT_PILLAR_KNOCKBACK;
     private static final int PILLARS_PER_AXIS = 4;
     private static final double PILLAR_SPACING = 4.5D;
     private static final float PILLAR_SCALE = 2.0F;

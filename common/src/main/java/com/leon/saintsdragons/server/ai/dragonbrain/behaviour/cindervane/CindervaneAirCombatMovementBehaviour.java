@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -15,19 +17,19 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class CindervaneAirCombatMovementBehaviour extends AirCombatMovementBehaviour<Cindervane> {
-    private static final double BITE_RANGE = 5.75D;
-    private static final double DOUBLE_BITE_RANGE = 5.25D;
-    private static final double FIRE_BODY_RANGE = 3.5D;
-    private static final double FIRE_BODY_EXIT_RANGE = 11.0D;
+    private static final double BITE_RANGE = CindervaneStatProfile.AirCombatMovementBehaviour.BITE_RANGE;
+    private static final double DOUBLE_BITE_RANGE = CindervaneStatProfile.AirCombatMovementBehaviour.DOUBLE_BITE_RANGE;
+    private static final double FIRE_BODY_RANGE = CindervaneStatProfile.AirCombatMovementBehaviour.FIRE_BODY_RANGE;
+    private static final double FIRE_BODY_EXIT_RANGE = CindervaneStatProfile.AirCombatMovementBehaviour.FIRE_BODY_EXIT_RANGE;
     private static final double MELEE_FACING_DOT = 0.25D;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
-    private static final double CHASE_HEIGHT_OFFSET = 0.5D;
-    private static final double CHASE_SPEED = 2.3D;
-    private static final double DIVE_CHASE_SPEED = 3.5D;
-    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
-    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
+    private static final double CHASE_HEIGHT_OFFSET = CindervaneStatProfile.AirCombatMovementBehaviour.CHASE_HEIGHT_OFFSET;
+    private static final double CHASE_SPEED = CindervaneStatProfile.AirCombatMovementBehaviour.CHASE_SPEED;
+    private static final double DIVE_CHASE_SPEED = CindervaneStatProfile.AirCombatMovementBehaviour.DIVE_CHASE_SPEED;
+    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = CindervaneStatProfile.AirCombatMovementBehaviour.DIVE_CHASE_MIN_HEIGHT_ADVANTAGE;
+    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = CindervaneStatProfile.AirCombatMovementBehaviour.DIVE_CHASE_MAX_HORIZONTAL_DISTANCE;
     private static final int DECISION_INTERVAL_TICKS = 6;
-    private static final int POST_ABILITY_CHASE_TICKS = 8;
+    private static final int POST_ABILITY_CHASE_TICKS = CindervaneStatProfile.AirCombatMovementBehaviour.POST_ABILITY_CHASE_TICKS;
     private static final int FIRE_BODY_MIN_TICKS = 60;
     private static final int FIRE_BODY_MAX_TICKS = 160;
 

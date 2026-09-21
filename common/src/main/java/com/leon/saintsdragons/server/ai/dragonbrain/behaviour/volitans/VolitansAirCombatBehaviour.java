@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -20,15 +22,15 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volitans> {
-    private static final double MELEE_RANGE = 6.0D;
-    private static final double POISON_MAX_RANGE = 32.0D;
-    private static final double ROAR_MAX_RANGE = 12.0D;
-    private static final double CHASE_HEIGHT_OFFSET = 2.0D;
-    private static final double CHASE_SPEED = 2.3D;
-    private static final double DIVE_CHASE_SPEED = 3.5D;
-    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = 7.0D;
-    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = 42.0D;
-    private static final double POSITION_SPEED = 0.85D;
+    private static final double MELEE_RANGE = VolitansStatProfile.AirCombatBehaviour.MELEE_RANGE;
+    private static final double POISON_MAX_RANGE = VolitansStatProfile.AirCombatBehaviour.POISON_MAX_RANGE;
+    private static final double ROAR_MAX_RANGE = VolitansStatProfile.AirCombatBehaviour.ROAR_MAX_RANGE;
+    private static final double CHASE_HEIGHT_OFFSET = VolitansStatProfile.AirCombatBehaviour.CHASE_HEIGHT_OFFSET;
+    private static final double CHASE_SPEED = VolitansStatProfile.AirCombatBehaviour.CHASE_SPEED;
+    private static final double DIVE_CHASE_SPEED = VolitansStatProfile.AirCombatBehaviour.DIVE_CHASE_SPEED;
+    private static final double DIVE_CHASE_MIN_HEIGHT_ADVANTAGE = VolitansStatProfile.AirCombatBehaviour.DIVE_CHASE_MIN_HEIGHT_ADVANTAGE;
+    private static final double DIVE_CHASE_MAX_HORIZONTAL_DISTANCE = VolitansStatProfile.AirCombatBehaviour.DIVE_CHASE_MAX_HORIZONTAL_DISTANCE;
+    private static final double POSITION_SPEED = VolitansStatProfile.AirCombatBehaviour.POSITION_SPEED;
     private static final double BITE_APPROACH_DISTANCE = 3.5D;
     private static final int MELEE_CADENCE_TICKS = 30;
 

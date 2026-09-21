@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.server.ai.navigation.GenericSwimSteeringController;
 import com.mojang.serialization.Dynamic;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonDestructionManager;
@@ -96,9 +98,9 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             Registries.STRUCTURE,
             SaintsDragonsCommon.rl("varasuchus_roost")
     );
-    public static final double ROOST_SLEEP_RADIUS = 3.0D;
-    public static final double ROOST_TERRITORY_RADIUS = 48.0D;
-    public static final double ROOST_TERRITORY_RETURN_RADIUS = 32.0D;
+    public static final double ROOST_SLEEP_RADIUS = VarasuchusStatProfile.Entity.ROOST_SLEEP_RADIUS;
+    public static final double ROOST_TERRITORY_RADIUS = VarasuchusStatProfile.Entity.ROOST_TERRITORY_RADIUS;
+    public static final double ROOST_TERRITORY_RETURN_RADIUS = VarasuchusStatProfile.Entity.ROOST_TERRITORY_RETURN_RADIUS;
     private static final int ROOST_SLEEP_SETTLE_TICKS = 60;
     private final DragonRoostComponent roostComponent = new DragonRoostComponent(
             this,
@@ -197,32 +199,32 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             .add("varasuchus_die", AnimationHelper.INTERACTION_CONTROLLER, "animation.varasuchus.die", ModSounds.VARASUCHUS_DIE, 1.35f, 0.9f, 0.05f, false, true, true)
             .build();
     public static final int RECENT_ATTACKER_PRIORITY_TICKS = 20 * 30;
-    public static final double RIDER_WALK_SPEED = 0.15D;
-    public static final double RIDER_RUN_SPEED = 0.30D;
+    public static final double RIDER_WALK_SPEED = VarasuchusStatProfile.Entity.RIDER_WALK_SPEED;
+    public static final double RIDER_RUN_SPEED = VarasuchusStatProfile.Entity.RIDER_RUN_SPEED;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
-    private static final double RIDER_JUMP_STRENGTH = 1.0D;
-    private static final double RIDER_JUMP_FORWARD_BOOST = 0.4D;
+    private static final double RIDER_JUMP_STRENGTH = VarasuchusStatProfile.Entity.RIDER_JUMP_STRENGTH;
+    private static final double RIDER_JUMP_FORWARD_BOOST = VarasuchusStatProfile.Entity.RIDER_JUMP_FORWARD_BOOST;
     private static final int MIN_AMBIENT_DELAY = 200;
     private static final int MAX_AMBIENT_DELAY = 600;
     private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 70;
-    private static final double BABY_MAX_HEALTH = 80.0D;
-    private static final double BABY_ARMOR = 0.0D;
-    private static final double GROUND_MOVEMENT_SPEED = 0.33D;
+    private static final double BABY_MAX_HEALTH = VarasuchusStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = VarasuchusStatProfile.Entity.BABY_ARMOR;
+    private static final double GROUND_MOVEMENT_SPEED = VarasuchusStatProfile.Entity.GROUND_MOVEMENT_SPEED;
     private static final float BABY_HITBOX_SCALE = 0.5F;
-    private static final double LEAP_HORIZONTAL_DRAG = 0.92D;
-    private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
-    private static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;
+    private static final double LEAP_HORIZONTAL_DRAG = VarasuchusStatProfile.Entity.LEAP_HORIZONTAL_DRAG;
+    private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = VarasuchusStatProfile.Entity.DEFAULT_DASH_TAIL_SWIPE_DAMAGE;
+    private static final float DEFAULT_DASH_CLAW_DAMAGE = VarasuchusStatProfile.Entity.DEFAULT_DASH_CLAW_DAMAGE;
     private static final int MIN_WILD_TAME_TICKS = 60;
-    private static final int WILD_RIDE_BUCK_COOLDOWN_TICKS = 20 * 5;
-    private static final int MAX_TAMING_PROGRESS = 400;
-    private static final int WILD_RIDE_BUCK_DURATION_TICKS = 90;
-    private static final double WILD_RIDE_WALK_SPEED = 0.9D;
-    public static final double BREED_PARTNER_RANGE = 30.0D;
-    public static final double BREED_DISTANCE_SQR = 16.0D;
+    private static final int WILD_RIDE_BUCK_COOLDOWN_TICKS = VarasuchusStatProfile.Entity.WILD_RIDE_BUCK_COOLDOWN_TICKS;
+    private static final int MAX_TAMING_PROGRESS = VarasuchusStatProfile.Entity.MAX_TAMING_PROGRESS;
+    private static final int WILD_RIDE_BUCK_DURATION_TICKS = VarasuchusStatProfile.Entity.WILD_RIDE_BUCK_DURATION_TICKS;
+    private static final double WILD_RIDE_WALK_SPEED = VarasuchusStatProfile.Entity.WILD_RIDE_WALK_SPEED;
+    public static final double BREED_PARTNER_RANGE = VarasuchusStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = VarasuchusStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
     private static final int FLEX_CONTROL_LOCK_TICKS = 70;
     private static final int FLEX2_CONTROL_LOCK_TICKS = 140;
-    private static final int FLEX_COOLDOWN_TICKS = 60;
+    private static final int FLEX_COOLDOWN_TICKS = VarasuchusStatProfile.Entity.FLEX_COOLDOWN_TICKS;
 
     @Override
     public int getScentAssessmentDurationTicks() {
@@ -571,10 +573,10 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         return TamableAnimal.createLivingAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
-                .add(Attributes.FOLLOW_RANGE, 32.0D)
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
-                .add(Attributes.ARMOR, 8.0D)
-                .add(Attributes.ATTACK_DAMAGE, 10.0D);
+                .add(Attributes.FOLLOW_RANGE, VarasuchusStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE)
+                .add(Attributes.KNOCKBACK_RESISTANCE, VarasuchusStatProfile.Entity.ATTRIBUTE_KNOCKBACK_RESISTANCE)
+                .add(Attributes.ARMOR, VarasuchusStatProfile.Entity.ATTRIBUTE_ARMOR)
+                .add(Attributes.ATTACK_DAMAGE, VarasuchusStatProfile.Entity.ATTRIBUTE_ATTACK_DAMAGE);
     }
 
     @Override
@@ -759,7 +761,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     public double getSwimSpeed() {
         return DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID)
-                .extraDouble("swim_speed", 1.45D);
+                .extraDouble("swim_speed", VarasuchusStatProfile.Entity.FALLBACK_SWIM_SPEED);
     }
 
     @Override
@@ -1390,7 +1392,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         Vec3 velocity = this.getDeltaMovement();
         double swimSpeed = getSwimSpeed();
         if (isAccelerating()) {
-            swimSpeed *= 1.6D;
+            swimSpeed *= VarasuchusStatProfile.Entity.RIDDEN_SWIM_SPRINT_MULTIPLIER;
         }
 
         double forwardInput = input.z;

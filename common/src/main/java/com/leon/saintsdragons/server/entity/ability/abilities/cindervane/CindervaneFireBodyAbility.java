@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -33,13 +35,13 @@ public class CindervaneFireBodyAbility extends DragonAbility<Cindervane> {
             new AbilitySectionDuration(ACTIVE, 1000)
     };
 
-    private static final double AURA_RADIUS = 3.5D;
+    private static final double AURA_RADIUS = CindervaneStatProfile.FireBodyAbility.AURA_RADIUS;
     private static final double AURA_VERTICAL = 2.5D;
-    private static final float BASE_DAMAGE = 3.0F;
+    private static final float BASE_DAMAGE = CindervaneStatProfile.FireBodyAbility.BASE_DAMAGE;
     private static final int FIRE_SECONDS = 4;
-    private static final double COOKING_RADIUS = 3.5D;
+    private static final double COOKING_RADIUS = CindervaneStatProfile.FireBodyAbility.COOKING_RADIUS;
     private static final int ALLY_FIRE_RESIST_TICKS = 60;
-    private static final int ALLY_DAMAGE_RESIST_TICKS = 40;
+    private static final int ALLY_DAMAGE_RESIST_TICKS = CindervaneStatProfile.FireBodyAbility.ALLY_DAMAGE_RESIST_TICKS;
 
     public CindervaneFireBodyAbility(DragonAbilityType<Cindervane, CindervaneFireBodyAbility> type,
                                      Cindervane user) {

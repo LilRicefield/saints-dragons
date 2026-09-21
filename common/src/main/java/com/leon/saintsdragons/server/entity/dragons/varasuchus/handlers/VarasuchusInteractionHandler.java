@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.varasuchus.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VarasuchusStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.config.dragon.DragonTamingChance;
@@ -278,15 +280,15 @@ public class VarasuchusInteractionHandler extends AbstractDragonInteractionHandl
 
     private double getTamingChance(ItemStack food, DragonAttributeConfig config) {
         if (food.is(ModItems.HEARTY_DRAGON_MEAL.get())) {
-            return Math.min(100.0D, config.extraDouble("taming_chance", 16.6667D) * 2.0D);
+            return Math.min(100.0D, config.extraDouble("taming_chance", VarasuchusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE) * 2.0D);
         }
         if (food.is(Items.TROPICAL_FISH)) {
-            return config.extraDouble("taming_chance_tropical", 25.0D);
+            return config.extraDouble("taming_chance_tropical", VarasuchusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_TROPICAL);
         }
         if (food.is(Items.BEEF)) {
-            return config.extraDouble("taming_chance_beef", 16.6667D);
+            return config.extraDouble("taming_chance_beef", VarasuchusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BEEF);
         }
-        return config.extraDouble("taming_chance", 16.6667D);
+        return config.extraDouble("taming_chance", VarasuchusStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE);
     }
 
 

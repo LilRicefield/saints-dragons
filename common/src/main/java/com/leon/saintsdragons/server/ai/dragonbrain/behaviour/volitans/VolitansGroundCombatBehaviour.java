@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
@@ -18,29 +20,29 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
-    public static final double BITE_RANGE = 4.1D;
-    public static final double CHASE_STOP_RANGE = 3.5D;
-    private static final double CLAW_RANGE = 5.1D;
-    public static final double GORE_RANGE = 6.2D;
-    private static final double POISON_BALL_MIN_RANGE = 8.0D;
-    private static final double POISON_BALL_MAX_RANGE = 24.0D;
-    private static final double ROAR_OPEN_RANGE = 14.0D;
-    public static final float CHASE_SPEED = 1.2F;
-    private static final double BURROW_MIN_RANGE = 8.0D;
-    private static final double BURROW_MAX_RANGE = 40.0D;
-    private static final double BURROW_CHASE_SPEED = 1.55D;
+    public static final double BITE_RANGE = VolitansStatProfile.GroundCombatBehaviour.BITE_RANGE;
+    public static final double CHASE_STOP_RANGE = VolitansStatProfile.GroundCombatBehaviour.CHASE_STOP_RANGE;
+    private static final double CLAW_RANGE = VolitansStatProfile.GroundCombatBehaviour.CLAW_RANGE;
+    public static final double GORE_RANGE = VolitansStatProfile.GroundCombatBehaviour.GORE_RANGE;
+    private static final double POISON_BALL_MIN_RANGE = VolitansStatProfile.GroundCombatBehaviour.POISON_BALL_MIN_RANGE;
+    private static final double POISON_BALL_MAX_RANGE = VolitansStatProfile.GroundCombatBehaviour.POISON_BALL_MAX_RANGE;
+    private static final double ROAR_OPEN_RANGE = VolitansStatProfile.GroundCombatBehaviour.ROAR_OPEN_RANGE;
+    public static final float CHASE_SPEED = VolitansStatProfile.GroundCombatBehaviour.CHASE_SPEED;
+    private static final double BURROW_MIN_RANGE = VolitansStatProfile.GroundCombatBehaviour.BURROW_MIN_RANGE;
+    private static final double BURROW_MAX_RANGE = VolitansStatProfile.GroundCombatBehaviour.BURROW_MAX_RANGE;
+    private static final double BURROW_CHASE_SPEED = VolitansStatProfile.GroundCombatBehaviour.BURROW_CHASE_SPEED;
     private static final int MELEE_CADENCE_TICKS = 30;
-    private static final int INITIAL_CHASE_COMMIT_TICKS = 32;
-    private static final int RETREAT_CHASE_COMMIT_TICKS = 36;
-    private static final int POST_ABILITY_CHASE_COMMIT_TICKS = 18;
-    private static final int FAILED_PRESSURE_CHASE_COMMIT_TICKS = 12;
+    private static final int INITIAL_CHASE_COMMIT_TICKS = VolitansStatProfile.GroundCombatBehaviour.INITIAL_CHASE_COMMIT_TICKS;
+    private static final int RETREAT_CHASE_COMMIT_TICKS = VolitansStatProfile.GroundCombatBehaviour.RETREAT_CHASE_COMMIT_TICKS;
+    private static final int POST_ABILITY_CHASE_COMMIT_TICKS = VolitansStatProfile.GroundCombatBehaviour.POST_ABILITY_CHASE_COMMIT_TICKS;
+    private static final int FAILED_PRESSURE_CHASE_COMMIT_TICKS = VolitansStatProfile.GroundCombatBehaviour.FAILED_PRESSURE_CHASE_COMMIT_TICKS;
     private static final int PRESSURE_STABLE_TICKS = 12;
     private static final int PRESSURE_DECISION_INTERVAL_TICKS = 8;
     private static final int ROAR_OPENER_WINDOW_TICKS = 100;
     private static final int BURROW_ROUTE_STALL_TICKS = 24;
-    private static final double TARGET_STABLE_SPEED = 0.12D;
+    private static final double TARGET_STABLE_SPEED = VolitansStatProfile.GroundCombatBehaviour.TARGET_STABLE_SPEED;
     private static final double STABLE_GAP_DELTA = 0.06D;
-    private static final double RETREATING_SPEED = 0.07D;
+    private static final double RETREATING_SPEED = VolitansStatProfile.GroundCombatBehaviour.RETREATING_SPEED;
 
     private Volitans dragon;
     private DragonBrainContext<Volitans> currentContext;

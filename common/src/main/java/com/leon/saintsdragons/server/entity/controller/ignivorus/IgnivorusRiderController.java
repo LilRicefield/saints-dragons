@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.ignivorus;
 
+import com.leon.saintsdragons.common.config.dragon.profile.IgnivorusStatProfile;
+
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
@@ -24,16 +26,16 @@ public record IgnivorusRiderController(Ignivorus dragon) {
 
     private static final double LANDING_HEIGHT_TRIGGER = 4.0D;
     private static final int MAX_GROUND_CHECK_DISTANCE = 10;
-    private static final double BASE_FLIGHT_SPEED_MULT = 3.95;
-    private static final double SPRINT_FLIGHT_SPEED_MULT = 4.75;
-    private static final double DRAG_NO_INPUT = 0.5;
+    private static final double BASE_FLIGHT_SPEED_MULT = IgnivorusStatProfile.RiderController.BASE_FLIGHT_SPEED_MULT;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = IgnivorusStatProfile.RiderController.SPRINT_FLIGHT_SPEED_MULT;
+    private static final double DRAG_NO_INPUT = IgnivorusStatProfile.RiderController.DRAG_NO_INPUT;
     private static final double STRAFE_POWER = 0.5;
-    private static final double ASCEND_THRUST = 0.45D;
-    private static final double DESCEND_THRUST = 1.0D;
-    private static final double TERMINAL_VELOCITY = 1.5D;
-    private static final double FLIGHT_ACCELERATION = 0.35D;
-    private static final double DIVE_SPEED_MULTIPLIER = 2.0D;
-    private static final double DIVE_ACCELERATION = 0.30D;
+    private static final double ASCEND_THRUST = IgnivorusStatProfile.RiderController.ASCEND_THRUST;
+    private static final double DESCEND_THRUST = IgnivorusStatProfile.RiderController.DESCEND_THRUST;
+    private static final double TERMINAL_VELOCITY = IgnivorusStatProfile.RiderController.TERMINAL_VELOCITY;
+    private static final double FLIGHT_ACCELERATION = IgnivorusStatProfile.RiderController.FLIGHT_ACCELERATION;
+    private static final double DIVE_SPEED_MULTIPLIER = IgnivorusStatProfile.RiderController.DIVE_SPEED_MULTIPLIER;
+    private static final double DIVE_ACCELERATION = IgnivorusStatProfile.RiderController.DIVE_ACCELERATION;
 
     @Nullable
     public Player getRidingPlayer() {

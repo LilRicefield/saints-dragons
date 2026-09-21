@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
@@ -19,24 +21,24 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public final class CindervaneGroundCombatBehaviour extends DragonBehaviour<Cindervane> {
-    public static final float CHASE_SPEED = 1.15F;
-    public static final double MELEE_STOP_RANGE = 5.0D;
+    public static final float CHASE_SPEED = CindervaneStatProfile.GroundCombatBehaviour.CHASE_SPEED;
+    public static final double MELEE_STOP_RANGE = CindervaneStatProfile.GroundCombatBehaviour.MELEE_STOP_RANGE;
 
-    private static final double BITE_RANGE = 4.5D;
-    private static final double DOUBLE_BITE_RANGE = 4.75D;
-    private static final double SLASH_GRAB_MIN_RANGE = 2.0D;
-    private static final double SLASH_GRAB_MAX_RANGE = 6.25D;
-    private static final double BOMBARDMENT_MIN_RANGE = 8.0D;
-    private static final double BOMBARDMENT_MAX_RANGE = 32.0D;
-    private static final double FIRE_BODY_POINT_BLANK_RANGE = 3.25D;
-    private static final double FIRE_BODY_GROUP_RANGE = 6.5D;
-    private static final double FIRE_BODY_EXIT_RANGE = 11.0D;
+    private static final double BITE_RANGE = CindervaneStatProfile.GroundCombatBehaviour.BITE_RANGE;
+    private static final double DOUBLE_BITE_RANGE = CindervaneStatProfile.GroundCombatBehaviour.DOUBLE_BITE_RANGE;
+    private static final double SLASH_GRAB_MIN_RANGE = CindervaneStatProfile.GroundCombatBehaviour.SLASH_GRAB_MIN_RANGE;
+    private static final double SLASH_GRAB_MAX_RANGE = CindervaneStatProfile.GroundCombatBehaviour.SLASH_GRAB_MAX_RANGE;
+    private static final double BOMBARDMENT_MIN_RANGE = CindervaneStatProfile.GroundCombatBehaviour.BOMBARDMENT_MIN_RANGE;
+    private static final double BOMBARDMENT_MAX_RANGE = CindervaneStatProfile.GroundCombatBehaviour.BOMBARDMENT_MAX_RANGE;
+    private static final double FIRE_BODY_POINT_BLANK_RANGE = CindervaneStatProfile.GroundCombatBehaviour.FIRE_BODY_POINT_BLANK_RANGE;
+    private static final double FIRE_BODY_GROUP_RANGE = CindervaneStatProfile.GroundCombatBehaviour.FIRE_BODY_GROUP_RANGE;
+    private static final double FIRE_BODY_EXIT_RANGE = CindervaneStatProfile.GroundCombatBehaviour.FIRE_BODY_EXIT_RANGE;
     private static final double CLOSE_FACING_DOT = 0.35D;
     private static final double BOMBARDMENT_FACING_DOT = 0.55D;
     private static final int DECISION_INTERVAL_TICKS = 6;
-    private static final int INITIAL_CHASE_COMMIT_TICKS = 12;
-    private static final int RETREAT_CHASE_COMMIT_TICKS = 18;
-    private static final int POST_ABILITY_CHASE_COMMIT_TICKS = 8;
+    private static final int INITIAL_CHASE_COMMIT_TICKS = CindervaneStatProfile.GroundCombatBehaviour.INITIAL_CHASE_COMMIT_TICKS;
+    private static final int RETREAT_CHASE_COMMIT_TICKS = CindervaneStatProfile.GroundCombatBehaviour.RETREAT_CHASE_COMMIT_TICKS;
+    private static final int POST_ABILITY_CHASE_COMMIT_TICKS = CindervaneStatProfile.GroundCombatBehaviour.POST_ABILITY_CHASE_COMMIT_TICKS;
     private static final int FIRE_BODY_MIN_TICKS = 60;
     private static final int FIRE_BODY_MAX_TICKS = 180;
     private static final float COMBAT_TURN_DEGREES_PER_TICK = 12.0F;

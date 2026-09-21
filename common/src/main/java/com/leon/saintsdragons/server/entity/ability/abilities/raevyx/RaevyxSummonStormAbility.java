@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.util.animation.AnimationHelper;
 import com.leon.saintsdragons.server.data.RaevyxStormSavedData;
 
@@ -19,9 +21,9 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 
 public class RaevyxSummonStormAbility extends DragonAbility<Raevyx> {
     private static final int DEFAULT_SUPERCHARGE_TICKS = 20 * 60;
-    private static final int DEFAULT_COOLDOWN_TICKS = 20 * 240;
+    private static final int DEFAULT_COOLDOWN_TICKS = RaevyxStatProfile.SummonStormAbility.DEFAULT_COOLDOWN_TICKS;
     private static final int MIN_SUPERCHARGE_TICKS = 20;
-    private static final int MIN_COOLDOWN_TICKS = 20;
+    private static final int MIN_COOLDOWN_TICKS = RaevyxStatProfile.SummonStormAbility.MIN_COOLDOWN_TICKS;
     public record CastTiming(int castTicks, float introTicks, int burstTicks, int soundTicks,
                              int shakeStartTick, int extraShakeTick) {
         public float chargeTick() { return introTicks + burstTicks; }

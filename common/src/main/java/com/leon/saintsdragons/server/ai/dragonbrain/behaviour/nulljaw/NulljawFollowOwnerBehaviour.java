@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -24,7 +26,7 @@ public final class NulljawFollowOwnerBehaviour extends DragonBehaviour<Nulljaw> 
     private static final double BABY_CATCH_UP_DISTANCE_SQR = DragonBabyOwnerFollowTuning.RUN_DISTANCE
             * DragonBabyOwnerFollowTuning.RUN_DISTANCE;
     private static final double TARGET_EPSILON_SQR = 9.0D;
-    private static final double FLIGHT_SPEED = 1.0D;
+    private static final double FLIGHT_SPEED = NulljawStatProfile.FollowOwnerBehaviour.FLIGHT_SPEED;
 
     @Nullable
     private Vec3 lastTarget;

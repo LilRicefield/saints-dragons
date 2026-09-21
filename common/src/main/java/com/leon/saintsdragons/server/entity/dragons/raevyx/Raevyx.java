@@ -1,6 +1,7 @@
 // zap van dink
 package com.leon.saintsdragons.server.entity.dragons.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.mojang.serialization.Dynamic;
@@ -109,11 +110,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return DragonAttributeConfigLoader.RAEVYX_ID;
     }
 
-    public static final double RIDER_WALK_SPEED = 0.20D;
-    public static final double RIDER_RUN_SPEED = 0.35D;
-    private static final float TAMING_HEALTH_RATIO = 1.0F / 3.0F;
-    private static final float DEFAULT_DASH_DAMAGE = 10.0F;
-    private static final double GROUND_REND_BOLT_LINK_START_REACH = 1.1D;
+    public static final double RIDER_WALK_SPEED = RaevyxStatProfile.Entity.RIDER_WALK_SPEED;
+    public static final double RIDER_RUN_SPEED = RaevyxStatProfile.Entity.RIDER_RUN_SPEED;
+    private static final float TAMING_HEALTH_RATIO = RaevyxStatProfile.Entity.TAMING_HEALTH_RATIO;
+    private static final float DEFAULT_DASH_DAMAGE = RaevyxStatProfile.Entity.DEFAULT_DASH_DAMAGE;
+    private static final double GROUND_REND_BOLT_LINK_START_REACH = RaevyxStatProfile.Entity.GROUND_REND_BOLT_LINK_START_REACH;
     private static final double GROUND_REND_MAX_LINK_DISTANCE_SQR = 16.0D;
     private static final int GROUND_REND_BOLT_LIFETIME = 5;
     public static final int VARIANT_DEFAULT = 0;
@@ -147,18 +148,18 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     private static final int LANDED_RECOVERY_TICKS = 38;
     private static final int COMBAT_LANDED_RECOVERY_TICKS = 8;
     public static final int AGGRO_TTL_TICKS = 200;
-    public static final double BREED_PARTNER_RANGE = 8.0D;
-    public static final double BREED_DISTANCE_SQR = 16.0D;
-    private static final int DODGE_DURATION_TICKS = 12;
+    public static final double BREED_PARTNER_RANGE = RaevyxStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = RaevyxStatProfile.Entity.BREED_DISTANCE_SQR;
+    private static final int DODGE_DURATION_TICKS = RaevyxStatProfile.Entity.DODGE_DURATION_TICKS;
     private static final int DODGE_IFRAMES_TICKS = 8;
-    private static final int RIDER_DODGE_COOLDOWN_TICKS = 30;
+    private static final int RIDER_DODGE_COOLDOWN_TICKS = RaevyxStatProfile.Entity.RIDER_DODGE_COOLDOWN_TICKS;
     private static final int FLEX_CONTROL_LOCK_TICKS = 65;
-    private static final int FLEX_COOLDOWN_TICKS = 120;
-    private static final int AI_DODGE_COOLDOWN_TICKS = 60;
+    private static final int FLEX_COOLDOWN_TICKS = RaevyxStatProfile.Entity.FLEX_COOLDOWN_TICKS;
+    private static final int AI_DODGE_COOLDOWN_TICKS = RaevyxStatProfile.Entity.AI_DODGE_COOLDOWN_TICKS;
     private static final double DODGE_DISTANCE_BLOCKS = 10.0D;
-    private static final double AIR_DODGE_DISTANCE_MULTIPLIER = 3.0D;
-    private static final double DASH_NUDGE_DRAG = 0.9D;
-    private static final float REACTIVE_HIT_DODGE_CHANCE = 0.35F;
+    private static final double AIR_DODGE_DISTANCE_MULTIPLIER = RaevyxStatProfile.Entity.AIR_DODGE_DISTANCE_MULTIPLIER;
+    private static final double DASH_NUDGE_DRAG = RaevyxStatProfile.Entity.DASH_NUDGE_DRAG;
+    private static final float REACTIVE_HIT_DODGE_CHANCE = RaevyxStatProfile.Entity.REACTIVE_HIT_DODGE_CHANCE;
     public static final EntityDataAccessor<Boolean> DATA_LANDED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final EntityDataAccessor<Float> DATA_SCREEN_SHAKE_AMOUNT = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.FLOAT);
     public static final EntityDataAccessor<Boolean> DATA_BEAMING = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
@@ -192,11 +193,11 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final EntityDataAccessor<Boolean> DATA_CUSTOM_DIVE_LOOP_ENABLED = SynchedEntityData.defineId(Raevyx.class, EntityDataSerializers.BOOLEAN);
     public static final float MAX_BEAM_YAW_DEG = 40.0f;
     public static final float MAX_BEAM_PITCH_DEG = 50.0f;
-    public static final double BEAM_RANGE = 64.0D;
+    public static final double BEAM_RANGE = RaevyxStatProfile.Entity.BEAM_RANGE;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
-    private static final int RIDER_LANDING_BLEND_DURATION = 5; // ticks to keep landing blend active after triggering
-    private static final double BABY_MAX_HEALTH = 60.0D;
-    private static final double GROUND_MOVEMENT_SPEED = 0.30D;
+    private static final int RIDER_LANDING_BLEND_DURATION = RaevyxStatProfile.Entity.RIDER_LANDING_BLEND_DURATION; // ticks to keep landing blend active after triggering
+    private static final double BABY_MAX_HEALTH = RaevyxStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double GROUND_MOVEMENT_SPEED = RaevyxStatProfile.Entity.GROUND_MOVEMENT_SPEED;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
             .add("grumble1", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble1", ModSounds.RAEVYX_GRUMBLE_1, 0.8f, 0.95f, 0.1f, false, false, false)
             .add("grumble2", AnimationHelper.VOCAL_CONTROLLER, "animation.raevyx.grumble2", ModSounds.RAEVYX_GRUMBLE_2, 0.8f, 0.95f, 0.1f, false, false, false)
@@ -564,9 +565,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
                 .add(Attributes.MOVEMENT_SPEED, GROUND_MOVEMENT_SPEED)
-                .add(Attributes.FOLLOW_RANGE, 64.0D)
+                .add(Attributes.FOLLOW_RANGE, RaevyxStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
-                .add(Attributes.KNOCKBACK_RESISTANCE, 1.0D)
+                .add(Attributes.KNOCKBACK_RESISTANCE, RaevyxStatProfile.Entity.ATTRIBUTE_KNOCKBACK_RESISTANCE)
                 .add(Attributes.ARMOR, config.armor());
     }
     private int hurtSoundCooldown = 0;
@@ -1816,7 +1817,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         if (!isBeaming() && getBeamEnergy() < 1.0f) {
             float regen = (float) DragonAttributeConfigLoader.getInstance()
                     .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
-                    .extraDouble("beam_regen_per_tick", 0.0025D);
+                    .extraDouble("beam_regen_per_tick", RaevyxStatProfile.Entity.FALLBACK_BEAM_REGEN_PER_TICK);
             regen = Math.max(0.0f, regen);
             if (regen > 0.0f) {
                 regenerateBeamEnergy(regen);
@@ -2567,7 +2568,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
         }
         double configured = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.RAEVYX_ID)
-                .extraDouble("summon_storm_supercharge_damage_multiplier", 2.0D);
+                .extraDouble("summon_storm_supercharge_damage_multiplier", RaevyxStatProfile.Entity.FALLBACK_SUMMON_STORM_SUPERCHARGE_DAMAGE_MULTIPLIER);
         return (float) Math.max(0.0D, configured);
     }
 
@@ -3222,7 +3223,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
             return baseSpeed;
         }
         DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance().getConfig(DragonAttributeConfigLoader.RAEVYX_ID);
-        return (float) (baseSpeed * config.extraDouble("wild_flying_speed_multiplier", 1.0D));
+        return (float) (baseSpeed * config.extraDouble("wild_flying_speed_multiplier", RaevyxStatProfile.Entity.FALLBACK_WILD_FLYING_SPEED_MULTIPLIER));
     }
 
     @Override

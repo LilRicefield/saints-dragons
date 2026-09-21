@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -18,8 +20,8 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.AbilitySectionType.STARTUP;
 
 public final class NulljawBiteAbility extends DragonAbility<Nulljaw> {
-    private static final float BASE_DAMAGE = 8.0F;
-    private static final double RANGE = 2.75D;
+    private static final float BASE_DAMAGE = NulljawStatProfile.BiteAbility.BASE_DAMAGE;
+    private static final double RANGE = NulljawStatProfile.BiteAbility.RANGE;
     private static final double HITBOX_HALF_WIDTH = 3.3D;
     private static final double HITBOX_HALF_HEIGHT = 3.3D;
     private static final double HITBOX_FORWARD_OFFSET = 1.75D;

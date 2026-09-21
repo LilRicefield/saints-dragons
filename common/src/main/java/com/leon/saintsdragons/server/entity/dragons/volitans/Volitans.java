@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.volitans;
 
+import com.leon.saintsdragons.common.config.dragon.profile.VolitansStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearner;
 import com.leon.saintsdragons.server.ai.dragonbrain.learning.DragonCombatLearning;
 import com.leon.saintsdragons.server.entity.component.VolitansWaterCombatMovement;
@@ -120,8 +122,8 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         return DragonAttributeConfigLoader.VOLITANS_ID;
     }
 
-    private static final double BABY_MAX_HEALTH = 60.0D;
-    private static final double BABY_ARMOR = 0.0D;
+    private static final double BABY_MAX_HEALTH = VolitansStatProfile.Entity.BABY_MAX_HEALTH;
+    private static final double BABY_ARMOR = VolitansStatProfile.Entity.BABY_ARMOR;
     private static final float BABY_HITBOX_SCALE = 0.55F;
     private static final int SLEEP_AFTER_SPAWN_GRACE_TICKS = 600;
     private static final int SCENT_ASSESSMENT_ANIMATION_TICKS = 90;
@@ -190,10 +192,10 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     private static final EntityDataAccessor<Float> DATA_RIDER_NUDGE_STEER_OFFSET =
             SynchedEntityData.defineId(Volitans.class, EntityDataSerializers.FLOAT);
 
-    private static final double RIDER_WALK_SPEED = 0.24D;
-    private static final double RIDER_RUN_SPEED = 0.34D;
-    private static final double RIDER_BURROW_SPEED = 0.40D;
-    private static final double RIDER_SWIM_SPEED = 1.42D;
+    private static final double RIDER_WALK_SPEED = VolitansStatProfile.Entity.RIDER_WALK_SPEED;
+    private static final double RIDER_RUN_SPEED = VolitansStatProfile.Entity.RIDER_RUN_SPEED;
+    private static final double RIDER_BURROW_SPEED = VolitansStatProfile.Entity.RIDER_BURROW_SPEED;
+    private static final double RIDER_SWIM_SPEED = VolitansStatProfile.Entity.RIDER_SWIM_SPEED;
     public static final int TAKEOFF_ANIMATION_TICKS = 31;
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
@@ -210,51 +212,51 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     private static final int SLEEP_WAKE_SUPPRESSION_TICKS = 20;
     private static final int LANDED_CONTROL_LOCK_TICKS = 20;
     private static final int LANDED_RECOVERY_TICKS = 23;
-    private static final int EAT_SOUND_DURATION_TICKS = 34;
+    private static final int EAT_SOUND_DURATION_TICKS = VolitansStatProfile.Entity.EAT_SOUND_DURATION_TICKS;
     private static final int MIN_AMBIENT_DELAY = 220;
     private static final int MAX_AMBIENT_DELAY = 420;
-    private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = 30;
-    private static final int RIDER_DASH_SOUND_TICKS = 60; // 3.0s
+    private static final int RIDER_BACK_DASH_COOLDOWN_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_COOLDOWN_TICKS;
+    private static final int RIDER_DASH_SOUND_TICKS = VolitansStatProfile.Entity.RIDER_DASH_SOUND_TICKS; // 3.0s
     private static final int RIDER_DODGE_SOUND_TICKS = 60; // 3.0s
     private static final int FLEX_CONTROL_LOCK_TICKS = 65;
-    private static final int FLEX_COOLDOWN_TICKS = 65;
-    private static final int RIDER_BACK_DASH_LOCK_TICKS = 0;
-    private static final int RIDER_BACK_DASH_DURATION_TICKS = 8;
-    private static final double RIDER_BACK_DASH_DISTANCE_BLOCKS = 12.0D;
-    private static final double RIDER_BACK_DASH_HORIZONTAL_DRAG = 0.90D;
-    private static final double RIDER_BACK_DASH_VERTICAL_DRAG = 0.95D;
-    private static final int RIDER_BACK_DASH_RECOVERY_TICKS = 5;
-    private static final double RIDER_BACK_DASH_RECOVERY_DRAG = 0.82D;
-    private static final int RIDER_BACK_DASH_SPIKE_COUNT = 3;
-    private static final float RIDER_BACK_DASH_SPIKE_DAMAGE = 5.0F;
-    private static final int RIDER_BACK_DASH_SPIKE_POISON_DURATION_TICKS = 100;
-    private static final int RIDER_BACK_DASH_SPIKE_POISON_AMPLIFIER = 0;
-    private static final float RIDER_BACK_DASH_SPIKE_SPEED = 2.9F;
-    private static final float RIDER_BACK_DASH_SPIKE_INACCURACY = 0.10F;
-    private static final int RIDER_BACK_DASH_SPIKE_DELAY_TICKS = 8;
-    private static final double RIDER_BACK_DASH_SPIKE_Y_OFFSET = -3.0D;
-    private static final float REACTIVE_HIT_EVADE_CHANCE = 0.35F;
-    private static final int RIDER_FORWARD_DASH_DURATION_TICKS = 25; // 1.25s
-    private static final double RIDER_FORWARD_DASH_DISTANCE_BLOCKS = 26.0D;
-    private static final double RIDER_FORWARD_DASH_HORIZONTAL_DRAG = 0.90D;
-    private static final int RIDER_FORWARD_DASH_DAMAGE_TICK = 14; // late hit near animation end
-    private static final float RIDER_FORWARD_DASH_DAMAGE = 16.0F;
-    private static final double RIDER_FORWARD_DASH_DAMAGE_RADIUS = 8.0D;
-    private static final int RIDER_SIDE_DODGE_DURATION_TICKS = 7;
-    private static final double RIDER_SIDE_DODGE_VERTICAL_DRAG = 0.95D;
+    private static final int FLEX_COOLDOWN_TICKS = VolitansStatProfile.Entity.FLEX_COOLDOWN_TICKS;
+    private static final int RIDER_BACK_DASH_LOCK_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_LOCK_TICKS;
+    private static final int RIDER_BACK_DASH_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_DURATION_TICKS;
+    private static final double RIDER_BACK_DASH_DISTANCE_BLOCKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_DISTANCE_BLOCKS;
+    private static final double RIDER_BACK_DASH_HORIZONTAL_DRAG = VolitansStatProfile.Entity.RIDER_BACK_DASH_HORIZONTAL_DRAG;
+    private static final double RIDER_BACK_DASH_VERTICAL_DRAG = VolitansStatProfile.Entity.RIDER_BACK_DASH_VERTICAL_DRAG;
+    private static final int RIDER_BACK_DASH_RECOVERY_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_RECOVERY_TICKS;
+    private static final double RIDER_BACK_DASH_RECOVERY_DRAG = VolitansStatProfile.Entity.RIDER_BACK_DASH_RECOVERY_DRAG;
+    private static final int RIDER_BACK_DASH_SPIKE_COUNT = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_COUNT;
+    private static final float RIDER_BACK_DASH_SPIKE_DAMAGE = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_DAMAGE;
+    private static final int RIDER_BACK_DASH_SPIKE_POISON_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_POISON_DURATION_TICKS;
+    private static final int RIDER_BACK_DASH_SPIKE_POISON_AMPLIFIER = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_POISON_AMPLIFIER;
+    private static final float RIDER_BACK_DASH_SPIKE_SPEED = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_SPEED;
+    private static final float RIDER_BACK_DASH_SPIKE_INACCURACY = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_INACCURACY;
+    private static final int RIDER_BACK_DASH_SPIKE_DELAY_TICKS = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_DELAY_TICKS;
+    private static final double RIDER_BACK_DASH_SPIKE_Y_OFFSET = VolitansStatProfile.Entity.RIDER_BACK_DASH_SPIKE_Y_OFFSET;
+    private static final float REACTIVE_HIT_EVADE_CHANCE = VolitansStatProfile.Entity.REACTIVE_HIT_EVADE_CHANCE;
+    private static final int RIDER_FORWARD_DASH_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DURATION_TICKS; // 1.25s
+    private static final double RIDER_FORWARD_DASH_DISTANCE_BLOCKS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DISTANCE_BLOCKS;
+    private static final double RIDER_FORWARD_DASH_HORIZONTAL_DRAG = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_HORIZONTAL_DRAG;
+    private static final int RIDER_FORWARD_DASH_DAMAGE_TICK = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE_TICK; // late hit near animation end
+    private static final float RIDER_FORWARD_DASH_DAMAGE = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE;
+    private static final double RIDER_FORWARD_DASH_DAMAGE_RADIUS = VolitansStatProfile.Entity.RIDER_FORWARD_DASH_DAMAGE_RADIUS;
+    private static final int RIDER_SIDE_DODGE_DURATION_TICKS = VolitansStatProfile.Entity.RIDER_SIDE_DODGE_DURATION_TICKS;
+    private static final double RIDER_SIDE_DODGE_VERTICAL_DRAG = VolitansStatProfile.Entity.RIDER_SIDE_DODGE_VERTICAL_DRAG;
     private static final double RIDER_SIDE_DODGE_DISTANCE_BLOCKS = 7.0D;
     private static final int RIDER_SIDE_DODGE_RECOVERY_TICKS = 5;
-    private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = 0.82D;
+    private static final double RIDER_SIDE_DODGE_RECOVERY_DRAG = VolitansStatProfile.Entity.RIDER_SIDE_DODGE_RECOVERY_DRAG;
     private static final int RIDER_NUDGE_NONE = 0;
-    private static final int RIDER_NUDGE_FORWARD_DASH = 1;
-    private static final int RIDER_NUDGE_BACK_DASH = 2;
+    private static final int RIDER_NUDGE_FORWARD_DASH = VolitansStatProfile.Entity.RIDER_NUDGE_FORWARD_DASH;
+    private static final int RIDER_NUDGE_BACK_DASH = VolitansStatProfile.Entity.RIDER_NUDGE_BACK_DASH;
     private static final int RIDER_NUDGE_SIDE_DODGE = 3;
     private static final float BREATH_DEPLETED_THRESHOLD = 0.01F;
     private static final float BREATH_REARM_THRESHOLD = 0.20F;
-    private static final int SPINE_DROP_COOLDOWN_TICKS = 30;
+    private static final int SPINE_DROP_COOLDOWN_TICKS = VolitansStatProfile.Entity.SPINE_DROP_COOLDOWN_TICKS;
     public static final double LANDING_BLEND_ALTITUDE = RideableFlyingDragon.LANDING_BLEND_ALTITUDE;
-    public static final double BREED_PARTNER_RANGE = 20.0D;
-    public static final double BREED_DISTANCE_SQR = 16.0D;
+    public static final double BREED_PARTNER_RANGE = VolitansStatProfile.Entity.BREED_PARTNER_RANGE;
+    public static final double BREED_DISTANCE_SQR = VolitansStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final float BURROW_MOVE_SHAKE_INTENSITY = 0.12F;
     private static final int BURROW_EXIT_TAKEOFF_BLOCK_BUFFER_TICKS = 8;
     private static final Map<String, VocalEntry> VOCAL_ENTRIES = new VocalEntryBuilder()
@@ -438,9 +440,9 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
                 .getConfig(DragonAttributeConfigLoader.VOLITANS_ID);
         return TamableAnimal.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, config.maxHealth())
-                .add(Attributes.MOVEMENT_SPEED, 0.30D)
+                .add(Attributes.MOVEMENT_SPEED, VolitansStatProfile.Entity.ATTRIBUTE_MOVEMENT_SPEED)
                 .add(Attributes.FLYING_SPEED, config.flyingSpeed())
-                .add(Attributes.FOLLOW_RANGE, 64.0D)
+                .add(Attributes.FOLLOW_RANGE, VolitansStatProfile.Entity.ATTRIBUTE_FOLLOW_RANGE)
                 .add(Attributes.ARMOR, config.armor());
     }
 
@@ -1481,7 +1483,7 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     public float getTamingThreshold() {
         double configured = DragonAttributeConfigLoader.getInstance()
                 .getConfig(DragonAttributeConfigLoader.VOLITANS_ID)
-                .extraDouble("taming_stun_health", 60.0D);
+                .extraDouble("taming_stun_health", VolitansStatProfile.Entity.FALLBACK_TAMING_STUN_HEALTH);
         double clamped = Math.max(0.0D, Math.min(configured, this.getMaxHealth()));
         return (float) clamped;
     }

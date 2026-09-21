@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.atroxiia;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -10,8 +12,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.FluidState;
 
 final class AtroxiiaFrostWalker {
-    private static final int MAX_RADIUS = 84;
-    private static final int SHORE_VERTICAL_REACH = 10;
+    private static final int MAX_RADIUS = AtroxiiaStatProfile.FrostWalker.MAX_RADIUS;
+    private static final int SHORE_VERTICAL_REACH = AtroxiiaStatProfile.FrostWalker.SHORE_VERTICAL_REACH;
 
     private AtroxiiaFrostWalker() {
     }

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -16,10 +18,10 @@ import java.util.Comparator;
 import java.util.Map;
 
 public final class NulljawShulkerBulletSensorBehaviour extends DragonBehaviour<Nulljaw> {
-    private static final double SEARCH_RADIUS = 32.0D;
+    private static final double SEARCH_RADIUS = NulljawStatProfile.ShulkerBulletSensorBehaviour.SEARCH_RADIUS;
     private static final double MAX_DEFENDER_DISTANCE_FROM_OWNER_SQR = 48.0D * 48.0D;
-    private static final double MAX_CHASE_DISTANCE_FROM_OWNER_SQR = 40.0D * 40.0D;
-    private static final double LAST_CHANCE_INTERCEPT_DISTANCE_SQR = 8.0D * 8.0D;
+    private static final double MAX_CHASE_DISTANCE_FROM_OWNER_SQR = NulljawStatProfile.ShulkerBulletSensorBehaviour.MAX_CHASE_DISTANCE_FROM_OWNER_SQR;
+    private static final double LAST_CHANCE_INTERCEPT_DISTANCE_SQR = NulljawStatProfile.ShulkerBulletSensorBehaviour.LAST_CHANCE_INTERCEPT_DISTANCE_SQR;
     private static final int SEARCH_INTERVAL_TICKS = 4;
 
     private int searchCooldown;

@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
@@ -21,7 +23,7 @@ import java.util.*;
 import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.*;
 
 public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
-    private static final float LIGHTNING_DAMAGE = 5.0F;
+    private static final float LIGHTNING_DAMAGE = RaevyxStatProfile.RoarAbility.LIGHTNING_DAMAGE;
 
     private static final DragonAbilitySection[] TRACK = new DragonAbilitySection[] {
             new AbilitySectionDuration(AbilitySectionType.STARTUP, 6),

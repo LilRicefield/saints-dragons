@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.GroundPursuitFlightSettings;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
@@ -84,7 +86,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                         CindervaneGroundCombatBehaviour::groundStopRange,
                                         (dragon, target) -> CindervaneGroundCombatBehaviour.isMovementCommitted(dragon)
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),
+                                new AsyncWaterChaseTargetBehaviour<>(CindervaneStatProfile.Brain.WATER_CHASE_SPEED, CindervaneStatProfile.Brain.WATER_CHASE_TURN_DEGREES),
                                 new CindervaneGroundCombatBehaviour()
                         )
                         .clearWhenStopped(
@@ -107,15 +109,15 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                 DragonBehaviourGroup.<Cindervane>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
+                                        new DragonWaterEscapeBehaviour<>(CindervaneStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, CindervaneStatProfile.Brain.WATER_ESCAPE_SPEED),
                                         new DragonBreedBehaviour<>(
-                                                1.0D,
+                                                CindervaneStatProfile.Brain.BREED_SPEED,
                                                 Cindervane.class,
                                                 Cindervane.BREED_PARTNER_RANGE,
                                                 Cindervane.BREED_DISTANCE_SQR
                                         ),
                                         new DragonPackFollowBehaviour<>(Cindervane.class, 1.0D, 20.0D, 10.0D),
-                                        new DragonFollowParentBehaviour<>(Cindervane.class, 1.15D),
+                                        new DragonFollowParentBehaviour<>(Cindervane.class, CindervaneStatProfile.Brain.FOLLOW_PARENT_SPEED),
                                         new DragonFollowOwnerBehaviour<>(
                                                 DragonFollowOwnerBehaviour.Config.cindervane(),
                                                 dragon -> dragon.startTakeoffSequence(
@@ -125,7 +127,7 @@ public class CindervaneBrain implements DragonBrainOwner<Cindervane> {
                                         ),
                                         new DragonDrinkBehaviour<>(DragonDrinkBehaviour.Config.standard()),
                                         new CindervaneAutonomousFlightBehaviour(),
-                                        new DragonGroundWanderBehaviour<>(1.0D, 160)
+                                        new DragonGroundWanderBehaviour<>(CindervaneStatProfile.Brain.GROUND_WANDER_SPEED, 160)
                                 )
                         )
                         .clearWhenStopped(DragonMemories.MOVEMENT_INTENT)

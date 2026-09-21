@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModEntities;
 import com.leon.saintsdragons.common.registry.ModSounds;
@@ -33,7 +35,7 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     private static final int STARTUP_TICKS = 20;
     private static final int ACTIVE_TICKS = 30;
     private static final int RECOVERY_TICKS = 20;
-    private static final int COOLDOWN_TICKS = 32;
+    private static final int COOLDOWN_TICKS = RaevyxStatProfile.GroundRendAbility.COOLDOWN_TICKS;
     private static final int GROUND_REND_SOUND_TICKS = 100;
     private static final int SLOWDOWN_START_TICKS = 25;
     private static final int STOP_TICKS = 55;
@@ -41,15 +43,15 @@ public class RaevyxGroundRendAbility extends DragonAbility<Raevyx> {
     public static final int FALLING_BLOCK_TICKS = 23;
     private static final int END_DUST_TICKS = 62;
     private static final double DUST_VIEW_DISTANCE = 128.0D;
-    private static final double AI_STEER_BACK_RANGE = 6.0D;
-    private static final float RIDER_SURGE_SPEED = 2.0F;
-    private static final float RIDER_RECOVERY_END_SPEED = 0.25F;
-    private static final double AI_FORWARD_SPEED = 0.9D;
+    private static final double AI_STEER_BACK_RANGE = RaevyxStatProfile.GroundRendAbility.AI_STEER_BACK_RANGE;
+    private static final float RIDER_SURGE_SPEED = RaevyxStatProfile.GroundRendAbility.RIDER_SURGE_SPEED;
+    private static final float RIDER_RECOVERY_END_SPEED = RaevyxStatProfile.GroundRendAbility.RIDER_RECOVERY_END_SPEED;
+    private static final double AI_FORWARD_SPEED = RaevyxStatProfile.GroundRendAbility.AI_FORWARD_SPEED;
     private static final double AI_RECOVERY_END_SPEED = AI_FORWARD_SPEED * (RIDER_RECOVERY_END_SPEED / RIDER_SURGE_SPEED);
-    private static final float HIT_DAMAGE = 5.0F;
+    private static final float HIT_DAMAGE = RaevyxStatProfile.GroundRendAbility.HIT_DAMAGE;
     private static final float SUPERCHARGED_HIT_DAMAGE = HIT_DAMAGE * 2.0F;
-    private static final double HIT_KNOCKBACK = 0.55D;
-    private static final int HIT_COOLDOWN_TICKS = 5;
+    private static final double HIT_KNOCKBACK = RaevyxStatProfile.GroundRendAbility.HIT_KNOCKBACK;
+    private static final int HIT_COOLDOWN_TICKS = RaevyxStatProfile.GroundRendAbility.HIT_COOLDOWN_TICKS;
 
     private final Map<Integer, Integer> hitCooldowns = new HashMap<>();
     private Vec3 aiGroundRendDir = Vec3.ZERO;

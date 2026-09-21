@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.dragons.atroxiia.handlers;
 
+import com.leon.saintsdragons.common.config.dragon.profile.AtroxiiaStatProfile;
+
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
@@ -91,8 +93,8 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
             }
 
             double tameChance = heartyMeal
-                    ? config.extraDouble("taming_chance_hearty", 33.3333D)
-                    : config.extraDouble("taming_chance_base", 20.0D);
+                    ? config.extraDouble("taming_chance_hearty", AtroxiiaStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_HEARTY)
+                    : config.extraDouble("taming_chance_base", AtroxiiaStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BASE);
             if (DragonTamingChance.rollPercent(dragon.getRandom(), tameChance)) {
                 dragon.tame(player);
                 if (!legacyTaming && heartyMeal) {
@@ -132,8 +134,8 @@ public final class AtroxiiaInteractionHandler extends AbstractDragonInteractionH
         }
 
         double tameChance = heartyMeal
-                ? config.extraDouble("taming_chance_hearty", 33.3333D)
-                : config.extraDouble("taming_chance_base", 20.0D);
+                ? config.extraDouble("taming_chance_hearty", AtroxiiaStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_HEARTY)
+                : config.extraDouble("taming_chance_base", AtroxiiaStatProfile.InteractionHandler.FALLBACK_TAMING_CHANCE_BASE);
         return baby.tryHandleBabyFoodTaming(
                 player,
                 heldItem,

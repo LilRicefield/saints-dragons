@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.profiles;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModSensorTypes;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourGroup;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainOwner;
@@ -31,7 +33,7 @@ import net.minecraft.world.entity.schedule.Activity;
 import java.util.List;
 
 public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
-    private static final float GROUND_CHASE_SPEED = 0.75F;
+    private static final float GROUND_CHASE_SPEED = StegonautStatProfile.Brain.GROUND_CHASE_SPEED;
 
 
     @Override
@@ -77,7 +79,7 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
                                                         + (dragon.getBbWidth() + target.getBbWidth()) * 0.5D,
                                         (dragon, target) -> StegonautGroundCombatBehaviour.isAttacking(dragon)
                                 ),
-                                new AsyncWaterChaseTargetBehaviour<>(0.12D, 8.0F),
+                                new AsyncWaterChaseTargetBehaviour<>(StegonautStatProfile.Brain.WATER_CHASE_SPEED, StegonautStatProfile.Brain.WATER_CHASE_TURN_DEGREES),
                                 new StegonautGroundCombatBehaviour()
                         )
                         .clearWhenStopped(
@@ -90,9 +92,9 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
                 DragonBehaviourGroup.<Stegonaut>activity(Activity.IDLE)
                         .behaviours(
                                 new FirstApplicableDragonBehaviour<>(
-                                        new DragonWaterEscapeBehaviour<>(8.0F, 0.12D),
-                                        new DragonFollowParentBehaviour<>(Stegonaut.class, 0.70D),
-                                        new DragonBreedBehaviour<>(1.0D,
+                                        new DragonWaterEscapeBehaviour<>(StegonautStatProfile.Brain.WATER_ESCAPE_TURN_DEGREES, StegonautStatProfile.Brain.WATER_ESCAPE_SPEED),
+                                        new DragonFollowParentBehaviour<>(Stegonaut.class, StegonautStatProfile.Brain.FOLLOW_PARENT_SPEED),
+                                        new DragonBreedBehaviour<>(StegonautStatProfile.Brain.BREED_SPEED,
                                                 Stegonaut.class,
                                                 Stegonaut.BREED_PARTNER_RANGE,
                                                 Stegonaut.BREED_DISTANCE_SQR),
@@ -100,7 +102,7 @@ public class StegonautBrain implements DragonBrainOwner<Stegonaut> {
                                                 DragonGroundFollowOwnerBehaviour.Config.standardAdult()),
                                         new DragonGroundPackFollowBehaviour<>(
                                                 Stegonaut.class, 16.0D, 8.0D),
-                                        new DragonGroundWanderBehaviour<>(0.80D, 120)
+                                        new DragonGroundWanderBehaviour<>(StegonautStatProfile.Brain.GROUND_WANDER_SPEED, 120)
                                 )
                         )
                         .build()

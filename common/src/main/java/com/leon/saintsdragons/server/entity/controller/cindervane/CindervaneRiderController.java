@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.controller.cindervane;
 
+import com.leon.saintsdragons.common.config.dragon.profile.CindervaneStatProfile;
+
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightController;
 import com.leon.saintsdragons.server.flight.DragonRiderFlightSettings;
@@ -20,16 +22,16 @@ public record CindervaneRiderController(Cindervane dragon) {
     private static final double SEAT0_HEIGHT_ADJUST = 0.00D;
     private static final double SEAT1_HEIGHT_ADJUST = 0.00D;
     private static final double AUTO_GRAB_HEIGHT_ADJUST = 0.00D;
-    private static final double BASE_FLIGHT_SPEED_MULT = 3.0;
-    private static final double SPRINT_FLIGHT_SPEED_MULT = 4.0;
-    private static final double DRAG_NO_INPUT = 0.45;
+    private static final double BASE_FLIGHT_SPEED_MULT = CindervaneStatProfile.RiderController.BASE_FLIGHT_SPEED_MULT;
+    private static final double SPRINT_FLIGHT_SPEED_MULT = CindervaneStatProfile.RiderController.SPRINT_FLIGHT_SPEED_MULT;
+    private static final double DRAG_NO_INPUT = CindervaneStatProfile.RiderController.DRAG_NO_INPUT;
     private static final double STRAFE_POWER = 0.4;
-    private static final double ASCEND_THRUST = 0.45D;
-    private static final double DESCEND_THRUST = 0.85D;
-    private static final double TERMINAL_VELOCITY = 1.2D;
-    private static final double FLIGHT_ACCELERATION = 0.35D;
-    private static final double DIVE_SPEED_MULTIPLIER = 2.75D;
-    private static final double DIVE_ACCELERATION = 0.30D;
+    private static final double ASCEND_THRUST = CindervaneStatProfile.RiderController.ASCEND_THRUST;
+    private static final double DESCEND_THRUST = CindervaneStatProfile.RiderController.DESCEND_THRUST;
+    private static final double TERMINAL_VELOCITY = CindervaneStatProfile.RiderController.TERMINAL_VELOCITY;
+    private static final double FLIGHT_ACCELERATION = CindervaneStatProfile.RiderController.FLIGHT_ACCELERATION;
+    private static final double DIVE_SPEED_MULTIPLIER = CindervaneStatProfile.RiderController.DIVE_SPEED_MULTIPLIER;
+    private static final double DIVE_ACCELERATION = CindervaneStatProfile.RiderController.DIVE_ACCELERATION;
 
     @Nullable
     public Player getRidingPlayer() {

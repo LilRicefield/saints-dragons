@@ -1,11 +1,13 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 
+import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonFollowParentBehaviour;
 import com.leon.saintsdragons.server.entity.dragons.nulljaw.Nulljaw;
 import net.minecraft.world.phys.Vec3;
 
 public final class NulljawFollowParentBehaviour extends DragonFollowParentBehaviour<Nulljaw> {
-    private static final double FOLLOW_SPEED = 0.9D;
+    private static final double FOLLOW_SPEED = NulljawStatProfile.FollowParentBehaviour.FOLLOW_SPEED;
 
     public NulljawFollowParentBehaviour() {
         super(Nulljaw.class, FOLLOW_SPEED);

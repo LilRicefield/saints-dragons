@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 
+import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
+
 import com.leon.saintsdragons.common.registry.ModParticles;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.common.particle.GroundDecalParticleData;
@@ -21,17 +23,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class RaevyxDiveImpactAbility {
-    private static final double MIN_IMPACT_SPEED = 1.45D;
+    private static final double MIN_IMPACT_SPEED = RaevyxStatProfile.DiveImpactAbility.MIN_IMPACT_SPEED;
     private static final int MIN_DIVE_TICKS = 8;
     private static final double MIN_DIVE_DROP = 12.0D;
-    private static final double FULL_POWER_SPEED = 3.25D;
-    private static final float BASE_DAMAGE = 8.0F;
-    private static final float DAMAGE_PER_EXCESS_SPEED = 20.0F;
-    private static final float MAX_DAMAGE = 40.0F;
-    private static final double MIN_RADIUS = 7.0D;
-    private static final double MAX_RADIUS = 12.0D;
-    private static final double MIN_KNOCKBACK = 0.8D;
-    private static final double MAX_KNOCKBACK = 2.0D;
+    private static final double FULL_POWER_SPEED = RaevyxStatProfile.DiveImpactAbility.FULL_POWER_SPEED;
+    private static final float BASE_DAMAGE = RaevyxStatProfile.DiveImpactAbility.BASE_DAMAGE;
+    private static final float DAMAGE_PER_EXCESS_SPEED = RaevyxStatProfile.DiveImpactAbility.DAMAGE_PER_EXCESS_SPEED;
+    private static final float MAX_DAMAGE = RaevyxStatProfile.DiveImpactAbility.MAX_DAMAGE;
+    private static final double MIN_RADIUS = RaevyxStatProfile.DiveImpactAbility.MIN_RADIUS;
+    private static final double MAX_RADIUS = RaevyxStatProfile.DiveImpactAbility.MAX_RADIUS;
+    private static final double MIN_KNOCKBACK = RaevyxStatProfile.DiveImpactAbility.MIN_KNOCKBACK;
+    private static final double MAX_KNOCKBACK = RaevyxStatProfile.DiveImpactAbility.MAX_KNOCKBACK;
     private static final int SONIC_RING_INTERVAL_TICKS = 3;
 
     private final Raevyx dragon;

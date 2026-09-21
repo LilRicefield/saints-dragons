@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.DragonTargetingBehaviour;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
@@ -21,8 +23,8 @@ import java.util.UUID;
 import java.util.function.Predicate;
 
 public final class StegonautTargetingBehaviour extends DragonTargetingBehaviour<Stegonaut> {
-    private static final double BABY_PROTECTION_RANGE = 16.0D;
-    private static final double PACK_ASSIST_RANGE = 36.0D;
+    private static final double BABY_PROTECTION_RANGE = StegonautStatProfile.TargetingBehaviour.BABY_PROTECTION_RANGE;
+    private static final double PACK_ASSIST_RANGE = StegonautStatProfile.TargetingBehaviour.PACK_ASSIST_RANGE;
 
     private int lastOwnerHurtTimestamp;
     private int lastOwnerAttackTimestamp;

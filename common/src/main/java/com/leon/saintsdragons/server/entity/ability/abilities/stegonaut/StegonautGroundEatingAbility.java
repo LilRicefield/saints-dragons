@@ -1,5 +1,7 @@
 package com.leon.saintsdragons.server.entity.ability.abilities.stegonaut;
 
+import com.leon.saintsdragons.common.config.dragon.profile.StegonautStatProfile;
+
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
@@ -24,15 +26,15 @@ public class StegonautGroundEatingAbility extends DragonAbility<Stegonaut> {
             new AbilitySectionInfinite(ACTIVE)
     };
 
-    private static final int COOLDOWN_TICKS = 30;
+    private static final int COOLDOWN_TICKS = StegonautStatProfile.GroundEatingAbility.COOLDOWN_TICKS;
     private static final int CHARGE_ANIM_TICKS = 29; // 1.4583s
     private static final int HOLD_LOOP_TRIGGER_TICKS = 29;
     private static final int FIRE_RELEASE_TICKS = 18;
-    private static final double PROJECTILE_SPEED = 2.5D;
+    private static final double PROJECTILE_SPEED = StegonautStatProfile.GroundEatingAbility.PROJECTILE_SPEED;
     private static final int PROJECTILE_LIFETIME_TICKS = 80;
     private static final float PROJECTILE_SCALE = 1.2F;
-    private static final double PROJECTILE_RADIUS = 3.2D;
-    private static final float PROJECTILE_DAMAGE = 10.0F;
+    private static final double PROJECTILE_RADIUS = StegonautStatProfile.GroundEatingAbility.PROJECTILE_RADIUS;
+    private static final float PROJECTILE_DAMAGE = StegonautStatProfile.GroundEatingAbility.PROJECTILE_DAMAGE;
     private static final double TARGET_LEAD_FACTOR = 0.55D;
     private int chargeTicks = 0;
     private boolean holdLoopActive = false;
