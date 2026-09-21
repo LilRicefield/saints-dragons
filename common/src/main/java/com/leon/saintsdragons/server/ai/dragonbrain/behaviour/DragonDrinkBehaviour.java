@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncDragonPathfinder;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
@@ -46,6 +47,12 @@ public final class DragonDrinkBehaviour<T extends RideableDragonBase & DrinkingD
 
     public DragonDrinkBehaviour(Config config) {
         this.config = config;
+    }
+
+    @Override
+    public boolean canYieldTo(DragonBrainContext<T> context, DragonBehaviourInterruption interruption) {
+        return super.canYieldTo(context, interruption)
+                && (phase != Phase.DRINKING || interruption == DragonBehaviourInterruption.WATER_ESCAPE);
     }
 
     @Override

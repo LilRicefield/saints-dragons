@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
@@ -108,7 +109,27 @@ public class ReturnToRoostBehaviour<T extends RideableDragonBase> extends Dragon
     }
 
     @Override
+    public DragonBehaviourInterruption interruptionType() {
+        return DragonBehaviourInterruption.RETURN_HOME;
+    }
+
+    @Override
+    public boolean canYieldTo(DragonBrainContext<T> context, DragonBehaviourInterruption interruption) {
+        return super.canYieldTo(context, interruption)
+                && (interruption != DragonBehaviourInterruption.WATER_ESCAPE || !context.dragon().canSwim());
+    }
+
+    @Override
+    public boolean requestsInterruption(DragonBrainContext<T> context) {
+        return wantsToReturn(context);
+    }
+
+    @Override
     protected boolean canStart(DragonBrainContext<T> context) {
+        return wantsToReturn(context);
+    }
+
+    private boolean wantsToReturn(DragonBrainContext<T> context) {
         if (context.dragon().isInLove()) {
             return false;
         }

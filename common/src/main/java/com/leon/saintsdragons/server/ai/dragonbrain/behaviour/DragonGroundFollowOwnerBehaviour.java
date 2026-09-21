@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerTeleport;
@@ -33,6 +34,16 @@ public final class DragonGroundFollowOwnerBehaviour<T extends RideableDragonBase
 
     public DragonGroundFollowOwnerBehaviour(Config config) {
         this.adultConfig = config;
+    }
+
+    @Override
+    public DragonBehaviourInterruption interruptionType() {
+        return DragonBehaviourInterruption.OWNER_FOLLOW;
+    }
+
+    @Override
+    public boolean requestsInterruption(DragonBrainContext<T> context) {
+        return canStart(context);
     }
 
     @Override

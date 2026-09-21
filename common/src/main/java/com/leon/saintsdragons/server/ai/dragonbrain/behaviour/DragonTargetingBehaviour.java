@@ -35,6 +35,9 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     private String source = "none";
     private int sourcePriority = Integer.MAX_VALUE;
     private int draconianSwarmPollCooldown;
+    private long targetCommittedUntil;
+    private long lastEvaluationAt;
+    private String targetDecision = "none";
 
     protected DragonTargetingBehaviour() {
         super(false);
@@ -53,6 +56,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     @Override
     protected final void tick(DragonBrainContext<T> context) {
         T dragon = context.dragon();
+        lastEvaluationAt = context.gameTime();
         pursuitSafety.beginTick(context.gameTime());
         LivingEntity wakeTarget = context.memories().get(DragonMemories.WAKE_TARGET).orElse(null);
         if (wakeTarget != null && !isUsableTarget(dragon, wakeTarget)) {
@@ -69,13 +73,13 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
             return;
         }
 
+        TargetChoice wakeChoice = null;
         if (wakeTarget != null
                 && dragon.isWildAggressionEnabled()
                 && dragon.getSensing().hasLineOfSight(wakeTarget)
                 && pursuitSafety.canReacquire(dragon, DragonTargetingHelper.combatTarget(wakeTarget), context.gameTime())) {
-            setTarget(context, wakeTarget, "heard_intruder", 3);
+            wakeChoice = targetChoice(wakeTarget, "heard_intruder", 3);
             context.memories().erase(DragonMemories.WAKE_TARGET);
-            return;
         }
 
         LivingEntity current = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
@@ -109,11 +113,15 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
                 && !pursuitSafety.canReacquire(dragon, assignedTarget, context.gameTime())) {
             DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
         }
-        if (current == null && pursuitSafety.shouldThrottleAcquisition(dragon, context.gameTime())) {
+        if (current == null && wakeChoice == null
+                && pursuitSafety.shouldThrottleAcquisition(dragon, context.gameTime())) {
             return;
         }
 
         TargetChoice choice = findPriorityTarget(context);
+        if (wakeChoice != null && (choice == null || wakeChoice.priority() < choice.priority())) {
+            choice = wakeChoice;
+        }
         TargetChoice draconianSwarm = findDraconianSwarmTarget(context);
         if (draconianSwarm != null
                 && (choice == null || draconianSwarm.priority() < choice.priority())) {
@@ -130,13 +138,25 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         }
         if (choice != null) {
             if (isUsableTarget(dragon, current) && canRetainTarget(dragon, current, source)) {
-                boolean keepProjectileCommitment = PROJECTILE_THREAT_SOURCE.equals(source)
-                        && PROJECTILE_THREAT_SOURCE.equals(choice.source())
-                        && choice.target() != current;
-                if (keepProjectileCommitment || choice.priority() > sourcePriority) {
+                LivingEntity candidate = DragonTargetingHelper.combatTarget(choice.target());
+                if (candidate == current && choice.priority() >= sourcePriority) {
+                    targetDecision = "same-target";
                     syncTarget(context, current);
                     return;
                 }
+                String retentionReason = candidate == current ? null : retentionReason(context, current, choice);
+                if (retentionReason != null) {
+                    targetDecision = "retained:" + retentionReason;
+                    dragon.combatManager.recordAiDecision("target", targetDecision
+                            + ":candidate=" + candidate.getId());
+                    syncTarget(context, current);
+                    return;
+                }
+                targetDecision = candidate == current ? "source-promoted"
+                        : choice.priority() < sourcePriority ? "higher-priority"
+                        : isImmediateTargetChoice(choice) ? "fresh-threat" : "better-target";
+            } else {
+                targetDecision = current == null ? "acquired" : "previous-ineligible";
             }
             setTarget(context, choice.target(), choice.source(), choice.priority());
             return;
@@ -164,6 +184,52 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
     }
 
     protected abstract boolean canRetainTarget(T dragon, LivingEntity target, String source);
+
+    protected int targetCommitmentTicks(T dragon) {
+        return 40;
+    }
+
+    protected boolean isImmediateTargetChoice(TargetChoice choice) {
+        return switch (choice.source()) {
+            case "owner_hurt", "owner_attacked", "retaliation", "protect_baby" -> true;
+            case "pack_defense" -> choice.priority() < sourcePriority;
+            default -> false;
+        };
+    }
+
+    @Nullable
+    private String retentionReason(DragonBrainContext<T> context, LivingEntity current, TargetChoice choice) {
+        if (choice.priority() > sourcePriority) {
+            return "higher-priority-current";
+        }
+        if (isImmediateTargetChoice(choice)) {
+            return null;
+        }
+        if (PROJECTILE_THREAT_SOURCE.equals(source) && PROJECTILE_THREAT_SOURCE.equals(choice.source())) {
+            return "projectile-commitment";
+        }
+        T dragon = context.dragon();
+        if (hasCommittedAction(dragon)) {
+            return "committed-action";
+        }
+        if (choice.priority() < sourcePriority) {
+            return null;
+        }
+        if (context.gameTime() < targetCommittedUntil) {
+            return "commitment-window";
+        }
+        LivingEntity candidate = DragonTargetingHelper.combatTarget(choice.target());
+        if (!dragon.getSensing().hasLineOfSight(candidate)) {
+            return "candidate-unseen";
+        }
+        if (!context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(true)) {
+            return null;
+        }
+        double currentDistance = dragon.distanceTo(current);
+        double candidateDistance = dragon.distanceTo(candidate);
+        return candidateDistance <= currentDistance * 0.75D && currentDistance - candidateDistance >= 4.0D
+                ? null : "no-meaningful-improvement";
+    }
 
     protected boolean suppressesTargetRetention(DragonBrainContext<T> context) {
         return false;
@@ -275,6 +341,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         sourcePriority = newPriority;
         context.memories().set(DragonMemories.ATTACK_TARGET, target);
         if (oldTarget != target) {
+            targetCommittedUntil = context.gameTime() + Math.max(0, targetCommitmentTicks(dragon));
             DragonSensoryObservation investigation = context.memories()
                     .get(DragonMemories.INVESTIGATION_TARGET)
                     .orElse(null);
@@ -289,7 +356,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         syncTarget(context, target);
         if (changed) {
             dragon.combatManager.recordAiDecision("target", "selected:" + newSource
-                    + ":from=" + (oldTarget == null ? -1 : oldTarget.getId()));
+                    + ":" + targetDecision + ":from=" + (oldTarget == null ? -1 : oldTarget.getId()));
             targetChanged(dragon, oldTarget, target, oldSource, newSource);
         }
     }
@@ -323,13 +390,15 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         String oldSource = source;
         LivingEntity clearedTarget = oldTarget != null ? oldTarget : entityTarget;
         if (clearedTarget != null) {
-            dragon.combatManager.recordAiDecision("target", "cleared:" + oldSource);
+            targetDecision = "cleared:" + oldSource;
+            dragon.combatManager.recordAiDecision("target", targetDecision);
         }
         if (rememberEvidence && isUsableTarget(dragon, clearedTarget)) {
             rememberTargetEvidence(context, clearedTarget);
         }
         source = "none";
         sourcePriority = Integer.MAX_VALUE;
+        targetCommittedUntil = 0L;
         DragonTargetLifecycle.clearCombatTarget(context.memories(), dragon, false);
         if (oldTarget != null || !"none".equals(oldSource)) {
             targetCleared(dragon, oldTarget, oldSource);
@@ -342,6 +411,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         pursuitSafety.recordAbandonment(context.gameTime(), target, reason);
         context.dragon().combatManager.recordAiDecision("target", "abandoned:" + reason);
         clearTarget(context, false);
+        targetDecision = "abandoned:" + reason;
         context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
         context.memories().erase(DragonMemories.WALK_TARGET);
         context.memories().erase(DragonMemories.PATH);
@@ -380,6 +450,8 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         Map<String, String> details = new LinkedHashMap<>();
         details.put("source", source);
         details.put("priority", sourcePriority == Integer.MAX_VALUE ? "none" : Integer.toString(sourcePriority));
+        details.put("commitment_ticks", Long.toString(Math.max(0L, targetCommittedUntil - lastEvaluationAt)));
+        details.put("target_decision", targetDecision);
         details.put("pursuit", pursuitSafety.stateDebugSummary());
         details.put("abandoned", pursuitSafety.abandonedDebugSummary());
         details.putAll(additionalDebugDetails());

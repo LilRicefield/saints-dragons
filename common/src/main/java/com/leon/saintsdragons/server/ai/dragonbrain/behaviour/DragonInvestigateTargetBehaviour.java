@@ -68,10 +68,11 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     private String investigationKind = "none";
     private Phase phase = Phase.IDLE;
     private String outcome = "none";
+    private boolean actionPaused;
 
     @Override
     protected boolean canStart(DragonBrainContext<T> context) {
-        return canInvestigate(context);
+        return !hasCommittedAction(context.dragon()) && canInvestigate(context);
     }
 
     @Override
@@ -102,6 +103,8 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         nextMovementAttemptAt = 0;
         phase = Phase.IDLE;
         outcome = "none";
+        actionPaused = false;
+        context.dragon().combatManager.recordAiDecision("investigation", "started");
         pruneRecentLocations(context.gameTime());
     }
 
@@ -109,6 +112,17 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
     protected void tick(DragonBrainContext<T> context) {
         if (!(context.dragon() instanceof RideableDragonBase dragon)) {
             return;
+        }
+        if (hasCommittedAction(dragon)) {
+            if (!actionPaused) {
+                dragon.combatManager.recordAiDecision("investigation", "paused:committed-action");
+                actionPaused = true;
+            }
+            return;
+        }
+        if (actionPaused) {
+            actionPaused = false;
+            dragon.combatManager.recordAiDecision("investigation", "resumed");
         }
         DragonSensoryObservation observation = context.memories()
                 .get(DragonMemories.INVESTIGATION_TARGET)
@@ -558,6 +572,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         clearOwnedInvestigationMemories(context);
         phase = finalPhase;
         outcome = finalOutcome;
+        dragon.combatManager.recordAiDecision("investigation", finalOutcome);
         if (finalPhase == Phase.FAILED || finalPhase == Phase.SKIPPED_RECENT
                 || (finalPhase == Phase.COMPLETE && "searched".equals(finalOutcome))) {
             landAfterAirSearch(context, dragon);
@@ -652,13 +667,15 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         if (activeObservation != null && (phase == Phase.TRAVELLING || phase == Phase.SEARCHING)) {
             clearOwnedInvestigationMemories(context);
             phase = Phase.CANCELLED;
-            outcome = "state-changed";
+            outcome = interruptionReason(context);
         }
         if (expired && context.dragon() instanceof RideableDragonBase dragon) {
             landAfterAirSearch(context, dragon);
             outcome = "memory-expired";
         }
         destination = null;
+        actionPaused = false;
+        context.dragon().combatManager.recordAiDecision("investigation", "stopped:" + outcome);
         activeObservation = null;
         nextSourceWaypointRefreshAt = 0L;
         trackingProjectileSource = false;
@@ -666,6 +683,21 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         searchWaypoint = null;
         searchWaypointTicks = 0;
         searchTicks = 0;
+    }
+
+    private String interruptionReason(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        if (!dragon.isAlive() || dragon.isDying()) return "dying";
+        if (dragon.isVehicle() || dragon.isPassenger()) return "rider-control";
+        if (dragon.isOrderedToSit()) return "sit-command";
+        if (dragon.isSleepLocked()) return "sleep";
+        if ((dragon.isInLove() || context.memories().has(DragonMemories.BREED_TARGET))
+                && !context.memories().has(DragonMemories.ATTACK_TARGET)) return "breeding";
+        if (dragon instanceof RideableDragonBase rideable
+                && DragonFollowOwnerBehaviour.hasOwnerFollowPriority(rideable)) return "owner-follow";
+        if (context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false)) return "target-visible";
+        if (activity() != null && !dragon.getBrain().getActiveActivities().contains(activity())) return "activity-changed";
+        return "state-changed";
     }
 
     private boolean canInvestigate(DragonBrainContext<T> context) {
@@ -678,6 +710,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         boolean targetVisible = target != null
                 && context.memories().get(DragonMemories.TARGET_VISIBLE).orElse(false);
         return (target == null || target.isAlive())
+                && (target != null || !dragon.isInLove() && !context.memories().has(DragonMemories.BREED_TARGET))
                 && !targetVisible
                 && context.memories().has(DragonMemories.INVESTIGATION_TARGET)
                 && !dragon.isVehicle()
@@ -692,6 +725,7 @@ public final class DragonInvestigateTargetBehaviour<T extends DragonEntity> exte
         Map<String, String> details = new LinkedHashMap<>();
         details.put("phase", phase.name().toLowerCase(Locale.ROOT));
         details.put("outcome", outcome);
+        details.put("action_paused", Boolean.toString(actionPaused));
         details.put("destination", destination == null ? "none" : destination.toString());
         details.put("kind", investigationKind);
         details.put("search_ticks", Integer.toString(searchTicks));

@@ -57,6 +57,23 @@ public abstract class DragonBehaviour<T extends DragonEntity> extends Behavior<T
         return Math.max(0L, cooldownEndsAtTick - gameTime);
     }
 
+    public DragonBehaviourInterruption interruptionType() {
+        return DragonBehaviourInterruption.NONE;
+    }
+
+    public boolean requestsInterruption(DragonBrainContext<T> context) {
+        return false;
+    }
+
+    public boolean canYieldTo(DragonBrainContext<T> context, DragonBehaviourInterruption interruption) {
+        return interruption.outranks(interruptionType());
+    }
+
+    protected static boolean hasCommittedAction(DragonEntity dragon) {
+        return dragon.getActiveAbility() != null || dragon.combatManager.hasActiveOverlay()
+                || dragon.areRiderControlsLocked();
+    }
+
     final void bindActivity(Activity activity, int priority) {
         if (this.activity != null && this.activity != activity) {
             throw new IllegalStateException("A DragonBehaviour instance cannot belong to multiple activities");

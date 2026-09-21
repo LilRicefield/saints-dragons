@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
@@ -66,6 +67,12 @@ public class DragonBreedBehaviour<T extends DragonEntity> extends DragonBehaviou
         this.partnerClass = partnerClass;
         this.partnerRange = partnerRange;
         this.breedDistanceSqr = breedDistanceSqr;
+    }
+
+    @Override
+    public boolean canYieldTo(DragonBrainContext<T> context, DragonBehaviourInterruption interruption) {
+        return interruption == DragonBehaviourInterruption.WATER_ESCAPE
+                && !context.dragon().canSwim();
     }
 
     @Override

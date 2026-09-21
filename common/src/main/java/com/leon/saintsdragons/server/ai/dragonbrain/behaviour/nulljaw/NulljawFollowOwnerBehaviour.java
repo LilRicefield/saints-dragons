@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.ai.dragonbrain.behaviour.nulljaw;
 import com.leon.saintsdragons.common.config.dragon.profile.NulljawStatProfile;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
@@ -31,6 +32,16 @@ public final class NulljawFollowOwnerBehaviour extends DragonBehaviour<Nulljaw> 
     @Nullable
     private Vec3 lastTarget;
     private int refreshCooldown;
+
+    @Override
+    public DragonBehaviourInterruption interruptionType() {
+        return DragonBehaviourInterruption.OWNER_FOLLOW;
+    }
+
+    @Override
+    public boolean requestsInterruption(DragonBrainContext<Nulljaw> context) {
+        return canStart(context);
+    }
 
     @Override
     protected boolean canStart(DragonBrainContext<Nulljaw> context) {

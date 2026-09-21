@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -38,6 +39,7 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     private int shoreRescanTicks;
     private int roamTicks;
     private boolean shoreTransitioning;
+    private long interruptionRequestedAt = Long.MIN_VALUE;
 
     public DragonWaterEscapeBehaviour(float turnSpeed, double swimSpeed) {
         this(turnSpeed, swimSpeed,
@@ -56,9 +58,31 @@ public final class DragonWaterEscapeBehaviour<T extends RideableDragonBase> exte
     }
 
     @Override
+    public DragonBehaviourInterruption interruptionType() {
+        return DragonBehaviourInterruption.WATER_ESCAPE;
+    }
+
+    @Override
+    public boolean requestsInterruption(DragonBrainContext<T> context) {
+        if (!shouldEscapeWater(context.dragon())) {
+            return false;
+        }
+        interruptionRequestedAt = context.gameTime();
+        return true;
+    }
+
+    @Override
+    public boolean canYieldTo(DragonBrainContext<T> context, DragonBehaviourInterruption interruption) {
+        return super.canYieldTo(context, interruption)
+                || (interruption == DragonBehaviourInterruption.RETURN_HOME && context.dragon().canSwim());
+    }
+
+    @Override
     protected boolean canStart(DragonBrainContext<T> context) {
         T dragon = context.dragon();
-        if (!shouldEscapeWater(dragon)) {
+        boolean interruptionRequested = interruptionRequestedAt == context.gameTime();
+        interruptionRequestedAt = Long.MIN_VALUE;
+        if (!interruptionRequested && !shouldEscapeWater(dragon)) {
             return false;
         }
         target = findEscapeTarget(dragon);

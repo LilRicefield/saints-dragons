@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.dragonbrain.behaviour;
 
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviour;
+import com.leon.saintsdragons.server.ai.dragonbrain.DragonBehaviourInterruption;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonOwnerFollowTarget;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncSwimController;
@@ -49,6 +50,21 @@ public final class DragonSwimFollowBehaviour<T extends RideableDragonBase & Semi
         this.startDistanceSqr = startDistance * startDistance;
         this.stopDistanceSqr = stopDistance * stopDistance;
         this.eligibility = Objects.requireNonNull(eligibility);
+    }
+
+    @Override
+    public DragonBehaviourInterruption interruptionType() {
+        return DragonBehaviourInterruption.OWNER_FOLLOW;
+    }
+
+    @Override
+    public boolean requestsInterruption(DragonBrainContext<T> context) {
+        T dragon = context.dragon();
+        LivingEntity owner = dragon.getOwner();
+        return dragon.isTame() && dragon.getCommand() == 0 && !dragon.isOrderedToSit()
+                && basicConditions(dragon) && owner != null && owner.isAlive()
+                && owner.level() == dragon.level()
+                && followDistanceToSqr(dragon, owner) > startDistance(dragon, owner);
     }
 
     @Override
