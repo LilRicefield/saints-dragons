@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
+import com.leon.saintsdragons.common.registry.ModDamageTypes;
 import com.leon.saintsdragons.common.registry.ModSounds;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
@@ -418,7 +419,7 @@ public class RaevyxBeamAbility extends DragonAbility<Raevyx> {
         if (target.isBlocking()) {
             return wyvern.level().damageSources().mobProjectile(wyvern, wyvern);
         }
-        return wyvern.level().damageSources().lightningBolt();
+        return ModDamageTypes.raevyxLightning(wyvern);
     }
 
     private record BeamPath(Vec3 origin, Vec3 impact) {}

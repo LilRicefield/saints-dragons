@@ -1,4 +1,7 @@
 {
+  "death.attack.saintsdragons.raevyx_lightning": "%1$s被殷雷龙的雷电击杀了",
+  "death.attack.saintsdragons.raevyx_lightning.player": "%1$s在与%2$s战斗时被殷雷龙的雷电击杀了",
+  "death.attack.saintsdragons.raevyx_lightning.item": "%1$s被%2$s使用%3$s释放的雷电击杀了",
   "item.saintsdragons.draconic_codex": "龙族典籍",
   "item.saintsdragons.stegonaut_binder": "坚甲龙储器",
   "item.saintsdragons.raevyx_binder": "殷雷龙储器",

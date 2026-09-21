@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.ability.abilities.raevyx;
 import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
+import com.leon.saintsdragons.common.registry.ModDamageTypes;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilitySection;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -145,7 +146,7 @@ public class RaevyxRoarAbility extends DragonAbility<Raevyx> {
             return;
         }
 
-        DamageSource source = dragon.damageSources().lightningBolt();
+        DamageSource source = ModDamageTypes.raevyxLightning(dragon);
         target.hurt(source, LIGHTNING_DAMAGE);
     }
 

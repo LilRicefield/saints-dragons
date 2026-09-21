@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.profile.RaevyxStatProfile;
 
 import com.leon.saintsdragons.common.item.tools.SwordAbilityTargeting;
 import com.leon.saintsdragons.common.particle.raevyx.RaevyxLightningStormData;
+import com.leon.saintsdragons.common.registry.ModDamageTypes;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 import com.leon.saintsdragons.server.entity.dragons.util.DragonElementalImmunity;
@@ -174,7 +175,7 @@ public final class RaevyxChainLightningAbility {
                 ? caster.level().damageSources().playerAttack(player)
                 : target instanceof DragonEntity
                         ? caster.level().damageSources().mobAttack(caster)
-                        : caster.level().damageSources().lightningBolt();
+                        : ModDamageTypes.raevyxLightning(caster);
         target.hurt(source, scaledDamage);
     }
 

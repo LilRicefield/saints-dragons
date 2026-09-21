@@ -1,4 +1,7 @@
 {
+  "death.attack.saintsdragons.raevyx_lightning": "%1$s was struck down by Raevyx lightning",
+  "death.attack.saintsdragons.raevyx_lightning.player": "%1$s was struck down by Raevyx lightning while fighting %2$s",
+  "death.attack.saintsdragons.raevyx_lightning.item": "%1$s was electrocuted by %2$s using %3$s",
   "item.saintsdragons.draconic_codex": "Draconic Codex",
   "item.saintsdragons.stegonaut_binder": "Stegonaut Binder",
   "item.saintsdragons.raevyx_binder": "Raevyx Binder",
