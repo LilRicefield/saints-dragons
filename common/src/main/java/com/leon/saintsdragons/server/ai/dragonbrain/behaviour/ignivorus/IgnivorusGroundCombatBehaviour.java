@@ -61,8 +61,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
             boolean fireballReady = dragon.isPhase2Active()
                     && (dragon.isAbilityActive(ModAbilities.IGNIVORUS_FIREBALL)
                         || fireballDecisionCooldown <= 0 && fireballPostCooldown <= 0
-                        && dragon.combatManager.canStart(ModAbilities.IGNIVORUS_FIREBALL)
-                        && dragon.getAiCombatPacing().canUse(ModAbilities.IGNIVORUS_FIREBALL, true))
+                        && dragon.combatManager.canStartAiAbility(ModAbilities.IGNIVORUS_FIREBALL, true))
                     && dragon.hasAiFireballShot(target, 64.0D);
             if (breathReady || fireballReady) gap = 22.0D + (breathReady ? dragon.getAiBreathSpacingBonus(target) : 0);
         }
@@ -711,7 +710,7 @@ public class IgnivorusGroundCombatBehaviour extends DragonBehaviour<Ignivorus> {
     }
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+        return dragon.combatManager.canStartAiAbility(abilityType, majorAbility);
     }
 
     @Override

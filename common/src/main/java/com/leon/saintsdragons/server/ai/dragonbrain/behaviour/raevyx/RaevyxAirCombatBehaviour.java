@@ -907,8 +907,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
     private boolean canUseAiAbility(Raevyx dragon,
                                     DragonAbilityType<?, ?> abilityType,
                                     boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType)
-                && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+        return dragon.combatManager.canStartAiAbility(abilityType, majorAbility);
     }
 
     private boolean startAiAbility(Raevyx dragon,

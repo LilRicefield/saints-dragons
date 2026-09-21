@@ -430,7 +430,7 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
 
     private boolean canUse(Ignivorus dragon, DragonAbilityType<?, ?> ability, boolean major) {
         return !dragon.isTakeoff() && !dragon.isLanding()
-                && dragon.combatManager.canStart(ability) && dragon.getAiCombatPacing().canUse(ability, major);
+                && dragon.combatManager.canStartAiAbility(ability, major);
     }
 
     private void issueRoute(DragonBrainContext<Ignivorus> context, @Nullable Vec3 destination,

@@ -284,8 +284,7 @@ public final class AtroxiiaGroundCombatBehaviour extends DragonBehaviour<Atroxii
     }
 
     private boolean canUse(Atroxiia dragon, DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType)
-                && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+        return dragon.combatManager.canStartAiAbility(abilityType, majorAbility);
     }
 
     private boolean startAbility(Atroxiia dragon,

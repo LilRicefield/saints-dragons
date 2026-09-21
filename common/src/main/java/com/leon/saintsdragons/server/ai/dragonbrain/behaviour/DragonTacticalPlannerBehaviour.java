@@ -35,9 +35,9 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
     private long lastGameTime;
     private DragonTacticalCommitment lastCommitment;
     private long flightRevision = -1;
-    private String flightSummary;
+    private WeakReference<DragonCombatFlightState> flightDiagnostics;
     private long executionRevision = -1;
-    private String executionSummary;
+    private WeakReference<DragonCombatDecisionSupport> executionDiagnostics;
     private WeakReference<DragonCombatLearning> combatLearning;
 
     public DragonTacticalPlannerBehaviour() {
@@ -63,9 +63,17 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
             combatLearning = new WeakReference<>(learning);
         }
         DragonCombatFlightState combatFlight = DragonCombatFlightState.get(context.dragon());
-        flightSummary = combatFlight == null ? null : combatFlight.summary();
+        if (combatFlight == null) {
+            flightDiagnostics = null;
+        } else if (flightDiagnostics == null || flightDiagnostics.get() != combatFlight) {
+            flightDiagnostics = new WeakReference<>(combatFlight);
+        }
         var decisions = DragonCombatDecisionSupport.get(context.dragon());
-        executionSummary = decisions == null ? null : decisions.summary();
+        if (decisions == null) {
+            executionDiagnostics = null;
+        } else if (executionDiagnostics == null || executionDiagnostics.get() != decisions) {
+            executionDiagnostics = new WeakReference<>(decisions);
+        }
         if (DragonPerception.isSightInterruption(context.dragon().getBrain())
                 && inactiveReason(context.dragon()) == null) {
             var current = context.memories().get(DragonMemories.TACTICAL_COMMITMENT).orElse(null);
@@ -99,6 +107,10 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
                 decisions == null || current == null ? 0 : decisions.tacticPenalty(current.tactic())
         );
         context.memories().set(DragonMemories.TACTICAL_COMMITMENT, decided);
+        if (current == null || current.tactic() != decided.tactic()
+                || !Objects.equals(current.targetUuid(), decided.targetUuid())) {
+            context.dragon().combatManager.recordAiDecision("plan", decided.tactic().name() + ":" + decided.reason());
+        }
         lastCommitment = decided;
     }
 
@@ -444,8 +456,10 @@ public final class DragonTacticalPlannerBehaviour<T extends DragonEntity> extend
         details.put("expiry_remaining",
                 Math.max(0L, lastCommitment.expiresAt() - lastGameTime) + "t");
         details.put("scores", lastCommitment.scoresSummary());
-        if (flightSummary != null) details.put("combat_flight", flightSummary);
-        if (executionSummary != null) details.put("combat_execution", executionSummary);
+        var flight = flightDiagnostics == null ? null : flightDiagnostics.get();
+        if (flight != null) details.put("combat_flight", flight.summary());
+        var execution = executionDiagnostics == null ? null : executionDiagnostics.get();
+        if (execution != null) details.put("combat_execution", execution.summary());
         var learning = combatLearning == null ? null : combatLearning.get();
         if (learning != null) details.put("combat_learning", learning.debugSummary());
         return Map.copyOf(details);

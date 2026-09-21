@@ -293,8 +293,7 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
     private boolean canUseAiAbility(Volitans dragon,
                                     DragonAbilityType<?, ?> abilityType,
                                     boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType)
-                && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+        return dragon.combatManager.canStartAiAbility(abilityType, majorAbility);
     }
 
     private boolean startAiAbility(Volitans dragon,

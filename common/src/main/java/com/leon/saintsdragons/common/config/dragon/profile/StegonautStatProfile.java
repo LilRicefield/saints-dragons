@@ -39,7 +39,7 @@ public final class StegonautStatProfile {
     }
 
     public static final class Brain {
-        public static final float GROUND_CHASE_SPEED = 0.75F;
+        public static final float GROUND_CHASE_SPEED = 1.25F;
         public static final double BREED_SPEED = 1.0D;
         public static final double FOLLOW_PARENT_SPEED = 0.70D;
         public static final double GROUND_WANDER_SPEED = 0.80D;

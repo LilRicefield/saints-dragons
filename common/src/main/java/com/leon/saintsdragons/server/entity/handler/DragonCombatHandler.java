@@ -3,6 +3,7 @@ package com.leon.saintsdragons.server.entity.handler;
 import com.leon.saintsdragons.common.registry.AbilityRegistry;
 import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
+import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonDecisionHistory;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import com.leon.saintsdragons.server.entity.ability.DragonAbility;
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
@@ -10,8 +11,10 @@ import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.entity.LivingEntity;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -22,6 +25,7 @@ public class DragonCombatHandler {
     private DragonAbility<?> overlayAbility;
     private int globalCooldown = 0;
     private boolean processingAbility = false;
+    private DragonDecisionHistory aiDecisionHistory;
     private final Map<DragonAbilityType<?, ?>, Integer> abilityCooldowns = new HashMap<>();
     private final Map<DragonAbilityType<?, ?>, Boolean> overlayAbilityCache = new HashMap<>();
     public void saveToNBT(CompoundTag tag) {
@@ -77,28 +81,82 @@ public class DragonCombatHandler {
     }
 
     public boolean canStart(DragonAbilityType<?, ?> abilityType) {
+        return getStartBlockReason(abilityType) == null;
+    }
+
+    @Nullable
+    public String getStartBlockReason(DragonAbilityType<?, ?> abilityType) {
+        if (abilityType == null) {
+            return "missing-ability";
+        }
         if (processingAbility) {
-            return false;
+            return "processing-ability";
         }
 
-        if (globalCooldown > 0 || dragon.areRiderControlsLocked()) {
-            return false;
+        if (globalCooldown > 0) {
+            return "global-recovery";
+        }
+        if (dragon.areRiderControlsLocked()) {
+            return "controls-locked";
         }
 
         if (!isAbilityCooldownReady(abilityType)) {
-            return false;
+            return "ability-cooldown";
         }
 
         if (!canUseAiAbilityAgainstCurrentTarget(abilityType)) {
-            return false;
+            return "prey-bite-only";
         }
 
         if (isOverlayAbilityType(abilityType)) {
-            return overlayAbility == null || !overlayAbility.isUsing();
+            return overlayAbility != null && overlayAbility.isUsing() ? "overlay-active" : null;
         }
 
-        return globalCooldown == 0
-            && (activeAbility == null || !activeAbility.isUsing());
+        return activeAbility != null && activeAbility.isUsing() ? "ability-active" : null;
+    }
+
+    @Nullable
+    public String getAiStartBlockReason(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        String reason = getReservationBlockReason(abilityType);
+        if (reason == null) {
+            reason = getStartBlockReason(abilityType);
+        }
+        return reason != null ? reason : dragon.getAiCombatPacing().getBlockReason(abilityType, majorAbility);
+    }
+
+    public boolean canStartAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        String reason = getAiStartBlockReason(abilityType, majorAbility);
+        if (reason != null) {
+            recordAbilityDecision(abilityType, reason);
+        }
+        return reason == null;
+    }
+
+    public void recordAiDecision(String subject, String reason) {
+        if (dragon.level().isClientSide || dragon.isVehicle()) {
+            return;
+        }
+        if (aiDecisionHistory == null) {
+            aiDecisionHistory = new DragonDecisionHistory();
+        }
+        LivingEntity target = dragon.getTarget();
+        aiDecisionHistory.record(dragon.level().getGameTime(), subject, reason, target == null ? -1 : target.getId());
+    }
+
+    public List<String> getAiDecisionHistory() {
+        return aiDecisionHistory == null ? List.of() : aiDecisionHistory.describe(dragon.level().getGameTime());
+    }
+
+    private void recordAbilityDecision(DragonAbilityType<?, ?> abilityType, String reason) {
+        String name = abilityType == null ? null : AbilityRegistry.getName(abilityType);
+        recordAiDecision(name == null ? "unknown-ability" : name, reason);
+    }
+
+    @Nullable
+    private String getReservationBlockReason(DragonAbilityType<?, ?> abilityType) {
+        return dragon instanceof Volitans volitans
+                && (volitans.isAiSpecialCombatActive() || volitans.isAiSpecialCombatReserved())
+                && abilityType != ModAbilities.VOLITANS_ULTIMATE ? "special-combat-reserved" : null;
     }
 
     public boolean isAbilityCooldownReady(DragonAbilityType<?, ?> abilityType) {
@@ -120,18 +178,12 @@ public class DragonCombatHandler {
         if (abilityType == null || dragon.level().isClientSide) {
             return false;
         }
-        if (dragon instanceof Volitans volitans
-                && (volitans.isAiSpecialCombatActive() || volitans.isAiSpecialCombatReserved())
-                && abilityType != ModAbilities.VOLITANS_ULTIMATE) {
-            return false;
+        String reason = getReservationBlockReason(abilityType);
+        if (reason == null) {
+            reason = getStartBlockReason(abilityType);
         }
-        if (dragon.areRiderControlsLocked()) {
-            return false;
-        }
-        if (!canUseAiAbilityAgainstCurrentTarget(abilityType)) {
-            return false;
-        }
-        if (!canStart(abilityType)) {
+        if (reason != null) {
+            recordAbilityDecision(abilityType, reason);
             return false;
         }
 
@@ -143,6 +195,7 @@ public class DragonCombatHandler {
             var ability = ((DragonAbilityType<DragonEntity, ?>) abilityType).makeInstance(dragon);
 
             if (!ability.tryAbility()) {
+                recordAbilityDecision(abilityType, "ability-conditions");
                 return false;
             }
 
@@ -153,8 +206,10 @@ public class DragonCombatHandler {
             }
             ability.start();
             if (clearIfStartupAborted(ability, overlay)) {
+                recordAbilityDecision(abilityType, "startup-aborted");
                 return false;
             }
+            recordAbilityDecision(abilityType, "started");
             return true;
         } finally {
             processingAbility = false;
@@ -167,7 +222,7 @@ public class DragonCombatHandler {
                                    int abilityCooldownTicks,
                                    int majorCooldownTicks,
                                    int repeatLockoutTicks) {
-        if (!canStart(abilityType) || !dragon.getAiCombatPacing().canUse(abilityType, majorAbility)) {
+        if (!canStartAiAbility(abilityType, majorAbility)) {
             return false;
         }
         if (!tryUseAbility(abilityType)) {

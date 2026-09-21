@@ -29,6 +29,7 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
     private Varasuchus drake;
     private DragonBrainContext<Varasuchus> currentContext;
     private int attackCooldown;
+    private String lastDecision = "idle";
 
     public VarasuchusCombatBehaviour() {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
@@ -78,6 +79,7 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
         drake.setAggressive(false);
         attackCooldown = 0;
         currentContext = null;
+        lastDecision = "stopped";
     }
 
     @Override
@@ -95,12 +97,14 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
         drake.getLookControl().setLookAt(target, 30.0F, 30.0F);
 
         if (drake.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) {
+            decision("phase-shift");
             return;
         }
 
         if (shouldEnterPhaseTwo()) {
             drake.combatManager.tryUseAbility(ModAbilities.VARASUCHUS_PHASE_SHIFT);
             if (drake.isAbilityActive(ModAbilities.VARASUCHUS_PHASE_SHIFT)) {
+                decision("phase-shift");
                 return;
             }
         }
@@ -115,23 +119,35 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
                 }
             }
             tryPerformAttacks(target);
+        } else {
+            decision("out-of-range");
         }
     }
 
     private void tryPerformAttacks(LivingEntity target) {
-        if (attackCooldown > 0 || drake.getAiCombatPacing().getCadenceCooldownTicks() > 0 || isPerformingAttack()) {
+        if (isPerformingAttack()) {
+            decision("attack-committed");
+            return;
+        }
+        if (attackCooldown > 0 || drake.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
+            decision("cadence-cooldown");
             return;
         }
 
         if (!drake.getSensing().hasLineOfSight(target) && !drake.isInWaterOrBubble()) {
+            decision("no-line-of-sight");
             return;
         }
 
         DragonAbilityType<Varasuchus, ?> ability = choosePrimaryAttack(target);
-        if (ability != null && drake.combatManager.canStart(ability) && drake.getAiCombatPacing().canUse(ability, false)) {
-            drake.combatManager.tryUseAbility(ability);
-            drake.getAiCombatPacing().recordUse(ability, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, false, 0, 24);
+        if (ability == null) {
+            decision("no-usable-attack");
+        } else if (drake.combatManager.tryUseAiAbility(
+                ability, false, MELEE_CADENCE_TICKS, MELEE_CADENCE_TICKS, 0, 24)) {
             attackCooldown = MELEE_CADENCE_TICKS;
+            lastDecision = "attack-started";
+        } else {
+            lastDecision = "startup-rejected";
         }
     }
 
@@ -140,39 +156,71 @@ public class VarasuchusCombatBehaviour extends DragonBehaviour<Varasuchus> {
         boolean phaseTwo = drake.isPhaseTwoActive();
         if (DragonTargetingHelper.isBiteOnlyPreyTarget(drake, target)) {
             double biteRange = getMeleeStopRange(target);
-            if (gap <= biteRange) {
-                return phaseTwo ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
+            DragonAbilityType<Varasuchus, ?> bite = phaseTwo
+                    ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
+            if (gap <= biteRange && canUse(bite)) {
+                return bite;
             }
             return null;
         }
 
-        if (gap <= CLAW_RANGE) {
+        if (gap <= CLAW_RANGE && canUse(ModAbilities.VARASUCHUS_HORN_GORE)) {
             return ModAbilities.VARASUCHUS_HORN_GORE;
         }
 
-        if (phaseTwo && gap <= BITE_RANGE && drake.getRandom().nextFloat() < 0.30F) {
+        if (phaseTwo && gap <= BITE_RANGE && canUse(ModAbilities.VARASUCHUS_SLASH_BARRAGE)
+                && drake.getRandom().nextFloat() < 0.30F) {
             return ModAbilities.VARASUCHUS_SLASH_BARRAGE;
         }
 
         if (phaseTwo && gap <= HORN_RANGE) {
-            return drake.getRandom().nextBoolean()
-                    ? ModAbilities.VARASUCHUS_BITE2
-                    : ModAbilities.VARASUCHUS_CLAW;
+            boolean biteReady = gap <= BITE_RANGE && canUse(ModAbilities.VARASUCHUS_BITE2);
+            boolean clawReady = canUse(ModAbilities.VARASUCHUS_CLAW);
+            if (biteReady && clawReady) {
+                return drake.getRandom().nextBoolean()
+                        ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_CLAW;
+            }
+            if (biteReady) return ModAbilities.VARASUCHUS_BITE2;
+            if (clawReady) return ModAbilities.VARASUCHUS_CLAW;
         }
 
-        if (!phaseTwo && gap > CLAW_RANGE && gap <= HORN_RANGE && drake.getRandom().nextFloat() < 0.35f) {
+        if (!phaseTwo && gap > CLAW_RANGE && gap <= HORN_RANGE
+                && canUse(ModAbilities.VARASUCHUS_TAIL_ATTACK) && drake.getRandom().nextFloat() < 0.35f) {
             return ModAbilities.VARASUCHUS_TAIL_ATTACK;
         }
 
-        if (gap <= BITE_RANGE) {
-            return phaseTwo ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
+        DragonAbilityType<Varasuchus, ?> bite = phaseTwo
+                ? ModAbilities.VARASUCHUS_BITE2 : ModAbilities.VARASUCHUS_BITE;
+        if (gap <= BITE_RANGE && canUse(bite)) {
+            return bite;
         }
 
-        if (gap <= HORN_RANGE) {
+        if (gap <= HORN_RANGE && canUse(ModAbilities.VARASUCHUS_HORN_GORE)) {
             return ModAbilities.VARASUCHUS_HORN_GORE;
         }
 
+        if (phaseTwo && gap <= BITE_RANGE && canUse(ModAbilities.VARASUCHUS_SLASH_BARRAGE)) {
+            return ModAbilities.VARASUCHUS_SLASH_BARRAGE;
+        }
+        if (!phaseTwo && gap > CLAW_RANGE && gap <= HORN_RANGE && canUse(ModAbilities.VARASUCHUS_TAIL_ATTACK)) {
+            return ModAbilities.VARASUCHUS_TAIL_ATTACK;
+        }
+
         return null;
+    }
+
+    private boolean canUse(DragonAbilityType<?, ?> ability) {
+        return drake.combatManager.canStartAiAbility(ability, false);
+    }
+
+    private void decision(String reason) {
+        lastDecision = reason;
+        drake.combatManager.recordAiDecision("varasuchus-combat", reason);
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of("decision", lastDecision, "attack_cooldown", Integer.toString(attackCooldown));
     }
 
     private boolean isPerformingAttack() {

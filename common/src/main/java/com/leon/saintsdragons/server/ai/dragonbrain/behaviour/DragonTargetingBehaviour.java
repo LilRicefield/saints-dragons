@@ -288,6 +288,8 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         }
         syncTarget(context, target);
         if (changed) {
+            dragon.combatManager.recordAiDecision("target", "selected:" + newSource
+                    + ":from=" + (oldTarget == null ? -1 : oldTarget.getId()));
             targetChanged(dragon, oldTarget, target, oldSource, newSource);
         }
     }
@@ -320,6 +322,9 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
         LivingEntity entityTarget = dragon.getTarget();
         String oldSource = source;
         LivingEntity clearedTarget = oldTarget != null ? oldTarget : entityTarget;
+        if (clearedTarget != null) {
+            dragon.combatManager.recordAiDecision("target", "cleared:" + oldSource);
+        }
         if (rememberEvidence && isUsableTarget(dragon, clearedTarget)) {
             rememberTargetEvidence(context, clearedTarget);
         }
@@ -335,6 +340,7 @@ public abstract class DragonTargetingBehaviour<T extends RideableDragonBase> ext
                                LivingEntity target,
                                String reason) {
         pursuitSafety.recordAbandonment(context.gameTime(), target, reason);
+        context.dragon().combatManager.recordAiDecision("target", "abandoned:" + reason);
         clearTarget(context, false);
         context.memories().erase(DragonMemories.INVESTIGATION_TARGET);
         context.memories().erase(DragonMemories.WALK_TARGET);

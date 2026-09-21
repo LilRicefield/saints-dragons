@@ -461,7 +461,7 @@ public class VolitansGroundCombatBehaviour extends DragonBehaviour<Volitans> {
     }
 
     private boolean canUseAiAbility(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType) && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+        return dragon.combatManager.canStartAiAbility(abilityType, majorAbility);
     }
 
     private boolean startAiAbility(DragonAbilityType<?, ?> abilityType,

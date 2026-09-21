@@ -119,6 +119,7 @@ public final class DragonBrainDebugHud {
             case BEHAVIOURS -> buildBehaviourLines(snapshot);
             case MEMORIES -> buildMemoryLines(snapshot);
             case PATHING -> buildPathingLines(snapshot);
+            case DECISIONS -> buildDecisionLines(snapshot);
         };
     }
 
@@ -194,6 +195,28 @@ public final class DragonBrainDebugHud {
                 for (String detail : behaviour.details()) {
                     lines.add(new Line("    " + detail, 0xFFB9DCC3));
                 }
+            }
+        }
+        return lines;
+    }
+
+    private static List<Line> buildDecisionLines(MessageDragonBrainDebug snapshot) {
+        if (snapshot.decisions().isEmpty()) {
+            return List.of(new Line("No recent AI decisions", 0xFF9AA1AD));
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        int width = Math.min(PANEL_WIDTH, Math.max(120, minecraft.getWindow().getGuiScaledWidth() - 12));
+        List<Line> lines = new ArrayList<>();
+        lines.add(new Line("Recent decisions (newest first)", 0xFFFFD866));
+        for (String decision : snapshot.decisions()) {
+            String remaining = decision;
+            boolean first = true;
+            while (!remaining.isEmpty()) {
+                String part = minecraft.font.plainSubstrByWidth(remaining, width - PADDING * 2 - 12);
+                if (part.isEmpty()) break;
+                lines.add(new Line((first ? "> " : "  ") + part, 0xFFB9DCC3));
+                remaining = remaining.substring(part.length());
+                first = false;
             }
         }
         return lines;
@@ -279,7 +302,8 @@ public final class DragonBrainDebugHud {
         OVERVIEW("Overview"),
         BEHAVIOURS("Behaviours"),
         MEMORIES("Memories"),
-        PATHING("Pathing");
+        PATHING("Pathing"),
+        DECISIONS("Decisions");
 
         private final String title;
 

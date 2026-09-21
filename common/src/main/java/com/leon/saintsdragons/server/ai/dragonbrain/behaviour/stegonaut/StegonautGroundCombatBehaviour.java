@@ -18,6 +18,7 @@ public class StegonautGroundCombatBehaviour extends DragonBehaviour<Stegonaut> {
     private static final int ATTACK_COOLDOWN_TICKS = StegonautStatProfile.GroundCombatBehaviour.ATTACK_COOLDOWN_TICKS;
 
     private int attackCooldown;
+    private String lastDecision = "idle";
 
     public StegonautGroundCombatBehaviour() {
         super(Map.of(DragonMemories.ATTACK_TARGET, MemoryStatus.VALUE_PRESENT));
@@ -47,36 +48,65 @@ public class StegonautGroundCombatBehaviour extends DragonBehaviour<Stegonaut> {
 
         Stegonaut dragon = context.dragon();
         LivingEntity target = context.memories().get(DragonMemories.ATTACK_TARGET).orElse(null);
-        if (target == null
-                || attackCooldown > 0
-                || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0
-                || isAttacking(dragon)
-                || !dragon.getSensing().hasLineOfSight(target)
-                || dragon.distanceToSqr(target) > attackReachSqr(dragon, target)) {
+        if (target == null) {
+            decision(dragon, "no-target");
+            return;
+        }
+        if (isAttacking(dragon)) {
+            decision(dragon, "attack-committed");
+            return;
+        }
+        if (attackCooldown > 0 || dragon.getAiCombatPacing().getCadenceCooldownTicks() > 0) {
+            decision(dragon, "cadence-cooldown");
+            return;
+        }
+        if (!dragon.getSensing().hasLineOfSight(target)) {
+            decision(dragon, "no-line-of-sight");
+            return;
+        }
+        if (dragon.distanceToSqr(target) > attackReachSqr(dragon, target)) {
+            decision(dragon, "out-of-range");
             return;
         }
 
-        var ability = dragon.getRandomAiAttackAbility();
-        if (!dragon.combatManager.canStart(ability)
-                || !dragon.getAiCombatPacing().canUse(ability, false)) {
+        boolean biteReady = dragon.combatManager.canStartAiAbility(ModAbilities.STEGONAUT_BITE, false);
+        boolean slamReady = dragon.combatManager.canStartAiAbility(ModAbilities.STEGONAUT_CHIN_SLAM, false);
+        if (!biteReady && !slamReady) {
+            decision(dragon, "no-usable-attack");
             return;
         }
 
-        dragon.combatManager.tryUseAbility(ability);
-        dragon.getAiCombatPacing().recordUse(
+        var ability = biteReady && slamReady ? dragon.getRandomAiAttackAbility()
+                : biteReady ? ModAbilities.STEGONAUT_BITE : ModAbilities.STEGONAUT_CHIN_SLAM;
+        if (dragon.combatManager.tryUseAiAbility(
                 ability,
-                ATTACK_COOLDOWN_TICKS,
-                ATTACK_COOLDOWN_TICKS,
                 false,
+                ATTACK_COOLDOWN_TICKS,
+                ATTACK_COOLDOWN_TICKS,
                 0,
                 22
-        );
-        attackCooldown = ATTACK_COOLDOWN_TICKS;
+        )) {
+            attackCooldown = ATTACK_COOLDOWN_TICKS;
+            lastDecision = "attack-started";
+        } else {
+            lastDecision = "startup-rejected";
+        }
     }
 
     @Override
     protected void stop(DragonBrainContext<Stegonaut> context) {
         attackCooldown = 0;
+        lastDecision = "stopped";
+    }
+
+    private void decision(Stegonaut dragon, String reason) {
+        lastDecision = reason;
+        dragon.combatManager.recordAiDecision("stegonaut-combat", reason);
+    }
+
+    @Override
+    public Map<String, String> getDragonBrainDebugDetails() {
+        return Map.of("decision", lastDecision, "attack_cooldown", Integer.toString(attackCooldown));
     }
 
     public static boolean isAttacking(Stegonaut dragon) {

@@ -398,8 +398,7 @@ public final class CindervaneGroundCombatBehaviour extends DragonBehaviour<Cinde
     private boolean canUse(Cindervane dragon,
                            DragonAbilityType<?, ?> abilityType,
                            boolean majorAbility) {
-        return dragon.combatManager.canStart(abilityType)
-                && dragon.getAiCombatPacing().canUse(abilityType, majorAbility);
+        return dragon.combatManager.canStartAiAbility(abilityType, majorAbility);
     }
 
     private boolean startAbility(Cindervane dragon,

@@ -21,13 +21,15 @@ public record MessageDragonBrainDebug(
         List<String> activeActivities,
         List<BehaviourState> behaviours,
         List<MemoryState> memories,
-        List<Marker> markers
+        List<Marker> markers,
+        List<String> decisions
 ) {
     private static final int MAX_ACTIVITIES = 16;
     private static final int MAX_BEHAVIOURS = 64;
     private static final int MAX_MEMORIES = 32;
     private static final int MAX_MARKERS = 32;
     private static final int MAX_DETAILS = 16;
+    private static final int MAX_DECISIONS = 8;
     private static final int MAX_STRING_LENGTH = 192;
 
     public MessageDragonBrainDebug {
@@ -37,6 +39,15 @@ public record MessageDragonBrainDebug(
         behaviours = copyLimited(behaviours, MAX_BEHAVIOURS);
         memories = copyLimited(memories, MAX_MEMORIES);
         markers = copyLimited(markers, MAX_MARKERS);
+        decisions = copyLimited(decisions, MAX_DECISIONS);
+    }
+
+    public MessageDragonBrainDebug(boolean active, int entityId, String dragonName, long gameTime,
+                                   int hunger, int maxHunger, boolean huntFoodPursuit,
+                                   String activeActivity, List<String> activeActivities,
+                                   List<BehaviourState> behaviours, List<MemoryState> memories, List<Marker> markers) {
+        this(active, entityId, dragonName, gameTime, hunger, maxHunger, huntFoodPursuit,
+                activeActivity, activeActivities, behaviours, memories, markers, List.of());
     }
 
     public static MessageDragonBrainDebug clear() {
@@ -62,6 +73,7 @@ public record MessageDragonBrainDebug(
         writeList(buffer, message.behaviours(), BehaviourState::encode);
         writeList(buffer, message.memories(), MemoryState::encode);
         writeList(buffer, message.markers(), Marker::encode);
+        writeList(buffer, message.decisions(), MessageDragonBrainDebug::writeString);
     }
 
     public static MessageDragonBrainDebug decode(FriendlyByteBuf buffer) {
@@ -81,7 +93,8 @@ public record MessageDragonBrainDebug(
                 readList(buffer, MAX_ACTIVITIES, MessageDragonBrainDebug::readString),
                 readList(buffer, MAX_BEHAVIOURS, BehaviourState::decode),
                 readList(buffer, MAX_MEMORIES, MemoryState::decode),
-                readList(buffer, MAX_MARKERS, Marker::decode)
+                readList(buffer, MAX_MARKERS, Marker::decode),
+                readList(buffer, MAX_DECISIONS, MessageDragonBrainDebug::readString)
         );
     }
 

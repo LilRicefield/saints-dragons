@@ -51,8 +51,7 @@ public final class AtroxiiaWaterCombatBehaviour extends DragonBehaviour<Atroxiia
             return;
         }
 
-        if (dragon.combatManager.canStart(ModAbilities.ATROXIIA_UNDERWATER_BITE)
-                && dragon.getAiCombatPacing().canUse(ModAbilities.ATROXIIA_UNDERWATER_BITE, false)) {
+        if (dragon.combatManager.canStartAiAbility(ModAbilities.ATROXIIA_UNDERWATER_BITE, false)) {
             dragon.combatManager.tryUseAiAbility(
                     ModAbilities.ATROXIIA_UNDERWATER_BITE,
                     false,

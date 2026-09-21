@@ -117,7 +117,8 @@ public final class DragonBrainDebugTracker {
                 activeActivities,
                 behaviours,
                 memories,
-                markers
+                markers,
+                dragon.combatManager.getAiDecisionHistory()
         );
     }
 

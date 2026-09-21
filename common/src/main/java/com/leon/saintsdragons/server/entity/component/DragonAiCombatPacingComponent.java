@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.entity.component;
 
 import com.leon.saintsdragons.server.entity.ability.DragonAbilityType;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Iterator;
@@ -42,22 +43,27 @@ public final class DragonAiCombatPacingComponent {
     }
 
     public boolean canUse(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
+        return getBlockReason(abilityType, majorAbility) == null;
+    }
+
+    @Nullable
+    public String getBlockReason(DragonAbilityType<?, ?> abilityType, boolean majorAbility) {
         if (abilityType == null) {
-            return false;
+            return "missing-ability";
         }
         if (globalActionLockTicks > 0) {
-            return false;
+            return "action-lock";
         }
         if (cadenceCooldownTicks > 0) {
-            return false;
+            return "cadence-cooldown";
         }
         if (majorAbility && majorAbilityCooldownTicks > 0) {
-            return false;
+            return "major-cooldown";
         }
         if (abilityCooldowns.getOrDefault(abilityType, 0) > 0) {
-            return false;
+            return "ai-ability-cooldown";
         }
-        return repeatLockouts.getOrDefault(abilityType, 0) <= 0;
+        return repeatLockouts.getOrDefault(abilityType, 0) > 0 ? "repeat-lockout" : null;
     }
 
     public boolean canUseMajorFollowup(DragonAbilityType<?, ?> abilityType) {
