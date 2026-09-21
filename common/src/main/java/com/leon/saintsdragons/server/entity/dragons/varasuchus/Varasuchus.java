@@ -324,6 +324,18 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
 
     @Override
+    public boolean supportsRiderPitchLock() {
+        return true;
+    }
+
+    @Override
+    public void onClientRiderAction(DragonRiderAction action) {
+        if (action == DragonRiderAction.DOUBLE_TAP_W) {
+            startClientRiderDashPrediction();
+        }
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case DOUBLE_TAP_W,

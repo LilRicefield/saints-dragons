@@ -351,6 +351,22 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     }
 
     @Override
+    public boolean supportsRiderPitchLock() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsRiderWaterBreach() {
+        return true;
+    }
+
+    @Override
+    public RiderDualAbilityBinding getSecondaryRiderDualAbility() {
+        return RiderDualAbilityBinding.ticks(ModAbilities.RAEVYX_SUMMON_STORM.getName(),
+                new RiderAbilityBinding(ModAbilities.RAEVYX_GROUND_REND.getName(), RiderAbilityBinding.Activation.PRESS), 6);
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         if (isGroundRending()) {
             return false;

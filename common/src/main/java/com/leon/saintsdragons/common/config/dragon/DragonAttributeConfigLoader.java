@@ -32,6 +32,7 @@ import java.io.Reader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -55,10 +56,11 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     public static final int SWARM_WAVE_2_DEFAULT_COUNT = 9;
     public static final int SWARM_WAVE_3_DEFAULT_COUNT = 12;
 
-    private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
     private static final boolean IS_FORGE = "forge".equals(Services.PLATFORM.getPlatformId());
+    private static final DragonAttributeConfigLoader INSTANCE = new DragonAttributeConfigLoader();
 
     private final Map<ResourceLocation, DragonAttributeConfig> defaults;
+    private volatile Map<ResourceLocation, DragonAttributeConfig> addonDefaults = Map.of();
     private final Path configDirectory;
     private volatile Map<ResourceLocation, DragonAttributeConfig> configs;
 
@@ -193,6 +195,20 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         return INSTANCE;
     }
 
+    public synchronized void registerDefault(ResourceLocation id, DragonAttributeConfig config) {
+        Objects.requireNonNull(id, "id");
+        Objects.requireNonNull(config, "config");
+        if (defaults.containsKey(id) || addonDefaults.containsKey(id)) {
+            throw new IllegalArgumentException("Duplicate dragon attribute defaults: " + id);
+        }
+        Map<ResourceLocation, DragonAttributeConfig> updatedDefaults = new HashMap<>(addonDefaults);
+        updatedDefaults.put(id, config);
+        addonDefaults = ImmutableMap.copyOf(updatedDefaults);
+        Map<ResourceLocation, DragonAttributeConfig> updatedConfigs = new HashMap<>(configs);
+        updatedConfigs.putIfAbsent(id, config);
+        configs = ImmutableMap.copyOf(updatedConfigs);
+    }
+
     public static void bootstrap() {
         // Ensures the class is loaded and defaults are ready
         getInstance();
@@ -212,6 +228,10 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     public DragonAttributeConfig getDefaultConfig(ResourceLocation id) {
+        DragonAttributeConfig addonDefault = addonDefaults.get(id);
+        if (addonDefault != null) {
+            return addonDefault;
+        }
         if (IS_FORGE) {
             DragonAttributeConfig config = configs.get(id);
             return config != null ? config : DragonAttributeConfig.EMPTY;
@@ -220,20 +240,18 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> jsonMap,
-                         @NotNull ResourceManager resourceManager,
-                         @NotNull ProfilerFiller profiler) {
-        if (IS_FORGE) {
-            this.configs = ImmutableMap.copyOf(buildDefaultConfigs());
-            SaintsDragonsCommon.LOGGER.info("Loaded {} dragon attribute configuration(s) from Forge config",
-                    this.configs.size());
-            return;
-        }
-        Map<ResourceLocation, DragonAttributeConfig> merged = new HashMap<>(defaults);
+    protected synchronized void apply(Map<ResourceLocation, JsonElement> jsonMap,
+                                      @NotNull ResourceManager resourceManager,
+                                      @NotNull ProfilerFiller profiler) {
+        Map<ResourceLocation, DragonAttributeConfig> merged = new HashMap<>(IS_FORGE ? buildDefaultConfigs() : defaults);
+        merged.putAll(addonDefaults);
         Map<ResourceLocation, JsonObject> rawJson = new HashMap<>();
         for (Map.Entry<ResourceLocation, JsonElement> entry : jsonMap.entrySet()) {
             try {
                 ResourceLocation id = entry.getKey();
+                if (IS_FORGE && defaults.containsKey(id)) {
+                    continue;
+                }
                 DragonAttributeConfig fallback = merged.getOrDefault(id, DragonAttributeConfig.EMPTY);
                 JsonObject data = GsonHelper.convertToJsonObject(entry.getValue(), id.toString());
                 removeRetiredVolitansBreathFields(id, data);
@@ -260,6 +278,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
 
         for (Map.Entry<ResourceLocation, DragonAttributeConfig> entry : merged.entrySet()) {
+            if (IS_FORGE && defaults.containsKey(entry.getKey())) {
+                continue;
+            }
             Path path = configPath(entry.getKey());
             // Always serialize the merged config to ensure all default keys are present
             JsonObject source = serializeConfig(entry.getKey(), entry.getValue());
@@ -288,6 +309,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         }
 
         for (Map.Entry<ResourceLocation, DragonAttributeConfig> entry : merged.entrySet()) {
+            if (IS_FORGE && defaults.containsKey(entry.getKey())) {
+                continue;
+            }
             DragonAttributeConfig override = readOverride(entry.getKey(), entry.getValue());
             merged.put(entry.getKey(), override);
         }
@@ -321,7 +345,9 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
     }
 
     private Path configPath(ResourceLocation id) {
-        return configDirectory.resolve(id.getPath() + ".json");
+        Path directory = SaintsDragonsCommon.MOD_ID.equals(id.getNamespace())
+                ? configDirectory : configDirectory.resolve(id.getNamespace());
+        return directory.resolve(id.getPath() + ".json");
     }
 
     private static JsonObject serializeConfig(ResourceLocation id, DragonAttributeConfig config) {
@@ -369,8 +395,8 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         return json;
     }
 
-    public void overwriteConfig(ResourceLocation id, DragonAttributeConfig config) {
-        if (IS_FORGE) {
+    public synchronized void overwriteConfig(ResourceLocation id, DragonAttributeConfig config) {
+        if (IS_FORGE && defaults.containsKey(id)) {
             return;
         }
         writeConfigFile(configPath(id), serializeConfig(id, config));
@@ -379,11 +405,14 @@ public final class DragonAttributeConfigLoader extends SimpleJsonResourceReloadL
         this.configs = ImmutableMap.copyOf(updated);
     }
 
-    public void refreshFromForgeConfig() {
+    public synchronized void refreshFromForgeConfig() {
         if (!IS_FORGE) {
             return;
         }
-        this.configs = ImmutableMap.copyOf(buildDefaultConfigs());
+        Map<ResourceLocation, DragonAttributeConfig> updated = new HashMap<>(this.configs);
+        updated.putAll(buildDefaultConfigs());
+        addonDefaults.forEach(updated::putIfAbsent);
+        this.configs = ImmutableMap.copyOf(updated);
     }
 
     private static void ensureLegacyTamingFlag(ResourceLocation id, JsonObject json) {

@@ -3,7 +3,6 @@ package com.leon.saintsdragons.server.entity.variant;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
-import com.leon.saintsdragons.common.registry.Dragons;
 import com.leon.saintsdragons.server.entity.base.DragonEntity;
 import net.minecraft.core.Holder;
 import net.minecraft.core.BlockPos;
@@ -20,14 +19,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public final class SaintsDragonVariantRegistry {
     public static final String SAINTS_DRAGONS = SaintsDragonsCommon.MOD_ID;
     public static final ResourceLocation DEFAULT_VARIANT_ID = SaintsDragonsCommon.rl("default");
 
-    private static final Map<ResourceLocation, List<DragonVariantDefinition>> DEFAULTS = buildDefaults();
-    private static volatile Map<ResourceLocation, List<DragonVariantDefinition>> variantsByDragon = DEFAULTS;
-    private static volatile Map<ResourceLocation, DragonVariantDefinition> variantsById = index(DEFAULTS);
+    private static volatile Map<ResourceLocation, List<DragonVariantDefinition>> defaults = buildDefaults();
+    private static Map<ResourceLocation, List<DragonVariantDefinition>> datapackVariants = Map.of();
+    private static volatile Map<ResourceLocation, List<DragonVariantDefinition>> variantsByDragon = defaults;
+    private static volatile Map<ResourceLocation, DragonVariantDefinition> variantsById = index(defaults);
 
     private SaintsDragonVariantRegistry() {
     }
@@ -36,8 +37,28 @@ public final class SaintsDragonVariantRegistry {
     }
 
     public static ResourceLocation dragonId(DragonEntity dragon) {
-        Dragons type = Dragons.fromEntity(dragon);
-        return type != null ? type.getConfigId() : SaintsDragonsCommon.rl("unknown");
+        return dragon.getDragonSpeciesId();
+    }
+
+    public static synchronized void registerDefaults(ResourceLocation dragonId, List<DragonVariantDefinition> definitions) {
+        Objects.requireNonNull(dragonId, "dragonId");
+        if (defaults.containsKey(dragonId)) {
+            throw new IllegalArgumentException("Duplicate dragon variant defaults: " + dragonId);
+        }
+        Map<ResourceLocation, DragonVariantDefinition> byId = new LinkedHashMap<>();
+        for (DragonVariantDefinition definition : List.copyOf(definitions)) {
+            if (!dragonId.equals(definition.dragon())) {
+                throw new IllegalArgumentException("Variant belongs to a different species: " + definition.id());
+            }
+            if (byId.putIfAbsent(definition.id(), definition) != null) {
+                throw new IllegalArgumentException("Duplicate dragon variant: " + definition.id());
+            }
+        }
+        byId.putIfAbsent(DEFAULT_VARIANT_ID, defaultDefinition(dragonId));
+        Map<ResourceLocation, List<DragonVariantDefinition>> updated = new LinkedHashMap<>(defaults);
+        updated.put(dragonId, List.copyOf(byId.values()));
+        defaults = ImmutableMap.copyOf(updated);
+        rebuildVariants();
     }
 
     public static ResourceLocation defaultVariantId(ResourceLocation dragonId) {
@@ -84,7 +105,17 @@ public final class SaintsDragonVariantRegistry {
     }
 
     public static List<DragonVariantDefinition> getVariants(ResourceLocation dragonId) {
-        return variantsByDragon.getOrDefault(dragonId, DEFAULTS.getOrDefault(dragonId, DEFAULTS.get(SaintsDragonsCommon.rl("ignivorus"))));
+        List<DragonVariantDefinition> variants = variantsByDragon.get(dragonId);
+        return variants != null ? variants : List.of(defaultDefinition(dragonId));
+    }
+
+    public static boolean hasDefaults(ResourceLocation dragonId) {
+        return defaults.containsKey(dragonId);
+    }
+
+    private static DragonVariantDefinition defaultDefinition(ResourceLocation dragonId) {
+        return new DragonVariantDefinition(DEFAULT_VARIANT_ID, dragonId, "default", 100, 0,
+                null, null, DragonVariantDefinition.AltitudeRestriction.ANY);
     }
 
     public static Map<String, Integer> legacyNameMap(ResourceLocation dragonId) {
@@ -122,7 +153,11 @@ public final class SaintsDragonVariantRegistry {
     }
 
     public static ResourceLocation chooseSpawnVariant(ServerLevelAccessor levelAccessor, DragonEntity entity) {
-        ResourceLocation dragonId = dragonId(entity);
+        return chooseSpawnVariant(levelAccessor, entity, dragonId(entity));
+    }
+
+    public static ResourceLocation chooseSpawnVariant(ServerLevelAccessor levelAccessor, DragonEntity entity,
+                                                      ResourceLocation dragonId) {
         List<DragonVariantDefinition> allowed = new ArrayList<>();
         for (DragonVariantDefinition definition : getVariants(dragonId)) {
             if (definition.weight() <= 0) {
@@ -152,9 +187,23 @@ public final class SaintsDragonVariantRegistry {
         return defaultVariantId(dragonId);
     }
 
-    public static void replaceDatapackVariants(Map<ResourceLocation, List<DragonVariantDefinition>> datapackVariants) {
+    public static synchronized void replaceDatapackVariants(Map<ResourceLocation, List<DragonVariantDefinition>> replacements) {
+        Map<ResourceLocation, List<DragonVariantDefinition>> copied = new LinkedHashMap<>();
+        replacements.forEach((id, definitions) -> {
+            for (DragonVariantDefinition definition : definitions) {
+                if (!id.equals(definition.dragon())) {
+                    throw new IllegalArgumentException("Variant belongs to a different species: " + definition.id());
+                }
+            }
+            copied.put(id, List.copyOf(definitions));
+        });
+        datapackVariants = ImmutableMap.copyOf(copied);
+        rebuildVariants();
+    }
+
+    private static void rebuildVariants() {
         Map<ResourceLocation, LinkedHashMap<ResourceLocation, DragonVariantDefinition>> merged = new LinkedHashMap<>();
-        for (Map.Entry<ResourceLocation, List<DragonVariantDefinition>> entry : DEFAULTS.entrySet()) {
+        for (Map.Entry<ResourceLocation, List<DragonVariantDefinition>> entry : defaults.entrySet()) {
             LinkedHashMap<ResourceLocation, DragonVariantDefinition> byId = new LinkedHashMap<>();
             for (DragonVariantDefinition definition : entry.getValue()) {
                 byId.put(definition.id(), definition);
@@ -162,7 +211,11 @@ public final class SaintsDragonVariantRegistry {
             merged.put(entry.getKey(), byId);
         }
         for (Map.Entry<ResourceLocation, List<DragonVariantDefinition>> entry : datapackVariants.entrySet()) {
-            LinkedHashMap<ResourceLocation, DragonVariantDefinition> byId = merged.computeIfAbsent(entry.getKey(), id -> new LinkedHashMap<>());
+            LinkedHashMap<ResourceLocation, DragonVariantDefinition> byId = merged.computeIfAbsent(entry.getKey(), id -> {
+                LinkedHashMap<ResourceLocation, DragonVariantDefinition> definitions = new LinkedHashMap<>();
+                definitions.put(DEFAULT_VARIANT_ID, defaultDefinition(id));
+                return definitions;
+            });
             for (DragonVariantDefinition definition : entry.getValue()) {
                 DragonVariantDefinition existing = byId.get(definition.id());
                 byId.put(definition.id(), preserveLegacyId(existing, definition));

@@ -493,6 +493,28 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
 
 
     @Override
+    public boolean supportsRiderPitchLock() {
+        return true;
+    }
+
+    @Override
+    public boolean isRiderMeleeToggleHandledByAbility(@Nullable String abilityId) {
+        return ModAbilities.VOLITANS_BREATH.getName().equals(abilityId);
+    }
+
+    @Override
+    public RiderDualAbilityBinding getPrimaryRiderDualAbility() {
+        return RiderDualAbilityBinding.milliseconds(ModAbilities.VOLITANS_ROAR.getName(),
+                new RiderAbilityBinding(ModAbilities.VOLITANS_POISON_BALL.getName(), RiderAbilityBinding.Activation.HOLD), 180L);
+    }
+
+    @Override
+    public RiderDualAbilityBinding getTertiaryRiderDualAbility() {
+        return RiderDualAbilityBinding.ticks(ModAbilities.VOLITANS_CLAW.getName(),
+                new RiderAbilityBinding(ModAbilities.VOLITANS_BREATH.getName(), RiderAbilityBinding.Activation.HOLD), 5);
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_S -> true;

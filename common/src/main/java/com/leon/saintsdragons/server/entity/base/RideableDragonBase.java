@@ -36,6 +36,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -329,6 +330,8 @@ public abstract class RideableDragonBase extends DragonEntity {
             case STOP_PITCH_MODE -> setRiderPitchKeyMode(false);
             case DOUBLE_TAP_A -> { if (!locked) onRiderDodge(player, true); }
             case DOUBLE_TAP_D -> { if (!locked) onRiderDodge(player, false); }
+            case DOUBLE_TAP_W -> { if (!locked) onRiderDash(player); }
+            case DOUBLE_TAP_S -> { if (!locked) onRiderBackwardDodge(player); }
             case OPEN_INVENTORY -> onRiderOpenInventory(player);
             default -> { }
         }
@@ -348,6 +351,28 @@ public abstract class RideableDragonBase extends DragonEntity {
             case FLEX -> hasRiderFlex();
             default -> true;
         };
+    }
+
+    public boolean isRiderInputEnabled(DragonRiderAction action) {
+        if (action == DragonRiderAction.START_PITCH_MODE || action == DragonRiderAction.STOP_PITCH_MODE) {
+            return supportsRiderPitchLock() && supportsRiderAction(action);
+        }
+        return action != null && supportsRiderAction(action);
+    }
+
+    public boolean supportsRiderPitchLock() {
+        return false;
+    }
+
+    public boolean supportsRiderWaterBreach() {
+        return false;
+    }
+
+    public void onClientRiderAction(DragonRiderAction action) {
+    }
+
+    public boolean isRiderMeleeToggleHandledByAbility(@Nullable String abilityId) {
+        return false;
     }
 
     protected record RiderFlexSpec(int controlLockTicks, int cooldownTicks) {
@@ -538,6 +563,21 @@ public abstract class RideableDragonBase extends DragonEntity {
         return null;
     }
 
+    @Nullable
+    public RiderDualAbilityBinding getPrimaryRiderDualAbility() {
+        return null;
+    }
+
+    @Nullable
+    public RiderDualAbilityBinding getSecondaryRiderDualAbility() {
+        return null;
+    }
+
+    @Nullable
+    public RiderDualAbilityBinding getTertiaryRiderDualAbility() {
+        return null;
+    }
+
     public int getMeleeMode() {
         return this.entityData.get(DATA_MELEE_MODE);
     }
@@ -568,6 +608,30 @@ public abstract class RideableDragonBase extends DragonEntity {
         public enum Activation {
             PRESS,
             HOLD
+        }
+    }
+
+    public record RiderDualAbilityBinding(String tapAbilityId, RiderAbilityBinding holdAbility,
+                                          int holdTicks, long holdMillis) {
+        public RiderDualAbilityBinding {
+            Objects.requireNonNull(tapAbilityId, "tapAbilityId");
+            Objects.requireNonNull(holdAbility, "holdAbility");
+            Objects.requireNonNull(holdAbility.abilityId(), "holdAbility.abilityId");
+            Objects.requireNonNull(holdAbility.activation(), "holdAbility.activation");
+            if (tapAbilityId.isBlank() || holdAbility.abilityId().isBlank()) {
+                throw new IllegalArgumentException("Rider ability ids must not be blank");
+            }
+            if (holdTicks < 0 || holdMillis < 0 || (holdTicks > 0) == (holdMillis > 0)) {
+                throw new IllegalArgumentException("Specify one positive hold threshold in ticks or milliseconds");
+            }
+        }
+
+        public static RiderDualAbilityBinding ticks(String tapAbilityId, RiderAbilityBinding holdAbility, int ticks) {
+            return new RiderDualAbilityBinding(tapAbilityId, holdAbility, ticks, 0L);
+        }
+
+        public static RiderDualAbilityBinding milliseconds(String tapAbilityId, RiderAbilityBinding holdAbility, long millis) {
+            return new RiderDualAbilityBinding(tapAbilityId, holdAbility, 0, millis);
         }
     }
 

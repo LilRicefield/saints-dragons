@@ -1,6 +1,5 @@
 package com.leon.saintsdragons.client.input;
 
-import com.leon.saintsdragons.common.registry.ModAbilities;
 import com.leon.saintsdragons.client.ui.DragonUIRegistry;
 import com.leon.saintsdragons.common.network.DragonRiderAction;
 import com.leon.saintsdragons.common.network.MessageDragonRideInput;
@@ -10,15 +9,10 @@ import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.common.registry.ModItems;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding;
+import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderDualAbilityBinding;
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase.RiderAbilityBinding.Activation;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import com.leon.saintsdragons.server.entity.base.RideableGroundDragon;
-import com.leon.saintsdragons.server.entity.dragons.atroxiia.Atroxiia;
-import com.leon.saintsdragons.server.entity.dragons.cindervane.Cindervane;
-import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
-import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
-import com.leon.saintsdragons.server.entity.dragons.varasuchus.Varasuchus;
-import com.leon.saintsdragons.server.entity.dragons.volitans.Volitans;
 import com.leon.saintsdragons.server.entity.interfaces.DragonChestCarrier;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -109,19 +103,10 @@ public final class DragonRideInputHandler {
     private static boolean wasPitchLockDown = false;
     private static boolean wasFlexDown = false;
     private static boolean wasHeldAbilityDown = false;
-    private static int volitansTertiaryHoldTicks = 0;
-    private static boolean volitansBreathActive = false;
-    private static final int VOLITANS_TERTIARY_HOLD_TICKS = 5;
-    private static long volitansPrimaryPressStartedAtMs = 0L;
-    private static boolean volitansPoisonBallActive = false;
-    private static final long DUAL_ABILITY_HOLD_MS = 180L;
-    private static long ignivorusPrimaryPressStartedAtMs = 0L;
-    private static boolean ignivorusFireballActive = false;
-    private static long atroxiiaTertiaryPressStartedAtMs = 0L;
-    private static boolean atroxiiaPreciseStrikeTriggered = false;
-    private static int raevyxSecondaryHoldTicks = 0;
-    private static boolean raevyxGroundRendTriggered = false;
-    private static final int RAEVYX_SECONDARY_HOLD_TICKS = 6;
+    private static final DualAbilityState primaryDualState = new DualAbilityState();
+    private static final DualAbilityState secondaryDualState = new DualAbilityState();
+    private static final DualAbilityState tertiaryDualState = new DualAbilityState();
+    private static RideableDragonBase lastControlledDragon;
     private static float lastForward = 0f;
     private static float lastStrafe = 0f;
     private static boolean lastAscendDown = false;
@@ -152,6 +137,7 @@ public final class DragonRideInputHandler {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) {
+            lastControlledDragon = null;
             wasHeldAbilityDown = false;
             resetStateTracking();
             return;
@@ -160,6 +146,7 @@ public final class DragonRideInputHandler {
         Entity vehicle = player.getVehicle();
         boolean heldAbilityDown = DRAGON_PRIMARY_ABILITY.isDown();
         if (!(vehicle instanceof RideableDragonBase dragon) || !dragon.canBeControlledBy(player)) {
+            lastControlledDragon = null;
             if (mc.screen == null
                     && heldAbilityDown
                     && !wasHeldAbilityDown) {
@@ -174,6 +161,10 @@ public final class DragonRideInputHandler {
             return;
         }
 
+        if (lastControlledDragon != dragon) {
+            resetStateTracking();
+            lastControlledDragon = dragon;
+        }
         wasHeldAbilityDown = heldAbilityDown;
         handleControls(mc, player, dragon);
     }
@@ -225,9 +216,7 @@ public final class DragonRideInputHandler {
             boolean canTakeoffNow = dragon.canTakeoff();
             boolean alreadyFlying = dragon.isFlying();
             boolean breachWaterBypass =
-                    (dragon instanceof Raevyx
-                    || dragon instanceof Cindervane
-                    || dragon instanceof Ignivorus)
+                    dragon.supportsRiderWaterBreach()
                     && dragon.isInWaterOrBubble()
                     && !dragon.isUnderWater()
                     && !alreadyFlying;
@@ -244,7 +233,9 @@ public final class DragonRideInputHandler {
         }
 
         if (toggleMeleeDown && !wasToggleMeleeDown) {
-            if (dragon instanceof Volitans && volitansBreathActive) {
+            if (dragon.isRiderMeleeToggleHandledByAbility(primaryDualState.activeAbilityId())
+                    || dragon.isRiderMeleeToggleHandledByAbility(secondaryDualState.activeAbilityId())
+                    || dragon.isRiderMeleeToggleHandledByAbility(tertiaryDualState.activeAbilityId())) {
                 sendInput(false, false, DragonRiderAction.TOGGLE_MELEE, null, forward, strafe);
             } else
             if (dragon.hasSecondaryMelee()) {
@@ -258,29 +249,33 @@ public final class DragonRideInputHandler {
                 );
             }
         }
-        if (supportsPitchLock(dragon) && pitchLockDown != wasPitchLockDown) {
+        if (dragon.isRiderInputEnabled(DragonRiderAction.START_PITCH_MODE) && pitchLockDown != wasPitchLockDown) {
             DragonRiderAction action = pitchLockDown
                     ? DragonRiderAction.START_PITCH_MODE
                     : DragonRiderAction.STOP_PITCH_MODE;
             sendInput(false, false, action, null, forward, strafe);
         }
-        if (flexDown && !wasFlexDown) {
+        if (flexDown && !wasFlexDown && dragon.isRiderInputEnabled(DragonRiderAction.FLEX)) {
             sendInput(false, false, DragonRiderAction.FLEX, null, forward, strafe);
         }
 
-        if (dragon instanceof Raevyx
-                || dragon instanceof Volitans) {
+        if (dragon.isRiderInputEnabled(DragonRiderAction.DOUBLE_TAP_A)
+                || dragon.isRiderInputEnabled(DragonRiderAction.DOUBLE_TAP_D)) {
             boolean leftDown = mc.options.keyLeft.isDown();
             boolean rightDown = mc.options.keyRight.isDown();
             long currentTime = System.currentTimeMillis();
             if (leftDown && !wasLeftKeyDown) {
-                if (currentTime - lastLeftTapTime < DOUBLE_TAP_WINDOW_MS) {
+                if (currentTime - lastLeftTapTime < DOUBLE_TAP_WINDOW_MS
+                        && dragon.isRiderInputEnabled(DragonRiderAction.DOUBLE_TAP_A)) {
+                    dragon.onClientRiderAction(DragonRiderAction.DOUBLE_TAP_A);
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_A, null, forward, strafe);
                 }
                 lastLeftTapTime = currentTime;
             }
             if (rightDown && !wasRightKeyDown) {
-                if (currentTime - lastRightTapTime < DOUBLE_TAP_WINDOW_MS) {
+                if (currentTime - lastRightTapTime < DOUBLE_TAP_WINDOW_MS
+                        && dragon.isRiderInputEnabled(DragonRiderAction.DOUBLE_TAP_D)) {
+                    dragon.onClientRiderAction(DragonRiderAction.DOUBLE_TAP_D);
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_D, null, forward, strafe);
                 }
                 lastRightTapTime = currentTime;
@@ -288,61 +283,52 @@ public final class DragonRideInputHandler {
 
             wasLeftKeyDown = leftDown;
             wasRightKeyDown = rightDown;
+        } else {
+            wasLeftKeyDown = false;
+            wasRightKeyDown = false;
+            lastLeftTapTime = 0L;
+            lastRightTapTime = 0L;
         }
 
-        if (dragon instanceof Ignivorus ||
-            dragon instanceof Raevyx ||
-            dragon instanceof Atroxiia ||
-            dragon instanceof Varasuchus ||
-            dragon instanceof Volitans) {
+        if (dragon.isRiderInputEnabled(DragonRiderAction.DOUBLE_TAP_W)) {
             boolean forwardDown = mc.options.keyUp.isDown();
             long currentTime = System.currentTimeMillis();
             if (forwardDown && !wasForwardKeyDown) {
                 if (currentTime - lastForwardTapTime < DOUBLE_TAP_WINDOW_MS) {
-                    if (dragon instanceof Varasuchus varasuchus) {
-                        varasuchus.startClientRiderDashPrediction();
-                    }
+                    dragon.onClientRiderAction(DragonRiderAction.DOUBLE_TAP_W);
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_W, null, forward, strafe);
                 }
                 lastForwardTapTime = currentTime;
             }
 
             wasForwardKeyDown = forwardDown;
+        } else {
+            wasForwardKeyDown = false;
+            lastForwardTapTime = 0L;
         }
-        if (dragon instanceof Ignivorus ||
-            dragon instanceof Raevyx ||
-            dragon instanceof Volitans) {
+        if (dragon.isRiderInputEnabled(DragonRiderAction.DOUBLE_TAP_S)) {
             boolean backwardDown = mc.options.keyDown.isDown();
             long currentTime = System.currentTimeMillis();
             if (backwardDown && !wasBackwardKeyDown) {
                 if (currentTime - lastBackwardTapTime < DOUBLE_TAP_WINDOW_MS) {
+                    dragon.onClientRiderAction(DragonRiderAction.DOUBLE_TAP_S);
                     sendInput(ascendDown, descendDown, DragonRiderAction.DOUBLE_TAP_S, null, forward, strafe);
                 }
                 lastBackwardTapTime = currentTime;
             }
 
             wasBackwardKeyDown = backwardDown;
+        } else {
+            wasBackwardKeyDown = false;
+            lastBackwardTapTime = 0L;
         }
 
-        if (dragon instanceof Volitans) {
-            handleVolitansDualTertiary(tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
-        } else if (dragon instanceof Atroxiia) {
-            handleAtroxiiaDualTertiary(tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
-        } else {
-            handleAbilityBinding(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
-        }
-        if (dragon instanceof Volitans) {
-            handleVolitansDualPrimary(primaryDown, wasPrimaryAbilityDown, forward, strafe);
-        } else if (dragon instanceof Ignivorus) {
-            handleIgnivorusDualPrimary(primaryDown, wasPrimaryAbilityDown, forward, strafe);
-        } else {
-            handleAbilityBinding(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown, forward, strafe);
-        }
-        if (dragon instanceof Raevyx) {
-            handleRaevyxDualSecondary(secondaryDown, wasSecondaryAbilityDown, forward, strafe);
-        } else {
-            handleAbilityBinding(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown, forward, strafe);
-        }
+        handleAbilityInput(dragon.getTertiaryRiderAbility(), dragon.getTertiaryRiderDualAbility(),
+                tertiaryDualState, tertiaryDown, wasTertiaryAbilityDown, forward, strafe);
+        handleAbilityInput(dragon.getPrimaryRiderAbility(), dragon.getPrimaryRiderDualAbility(),
+                primaryDualState, primaryDown, wasPrimaryAbilityDown, forward, strafe);
+        handleAbilityInput(dragon.getSecondaryRiderAbility(), dragon.getSecondaryRiderDualAbility(),
+                secondaryDualState, secondaryDown, wasSecondaryAbilityDown, forward, strafe);
         handleAbilityBinding(dragon.getAttackRiderAbility(), attackDown, wasAttackDown, forward, strafe);
         wasAscendPressed = ascendDown;
         wasAccelerateDown = accelerateDown;
@@ -398,184 +384,84 @@ public final class DragonRideInputHandler {
         return false;
     }
 
-    private static void handleVolitansDualTertiary(boolean currentDown,
-                                                    boolean previousDown,
-                                                    float forward,
-                                                    float strafe) {
-        if (currentDown) {
-            if (!previousDown) {
-                volitansTertiaryHoldTicks = 0;
-                volitansBreathActive = false;
-            }
-            volitansTertiaryHoldTicks++;
-            if (!volitansBreathActive && volitansTertiaryHoldTicks >= VOLITANS_TERTIARY_HOLD_TICKS) {
-                sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        ModAbilities.VOLITANS_BREATH.getName(), forward, strafe);
-                volitansBreathActive = true;
-            }
-            return;
+    private static void handleAbilityInput(RiderAbilityBinding binding, RiderDualAbilityBinding dualBinding,
+                                           DualAbilityState state, boolean currentDown, boolean previousDown,
+                                           float forward, float strafe) {
+        if (dualBinding != null || state.binding != null) {
+            state.tick(dualBinding, currentDown, previousDown, forward, strafe);
+        } else {
+            handleAbilityBinding(binding, currentDown, previousDown, forward, strafe);
         }
-
-        if (previousDown) {
-            if (volitansBreathActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                        ModAbilities.VOLITANS_BREATH.getName(), forward, strafe);
-            } else {
-                sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        ModAbilities.VOLITANS_CLAW.getName(), forward, strafe);
-            }
-        }
-        volitansTertiaryHoldTicks = 0;
-        volitansBreathActive = false;
     }
 
-    private static void handleVolitansDualPrimary(boolean currentDown,
-                                                  boolean previousDown,
-                                                  float forward,
-                                                  float strafe) {
-        long now = System.currentTimeMillis();
-        if (currentDown) {
-            if (!previousDown) {
-                volitansPrimaryPressStartedAtMs = now;
-                volitansPoisonBallActive = false;
-            }
-            if (!volitansPoisonBallActive
-                    && volitansPrimaryPressStartedAtMs > 0L
-                    && now - volitansPrimaryPressStartedAtMs >= DUAL_ABILITY_HOLD_MS) {
-                sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
-                volitansPoisonBallActive = true;
-            }
-            return;
-        }
+    private static final class DualAbilityState {
+        private RiderDualAbilityBinding binding;
+        private int heldTicks;
+        private long pressStartedAt;
+        private boolean triggered;
 
-        if (previousDown) {
-            if (volitansPoisonBallActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                        ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
-            } else {
-                long heldMs = volitansPrimaryPressStartedAtMs > 0L ? now - volitansPrimaryPressStartedAtMs : 0L;
-                if (heldMs >= DUAL_ABILITY_HOLD_MS) {
-                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
-                    sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                            ModAbilities.VOLITANS_POISON_BALL.getName(), forward, strafe);
-                } else {
-                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            ModAbilities.VOLITANS_ROAR.getName(), forward, strafe);
-                }
+        private void tick(RiderDualAbilityBinding nextBinding, boolean currentDown, boolean previousDown,
+                          float forward, float strafe) {
+            long now = System.currentTimeMillis();
+            if (currentDown && !previousDown) {
+                reset();
+                binding = nextBinding;
+                pressStartedAt = now;
             }
-        }
-
-        volitansPrimaryPressStartedAtMs = 0L;
-        volitansPoisonBallActive = false;
-    }
-
-    private static void handleIgnivorusDualPrimary(boolean currentDown,
-                                                   boolean previousDown,
-                                                   float forward,
-                                                   float strafe) {
-        long now = System.currentTimeMillis();
-        if (currentDown) {
-            if (!previousDown) {
-                ignivorusPrimaryPressStartedAtMs = now;
-                ignivorusFireballActive = false;
-            }
-            if (!ignivorusFireballActive
-                    && ignivorusPrimaryPressStartedAtMs > 0L
-                    && now - ignivorusPrimaryPressStartedAtMs >= DUAL_ABILITY_HOLD_MS) {
-                sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
-                ignivorusFireballActive = true;
-            }
-            return;
-        }
-
-        if (previousDown) {
-            if (ignivorusFireballActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                        ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
-            } else {
-                long heldMs = ignivorusPrimaryPressStartedAtMs > 0L ? now - ignivorusPrimaryPressStartedAtMs : 0L;
-                if (heldMs >= DUAL_ABILITY_HOLD_MS) {
-                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
-                    sendInput(false, false, DragonRiderAction.ABILITY_STOP,
-                            ModAbilities.IGNIVORUS_FIREBALL.getName(), forward, strafe);
-                } else {
-                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                            ModAbilities.IGNIVORUS_ROAR.getName(), forward, strafe);
-                }
-            }
-        }
-
-        ignivorusPrimaryPressStartedAtMs = 0L;
-        ignivorusFireballActive = false;
-    }
-
-    private static void handleAtroxiiaDualTertiary(boolean currentDown,
-                                                   boolean previousDown,
-                                                   float forward,
-                                                   float strafe) {
-        long now = System.currentTimeMillis();
-        if (currentDown) {
-            if (!previousDown) {
-                atroxiiaTertiaryPressStartedAtMs = now;
-                atroxiiaPreciseStrikeTriggered = false;
-            } else if (atroxiiaTertiaryPressStartedAtMs == 0L) {
-                // The key was already held while controls were unavailable; consume that gesture.
-                atroxiiaPreciseStrikeTriggered = true;
+            if (binding == null) {
                 return;
             }
-            if (!atroxiiaPreciseStrikeTriggered
-                    && atroxiiaTertiaryPressStartedAtMs > 0L
-                    && now - atroxiiaTertiaryPressStartedAtMs >= DUAL_ABILITY_HOLD_MS) {
-                sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        ModAbilities.ATROXIIA_PRECISE_STRIKE.getName(), forward, strafe);
-                atroxiiaPreciseStrikeTriggered = true;
+            if (currentDown) {
+                heldTicks++;
+                if (!triggered && reachedThreshold(now)) {
+                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                            binding.holdAbility().abilityId(), forward, strafe);
+                    triggered = true;
+                }
+                return;
             }
-            return;
-        }
-
-        if (previousDown && !atroxiiaPreciseStrikeTriggered) {
-            long heldMs = atroxiiaTertiaryPressStartedAtMs > 0L
-                    ? now - atroxiiaTertiaryPressStartedAtMs
-                    : 0L;
-            String abilityName = heldMs >= DUAL_ABILITY_HOLD_MS
-                    ? ModAbilities.ATROXIIA_PRECISE_STRIKE.getName()
-                    : ModAbilities.ATROXIIA_GUNGNIR_STAB.getName();
-            sendInput(false, false, DragonRiderAction.ABILITY_USE, abilityName, forward, strafe);
-        }
-
-        atroxiiaTertiaryPressStartedAtMs = 0L;
-        atroxiiaPreciseStrikeTriggered = false;
-    }
-
-    private static void handleRaevyxDualSecondary(boolean currentDown,
-                                                  boolean previousDown,
-                                                  float forward,
-                                                  float strafe) {
-        if (currentDown) {
-            if (!previousDown) {
-                raevyxSecondaryHoldTicks = 0;
-                raevyxGroundRendTriggered = false;
+            if (previousDown) {
+                if (!triggered && reachedThreshold(now)) {
+                    sendInput(false, false, DragonRiderAction.ABILITY_USE,
+                            binding.holdAbility().abilityId(), forward, strafe);
+                    triggered = true;
+                }
+                if (triggered) {
+                    stopHeldAbility(forward, strafe);
+                } else {
+                    sendInput(false, false, DragonRiderAction.ABILITY_USE, binding.tapAbilityId(), forward, strafe);
+                }
             }
-            raevyxSecondaryHoldTicks++;
-            if (!raevyxGroundRendTriggered && raevyxSecondaryHoldTicks >= RAEVYX_SECONDARY_HOLD_TICKS) {
-                sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                        ModAbilities.RAEVYX_GROUND_REND.getName(), forward, strafe);
-                raevyxGroundRendTriggered = true;
+            reset();
+        }
+
+        private boolean reachedThreshold(long now) {
+            return binding.holdTicks() > 0 ? heldTicks >= binding.holdTicks()
+                    : now - pressStartedAt >= binding.holdMillis();
+        }
+
+        private String activeAbilityId() {
+            return binding != null && triggered ? binding.holdAbility().abilityId() : null;
+        }
+
+        private void stopHeldAbility(float forward, float strafe) {
+            if (binding != null && triggered && binding.holdAbility().activation() == Activation.HOLD) {
+                sendInput(false, false, DragonRiderAction.ABILITY_STOP,
+                        binding.holdAbility().abilityId(), forward, strafe);
             }
-            return;
         }
 
-        if (previousDown && !raevyxGroundRendTriggered) {
-            sendInput(false, false, DragonRiderAction.ABILITY_USE,
-                    ModAbilities.RAEVYX_SUMMON_STORM.getName(), forward, strafe);
+        private void cancel() {
+            stopHeldAbility(0f, 0f);
+            reset();
         }
 
-        raevyxSecondaryHoldTicks = 0;
-        raevyxGroundRendTriggered = false;
+        private void reset() {
+            binding = null;
+            heldTicks = 0;
+            pressStartedAt = 0L;
+            triggered = false;
+        }
     }
 
     private static void handleLockedInputs(Minecraft mc, RideableDragonBase dragon) {
@@ -587,30 +473,10 @@ public final class DragonRideInputHandler {
         boolean pitchLockDown = mc.options.keyUse.isDown();
         boolean flexDown = isFlexDown();
 
-        if (dragon instanceof Volitans) {
-            if (volitansBreathActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP, ModAbilities.VOLITANS_BREATH.getName(), 0f, 0f);
-            }
-            if (volitansPoisonBallActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP, ModAbilities.VOLITANS_POISON_BALL.getName(), 0f, 0f);
-            }
-            volitansTertiaryHoldTicks = 0;
-            volitansBreathActive = false;
-            volitansPrimaryPressStartedAtMs = 0L;
-            volitansPoisonBallActive = false;
-        } else if (dragon instanceof Ignivorus) {
-            if (ignivorusFireballActive) {
-                sendInput(false, false, DragonRiderAction.ABILITY_STOP, ModAbilities.IGNIVORUS_FIREBALL.getName(), 0f, 0f);
-            }
-            ignivorusPrimaryPressStartedAtMs = 0L;
-            ignivorusFireballActive = false;
-        } else {
-            handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
-        }
-        if (dragon instanceof Raevyx) {
-            raevyxSecondaryHoldTicks = 0;
-            raevyxGroundRendTriggered = false;
-        }
+        primaryDualState.cancel();
+        secondaryDualState.cancel();
+        tertiaryDualState.cancel();
+        handleLockedAbilityRelease(dragon.getTertiaryRiderAbility(), tertiaryDown, wasTertiaryAbilityDown);
         handleLockedAbilityRelease(dragon.getPrimaryRiderAbility(), primaryDown, wasPrimaryAbilityDown);
         handleLockedAbilityRelease(dragon.getSecondaryRiderAbility(), secondaryDown, wasSecondaryAbilityDown);
         handleLockedAbilityRelease(dragon.getAttackRiderAbility(), attackDown, wasAttackDown);
@@ -668,12 +534,9 @@ public final class DragonRideInputHandler {
         wasToggleMeleeDown = false;
         wasPitchLockDown = false;
         wasFlexDown = false;
-        volitansPrimaryPressStartedAtMs = 0L;
-        volitansPoisonBallActive = false;
-        ignivorusPrimaryPressStartedAtMs = 0L;
-        ignivorusFireballActive = false;
-        atroxiiaTertiaryPressStartedAtMs = 0L;
-        atroxiiaPreciseStrikeTriggered = false;
+        primaryDualState.reset();
+        secondaryDualState.reset();
+        tertiaryDualState.reset();
         lastForward = 0f;
         lastStrafe = 0f;
         lastAscendDown = false;
@@ -686,23 +549,9 @@ public final class DragonRideInputHandler {
         wasForwardKeyDown = false;
         lastBackwardTapTime = 0;
         wasBackwardKeyDown = false;
-        volitansTertiaryHoldTicks = 0;
-        volitansBreathActive = false;
-        raevyxSecondaryHoldTicks = 0;
-        raevyxGroundRendTriggered = false;
     }
 
     private static boolean isFlexDown() {
         return DRAGON_FLEX.isDown();
     }
-
-    private static boolean supportsPitchLock(RideableDragonBase dragon) {
-        return dragon instanceof Atroxiia
-                || dragon instanceof Raevyx
-                || dragon instanceof Cindervane
-                || dragon instanceof Ignivorus
-                || dragon instanceof Volitans
-                || dragon instanceof Varasuchus;
-    }
-
 }

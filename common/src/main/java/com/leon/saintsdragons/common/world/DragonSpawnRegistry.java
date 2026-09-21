@@ -12,17 +12,39 @@ import net.minecraft.world.level.biome.Biome;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
 
 public final class DragonSpawnRegistry {
-    private static final List<DragonSpawnEntry> ENTRIES = createEntries();
+    private static final List<DragonSpawnEntry> ENTRIES = new ArrayList<>(createEntries());
+    private static final List<Consumer<DragonSpawnEntry>> LISTENERS = new ArrayList<>();
 
     private DragonSpawnRegistry() {
     }
 
-    public static List<DragonSpawnEntry> getAll() {
-        return ENTRIES;
+    public static synchronized List<DragonSpawnEntry> getAll() {
+        return List.copyOf(ENTRIES);
+    }
+
+    public static synchronized void register(DragonSpawnEntry entry) {
+        Objects.requireNonNull(entry, "entry");
+        if (ENTRIES.stream().anyMatch(existing -> existing.id().equals(entry.id()))) {
+            throw new IllegalArgumentException("Duplicate dragon spawn entry: " + entry.id());
+        }
+        ENTRIES.add(entry);
+        for (Consumer<DragonSpawnEntry> listener : List.copyOf(LISTENERS)) {
+            listener.accept(entry);
+        }
+    }
+
+    public static synchronized void addRegistrationListener(Consumer<DragonSpawnEntry> listener) {
+        Objects.requireNonNull(listener, "listener");
+        LISTENERS.add(listener);
+        for (DragonSpawnEntry entry : List.copyOf(ENTRIES)) {
+            listener.accept(entry);
+        }
     }
 
     private static List<DragonSpawnEntry> createEntries() {
@@ -122,5 +144,14 @@ public final class DragonSpawnRegistry {
             IntSupplier minGroupSize,
             IntSupplier maxGroupSize
     ) {
+        public DragonSpawnEntry {
+            Objects.requireNonNull(id, "id");
+            Objects.requireNonNull(entityType, "entityType");
+            Objects.requireNonNull(biomeTag, "biomeTag");
+            Objects.requireNonNull(category, "category");
+            Objects.requireNonNull(weight, "weight");
+            Objects.requireNonNull(minGroupSize, "minGroupSize");
+            Objects.requireNonNull(maxGroupSize, "maxGroupSize");
+        }
     }
 }

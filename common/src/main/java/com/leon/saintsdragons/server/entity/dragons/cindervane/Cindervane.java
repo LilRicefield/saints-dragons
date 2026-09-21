@@ -255,6 +255,16 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     private final DragonFlightVisuals.State flightVisualState = new DragonFlightVisuals.State();
     private final ScreenShakeComponent screenShakeComponent;
     @Override
+    public boolean supportsRiderPitchLock() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsRiderWaterBreach() {
+        return true;
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case ABILITY_USE, ABILITY_STOP, OPEN_INVENTORY -> true;

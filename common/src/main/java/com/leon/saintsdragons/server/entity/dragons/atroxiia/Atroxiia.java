@@ -431,6 +431,17 @@ public class Atroxiia extends RideableGroundDragon implements ShakesScreen, Pass
     }
 
     @Override
+    public boolean supportsRiderPitchLock() {
+        return true;
+    }
+
+    @Override
+    public RiderDualAbilityBinding getTertiaryRiderDualAbility() {
+        return RiderDualAbilityBinding.milliseconds(ModAbilities.ATROXIIA_GUNGNIR_STAB.getName(),
+                new RiderAbilityBinding(ModAbilities.ATROXIIA_PRECISE_STRIKE.getName(), RiderAbilityBinding.Activation.PRESS), 180L);
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case ABILITY_USE, ABILITY_STOP, DOUBLE_TAP_W, OPEN_INVENTORY -> true;

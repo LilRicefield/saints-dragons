@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
+import com.leon.saintsdragons.common.registry.DragonSpeciesRegistry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
@@ -37,9 +38,9 @@ public final class DragonVariantReloadListener extends SimpleJsonResourceReloadL
         Map<ResourceLocation, List<DragonVariantDefinition>> parsed = new LinkedHashMap<>();
         for (Map.Entry<ResourceLocation, JsonElement> entry : jsonMap.entrySet()) {
             ResourceLocation fileId = entry.getKey();
-            ResourceLocation dragonId = SaintsDragonsCommon.rl(fileId.getPath());
             try {
                 JsonObject root = GsonHelper.convertToJsonObject(entry.getValue(), fileId.toString());
+                ResourceLocation dragonId = resolveDragonId(fileId, root);
                 JsonArray variants = GsonHelper.getAsJsonArray(root, "variants");
                 for (JsonElement element : variants) {
                     DragonVariantDefinition definition = parseVariant(fileId, dragonId, GsonHelper.convertToJsonObject(element, fileId + " variant"));
@@ -50,6 +51,18 @@ public final class DragonVariantReloadListener extends SimpleJsonResourceReloadL
             }
         }
         SaintsDragonVariantRegistry.replaceDatapackVariants(parsed);
+    }
+
+    private static ResourceLocation resolveDragonId(ResourceLocation fileId, JsonObject root) {
+        if (root.has("dragon")) {
+            return parseVariantId(fileId.getNamespace(), GsonHelper.getAsString(root, "dragon"));
+        }
+        if (SaintsDragonVariantRegistry.hasDefaults(fileId)
+                || DragonSpeciesRegistry.get(fileId) != null) {
+            return fileId;
+        }
+        ResourceLocation legacyId = SaintsDragonsCommon.rl(fileId.getPath());
+        return SaintsDragonVariantRegistry.hasDefaults(legacyId) ? legacyId : fileId;
     }
 
     private static DragonVariantDefinition parseVariant(ResourceLocation fileId,

@@ -575,6 +575,28 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
 
 
     @Override
+    public boolean supportsRiderPitchLock() {
+        return true;
+    }
+
+    @Override
+    public boolean supportsRiderWaterBreach() {
+        return true;
+    }
+
+    @Override
+    public boolean isRiderInputEnabled(DragonRiderAction action) {
+        return action != DragonRiderAction.DOUBLE_TAP_A && action != DragonRiderAction.DOUBLE_TAP_D
+                && super.isRiderInputEnabled(action);
+    }
+
+    @Override
+    public RiderDualAbilityBinding getPrimaryRiderDualAbility() {
+        return RiderDualAbilityBinding.milliseconds(ModAbilities.IGNIVORUS_ROAR.getName(),
+                new RiderAbilityBinding(ModAbilities.IGNIVORUS_FIREBALL.getName(), RiderAbilityBinding.Activation.HOLD), 180L);
+    }
+
+    @Override
     protected boolean supportsRiderAction(DragonRiderAction action) {
         return switch (action) {
             case DOUBLE_TAP_A, DOUBLE_TAP_D, DOUBLE_TAP_W, DOUBLE_TAP_S,

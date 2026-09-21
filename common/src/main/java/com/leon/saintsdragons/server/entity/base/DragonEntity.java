@@ -4,6 +4,7 @@ import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfig;
 import com.leon.saintsdragons.common.config.dragon.DragonAttributeConfigLoader;
 import com.leon.saintsdragons.common.block.AbstractDragonEggBlockEntity;
 import com.leon.saintsdragons.common.registry.Dragons;
+import com.leon.saintsdragons.common.registry.DragonSpeciesRegistry;
 import com.leon.saintsdragons.common.SaintsDragonsCommon;
 import com.leon.saintsdragons.common.config.SaintsDragonsConfig;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonTargetLifecycle;
@@ -922,7 +923,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     protected ResourceLocation chooseAdultTextureVariantId() {
         if (this.level() instanceof ServerLevelAccessor serverLevelAccessor) {
-            return SaintsDragonVariantRegistry.chooseSpawnVariant(serverLevelAccessor, this);
+            return SaintsDragonVariantRegistry.chooseSpawnVariant(serverLevelAccessor, this, getDragonVariantTypeId());
         }
         return SaintsDragonVariantRegistry.legacyToVariantId(getDragonVariantTypeId(), getVariantSet().roll(this.getRandom()));
     }
@@ -1051,7 +1052,7 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
                                                           @NotNull MobSpawnType reason,
                                                           @Nullable SpawnGroupData spawnData,
                                                           @Nullable CompoundTag spawnTag) {
-        return SaintsDragonVariantRegistry.chooseSpawnVariant(levelAccessor, this);
+        return SaintsDragonVariantRegistry.chooseSpawnVariant(levelAccessor, this, getDragonVariantTypeId());
     }
 
     public boolean hasCustomTextureVariant() {
@@ -1065,6 +1066,15 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
 
     protected ResourceLocation getDragonVariantTypeId() {
         return SaintsDragonVariantRegistry.dragonId(this);
+    }
+
+    public ResourceLocation getDragonSpeciesId() {
+        return DragonSpeciesRegistry.speciesId(this);
+    }
+
+    @Nullable
+    public DragonSpeciesRegistry.Definition getDragonSpecies() {
+        return DragonSpeciesRegistry.get(getDragonSpeciesId());
     }
 
     @Nullable
@@ -2005,7 +2015,10 @@ public abstract class DragonEntity extends TamableAnimal implements GeoEntity, S
         return 0.0;
     }
 
-    protected abstract ResourceLocation getDragonAttributesId();
+    protected ResourceLocation getDragonAttributesId() {
+        DragonSpeciesRegistry.Definition species = getDragonSpecies();
+        return species != null ? species.attributesId() : getDragonSpeciesId();
+    }
 
     public DragonAttributeConfig getConfiguredDragonAttributes() {
         return DragonAttributeConfigLoader.getInstance().getConfig(getDragonAttributesId());

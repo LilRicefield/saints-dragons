@@ -28,14 +28,14 @@ public final class Spawns {
     }
 
     public static void register() {
-        for (DragonSpawnRegistry.DragonSpawnEntry entry : DragonSpawnRegistry.getAll()) {
+        DragonSpawnRegistry.addRegistrationListener(entry -> {
             int weight = entry.weight().getAsInt();
             int minGroupSize = entry.minGroupSize().getAsInt();
             int maxGroupSize = entry.maxGroupSize().getAsInt();
             EntityType<?> entityType = entry.entityType().get();
 
             if (weight <= 0) {
-                continue;
+                return;
             }
 
             registerSpawn(
@@ -46,7 +46,7 @@ public final class Spawns {
                     minGroupSize,
                     maxGroupSize
             );
-        }
+        });
 
         if (SaintsDragonsConfig.isMoopSpawningEnabled()) {
             registerMoopSpawn();
