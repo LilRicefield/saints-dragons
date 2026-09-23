@@ -235,13 +235,13 @@ public final class DragonLandingPlanner {
                 && space.corridorClear(plan.flare(), plan.touchdown());
     }
 
-    /** Enclosed spaces may allow a controlled nearby descent without an outdoor runway. */
+    /** A clear nearby descent can work when there is no room for a full approach runway. */
     private static @Nullable DragonLandingPlan findCompactPlan(Mob dragon, DragonFlightSpace space,
                                                                 Vec3 anchor, int maxRadius,
                                                                 Predicate<Vec3> acceptableTouchdown) {
         Vec3 current = dragon.position();
         FlightClearance local = space.observe(current);
-        if (local == null || !local.clear() || !local.ceilingKnown()) return null;
+        if (local == null || !local.clear()) return null;
         for (int radius = 0; radius <= 8; radius += RADIUS_STEP) {
             int samples = radius == 0 ? 1 : 8;
             for (int i = 0; i < samples; i++) {

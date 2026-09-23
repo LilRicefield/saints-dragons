@@ -11,7 +11,7 @@ public final class FabricIgnivorusPartManager {
     public FabricIgnivorusPartManager(Ignivorus dragon) {
         this.dragon = dragon;
         manager = new DragonPartManager<>(dragon, index -> new FabricDragonPart(dragon, index));
-        manager.update();
+        manager.initializeParts();
         parts = manager.parts().toArray(FabricDragonPart[]::new);
     }
 

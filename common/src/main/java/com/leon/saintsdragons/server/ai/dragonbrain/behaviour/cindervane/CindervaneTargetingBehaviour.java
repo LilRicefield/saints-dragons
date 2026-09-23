@@ -69,6 +69,8 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
         }
 
         if (packPollCooldown-- <= 0) {
+            // stop fucking scanning even when you're in a crowd, dumbass dragons im gonna kms
+            packPollCooldown = 10 + dragon.getRandom().nextInt(10);
             LivingEntity threat = packThreat(context.level(), dragon);
             if (threat != null) {
                 packPollCooldown = 20 + dragon.getRandom().nextInt(20);

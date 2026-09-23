@@ -21,12 +21,25 @@ public final class DragonPartManager<P extends Entity & DragonPartEntity> {
 
     public List<P> parts() { return parts; }
 
+    // allocate the stable part list without sampling a pose or querying the world
+    public void initializeParts() {
+        if (!parts.isEmpty() || dragon.isRemoved()) return;
+        // structure templates can construct dragons on a worldgen worker
+        // pose selection checks terrain so defer it until update()
+        AABB initialBounds = new AABB(dragon.position(), dragon.position());
+        for (int i = 0; i < IgnivorusHitboxes.REGIONS.size(); i++) {
+            P part = factory.apply(i);
+            part.updateBounds(initialBounds);
+            parts.add(part);
+        }
+    }
+
     public void update() {
         if (dragon.isRemoved()) {
             remove();
             return;
         }
-        if (parts.isEmpty()) for (int i = 0; i < IgnivorusHitboxes.REGIONS.size(); i++) parts.add(factory.apply(i));
+        initializeParts();
         // Abilities may have sampled a pose before this tick's movement and flight updates finished.
         dragon.getCollisionState().invalidate();
         for (int i = 0; i < parts.size(); i++) parts.get(i).updateBounds(dragon.isBaby()

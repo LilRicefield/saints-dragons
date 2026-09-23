@@ -6,6 +6,7 @@ import com.leon.saintsdragons.common.network.MessageDragonBrainDebug;
 import com.leon.saintsdragons.common.network.NetworkHandler;
 import com.leon.saintsdragons.server.ai.DragonTargetingHelper;
 import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.*;
+import com.leon.saintsdragons.server.ai.dragonbrain.behaviour.ignivorus.IgnivorusAutonomousFlightBehaviour;
 import com.leon.saintsdragons.server.ai.dragonbrain.debug.DragonBrainDebugDetails;
 import com.leon.saintsdragons.server.ai.navigation.DragonAIMovementController;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
@@ -765,6 +766,7 @@ public final class DragonPathDebugTracker {
         summary.append(",steering={").append(flying.getFlightSteeringDebugSummary()).append('}');
         summary.append(",aim={").append(flying.getCombatAim().debugSummary()).append('}');
         summary.append(",space={").append(movement.flightSpace().debugSummary()).append('}');
+        summary.append(",landingPlan={").append(movement.getLandingPlanDebugSummary()).append('}');
         summary.append(",landing=").append(dragon.getBrain()
                 .getMemory(DragonMemories.TACTICAL_LANDING_POSITION).map(Object::toString).orElse("none"));
         DragonCombatFlightState combatFlight = DragonCombatFlightState.get(dragon);
@@ -783,14 +785,20 @@ public final class DragonPathDebugTracker {
         }
         for (DragonBrainDiagnostics.RegisteredBehaviour registered :
                 DragonBrainDiagnostics.getBehaviours(dragon, dragon.getBrain())) {
+            if (registered.behaviour() instanceof FirstApplicableDragonBehaviour<?> idle
+                    && idle.runningBehaviour() instanceof IgnivorusAutonomousFlightBehaviour) {
+                summary.append(",idle_decision=").append(idle.getDragonBrainDebugDetails().get("decision"));
+            }
             if (registered.behaviour() instanceof AirCombatMovementBehaviour<?>
                     || registered.behaviour() instanceof AirToGroundTransitionBehaviour<?>
-                    || registered.behaviour() instanceof DragonFlightMovementRecoveryBehaviour<?>) {
+                    || registered.behaviour() instanceof DragonFlightMovementRecoveryBehaviour<?>
+                    || registered.behaviour() instanceof IgnivorusAutonomousFlightBehaviour) {
                 var details = ((DragonBrainDebugDetails)
                         registered.behaviour()).getDragonBrainDebugDetails();
                 for (String key : List.of("flight_block", "handoff", "flight_execution", "missing_ticks", "recoveries",
                         "air_phase", "air_decision", "air_attack_height", "air_route_y", "air_phase_ticks",
-                        "air_beam_availability", "air_beam_cooldown", "air_beam_alignment_ticks", "air_roar_cooldown")) {
+                        "air_beam_availability", "air_beam_cooldown", "air_beam_alignment_ticks", "air_roar_cooldown",
+                        "phase2_landing_recovery", "phase2_landing_attempts", "phase2_reposition_attempts")) {
                     if (details.containsKey(key)) summary.append(',').append(key).append('=').append(details.get(key));
                 }
             }

@@ -11,7 +11,7 @@ public final class ForgeIgnivorusPartManager {
     public ForgeIgnivorusPartManager(Ignivorus dragon) {
         this.dragon = dragon;
         manager = new DragonPartManager<>(dragon, index -> new ForgeDragonPart(dragon, index));
-        manager.update();
+        manager.initializeParts();
         parts = manager.parts().toArray(ForgeDragonPart[]::new);
     }
 

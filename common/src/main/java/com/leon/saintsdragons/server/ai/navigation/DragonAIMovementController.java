@@ -51,6 +51,7 @@ public class DragonAIMovementController {
     private boolean ignoreInheritedGroundNavigationStuck;
     private String groundPathDebugReason = "idle";
     private int landingPlanRetryTicks;
+    private String landingPlanDebugReason = "not-requested";
     private @Nullable DragonLandingPlan pendingLandingPlan;
     private int lastWaterControllerTick = Integer.MIN_VALUE;
 
@@ -286,11 +287,16 @@ public class DragonAIMovementController {
     }
 
     public boolean requestGroundTransition(@Nullable LivingEntity target, double speed) {
-        if (!brainMovement.canMutate(movementCommandGeneration)) return false;
+        if (!brainMovement.canMutate(movementCommandGeneration)) {
+            landingPlanDebugReason = "movement-owned-by-action";
+            return false;
+        }
         if (!dragon.canFly() || !(dragon instanceof DragonFlightCapable flightCapable)) {
+            landingPlanDebugReason = "flight-unavailable";
             return false;
         }
         if (dragon.onGround()) {
+            landingPlanDebugReason = "already-grounded";
             if (dragon.isAerial()) {
                 flightCapable.completeAiLanding();
                 clearAllWaypoints();
@@ -299,15 +305,18 @@ public class DragonAIMovementController {
             return false;
         }
         if (hasActiveLandingTransition()) {
+            landingPlanDebugReason = "active";
             return true;
         }
         if (landingPlanRetryTicks > 0) {
+            landingPlanDebugReason = "retry-cooldown";
             return false;
         }
 
         this.pendingLandingPlan = null;
         DragonLandingPlan landingPlan = DragonLandingPlanner.findPlan(dragon, target);
         if (landingPlan == null) {
+            landingPlanDebugReason = "no-safe-plan";
             landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
             return false;
         }
@@ -316,11 +325,16 @@ public class DragonAIMovementController {
     }
 
     public boolean requestGroundTransition(@Nullable Vec3 landingTarget, double speed) {
-        if (!brainMovement.canMutate(movementCommandGeneration)) return false;
+        if (!brainMovement.canMutate(movementCommandGeneration)) {
+            landingPlanDebugReason = "movement-owned-by-action";
+            return false;
+        }
         if (!dragon.canFly() || !(dragon instanceof DragonFlightCapable flightCapable)) {
+            landingPlanDebugReason = "flight-unavailable";
             return false;
         }
         if (dragon.onGround()) {
+            landingPlanDebugReason = "already-grounded";
             if (dragon.isAerial()) {
                 flightCapable.completeAiLanding();
                 clearAllWaypoints();
@@ -329,12 +343,15 @@ public class DragonAIMovementController {
             return false;
         }
         if (hasActiveLandingTransition()) {
+            landingPlanDebugReason = "active";
             return true;
         }
         if (landingPlanRetryTicks > 0) {
+            landingPlanDebugReason = "retry-cooldown";
             return false;
         }
         if (landingTarget == null) {
+            landingPlanDebugReason = "no-target";
             return false;
         }
         DragonLandingPlan landingPlan = this.pendingLandingPlan;
@@ -344,6 +361,7 @@ public class DragonAIMovementController {
             landingPlan = DragonLandingPlanner.findPlanNear(dragon, landingTarget);
         }
         if (landingPlan == null) {
+            landingPlanDebugReason = "no-safe-plan";
             landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
             return false;
         }
@@ -354,13 +372,23 @@ public class DragonAIMovementController {
     public boolean requestOwnerFollowLanding(Vec3 ownerPosition, double stopDistance,
                                               double maxDistance, double maxVerticalDelta, double speed) {
         if (!brainMovement.canMutate(movementCommandGeneration) || !dragon.canFly()
-                || !dragon.isAerial() || dragon.onGround()) return false;
-        if (hasActiveLandingTransition()) return true;
-        if (landingPlanRetryTicks > 0) return false;
+                || !dragon.isAerial() || dragon.onGround()) {
+            landingPlanDebugReason = "follow-landing-ineligible";
+            return false;
+        }
+        if (hasActiveLandingTransition()) {
+            landingPlanDebugReason = "active";
+            return true;
+        }
+        if (landingPlanRetryTicks > 0) {
+            landingPlanDebugReason = "retry-cooldown";
+            return false;
+        }
         pendingLandingPlan = null;
         DragonLandingPlan plan = DragonLandingPlanner.findFollowPlan(
                 dragon, ownerPosition, stopDistance, maxDistance, maxVerticalDelta);
         if (plan == null) {
+            landingPlanDebugReason = "no-safe-plan";
             landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
             return false;
         }
@@ -384,12 +412,19 @@ public class DragonAIMovementController {
         return hasActiveLandingTransition() ? currentWaypoint.target() : null;
     }
 
+    public String getLandingPlanDebugSummary() {
+        return "last=" + landingPlanDebugReason + ",retry=" + landingPlanRetryTicks
+                + ",touchdown=" + (currentWaypoint != null && currentWaypoint.mode() == MovementMode.LANDING
+                ? currentWaypoint.target() : "none");
+    }
+
     private boolean beginGroundTransition(@Nullable DragonLandingPlan landingPlan, double speed) {
         if (landingPlan == null) {
+            landingPlanDebugReason = "no-safe-plan";
             return false;
         }
         this.pendingLandingPlan = null;
-        return startWaypoint(new QueuedWaypoint(
+        boolean accepted = startWaypoint(new QueuedWaypoint(
                 landingPlan.touchdown(),
                 speed,
                 false,
@@ -397,14 +432,18 @@ public class DragonAIMovementController {
                 landingPlan,
                 Double.NaN
         ));
+        landingPlanDebugReason = accepted ? "accepted" : "movement-rejected";
+        return accepted;
     }
 
     public @Nullable Vec3 findGroundTransitionTarget(@Nullable LivingEntity target) {
         if (landingPlanRetryTicks > 0) {
+            landingPlanDebugReason = "retry-cooldown";
             return null;
         }
         DragonLandingPlan plan = DragonLandingPlanner.findPlan(dragon, target);
         this.pendingLandingPlan = plan;
+        landingPlanDebugReason = plan == null ? "no-safe-plan" : "planned";
         if (plan == null) {
             landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
         }

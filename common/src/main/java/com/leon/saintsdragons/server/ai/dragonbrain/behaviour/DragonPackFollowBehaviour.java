@@ -18,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMember<T>>
@@ -33,7 +34,9 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
     private final double stopDistanceSq;
     @Nullable
     private T leader;
-    private int leaderRefreshCooldown;
+    private long nextLeaderRefreshAt;
+    @Nullable
+    private UUID lastResolvedLeaderUuid;
     private int groundRepathCooldown;
     private int airRefreshCooldown;
     private double lastLeaderX = Double.NaN;
@@ -42,6 +45,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
     @Nullable
     private Vec3 lastAirTarget;
     private double lastAirSpeed = Double.NaN;
+    private boolean lastLeaderAirborne;
     private String mode = "idle";
 
     public DragonPackFollowBehaviour(Class<T> memberClass,
@@ -59,7 +63,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
     protected boolean canStart(DragonBrainContext<T> context) {
         T member = context.dragon();
         if (!canFollow(member)) return false;
-        leader = resolveLeader(context.level(), member);
+        refreshLeader(context);
         return leader != null && member.distanceToSqr(leader) > startDistanceSq;
     }
 
@@ -80,9 +84,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
             return false;
         }
         if (member.isLanding()) return !member.onGround();
-        if (!usableLeader(member, leader)) {
-            leader = resolveLeader(context.level(), member);
-        }
+        refreshLeader(context);
         return leader != null && member.distanceToSqr(leader) > stopDistanceSq;
     }
 
@@ -98,11 +100,7 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
     @Override
     protected void tick(DragonBrainContext<T> context) {
         T member = context.dragon();
-        if (leaderRefreshCooldown-- <= 0) {
-            leaderRefreshCooldown = Math.max(20, member.getPackLeaderRefreshIntervalTicks())
-                    + member.getRandom().nextInt(11);
-            leader = resolveLeader(context.level(), member);
-        }
+        refreshLeader(context);
         if (!usableLeader(member, leader)) return;
 
         member.getLookControl().setLookAt(leader, 20.0F, 20.0F);
@@ -151,6 +149,10 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         if (airRefreshCooldown > 0) airRefreshCooldown--;
         boolean leaderAirborne = isAirborne(currentLeader);
         boolean memberAirborne = isAirborne(member);
+        if (leaderAirborne != lastLeaderAirborne || !memberAirborne) {
+            lastAirTarget = null;
+        }
+        lastLeaderAirborne = leaderAirborne;
         if (!leaderAirborne && !memberAirborne) return false;
 
         if (member.isLanding()) {
@@ -191,15 +193,16 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
             boolean catchUp = distanceSq > AIR_CATCH_UP_DISTANCE * AIR_CATCH_UP_DISTANCE;
             double speed = airSpeed(member, catchUp);
             member.setAccelerating(catchUp);
-            if (member.handleDirectAirPackFollow(target, speed)) {
-                rememberAirTarget(target, speed);
-            } else if (shouldRefreshAirTarget(target, speed)) {
-                context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(target, speed));
+            if (shouldRefreshAirTarget(target, speed)) {
+                if (!member.handleDirectAirPackFollow(target, speed)) {
+                    context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.auto(target, speed));
+                }
                 rememberAirTarget(target, speed);
             }
         } else {
             member.setAccelerating(false);
             member.getAIMovement().stop();
+            lastAirTarget = null;
         }
         remember(currentLeader);
         return true;
@@ -243,6 +246,28 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         airRefreshCooldown = speed >= 1.4D ? 3 : speed >= 1.0D ? 5 : 7;
     }
 
+    private void refreshLeader(DragonBrainContext<T> context) {
+        T member = context.dragon();
+        UUID stored = member.getPackLeaderUuid();
+        if (context.gameTime() < nextLeaderRefreshAt && Objects.equals(stored, lastResolvedLeaderUuid)) {
+            // cache unsuccessful searches
+            // this deadline advances even while the behavior is stopped
+            if (stored == null || stored.equals(member.getUUID())) return;
+            if (leader == null || !stored.equals(leader.getUUID())) {
+                Entity entity = context.level().getEntity(stored);
+                leader = memberClass.isInstance(entity) ? memberClass.cast(entity) : null;
+            }
+            if (usableLeader(member, leader)) return;
+        }
+
+        T previous = leader;
+        leader = resolveLeader(context.level(), member);
+        lastResolvedLeaderUuid = member.getPackLeaderUuid();
+        int interval = leader == null ? 20 : Math.max(20, member.getPackLeaderRefreshIntervalTicks());
+        nextLeaderRefreshAt = context.gameTime() + interval + member.getRandom().nextInt(11);
+        if (leader != previous) resetTracking();
+    }
+
     @Nullable
     private T resolveLeader(ServerLevel level, T member) {
         UUID stored = member.getPackLeaderUuid();
@@ -261,8 +286,8 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
                 candidate -> candidate == member || usableLeader(member, candidate));
         T best = member.canLeadPack() ? member : null;
         for (T candidate : nearby) {
-            if (candidate != member && hasCapacity(level, member, candidate)
-                    && (best == null || betterLeader(candidate, best))) {
+            if (candidate != member && (best == null || betterLeader(candidate, best))
+                    && hasCapacity(level, member, candidate)) {
                 best = candidate;
             }
         }
@@ -296,15 +321,13 @@ public class DragonPackFollowBehaviour<T extends RideableFlyingDragon & PackMemb
         AABB box = candidate.getBoundingBox().inflate(Math.max(8.0D, candidate.getPackSearchRadius()));
         UUID leaderId = candidate.getUUID();
         List<T> nearby = member.getBrainUtilities().nearby().find(level, memberClass, box,
-                other -> other == candidate || compatibleMember(member, other));
-        long followers = nearby.stream()
-                .filter(other -> other != candidate && leaderId.equals(other.getPackLeaderUuid()))
-                .count();
+                other -> other != candidate && leaderId.equals(other.getPackLeaderUuid())
+                        && compatibleMember(member, other));
+        int followers = nearby.size();
         if (!leaderId.equals(member.getPackLeaderUuid())) return followers < max - 1;
         if (followers <= max - 1) return true;
         long rank = nearby.stream()
-                .filter(other -> other != candidate && other != member)
-                .filter(other -> leaderId.equals(other.getPackLeaderUuid()))
+                .filter(other -> other != member)
                 .filter(other -> compareUuid(other.getUUID(), member.getUUID()) < 0)
                 .count();
         return rank < max - 1;
