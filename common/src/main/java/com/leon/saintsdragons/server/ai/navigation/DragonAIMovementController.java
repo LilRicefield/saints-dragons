@@ -32,7 +32,7 @@ public class DragonAIMovementController {
     private static final int GROUND_PATH_FAILURE_RETRY_TICKS = 20;
     private static final int REPEATED_GROUND_PATH_FAILURE_THRESHOLD = 3;
     private static final int FAILED_ROUTE_DETOUR_ALLOWANCE = 40;
-    private static final int LANDING_PLAN_FAILURE_RETRY_TICKS = 20;
+    private static final int LANDING_PLAN_FAILURE_RETRY_TICKS = 100;
     private static final float WATER_TURN_SPEED = 8.0F;
 
     private final RideableDragonBase dragon;
@@ -296,6 +296,10 @@ public class DragonAIMovementController {
             landingPlanDebugReason = "flight-unavailable";
             return false;
         }
+        if (canCompleteWaterLanding()) {
+            completeWaterLanding();
+            return true;
+        }
         if (dragon.onGround()) {
             landingPlanDebugReason = "already-grounded";
             if (dragon.isAerial()) {
@@ -311,6 +315,7 @@ public class DragonAIMovementController {
         }
         if (landingPlanRetryTicks > 0) {
             landingPlanDebugReason = "retry-cooldown";
+            resumeLandingRecovery(speed);
             return false;
         }
 
@@ -329,6 +334,10 @@ public class DragonAIMovementController {
             landingPlanDebugReason = "flight-unavailable";
             return false;
         }
+        if (canCompleteWaterLanding()) {
+            completeWaterLanding();
+            return true;
+        }
         if (dragon.onGround()) {
             landingPlanDebugReason = "already-grounded";
             if (dragon.isAerial()) {
@@ -344,6 +353,7 @@ public class DragonAIMovementController {
         }
         if (landingPlanRetryTicks > 0) {
             landingPlanDebugReason = "retry-cooldown";
+            resumeLandingRecovery(speed);
             return false;
         }
         if (landingTarget == null) {
@@ -370,6 +380,7 @@ public class DragonAIMovementController {
         }
         if (landingPlanRetryTicks > 0) {
             landingPlanDebugReason = "retry-cooldown";
+            resumeLandingRecovery(speed);
             return false;
         }
         Vec3 touchdown = DragonLandingSites.findForOwner(
@@ -381,6 +392,10 @@ public class DragonAIMovementController {
 
     public boolean hasActiveLandingTransition() {
         if (currentWaypoint == null || currentWaypoint.mode() != MovementMode.LANDING) {
+            return false;
+        }
+        if (canCompleteWaterLanding()) {
+            completeWaterLanding();
             return false;
         }
         if (dragon instanceof RideableFlyingDragon flyingDragon && flyingDragon.isAiFlightDone()) {
@@ -404,23 +419,47 @@ public class DragonAIMovementController {
 
     private boolean beginGroundTransition(Vec3 touchdown, double speed) {
         boolean accepted = startWaypoint(new QueuedWaypoint(touchdown, speed, false, MovementMode.LANDING));
-        landingPlanDebugReason = accepted ? "accepted" : "movement-rejected";
+        landingPlanDebugReason = accepted
+                ? DragonLandingSites.isWaterSurface(dragon, touchdown) ? "accepted-water" : "accepted-ground"
+                : "movement-rejected";
         return accepted;
+    }
+
+    private boolean canCompleteWaterLanding() {
+        return DragonLandingSites.canLandOnWater(dragon) && dragon.isInWaterOrBubble()
+                && !dragon.isInLava() && !dragon.isVehicle() && !dragon.isPassenger();
+    }
+
+    private void completeWaterLanding() {
+        invalidateMovementCommand();
+        currentWaypoint = null;
+        resetGroundPathState();
+        landingPlanRetryTicks = 0;
+        landingPlanDebugReason = "water-contact";
+        if (dragon instanceof RideableFlyingDragon flying) flying.completeAiWaterHandoff();
+        // The landing has arrived.
+        //Let swimming behaviors choose their own destination,rather than giving the swim pathfinder the old endpoint above the water.
+        dragon.getAiSwimController().stop();
     }
 
     private boolean landingUnavailable(String reason, double speed) {
         landingPlanDebugReason = reason;
         landingPlanRetryTicks = LANDING_PLAN_FAILURE_RETRY_TICKS;
+        resumeLandingRecovery(speed);
+        return false;
+    }
+
+    private void resumeLandingRecovery(double speed) {
         if (dragon instanceof RideableFlyingDragon flying && dragon.isAerial() && !dragon.onGround()
+                && !dragon.isInWaterOrBubble() && !dragon.isInLava()
                 && !dragon.isVehicle() && !dragon.isPassenger()
                 && brainMovement.canMutate(movementCommandGeneration)) {
             flying.beginAiFlight();
             if (!flying.isAiFlightPathing()) {
-                Vec3 reposition = flightSpace.findCruiseTarget(360.0D, 12.0D, 16.0D, 12.0D, true);
+                Vec3 reposition = flightSpace.findLandingRecoveryTarget();
                 if (reposition != null) requestFlight(DragonFlightRequest.cruise(reposition, speed));
             }
         }
-        return false;
     }
 
     public @Nullable Vec3 findGroundTransitionTarget(@Nullable LivingEntity target) {
@@ -503,6 +542,9 @@ public class DragonAIMovementController {
         if (dx * dx + dz * dz > maxHorizontalDistance * maxHorizontalDistance
                 || Math.abs(landingTarget.y - target.getY()) > maxVerticalDelta) {
             return false;
+        }
+        if (DragonLandingSites.isWaterSurface(dragon, landingTarget)) {
+            return DragonLandingSites.isValid(dragon, landingTarget);
         }
         BlockPos ground = BlockPos.containing(
                 landingTarget.x,

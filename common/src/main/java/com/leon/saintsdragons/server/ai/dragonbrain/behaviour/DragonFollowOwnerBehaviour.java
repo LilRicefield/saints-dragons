@@ -332,6 +332,11 @@ public final class DragonFollowOwnerBehaviour<T extends RideableFlyingDragon> ex
             decision = "landing:committed";
             return true;
         }
+        if (!dragon.isAerial()) {
+            clearLandingTracking();
+            decision = dragon.isInWaterOrBubble() ? "landed:water-handoff" : "landed:ground-contact";
+            return true;
+        }
         if (landingTarget != null || dragon.isLanding()) {
             cancelLanding(context, "route-ended-before-touchdown");
             return false;

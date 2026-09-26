@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import java.util.List;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
@@ -23,6 +24,7 @@ public class AsyncFlightController {
     private @Nullable DragonFlightRequest currentFlightRequest;
     private WaypointArrivalCallback currentArrivalCallback;
     private boolean currentGroundTransition;
+    private boolean currentWaterTouchdown;
     private PathState state = PathState.IDLE;
     private double speedModifier = 1.0;
     private long pathRequestGeneration = 0L;
@@ -78,11 +80,11 @@ public class AsyncFlightController {
         }
 
         boolean touchdown = this.currentGroundTransition
-                && FlightLandingMotion.nearTouchdown(this.host.position(), this.currentWaypoint);
+                && FlightLandingMotion.nearTouchdown(this.host.position(), this.currentWaypoint, this.currentWaterTouchdown);
         if (this.currentGroundTransition && !touchdown && this.flightCapable.isLanding()) {
             this.flightCapable.beginAiFlight();
         }
-        if (this.currentGroundTransition && this.host.onGround()) {
+        if (this.currentGroundTransition && this.hasLandingContact()) {
             this.onArrived();
             return;
         }
@@ -147,6 +149,7 @@ public class AsyncFlightController {
         this.clearRoute();
         this.currentWaypoint = target;
         this.currentGroundTransition = true;
+        this.currentWaterTouchdown = DragonLandingSites.isWaterSurface(this.host, target);
         this.speedModifier = speed;
         this.state = PathState.CALCULATING;
         this.flightCapable.beginAiFlight();
@@ -228,11 +231,13 @@ public class AsyncFlightController {
         this.currentArrivalCallback = null;
         this.currentGroundTransition = false;
         this.state = PathState.IDLE;
+        this.currentWaterTouchdown = false;
         this.invalidatePathRequests();
         this.pathResolver.clearPathNodes();
         this.resetPathingState();
         this.movementExecutor.resetSteering();
-        if (wasLanding && this.flightCapable.isLanding() && !this.host.onGround()) {
+        if (wasLanding && this.flightCapable.isLanding() && !this.host.onGround()
+                && !this.host.isInWaterOrBubble() && !this.host.isInLava()) {
             this.flightCapable.beginAiFlight();
         }
     }
@@ -251,9 +256,11 @@ public class AsyncFlightController {
     public void onArrived() {
         if (this.currentGroundTransition) {
             // A route endpoint in the air is never a completed landing.
-            if (!this.host.onGround()) return;
+            if (!this.hasLandingContact()) return;
+            boolean waterContact = this.currentWaterTouchdown && this.host.isInWaterOrBubble();
             this.clearAllWaypoints();
-            this.flightCapable.completeAiLanding();
+            if (waterContact && this.host instanceof RideableFlyingDragon flying) flying.completeAiWaterHandoff();
+            else this.flightCapable.completeAiLanding();
             return;
         }
         this.movementExecutor.resetSteering();
@@ -346,9 +353,14 @@ public class AsyncFlightController {
 
     boolean hasReachedWaypoint(double distSq, double arrivalDist, boolean landingTarget) {
         if (landingTarget) {
-            return this.host.onGround();
+            return this.hasLandingContact();
         }
         return distSq <= arrivalDist * arrivalDist;
+    }
+
+    private boolean hasLandingContact() {
+        return this.host.onGround() || this.currentWaterTouchdown
+                && this.host.isInWaterOrBubble() && !this.host.isInLava();
     }
 
     void setState(PathState state) {
@@ -402,7 +414,8 @@ public class AsyncFlightController {
                 + ",landing=" + this.currentGroundTransition + ",takeoff=" + this.flightCapable.isTakeoff()
                 + (this.currentFlightRequest == null ? "" : ",purpose=" + this.currentFlightRequest.purpose()
                     + ",arrival=" + this.currentFlightRequest.arrival()) + ",speed=" + this.speedModifier
-                + (this.currentGroundTransition ? ",touchdown=" + this.currentWaypoint : "");
+                + (this.currentGroundTransition ? ",touchdown=" + this.currentWaypoint
+                    + ",surface=" + (this.currentWaterTouchdown ? "water" : "ground") : "");
     }
 
     public DebugSnapshot getDebugSnapshot() {

@@ -5,7 +5,6 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonFlightEligibility;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
-import com.leon.saintsdragons.server.ai.navigation.async.DragonFlightRequest;
 import com.leon.saintsdragons.server.entity.dragons.ignivorus.Ignivorus;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -83,26 +82,15 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
         if (context.gameTime() < nextLandingAttempt) return;
         nextLandingAttempt = context.gameTime() + LANDING_RETRY_TICKS;
 
-        boolean failedLanding = dragon.isFlightControllerFailed() && "landing".equals(landingRecovery);
-        if (!failedLanding) {
-            landingAttempts++;
-            if (movement.requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed())) {
-                landingRecovery = "landing";
-                return;
-            }
-        }
-
-        repositionAttempts++;
-        Vec3 reposition = dragon.findStandardAiFlightTarget(360.0D, 16.0D, 16.0D, 12.0D, true);
-        if (reposition == null) {
-            landingRecovery = "no-clear-reposition";
-        } else if (!isCruiseTargetAllowed(dragon, reposition)) {
-            landingRecovery = "reposition-outside-roost";
-        } else if (movement.requestFlight(DragonFlightRequest.cruise(reposition, dragon.getAiAirCombatSettings().landingSpeed()))) {
-            dragon.beginAiFlight();
+        landingAttempts++;
+        if (movement.requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed())) {
+            landingRecovery = "landing";
+        } else if (movement.isPathing()) {
+            // The movement controller owns the retry flight, including its altitude and cooldown.
+            repositionAttempts++;
             landingRecovery = "repositioning";
         } else {
-            landingRecovery = "reposition-rejected";
+            landingRecovery = "no-clear-reposition";
         }
     }
 

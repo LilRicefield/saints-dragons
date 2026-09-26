@@ -2104,6 +2104,11 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
         setGoingDown(false);
     }
 
+    @Override
+    public boolean canAiLandOnWater() {
+        return VolitansStatProfile.Landing.ALLOW_WATER_TOUCHDOWN;
+    }
+
     public void handleAiLandingComplete() {
         if (isInWaterOrBubble()) {
             suppressSleep(60);

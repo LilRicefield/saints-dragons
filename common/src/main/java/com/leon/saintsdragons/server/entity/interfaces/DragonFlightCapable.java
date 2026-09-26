@@ -21,6 +21,9 @@ public interface DragonFlightCapable {
     boolean isLanding();
     void setLanding(boolean landing);
     float getFlightSpeed();
+    default boolean canAiLandOnWater() {
+        return false;
+    }
     double getPreferredFlightAltitude();
     boolean canTakeoff();
     void startTakeoffSequence(double minUpwardVelocity, int animationTicks);

@@ -12,9 +12,9 @@ final class FlightLandingMotion {
 
     private FlightLandingMotion() { }
 
-    static boolean nearTouchdown(Vec3 position, Vec3 touchdown) {
+    static boolean nearTouchdown(Vec3 position, Vec3 touchdown, boolean water) {
         Vec3 offset = position.subtract(touchdown);
-        return offset.y >= -0.1D && offset.y <= TOUCHDOWN_HEIGHT
+        return offset.y >= (water ? -0.5D : -0.1D) && offset.y <= TOUCHDOWN_HEIGHT
                 && offset.horizontalDistanceSqr() <= 1.0D;
     }
 

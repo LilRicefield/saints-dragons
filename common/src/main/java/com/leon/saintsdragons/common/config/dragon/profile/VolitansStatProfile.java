@@ -63,6 +63,7 @@ public final class VolitansStatProfile {
     }
 
     public static final class Landing {
+        public static final boolean ALLOW_WATER_TOUCHDOWN = true;
         public static final double APPROACH_SPEED = 2.65D;
 
         private Landing() {

@@ -107,7 +107,10 @@ public final class DragonCombatFlightState {
             mediumSince = now;
             if (!wasAerial) {
                 landingProgressPosition = null;
-                handoff = "grounded:combat-plan";
+                landingPosition = null;
+                dragon.getBrain().eraseMemory(DragonMemories.TACTICAL_LANDING_POSITION);
+                dragon.getBrain().eraseMemory(DragonMemories.GROUND_ROUTE_ABANDONED);
+                handoff = dragon.isInWaterOrBubble() ? "water:combat-plan" : "grounded:combat-plan";
             }
             revision++;
         }

@@ -168,6 +168,26 @@ public final class DragonFlightSpace {
         return null;
     }
 
+    public @Nullable Vec3 findLandingRecoveryTarget() {
+        Vec3 origin = dragon.position();
+        Vec3 motion = dragon.getDeltaMovement();
+        double yaw = motion.horizontalDistanceSqr() > 0.01D
+                ? Math.atan2(-motion.x, motion.z) : Math.toRadians(dragon.getYRot());
+        for (double turn : new double[]{0, 30, -30, 60, -60, 90, -90, 180}) {
+            double angle = yaw + Math.toRadians(turn);
+            for (double range : new double[]{48, 24, 12}) {
+                Vec3 candidate = new Vec3(origin.x - Math.sin(angle) * range,
+                        origin.y, origin.z + Math.cos(angle) * range);
+                if (fits(candidate) && corridorClear(origin, candidate)) {
+                    decision = "landing-recovery-level-flight";
+                    return candidate;
+                }
+            }
+        }
+        decision = "no-clear-landing-recovery-route";
+        return null;
+    }
+
     public static double heightAboveLocalFloor(Entity entity, double range) {
         Vec3 from = entity.position().add(0, 0.01D, 0);
         Vec3 to = from.add(0, -Math.min(96.0D, Math.max(1.0D, range)), 0);
