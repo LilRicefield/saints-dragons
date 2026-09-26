@@ -171,7 +171,9 @@ public final class IgnivorusTargetingBehaviour extends DragonTargetingBehaviour<
     }
 
     private void keepNearBabies(Ignivorus dragon) {
-        if (dragon.isAerial() && !dragon.isLanding()) dragon.beginAiLanding();
+        if (dragon.isAerial() && !dragon.isLanding()) {
+            dragon.getAIMovement().requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed());
+        }
     }
 
     private List<Ignivorus> protectableBabies(Ignivorus dragon) {

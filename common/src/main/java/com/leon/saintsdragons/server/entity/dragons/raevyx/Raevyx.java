@@ -138,7 +138,7 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
-                    1.6D,
+                    RaevyxStatProfile.Landing.APPROACH_SPEED,
                     0,
                     64.0D,
                     8.0D,

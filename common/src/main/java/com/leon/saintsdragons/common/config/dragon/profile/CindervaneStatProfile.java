@@ -51,10 +51,16 @@ public final class CindervaneStatProfile {
 
     public static final class AutonomousFlightBehaviour {
         public static final double CRUISE_SPEED = 1.25D;
-        public static final double LANDING_SPEED = 1.0D;
         public static final double AUTONOMOUS_DIVE_SPEED = 2.2D;
 
         private AutonomousFlightBehaviour() {
+        }
+    }
+
+    public static final class Landing {
+        public static final double APPROACH_SPEED = 2.2D;
+
+        private Landing() {
         }
     }
 

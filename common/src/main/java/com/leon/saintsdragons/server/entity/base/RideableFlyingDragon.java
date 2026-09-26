@@ -9,7 +9,6 @@ import com.leon.saintsdragons.server.ai.navigation.PathNavigateGround;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightController;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlightMoveControl;
 import com.leon.saintsdragons.server.ai.navigation.async.AsyncFlyingPathNavigation;
-import com.leon.saintsdragons.server.ai.navigation.async.DragonLandingPlan;
 import com.leon.saintsdragons.server.entity.ability.DragonCombatAim;
 import com.leon.saintsdragons.server.entity.controller.DragonRiderControllerHelper;
 import com.leon.saintsdragons.server.entity.interfaces.DragonFlightCapable;
@@ -1619,16 +1618,6 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
             switchToAirNavigation();
         }
         this.asyncAirController.setGroundTransitionWaypoint(target, speed);
-    }
-
-    public void pathAiLandingPlan(DragonLandingPlan plan, double speed) {
-        if (plan == null) {
-            return;
-        }
-        if (!isUsingAirNavigation()) {
-            switchToAirNavigation();
-        }
-        this.asyncAirController.setLandingPlan(plan, speed);
     }
 
     public void trackAiFlightTarget(@Nullable Vec3 target, double speed) {

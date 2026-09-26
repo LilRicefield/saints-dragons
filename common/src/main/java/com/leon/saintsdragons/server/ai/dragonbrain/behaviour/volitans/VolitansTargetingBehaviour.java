@@ -190,7 +190,7 @@ public final class VolitansTargetingBehaviour extends DragonTargetingBehaviour<V
 
     private void keepNearBabies(Volitans dragon) {
         if (dragon.isAerial() && !dragon.isLanding()) {
-            dragon.beginAiLanding();
+            dragon.getAIMovement().requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed());
         }
     }
 

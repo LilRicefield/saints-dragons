@@ -340,7 +340,7 @@ public final class DragonCombatFlightState {
                 else if (now - landingProgressAt > landing.landingFailureTimeoutTicks()) rejectLanding(now, "approach-stalled");
                 return;
             }
-            clearMovement();
+            clearMovementIntent();
             if (dragon.getAIMovement().requestGroundTransition(landingPosition,
                     ((DragonAirCombatSettingsProvider) dragon).getAiAirCombatSettings().landingSpeed())) {
                 Vec3 accepted = dragon.getAIMovement().getActiveLandingTarget();
@@ -395,6 +395,11 @@ public final class DragonCombatFlightState {
     }
 
     private void clearMovement() {
+        clearMovementIntent();
+        dragon.getAIMovement().clearAllWaypoints();
+    }
+
+    private void clearMovementIntent() {
         handoffRevision++;
         landingProgressPosition = null;
         dragon.getBrain().eraseMemory(DragonMemories.WALK_TARGET);
@@ -404,7 +409,6 @@ public final class DragonCombatFlightState {
         dragon.getBrain().eraseMemory(DragonMemories.GROUND_ROUTE_ABANDONED);
         dragon.getBrain().eraseMemory(DragonMemories.MOVEMENT_INTENT);
         dragon.getAIMovement().brainMovement().discardPending();
-        dragon.getAIMovement().clearAllWaypoints();
         dragon.setAccelerating(false);
     }
 

@@ -78,9 +78,15 @@ public final class RaevyxStatProfile {
 
     public static final class AutonomousFlightBehaviour {
         public static final double CRUISE_SPEED = 2.6D;
-        public static final double LANDING_SPEED = 1.45D;
 
         private AutonomousFlightBehaviour() {
+        }
+    }
+
+    public static final class Landing {
+        public static final double APPROACH_SPEED = 3.6D;
+
+        private Landing() {
         }
     }
 

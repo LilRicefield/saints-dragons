@@ -13,7 +13,6 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Map;
 
 public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Ignivorus> {
-    private static final double LANDING_SPEED = 1.5D;
     private static final int LANDING_RETRY_TICKS = 20;
     private boolean recoveringPhase2Flight;
     private long nextLandingAttempt;
@@ -22,7 +21,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
     private int repositionAttempts;
 
     public IgnivorusAutonomousFlightBehaviour() {
-        super(DragonFlightBehaviorProfile.ignivorus(), 2.25D, LANDING_SPEED, Ignivorus.TAKEOFF_ANIMATION_TICKS);
+        super(DragonFlightBehaviorProfile.ignivorus(), 2.25D, Ignivorus.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override
@@ -87,7 +86,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
         boolean failedLanding = dragon.isFlightControllerFailed() && "landing".equals(landingRecovery);
         if (!failedLanding) {
             landingAttempts++;
-            if (movement.requestGroundTransition((LivingEntity) null, LANDING_SPEED)) {
+            if (movement.requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed())) {
                 landingRecovery = "landing";
                 return;
             }
@@ -99,7 +98,7 @@ public class IgnivorusAutonomousFlightBehaviour extends AutonomousFlightBehaviou
             landingRecovery = "no-clear-reposition";
         } else if (!isCruiseTargetAllowed(dragon, reposition)) {
             landingRecovery = "reposition-outside-roost";
-        } else if (movement.requestFlight(DragonFlightRequest.cruise(reposition, LANDING_SPEED))) {
+        } else if (movement.requestFlight(DragonFlightRequest.cruise(reposition, dragon.getAiAirCombatSettings().landingSpeed()))) {
             dragon.beginAiFlight();
             landingRecovery = "repositioning";
         } else {

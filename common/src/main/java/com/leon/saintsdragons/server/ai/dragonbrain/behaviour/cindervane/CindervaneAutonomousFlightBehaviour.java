@@ -12,14 +12,13 @@ import java.util.UUID;
 
 public class CindervaneAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Cindervane> {
     private static final double CRUISE_SPEED = CindervaneStatProfile.AutonomousFlightBehaviour.CRUISE_SPEED;
-    private static final double LANDING_SPEED = CindervaneStatProfile.AutonomousFlightBehaviour.LANDING_SPEED;
     private static final double AUTONOMOUS_DIVE_SPEED = CindervaneStatProfile.AutonomousFlightBehaviour.AUTONOMOUS_DIVE_SPEED;
 
     private boolean wasThundering;
     private boolean wasRaining;
 
     public CindervaneAutonomousFlightBehaviour() {
-        super(DragonFlightBehaviorProfile.cindervane(), CRUISE_SPEED, LANDING_SPEED, Cindervane.TAKEOFF_ANIMATION_TICKS);
+        super(DragonFlightBehaviorProfile.cindervane(), CRUISE_SPEED, Cindervane.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override

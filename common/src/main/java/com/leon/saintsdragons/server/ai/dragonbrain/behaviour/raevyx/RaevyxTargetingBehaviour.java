@@ -185,7 +185,7 @@ public final class RaevyxTargetingBehaviour extends DragonTargetingBehaviour<Rae
 
     private void keepNearBabies(Raevyx dragon) {
         if (dragon.isAerial() && !dragon.isLanding()) {
-            dragon.beginAiLanding();
+            dragon.getAIMovement().requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed());
         }
     }
 

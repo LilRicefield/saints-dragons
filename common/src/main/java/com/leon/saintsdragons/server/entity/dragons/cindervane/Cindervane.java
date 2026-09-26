@@ -191,7 +191,7 @@ public class Cindervane extends RideableFlyingDragon implements ShakesScreen, Pa
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
-                    2.2D,
+                    CindervaneStatProfile.Landing.APPROACH_SPEED,
                     30,
                     16.0D,
                     2.0D,

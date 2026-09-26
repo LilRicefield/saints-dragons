@@ -7,7 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 
 public class VolitansAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Volitans> {
     public VolitansAutonomousFlightBehaviour() {
-        super(DragonFlightBehaviorProfile.volitans(), 1.65D, 1.0D, Volitans.TAKEOFF_ANIMATION_TICKS);
+        super(DragonFlightBehaviorProfile.volitans(), 1.65D, Volitans.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override

@@ -62,6 +62,13 @@ public final class VolitansStatProfile {
         }
     }
 
+    public static final class Landing {
+        public static final double APPROACH_SPEED = 2.65D;
+
+        private Landing() {
+        }
+    }
+
     public static final class BiteAbility {
         public static final float BASE_DAMAGE = 12.0f;
         public static final double RANGE = 4.5;

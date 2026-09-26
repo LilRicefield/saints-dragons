@@ -190,7 +190,9 @@ public final class CindervaneTargetingBehaviour extends DragonTargetingBehaviour
     }
 
     private void keepNearBabies(Cindervane dragon) {
-        if (dragon.isAerial() && !dragon.isLanding()) dragon.beginAiLanding();
+        if (dragon.isAerial() && !dragon.isLanding()) {
+            dragon.getAIMovement().requestGroundTransition((LivingEntity) null, dragon.getAiAirCombatSettings().landingSpeed());
+        }
     }
 
     private List<Cindervane> protectableBabies(Cindervane dragon) {

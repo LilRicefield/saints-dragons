@@ -200,7 +200,7 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
-                    1.6D,
+                    VolitansStatProfile.Landing.APPROACH_SPEED,
                     0,
                     48.0D,
                     8.0D,

@@ -7,6 +7,7 @@ import com.leon.saintsdragons.server.ai.dragonbrain.DragonBrainContext;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMemories;
 import com.leon.saintsdragons.server.ai.dragonbrain.DragonMovementIntent;
 import com.leon.saintsdragons.server.ai.DragonAirCombatHelper;
+import com.leon.saintsdragons.server.ai.DragonAirCombatSettingsProvider;
 import com.leon.saintsdragons.server.ai.DragonFlightBehaviorProfile;
 import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.util.Mth;
@@ -16,11 +17,10 @@ import net.minecraft.world.phys.Vec3;
 
 import java.util.Map;
 
-public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends DragonBehaviour<T> {
+public class AutonomousFlightBehaviour<T extends RideableFlyingDragon & DragonAirCombatSettingsProvider> extends DragonBehaviour<T> {
     private static final int STUCK_RETARGET_TICKS = 20;
     protected final DragonFlightBehaviorProfile profile;
     private final double cruiseSpeed;
-    private final double landingSpeed;
     private final int takeoffAnimationTicks;
 
     private Vec3 targetPosition;
@@ -29,15 +29,14 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     private int decisionCooldown;
     private boolean currentCruiseDive;
     private int spaceRetryTicks;
+    private boolean landingRequested;
 
     public AutonomousFlightBehaviour(DragonFlightBehaviorProfile profile,
                                      double cruiseSpeed,
-                                     double landingSpeed,
                                      int takeoffAnimationTicks) {
         super(Map.of(DragonMemories.MOVEMENT_INTENT, MemoryStatus.REGISTERED));
         this.profile = profile;
         this.cruiseSpeed = cruiseSpeed;
-        this.landingSpeed = landingSpeed;
         this.takeoffAnimationTicks = takeoffAnimationTicks;
     }
 
@@ -68,6 +67,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
             return false;
         }
 
+        landingRequested = false;
         targetPosition = findCruiseTarget(dragon);
         return targetPosition != null || dragon.isFlying();
     }
@@ -78,21 +78,14 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         if (dragon.isVehicle() || dragon.isPassenger()) {
             return false;
         }
-        if (dragon.isLanding()) {
-            return !dragon.onGround();
-        }
+        if (dragon.getAIMovement().hasActiveLandingTransition()) return !dragon.onGround();
         if (!canContinueAutonomousFlight(dragon)) {
-            if (dragon.isFlying() && shouldLandWhenAutonomousFlightBlocked(dragon)) {
-                beginLandingApproach(context);
-                return true;
-            }
-            return false;
+            if (!dragon.isAerial() || !shouldLandWhenAutonomousFlightBlocked(dragon)) return false;
+            landingRequested = true;
         }
-        if (shouldLandNow(dragon)) {
-            beginLandingApproach(context);
-            return true;
-        }
-        return dragon.isFlying() && (targetPosition == null || dragon.distanceToSqr(targetPosition) > 9.0D);
+        if (dragon.isLanding() || !landingRequested && shouldLandNow(dragon)) landingRequested = true;
+        return dragon.isAerial() && (landingRequested || targetPosition == null
+                || dragon.distanceToSqr(targetPosition) > 9.0D);
     }
 
     @Override
@@ -100,9 +93,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         T dragon = context.dragon();
         dragon.getAIMovement().clearGroundPathFailureHistory();
         if (targetPosition == null) {
-            dragon.getAIMovement().stopAndClearAllMovement();
             beginLandingApproach(context);
-            spaceRetryTicks = 20;
             return;
         }
         if (dragon.onGround() && !dragon.isFlying() && !dragon.isTakeoff() && !dragon.isLanding()) {
@@ -127,14 +118,14 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
             dragon.beginAiFlight();
         }
 
-        if (dragon.isLanding()) {
+        if (dragon.getAIMovement().hasActiveLandingTransition()) {
             dragon.setAccelerating(false);
-            if (targetPosition == null) {
-                beginLandingApproach(context);
-            } else if (!dragon.getAIMovement().isPathing()) {
-                context.memories().set(DragonMemories.MOVEMENT_INTENT,
-                        DragonMovementIntent.transitionToGround(targetPosition, landingSpeed));
-            }
+            return;
+        }
+        if (landingRequested || dragon.isLanding()) {
+            // A failed attempt may be repositioning through the movement controller.
+            // Wait for that flight, then search afresh instead of retrying a stale cruise point.
+            if (!dragon.getAIMovement().isPathing()) beginLandingApproach(context);
             return;
         }
 
@@ -142,10 +133,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
             targetPosition = findCruiseTarget(dragon);
             timeSinceTargetChange = 0;
             if (targetPosition == null) {
-                dragon.getAIMovement().stopAndClearAllMovement();
-                dragon.setAccelerating(false);
                 beginLandingApproach(context);
-                spaceRetryTicks = 20;
                 return;
             }
             setMoveIntent(context, targetPosition, getCruiseSpeed(targetPosition));
@@ -160,6 +148,7 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
         timeSinceTargetChange = 0;
         currentCruiseDive = false;
         spaceRetryTicks = 0;
+        landingRequested = false;
         dragon.setAccelerating(false);
         context.memories().erase(DragonMemories.MOVEMENT_INTENT);
         if (!dragon.isFlying()) {
@@ -263,13 +252,14 @@ public class AutonomousFlightBehaviour<T extends RideableFlyingDragon> extends D
     }
 
     protected void beginLandingApproach(DragonBrainContext<T> context) {
-        Vec3 landingTarget = context.dragon().getAIMovement().findGroundTransitionTarget(null);
-        if (landingTarget == null) {
-            return;
-        }
-        targetPosition = landingTarget;
-        context.memories().set(DragonMemories.MOVEMENT_INTENT,
-                DragonMovementIntent.transitionToGround(landingTarget, landingSpeed));
+        landingRequested = true;
+        targetPosition = null;
+        currentCruiseDive = false;
+        context.dragon().setAccelerating(false);
+        context.memories().erase(DragonMemories.MOVEMENT_INTENT);
+        context.dragon().getAIMovement().requestGroundTransition((LivingEntity) null,
+                context.dragon().getAiAirCombatSettings().landingSpeed());
+        spaceRetryTicks = 20;
     }
 
     protected boolean isCurrentCruiseDive() {

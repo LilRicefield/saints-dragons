@@ -8,10 +8,9 @@ import com.leon.saintsdragons.server.entity.dragons.raevyx.Raevyx;
 
 public class RaevyxAutonomousFlightBehaviour extends AutonomousFlightBehaviour<Raevyx> {
     private static final double CRUISE_SPEED = RaevyxStatProfile.AutonomousFlightBehaviour.CRUISE_SPEED;
-    private static final double LANDING_SPEED = RaevyxStatProfile.AutonomousFlightBehaviour.LANDING_SPEED;
 
     public RaevyxAutonomousFlightBehaviour() {
-        super(DragonFlightBehaviorProfile.raevyx(), CRUISE_SPEED, LANDING_SPEED, Raevyx.TAKEOFF_ANIMATION_TICKS);
+        super(DragonFlightBehaviorProfile.raevyx(), CRUISE_SPEED, Raevyx.TAKEOFF_ANIMATION_TICKS);
     }
 
     @Override

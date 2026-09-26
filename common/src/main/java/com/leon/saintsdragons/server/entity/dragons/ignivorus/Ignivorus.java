@@ -151,7 +151,7 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     public static final DragonAirCombatSettings AI_AIR_COMBAT_SETTINGS =
             new DragonAirCombatSettings(
                     TAKEOFF_ANIMATION_TICKS,
-                    1.5D,
+                    IgnivorusStatProfile.Landing.APPROACH_SPEED,
                     0,
                     BASE_FOLLOW_RANGE,
                     2.5D,

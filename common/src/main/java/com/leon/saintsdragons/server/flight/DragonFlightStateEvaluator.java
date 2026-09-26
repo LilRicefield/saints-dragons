@@ -39,13 +39,15 @@ public final class DragonFlightStateEvaluator {
             return MODE_TAKEOFF;
         }
 
-        if (input.landing) {
+        if (input.landing && (input.riddenByOwner || input.velocity.y < -0.02D
+                && input.altitudeAboveTerrain >= -0.25D
+                && input.altitudeAboveTerrain <= LANDING_TOUCHDOWN_ALTITUDE)) {
             state.riderHighAltitudeGlide = false;
             resetAiState(state);
             return MODE_LANDING;
         }
 
-        if (!input.flying) {
+        if (!input.flying && !input.landing) {
             reset(state);
             return MODE_GROUND;
         }
@@ -74,7 +76,7 @@ public final class DragonFlightStateEvaluator {
     private static VisualState visualState(int syncedMode, boolean climbing, boolean diving) {
         return switch (syncedMode) {
             case MODE_TAKEOFF -> VisualState.TAKEOFF;
-            case MODE_LANDING -> VisualState.GLIDE_DOWN;
+            case MODE_LANDING -> climbing ? VisualState.FLAP : VisualState.GLIDE_DOWN;
             case MODE_FLY_IDLE -> VisualState.FLY_IDLE;
             case MODE_SPRINT_FLAP -> diving
                     ? VisualState.GLIDE_DOWN
@@ -130,17 +132,17 @@ public final class DragonFlightStateEvaluator {
         VisualState motion = evaluateVisualState(state, tick, syncedMode, ridden, flightPitchRadians, velocity);
         boolean nearTerrain = altitudeAboveTerrain >= -0.25D
                 && altitudeAboveTerrain <= Math.min(landingBlendAltitude, LANDING_TOUCHDOWN_ALTITUDE);
-        return riderLandingBlendActive || (landing && nearTerrain) ? VisualState.LANDING : motion;
+        return riderLandingBlendActive || (landing && nearTerrain && (ridden || velocity.y < -0.02D))
+                ? VisualState.LANDING : motion;
     }
 
     public static VisualState evaluateAnimationVisualState(int syncedMode, boolean ridden, float flightPitchRadians,
                                                            Vec3 velocity, boolean landing, double altitudeAboveTerrain,
                                                            double landingBlendAltitude,
                                                            boolean riderLandingBlendActive) {
-        boolean nearTouchdownTerrain = altitudeAboveTerrain != Double.POSITIVE_INFINITY
-                && altitudeAboveTerrain >= -0.25D
+        boolean nearTouchdownTerrain = altitudeAboveTerrain >= -0.25D
                 && altitudeAboveTerrain <= Math.min(landingBlendAltitude, LANDING_TOUCHDOWN_ALTITUDE);
-        if (riderLandingBlendActive || (landing && nearTouchdownTerrain)) {
+        if (riderLandingBlendActive || (landing && nearTouchdownTerrain && (ridden || velocity.y < -0.02D))) {
             return VisualState.LANDING;
         }
 

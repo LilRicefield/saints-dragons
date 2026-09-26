@@ -61,6 +61,13 @@ public final class IgnivorusStatProfile {
         }
     }
 
+    public static final class Landing {
+        public static final double APPROACH_SPEED = 2.4D;
+
+        private Landing() {
+        }
+    }
+
     public static final class BiteAbility {
         public static final float BASE_DAMAGE = 50.0f;
         public static final float ARMOR_PENETRATION = 5.0f;
