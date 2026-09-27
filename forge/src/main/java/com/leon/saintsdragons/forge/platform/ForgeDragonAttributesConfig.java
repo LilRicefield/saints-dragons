@@ -275,7 +275,10 @@ public final class ForgeDragonAttributesConfig {
         VARASUCHUS_CLAW_ATTACK_DAMAGE = builder.defineInRange("claw_attack_damage", VarasuchusStatProfile.Config.CLAW_ATTACK_DAMAGE, 0.0, 100000.0);
         VARASUCHUS_HORN_GORE_PHASE1_DAMAGE = builder.defineInRange("horn_gore_phase1_damage", VarasuchusStatProfile.Config.HORN_PHASE1_DAMAGE, 0.0, 100000.0);
         VARASUCHUS_HORN_GORE_PHASE2_DAMAGE = builder.defineInRange("horn_gore_phase2_damage", VarasuchusStatProfile.Config.HORN_PHASE2_DAMAGE, 0.0, 100000.0);
-        VARASUCHUS_TAMING_CHANCE = builder.defineInRange("taming_chance", VarasuchusStatProfile.Config.TAMING_CHANCE, 0.0, 100.0);
+        VARASUCHUS_TAMING_CHANCE = builder
+                .comment("Taming chance in percent per completed wild bucking sequence. 100 guarantees success; 0 disables success.",
+                        "Also used as the fallback food taming chance when legacy_taming is enabled.")
+                .defineInRange("taming_chance", VarasuchusStatProfile.Config.TAMING_CHANCE, 0.0, 100.0);
         VARASUCHUS_TAMING_CHANCE_BEEF = builder.defineInRange("taming_chance_beef", VarasuchusStatProfile.Config.TAMING_CHANCE_BEEF, 0.0, 100.0);
         VARASUCHUS_TAMING_CHANCE_TROPICAL = builder.defineInRange("taming_chance_tropical", VarasuchusStatProfile.Config.TAMING_CHANCE_TROPICAL, 0.0, 100.0);
         VARASUCHUS_EGG_HATCH_CHANCE_NORMAL = builder.defineInRange("egg_hatch_time_ticks_normal", VarasuchusStatProfile.Config.EGG_HATCH_TIME_TICKS_NORMAL, 20.0, 72000.0);

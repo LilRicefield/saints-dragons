@@ -111,9 +111,9 @@ public final class VarasuchusStatProfile {
         public static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
         public static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;
         public static final int WILD_RIDE_BUCK_COOLDOWN_TICKS = 20 * 5;
-        public static final int MAX_TAMING_PROGRESS = 400;
         public static final int WILD_RIDE_BUCK_DURATION_TICKS = 90;
-        public static final double WILD_RIDE_WALK_SPEED = 0.9D;
+        public static final double WILD_RIDE_BUCK_HORIZONTAL_SPEED = 1.0D;
+        public static final double WILD_RIDE_BUCK_UPWARD_SPEED = 1.25D;
         public static final double BREED_PARTNER_RANGE = 30.0D;
         public static final double BREED_DISTANCE_SQR = 16.0D;
         public static final int FLEX_COOLDOWN_TICKS = 60;

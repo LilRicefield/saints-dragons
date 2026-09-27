@@ -214,11 +214,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     private static final double LEAP_HORIZONTAL_DRAG = VarasuchusStatProfile.Entity.LEAP_HORIZONTAL_DRAG;
     private static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = VarasuchusStatProfile.Entity.DEFAULT_DASH_TAIL_SWIPE_DAMAGE;
     private static final float DEFAULT_DASH_CLAW_DAMAGE = VarasuchusStatProfile.Entity.DEFAULT_DASH_CLAW_DAMAGE;
-    private static final int MIN_WILD_TAME_TICKS = 60;
     private static final int WILD_RIDE_BUCK_COOLDOWN_TICKS = VarasuchusStatProfile.Entity.WILD_RIDE_BUCK_COOLDOWN_TICKS;
-    private static final int MAX_TAMING_PROGRESS = VarasuchusStatProfile.Entity.MAX_TAMING_PROGRESS;
     private static final int WILD_RIDE_BUCK_DURATION_TICKS = VarasuchusStatProfile.Entity.WILD_RIDE_BUCK_DURATION_TICKS;
-    private static final double WILD_RIDE_WALK_SPEED = VarasuchusStatProfile.Entity.WILD_RIDE_WALK_SPEED;
     public static final double BREED_PARTNER_RANGE = VarasuchusStatProfile.Entity.BREED_PARTNER_RANGE;
     public static final double BREED_DISTANCE_SQR = VarasuchusStatProfile.Entity.BREED_DISTANCE_SQR;
     private static final int PHASE_TWO_LINGER_TICKS = 20 * 30;
@@ -314,11 +311,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     );
     private boolean leapDamageApplied = false;
     private boolean lastDashWasRight = false;
-    private boolean wildRideActive = false;
     private int wildRideTicks = 0;
-    private int nextBuckAttemptTick = 0;
     private int wildRideBuckCooldownTicks = 0;
-    private int cumulativeWildRideProgress = 0;
     @Nullable
     private UUID babyProtectionAggroTargetUuid;
 
@@ -726,9 +720,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             if (swimming || isInWaterOrBubble()) {
                 this.updateSwimOrientationState();
             }
-            if (wildRideActive) {
-                this.tickWildRideState();
-            }
+            this.tickWildRideState();
             if (this.isPhaseTwoActive()) {
                 tickPhaseTwoLinger();
             }
@@ -738,6 +730,11 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
 
     @Override
     public void travel(@NotNull Vec3 motion) {
+        if (isWildRideActive()) {
+            // The bucking animation supplies the motion so neither AI nor rider moves the entity
+            stopWildRideMotion();
+            return;
+        }
         if (isGroundDashing()) {
             super.travel(Vec3.ZERO);
             if (getControllingPassenger() instanceof Player) {
@@ -746,7 +743,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             groundDash.applyTravelMotion();
             return;
         }
-        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player && !isWildRideActive()) {
+        if (this.isVehicle() && this.getControllingPassenger() instanceof Player player) {
             if (areRiderControlsLocked()) {
                 this.setDeltaMovement(Vec3.ZERO);
                 return;
@@ -833,7 +830,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     public boolean beginUntamedRide(Player player) {
-        if (this.isTame() || this.isBaby() || this.isVehicle() || player.isSecondaryUseActive()) {
+        if (!this.isAlive() || this.isDying() || this.isTame() || this.isBaby()
+                || this.isVehicle() || player.isSecondaryUseActive()) {
             return false;
         }
         if (this.level().isClientSide) {
@@ -847,9 +845,37 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
             );
             return false;
         }
-        player.startRiding(this);
+        if (!player.startRiding(this)) {
+            return false;
+        }
         startWildRideSequence();
         return true;
+    }
+
+    @Override
+    public void tame(@NotNull Player player) {
+        super.tame(player);
+        if (!this.level().isClientSide) {
+            finishTamingRide();
+        }
+    }
+
+    @Override
+    protected void afterPrepareForMounting() {
+        super.afterPrepareForMounting();
+        groundDash.cancelActive();
+        leapDamageApplied = false;
+        stopWildRideMotion();
+    }
+
+    @Override
+    protected void onMountedStateStarted() {
+        super.onMountedStateStarted();
+        // Restored passengers need a fresh attempt; its timer is deliberately not saved.
+        if (this.isAlive() && !this.isDying() && !this.isBaby()
+                && !this.isTame() && getWildRideRider() != null && !isWildRideActive()) {
+            startWildRideSequence();
+        }
     }
 
     public void awardTamingAdvancement(Player player) {
@@ -961,10 +987,8 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     @Override
     public void removePassenger(@NotNull Entity passenger) {
         super.removePassenger(passenger);
-        if (!this.level().isClientSide && !this.isTame() && wildRideActive) {
-            endWildRide(false);
-        }
         if (!this.level().isClientSide) {
+            endWildRide();
             this.setAccelerating(false);
             this.setLastRiderForward(0.0F);
             this.setLastRiderStrafe(0.0F);
@@ -1547,60 +1571,53 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     private void startWildRideSequence() {
-        wildRideActive = true;
+        this.prepareForMounting();
         this.entityData.set(DATA_WILD_RIDE_ACTIVE, true);
         wildRideTicks = 0;
-        nextBuckAttemptTick = WILD_RIDE_BUCK_DURATION_TICKS;
-        this.getNavigation().stop();
-        this.setTarget(null);
-        this.setAccelerating(false);
-        this.setGroundMoveStateFromAI(1);
-        if (!this.level().isClientSide) {
-            this.getSoundHandler().playMovingEntitySound(
-                    ModSounds.VARASUCHUS_BUCKING.get(),
-                    1.0f,
-                    1.0f,
-                    WILD_RIDE_BUCK_DURATION_TICKS
-            );
-        }
+        this.getSoundHandler().playMovingEntitySound(
+                ModSounds.VARASUCHUS_BUCKING.get(),
+                1.0f,
+                1.0f,
+                WILD_RIDE_BUCK_DURATION_TICKS
+        );
     }
 
     private void tickWildRideState() {
-        if (!wildRideActive || this.isTame()) {
-            wildRideActive = false;
-            this.entityData.set(DATA_WILD_RIDE_ACTIVE, false);
+        if (!this.entityData.get(DATA_WILD_RIDE_ACTIVE)) {
+            return;
+        }
+        if (this.isTame()) {
+            // Also handles ownership changes made without calling tame(), such as NBT commands.
+            finishTamingRide();
             return;
         }
         Player rider = getWildRideRider();
-        if (rider == null) {
-            endWildRide(false);
+        if (rider == null || !rider.isAlive() || !this.isAlive() || this.isDying() || this.isBaby()) {
+            endWildRide();
             return;
         }
-        wildRideTicks++;
-        cumulativeWildRideProgress = Math.min(cumulativeWildRideProgress + 1, MAX_TAMING_PROGRESS);
-        applyWildRideWalk();
-        if (wildRideTicks >= nextBuckAttemptTick) {
+        this.getNavigation().stop();
+        stopWildRideMotion();
+        rider.fallDistance = 0.0F;
+        if (++wildRideTicks < WILD_RIDE_BUCK_DURATION_TICKS) {
+            return;
+        }
+
+        DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
+                .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
+        double tamingChance = config.extraDouble("taming_chance", VarasuchusStatProfile.Config.TAMING_CHANCE);
+        // One percentage roll per completed attempt: 0 always fails, 100 always succeeds
+        if (DragonTamingChance.rollPercent(this.getRandom(), tamingChance)) {
+            this.tame(rider);
+            this.setOrderedToSit(false);
+            this.setCommand(0);
+            this.level().broadcastEntityEvent(this, (byte) 7);
+            awardTamingAdvancement(rider);
+        } else {
+            // Clear the attempt before dismount callbacks so cleanup only runs once
+            endWildRide();
             buckWildRider(rider);
             triggerFailedTamingAggro(rider);
-            endWildRide(true);
-            return;
-        }
-        if (wildRideTicks >= MIN_WILD_TAME_TICKS) {
-            float progressFactor = (float) cumulativeWildRideProgress / (float) MAX_TAMING_PROGRESS;
-            DragonAttributeConfig config = DragonAttributeConfigLoader.getInstance()
-                    .getConfig(DragonAttributeConfigLoader.VARASUCHUS_ID);
-            double tamingChanceConfig = config.extraDoubles().getOrDefault("taming_chance", 16.6667D);
-            float baseChance = (float) (DragonTamingChance.probabilityFromPercent(tamingChanceConfig) / 100.0D);
-            float successChance = baseChance * (1.0F + (progressFactor * progressFactor * 4.0F));
-
-            if (this.getRandom().nextFloat() < successChance) {
-                this.tame(rider);
-                this.setOrderedToSit(false);
-                this.setCommand(0);
-                this.level().broadcastEntityEvent(this, (byte) 7);
-                awardTamingAdvancement(rider);
-                endWildRide(false);
-            }
         }
     }
 
@@ -1615,16 +1632,14 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         }
     }
 
-    private void applyWildRideWalk() {
-        this.setAccelerating(false);
-        this.setGroundMoveStateFromAI(1);
-
-        if (this.getNavigation().isDone()) {
-            double targetX = this.getX() + (this.getRandom().nextDouble() - 0.5D) * 10.0D;
-            double targetZ = this.getZ() + (this.getRandom().nextDouble() - 0.5D) * 10.0D;
-            double targetY = this.getY();
-            this.getNavigation().moveTo(targetX, targetY, targetZ, WILD_RIDE_WALK_SPEED);
-        }
+    private void stopWildRideMotion() {
+        this.setDeltaMovement(Vec3.ZERO);
+        this.setSpeed(0.0F);
+        this.xxa = 0.0F;
+        this.yya = 0.0F;
+        this.zza = 0.0F;
+        this.setJumping(false);
+        this.fallDistance = 0.0F;
     }
 
     private Player getWildRideRider() {
@@ -1639,51 +1654,45 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
     }
 
     private void buckWildRider(Player rider) {
-        Vec3 forward = this.getLookAngle().normalize();
-        Vec3 backward = new Vec3(-forward.x, 0.0D, -forward.z);
-        if (backward.lengthSqr() < 1.0E-4D) {
-            backward = new Vec3(0.0D, 0.0D, -1.0D);
-        } else {
-            backward = backward.normalize();
-        }
-
-        Vec3 right = new Vec3(-backward.z, 0.0D, backward.x);
-        double sideSign = this.getRandom().nextBoolean() ? 1.0D : -1.0D;
-        double backwardStrength = 1.0D + this.getRandom().nextDouble() * 0.8D;
-        double sideStrength = 0.55D + this.getRandom().nextDouble() * 0.55D;
-        double upward = 1.0D + this.getRandom().nextDouble() * 0.6D;
-        Vec3 launch = backward.scale(backwardStrength).add(right.scale(sideSign * sideStrength)).add(0.0D, upward, 0.0D);
-        Vec3 releaseOffset = backward.scale(1.6D).add(right.scale(sideSign * 0.8D)).add(0.0D, 1.35D, 0.0D);
-        Vec3 releasePos = this.position().add(releaseOffset);
-        rider.stopRiding();
-        rider.moveTo(releasePos.x, releasePos.y, releasePos.z, rider.getYRot(), rider.getXRot());
-        Vec3 currentVel = rider.getDeltaMovement();
-        rider.setDeltaMovement(currentVel.add(launch));
-        rider.hurtMarked = true;
-        rider.hasImpulse = true;
-        rider.fallDistance = 0.0F;
         wildRideBuckCooldownTicks = WILD_RIDE_BUCK_COOLDOWN_TICKS;
+        // Let the normal dismount choose a safe position, then toss the rider away from the body
+        rider.stopRiding();
+        if (!rider.isPassenger() && rider.isAlive()) {
+            Vec3 away = rider.position().subtract(this.position()).multiply(1.0D, 0.0D, 1.0D);
+            away = away.lengthSqr() > 1.0E-4D
+                    ? away.normalize()
+                    : DragonMotionMath.horizontalForward(this.getYRot()).scale(-1.0D);
+            rider.setDeltaMovement(away.scale(VarasuchusStatProfile.Entity.WILD_RIDE_BUCK_HORIZONTAL_SPEED)
+                    .add(0.0D, VarasuchusStatProfile.Entity.WILD_RIDE_BUCK_UPWARD_SPEED, 0.0D));
+            rider.hurtMarked = true;
+            rider.hasImpulse = true;
+        }
+        rider.fallDistance = 0.0F;
         this.level().broadcastEntityEvent(this, (byte) 6);
     }
 
-    private void endWildRide(boolean bucked) {
-        if (bucked) {
-            cumulativeWildRideProgress = Math.max(0, cumulativeWildRideProgress - 40);
-        } else {
-            cumulativeWildRideProgress = Math.max(0, cumulativeWildRideProgress - 10);
+    private void endWildRide() {
+        if (!this.entityData.get(DATA_WILD_RIDE_ACTIVE)) {
+            return;
         }
-        wildRideActive = false;
         this.entityData.set(DATA_WILD_RIDE_ACTIVE, false);
         wildRideTicks = 0;
-        nextBuckAttemptTick = 0;
+        this.getAIMovement().stopAndClearAllMovement();
+        stopWildRideMotion();
+    }
+
+    private void finishTamingRide() {
+        endWildRide();
+        wildRideBuckCooldownTicks = 0;
+        this.prepareForMounting();
     }
 
     private boolean isWildRideActive() {
-        return wildRideActive && !this.isTame();
+        return this.entityData.get(DATA_WILD_RIDE_ACTIVE) && this.isVehicle() && !this.isTame();
     }
 
     public boolean isWildRideAnimationActive() {
-        return this.entityData.get(DATA_WILD_RIDE_ACTIVE) && this.isVehicle() && !this.isTame();
+        return isWildRideActive();
     }
 
     private void updateSittingProgress() {
