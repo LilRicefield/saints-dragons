@@ -107,6 +107,7 @@ public final class VarasuchusStatProfile {
         public static final double BABY_MAX_HEALTH = 80.0D;
         public static final double BABY_ARMOR = 0.0D;
         public static final double GROUND_MOVEMENT_SPEED = 0.33D;
+        public static final float MAX_UP_STEP = 1.25F;
         public static final double LEAP_HORIZONTAL_DRAG = 0.92D;
         public static final float DEFAULT_DASH_TAIL_SWIPE_DAMAGE = 14.0F;
         public static final float DEFAULT_DASH_CLAW_DAMAGE = 16.0F;

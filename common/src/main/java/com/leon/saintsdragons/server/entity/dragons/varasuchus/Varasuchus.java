@@ -114,7 +114,7 @@ public class Varasuchus extends RideableGroundDragon implements SemiAquaticDrago
         this.screenShakeComponent = new ScreenShakeComponent(this, DATA_SCREEN_SHAKE_AMOUNT, SHAKE_DECAY_PER_TICK);
         this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
         this.setPathfindingMalus(BlockPathTypes.WATER_BORDER, 0.0F);
-        this.setMaxUpStep(1.4F);
+        this.setMaxUpStep(VarasuchusStatProfile.Entity.MAX_UP_STEP);
         this.groundNavigation = new PathNavigateGround(this, level);
         this.landMoveControl = new MoveControl(this);
         this.landLookControl = new VarasuchusLookController(this);
