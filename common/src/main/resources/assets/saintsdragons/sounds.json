@@ -1569,7 +1569,7 @@
     "sounds": [
       {
         "name": "saintsdragons:entity/ignivorus/ignivorus_toor_shul",
-        "volume": 3.0,
+        "volume": 2.0,
         "pitch": 1.0,
         "attenuation_distance": 48
       }

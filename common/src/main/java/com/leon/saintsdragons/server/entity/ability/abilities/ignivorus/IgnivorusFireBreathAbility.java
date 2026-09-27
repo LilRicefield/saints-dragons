@@ -28,6 +28,7 @@ import static com.leon.saintsdragons.server.entity.ability.DragonAbilitySection.
 public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
 
     private static final int STARTUP_TICKS = 9;
+    private static final int START_SOUND_MAX_LIFETIME_TICKS = 1200;
     private static final int RIDER_ACTIVE_TICKS = 240;
     private static final int AI_ACTIVE_TICKS = 240;
     private static final int BLOCK_BREAK_START_TICKS = 120;
@@ -112,10 +113,12 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.clearFireBreathPath();
             if (!dragon.level().isClientSide) {
                 float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_FIRE_BREATH_START.get(), 2.0f, pitch, START_SOUND_MAX_LIFETIME_TICKS);
                 if (isDovahkiinModeEnabled()) {
-                    dragon.playSound(ModSounds.IGNIVORUS_YOL.get(), 2.0f, pitch);
+                    dragon.getSoundHandler().playMovingEntitySound(
+                            ModSounds.IGNIVORUS_YOL.get(), 2.0f, pitch,
+                            START_SOUND_MAX_LIFETIME_TICKS);
                 }
-                dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_START.get(), 2.0f, pitch);
             }
             dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_start");
 
@@ -127,7 +130,9 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breathing");
             breathLoopActive = true;
             if (!dragon.level().isClientSide && isDovahkiinModeEnabled()) {
-                dragon.playSound(ModSounds.IGNIVORUS_TOOR_SHUL.get(), 2.0f, 1.0f);
+                dragon.getSoundHandler().playMovingEntitySound(
+                        ModSounds.IGNIVORUS_TOOR_SHUL.get(), 2.0f, 1.0f,
+                        START_SOUND_MAX_LIFETIME_TICKS);
             }
         }
     }
@@ -182,7 +187,7 @@ public class IgnivorusFireBreathAbility extends DragonAbility<Ignivorus> {
             dragon.triggerHitboxAnimation(IgnivorusAnimationHandler.ACTION_CONTROLLER, "fire_breath_stop");
             if (!dragon.level().isClientSide) {
                 float pitch = 0.92f + dragon.getRandom().nextFloat() * 0.15f;
-                dragon.playSound(ModSounds.IGNIVORUS_FIRE_BREATH_END.get(), 2.0f, pitch);
+                dragon.getSoundHandler().playMovingEntitySound(ModSounds.IGNIVORUS_FIRE_BREATH_END.get(), 2.0f, pitch, 40);
             }
         }
         breathStartPlayed = false;
