@@ -69,8 +69,10 @@ public final class DragonFlightVisuals {
     }
 
     public static void tickDivePose(DivePoseState state, boolean aerial, Vec3 velocity) {
-        state.prevDivePose = state.divePose;
+        tickDivePose(state, computeDivePoseTarget(aerial, velocity));
+    }
 
+    public static float computeDivePoseTarget(boolean aerial, Vec3 velocity) {
         float target = 0.0F;
         if (aerial && velocity.y < 0.0D && velocity.lengthSqr() > 1.0E-6D) {
             double normalizedDescent = Mth.clamp(-velocity.normalize().y, 0.0D, 1.0D);
@@ -80,7 +82,11 @@ public final class DragonFlightVisuals {
                     1.0D
             );
         }
+        return target;
+    }
 
+    public static void tickDivePose(DivePoseState state, float target) {
+        state.prevDivePose = state.divePose;
         state.divePose = Mth.lerp(DIVE_POSE_LERP, state.divePose, target);
         if (Math.abs(state.divePose) < 0.001F) {
             state.divePose = 0.0F;

@@ -26,6 +26,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
@@ -55,6 +57,10 @@ import java.util.EnumSet;
 import java.util.function.BooleanSupplier;
 
 public abstract class RideableFlyingDragon extends RideableDragonBase implements FlyingAnimal, DragonFlightCapable {
+    private static final EntityDataAccessor<Float> DATA_DIVE_POSE_TARGET =
+            SynchedEntityData.defineId(RideableFlyingDragon.class, EntityDataSerializers.FLOAT);
+    private static final EntityDataAccessor<Boolean> DATA_RIDER_DIVE_MOMENTUM =
+            SynchedEntityData.defineId(RideableFlyingDragon.class, EntityDataSerializers.BOOLEAN);
     protected static final double RIDER_GLIDE_ALTITUDE_THRESHOLD = 40.0D;
     protected static final double RIDER_GLIDE_ALTITUDE_EXIT = 30.0D;
     protected static final double RIDER_LOW_ALTITUDE_GLIDE_THRESHOLD = 6.0D;
@@ -88,6 +94,7 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     private final DragonFlightStateEvaluator.State flightModeState = new DragonFlightStateEvaluator.State();
     private final DragonFlightStateEvaluator.AnimationState flightAnimationState = new DragonFlightStateEvaluator.AnimationState();
     private final DragonFlightVisuals.DivePoseState divePoseState = new DragonFlightVisuals.DivePoseState();
+    private Vec3 lastDivePosePosition;
     private final DragonCombatAim combatAim = new DragonCombatAim(this);
     private DragonCombatDecisionSupport combatDecisionSupport;
     protected final PathNavigateGround groundNav;
@@ -192,21 +199,27 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     public boolean isHoldingRiderDiveMomentum() {
+        if (level().isClientSide && !isControlledByLocalInstance()) {
+            return this.entityData.get(DATA_RIDER_DIVE_MOMENTUM);
+        }
         return riderDiveBoostHoldTicks > 0;
     }
 
     public void setRiderDiveBoostHoldTicks(int ticks) {
         riderDiveBoostHoldTicks = Math.max(0, ticks);
+        if (!level().isClientSide) {
+            this.entityData.set(DATA_RIDER_DIVE_MOMENTUM, riderDiveBoostHoldTicks > 0);
+        }
     }
 
     public void tickRiderDiveBoostHold() {
         if (riderDiveBoostHoldTicks > 0) {
-            riderDiveBoostHoldTicks--;
+            setRiderDiveBoostHoldTicks(riderDiveBoostHoldTicks - 1);
         }
     }
 
     public void clearRiderDiveBoostHold() {
-        riderDiveBoostHoldTicks = 0;
+        setRiderDiveBoostHoldTicks(0);
     }
 
     public void updateRiderDivingState(Player rider, boolean diving, double diveIntensity) {
@@ -235,7 +248,11 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
                 getRiderKeyPitchDegrees()
         );
         double diveIntensity = DragonRiderFlightController.diveIntensity(pitchRadians);
-        updateRiderDivingState(player, forward > 0.01F && diveIntensity > 0.0D, diveIntensity);
+        boolean diving = forward > 0.01F && diveIntensity > 0.0D;
+        if (diving) {
+            setRiderDiveBoostHoldTicks(DragonRiderFlightController.DIVE_EXIT_BOOST_HOLD_TICKS);
+        }
+        updateRiderDivingState(player, diving, diveIntensity);
     }
 
     @Override
@@ -745,19 +762,44 @@ public abstract class RideableFlyingDragon extends RideableDragonBase implements
     }
 
     @Override
+    protected void defineSynchedData() {
+        super.defineSynchedData();
+        this.entityData.define(DATA_DIVE_POSE_TARGET, 0.0F);
+        this.entityData.define(DATA_RIDER_DIVE_MOMENTUM, false);
+    }
+
+    @Override
     public void tick() {
         wasAerialForDustAtTickStart = isAerial();
         super.tick();
-        DragonFlightVisuals.tickDivePose(
-                divePoseState,
-                isFlying() || isLanding() || isTakeoff(),
-                getDeltaMovement()
-        );
+        tickDivePose();
         tickRiderWaterFlightEntrySampling();
         tickServerRiderDiveInput();
         tickRiderDiveBoostHoldState();
         tickNearGroundFlightDust();
         tickNearWaterFlightSplash();
+    }
+
+    private void tickDivePose() {
+        boolean aerial = isFlying() || isLanding() || isTakeoff();
+        float target;
+        if (level().isClientSide && !isControlledByLocalInstance()) {
+            target = aerial ? this.entityData.get(DATA_DIVE_POSE_TARGET) : 0.0F;
+        } else {
+            Vec3 velocity = getDeltaMovement();
+            if (!level().isClientSide) {
+                Vec3 currentPosition = position();
+                if (getControllingPassenger() instanceof Player) {
+                    velocity = lastDivePosePosition == null ? Vec3.ZERO : currentPosition.subtract(lastDivePosePosition);
+                }
+                lastDivePosePosition = currentPosition;
+            }
+            target = DragonFlightVisuals.computeDivePoseTarget(aerial, velocity);
+            if (!level().isClientSide) {
+                this.entityData.set(DATA_DIVE_POSE_TARGET, target);
+            }
+        }
+        DragonFlightVisuals.tickDivePose(divePoseState, target);
     }
 
     private void tickServerRiderDiveInput() {
