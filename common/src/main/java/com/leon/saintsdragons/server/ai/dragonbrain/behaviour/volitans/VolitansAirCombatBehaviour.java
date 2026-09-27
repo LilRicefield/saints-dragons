@@ -78,7 +78,7 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
         if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)) {
             setBreathApproachIntent(context, target);
             breathApproachTicks = 0;
-            lastDecision = "breath:moving-pass";
+            lastDecision = "breath:steering-pass";
             return;
         }
 
@@ -215,6 +215,8 @@ public class VolitansAirCombatBehaviour extends AirCombatMovementBehaviour<Volit
 
     private void setBreathApproachIntent(DragonBrainContext<Volitans> context, LivingEntity target) {
         Volitans dragon = context.dragon();
+        if (dragon.isAbilityActive(ModAbilities.VOLITANS_BREATH)
+                && !dragon.getCombatLearning().hasVisibleObservation(target)) return;
         Vec3 destination = dragon.getBreathCombat().movingDestination(target, true);
         var space = dragon.getAIMovement().flightSpace();
         double floor = dragon.level().getMinBuildHeight() + 4;

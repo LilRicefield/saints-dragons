@@ -312,15 +312,21 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
         phase = AirPhase.BREATH_PASS;
         phaseTicks = 0;
         dragon.getCombatFlightState().holdFlightFor(40);
-        Vec3 forward = horizontal(targetCenter(target).subtract(dragon.getBoundingBox().getCenter()), dragon);
-        Vec3 tangent = new Vec3(-forward.z, 0, forward.x).scale(attackSide);
-        runDirection = forward.add(tangent.scale(0.30D)).normalize();
-        double length = Mth.clamp(dragon.distanceTo(target) + 24.0D, 48.0D, 72.0D);
-        Vec3 destination = dragon.position().add(runDirection.scale(length));
-        destination = new Vec3(destination.x, predictedFeet(dragon, target, 2).y, destination.z);
+        commandBreathPass(context, target);
+    }
+
+    private void commandBreathPass(DragonBrainContext<Ignivorus> context, LivingEntity target) {
+        Ignivorus dragon = context.dragon();
+        if (!dragon.getCombatLearning().hasVisibleObservation(target)) {
+            lastDecision = "breath:hold-last-course";
+            return;
+        }
+        runDirection = horizontal(dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01D
+                ? dragon.getDeltaMovement() : Vec3.directionFromRotation(0, dragon.yBodyRot), dragon);
+        Vec3 destination = dragon.getCombatAim().steerFlightPass(predictedFeet(dragon, target, 3), attackSide * 6.0D);
         issueRoute(context, attackPosition(dragon, target, destination, 12),
                 BREATH_PASS_SPEED, DragonFlightRequest.Arrival.PASS_THROUGH);
-        lastDecision = "breath:committed-pass";
+        lastDecision = "breath:steering-pass";
     }
 
     private void tickFireballPass(DragonBrainContext<Ignivorus> context, LivingEntity target, boolean visible) {
@@ -374,18 +380,18 @@ public final class IgnivorusAirCombatBehaviour extends AirCombatMovementBehaviou
 
     private void tickBreathPass(DragonBrainContext<Ignivorus> context, LivingEntity target) {
         Ignivorus dragon = context.dragon();
-        Vec3 offset = targetCenter(target).subtract(dragon.getBoundingBox().getCenter());
-        double horizontalGap = offset.horizontalDistance() - (dragon.getBbWidth() + target.getBbWidth()) * 0.5D;
+        runDirection = horizontal(dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01D
+                ? dragon.getDeltaMovement() : Vec3.directionFromRotation(0, dragon.yBodyRot), dragon);
+        // The ability checks the actual shot. Crossing the flight heading or
+        // flying above the target no longer ends a breath that can still track it.
         String stop = routeFailed(dragon) ? "blocked-pass"
-                : horizontalGap < 3 && offset.y < -3 ? "target-underneath"
-                : runDirection != null && offset.dot(runDirection) < -6 ? "passed-target"
-                : reachedRoute(dragon) || phaseTicks >= 170 ? "pass-complete" : null;
+                : phaseTicks >= 170 ? "pass-complete" : null;
         if (stop != null) {
             DragonAbility<?> active = dragon.getActiveAbility();
             if (active instanceof IgnivorusFireBreathAbility breath) breath.finishAiPass(stop);
             enterEgress(context, target, stop);
         } else {
-            lastDecision = "breath:committed-pass";
+            commandBreathPass(context, target);
         }
     }
 

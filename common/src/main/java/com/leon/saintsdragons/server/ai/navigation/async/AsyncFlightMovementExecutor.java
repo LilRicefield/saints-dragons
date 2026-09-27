@@ -158,11 +158,13 @@ class AsyncFlightMovementExecutor {
 
         if (!holdLandingHeading && velocity.horizontalDistanceSqr() > 1.0E-4D) {
             float targetYaw = -(float) Math.toDegrees(Mth.atan2(velocity.x, velocity.z));
+            float maxYawStep = MAX_YAW_STEP;
             if (this.dragon instanceof RideableFlyingDragon flying) {
                 targetYaw = flying.getCombatAim().flightYaw(targetYaw);
+                maxYawStep = flying.getCombatAim().flightTurnDegrees(maxYawStep);
             }
             float yawDiff = Mth.wrapDegrees(targetYaw - this.dragon.getYRot());
-            float newYaw = this.dragon.getYRot() + Mth.clamp(yawDiff, -MAX_YAW_STEP, MAX_YAW_STEP);
+            float newYaw = this.dragon.getYRot() + Mth.clamp(yawDiff, -maxYawStep, maxYawStep);
             this.dragon.setYRot(newYaw);
             this.dragon.yBodyRot = newYaw;
             if (!(this.dragon instanceof RideableFlyingDragon flying)

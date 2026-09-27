@@ -370,7 +370,9 @@ public class Ignivorus extends RideableFlyingDragon implements ShakesScreen, Dra
     private static final DragonCombatAim.Profile GROUND_FIRE_AIM =
             new DragonCombatAim.Profile(MAX_FIRE_YAW_DEG, MAX_FIRE_PITCH_DEG, 6, 1.0);
     private static final DragonCombatAim.Profile AIR_FIRE_AIM =
-            new DragonCombatAim.Profile(MAX_FIRE_YAW_DEG, MAX_FIRE_PITCH_DEG, 3, 1.0);
+            new DragonCombatAim.Profile(MAX_FIRE_YAW_DEG, MAX_FIRE_PITCH_DEG, 3, 1.0,
+                    IgnivorusStatProfile.FireBreathAbility.AI_AIR_AIM_TURN_DEGREES,
+                    IgnivorusStatProfile.FireBreathAbility.AI_AIR_BODY_TURN_DEGREES);
     private final DragonCombatFlightState combatFlightState = new DragonCombatFlightState(this,
             () -> isPhase2Active() ? COMBAT_FLIGHT_PHASE2 : COMBAT_FLIGHT_PHASE1,
             this::isAiRangedFlightReady, this::isAiCombatMovementCommitted);

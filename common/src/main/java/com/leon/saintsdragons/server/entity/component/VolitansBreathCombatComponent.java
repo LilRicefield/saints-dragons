@@ -160,6 +160,14 @@ public final class VolitansBreathCombatComponent {
             passDestination = null;
             passDirection = null;
         }
+        if (running && air) {
+            Vec3 prediction = dragon.getCombatLearning().predictCenter(target, 3, 6);
+            Vec3 targetFeet = prediction == null ? feet : prediction.add(0, -dragon.getBbHeight() * 0.5D, 0);
+            passDestination = dragon.getCombatAim().steerFlightPass(targetFeet, side * 4.0D);
+            passDirection = horizontal(dragon.getDeltaMovement().horizontalDistanceSqr() > 0.01D
+                    ? dragon.getDeltaMovement() : passDestination.subtract(dragon.position()));
+            return passDestination;
+        }
         if (running || makingSpace()) {
             if (passDestination == null) {
                 Vec3 heading = passDirection != null ? passDirection : horizontal(center.subtract(dragon.position()));
@@ -169,7 +177,7 @@ public final class VolitansBreathCombatComponent {
                         : dragon.position().add(heading.scale(18)).add(lateral.scale(6));
                 if (!air) passDestination = passDestination.add(0, dragon.getBbHeight() * 0.5D, 0);
             }
-            // Commit to a course through the burst; aiming can turn independently within its neck limits.
+            // Ground/water passes and the short recovery leg keep their committed course.
             return passDestination;
         }
         Vec3 lead = dragon.getCombatFlightState().targetVelocity().scale(4);

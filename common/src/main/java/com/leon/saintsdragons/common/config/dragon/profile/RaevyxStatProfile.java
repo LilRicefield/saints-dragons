@@ -100,6 +100,8 @@ public final class RaevyxStatProfile {
         public static final int AI_ABORTED_START_COOLDOWN_TICKS = 40;
         public static final float MAX_AIM_YAW_DEGREES = 40.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
+        public static final float AI_AIR_AIM_TURN_DEGREES = 12.0F;
+        public static final float AI_AIR_BODY_TURN_DEGREES = 12.0F;
         public static final float AI_BEAM_MERCY_HEALTH_FRACTION = 0.25F;
         public static final double AI_TARGET_HIT_RADIUS = 0.55D;
         public static final double RIDER_BEAM_RADIUS = 1.2D;
@@ -123,7 +125,7 @@ public final class RaevyxStatProfile {
         public static final int BLEND_OUT_TICKS = 8;
         public static final float AIM_RESPONSE = 0.45F;
         public static final float MAX_CORRECTION_DEGREES = 135.0F;
-        public static final float NECK_1_WEIGHT = 0.06F;
+        public static final float NECK_1_WEIGHT = 0.25F;
         public static final float NECK_2_WEIGHT = 0.24F;
         public static final float NECK_3_WEIGHT = 0.32F;
         public static final float HEAD_WEIGHT = 0.38F;

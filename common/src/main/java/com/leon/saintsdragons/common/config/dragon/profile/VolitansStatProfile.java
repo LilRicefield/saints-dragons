@@ -101,6 +101,8 @@ public final class VolitansStatProfile {
         public static final int COOLDOWN_TICKS = 20;
         public static final float MAX_AIM_YAW_DEGREES = 70.0F;
         public static final float MAX_AIM_PITCH_DEGREES = 90.0F;
+        public static final float AI_AIR_AIM_TURN_DEGREES = 8.0F;
+        public static final float AI_AIR_BODY_TURN_DEGREES = 8.0F;
 
         private BreathAbility() {
         }
@@ -113,7 +115,7 @@ public final class VolitansStatProfile {
         public static final float MAX_CORRECTION_DEGREES = 135.0F;
         // The short neck needs more bend at the base to avoid folding
         // Leaving this here in case I forgor
-        public static final float NECK_1_WEIGHT = 0.30F;
+        public static final float NECK_1_WEIGHT = 0.45F;
         public static final float NECK_2_WEIGHT = 0.20F;
         public static final float HEAD_WEIGHT = 0.50F;
         public static final DragonBreathPose.Profile PROFILE = new DragonBreathPose.Profile(

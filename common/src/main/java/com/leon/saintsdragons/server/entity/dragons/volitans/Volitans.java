@@ -272,7 +272,9 @@ public class Volitans extends RideableFlyingDragon implements DragonCombatLearne
     private final DragonBreathPose breathPose = new DragonBreathPose(VolitansStatProfile.BreathPose.PROFILE);
     private static final DragonCombatAim.Profile BREATH_AIM = new DragonCombatAim.Profile(
             VolitansStatProfile.BreathAbility.MAX_AIM_YAW_DEGREES,
-            VolitansStatProfile.BreathAbility.MAX_AIM_PITCH_DEGREES, 8, 1.0);
+            VolitansStatProfile.BreathAbility.MAX_AIM_PITCH_DEGREES, 8, 1.0,
+            VolitansStatProfile.BreathAbility.AI_AIR_AIM_TURN_DEGREES,
+            VolitansStatProfile.BreathAbility.AI_AIR_BODY_TURN_DEGREES);
     private final VolitansBreathStream breathStream = new VolitansBreathStream(this);
     private final DragonCombatLearning combatLearning = new DragonCombatLearning(this,
             DragonCombatLearning.Profile.standard(DragonCombatLearning.Attack.BREATH));

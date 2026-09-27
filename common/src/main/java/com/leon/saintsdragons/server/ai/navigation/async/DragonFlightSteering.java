@@ -1,6 +1,7 @@
 package com.leon.saintsdragons.server.ai.navigation.async;
 
 import com.leon.saintsdragons.server.entity.base.RideableDragonBase;
+import com.leon.saintsdragons.server.entity.base.RideableFlyingDragon;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.phys.Vec3;
@@ -88,6 +89,9 @@ final class DragonFlightSteering {
                 ? (float) Math.toDegrees(Math.atan2(-motion.x, motion.z)) : dragon.getYRot();
         double agility = Mth.clamp(2.0D / Math.sqrt(Math.max(1.0D, dragon.getBbWidth())), 0.6D, 1.25D);
         float turnLimit = (float) Mth.clamp(9.0D * agility / Math.max(1.0D, speed), 2.0D, 10.0D);
+        if (dragon instanceof RideableFlyingDragon flying) {
+            turnLimit = flying.getCombatAim().flightTurnDegrees(turnLimit);
+        }
         float yaw = currentYaw + Mth.clamp(Mth.wrapDegrees(desiredYaw - currentYaw), -turnLimit, turnLimit);
         double horizontal = direction.horizontalDistance();
         if (horizontal < 1.0E-4D) return direction;

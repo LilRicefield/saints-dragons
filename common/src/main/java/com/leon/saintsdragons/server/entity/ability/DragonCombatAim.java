@@ -16,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Locale;
 
 public final class DragonCombatAim {
+    private static final int FLIGHT_PASS_UPDATE_TICKS = 6;
+    private static final double FLIGHT_PASS_COURSE_TURN_DEGREES = 30.0D;
     public static final Profile BEAM = new Profile(40, 50, 9, 0.0);
     public static final Profile FIRE = new Profile(70, 55, 6, 1.0);
     public static final Profile BREATH = new Profile(70, 55, 8, 1.0);
@@ -33,6 +35,8 @@ public final class DragonCombatAim {
     private double yawError;
     private double pitchError;
     private boolean sprintingApproach;
+    private @Nullable Vec3 flightPassTarget;
+    private long nextFlightPassUpdate;
 
     public DragonCombatAim(RideableFlyingDragon dragon) {
         this.dragon = dragon;
@@ -79,6 +83,8 @@ public final class DragonCombatAim {
             yawError = pitchError = 0;
             alignedTicks = 0;
             assessedTick = Integer.MIN_VALUE;
+            flightPassTarget = null;
+            nextFlightPassUpdate = 0;
         }
         this.target = target;
         this.profile = profile;
@@ -94,9 +100,14 @@ public final class DragonCombatAim {
         float bodyPitch = dragon.isAerial()
                 ? -DragonFlightVisuals.computeAiPitchTarget(dragon.getDeltaMovement()) * Mth.RAD_TO_DEG : 0.0F;
         pitchError = pitch(desired) - bodyPitch;
-        Vec3 reachable = DragonAimHelper.clampDirectionToHead(desired, dragon.yBodyRot,
-                bodyPitch, profile.yawLimit(), profile.pitchLimit());
-        direction = DragonAimHelper.turnDirection(direction, reachable, profile.turnDegrees());
+        // Aerial breath aim leads the body. Turning the flight course must not
+        // pull the shot back into the torso's current facing cone.
+        boolean independentFlightAim = hasIndependentFlightAim();
+        Vec3 reachable = independentFlightAim ? desired
+                : DragonAimHelper.clampDirectionToHead(desired, dragon.yBodyRot,
+                        bodyPitch, profile.yawLimit(), profile.pitchLimit());
+        direction = DragonAimHelper.turnDirection(direction, reachable,
+                independentFlightAim ? profile.airAimTurnDegrees() : profile.turnDegrees());
         applyFacing();
         return direction;
     }
@@ -118,23 +129,36 @@ public final class DragonCombatAim {
         if (!isActive()) return;
         if ((!dragon.isAerial() || dragon.getDeltaMovement().horizontalDistanceSqr() < 0.01D)
                 && facingTick != dragon.tickCount) {
-            float bodyYaw = Mth.approachDegrees(dragon.getYRot(), yaw(desired), 6.0F);
+            float bodyYaw = Mth.approachDegrees(dragon.getYRot(),
+                    yaw(hasIndependentFlightAim() ? direction : desired), flightTurnDegrees(6.0F));
             dragon.setYRot(bodyYaw);
             dragon.yBodyRot = bodyYaw;
         }
         facingTick = dragon.tickCount;
         // The flight model pitches from velocity; entity pitch carries the head aim to observers.
-        dragon.setYHeadRot(dragon.yBodyRot + Mth.clamp(Mth.wrapDegrees(yaw(direction) - dragon.yBodyRot),
-                -profile.yawLimit(), profile.yawLimit()));
+        // Volitans also uses replicated head yaw for its breath pose, so it must
+        // carry the shot heading rather than a second body-relative clamp.
+        dragon.setYHeadRot(hasIndependentFlightAim() ? yaw(direction)
+                : dragon.yBodyRot + Mth.clamp(Mth.wrapDegrees(yaw(direction) - dragon.yBodyRot),
+                        -profile.yawLimit(), profile.yawLimit()));
         dragon.setXRot(pitch(direction));
     }
 
     public float flightYaw(float movementYaw) {
         if (!isActive()) return movementYaw;
+        if (hasIndependentFlightAim()) return yaw(direction);
         // At low speed the body can face the shot while making a small lateral correction.
         float allowance = (float) Mth.clamp((1.0D - dragon.getDeltaMovement().horizontalDistance()) * 240.0D, 0, 180);
         return movementYaw + Mth.clamp(Mth.wrapDegrees(DragonAimHelper.yawOrFallback(desired, movementYaw)
                 - movementYaw), -allowance, allowance);
+    }
+
+    public float flightTurnDegrees(float fallback) {
+        return isActive() && hasIndependentFlightAim() ? profile.airBodyTurnDegrees() : fallback;
+    }
+
+    private boolean hasIndependentFlightAim() {
+        return dragon.isAerial() && profile != null && profile.airAimTurnDegrees() > 0.0F;
     }
 
     public Shot assess(Vec3 origin, Vec3 firingDirection, LivingEntity target, double range,
@@ -169,7 +193,7 @@ public final class DragonCombatAim {
         // Check the covered part of the target, not only the center ray of a broad breath.
         if (!clearLine(origin, contact != null ? contact : center)) return recordShot(Shot.BLOCKED);
         if (contact != null) return recordShot(Shot.ALIGNED);
-        boolean outsideArc = profile != null
+        boolean outsideArc = profile != null && !hasIndependentFlightAim()
                 && (Math.abs(yawError) > profile.yawLimit() || Math.abs(pitchError) > profile.pitchLimit());
         return recordShot(outsideArc ? Shot.OUT_OF_ARC : Shot.ALIGNING);
     }
@@ -207,12 +231,42 @@ public final class DragonCombatAim {
         if (normalized == null) return recordShot(Shot.NO_TARGET);
         float bodyPitch = dragon.isAerial()
                 ? -DragonFlightVisuals.computeAiPitchTarget(dragon.getDeltaMovement()) * Mth.RAD_TO_DEG : 0.0F;
-        if (Math.abs(Mth.wrapDegrees(yaw(normalized) - dragon.yBodyRot)) > profile.yawLimit()
-                || Math.abs(pitch(normalized) - bodyPitch) > profile.pitchLimit()) {
+        if (!hasIndependentFlightAim()
+                && (Math.abs(Mth.wrapDegrees(yaw(normalized) - dragon.yBodyRot)) > profile.yawLimit()
+                || Math.abs(pitch(normalized) - bodyPitch) > profile.pitchLimit())) {
             return recordShot(Shot.OUT_OF_ARC);
         }
         return recordShot(direction.dot(normalized) >= Math.cos(Math.toRadians(toleranceDegrees))
                 ? Shot.ALIGNED : Shot.ALIGNING);
+    }
+
+    public Vec3 steerFlightPass(Vec3 targetFeet, double sideOffset) {
+        long now = dragon.level().getGameTime();
+        if (flightPassTarget != null && now < nextFlightPassUpdate) return flightPassTarget;
+        Vec3 motion = dragon.getDeltaMovement();
+        Vec3 heading = motion.horizontalDistanceSqr() > 0.01D
+                ? motion.multiply(1, 0, 1).normalize() : Vec3.directionFromRotation(0, dragon.yBodyRot);
+        double lookAhead = Mth.clamp(motion.horizontalDistance() * 16.0D, 16.0D, 32.0D);
+        var learning = DragonCombatLearner.get(dragon);
+        if (!isActive() || learning != null && !learning.hasVisibleObservation(target)) {
+            // Lost sight keeps the last course, rather than steering toward a hidden opponent.
+            return flightPassTarget != null ? flightPassTarget : dragon.position().add(heading.scale(lookAhead));
+        }
+        Vec3 offset = targetFeet.subtract(dragon.position());
+        // Follow the smoothed shot heading. Altitude and lateral spacing still
+        // come from the combat approach, keeping ground-target passes aloft.
+        Vec3 toward = direction.horizontalDistanceSqr() > 1.0E-6D
+                ? direction.multiply(1, 0, 1).normalize() : heading;
+        Vec3 lateral = new Vec3(-toward.z, 0, toward.x).scale(sideOffset);
+        Vec3 wanted = toward.scale(Math.max(lookAhead, offset.horizontalDistance())).add(lateral);
+        double courseTurn = hasIndependentFlightAim()
+                ? profile.airBodyTurnDegrees() * FLIGHT_PASS_UPDATE_TICKS : FLIGHT_PASS_COURSE_TURN_DEGREES;
+        Vec3 course = DragonAimHelper.turnDirection(heading, wanted, courseTurn);
+        double progress = Math.min(1.0D, lookAhead / Math.max(1.0D, offset.horizontalDistance()));
+        double heightChange = Mth.clamp(offset.y * progress, -lookAhead * 0.5D, lookAhead * 0.5D);
+        flightPassTarget = dragon.position().add(course.scale(lookAhead)).add(0, heightChange, 0);
+        nextFlightPassUpdate = now + FLIGHT_PASS_UPDATE_TICKS;
+        return flightPassTarget;
     }
 
     public DragonFlightRequest firingApproach(LivingEntity target, double maximumSpeed,
@@ -242,6 +296,8 @@ public final class DragonCombatAim {
         alignedTicks = 0;
         shot = Shot.NO_TARGET;
         sprintingApproach = false;
+        flightPassTarget = null;
+        nextFlightPassUpdate = 0;
     }
 
     public String debugSummary() {
@@ -263,7 +319,12 @@ public final class DragonCombatAim {
     private float yaw(Vec3 direction) { return DragonAimHelper.yawOrFallback(direction, dragon.yBodyRot); }
     private static float pitch(Vec3 direction) { return (float) -Math.toDegrees(Math.atan2(direction.y, direction.horizontalDistance())); }
 
-    public record Profile(float yawLimit, float pitchLimit, float turnDegrees, double leadTicks) { }
+    public record Profile(float yawLimit, float pitchLimit, float turnDegrees, double leadTicks,
+                          float airAimTurnDegrees, float airBodyTurnDegrees) {
+        public Profile(float yawLimit, float pitchLimit, float turnDegrees, double leadTicks) {
+            this(yawLimit, pitchLimit, turnDegrees, leadTicks, 0.0F, 0.0F);
+        }
+    }
 
     public static final class ShotGrace {
         private int lastTick = Integer.MIN_VALUE;

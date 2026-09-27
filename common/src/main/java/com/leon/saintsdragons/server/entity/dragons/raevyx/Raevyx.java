@@ -196,7 +196,9 @@ public class Raevyx extends RideableFlyingDragon implements ShakesScreen, Dragon
     public static final float MAX_BEAM_YAW_DEG = RaevyxStatProfile.BeamAbility.MAX_AIM_YAW_DEGREES;
     public static final float MAX_BEAM_PITCH_DEG = RaevyxStatProfile.BeamAbility.MAX_AIM_PITCH_DEGREES;
     private static final DragonCombatAim.Profile BEAM_AIM =
-            new DragonCombatAim.Profile(MAX_BEAM_YAW_DEG, MAX_BEAM_PITCH_DEG, 9, 0.0);
+            new DragonCombatAim.Profile(MAX_BEAM_YAW_DEG, MAX_BEAM_PITCH_DEG, 9, 0.0,
+                    RaevyxStatProfile.BeamAbility.AI_AIR_AIM_TURN_DEGREES,
+                    RaevyxStatProfile.BeamAbility.AI_AIR_BODY_TURN_DEGREES);
     public static final double BEAM_RANGE = RaevyxStatProfile.Entity.BEAM_RANGE;
     public static final float RIDER_KEY_PITCH_DEG = 25.0f;
     private static final int RIDER_LANDING_BLEND_DURATION = RaevyxStatProfile.Entity.RIDER_LANDING_BLEND_DURATION; // ticks to keep landing blend active after triggering

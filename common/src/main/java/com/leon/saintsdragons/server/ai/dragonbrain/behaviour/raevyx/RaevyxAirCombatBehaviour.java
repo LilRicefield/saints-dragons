@@ -492,7 +492,7 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
             enterBreakaway(context, target, "breakaway:beam-timeout");
             return;
         }
-        lastDecision = "beam:tracking-pass";
+        lastDecision = "beam:steering-pass";
     }
 
     private void tickRoarPass(DragonBrainContext<Raevyx> context, LivingEntity target) {
@@ -650,6 +650,10 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
 
     private void commandBeamApproach(DragonBrainContext<Raevyx> context, LivingEntity target) {
         Raevyx dragon = context.dragon();
+        if (dragon.isAbilityActive(ModAbilities.RAEVYX_LIGHTNING_BEAM)) {
+            commandSteeringBeamPass(context, target);
+            return;
+        }
         if (dragon.getCombatFlightState().targetNeedsFlight()) {
             // Keep the firing lane moving with the opponent; a stationary setup position
             // otherwise forces us to brake while the opponent leaves beam range.
@@ -695,6 +699,30 @@ public final class RaevyxAirCombatBehaviour extends AirCombatMovementBehaviour<R
         routeTarget = request.target();
         beamSegment = dragon.isBeaming() ? 1 : 0;
         context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(request));
+    }
+
+    private void commandSteeringBeamPass(DragonBrainContext<Raevyx> context, LivingEntity target) {
+        Raevyx dragon = context.dragon();
+        if (!dragon.getCombatLearning().hasVisibleObservation(target)) return;
+        Vec3 targetFeet = flightFeet(dragon, predictTargetCenter(dragon, target, 3.0D, 6.0D));
+        if (!dragon.getCombatFlightState().targetNeedsFlight()
+                && !DragonTargetingHelper.isMovementAnchorInWater(target)) {
+            targetFeet = new Vec3(targetFeet.x,
+                    DragonTargetingHelper.movementAnchor(target).getY() + attackHeight * 0.75D, targetFeet.z);
+        }
+        Vec3 destination = dragon.getCombatAim().steerFlightPass(targetFeet, attackSide * 4.0D);
+        Vec3 fitted = dragon.getAIMovement().flightSpace().fitDestination(destination);
+        if (fitted == null) {
+            commandChaseIntent(context, target);
+            return;
+        }
+        double speed = Mth.clamp((dragon.getCombatFlightState().targetVelocity().horizontalDistance() + 0.35D)
+                / Math.max(0.1D, dragon.getFlightSpeed()), BEAM_PASS_SPEED, DIRECT_CHASE_SPEED);
+        if (routeTarget == null) routeGraceTicks = 3;
+        routeTarget = fitted;
+        beamSegment = dragon.isBeaming() ? 1 : 0;
+        context.memories().set(DragonMemories.MOVEMENT_INTENT, DragonMovementIntent.flight(
+                DragonFlightRequest.maneuver(fitted, speed, 2.0D, DragonFlightRequest.Arrival.PASS_THROUGH)));
     }
 
     private boolean selectBeamPosition(Raevyx dragon, LivingEntity target) {
